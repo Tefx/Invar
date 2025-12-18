@@ -1,4 +1,4 @@
-# The Invar Protocol v3.7
+# The Invar Protocol v3.8
 
 > **"Trade structure for safety."**
 
@@ -994,14 +994,67 @@ Implement (ICIDV) → Review → Propose → (Approval) → Improve
 - Updated Lessons Learned (Layer 2)
 - Protocol change proposals (Layer 1, if needed)
 
-### 12.6 Version History
+### 12.6 Versioning Rules
+
+The protocol uses semantic versioning aligned with the governance layers:
+
+```
+MAJOR.MINOR
+  │     │
+  │     └─ Layer 1 changes (protocol revisions)
+  │
+  └─ Protocol generation (Layer 0 defines this)
+```
+
+**Version Bump Rules:**
+
+| Change Type | Version Impact | Example |
+|-------------|----------------|---------|
+| Layer 0 change | N/A (impossible) | Would create new protocol, not Invar |
+| Layer 1 change | MINOR bump (+0.1) | v3.7 → v3.8 |
+| Layer 2 change | No bump | Project-specific, not versioned |
+| Typo/clarification | No bump | Editorial only |
+
+**Backwards Compatibility:**
+
+Within the same MAJOR version, all changes are **additive and compatible**:
+
+| Scenario | Behavior |
+|----------|----------|
+| v3.6 project reads v3.7 docs | ✅ All v3.6 rules still apply |
+| v3.8 project uses v3.6 tooling | ✅ Tools may lack new features, but work |
+| v3.x project meets v2.x project | ⚠️ Different MAJOR = potentially incompatible |
+
+**MAJOR Version Change Criteria:**
+
+A new MAJOR version (e.g., v3.x → v4.x) would require:
+1. Fundamental philosophy change (not just implementation details)
+2. Breaking changes to Layer 1 that cannot be backwards-compatible
+3. Community consensus (if protocol is widely adopted)
+
+**Note:** Layer 0 is immutable, so a true MAJOR version change would effectively be a fork or successor protocol, not "Invar v4".
+
+**Version in Config:**
+
+```toml
+[tool.invar]
+protocol_version = "3.8"  # Documents which version this project implements
+```
+
+This is **declarative, not enforced** - it documents the project's target version for:
+- Agent awareness (which features/rules apply)
+- Tooling compatibility checks (future)
+- Audit trail (which protocol version was followed)
+
+### 12.7 Version History
 
 | Version | Date | Layer | Key Changes |
 |---------|------|-------|-------------|
+| v3.8 | 2024-12-19 | L1 | Versioning rules, compatibility guarantees |
 | v3.7 | 2024-12-19 | L1 | Protocol Governance, evolution controls |
 | v3.6 | 2024-12-19 | L1 | ICIDV workflow, enhanced Law 4 |
 | v3.5 | 2024-12-18 | L1 | Quick Start, Deep Dive sections |
 
 ---
 
-*Version 3.7 | Designed for AI Coding Agents*
+*Version 3.8 | Designed for AI Coding Agents*

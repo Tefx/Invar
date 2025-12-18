@@ -935,9 +935,15 @@ $ invar init
 Protocol and tool versions are separate:
 
 ```
-INVAR.md v3.7        # Protocol version
+INVAR.md v3.8        # Protocol version (MAJOR.MINOR)
 invar 0.1.0          # Tool version (semver)
 ```
+
+**Protocol Versioning (MAJOR.MINOR):**
+- MAJOR = Protocol generation (Layer 0 defines this)
+- MINOR = Protocol revision (Layer 1 changes)
+- Layer 2 changes don't bump version
+- See INVAR.md Section 12.6 for full rules
 
 ### File Roles
 

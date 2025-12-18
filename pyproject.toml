@@ -90,7 +90,7 @@ use_code_lines = false      # Use total lines (including docstrings) for size ch
 
 [tool.invar]
 # Protocol governance (see INVAR.md Section 12)
-protocol_version = "3.7"
+protocol_version = "3.8"
 protocol_evolution = "human-approved"  # locked | human-approved | open
 
 # Test style: "inline" or "separate"
