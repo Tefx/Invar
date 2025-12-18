@@ -47,6 +47,10 @@ class Symbol(BaseModel):
     docstring: str | None = None
     contracts: list[Contract] = Field(default_factory=list)
     has_doctest: bool = False
+    # Phase 3: Guard Enhancement
+    internal_imports: list[str] = Field(default_factory=list)
+    impure_calls: list[str] = Field(default_factory=list)
+    code_lines: int | None = None  # Lines excluding docstring/comments
 
 
 class FileInfo(BaseModel):

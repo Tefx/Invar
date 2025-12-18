@@ -94,6 +94,13 @@ def _parse_config(guard_config: dict[str, Any]) -> RuleConfig:
     if "require_doctests" in guard_config:
         kwargs["require_doctests"] = guard_config["require_doctests"]
 
+    # Phase 3: Guard Enhancement
+    if "strict_pure" in guard_config:
+        kwargs["strict_pure"] = guard_config["strict_pure"]
+
+    if "use_code_lines" in guard_config:
+        kwargs["use_code_lines"] = guard_config["use_code_lines"]
+
     return RuleConfig(**kwargs)
 
 

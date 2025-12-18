@@ -13,6 +13,8 @@ from typing import Callable
 from deal import post, pre
 
 from invar.core.models import FileInfo, Severity, Symbol, SymbolKind, Violation
+from invar.core.purity import check_impure_calls as _check_impure_calls
+from invar.core.purity import check_internal_imports as _check_internal_imports
 
 
 @dataclass
@@ -34,6 +36,9 @@ class RuleConfig:
     )
     require_contracts: bool = True
     require_doctests: bool = True
+    # Phase 3: Guard Enhancement
+    strict_pure: bool = False  # Enable stricter purity checks
+    use_code_lines: bool = False  # Use code_lines (excluding docstring) for size check
 
 
 # Type alias for rule functions
@@ -80,6 +85,8 @@ def check_function_size(file_info: FileInfo, config: RuleConfig) -> list[Violati
     """
     Check if any function exceeds maximum line count.
 
+    When use_code_lines is True, uses code_lines (excluding docstring).
+
     Examples:
         >>> from invar.core.models import FileInfo, Symbol, SymbolKind
         >>> sym = Symbol(name="foo", kind=SymbolKind.FUNCTION, line=1, end_line=10)
@@ -92,7 +99,14 @@ def check_function_size(file_info: FileInfo, config: RuleConfig) -> list[Violati
 
     for symbol in file_info.symbols:
         if symbol.kind in (SymbolKind.FUNCTION, SymbolKind.METHOD):
-            func_lines = symbol.end_line - symbol.line + 1
+            # Use code_lines if available and enabled, otherwise total lines
+            if config.use_code_lines and symbol.code_lines is not None:
+                func_lines = symbol.code_lines
+                line_type = "code lines"
+            else:
+                func_lines = symbol.end_line - symbol.line + 1
+                line_type = "lines"
+
             if func_lines > config.max_function_lines:
                 violations.append(
                     Violation(
@@ -101,7 +115,7 @@ def check_function_size(file_info: FileInfo, config: RuleConfig) -> list[Violati
                         file=file_info.path,
                         line=symbol.line,
                         message=(
-                            f"Function '{symbol.name}' has {func_lines} lines "
+                            f"Function '{symbol.name}' has {func_lines} {line_type} "
                             f"(max: {config.max_function_lines})"
                         ),
                         suggestion="Extract helper functions",
@@ -229,6 +243,19 @@ def check_doctests(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
     return violations
 
 
+# Phase 3: Guard Enhancement - Wrapper functions for purity checks
+
+
+def check_internal_imports(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
+    """Delegate to purity.check_internal_imports."""
+    return _check_internal_imports(file_info, config.strict_pure)
+
+
+def check_impure_calls(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
+    """Delegate to purity.check_impure_calls."""
+    return _check_impure_calls(file_info, config.strict_pure)
+
+
 @post(lambda result: len(result) > 0)
 def get_all_rules() -> list[RuleFunc]:
     """
@@ -236,7 +263,7 @@ def get_all_rules() -> list[RuleFunc]:
 
     Examples:
         >>> rules = get_all_rules()
-        >>> len(rules) > 0
+        >>> len(rules) >= 5
         True
     """
     return [
@@ -245,6 +272,9 @@ def get_all_rules() -> list[RuleFunc]:
         check_forbidden_imports,
         check_contracts,
         check_doctests,
+        # Phase 3: Guard Enhancement
+        check_internal_imports,
+        check_impure_calls,
     ]
 
 

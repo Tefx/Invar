@@ -8,14 +8,11 @@ structured data. No I/O operations.
 from __future__ import annotations
 
 import ast
-from typing import TYPE_CHECKING
 
 from deal import pre
 
 from invar.core.models import Contract, FileInfo, Symbol, SymbolKind
-
-if TYPE_CHECKING:
-    pass
+from invar.core.purity import count_code_lines, extract_impure_calls, extract_internal_imports
 
 
 @pre(lambda source, path="<string>": isinstance(source, str))
@@ -80,6 +77,11 @@ def _parse_function(node: ast.FunctionDef | ast.AsyncFunctionDef) -> Symbol:
     # Build signature
     signature = _build_signature(node)
 
+    # Phase 3: Extract additional info (from purity module)
+    internal_imports = extract_internal_imports(node)
+    impure_calls = extract_impure_calls(node)
+    code_lines = count_code_lines(node)
+
     return Symbol(
         name=node.name,
         kind=SymbolKind.FUNCTION,
@@ -89,6 +91,9 @@ def _parse_function(node: ast.FunctionDef | ast.AsyncFunctionDef) -> Symbol:
         docstring=docstring,
         contracts=contracts,
         has_doctest=has_doctest,
+        internal_imports=internal_imports,
+        impure_calls=impure_calls,
+        code_lines=code_lines,
     )
 
 
@@ -170,10 +175,10 @@ def _build_signature(node: ast.FunctionDef | ast.AsyncFunctionDef) -> str:
 
 
 def _extract_imports(tree: ast.Module) -> list[str]:
-    """Extract imported module names from AST."""
+    """Extract imported module names from AST (top-level only)."""
     imports: list[str] = []
 
-    for node in ast.walk(tree):
+    for node in tree.body:
         if isinstance(node, ast.Import):
             for alias in node.names:
                 imports.append(alias.name.split(".")[0])

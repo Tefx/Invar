@@ -56,6 +56,8 @@ def guard(
     path: Path = typer.Argument(Path("."), help="Project root directory",
                                  exists=True, file_okay=False, dir_okay=True),
     strict: bool = typer.Option(False, "--strict", help="Treat warnings as errors"),
+    strict_pure: bool = typer.Option(False, "--strict-pure",
+                                      help="Enable strict purity checks (internal imports, impure calls)"),
     json_output: bool = typer.Option(False, "--json", help="Output as JSON"),
 ) -> None:
     """Check project against Invar architecture rules."""
@@ -64,16 +66,23 @@ def guard(
         console.print(f"[red]Error:[/red] {config_result.failure()}")
         raise typer.Exit(1)
 
-    report = _scan_and_check(path, config_result.unwrap())
-    _output_json(report) if json_output else _output_rich(report)
+    config = config_result.unwrap()
+    # Override strict_pure if specified on command line
+    if strict_pure:
+        config.strict_pure = True
+
+    report = _scan_and_check(path, config)
+    _output_json(report) if json_output else _output_rich(report, strict_pure)
     raise typer.Exit(_get_exit_code(report, strict))
 
 
-def _output_rich(report: GuardReport) -> None:
+def _output_rich(report: GuardReport, strict_pure: bool = False) -> None:
     """Output report using Rich formatting."""
     console.print()
     console.print("[bold]Invar Guard Report[/bold]")
     console.print("=" * 40)
+    if strict_pure:
+        console.print("[cyan](strict-pure mode enabled)[/cyan]")
     console.print()
 
     if not report.violations:

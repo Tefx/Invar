@@ -48,7 +48,8 @@ src/invar/
 │   ├── models.py   # Pydantic models: Symbol, Violation, Config
 │   ├── parser.py   # AST parsing: source string → symbols
 │   ├── rules.py    # Rule checking: file info → violations
-│   └── references.py  # Reference counting (Phase 2)
+│   ├── purity.py   # Purity detection: internal imports, impure calls
+│   └── references.py  # Reference counting (Phase 4)
 │
 ├── shell/          # I/O operations
 │   ├── cli.py      # Typer CLI commands
@@ -188,14 +189,15 @@ Improved usability for existing projects:
 - [x] Flexible `invar init` (detect config location, `--dirs`/`--no-dirs`)
 - [x] Config loading priority: pyproject.toml > invar.toml > defaults
 
-### Phase 3: Guard Enhancement ← Current
+### Phase 3: Guard Enhancement ✅ Complete
 Enhanced verification for better self-dogfooding:
-- [ ] Function-internal import detection (not just top-level)
-- [ ] Impure function call detection (datetime.now, random.*, open, print)
-- [ ] Code line count excluding docstrings/comments
-- [ ] `--strict-pure` mode
+- [x] Function-internal import detection (not just top-level)
+- [x] Impure function call detection (datetime.now, random.*, open, print)
+- [x] Code line count excluding docstrings/comments (`use_code_lines` config)
+- [x] `--strict-pure` CLI mode
+- [x] New `core/purity.py` module for purity detection
 
-### Phase 4: Perception
+### Phase 4: Perception ← Current
 Context compression for large codebases:
 - [ ] core/references.py (reference counting)
 - [ ] core/formatter.py (output formatting)

@@ -1,12 +1,12 @@
 # Invar Project Context
 
-*Last updated: 2024-12-18*
+*Last updated: 2024-12-19*
 
 ## Current State
 
 - **Phase 1 (Guard):** Complete ✅
 - **Phase 2 (Adoption):** Complete ✅
-- **Phase 3 (Guard Enhancement):** Not started
+- **Phase 3 (Guard Enhancement):** Complete ✅
 - **Protocol Version:** v3.5
 - **Blockers:** None
 
@@ -16,8 +16,8 @@
 |-------|------|--------|-------------|
 | 1 | Guard (MVP) | ✅ Complete | Core architecture enforcement |
 | 2 | Adoption | ✅ Complete | Flexible config, pattern matching |
-| 3 | Guard Enhancement | ← Current | Pureness detection, better line count |
-| 4 | Perception | Pending | map, sig commands |
+| 3 | Guard Enhancement | ✅ Complete | Pureness detection, better line count |
+| 4 | Perception | ← Current | map, sig commands |
 | 5 | Polish | Pending | Docs, CI, PyPI release |
 | 6 | Advanced Verification | Long-term | # invar: pure, validation |
 
@@ -29,19 +29,18 @@
 3. [x] Flexible `invar init` with `--dirs`/`--no-dirs` options
 4. [x] Auto-detect config location (creates invar.toml if no pyproject.toml)
 
-## Phase 3: Guard Enhancement (Current)
+## Phase 3: Guard Enhancement ✅ Complete
 
 **Goal:** Enhance verification for better self-dogfooding.
 
-**Rationale:** By improving guard now, we get immediate feedback while developing subsequent phases.
+**Implemented:**
+1. [x] Function-internal import detection
+2. [x] Impure function call detection (datetime.now, random.*, open, print)
+3. [x] Code line count excluding docstrings/comments
+4. [x] `--strict-pure` CLI mode
+5. [x] New `core/purity.py` module for purity detection logic
 
-**Tasks:**
-1. [ ] Function-internal import detection
-2. [ ] Impure function call detection (datetime.now, random.*, open, print)
-3. [ ] Code line count excluding docstrings/comments
-4. [ ] `--strict-pure` mode
-
-## Phase 4: Perception (Next)
+## Phase 4: Perception (Current)
 
 **Goal:** Context compression for large codebases.
 
@@ -52,7 +51,13 @@
 
 ## Recent Decisions
 
-1. **Protocol v3.5: Agent Onboarding** (2024-12-18)
+1. **Phase 3 Complete: Guard Enhancement** (2024-12-19)
+   - Added purity detection: internal imports, impure function calls
+   - New `core/purity.py` module (extracted to keep files under 300 lines)
+   - `--strict-pure` CLI flag for stricter Core verification
+   - `use_code_lines` config option for docstring-excluded line counting
+
+2. **Protocol v3.5: Agent Onboarding** (2024-12-18)
    - Added Section 0: Quick Start for new agents
    - Added Section 11: Deep Dive (Design Rationale, Decision Trees, Troubleshooting)
    - Added Key Insight callout: "Result[T, E] IS the Contract"
