@@ -193,9 +193,11 @@ def load_config(project_root: Path) -> Result[Config, str]:
 
 | Level | What to Read | When |
 |-------|--------------|------|
-| 1 | `invar map` output | First, to understand structure |
+| 1 | Project structure (file tree) | First, to understand structure |
 | 2 | Signatures + contracts | Understanding dependencies |
 | 3 | Full implementation | Only when modifying |
+
+> **Note:** `invar map` command is planned for Phase 4. Currently use IDE features or `tree` command for project overview.
 
 ### Law 4: Verify Immediately
 
@@ -478,22 +480,25 @@ invar init --no-dirs     # Skip directory creation (for existing projects)
 ## 7. Honest Limitations
 
 **Invar CAN detect:**
-- Static `import` statements (top-level)
+- Static `import` statements (top-level and function-internal)
 - Decorator presence (@pre, @post)
 - File and function size violations
-- Path-based Core/Shell classification
+- Path-based and pattern-based Core/Shell classification
+- Function-internal imports (`--strict-pure` mode)
+- Common impure function calls: `datetime.now`, `random.*`, `open`, `print` (`--strict-pure` mode)
 
-**Invar CANNOT detect (current):**
+**Invar CANNOT detect:**
 - Dynamic imports (`__import__`, `importlib`)
-- Function-internal imports
-- Impure function calls (`datetime.now()`, `random.random()`)
-- I/O through dependency injection
+- I/O through dependency injection (e.g., passing file handle to Core)
 - Contract semantic quality (`@pre(lambda x: True)` passes)
+- Missing `Result[T, E]` return type in Shell functions (not yet implemented)
+- Class method contracts (only checks top-level functions)
+- Async function purity issues
 
-**Planned improvements (Phase 5):**
-- Function-internal import detection
-- Common impure call detection (`datetime.now`, `open`, `print`)
-- `--strict-pure` mode for deeper analysis
+**Planned improvements:**
+- Shell contract validation (check for Result return type)
+- Class method checking
+- Configurable impure function list
 
 **Always remember:** Guard assists but doesn't replace engineering judgment.
 
@@ -501,7 +506,7 @@ invar init --no-dirs     # Skip directory creation (for existing projects)
 
 ## 8. Commit Practices
 
-> One ICIV cycle = one commit
+> One ICIDV cycle = one commit
 
 - Commit when tests pass (enforces Law 4)
 - Commit before trying something risky
@@ -518,7 +523,7 @@ For security-critical projects, explicit role-switching can improve code quality
 
 | Role | Mindset | When to Use |
 |------|---------|-------------|
-| **Implementer** | Constructive | Default. Follow ICIV, build features |
+| **Implementer** | Constructive | Default. Follow ICIDV, build features |
 | **Reviewer** | Critical | Architecture changes, public API changes |
 | **Adversary** | Destructive | User input handling, auth, financial code |
 
@@ -952,7 +957,7 @@ Projects can configure how strictly they follow the protocol:
 
 ```toml
 [tool.invar]
-protocol_version = "3.7"           # Lock to specific version
+protocol_version = "3.9"           # Lock to specific version
 protocol_evolution = "human-approved"  # Default mode
 ```
 
@@ -1070,7 +1075,7 @@ A new MAJOR version (e.g., v3.x → v4.x) would require:
 
 ```toml
 [tool.invar]
-protocol_version = "3.8"  # Documents which version this project implements
+protocol_version = "3.9"  # Documents which version this project implements
 ```
 
 This is **declarative, not enforced** - it documents the project's target version for:

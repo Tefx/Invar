@@ -51,7 +51,16 @@
 
 ## Recent Decisions
 
-1. **Protocol v3.9: Session Start Protocol** (2024-12-19)
+1. **First-Principles Review** (2024-12-19)
+   - Comprehensive review documented in docs/FIRST_PRINCIPLES_REVIEW.md
+   - Fixed Section 7 (Honest Limitations) - was factually wrong about capabilities
+   - Fixed ICIV → ICIDV references in Sections 8, 9
+   - Fixed Law 3 to note `invar map` is planned (Phase 4)
+   - Fixed version examples in Section 12 to use 3.9
+   - Identified: Shell Result validation not implemented (planned)
+   - Identified: Rule signatures inconsistent (purity vs rules module)
+
+2. **Protocol v3.9: Session Start Protocol** (2024-12-19)
    - Added Session Start Protocol to Section 0 (Quick Start)
    - Requires agent to read project's INVAR.md at session start
    - Feature Discovery approach: check document contents, not version numbers
@@ -122,21 +131,25 @@
 
 ## Future Improvements
 
-Potential enhancements identified during Phase 3 review:
+Potential enhancements identified during reviews:
 
 ### High Priority
-1. **Class method checking** - Extend purity checks to methods inside classes
-2. **Configurable impure list** - Allow users to customize IMPURE_FUNCTIONS/PATTERNS
+1. **Shell Result validation** - Check Shell functions return `Result[T, E]` (not implemented)
+2. **Class method checking** - Extend purity checks to methods inside classes
 3. **Unified rule signatures** - All rules should use `(FileInfo, RuleConfig)` signature
+4. **RuleConfig to Pydantic** - Consistency with other models
 
 ### Medium Priority
-4. **Private function contracts** - Option to require contracts on `_private` functions
-5. **Doctest line exclusion** - Option to exclude doctest lines from function size
-6. **Rule result aggregation** - Group related violations (e.g., all impure calls in one message)
+5. **Configurable impure list** - Allow users to customize IMPURE_FUNCTIONS/PATTERNS
+6. **Config profiles** - "strict", "standard", "relaxed" instead of many options
+7. **Private function contracts** - Option to require contracts on `_private` functions
+8. **Doctest line exclusion** - Option to exclude doctest lines from function size
 
 ### Low Priority
-7. **Suggestion templates** - Standardize suggestion message format
-8. **Rule severity config** - Allow users to customize severity per rule
+9. **Rule result aggregation** - Group related violations (e.g., all impure calls in one message)
+10. **Suggestion templates** - Standardize suggestion message format
+11. **Rule severity config** - Allow users to customize severity per rule
+12. **Documentation consolidation** - Reduce redundancy between INVAR.md, CLAUDE.md, VISION.md
 
 ## Documentation Checklist
 
