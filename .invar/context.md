@@ -17,6 +17,8 @@
 | 2 | Adoption | ✅ Complete | Flexible config, pattern matching |
 | 3 | Perception | ← Current | map, sig commands |
 | 4 | Polish | Pending | Docs, CI, PyPI release |
+| 5 | Deep Verification | Planned | Pureness detection, --strict-pure |
+| 6 | Function Annotations | Long-term | # invar: pure, validation |
 
 ## Phase 2: Adoption ✅ Complete
 
@@ -34,6 +36,21 @@
 1. [ ] core/references.py (reference counting)
 2. [ ] core/formatter.py (output formatting)
 3. [ ] shell/cli.py (map, sig commands)
+
+## Phase 5: Deep Verification (Planned)
+
+**Goal:** Enhance pureness detection beyond static imports.
+
+**Tasks:**
+1. [ ] Function-internal import detection
+2. [ ] Impure function call detection (datetime.now, random.*, open, print)
+3. [ ] Global variable modification detection
+4. [ ] `--strict-pure` mode
+
+**Rationale:** Current guard only checks top-level imports. Phase 5 addresses:
+- Hidden imports inside functions
+- Calls to known impure functions
+- Global state modifications
 
 ## Recent Decisions
 

@@ -346,16 +346,25 @@ invar init --no-dirs     # Skip directory creation (for existing projects)
 
 ## 7. Honest Limitations
 
-**Invar CAN:**
-- Catch static import violations
-- Check decorator presence
-- Enforce file/function size limits
+**Invar CAN detect:**
+- Static `import` statements (top-level)
+- Decorator presence (@pre, @post)
+- File and function size violations
+- Path-based Core/Shell classification
 
-**Invar CANNOT:**
-- Detect dynamic imports or `eval`
-- Verify contract semantics (`@pre(lambda x: True)` passes)
-- Force agents to follow protocol
-- Replace engineering judgment
+**Invar CANNOT detect (current):**
+- Dynamic imports (`__import__`, `importlib`)
+- Function-internal imports
+- Impure function calls (`datetime.now()`, `random.random()`)
+- I/O through dependency injection
+- Contract semantic quality (`@pre(lambda x: True)` passes)
+
+**Planned improvements (Phase 5):**
+- Function-internal import detection
+- Common impure call detection (`datetime.now`, `open`, `print`)
+- `--strict-pure` mode for deeper analysis
+
+**Always remember:** Guard assists but doesn't replace engineering judgment.
 
 ---
 
@@ -499,4 +508,4 @@ def process_invoice(path: str) -> Result[PriceBreakdown, str]:
 
 ---
 
-*Version 3.3 | Designed for AI Coding Agents*
+*Version 3.4 | Designed for AI Coding Agents*

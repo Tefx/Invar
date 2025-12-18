@@ -199,6 +199,18 @@ Context compression for large codebases:
 - [ ] CI templates
 - [ ] PyPI release
 
+### Phase 5: Deep Verification
+Enhanced pureness detection:
+- [ ] Function-internal import detection
+- [ ] Impure function call detection (datetime.now, random.*, open, print)
+- [ ] Global variable modification detection
+- [ ] `--strict-pure` mode
+
+### Phase 6: Function-Level Annotations (Long-term)
+- [ ] `# invar: pure` comment annotation support
+- [ ] Pureness validation (pure functions can't call impure)
+- [ ] Show pureness in `invar map` output
+
 ---
 
 ## Testing

@@ -758,6 +758,55 @@ invar init --config-only # Only add config, no INVAR.md/CLAUDE.md
 - CI templates
 - PyPI release
 
+### Phase 5: Deep Verification
+
+**Goal:** Enhance pureness detection beyond static imports.
+
+**Deliverables:**
+- Function-internal import detection (not just top-level)
+- Impure function call detection:
+  - Time: `datetime.now()`, `datetime.utcnow()`, `time.time()`
+  - Random: `random.random()`, `random.randint()`, `random.choice()`
+  - I/O: `open()`, `print()`, `input()`
+  - Environment: `os.getcwd()`, `os.environ`
+- Global variable modification detection
+- `invar guard --strict-pure` mode (these as WARNING)
+
+**Value:** Catch common pureness violations that slip past import checks
+
+**Technical approach:**
+```python
+# AST visitor to detect impure calls
+IMPURE_CALLS = {
+    ('datetime', 'now'), ('datetime', 'utcnow'),
+    ('time', 'time'), ('random', 'random'),
+    ('', 'open'), ('', 'print'), ('', 'input'),
+}
+
+def check_impure_calls(tree: ast.AST) -> list[Violation]:
+    """Walk AST and flag calls to known impure functions."""
+    ...
+```
+
+### Phase 6: Function-Level Annotations (Long-term)
+
+**Goal:** Enable explicit pureness declarations with validation.
+
+**Deliverables:**
+- Support `# invar: pure` comment annotation
+- Validate declared pure functions don't call impure functions
+- Show pureness status in `invar map` output
+- Optional `@pure` decorator (non-invasive alternative to comment)
+
+**Configuration:**
+```toml
+[tool.invar.guard]
+# Require explicit purity annotations in Core
+require_pure_annotations = false  # default: false, opt-in
+```
+
+**Value:** Explicit intent + automated verification
+
 ---
 
 ## Dependencies
