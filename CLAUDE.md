@@ -86,7 +86,7 @@ symbols = parse_source(content)  # No I/O here
 
 ## Development Workflow
 
-Follow ICIV for each task:
+Follow **ICIDV** for each task (Intent → Contract → Inspect → Design → Implement → Verify):
 
 ### I - Intent
 ```
@@ -103,6 +103,20 @@ Follow ICIV for each task:
 □ Consider: empty, zero, negative, None
 ```
 
+### I - Inspect (before coding!)
+```
+□ Check file sizes: will any exceed 280 lines after changes?
+□ Check signature patterns: how do similar functions look?
+□ Identify edge cases: methods, nested functions, async?
+```
+
+### D - Design
+```
+□ If file will exceed 280 lines → plan extraction first
+□ Match existing signature patterns
+□ Document non-obvious decisions
+```
+
 ### I - Implementation
 ```
 □ Write explicit code (no **kwargs, no eval)
@@ -112,9 +126,25 @@ Follow ICIV for each task:
 
 ### V - Verify
 ```
-□ Run pytest --doctest-modules
+□ Run pytest --doctest-modules (unit tests)
+□ Run invar guard (architecture check)
+□ Test config + CLI scenarios (integration)
 □ Check type hints with mypy (optional)
 ```
+
+---
+
+## Common Pitfalls
+
+Lessons learned from Invar development:
+
+| Pitfall | Symptom | Fix |
+|---------|---------|-----|
+| set() ordering | Doctest fails randomly | Use `sorted()` in tests |
+| CLI vs config value | Feature works with CLI flag but not config | Pass `config.X` not `cli_arg` |
+| File size surprise | Guard fails after "done" | Check file size BEFORE adding code |
+| Signature mismatch | Wrapper functions needed | Match existing patterns |
+| Missing integration test | Bug only found in production | Test config file scenarios |
 
 ---
 

@@ -7,7 +7,7 @@
 - **Phase 1 (Guard):** Complete ✅
 - **Phase 2 (Adoption):** Complete ✅
 - **Phase 3 (Guard Enhancement):** Complete ✅
-- **Protocol Version:** v3.5
+- **Protocol Version:** v3.6
 - **Blockers:** None
 
 ## Implementation Phases
@@ -51,7 +51,14 @@
 
 ## Recent Decisions
 
-1. **Phase 3 Complete: Guard Enhancement** (2024-12-19)
+1. **Protocol v3.6: ICIDV Workflow** (2024-12-19)
+   - Evolved ICIV to ICIDV (added Inspect and Design phases)
+   - Enhanced Law 4: Unit + Integration + Self-check
+   - Added "Why Inspect and Design" rationale
+   - Added Common Pitfalls to CLAUDE.md
+   - Goal: Prevent surprise refactoring and integration bugs
+
+2. **Phase 3 Complete: Guard Enhancement** (2024-12-19)
    - Added purity detection: internal imports, impure function calls
    - New `core/purity.py` module (extracted to keep files under 300 lines)
    - `--strict-pure` CLI flag for stricter Core verification

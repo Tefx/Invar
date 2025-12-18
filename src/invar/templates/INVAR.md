@@ -1,4 +1,4 @@
-# The Invar Protocol v3.5
+# The Invar Protocol v3.6
 
 > **"Trade structure for safety."**
 
@@ -60,10 +60,12 @@ When you write a function, ask: "Can this fail for reasons outside my control?"
 │  1. SEPARATION    Core (pure) and Shell (I/O) are separate      │
 │  2. CONTRACT      Define boundaries before implementation       │
 │  3. CONTEXT       Read map → signatures → code (only if needed) │
-│  4. VERIFY        Run tests after every change                  │
+│  4. VERIFY        Unit + integration + self-check (invar guard) │
 ├─────────────────────────────────────────────────────────────────┤
 │  Core:   Pure logic, NO I/O, @pre/@post REQUIRED                │
 │  Shell:  I/O handling, Result[T, E] REQUIRED, @pre/@post opt.   │
+├─────────────────────────────────────────────────────────────────┤
+│  Workflow: Intent → Contract → Inspect → Design → Impl → Verify │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -165,18 +167,37 @@ def load_config(project_root: Path) -> Result[Config, str]:
 
 ### Law 4: Verify Immediately
 
-**Run tests after every change. No exceptions.**
+**Run ALL verification after every change. No exceptions.**
 
 ```bash
+# Unit tests (doctest)
 pytest --doctest-modules
+
+# Architecture check
+invar guard
+
+# Integration (if config options changed)
+# Test: config file enables feature
+# Test: CLI flag overrides config
 ```
+
+**Three levels of verification:**
+
+| Level | What | Catches |
+|-------|------|---------|
+| Unit | pytest --doctest-modules | Logic errors, contract violations |
+| Architecture | invar guard | File size, forbidden imports, missing contracts |
+| Integration | Manual or scripted | Config/CLI interaction bugs |
+
+**Common miss:** Feature works with `--flag` but not when set in config file.
+Always test both scenarios when adding config options.
 
 ---
 
-## 2. ICIV Workflow
+## 2. ICIDV Workflow
 
 ```
-Intent → Contract → Implementation → Verify
+Intent → Contract → Inspect → Design → Implement → Verify
 ```
 
 ### Checkpoints by Zone
@@ -185,14 +206,39 @@ Intent → Contract → Implementation → Verify
 |------|------|-------|
 | **Intent** | Classified as Core | Classified as Shell |
 | **Contract** | @pre/@post + doctest | Result[T, E] + types |
-| **Implementation** | < 50 lines, no I/O | < 50 lines, returns Result |
-| **Verify** | pytest + invar guard | pytest + invar guard |
+| **Inspect** | Check file sizes, signature patterns | Check file sizes, signature patterns |
+| **Design** | Plan extraction if needed | Plan extraction if needed |
+| **Implement** | < 50 lines, no I/O | < 50 lines, returns Result |
+| **Verify** | pytest + invar guard + integration | pytest + invar guard + integration |
 
 **After Intent:** Classified as Core or Shell
 **After Contract (Core):** @pre/@post defined, doctests written
 **After Contract (Shell):** Result type defined, type annotations complete
-**After Implementation:** Code < 50 lines per function (refactor if exceeded)
-**After Verify:** All tests pass, `invar guard` passes
+**After Inspect:** Know if files will exceed limits, know existing patterns
+**After Design:** Extraction planned (if needed), signatures consistent
+**After Implement:** Code < 50 lines per function (refactor if exceeded)
+**After Verify:** All tests pass, `invar guard` passes, config scenarios tested
+
+### Why Inspect and Design?
+
+Experience shows that skipping these steps causes:
+- **File size surprises** - Adding code only to find files exceed 300 lines
+- **Signature inconsistency** - Creating wrapper functions to adapt mismatched signatures
+- **Integration bugs** - Features work with CLI but not config files
+
+**Inspect checklist:**
+```
+□ Target file current size? (if >200 lines, be careful)
+□ How do similar functions look? (signature patterns)
+□ Edge cases? (class methods, async, nested functions)
+```
+
+**Design checklist:**
+```
+□ Will file exceed 280 lines? → Plan extraction BEFORE coding
+□ Does signature match existing? → Adapt to existing pattern
+□ Config option added? → Plan integration test
+```
 
 ---
 
