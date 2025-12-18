@@ -1,5 +1,17 @@
 # Design Decisions
 
+## 2024-12-18: Phase 2 Implementation Lessons
+
+**Observation:** During Phase 2 development, `classify_file` function exceeded 50-line limit due to docstring.
+
+**Solution:** Extract helper function `_matches_path_prefix` to reduce main function size.
+
+**Lesson:** Function size limits are effective at forcing refactoring. Good docstrings can push functions over the limit - consider this when writing comprehensive examples.
+
+**Pattern matching edge case:** `**/domain/**` requires special handling to match `src/domain/models.py`. The `matches_pattern` function handles this by trying multiple subpath matches.
+
+---
+
 ## 2024-12-18: Pattern-based Classification (Phase 2)
 
 **Decision:** Support glob patterns for Core/Shell classification alongside path-based approach.

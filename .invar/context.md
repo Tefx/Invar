@@ -57,6 +57,18 @@
 3. **Default exclude_paths** → Must include .venv, __pycache__, .pytest_cache
 4. **AST symbol extraction** → Use tree.body, not ast.walk()
 5. **CLI function size** → Extract helpers to keep under 50 lines
+6. **Pattern matching** → `**/domain/**` needs special handling for subpaths
+7. **Docstring in line count** → Good doctests can push functions over 50-line limit
+
+## Documentation Checklist
+
+After any feature development or design change:
+- [ ] INVAR.md (protocol)
+- [ ] CLAUDE.md (project guide)
+- [ ] README.md (package docs)
+- [ ] docs/DESIGN.md (technical design)
+- [ ] .invar/context.md (current state)
+- [ ] src/invar/templates/INVAR.md (sync with root)
 
 ## Key Files
 
