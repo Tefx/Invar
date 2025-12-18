@@ -135,7 +135,7 @@
 8. **Core vs Shell contracts** → Core needs @pre/@post, Shell needs Result[T, E]
 9. **CLI vs Config value** → Output functions should use config values, not CLI args
 10. **Module extraction** → When files exceed 300 lines, extract cohesive modules
-11. **Wrapper function contracts** → Use private (_) prefix for simple delegates to avoid contract requirements
+11. **Private function contracts** → Private (`_`) Core functions don't require contracts (API boundary is the public function); but add them for complex algorithms with non-obvious invariants
 12. **Top-level only design** → Current parser only checks module-level functions, not class methods
 13. **Section 7 sync** → When implementing new Guard capabilities, ALWAYS update Section 7 (Honest Limitations)
 

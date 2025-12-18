@@ -133,13 +133,25 @@ RULE: Core NEVER imports from Shell.
 
 **Define boundaries before implementation.**
 
-Contract requirements differ by zone:
+Contract requirements differ by zone and visibility:
 
-| Zone | Contract Type | Required |
-|------|--------------|----------|
-| **Core** | @pre/@post + doctest | ✅ Required |
-| **Shell** | Result[T, E] + types | ✅ Required |
-| **Shell** | @pre/@post | Optional |
+| Zone | Visibility | Contract Type | Required |
+|------|------------|--------------|----------|
+| **Core** | Public | @pre/@post + doctest | ✅ Required |
+| **Core** | Private (`_`) | @pre/@post | Optional |
+| **Shell** | Any | Result[T, E] + types | ✅ Required |
+| **Shell** | Any | @pre/@post | Optional |
+
+**Why private Core functions don't require contracts:**
+- They are implementation details, not API boundaries
+- The public function's contract covers the externally-visible behavior
+- Simple delegation functions (`_impl`, `_helper`) add noise with redundant contracts
+- You control all callers, so you can ensure correct usage
+
+**When to add contracts to private functions anyway:**
+- Complex algorithm with non-obvious invariants
+- Performance-critical code where boundary conditions matter
+- Functions likely to become public in the future
 
 **Core Example:**
 ```python
