@@ -132,7 +132,7 @@ def version() -> None:
     console.print(f"invar {__version__}")
 
 
-_DEFAULT_INVAR_CONFIG = '''\n# Invar Configuration
+_DEFAULT_PYPROJECT_CONFIG = '''\n# Invar Configuration
 [tool.invar.guard]
 core_paths = ["src/core"]
 shell_paths = ["src/shell"]
@@ -142,6 +142,24 @@ require_contracts = true
 require_doctests = true
 forbidden_imports = ["os", "sys", "socket", "requests", "urllib", "subprocess", "shutil", "io", "pathlib"]
 exclude_paths = ["tests", "scripts", ".venv"]
+'''
+
+_DEFAULT_INVAR_TOML = '''# Invar Configuration
+# For projects without pyproject.toml
+
+[guard]
+core_paths = ["src/core"]
+shell_paths = ["src/shell"]
+max_file_lines = 300
+max_function_lines = 50
+require_contracts = true
+require_doctests = true
+forbidden_imports = ["os", "sys", "socket", "requests", "urllib", "subprocess", "shutil", "io", "pathlib"]
+exclude_paths = ["tests", "scripts", ".venv"]
+
+# Pattern-based classification (optional, takes priority over paths)
+# core_patterns = ["**/domain/**", "**/models/**"]
+# shell_patterns = ["**/api/**", "**/cli/**"]
 '''
 
 
@@ -165,20 +183,61 @@ def _copy_template(template_name: str, dest: Path, dest_name: str | None = None)
     return False
 
 
-@app.command()
-def init(path: Path = typer.Argument(Path("."), help="Project root directory")) -> None:
-    """Initialize Invar configuration in a project."""
+def _add_config(path: Path) -> bool:
+    """Add configuration to project. Returns True if config was added."""
     pyproject = path / "pyproject.toml"
-    if not pyproject.exists():
-        console.print("[red]Error:[/red] pyproject.toml not found")
-        raise typer.Exit(1)
+    invar_toml = path / "invar.toml"
 
-    config_added = False
-    if "[tool.invar]" not in pyproject.read_text():
-        with pyproject.open("a") as f:
-            f.write(_DEFAULT_INVAR_CONFIG)
-        console.print("[green]Added[/green] [tool.invar.guard] to pyproject.toml")
-        config_added = True
+    # If pyproject.toml exists, add config there
+    if pyproject.exists():
+        content = pyproject.read_text()
+        if "[tool.invar]" not in content:
+            with pyproject.open("a") as f:
+                f.write(_DEFAULT_PYPROJECT_CONFIG)
+            console.print("[green]Added[/green] [tool.invar.guard] to pyproject.toml")
+            return True
+        return False
+
+    # Otherwise create invar.toml
+    if not invar_toml.exists():
+        invar_toml.write_text(_DEFAULT_INVAR_TOML)
+        console.print("[green]Created[/green] invar.toml")
+        return True
+
+    return False
+
+
+def _create_directories(path: Path) -> None:
+    """Create src/core and src/shell directories."""
+    core_path = path / "src" / "core"
+    shell_path = path / "src" / "shell"
+
+    if not core_path.exists():
+        core_path.mkdir(parents=True)
+        (core_path / "__init__.py").touch()
+        console.print("[green]Created[/green] src/core/")
+
+    if not shell_path.exists():
+        shell_path.mkdir(parents=True)
+        (shell_path / "__init__.py").touch()
+        console.print("[green]Created[/green] src/shell/")
+
+
+@app.command()
+def init(
+    path: Path = typer.Argument(Path("."), help="Project root directory"),
+    dirs: bool = typer.Option(None, "--dirs/--no-dirs", help="Create src/core and src/shell directories"),
+) -> None:
+    """
+    Initialize Invar configuration in a project.
+
+    Works with or without pyproject.toml:
+    - If pyproject.toml exists: adds [tool.invar.guard] section
+    - Otherwise: creates invar.toml
+
+    Use --dirs to always create directories, --no-dirs to skip.
+    """
+    config_added = _add_config(path)
 
     if _copy_template("INVAR.md", path):
         console.print("[green]Created[/green] INVAR.md (Invar Protocol)")
@@ -186,16 +245,14 @@ def init(path: Path = typer.Argument(Path("."), help="Project root directory")) 
     if _copy_template("CLAUDE.md.template", path, "CLAUDE.md"):
         console.print("[green]Created[/green] CLAUDE.md (customize for your project)")
 
-    core_path = path / "src" / "core"
-    shell_path = path / "src" / "shell"
-    if not core_path.exists():
-        core_path.mkdir(parents=True)
-        (core_path / "__init__.py").touch()
-        console.print("[green]Created[/green] src/core/")
-    if not shell_path.exists():
-        shell_path.mkdir(parents=True)
-        (shell_path / "__init__.py").touch()
-        console.print("[green]Created[/green] src/shell/")
+    # Handle directory creation based on --dirs flag
+    if dirs is True:
+        _create_directories(path)
+    elif dirs is False:
+        pass  # Skip directory creation
+    else:
+        # Default: create directories (for backwards compatibility)
+        _create_directories(path)
 
     invar_dir = path / ".invar"
     if not invar_dir.exists():

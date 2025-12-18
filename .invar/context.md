@@ -5,8 +5,8 @@
 ## Current State
 
 - **Phase 1 (Guard):** Complete ✅
-- **Phase 2 (Adoption):** Planning complete, ready to implement
-- **Working on:** Documentation updates for Phase 2 design
+- **Phase 2 (Adoption):** Complete ✅
+- **Phase 3 (Perception):** Not started
 - **Blockers:** None
 
 ## Implementation Phases
@@ -14,21 +14,26 @@
 | Phase | Name | Status | Description |
 |-------|------|--------|-------------|
 | 1 | Guard (MVP) | ✅ Complete | Core architecture enforcement |
-| 2 | Adoption | 📋 Planned | Flexible config, pattern matching |
-| 3 | Perception | Pending | map, sig commands |
+| 2 | Adoption | ✅ Complete | Flexible config, pattern matching |
+| 3 | Perception | ← Current | map, sig commands |
 | 4 | Polish | Pending | Docs, CI, PyPI release |
 
-## Phase 2: Adoption (Next Up)
+## Phase 2: Adoption ✅ Complete
 
-**Goal:** Lower adoption barriers for existing projects.
+**Implemented:**
+1. [x] Multiple config sources: pyproject.toml > invar.toml > .invar/config.toml > defaults
+2. [x] Pattern-based Core/Shell classification (`core_patterns`, `shell_patterns`)
+3. [x] Flexible `invar init` with `--dirs`/`--no-dirs` options
+4. [x] Auto-detect config location (creates invar.toml if no pyproject.toml)
+
+## Phase 3: Perception (Next Up)
+
+**Goal:** Context compression for large codebases.
 
 **Tasks:**
-1. [ ] Support `invar.toml` as alternative config source
-2. [ ] Implement pattern-based Core/Shell classification
-3. [ ] Update `invar init` (no pyproject.toml required, optional dirs)
-4. [ ] Config loading priority: pyproject.toml > invar.toml > defaults
-
-**Design:** See docs/DESIGN.md "Phase 2 Design: Adoption Improvements"
+1. [ ] core/references.py (reference counting)
+2. [ ] core/formatter.py (output formatting)
+3. [ ] shell/cli.py (map, sig commands)
 
 ## Recent Decisions
 

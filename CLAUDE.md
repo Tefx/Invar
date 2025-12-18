@@ -53,7 +53,7 @@ src/invar/
 ├── shell/          # I/O operations
 │   ├── cli.py      # Typer CLI commands
 │   ├── fs.py       # File system: read files, walk directories
-│   └── config.py   # Load pyproject.toml
+│   └── config.py   # Load config from multiple sources
 │
 └── templates/      # Files copied by `invar init`
     ├── INVAR.md            # Protocol document
@@ -181,14 +181,14 @@ Is it security-critical or processing untrusted input?
 - [x] shell/cli.py (guard command)
 - [x] invar init command
 
-### Phase 2: Adoption ← Current
-Improve usability for existing projects:
-- [ ] Support `invar.toml` as alternative config (no pyproject.toml required)
-- [ ] Pattern-based Core/Shell classification (`core_patterns`, `shell_patterns`)
-- [ ] Flexible `invar init` (detect config location, optional directory creation)
-- [ ] Update config loading priority: pyproject.toml > invar.toml > defaults
+### Phase 2: Adoption ✅ Complete
+Improved usability for existing projects:
+- [x] Support `invar.toml` as alternative config (no pyproject.toml required)
+- [x] Pattern-based Core/Shell classification (`core_patterns`, `shell_patterns`)
+- [x] Flexible `invar init` (detect config location, `--dirs`/`--no-dirs`)
+- [x] Config loading priority: pyproject.toml > invar.toml > defaults
 
-### Phase 3: Perception
+### Phase 3: Perception ← Current
 Context compression for large codebases:
 - [ ] core/references.py (reference counting)
 - [ ] core/formatter.py (output formatting)

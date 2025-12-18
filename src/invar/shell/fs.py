@@ -13,7 +13,7 @@ from returns.result import Failure, Result, Success
 
 from invar.core.models import FileInfo
 from invar.core.parser import parse_source
-from invar.shell.config import get_exclude_paths, get_path_classification
+from invar.shell.config import classify_file, get_exclude_paths
 
 
 def discover_python_files(
@@ -70,18 +70,8 @@ def read_and_parse_file(file_path: Path, project_root: Path) -> Result[FileInfo,
     if file_info is None:
         return Failure(f"Syntax error in {file_path}")
 
-    # Classify as Core or Shell based on path
-    core_paths, shell_paths = get_path_classification(project_root)
-
-    for core_path in core_paths:
-        if relative_path.startswith(core_path):
-            file_info.is_core = True
-            break
-
-    for shell_path in shell_paths:
-        if relative_path.startswith(shell_path):
-            file_info.is_shell = True
-            break
+    # Classify as Core or Shell based on patterns and paths
+    file_info.is_core, file_info.is_shell = classify_file(relative_path, project_root)
 
     return Success(file_info)
 

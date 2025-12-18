@@ -30,16 +30,17 @@ pip install invar[dev]  # includes deal, returns, hypothesis
 ### Initialize a new project
 
 ```bash
-invar init
+invar init              # Auto-detect config location, create directories
+invar init --no-dirs    # Skip directory creation (for existing projects)
+invar init --dirs       # Always create src/core and src/shell
 ```
 
 This creates:
 - `INVAR.md` - Protocol document for AI agents
 - `CLAUDE.md` - Project development guide
-- `src/core/` - Directory for pure business logic
-- `src/shell/` - Directory for I/O adapters
+- `src/core/` and `src/shell/` - Directories for Core/Shell separation (optional)
 - `.invar/context.md` - Context management for long sessions
-- `[tool.invar.guard]` section in `pyproject.toml`
+- Configuration in `pyproject.toml` or `invar.toml` (auto-detected)
 
 ### Check architecture rules
 
@@ -116,7 +117,12 @@ def process_invoice(path: str) -> Result[Decimal, str]:
 
 ## Configuration
 
-In `pyproject.toml`:
+Invar looks for configuration in this order:
+1. `pyproject.toml` `[tool.invar.guard]`
+2. `invar.toml` `[guard]`
+3. Built-in defaults
+
+### pyproject.toml
 
 ```toml
 [tool.invar.guard]
@@ -128,6 +134,19 @@ require_contracts = true
 require_doctests = true
 forbidden_imports = ["os", "sys", "socket", "requests", "subprocess"]
 exclude_paths = ["tests", ".venv"]
+
+# Pattern-based classification (optional, takes priority over paths)
+core_patterns = ["**/domain/**", "**/models/**"]
+shell_patterns = ["**/api/**", "**/cli/**"]
+```
+
+### invar.toml (for projects without pyproject.toml)
+
+```toml
+[guard]
+core_paths = ["src/core"]
+shell_paths = ["src/shell"]
+# ... same options as above
 ```
 
 ## CLI Commands

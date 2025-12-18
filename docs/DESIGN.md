@@ -731,14 +731,14 @@ invar init --config-only # Only add config, no INVAR.md/CLAUDE.md
 
 **Value:** Architecture enforcement, contract checking
 
-### Phase 2: Adoption
+### Phase 2: Adoption ✅ Complete
 
 **Goal:** Lower barriers for existing projects to adopt Invar.
 
 **Deliverables:**
-- Multiple configuration sources (pyproject.toml, invar.toml)
-- Pattern-based Core/Shell classification
-- Flexible `invar init` (works without pyproject.toml)
+- [x] Multiple configuration sources (pyproject.toml, invar.toml)
+- [x] Pattern-based Core/Shell classification
+- [x] Flexible `invar init` (works without pyproject.toml)
 
 **Value:** Zero-refactor adoption for existing projects
 

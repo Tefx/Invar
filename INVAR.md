@@ -259,9 +259,9 @@ require_doctests = true
 forbidden_imports = ["os", "sys", "socket", "requests", "subprocess", "shutil", "io", "pathlib"]
 exclude_paths = ["tests", ".venv", "venv", "__pycache__", ".git"]
 
-# Pattern-based classification (planned)
-# core_patterns = ["**/domain/**", "**/models/**"]
-# shell_patterns = ["**/api/**", "**/cli/**"]
+# Pattern-based classification (optional, takes priority over paths)
+core_patterns = ["**/domain/**", "**/models/**"]
+shell_patterns = ["**/api/**", "**/cli/**"]
 ```
 
 ### invar.toml (Alternative)
@@ -290,8 +290,9 @@ exclude_paths = ["tests", ".venv", "venv", "__pycache__", ".git"]
 invar guard [path]       # Check architecture rules
 invar guard --strict     # Warnings as errors
 invar guard --json       # JSON output
-invar init               # Initialize project
-invar init --no-dirs     # Skip src/core, src/shell creation
+invar init               # Initialize project (auto-detect config location)
+invar init --dirs        # Always create src/core, src/shell
+invar init --no-dirs     # Skip directory creation (for existing projects)
 ```
 
 ---
