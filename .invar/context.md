@@ -7,7 +7,7 @@
 - **Phase 1 (Guard):** Complete ✅
 - **Phase 2 (Adoption):** Complete ✅
 - **Phase 3 (Guard Enhancement):** Complete ✅
-- **Protocol Version:** v3.8
+- **Protocol Version:** v3.9
 - **Blockers:** None
 
 ## Implementation Phases
@@ -51,7 +51,14 @@
 
 ## Recent Decisions
 
-1. **Protocol v3.8: Versioning Rules** (2024-12-19)
+1. **Protocol v3.9: Session Start Protocol** (2024-12-19)
+   - Added Session Start Protocol to Section 0 (Quick Start)
+   - Requires agent to read project's INVAR.md at session start
+   - Feature Discovery approach: check document contents, not version numbers
+   - Prevents conflicts when agent works on multiple projects
+   - Updated CLAUDE.md template with Session Start Checklist
+
+2. **Protocol v3.8: Versioning Rules** (2024-12-19)
    - Added Section 12.6: Versioning Rules to INVAR.md
    - Semantic versioning: MAJOR.MINOR (Layer 0.Layer 1)
    - Layer 1 changes → MINOR bump, Layer 2 → no bump
@@ -145,7 +152,7 @@ After any feature development or design change:
 
 | File | Purpose |
 |------|---------|
-| INVAR.md | Protocol v3.8 |
+| INVAR.md | Protocol v3.9 |
 | CLAUDE.md | Development guide + project rules |
 | docs/DESIGN.md | Technical design (includes Phase 2 design) |
 | docs/AGENTS.md | Role definitions |

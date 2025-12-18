@@ -1,4 +1,4 @@
-# The Invar Protocol v3.8
+# The Invar Protocol v3.9
 
 > **"Trade structure for safety."**
 
@@ -48,6 +48,38 @@ When you write a function, ask: "Can this fail for reasons outside my control?"
 - **Not sure Core vs Shell?** → If it touches files/network/time/random, it's Shell
 - **Function too long?** → Extract helper function (see [Section 11.3](#113-troubleshooting))
 - **Guard failing?** → See [Section 11.3: Troubleshooting](#113-troubleshooting)
+
+### Session Start Protocol
+
+**When starting work on ANY Invar project, ALWAYS:**
+
+```
+1. Read THIS project's INVAR.md (not from memory)
+   └─ Each project may have different protocol version
+
+2. Check CLAUDE.md for project-specific rules
+   └─ Look for "Protocol Version: X.Y" in header
+
+3. Read .invar/context.md if exists
+   └─ Contains current state and lessons learned
+```
+
+**Why this matters:** If you work on multiple projects, each may use different protocol versions. The project's local INVAR.md is the **authoritative source** - not your training data or previous project's rules.
+
+**Feature Discovery (preferred over version checking):**
+
+Instead of checking version numbers, check document contents:
+
+| To Know | Check For |
+|---------|-----------|
+| Uses ICIDV workflow? | "Intent → Contract → Inspect → Design" in Section 2 |
+| Has governance? | Section 12 exists |
+| Has versioning rules? | Section 12.6 exists |
+
+This is more reliable because:
+- Version numbers can be outdated
+- INVAR.md content is definitive
+- Works even if protocol was partially updated
 
 ---
 
@@ -1050,6 +1082,7 @@ This is **declarative, not enforced** - it documents the project's target versio
 
 | Version | Date | Layer | Key Changes |
 |---------|------|-------|-------------|
+| v3.9 | 2024-12-19 | L1 | Session Start Protocol, feature discovery |
 | v3.8 | 2024-12-19 | L1 | Versioning rules, compatibility guarantees |
 | v3.7 | 2024-12-19 | L1 | Protocol Governance, evolution controls |
 | v3.6 | 2024-12-19 | L1 | ICIDV workflow, enhanced Law 4 |
@@ -1057,4 +1090,4 @@ This is **declarative, not enforced** - it documents the project's target versio
 
 ---
 
-*Version 3.8 | Designed for AI Coding Agents*
+*Version 3.9 | Designed for AI Coding Agents*

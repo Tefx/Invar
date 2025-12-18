@@ -2,6 +2,21 @@
 
 > This project follows the Invar methodology. See [INVAR.md](./INVAR.md) for the full protocol.
 
+**Protocol Version:** See INVAR.md header (e.g., "The Invar Protocol v3.8")
+
+---
+
+## Session Start Checklist
+
+When starting a new session on this project:
+
+```
+□ Read THIS project's INVAR.md (each project may differ)
+□ Check protocol version in INVAR.md header
+□ Read .invar/context.md for current state
+□ Note: Project's INVAR.md is authoritative, not your training data
+```
+
 ---
 
 ## Context Recovery

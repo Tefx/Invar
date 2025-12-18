@@ -935,7 +935,7 @@ $ invar init
 Protocol and tool versions are separate:
 
 ```
-INVAR.md v3.8        # Protocol version (MAJOR.MINOR)
+INVAR.md v3.9        # Protocol version (MAJOR.MINOR)
 invar 0.1.0          # Tool version (semver)
 ```
 
