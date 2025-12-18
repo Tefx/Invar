@@ -4,6 +4,20 @@
 
 ---
 
+## Project Rules
+
+1. **Language:** All documentation and code in English. Conversations with user in their language.
+
+2. **Documentation Sync:** After any feature development or design change, review and update ALL related documents:
+   - INVAR.md (protocol)
+   - CLAUDE.md (project guide)
+   - README.md (package docs)
+   - docs/DESIGN.md (technical design)
+   - .invar/context.md (current state)
+   - Templates in src/invar/templates/
+
+---
+
 ## Context Recovery
 
 If starting a new session or context was summarized, read `.invar/context.md` for:
