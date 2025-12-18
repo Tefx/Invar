@@ -86,6 +86,28 @@
 6. **Pattern matching** → `**/domain/**` needs special handling for subpaths
 7. **Docstring in line count** → Good doctests can push functions over 50-line limit
 8. **Core vs Shell contracts** → Core needs @pre/@post, Shell needs Result[T, E]
+9. **CLI vs Config value** → Output functions should use config values, not CLI args
+10. **Module extraction** → When files exceed 300 lines, extract cohesive modules
+11. **Wrapper function contracts** → Simple delegates don't need their own contracts
+12. **Top-level only design** → Current parser only checks module-level functions, not class methods
+
+## Future Improvements
+
+Potential enhancements identified during Phase 3 review:
+
+### High Priority
+1. **Class method checking** - Extend purity checks to methods inside classes
+2. **Configurable impure list** - Allow users to customize IMPURE_FUNCTIONS/PATTERNS
+3. **Unified rule signatures** - All rules should use `(FileInfo, RuleConfig)` signature
+
+### Medium Priority
+4. **Private function contracts** - Option to require contracts on `_private` functions
+5. **Doctest line exclusion** - Option to exclude doctest lines from function size
+6. **Rule result aggregation** - Group related violations (e.g., all impure calls in one message)
+
+### Low Priority
+7. **Suggestion templates** - Standardize suggestion message format
+8. **Rule severity config** - Allow users to customize severity per rule
 
 ## Documentation Checklist
 

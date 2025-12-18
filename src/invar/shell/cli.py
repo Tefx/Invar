@@ -72,7 +72,7 @@ def guard(
         config.strict_pure = True
 
     report = _scan_and_check(path, config)
-    _output_json(report) if json_output else _output_rich(report, strict_pure)
+    _output_json(report) if json_output else _output_rich(report, config.strict_pure)
     raise typer.Exit(_get_exit_code(report, strict))
 
 

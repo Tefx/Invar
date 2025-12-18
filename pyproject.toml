@@ -83,6 +83,10 @@ forbidden_imports = [
 # Paths to exclude from checking
 exclude_paths = ["tests", "scripts", ".venv", "__pycache__"]
 
+# Phase 3: Guard Enhancement
+strict_pure = true          # Detect internal imports and impure calls in Core
+use_code_lines = false      # Use total lines (including docstrings) for size check
+
 [tool.invar]
 # Test style: "inline" or "separate"
 test_style = "inline"
