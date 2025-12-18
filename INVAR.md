@@ -239,6 +239,13 @@ expired = is_expired(token.expiry, datetime.now())
 
 ## 6. Configuration
 
+### Configuration Sources
+
+Invar looks for configuration in this order:
+1. `pyproject.toml` `[tool.invar.guard]` (standard Python projects)
+2. `invar.toml` `[guard]` (standalone, no pyproject.toml needed)
+3. Built-in defaults
+
 ### pyproject.toml
 
 ```toml
@@ -251,6 +258,21 @@ require_contracts = true
 require_doctests = true
 forbidden_imports = ["os", "sys", "socket", "requests", "subprocess", "shutil", "io", "pathlib"]
 exclude_paths = ["tests", ".venv", "venv", "__pycache__", ".git"]
+
+# Pattern-based classification (planned)
+# core_patterns = ["**/domain/**", "**/models/**"]
+# shell_patterns = ["**/api/**", "**/cli/**"]
+```
+
+### invar.toml (Alternative)
+
+For projects without pyproject.toml:
+
+```toml
+[guard]
+core_paths = ["src/core"]
+shell_paths = ["src/shell"]
+# ... same options as above
 ```
 
 **Pitfall #3: Missing exclusions**
@@ -269,6 +291,7 @@ invar guard [path]       # Check architecture rules
 invar guard --strict     # Warnings as errors
 invar guard --json       # JSON output
 invar init               # Initialize project
+invar init --no-dirs     # Skip src/core, src/shell creation
 ```
 
 ---

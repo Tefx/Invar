@@ -181,12 +181,20 @@ Is it security-critical or processing untrusted input?
 - [x] shell/cli.py (guard command)
 - [x] invar init command
 
-### Phase 2: Perception ← Current
-- [ ] core/references.py
-- [ ] core/formatter.py
+### Phase 2: Adoption ← Current
+Improve usability for existing projects:
+- [ ] Support `invar.toml` as alternative config (no pyproject.toml required)
+- [ ] Pattern-based Core/Shell classification (`core_patterns`, `shell_patterns`)
+- [ ] Flexible `invar init` (detect config location, optional directory creation)
+- [ ] Update config loading priority: pyproject.toml > invar.toml > defaults
+
+### Phase 3: Perception
+Context compression for large codebases:
+- [ ] core/references.py (reference counting)
+- [ ] core/formatter.py (output formatting)
 - [ ] shell/cli.py (map, sig commands)
 
-### Phase 3: Polish
+### Phase 4: Polish
 - [ ] Documentation (usage guide)
 - [ ] CI templates
 - [ ] PyPI release

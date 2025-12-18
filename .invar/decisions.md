@@ -1,5 +1,64 @@
 # Design Decisions
 
+## 2024-12-18: Pattern-based Classification (Phase 2)
+
+**Decision:** Support glob patterns for Core/Shell classification alongside path-based approach.
+
+**Rationale:**
+- Existing projects have established structures (Django, Flask, etc.)
+- Requiring src/core and src/shell forces major refactoring
+- Patterns allow zero-refactor adoption
+- Priority: patterns > paths > defaults
+
+**Configuration:**
+```toml
+core_patterns = ["**/domain/**", "**/models/**"]
+shell_patterns = ["**/api/**", "**/cli/**"]
+```
+
+**Status:** Planned for Phase 2
+
+---
+
+## 2024-12-18: Multiple Configuration Sources (Phase 2)
+
+**Decision:** Support pyproject.toml, invar.toml, and .invar/config.toml with priority order.
+
+**Rationale:**
+- Not all projects use pyproject.toml (scripts, notebooks, legacy projects)
+- invar.toml provides standalone configuration
+- Lowers adoption barrier significantly
+
+**Priority:**
+1. pyproject.toml [tool.invar.guard]
+2. invar.toml [guard]
+3. .invar/config.toml [guard]
+4. Built-in defaults
+
+**Status:** Planned for Phase 2
+
+---
+
+## 2024-12-18: Flexible invar init (Phase 2)
+
+**Decision:** Make `invar init` work without pyproject.toml and make directory creation optional.
+
+**Rationale:**
+- Current requirement of pyproject.toml is a barrier
+- Not all projects need src/core and src/shell directories
+- Flexibility increases adoption
+
+**Options:**
+```bash
+invar init              # Interactive
+invar init --dirs       # Always create directories
+invar init --no-dirs    # Never create directories
+```
+
+**Status:** Planned for Phase 2
+
+---
+
 ## 2024-12-18: Context Management Approach
 
 **Decision:** Use `.invar/context.md` file for context persistence

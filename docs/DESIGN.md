@@ -579,18 +579,170 @@ project/
 
 ---
 
+## Phase 2 Design: Adoption Improvements
+
+### Configuration Sources
+
+**Problem:** Requiring pyproject.toml excludes scripts, notebooks, and legacy projects.
+
+**Solution:** Support multiple configuration sources with priority:
+
+```
+Priority (highest to lowest):
+1. pyproject.toml [tool.invar.guard]    # Standard Python projects
+2. invar.toml [guard]                   # Standalone config
+3. .invar/config.toml [guard]           # Context directory
+4. Built-in defaults                    # Fallback
+```
+
+**invar.toml Format:**
+
+```toml
+# invar.toml - standalone configuration
+
+[guard]
+core_paths = ["src/core"]
+shell_paths = ["src/shell"]
+max_file_lines = 300
+max_function_lines = 50
+require_contracts = true
+require_doctests = true
+forbidden_imports = ["os", "sys", "socket", "requests"]
+exclude_paths = ["tests", ".venv"]
+
+# Pattern-based classification (optional)
+core_patterns = []
+shell_patterns = []
+```
+
+**Config Loading Algorithm:**
+
+```python
+def load_config(project_root: Path) -> RuleConfig:
+    # Try sources in priority order
+    if (pyproject := project_root / "pyproject.toml").exists():
+        config = parse_pyproject(pyproject)
+        if config:
+            return config
+
+    if (invar_toml := project_root / "invar.toml").exists():
+        return parse_invar_toml(invar_toml)
+
+    if (invar_config := project_root / ".invar/config.toml").exists():
+        return parse_invar_toml(invar_config)
+
+    return RuleConfig()  # defaults
+```
+
+### Pattern-based Classification
+
+**Problem:** Requiring src/core and src/shell directories forces project restructuring.
+
+**Solution:** Support glob patterns for flexible classification.
+
+**Configuration:**
+
+```toml
+[tool.invar.guard]
+# Option 1: Path-based (default, for new projects)
+core_paths = ["src/core"]
+shell_paths = ["src/shell"]
+
+# Option 2: Pattern-based (for existing projects)
+core_patterns = [
+    "**/domain/**",
+    "**/models/**",
+    "**/services/internal/**",
+    "**/core/**"
+]
+shell_patterns = [
+    "**/api/**",
+    "**/views/**",
+    "**/cli/**",
+    "**/handlers/**",
+    "**/services/external/**"
+]
+
+# Exclude from all checking
+exclude_patterns = ["**/legacy/**", "**/generated/**"]
+```
+
+**Classification Priority:**
+
+```
+1. Explicit exclude_patterns    → Skip file entirely
+2. core_patterns match          → Classify as Core
+3. shell_patterns match         → Classify as Shell
+4. core_paths contains file     → Classify as Core
+5. shell_paths contains file    → Classify as Shell
+6. Neither                      → Uncategorized (no Core/Shell rules applied)
+```
+
+**Pattern Matching Rules:**
+
+- Uses glob syntax (fnmatch)
+- `**` matches any directory depth
+- Patterns are relative to project root
+- First match wins (patterns checked before paths)
+
+### Flexible invar init
+
+**Updated Behavior:**
+
+```bash
+$ invar init
+
+# Step 1: Detect config location
+pyproject.toml exists?
+├── Yes → Add [tool.invar.guard] to pyproject.toml
+└── No  → Create invar.toml
+
+# Step 2: Create protocol files
+├── Create INVAR.md (always)
+├── Create CLAUDE.md (always)
+└── Create .invar/context.md (always)
+
+# Step 3: Create directories (optional)
+Create src/core and src/shell? [Y/n]
+├── Yes → Create directories with __init__.py
+└── No  → Skip (user will use patterns)
+```
+
+**CLI Options:**
+
+```bash
+invar init              # Interactive, asks about directories
+invar init --dirs       # Always create src/core, src/shell
+invar init --no-dirs    # Never create directories
+invar init --config-only # Only add config, no INVAR.md/CLAUDE.md
+```
+
+---
+
 ## Implementation Phases
 
-### Phase 1: Protocol + Guard (MVP)
+### Phase 1: Protocol + Guard (MVP) ✅ Complete
 
 **Deliverables:**
 - INVAR.md template
 - `invar guard` command
 - Basic pyproject.toml configuration
+- `invar init` command
 
 **Value:** Architecture enforcement, contract checking
 
-### Phase 2: Perception
+### Phase 2: Adoption
+
+**Goal:** Lower barriers for existing projects to adopt Invar.
+
+**Deliverables:**
+- Multiple configuration sources (pyproject.toml, invar.toml)
+- Pattern-based Core/Shell classification
+- Flexible `invar init` (works without pyproject.toml)
+
+**Value:** Zero-refactor adoption for existing projects
+
+### Phase 3: Perception
 
 **Deliverables:**
 - `invar map` command (with AST-based reference analysis)
@@ -599,13 +751,12 @@ project/
 
 **Value:** Context compression for large projects
 
-### Phase 3: Polish
+### Phase 4: Polish
 
 **Deliverables:**
-- `invar init` command
-- Documentation
+- Documentation (usage guide)
 - CI templates
-- Test style configuration
+- PyPI release
 
 ---
 
