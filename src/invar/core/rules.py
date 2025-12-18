@@ -243,16 +243,11 @@ def check_doctests(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
     return violations
 
 
-# Phase 3: Guard Enhancement - Wrapper functions for purity checks
-
-
-def check_internal_imports(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
-    """Delegate to purity.check_internal_imports."""
+# Phase 3: Purity check wrappers (adapts signature for rule engine)
+def _wrap_internal_imports(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
     return _check_internal_imports(file_info, config.strict_pure)
 
-
-def check_impure_calls(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
-    """Delegate to purity.check_impure_calls."""
+def _wrap_impure_calls(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
     return _check_impure_calls(file_info, config.strict_pure)
 
 
@@ -272,9 +267,8 @@ def get_all_rules() -> list[RuleFunc]:
         check_forbidden_imports,
         check_contracts,
         check_doctests,
-        # Phase 3: Guard Enhancement
-        check_internal_imports,
-        check_impure_calls,
+        _wrap_internal_imports,
+        _wrap_impure_calls,
     ]
 
 

@@ -2,6 +2,21 @@
 
 > This project follows the Invar methodology. See [INVAR.md](./INVAR.md) for the full protocol.
 
+**Protocol Version:** v3.9
+
+---
+
+## Session Start Checklist
+
+When starting a new session on this project:
+
+```
+□ Read INVAR.md (protocol v3.9)
+□ Read .invar/context.md (current state, recent decisions)
+□ Check this file for project-specific rules
+□ Note: Project's INVAR.md is authoritative, not training data
+```
+
 ---
 
 ## Project Rules
@@ -9,12 +24,14 @@
 1. **Language:** All documentation and code in English. Conversations with user in their language.
 
 2. **Documentation Sync:** After any feature development or design change, review and update ALL related documents:
-   - INVAR.md (protocol)
+   - INVAR.md (protocol) - **especially Section 7 (Honest Limitations)**
    - CLAUDE.md (project guide)
    - README.md (package docs)
    - docs/DESIGN.md (technical design)
    - .invar/context.md (current state)
    - Templates in src/invar/templates/
+
+3. **Section 7 Rule:** When implementing new Guard capabilities, ALWAYS update Section 7 (Honest Limitations) to reflect what Guard CAN and CANNOT detect.
 
 ---
 
@@ -235,12 +252,29 @@ Context compression for large codebases:
 - [ ] core/formatter.py (output formatting)
 - [ ] shell/cli.py (map, sig commands)
 
-### Phase 5: Polish
+### Phase 5: Guard Refinement
+Code quality fixes from first-principles review:
+- [ ] **Shell Result validation** - Check Shell functions return `Result[T, E]`
+- [ ] **Unified rule signatures** - All rules use `(FileInfo, RuleConfig)` signature
+- [ ] **RuleConfig to Pydantic** - Consistency with other models
+- [ ] Config profiles - "strict", "standard", "relaxed" presets
+
+### Phase 6: Polish
+Documentation and release:
 - [ ] Documentation (usage guide)
 - [ ] CI templates
 - [ ] PyPI release
+- [ ] Documentation consolidation (reduce INVAR.md/CLAUDE.md/VISION.md redundancy)
+- [ ] Suggestion message templates
 
-### Phase 6: Advanced Verification (Long-term)
+### Phase 7: Advanced Verification (Long-term)
+Extended checking capabilities:
+- [ ] Class method checking (extend to methods inside classes)
+- [ ] Configurable impure list (user-defined IMPURE_FUNCTIONS)
+- [ ] Private function contracts (option for `_private` functions)
+- [ ] Doctest line exclusion (option to exclude doctest from size)
+- [ ] Rule result aggregation (group related violations)
+- [ ] Rule severity config (user-customizable severity)
 - [ ] Global variable modification detection
 - [ ] `# invar: pure` comment annotation support
 - [ ] Pureness validation (pure functions can't call impure)
