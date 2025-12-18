@@ -821,9 +821,20 @@ When Invar was used to check itself, several issues were discovered:
 
 ### Future Considerations
 
-1. **Per-zone limits**: Different `max_function_lines` for Core (50) vs Shell (80)
-2. **Static contract validation**: Check @pre lambda signature matches function
-3. **IDE integration**: Real-time feedback while coding
+**Guard Improvements:**
+1. **Separate code/docstring line counts**: Report `Function 'foo' has 55 lines (35 code, 20 docstring)`
+2. **Per-zone limits**: Different `max_function_lines` for Core (50) vs Shell (80)
+3. **`invar guard --explain`**: Show why each file was classified as Core/Shell
+4. **Static contract validation**: Check @pre lambda signature matches function
+
+**Init Improvements:**
+5. **Smart framework detection**: Detect Django/Flask and suggest appropriate patterns
+6. **Config validation**: Warn when core_patterns and shell_patterns overlap
+7. **Path existence check**: Warn when configured paths don't exist
+
+**IDE Integration:**
+8. **Real-time feedback**: Show violations while coding
+9. **Quick fixes**: Auto-extract helper functions when limit exceeded
 
 ---
 

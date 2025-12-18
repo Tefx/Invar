@@ -1,4 +1,4 @@
-# The Invar Protocol v3.3
+# The Invar Protocol v3.4
 
 > **"Trade structure for safety."**
 
@@ -21,8 +21,8 @@ This is the operating manual for AI Coding Agents in Invar-enabled projects.
 │  3. CONTEXT       Read map → signatures → code (only if needed) │
 │  4. VERIFY        Run tests after every change                  │
 ├─────────────────────────────────────────────────────────────────┤
-│  Core:   Pure logic, NO I/O, HAS @pre/@post                     │
-│  Shell:  I/O handling, RETURNS Result[T, E]                     │
+│  Core:   Pure logic, NO I/O, @pre/@post REQUIRED                │
+│  Shell:  I/O handling, Result[T, E] REQUIRED, @pre/@post opt.   │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -58,6 +58,15 @@ RULE: Core NEVER imports from Shell.
 
 **Define boundaries before implementation.**
 
+Contract requirements differ by zone:
+
+| Zone | Contract Type | Required |
+|------|--------------|----------|
+| **Core** | @pre/@post + doctest | ✅ Required |
+| **Shell** | Result[T, E] + types | ✅ Required |
+| **Shell** | @pre/@post | Optional |
+
+**Core Example:**
 ```python
 from deal import pre, post
 
@@ -66,14 +75,28 @@ from deal import pre, post
 @post(lambda result: result >= 0)
 def calculate_total(items: list[Item], tax_rate: Decimal) -> Decimal:
     """
-    Calculate order total with tax.
-
     Examples:
         >>> calculate_total([Item(price=Decimal("100"))], Decimal("0.1"))
         Decimal('110.00')
     """
     ...
 ```
+
+**Shell Example:**
+```python
+from returns.result import Result, Success, Failure
+
+def load_config(project_root: Path) -> Result[Config, str]:
+    """Load config from file. Result type IS the contract."""
+    if not project_root.exists():
+        return Failure(f"Path not found: {project_root}")
+    return Success(Config(...))
+```
+
+**Why the difference?**
+- Core is deterministic: @pre/@post can validate invariants
+- Shell handles chaos: Result type expresses "might fail" contract
+- Shell's @pre would check path validity, but that requires I/O
 
 **Critical:** Lambda must accept ALL function parameters. See [Pitfall #1](#pitfall-1-deal-pre-signature).
 
@@ -103,9 +126,19 @@ pytest --doctest-modules
 Intent → Contract → Implementation → Verify
 ```
 
+### Checkpoints by Zone
+
+| Step | Core | Shell |
+|------|------|-------|
+| **Intent** | Classified as Core | Classified as Shell |
+| **Contract** | @pre/@post + doctest | Result[T, E] + types |
+| **Implementation** | < 50 lines, no I/O | < 50 lines, returns Result |
+| **Verify** | pytest + invar guard | pytest + invar guard |
+
 **After Intent:** Classified as Core or Shell
-**After Contract:** @pre/@post defined, doctests written
-**After Implementation:** Code < 50 lines per function
+**After Contract (Core):** @pre/@post defined, doctests written
+**After Contract (Shell):** Result type defined, type annotations complete
+**After Implementation:** Code < 50 lines per function (refactor if exceeded)
 **After Verify:** All tests pass, `invar guard` passes
 
 ---
@@ -282,6 +315,20 @@ exclude_paths = ["tests"]
 
 # ✅ CORRECT: Exclude all non-project code
 exclude_paths = ["tests", ".venv", "venv", "__pycache__", ".git"]
+```
+
+**Pitfall #4: Function size includes docstrings**
+```python
+# ⚠️ The 50-line limit counts EVERYTHING: code + docstring + comments
+# Good doctests can push functions over the limit
+
+# ✅ SOLUTION: Extract helper functions when exceeded
+def _helper(x):  # Move logic to helper
+    ...
+
+def main_function(x):
+    """Extensive doctest examples here."""
+    return _helper(x)
 ```
 
 ### CLI Commands

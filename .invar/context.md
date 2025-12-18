@@ -59,6 +59,7 @@
 5. **CLI function size** → Extract helpers to keep under 50 lines
 6. **Pattern matching** → `**/domain/**` needs special handling for subpaths
 7. **Docstring in line count** → Good doctests can push functions over 50-line limit
+8. **Core vs Shell contracts** → Core needs @pre/@post, Shell needs Result[T, E]
 
 ## Documentation Checklist
 
@@ -74,7 +75,7 @@ After any feature development or design change:
 
 | File | Purpose |
 |------|---------|
-| INVAR.md | Protocol v3.3 |
+| INVAR.md | Protocol v3.4 |
 | CLAUDE.md | Development guide + project rules |
 | docs/DESIGN.md | Technical design (includes Phase 2 design) |
 | docs/AGENTS.md | Role definitions |
