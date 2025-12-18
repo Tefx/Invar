@@ -1,0 +1,202 @@
+# Invar Project Development Guide
+
+> This project follows the Invar methodology. See [INVAR.md](./INVAR.md) for the full protocol.
+
+---
+
+## Context Recovery
+
+If starting a new session or context was summarized, read `.invar/context.md` for:
+- Current project state and progress
+- Recent design decisions
+- Lessons learned (pitfalls to avoid)
+
+---
+
+## Bootstrap Status
+
+**Phase 1 (Guard) is complete.** Invar can now check itself:
+
+```bash
+invar guard        # Verify architecture rules
+pytest --doctest-modules  # Run all tests
+```
+
+**Note:** Core's "no I/O" exception - Invar's Core receives file content as strings (parsed by Shell), not file paths.
+
+---
+
+## Project Structure
+
+```
+src/invar/
+├── core/           # Pure logic (receives file content as strings)
+│   ├── models.py   # Pydantic models: Symbol, Violation, Config
+│   ├── parser.py   # AST parsing: source string → symbols
+│   ├── rules.py    # Rule checking: file info → violations
+│   └── references.py  # Reference counting (Phase 2)
+│
+├── shell/          # I/O operations
+│   ├── cli.py      # Typer CLI commands
+│   ├── fs.py       # File system: read files, walk directories
+│   └── config.py   # Load pyproject.toml
+│
+└── templates/      # Files copied by `invar init`
+    ├── INVAR.md            # Protocol document
+    └── CLAUDE.md.template  # Project guide template
+```
+
+**Key insight:** Core functions receive **string content**, not file paths. Shell reads files and passes content to Core.
+
+```python
+# Shell: reads file
+content = Path("foo.py").read_text()
+
+# Core: processes string (pure)
+symbols = parse_source(content)  # No I/O here
+```
+
+---
+
+## Quick Rules
+
+1. **Separation:** `src/invar/core` vs `src/invar/shell`
+2. **Contracts:** Use `@pre`/`@post` from `deal` for Core functions
+3. **Results:** Use `Result[T, E]` from `returns` for Shell functions
+4. **Types:** Full type annotations, use Pydantic for models
+5. **Tests:** Doctest for examples, hypothesis for properties
+6. **Verify:** Run `pytest --doctest-modules` after every change
+
+---
+
+## Development Workflow
+
+Follow ICIV for each task:
+
+### I - Intent
+```
+□ Understand what needs to be done
+□ Identify affected files
+□ Classify as Core or Shell
+```
+
+### C - Contract
+```
+□ Define function signature with types
+□ Add @pre/@post decorators
+□ Write doctest examples
+□ Consider: empty, zero, negative, None
+```
+
+### I - Implementation
+```
+□ Write explicit code (no **kwargs, no eval)
+□ Keep functions < 50 lines
+□ Keep files < 300 lines
+```
+
+### V - Verify
+```
+□ Run pytest --doctest-modules
+□ Check type hints with mypy (optional)
+```
+
+---
+
+## Agent Roles
+
+This project uses role-based review. See [docs/AGENTS.md](./docs/AGENTS.md) for full definitions.
+
+| Command | Role | Purpose |
+|---------|------|---------|
+| `/review` | Reviewer | Critical code review, find defects |
+| `/attack` | Adversary | Try to break the code, find vulnerabilities |
+
+### When to Use Each Role
+
+**Default (Implementer):** Most work. Follow ICIV, let automated tools verify.
+
+**Reviewer - Use when:**
+- Design decisions affect multiple modules
+- Architecture changes (new Core/Shell boundaries)
+- Public API changes
+- Changes to contracts (@pre/@post)
+- Complex algorithms (>30 lines of logic)
+
+**Adversary - Use when:**
+- Processing user/external input
+- Security-sensitive code (auth, crypto, permissions)
+- Code at trust boundaries (Shell entry points)
+- Financial calculations
+- Data validation logic
+
+### Decision Flow
+
+```
+Is it security-critical or processing untrusted input?
+├── Yes → /attack (Adversary)
+└── No → Does it affect architecture or public contracts?
+    ├── Yes → /review (Reviewer)
+    └── No → Default (Implementer) + automated checks
+```
+
+**Key insight:** `invar guard` and `pytest` handle most verification automatically. Use Reviewer/Adversary for decisions that require judgment, not mechanical checking.
+
+---
+
+## Key Design Documents
+
+| Document | Purpose | When to Read |
+|----------|---------|--------------|
+| [INVAR.md](./INVAR.md) | Protocol for agents | Always (this is the law) |
+| [docs/VISION.md](./docs/VISION.md) | Philosophy | When questioning "why" |
+| [docs/DESIGN.md](./docs/DESIGN.md) | Technical design | When implementing features |
+| [docs/AGENTS.md](./docs/AGENTS.md) | Role definitions | When reviewing code |
+
+---
+
+## Implementation Phases
+
+### Phase 1: Guard (MVP) ✅ Complete
+- [x] Project skeleton
+- [x] core/models.py
+- [x] core/parser.py
+- [x] core/rules.py
+- [x] shell/fs.py
+- [x] shell/config.py
+- [x] shell/cli.py (guard command)
+- [x] invar init command
+
+### Phase 2: Perception ← Current
+- [ ] core/references.py
+- [ ] core/formatter.py
+- [ ] shell/cli.py (map, sig commands)
+
+### Phase 3: Polish
+- [ ] Documentation (usage guide)
+- [ ] CI templates
+- [ ] PyPI release
+
+---
+
+## Testing
+
+```bash
+# Run all tests including doctests
+pytest --doctest-modules src/
+
+# Run with hypothesis (property tests)
+pytest src/ -v
+
+# Type checking (optional but recommended)
+mypy src/invar/
+```
+
+---
+
+## Dependencies
+
+```bash
+# Development setup
+pip install typer rich pydantic deal returns hypothesis pytest mypy ruff
+```

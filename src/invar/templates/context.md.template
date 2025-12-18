@@ -1,0 +1,30 @@
+# Project Context
+
+*Last updated: [DATE]*
+
+## Current State
+
+- Phase: [current development phase]
+- Working on: [current task or feature]
+- Blockers: None
+
+## Recent Decisions
+
+1. [Decision summary] - [Brief rationale]
+
+## Lessons Learned
+
+1. [Pitfall or issue] → [Solution or workaround]
+
+## Key Files
+
+| File | Purpose |
+|------|---------|
+| INVAR.md | Protocol reference |
+| CLAUDE.md | Project development guide |
+| src/core/ | Pure business logic |
+| src/shell/ | I/O adapters |
+
+---
+
+*Update this file when: completing major tasks, making design decisions, discovering pitfalls.*
