@@ -1,184 +1,171 @@
 # Invar
 
-> **Trade structure for safety.**
+**Structure for AI-assisted development.**
 
-Invar is an AI-native software engineering framework that combines design-by-contract with architectural enforcement. It provides both a methodology (the Invar Protocol) and tools to enforce it.
+---
 
-## The Four Laws
+## The Problem
+
+AI coding agents (Claude Code, Cursor, Copilot) face inherent limitations:
+
+| Limitation | Nature | Consequence |
+|------------|--------|-------------|
+| **Stateless** | No persistent memory | Must re-learn project every session |
+| **Token-bound** | Limited context window | Cannot "see" entire codebase |
+| **Blind generation** | Cannot execute code | Cannot verify during generation |
+| **Happy-path bias** | Training data distribution | Systematically weak at edge cases |
+
+These are **not bugs to fix**—they are fundamental properties of how language models work.
+
+## The Insight
+
+Traditional approaches try to make AI "smarter":
+- Better prompts
+- More training data
+- Larger context windows
+
+**Invar takes a different approach: provide structure that catches errors.**
+
+You invest MORE upfront (contracts, separation, verification). You get FEWER bugs and MORE maintainable code.
+
+> **Invar is safety infrastructure, not simplification.**
+
+## The Four Pillars
+
+### 1. Contracts as Guardrails
+
+Agents have blind spots for edge cases. Contracts force explicit boundary thinking.
+
+- **Without:** Agent writes code, forgets edge cases, bugs emerge later
+- **With:** Agent declares boundaries upfront, issues caught early
+
+### 2. Architecture as Sanctuary
+
+I/O is chaos. Pure logic is testable. Separation creates a "clean room" for agents.
 
 ```
-1. SEPARATION    Core (pure) and Shell (I/O) are separate
-2. CONTRACT      Define boundaries before implementation
-3. CONTEXT       Read map → signatures → code (only if needed)
-4. VERIFY        Unit + integration + self-check (invar guard)
+your-project/
+├── core/           ← Pure logic (deterministic, testable, no I/O)
+└── shell/          ← I/O operations (calls core/ for logic)
 ```
 
-## Installation
+### 3. Maps as Compressed Context *(Phase 4)*
+
+Agents cannot "see" large codebases. Maps will provide high-signal summaries.
+
+- **Without:** Agent reads 50 files to understand project
+- **With:** Agent reads summary with key symbols and contracts
+
+> Not yet implemented. Currently use IDE features or tools like Repomix.
+
+### 4. Tools as Enforcement
+
+Prompts are suggestions. Tools are laws.
+
+Agents might forget instructions. But `invar guard` blocks non-compliant code.
+
+## Quick Start
+
+### 1. Install
 
 ```bash
 pip install invar
 ```
 
-For development with contracts and result types:
+### 2. Initialize
 
 ```bash
-pip install invar[dev]  # includes deal, returns, hypothesis
+cd your-project
+invar init
 ```
 
-## Quick Start
+Creates:
+- `INVAR.md` — Protocol document (give this to your AI)
+- `CLAUDE.md` — Project-specific rules
+- `.invar/context.md` — Session continuity
 
-### Initialize a new project
+### 3. Give Protocol to Your AI
+
+**Claude Code:** Reads `CLAUDE.md` automatically.
+
+**Other tools:** Add `INVAR.md` to system prompt or project knowledge.
+
+### 4. Verify
 
 ```bash
-invar init              # Auto-detect config location, create directories
-invar init --no-dirs    # Skip directory creation (for existing projects)
-invar init --dirs       # Always create src/core and src/shell
+invar guard              # Check structure
+invar guard --strict     # Warnings as errors
 ```
 
-This creates:
-- `INVAR.md` - Protocol document for AI agents
-- `CLAUDE.md` - Project development guide
-- `src/core/` and `src/shell/` - Directories for Core/Shell separation (optional)
-- `.invar/context.md` - Context management for long sessions
-- Configuration in `pyproject.toml` or `invar.toml` (auto-detected)
+## What Gets Enforced
 
-### Check architecture rules
+| Rule | Purpose |
+|------|---------|
+| Core has no I/O imports | Business logic stays pure and testable |
+| Functions < 50 lines | Forces decomposition into understandable units |
+| Files < 300 lines | Prevents god-modules that know too much |
+| Public functions have contracts | Explicit boundaries prevent misuse |
+| No impure calls in Core | `datetime.now()`, `random()` break determinism |
 
-```bash
-invar guard              # Check current directory
-invar guard --strict     # Treat warnings as errors
-invar guard --json       # Output as JSON
-```
+## For Existing Projects
 
-## Project Structure
-
-Invar enforces a Core/Shell architecture:
-
-```
-src/
-├── core/           # Pure logic, NO I/O
-│   ├── models.py   # Pydantic models
-│   ├── rules.py    # Business logic with @pre/@post
-│   └── ...
-│
-└── shell/          # I/O adapters
-    ├── cli.py      # Command line interface
-    ├── api.py      # HTTP handlers
-    └── ...
-```
-
-**Rule:** Core NEVER imports from Shell. Dependencies flow inward only.
-
-## Example
-
-### Core (pure logic with contracts)
-
-```python
-# src/core/pricing.py
-from decimal import Decimal
-from deal import pre, post
-
-@pre(lambda amount, tax_rate: amount >= 0)
-@pre(lambda amount, tax_rate: 0 <= tax_rate <= 1)
-@post(lambda result: result >= 0)
-def calculate_total(amount: Decimal, tax_rate: Decimal) -> Decimal:
-    """
-    Calculate total with tax.
-
-    Examples:
-        >>> calculate_total(Decimal("100"), Decimal("0.1"))
-        Decimal('110.00')
-    """
-    tax = (amount * tax_rate).quantize(Decimal("0.01"))
-    return amount + tax
-```
-
-### Shell (I/O with Result types)
-
-```python
-# src/shell/invoice.py
-from pathlib import Path
-from returns.result import Result, Success, Failure
-from src.core.pricing import calculate_total
-
-def process_invoice(path: str) -> Result[Decimal, str]:
-    """Load invoice and calculate total."""
-    file_path = Path(path)
-    if not file_path.exists():
-        return Failure(f"File not found: {path}")
-
-    data = json.loads(file_path.read_text())
-    total = calculate_total(
-        Decimal(data["amount"]),
-        Decimal(data["tax_rate"])
-    )
-    return Success(total)
-```
-
-## Configuration
-
-Invar looks for configuration in this order:
-1. `pyproject.toml` `[tool.invar.guard]`
-2. `invar.toml` `[guard]`
-3. Built-in defaults
-
-### pyproject.toml
+No need to reorganize. Use pattern-based classification:
 
 ```toml
+# pyproject.toml
 [tool.invar.guard]
-core_paths = ["src/core"]
-shell_paths = ["src/shell"]
-max_file_lines = 300
-max_function_lines = 50
-require_contracts = true
-require_doctests = true
-forbidden_imports = ["os", "sys", "socket", "requests", "subprocess"]
-exclude_paths = ["tests", ".venv"]
-
-# Pattern-based classification (optional, takes priority over paths)
-core_patterns = ["**/domain/**", "**/models/**"]
-shell_patterns = ["**/api/**", "**/cli/**"]
+core_patterns = ["**/domain/**", "**/models/**", "**/rules/**"]
+shell_patterns = ["**/api/**", "**/cli/**", "**/db/**"]
 ```
-
-### invar.toml (for projects without pyproject.toml)
-
-```toml
-[guard]
-core_paths = ["src/core"]
-shell_paths = ["src/shell"]
-# ... same options as above
-```
-
-## CLI Commands
-
-| Command | Description |
-|---------|-------------|
-| `invar guard` | Check architecture rules |
-| `invar guard --strict` | Warnings as errors |
-| `invar guard --json` | JSON output |
-| `invar init` | Initialize project |
-| `invar version` | Show version |
-
-## Documentation
-
-| Document | Purpose |
-|----------|---------|
-| [INVAR.md](./INVAR.md) | Protocol for AI agents |
-| [docs/DESIGN.md](./docs/DESIGN.md) | Technical design |
-| [docs/VISION.md](./docs/VISION.md) | Philosophy |
-| [docs/AGENTS.md](./docs/AGENTS.md) | Role definitions (optional) |
 
 ## Honest Limitations
 
-**Invar CAN:**
-- Catch static import violations
-- Check decorator presence (@pre/@post)
-- Enforce file/function size limits
+**Invar can:**
+- Catch common architectural violations
+- Provide checkpoints for agent workflow (ICIDV)
+- Make violations visible in CI
+- Enforce Core/Shell separation
 
-**Invar CANNOT:**
-- Detect dynamic imports (`__import__`, `eval`)
-- Verify contract semantics (`@pre(lambda x: True)` passes)
-- Replace engineering judgment
+**Invar cannot:**
+- Detect dynamic imports or `eval()`
+- Guarantee semantic correctness of contracts
+- Force agents to follow the protocol
+- Replace good engineering judgment
+
+## Proof It Works
+
+Invar enforces itself:
+
+```bash
+git clone https://github.com/tefx/invar
+cd invar
+invar guard --strict
+# → 0 errors, 0 warnings
+```
+
+## When to Use Invar
+
+**Good fit:**
+- AI-assisted projects with real business logic
+- Codebases maintained over months/years
+- Teams that want AI productivity without AI chaos
+
+**Skip it:**
+- One-off scripts
+- Throwaway prototypes
+- Projects under 500 lines
+
+## Learn More
+
+| Document | Content |
+|----------|---------|
+| [INVAR.md](./INVAR.md) | Full protocol for AI agents |
+| [docs/VISION.md](./docs/VISION.md) | Design philosophy |
+| [docs/DESIGN.md](./docs/DESIGN.md) | Technical architecture |
+
+---
+
+*"In the age of AI-generated code, the skill is not writing code—it's specifying what correct code looks like."*
 
 ## License
 

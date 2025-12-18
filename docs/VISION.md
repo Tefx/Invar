@@ -58,16 +58,16 @@ def calculate_discount(price, rate):
 **Without contract:** Agent writes code, forgets edge cases, bugs emerge later.
 **With contract:** Agent must declare boundaries upfront, catches issues early.
 
-### 2. Maps as Compressed Context
+### 2. Maps as Compressed Context *(Planned - Phase 4)*
 
-Agents cannot "see" large codebases. Maps provide high-signal context.
+Agents cannot "see" large codebases. Maps will provide high-signal context.
 
 ```
 Without Map: Agent reads 50 files to understand project
 With Map:    Agent reads summary with key symbols and contracts
 ```
 
-**Honest caveat:** Maps reduce context, but don't eliminate it. Large projects still need significant tokens.
+**Status:** Not yet implemented. Currently use IDE features, `tree`, or tools like Repomix for project overview.
 
 ### 3. Architecture as Sanctuary
 
@@ -111,11 +111,11 @@ Invar's role: **coordinate and add AI-specific value**, not replace.
 
 ```
 Level 0: Protocol only (INVAR.md)     → Guidance, no enforcement
-Level 1: + Guard                       → Architecture enforcement
-Level 2: + Map/Sig                     → Context compression
+Level 1: + Guard                       → Architecture enforcement  ← Current
+Level 2: + Map/Sig                     → Context compression       ← Planned
 ```
 
-Each level adds value independently.
+Each level adds value independently. Currently at Level 1.
 
 ### Principle 3: Human-AI Collaboration
 
@@ -135,20 +135,22 @@ Invar cannot:
 
 Invar can:
 - Catch common architectural violations
-- Compress codebase context
-- Provide checkpoints for agent workflow
-- Make test coverage more visible
+- Provide checkpoints for agent workflow (ICIDV)
+- Enforce Core/Shell separation
+
+Invar will (Phase 4):
+- Compress codebase context via Maps
 
 ---
 
 ## Success Metrics
 
-| Metric | What We Measure | Honest Expectation |
-|--------|-----------------|-------------------|
-| Edge-case bugs | Bugs from unhandled boundaries | Reduce, not eliminate |
-| Context efficiency | Tokens needed to understand code | Improve significantly |
-| Contract coverage | Functions with explicit contracts | Aim for 80% in Core |
-| Architecture violations | I/O in Core, missing Result in Shell | Catch static violations |
+| Metric | What We Measure | Status |
+|--------|-----------------|--------|
+| Architecture violations | I/O in Core, missing contracts | ✅ Enforced by Guard |
+| Contract coverage | Functions with explicit contracts | ✅ Aim for 80% in Core |
+| Edge-case bugs | Bugs from unhandled boundaries | ✅ Reduced by contracts |
+| Context efficiency | Tokens needed to understand code | ⏳ Phase 4 (Maps) |
 
 ---
 
@@ -167,11 +169,11 @@ Invar is a **methodology + AI-specific tools** that coordinates existing tools.
 ## The Invar Equation
 
 ```
-Invar = Protocol + Perception + Guard + Integrations
+Invar = Protocol + Guard + Perception* + Integrations
 
-Protocol     = Methodology for human-AI collaboration
-Perception   = Map + Signature extraction (context compression)
-Guard        = Architecture enforcement (static analysis)
+Protocol     = Methodology for human-AI collaboration (INVAR.md)
+Guard        = Architecture enforcement (static analysis) ✅
+Perception   = Map + Signature extraction (context compression) ⏳ Phase 4
 Integrations = deal + returns + pydantic + hypothesis + pytest
 ```
 
