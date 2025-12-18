@@ -935,7 +935,7 @@ $ invar init
 Protocol and tool versions are separate:
 
 ```
-INVAR.md v3.6        # Protocol version
+INVAR.md v3.7        # Protocol version
 invar 0.1.0          # Tool version (semver)
 ```
 
@@ -946,6 +946,7 @@ invar 0.1.0          # Tool version (semver)
 | INVAR.md | ✅ | ✅ | Protocol reference |
 | CLAUDE.md.template | ✅ | ✅ (as CLAUDE.md) | Project guide |
 | context.md.template | ✅ | ✅ (as .invar/context.md) | Context management |
+| proposal.md.template | ✅ | ✅ (as .invar/proposals/TEMPLATE.md) | Protocol change proposals |
 | AGENTS.md | ❌ | ❌ | Optional, in docs/ |
 | DESIGN.md | ❌ | ❌ | Dev docs only |
 | VISION.md | ❌ | ❌ | Dev docs only |

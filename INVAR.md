@@ -1,4 +1,4 @@
-# The Invar Protocol v3.6
+# The Invar Protocol v3.7
 
 > **"Trade structure for safety."**
 
@@ -870,4 +870,138 @@ def load_config(path: str) -> Result[Config, str]:
 
 ---
 
-*Version 3.5 | Designed for AI Coding Agents*
+## 12. Protocol Governance
+
+> The protocol evolves through practice, but with discipline.
+
+### 12.1 The Three Layers
+
+The Invar methodology has three layers with different change rules:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Layer 0: Immutable Core                                        │
+│  ─────────────────────────────────────────────────────────────  │
+│  • Core/Shell separation principle                              │
+│  • Design-by-contract philosophy                                │
+│  • "Can fail → Shell, Cannot fail → Core"                       │
+│                                                                 │
+│  Status: IMMUTABLE. Changing this = no longer Invar.            │
+├─────────────────────────────────────────────────────────────────┤
+│  Layer 1: Protocol Standard (this document)                     │
+│  ─────────────────────────────────────────────────────────────  │
+│  • INVAR.md implementation details                              │
+│  • Workflow definitions (ICIDV)                                 │
+│  • Verification requirements (Law 4)                            │
+│                                                                 │
+│  Status: HUMAN-APPROVED changes only.                           │
+├─────────────────────────────────────────────────────────────────┤
+│  Layer 2: Project Adaptation                                    │
+│  ─────────────────────────────────────────────────────────────  │
+│  • CLAUDE.md project-specific rules                             │
+│  • context.md lessons learned                                   │
+│  • Project-specific patterns and pitfalls                       │
+│                                                                 │
+│  Status: Agent may evolve freely, but should document.          │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### 12.2 Change Rules
+
+| Layer | Who Can Propose | Who Approves | Documentation |
+|-------|-----------------|--------------|---------------|
+| Layer 0 | Nobody | N/A | N/A |
+| Layer 1 | Agent or Human | **Human only** | Proposal required |
+| Layer 2 | Agent or Human | Self-approved | Should document |
+
+### 12.3 Protocol Evolution Mode
+
+Projects can configure how strictly they follow the protocol:
+
+```toml
+[tool.invar]
+protocol_version = "3.7"           # Lock to specific version
+protocol_evolution = "human-approved"  # Default mode
+```
+
+| Mode | Layer 1 Changes | Layer 2 Changes |
+|------|-----------------|-----------------|
+| `locked` | ❌ Forbidden | ✅ Allowed |
+| `human-approved` | 🔒 Requires approval | ✅ Allowed |
+| `open` | ✅ Allowed (not recommended) | ✅ Allowed |
+
+**Default: `human-approved`** - Agent can propose Layer 1 changes, but human must explicitly approve.
+
+### 12.4 Proposal Process
+
+When Agent identifies a potential protocol improvement:
+
+**Step 1: Document the Proposal**
+
+Create `.invar/proposals/YYYY-MM-DD-title.md`:
+
+```markdown
+# Protocol Change Proposal
+
+## Trigger
+What problem or friction caused this proposal?
+
+## Change
+What specific change is proposed?
+
+## Evidence
+What experience supports this change?
+
+## Layer
+Is this Layer 1 (protocol) or Layer 2 (project)?
+
+## Impact
+What else needs to change if this is approved?
+```
+
+**Step 2: Wait for Approval (Layer 1 only)**
+
+- Agent MUST NOT implement Layer 1 changes without human approval
+- Agent SHOULD explicitly ask: "This is a Layer 1 change. Do you approve?"
+- Human can: Approve / Reject / Modify
+
+**Step 3: Implement and Document**
+
+- Update relevant files
+- Update version number (Layer 1 changes)
+- Record in changelog
+
+### 12.5 Review Cycle
+
+After major milestones, consider a review:
+
+```
+Implement (ICIDV) → Review → Propose → (Approval) → Improve
+```
+
+**Trigger conditions:**
+- Phase/milestone completion
+- Significant friction encountered
+- Major bug discovered
+
+**Review questions:**
+1. What worked well? Why?
+2. What caused friction? Root cause?
+3. What unexpected rework happened? How to prevent?
+4. What's missing from current process?
+
+**Outputs:**
+- Updated Lessons Learned (Layer 2)
+- Protocol change proposals (Layer 1, if needed)
+
+### 12.6 Version History
+
+| Version | Date | Layer | Key Changes |
+|---------|------|-------|-------------|
+| v3.7 | 2024-12-19 | L1 | Protocol Governance, evolution controls |
+| v3.6 | 2024-12-19 | L1 | ICIDV workflow, enhanced Law 4 |
+| v3.5 | 2024-12-18 | L1 | Quick Start, Deep Dive sections |
+
+---
+
+*Version 3.7 | Designed for AI Coding Agents*

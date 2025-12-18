@@ -9,6 +9,7 @@ packages = ["src/invar"]
 "src/invar/templates/INVAR.md" = "invar/templates/INVAR.md"
 "src/invar/templates/CLAUDE.md.template" = "invar/templates/CLAUDE.md.template"
 "src/invar/templates/context.md.template" = "invar/templates/context.md.template"
+"src/invar/templates/proposal.md.template" = "invar/templates/proposal.md.template"
 
 [project]
 name = "invar"
@@ -88,6 +89,10 @@ strict_pure = true          # Detect internal imports and impure calls in Core
 use_code_lines = false      # Use total lines (including docstrings) for size check
 
 [tool.invar]
+# Protocol governance (see INVAR.md Section 12)
+protocol_version = "3.7"
+protocol_evolution = "human-approved"  # locked | human-approved | open
+
 # Test style: "inline" or "separate"
 test_style = "inline"
 

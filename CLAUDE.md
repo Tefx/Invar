@@ -57,8 +57,10 @@ src/invar/
 │   └── config.py   # Load config from multiple sources
 │
 └── templates/      # Files copied by `invar init`
-    ├── INVAR.md            # Protocol document
-    └── CLAUDE.md.template  # Project guide template
+    ├── INVAR.md              # Protocol document
+    ├── CLAUDE.md.template    # Project guide template
+    ├── context.md.template   # Context management template
+    └── proposal.md.template  # Protocol change proposal template
 ```
 
 **Key insight:** Core functions receive **string content**, not file paths. Shell reads files and passes content to Core.

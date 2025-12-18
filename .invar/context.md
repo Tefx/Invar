@@ -7,7 +7,7 @@
 - **Phase 1 (Guard):** Complete ✅
 - **Phase 2 (Adoption):** Complete ✅
 - **Phase 3 (Guard Enhancement):** Complete ✅
-- **Protocol Version:** v3.6
+- **Protocol Version:** v3.7
 - **Blockers:** None
 
 ## Implementation Phases
@@ -51,7 +51,15 @@
 
 ## Recent Decisions
 
-1. **Protocol v3.6: ICIDV Workflow** (2024-12-19)
+1. **Protocol v3.7: Governance Framework** (2024-12-19)
+   - Added Section 12: Protocol Governance with three-layer model
+   - Layer 0 (Immutable Core): Cannot change
+   - Layer 1 (Protocol Standard): Human-approved changes only
+   - Layer 2 (Project Adaptation): Agent can evolve freely
+   - Added protocol_version and protocol_evolution config options
+   - Created proposal template for Layer 1 changes
+
+2. **Protocol v3.6: ICIDV Workflow** (2024-12-19)
    - Evolved ICIV to ICIDV (added Inspect and Design phases)
    - Enhanced Law 4: Unit + Integration + Self-check
    - Added "Why Inspect and Design" rationale
@@ -130,7 +138,7 @@ After any feature development or design change:
 
 | File | Purpose |
 |------|---------|
-| INVAR.md | Protocol v3.6 |
+| INVAR.md | Protocol v3.7 |
 | CLAUDE.md | Development guide + project rules |
 | docs/DESIGN.md | Technical design (includes Phase 2 design) |
 | docs/AGENTS.md | Role definitions |

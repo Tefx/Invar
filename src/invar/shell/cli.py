@@ -269,6 +269,13 @@ def init(
         if _copy_template("context.md.template", invar_dir, "context.md"):
             console.print("[green]Created[/green] .invar/context.md (context management)")
 
+    # Create proposals directory for protocol governance
+    proposals_dir = invar_dir / "proposals"
+    if not proposals_dir.exists():
+        proposals_dir.mkdir()
+        if _copy_template("proposal.md.template", proposals_dir, "TEMPLATE.md"):
+            console.print("[green]Created[/green] .invar/proposals/TEMPLATE.md")
+
     if not config_added and not (path / "INVAR.md").exists():
         console.print("[yellow]Invar already configured.[/yellow]")
 
