@@ -10,7 +10,7 @@ Invar is an AI-native software engineering framework that combines design-by-con
 1. SEPARATION    Core (pure) and Shell (I/O) are separate
 2. CONTRACT      Define boundaries before implementation
 3. CONTEXT       Read map → signatures → code (only if needed)
-4. VERIFY        Run tests after every change
+4. VERIFY        Unit + integration + self-check (invar guard)
 ```
 
 ## Installation

@@ -130,7 +130,7 @@ After any feature development or design change:
 
 | File | Purpose |
 |------|---------|
-| INVAR.md | Protocol v3.5 |
+| INVAR.md | Protocol v3.6 |
 | CLAUDE.md | Development guide + project rules |
 | docs/DESIGN.md | Technical design (includes Phase 2 design) |
 | docs/AGENTS.md | Role definitions |

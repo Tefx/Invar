@@ -39,7 +39,7 @@ src/
 
 ## Development Workflow
 
-Follow ICIV for each task:
+Follow **ICIDV** for each task:
 
 ### I - Intent
 ```
@@ -55,6 +55,20 @@ Follow ICIV for each task:
 □ Write doctest examples
 ```
 
+### I - Inspect
+```
+□ Check target file size (if >200 lines, be careful)
+□ Check existing function signature patterns
+□ Identify edge cases
+```
+
+### D - Design
+```
+□ If file will exceed 280 lines → plan extraction
+□ Match existing signature patterns
+□ Plan integration tests if adding config options
+```
+
 ### I - Implementation
 ```
 □ Write code (< 50 lines per function)
@@ -64,8 +78,9 @@ Follow ICIV for each task:
 
 ### V - Verify
 ```
-□ pytest --doctest-modules
-□ invar guard
+□ pytest --doctest-modules (unit)
+□ invar guard (architecture)
+□ Test config scenarios (integration)
 ```
 
 ---

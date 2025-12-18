@@ -48,21 +48,21 @@ The Protocol is a document that defines how agents should work. It provides sign
 │ Read map → signatures → implementation (only if needed)        │
 ├────────────────────────────────────────────────────────────────┤
 │ LAW 4: VERIFY IMMEDIATELY                                      │
-│ Run tests after every change                                    │
+│ Unit + integration + self-check (invar guard)                   │
 └────────────────────────────────────────────────────────────────┘
 ```
 
-### The ICIV Workflow
+### The ICIDV Workflow
 
 ```
-  ┌─────┐     ┌─────┐     ┌─────┐     ┌─────┐
-  │  I  │ ──▶ │  C  │ ──▶ │  I  │ ──▶ │  V  │
-  │ntent│     │ontr.│     │mpl. │     │erify│
-  └─────┘     └─────┘     └─────┘     └─────┘
-     │           │           │           │
-     ▼           ▼           ▼           ▼
-  Classify   Define      Write       Run
-  Core/Shell  bounds     code        tests
+  ┌─────┐   ┌─────┐   ┌─────┐   ┌─────┐   ┌─────┐   ┌─────┐
+  │  I  │ ▶ │  C  │ ▶ │  I  │ ▶ │  D  │ ▶ │  I  │ ▶ │  V  │
+  │ntent│   │ontr.│   │nsp. │   │sign │   │mpl. │   │erify│
+  └─────┘   └─────┘   └─────┘   └─────┘   └─────┘   └─────┘
+     │         │         │         │         │         │
+     ▼         ▼         ▼         ▼         ▼         ▼
+  Classify  Define    Check     Plan     Write     Unit+
+  Core/Shell bounds   sizes    extract   code     Integ.
 ```
 
 ### Checkpoints
@@ -935,7 +935,7 @@ $ invar init
 Protocol and tool versions are separate:
 
 ```
-INVAR.md v3.3        # Protocol version
+INVAR.md v3.6        # Protocol version
 invar 0.1.0          # Tool version (semver)
 ```
 

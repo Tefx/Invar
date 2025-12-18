@@ -159,7 +159,7 @@ This project uses role-based review. See [docs/AGENTS.md](./docs/AGENTS.md) for 
 
 ### When to Use Each Role
 
-**Default (Implementer):** Most work. Follow ICIV, let automated tools verify.
+**Default (Implementer):** Most work. Follow ICIDV, let automated tools verify.
 
 **Reviewer - Use when:**
 - Design decisions affect multiple modules
