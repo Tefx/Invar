@@ -1,4 +1,4 @@
-# The Invar Protocol v3.4
+# The Invar Protocol v3.5
 
 > **"Trade structure for safety."**
 
@@ -7,6 +7,47 @@ This is the operating manual for AI Coding Agents in Invar-enabled projects.
 **What this is:** A structured methodology for writing reliable code through contracts, separation, and verification.
 
 **What this is NOT:** Magic. You still need to think carefully.
+
+---
+
+## 0. Quick Start (Read This First)
+
+**Core insight:** Separate what CAN fail (I/O) from what SHOULD NOT fail (logic).
+
+### The One Rule That Matters Most
+
+```
+When you write a function, ask: "Can this fail for reasons outside my control?"
+├── YES (file not found, network error, invalid input from outside)
+│   └── Shell: returns Result[T, E]
+└── NO (pure calculation, transformation, validation of known data)
+    └── Core: has @pre/@post contracts
+```
+
+### Minimum Viable Knowledge
+
+1. **Core** = pure functions, no I/O, must have `@pre`/`@post` decorators
+2. **Shell** = I/O functions, must return `Result[T, E]`
+3. **Run `invar guard` after every change** - it catches violations
+4. **Keep functions under 50 lines** - including docstrings and comments!
+5. **Core receives data, not paths** - Shell reads files, passes content to Core
+
+### Quick Decision Guide
+
+| Situation | Answer |
+|-----------|--------|
+| Function reads/writes files? | Shell |
+| Function makes network requests? | Shell |
+| Function gets current time? | Shell, or inject time as parameter |
+| Function uses random values? | Shell, or inject seed as parameter |
+| Function prints to console? | Shell |
+| None of the above? | Probably Core |
+
+### When Confused
+
+- **Not sure Core vs Shell?** → If it touches files/network/time/random, it's Shell
+- **Function too long?** → Extract helper function (see [Section 11.3](#113-troubleshooting))
+- **Guard failing?** → See [Section 11.3: Troubleshooting](#113-troubleshooting)
 
 ---
 
@@ -99,6 +140,18 @@ def load_config(project_root: Path) -> Result[Config, str]:
 - Shell's @pre would check path validity, but that requires I/O
 
 **Critical:** Lambda must accept ALL function parameters. See [Pitfall #1](#pitfall-1-deal-pre-signature).
+
+> **Key Insight: Result[T, E] IS the Contract**
+>
+> For Shell functions, you might wonder: "Where's my @pre/@post?"
+>
+> The `Result` type IS your contract:
+> - `Result[Config, str]` says: "I might fail, and if I do, here's why"
+> - This is more honest than @pre, because @pre would need I/O to validate
+>
+> Example: To check "file exists" in @pre, you'd need to read the filesystem.
+> But reading the filesystem IS the I/O you're trying to handle.
+> So just return `Failure("File not found")` instead.
 
 ### Law 3: Context Economy
 
@@ -508,4 +561,267 @@ def process_invoice(path: str) -> Result[PriceBreakdown, str]:
 
 ---
 
-*Version 3.4 | Designed for AI Coding Agents*
+## 11. Deep Dive
+
+This section provides additional context for agents who want to understand the "why" behind the rules, or who need help with specific situations.
+
+### 11.1 Design Rationale
+
+#### Why physical separation (not just logical)?
+
+**Short answer:** Makes testing trivial and bugs locatable.
+
+**Long answer:**
+- Core functions are deterministic → same input = same output
+- This means: no mocks needed, no test fixtures, just call and assert
+- When a Core function has a bug, the bug is IN that function (not in some external dependency)
+- When a Shell function fails, you know it's I/O-related (network, filesystem, etc.)
+- Physical separation (different directories) makes the boundary visible and enforceable
+
+#### Why contracts BEFORE implementation?
+
+**Short answer:** Prevents "I'll add tests later" syndrome.
+
+**Long answer:**
+- `@pre` documents what the function expects from callers
+- `@post` documents what the function guarantees to callers
+- Doctest provides executable examples that serve as documentation
+- Writing these FIRST forces you to think about edge cases before coding
+- Implementation becomes "fill in the blank" - much easier than "figure it all out"
+
+#### Why 50-line limit?
+
+**Short answer:** If you can't fit it in 50 lines, you don't understand it well enough.
+
+**Long answer:**
+- Forces decomposition into understandable units
+- Each function fits in one screen → easier to review
+- Smaller functions are easier to test in isolation
+- **Important:** The 50 lines include EVERYTHING: code + docstrings + comments
+- This is intentional: if your docstring is huge, your function is doing too much
+
+#### Why Core receives data, not paths?
+
+**Short answer:** Keeps Core pure and testable.
+
+**Example:**
+```python
+# ❌ WRONG: Core receives path (requires I/O to use)
+def parse_config(path: Path) -> Config:
+    content = path.read_text()  # I/O in Core!
+    return Config.parse(content)
+
+# ✅ CORRECT: Core receives content (pure)
+def parse_config(content: str) -> Config:
+    return Config.parse(content)
+
+# Shell handles the I/O
+content = Path("config.toml").read_text()  # I/O in Shell
+config = parse_config(content)  # Pure call
+```
+
+### 11.2 Decision Trees
+
+#### Core vs Shell Classification
+
+```
+Does this function...
+│
+├─ Read or write files?
+│  └─ YES → Shell
+│
+├─ Make network requests?
+│  └─ YES → Shell
+│
+├─ Access current time (datetime.now)?
+│  └─ YES → Shell, OR inject time as parameter to keep in Core
+│
+├─ Generate random values?
+│  └─ YES → Shell, OR inject seed as parameter to keep in Core
+│
+├─ Print to console or log?
+│  └─ YES → Shell (return data instead, let Shell log)
+│
+├─ Access environment variables?
+│  └─ YES → Shell
+│
+└─ None of the above?
+   └─ Core
+```
+
+#### Contract Type Selection
+
+```
+Is it in Core?
+│
+├─ YES
+│  ├─ Add @pre for each input constraint
+│  ├─ Add @post for each output guarantee
+│  ├─ Add doctest with examples
+│  └─ All three are REQUIRED
+│
+└─ NO (Shell)
+   ├─ Return type MUST be Result[T, E]
+   ├─ @pre/@post are OPTIONAL (usually skip them)
+   └─ Why skip? Because @pre would need I/O to validate
+      Example: @pre checking "file exists" requires reading filesystem
+```
+
+#### Function Too Long - What to Do?
+
+```
+Why is the function long?
+│
+├─ Long docstring with many examples?
+│  └─ Extract implementation to _helper(), keep docstring in main function
+│     def _calculate_impl(x, y): ...  # No docstring needed
+│     def calculate(x, y):
+│         """Long docstring here."""
+│         return _calculate_impl(x, y)
+│
+├─ Many conditional branches?
+│  └─ Extract each branch to a separate function
+│     def handle_case_a(x): ...
+│     def handle_case_b(x): ...
+│     def main(x):
+│         if condition_a: return handle_case_a(x)
+│         if condition_b: return handle_case_b(x)
+│
+├─ Sequential steps?
+│  └─ Extract each step to a separate function
+│     def step1(x): ...
+│     def step2(y): ...
+│     def main(x):
+│         y = step1(x)
+│         return step2(y)
+│
+└─ Complex algorithm?
+   └─ Break into phases, each phase = one function
+```
+
+### 11.3 Troubleshooting
+
+#### "Function 'X' exceeds 50 lines (N)"
+
+**Cause:** Function is too long (including docstring and comments).
+
+**Solutions (in order of preference):**
+
+1. **Extract helper function:**
+   ```python
+   # Before
+   def process(data):
+       # 60 lines of code...
+
+   # After
+   def _process_impl(data):
+       # Implementation here (no docstring)
+
+   def process(data):
+       """Docstring with examples."""
+       return _process_impl(data)
+   ```
+
+2. **Split into multiple functions** if doing multiple things
+
+3. **Simplify** - maybe the function is doing too much
+
+#### "Core file 'X' imports forbidden module 'Y'"
+
+**Cause:** I/O module imported in Core file.
+
+**Solutions:**
+
+1. **Move the function to Shell** if it genuinely needs I/O
+
+2. **Inject the dependency** if the function can be kept pure:
+   ```python
+   # ❌ Core importing datetime
+   from datetime import datetime
+   def is_expired(expiry):
+       return datetime.now() > expiry  # IMPURE!
+
+   # ✅ Inject current time
+   def is_expired(expiry, now):  # 'now' passed by Shell
+       return now > expiry  # PURE!
+   ```
+
+3. **Pass data instead of path:**
+   ```python
+   # ❌ Core importing pathlib
+   from pathlib import Path
+   def load_data(path):
+       return parse(Path(path).read_text())
+
+   # ✅ Shell passes content
+   def load_data(content):  # Shell reads file first
+       return parse(content)
+   ```
+
+#### "Function 'X' missing @pre or @post"
+
+**Cause:** Core function lacks contract decorators.
+
+**Quick fix template:**
+```python
+from deal import pre, post
+
+@pre(lambda param1, param2: <precondition>)  # What caller must provide
+@post(lambda result: <postcondition>)         # What function guarantees
+def function_name(param1, param2):
+    """
+    Brief description.
+
+    Examples:
+        >>> function_name(valid_input1, valid_input2)
+        expected_output
+    """
+    ...
+```
+
+**Common contract patterns:**
+```python
+# Non-null
+@pre(lambda x, y: x is not None)
+
+# Non-empty collection
+@pre(lambda items, n: len(items) > 0)
+
+# Non-negative number
+@pre(lambda x, y: x >= 0)
+
+# Returns non-null
+@post(lambda result: result is not None)
+
+# Returns non-empty
+@post(lambda result: len(result) > 0)
+
+# Returns within range
+@post(lambda result: 0 <= result <= 100)
+```
+
+#### "Shell function should return Result"
+
+**Cause:** Shell function doesn't return `Result[T, E]`.
+
+**Fix:**
+```python
+from returns.result import Result, Success, Failure
+
+# ❌ Before
+def load_config(path: str) -> Config:
+    return Config.parse(Path(path).read_text())
+
+# ✅ After
+def load_config(path: str) -> Result[Config, str]:
+    try:
+        return Success(Config.parse(Path(path).read_text()))
+    except FileNotFoundError:
+        return Failure(f"Config not found: {path}")
+    except Exception as e:
+        return Failure(f"Failed to load config: {e}")
+```
+
+---
+
+*Version 3.5 | Designed for AI Coding Agents*

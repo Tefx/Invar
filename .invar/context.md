@@ -6,7 +6,8 @@
 
 - **Phase 1 (Guard):** Complete ✅
 - **Phase 2 (Adoption):** Complete ✅
-- **Phase 3 (Perception):** Not started
+- **Phase 3 (Guard Enhancement):** Not started
+- **Protocol Version:** v3.5
 - **Blockers:** None
 
 ## Implementation Phases
@@ -51,16 +52,22 @@
 
 ## Recent Decisions
 
-1. **Config flexibility** (2024-12-18)
+1. **Protocol v3.5: Agent Onboarding** (2024-12-18)
+   - Added Section 0: Quick Start for new agents
+   - Added Section 11: Deep Dive (Design Rationale, Decision Trees, Troubleshooting)
+   - Added Key Insight callout: "Result[T, E] IS the Contract"
+   - Goal: Enable agents without conversation history to understand the protocol
+
+2. **Config flexibility** (2024-12-18)
    - Support multiple config sources: pyproject.toml, invar.toml, .invar/config.toml
    - Allows adoption without pyproject.toml
 
-2. **Pattern-based classification** (2024-12-18)
+3. **Pattern-based classification** (2024-12-18)
    - `core_patterns` and `shell_patterns` for glob matching
    - Enables zero-refactor adoption for existing projects
    - Priority: patterns > paths > defaults
 
-3. **Flexible invar init** (2024-12-18)
+4. **Flexible invar init** (2024-12-18)
    - Works without pyproject.toml (creates invar.toml)
    - Optional directory creation (--dirs / --no-dirs)
 
@@ -89,7 +96,7 @@ After any feature development or design change:
 
 | File | Purpose |
 |------|---------|
-| INVAR.md | Protocol v3.4 |
+| INVAR.md | Protocol v3.5 |
 | CLAUDE.md | Development guide + project rules |
 | docs/DESIGN.md | Technical design (includes Phase 2 design) |
 | docs/AGENTS.md | Role definitions |
