@@ -742,25 +742,11 @@ invar init --config-only # Only add config, no INVAR.md/CLAUDE.md
 
 **Value:** Zero-refactor adoption for existing projects
 
-### Phase 3: Perception
+### Phase 3: Guard Enhancement
 
-**Deliverables:**
-- `invar map` command (with AST-based reference analysis)
-- `invar sig` command
-- JSON output for agent consumption
+**Goal:** Enhance verification for better self-dogfooding during Invar development.
 
-**Value:** Context compression for large projects
-
-### Phase 4: Polish
-
-**Deliverables:**
-- Documentation (usage guide)
-- CI templates
-- PyPI release
-
-### Phase 5: Deep Verification
-
-**Goal:** Enhance pureness detection beyond static imports.
+**Rationale:** By improving guard now, we get immediate feedback while developing subsequent phases.
 
 **Deliverables:**
 - Function-internal import detection (not just top-level)
@@ -768,11 +754,10 @@ invar init --config-only # Only add config, no INVAR.md/CLAUDE.md
   - Time: `datetime.now()`, `datetime.utcnow()`, `time.time()`
   - Random: `random.random()`, `random.randint()`, `random.choice()`
   - I/O: `open()`, `print()`, `input()`
-  - Environment: `os.getcwd()`, `os.environ`
-- Global variable modification detection
-- `invar guard --strict-pure` mode (these as WARNING)
+- Code line count excluding docstrings/comments
+- `invar guard --strict-pure` mode (new checks as WARNING)
 
-**Value:** Catch common pureness violations that slip past import checks
+**Value:** Catch common pureness violations; better line count accuracy
 
 **Technical approach:**
 ```python
@@ -786,17 +771,38 @@ IMPURE_CALLS = {
 def check_impure_calls(tree: ast.AST) -> list[Violation]:
     """Walk AST and flag calls to known impure functions."""
     ...
+
+# Separate code lines from docstring/comment lines
+def count_code_lines(source: str) -> tuple[int, int]:
+    """Returns (code_lines, docstring_comment_lines)."""
+    ...
 ```
 
-### Phase 6: Function-Level Annotations (Long-term)
+### Phase 4: Perception
+
+**Deliverables:**
+- `invar map` command (with AST-based reference analysis)
+- `invar sig` command
+- JSON output for agent consumption
+
+**Value:** Context compression for large projects
+
+### Phase 5: Polish
+
+**Deliverables:**
+- Documentation (usage guide)
+- CI templates
+- PyPI release
+
+### Phase 6: Advanced Verification (Long-term)
 
 **Goal:** Enable explicit pureness declarations with validation.
 
 **Deliverables:**
+- Global variable modification detection
 - Support `# invar: pure` comment annotation
 - Validate declared pure functions don't call impure functions
 - Show pureness status in `invar map` output
-- Optional `@pure` decorator (non-invasive alternative to comment)
 
 **Configuration:**
 ```toml
