@@ -20,6 +20,7 @@ from invar.core.models import (
 )
 from invar.core.contracts import check_empty_contracts, check_redundant_type_contracts
 from invar.core.purity import check_impure_calls, check_internal_imports
+from invar.core.suggestions import format_suggestion_for_violation
 
 # Type alias for rule functions
 RuleFunc = Callable[[FileInfo, RuleConfig], list[Violation]]
@@ -166,6 +167,7 @@ def check_contracts(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
         if symbol.kind in (SymbolKind.FUNCTION, SymbolKind.METHOD):
             if not symbol.contracts:
                 kind_name = "Method" if symbol.kind == SymbolKind.METHOD else "Function"
+                suggestion = format_suggestion_for_violation(symbol, "missing_contract")
                 violations.append(
                     Violation(
                         rule="missing_contract",
@@ -173,7 +175,7 @@ def check_contracts(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
                         file=file_info.path,
                         line=symbol.line,
                         message=f"{kind_name} '{symbol.name}' has no @pre or @post contract",
-                        suggestion="Add @pre for input validation or @post for output guarantee",
+                        suggestion=suggestion,
                     )
                 )
 

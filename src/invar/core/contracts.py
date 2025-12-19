@@ -16,6 +16,7 @@ import re
 from deal import pre
 
 from invar.core.models import FileInfo, RuleConfig, Severity, SymbolKind, Violation
+from invar.core.suggestions import format_suggestion_for_violation
 
 
 @pre(lambda expression: "lambda" in expression or not expression.strip())
@@ -211,11 +212,12 @@ def check_empty_contracts(file_info: FileInfo, config: RuleConfig) -> list[Viola
         for contract in symbol.contracts:
             if is_empty_contract(contract.expression):
                 kind = "Method" if symbol.kind == SymbolKind.METHOD else "Function"
+                suggestion = format_suggestion_for_violation(symbol, "empty_contract")
                 violations.append(Violation(
                     rule="empty_contract", severity=Severity.WARNING,
                     file=file_info.path, line=contract.line,
                     message=f"{kind} '{symbol.name}' has empty contract: @{contract.kind}({contract.expression})",
-                    suggestion="Replace with meaningful constraint based on business logic",
+                    suggestion=suggestion,
                 ))
     return violations
 
@@ -251,10 +253,11 @@ def check_redundant_type_contracts(file_info: FileInfo, config: RuleConfig) -> l
         for contract in symbol.contracts:
             if is_redundant_type_contract(contract.expression, annotations):
                 kind = "Method" if symbol.kind == SymbolKind.METHOD else "Function"
+                suggestion = format_suggestion_for_violation(symbol, "redundant_type_contract")
                 violations.append(Violation(
                     rule="redundant_type_contract", severity=Severity.INFO,
                     file=file_info.path, line=contract.line,
                     message=f"{kind} '{symbol.name}' contract only checks types already in annotations",
-                    suggestion="Replace with business logic constraint or remove",
+                    suggestion=suggestion,
                 ))
     return violations
