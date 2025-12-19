@@ -1,4 +1,4 @@
-# The Invar Protocol v3.9
+# The Invar Protocol v3.12
 
 > **"Trade structure for safety."**
 
@@ -31,6 +31,20 @@ When you write a function, ask: "Can this fail for reasons outside my control?"
 3. **Run `invar guard` after every change** - it catches violations
 4. **Keep functions under 50 lines** - including docstrings and comments!
 5. **Core receives data, not paths** - Shell reads files, passes content to Core
+
+### Lambda Signature Pitfall (Read This!)
+
+```python
+# ❌ WRONG: Lambda only takes first parameter
+@pre(lambda x: x >= 0)
+def calculate(x: int, y: int = 0): ...
+
+# ✅ CORRECT: Lambda must include ALL parameters (even defaults)
+@pre(lambda x, y=0: x >= 0)
+def calculate(x: int, y: int = 0): ...
+```
+
+This causes runtime errors, not import errors. Always match lambda params to function params.
 
 ### Quick Decision Guide
 
@@ -81,6 +95,43 @@ This is more reliable because:
 - INVAR.md content is definitive
 - Works even if protocol was partially updated
 
+### Protocol Acknowledgment (Required)
+
+After reading INVAR.md, agent MUST state:
+
+1. **Version**: The protocol version number
+2. **Marker**: One behavior specific to THIS version (proves comprehension)
+
+```
+Example acknowledgment:
+"Protocol v3.12 acknowledged. Version marker: Mid-session switch
+requires explicit statement of new behaviors."
+```
+
+**Why required:** Version number alone could be stated without reading. The version-specific marker proves the agent parsed the current version, not an older cached version.
+
+See Section 12.7 for version markers table.
+
+### Mid-Session Protocol Switch
+
+When INVAR.md is updated during a conversation:
+
+1. Agent re-reads the updated INVAR.md
+2. Agent states: **"Switching to Protocol vX.Y"**
+3. Agent lists the **NEW behaviors** it will now follow
+4. From this point forward, agent operates under new version
+
+```
+Example switch statement:
+"Switching to Protocol v3.12.
+New behaviors I will follow:
+- Protocol Acknowledgment at session start
+- Mid-session switch with explicit behavior list
+- Document checkpoint after Verify"
+```
+
+**Why explicit:** Reading a file doesn't mean following it. The explicit switch makes the transition observable and verifiable.
+
 ---
 
 ## Quick Reference
@@ -97,7 +148,7 @@ This is more reliable because:
 │  Core:   Pure logic, NO I/O, @pre/@post REQUIRED                │
 │  Shell:  I/O handling, Result[T, E] REQUIRED, @pre/@post opt.   │
 ├─────────────────────────────────────────────────────────────────┤
-│  Workflow: Intent → Contract → Inspect → Design → Impl → Verify │
+│  Workflow: Intent → Contract → Inspect → Design → Impl → Verify → Doc │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -209,7 +260,13 @@ def load_config(project_root: Path) -> Result[Config, str]:
 | 2 | Signatures + contracts | Understanding dependencies |
 | 3 | Full implementation | Only when modifying |
 
-> **Note:** `invar map` command is planned for Phase 4. Currently use IDE features or `tree` command for project overview.
+**Commands:**
+```bash
+invar map [path]              # Symbol map with cross-file reference counts
+invar map --top 10            # Show top 10 most-referenced symbols
+invar sig src/core/models.py  # Extract all signatures from file
+invar sig file.py::func_name  # Extract specific symbol signature
+```
 
 ### Law 4: Verify Immediately
 
@@ -243,8 +300,10 @@ Always test both scenarios when adding config options.
 ## 2. ICIDV Workflow
 
 ```
-Intent → Contract → Inspect → Design → Implement → Verify
+Intent → Contract → Inspect → Design → Implement → Verify → Document
 ```
+
+> **Document checkpoint:** After Verify passes, check if Guard capabilities changed → update Section 7 and bump protocol version.
 
 ### Checkpoints by Zone
 
@@ -479,9 +538,23 @@ def main_function(x):
 ### CLI Commands
 
 ```bash
+# Guard - architecture verification
 invar guard [path]       # Check architecture rules
-invar guard --strict     # Warnings as errors
+invar guard --strict     # Treat warnings as errors
+invar guard --strict-pure # Enable strict purity checks
 invar guard --json       # JSON output
+
+# Map - symbol reference analysis
+invar map [path]         # Generate symbol map with cross-file reference counts
+invar map --top N        # Show top N most-referenced symbols
+invar map --json         # JSON output
+
+# Sig - signature extraction
+invar sig <file>         # Extract all signatures from file
+invar sig <file>::<sym>  # Extract specific symbol signature
+invar sig --json         # JSON output
+
+# Init - project setup
 invar init               # Initialize project (auto-detect config location)
 invar init --dirs        # Always create src/core, src/shell
 invar init --no-dirs     # Skip directory creation (for existing projects)
@@ -491,28 +564,43 @@ invar init --no-dirs     # Skip directory creation (for existing projects)
 
 ## 7. Honest Limitations
 
-**Invar CAN detect:**
+### Guard (Architecture Verification)
+
+**CAN detect:**
 - Static `import` statements (top-level and function-internal)
 - Decorator presence (@pre, @post)
 - File and function size violations
 - Path-based and pattern-based Core/Shell classification
 - Function-internal imports (`--strict-pure` mode)
 - Common impure function calls: `datetime.now`, `random.*`, `open`, `print` (`--strict-pure` mode)
+- Missing `Result[T, E]` return type in Shell functions (warns for public functions with return values)
 
-**Invar CANNOT detect:**
+**CANNOT detect:**
 - Dynamic imports (`__import__`, `importlib`)
 - I/O through dependency injection (e.g., passing file handle to Core)
 - Contract semantic quality (`@pre(lambda x: True)` passes)
-- Missing `Result[T, E]` return type in Shell functions (not yet implemented)
 - Class method contracts (only checks top-level functions)
 - Async function purity issues
 
-**Planned improvements:**
-- Shell contract validation (check for Result return type)
+### Map (Reference Analysis)
+
+**CAN detect:**
+- Cross-file function/class references (which symbols are depended upon by other files)
+- Symbol signatures with type annotations and contracts
+- Reference count ranking (hot/warm/cold classification)
+
+**CANNOT detect:**
+- Dynamic calls: `getattr(obj, "method")()`
+- String-based references: `globals()["func"]()`
+- References from outside the project (external imports)
+- Same-file references (excluded by design - only cross-file matters for importance)
+- Attribute access patterns: `obj.method` without call
+
+### Planned Improvements
 - Class method checking
 - Configurable impure function list
 
-**Always remember:** Guard assists but doesn't replace engineering judgment.
+**Always remember:** These tools assist but don't replace engineering judgment.
 
 ---
 
@@ -899,23 +987,40 @@ def function_name(param1, param2):
 
 **Cause:** Shell function doesn't return `Result[T, E]`.
 
-**Fix:**
-```python
-from returns.result import Result, Success, Failure
+**This warning indicates one of three situations:**
 
-# ❌ Before
-def load_config(path: str) -> Config:
-    return Config.parse(Path(path).read_text())
+| Situation | Action |
+|-----------|--------|
+| Function does I/O | Add `Result[T, E]`, handle errors |
+| Function is pure logic | Move to Core (gains @pre/@post contracts) |
+| Function is generator/iterator | Acceptable exception (yields items incrementally) |
 
-# ✅ After
-def load_config(path: str) -> Result[Config, str]:
-    try:
-        return Success(Config.parse(Path(path).read_text()))
-    except FileNotFoundError:
-        return Failure(f"Config not found: {path}")
-    except Exception as e:
-        return Failure(f"Failed to load config: {e}")
+**Decision tree:**
 ```
+Does this function do I/O (file, network, time, random)?
+├── YES → Add Result[T, E]
+│         def load_config(path: str) -> Result[Config, str]:
+│             try:
+│                 return Success(Config.parse(Path(path).read_text()))
+│             except FileNotFoundError:
+│                 return Failure(f"Config not found: {path}")
+│
+├── NO, it's pure logic → Move to Core
+│         # Before: in shell/utils.py (warning)
+│         def matches_pattern(path: str, pattern: str) -> bool: ...
+│
+│         # After: in core/matching.py (correct, gains contracts)
+│         @pre(lambda path, pattern: len(pattern) > 0)
+│         def matches_pattern(path: str, pattern: str) -> bool: ...
+│
+└── NO, it's a generator → Acceptable exception
+          # Generators yield incrementally, don't fit Result pattern
+          def discover_files(path: Path) -> Iterator[Path]:
+              for f in path.rglob("*.py"):
+                  yield f
+```
+
+**Key insight:** The warning is design feedback. It helps you identify functions that either need error handling (Result) or are misplaced (should be in Core).
 
 ---
 
@@ -969,7 +1074,7 @@ Projects can configure how strictly they follow the protocol:
 
 ```toml
 [tool.invar]
-protocol_version = "3.9"           # Lock to specific version
+protocol_version = "3.12"          # Lock to specific version
 protocol_evolution = "human-approved"  # Default mode
 ```
 
@@ -1087,7 +1192,7 @@ A new MAJOR version (e.g., v3.x → v4.x) would require:
 
 ```toml
 [tool.invar]
-protocol_version = "3.9"  # Documents which version this project implements
+protocol_version = "3.12"  # Documents which version this project implements
 ```
 
 This is **declarative, not enforced** - it documents the project's target version for:
@@ -1099,12 +1204,28 @@ This is **declarative, not enforced** - it documents the project's target versio
 
 | Version | Date | Layer | Key Changes |
 |---------|------|-------|-------------|
+| v3.12 | 2024-12-19 | L1 | Protocol Acknowledgment required, Mid-Session Switch procedure |
+| v3.11 | 2024-12-19 | L1 | ICIDEV (Document checkpoint), lambda pitfall in Quick Start, Shell Result as design feedback |
+| v3.10 | 2024-12-19 | L1 | Phase 4 complete: `invar map`, `invar sig` commands documented |
 | v3.9 | 2024-12-19 | L1 | Session Start Protocol, feature discovery |
 | v3.8 | 2024-12-19 | L1 | Versioning rules, compatibility guarantees |
 | v3.7 | 2024-12-19 | L1 | Protocol Governance, evolution controls |
 | v3.6 | 2024-12-19 | L1 | ICIDV workflow, enhanced Law 4 |
 | v3.5 | 2024-12-18 | L1 | Quick Start, Deep Dive sections |
 
+### 12.8 Version Markers (for Acknowledgment)
+
+When acknowledging protocol version, agent must cite the marker for the CURRENT version:
+
+| Version | Marker Behavior |
+|---------|-----------------|
+| v3.12 | Protocol Acknowledgment required; Mid-Session Switch with explicit behavior list |
+| v3.11 | Document checkpoint after Verify; Shell Result warning = consider moving to Core |
+| v3.10 | `invar map` and `invar sig` commands available for context compression |
+| v3.9 | Session Start Protocol: read THIS project's INVAR.md, not from memory |
+
+If agent cites an older marker, they haven't read the current version.
+
 ---
 
-*Version 3.9 | Designed for AI Coding Agents*
+*Version 3.12 | Designed for AI Coding Agents*
