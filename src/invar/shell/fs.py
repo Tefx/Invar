@@ -31,7 +31,8 @@ def discover_python_files(
         Path objects for each Python file found
     """
     if exclude_patterns is None:
-        exclude_patterns = get_exclude_paths(project_root)
+        exclude_result = get_exclude_paths(project_root)
+        exclude_patterns = exclude_result.unwrap() if isinstance(exclude_result, Success) else []
 
     for py_file in project_root.rglob("*.py"):
         # Check exclusions
@@ -71,7 +72,8 @@ def read_and_parse_file(file_path: Path, project_root: Path) -> Result[FileInfo,
         return Failure(f"Syntax error in {file_path}")
 
     # Classify as Core or Shell based on patterns and paths
-    file_info.is_core, file_info.is_shell = classify_file(relative_path, project_root)
+    classify_result = classify_file(relative_path, project_root)
+    file_info.is_core, file_info.is_shell = classify_result.unwrap() if isinstance(classify_result, Success) else (False, False)
 
     return Success(file_info)
 

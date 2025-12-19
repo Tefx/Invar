@@ -9,17 +9,18 @@ from __future__ import annotations
 from pathlib import Path
 
 import typer
-from deal import post, pre
 from rich.console import Console
 from rich.table import Table
 
-from returns.result import Failure, Success
+from returns.result import Failure, Result, Success
 
 from invar import __version__
 from invar.core.models import GuardReport, RuleConfig, Severity
 from invar.core.rules import check_all_rules
+from invar.core.utils import get_exit_code
 from invar.shell.config import load_config
 from invar.shell.fs import scan_project
+from invar.shell.templates import add_config, copy_template, create_directories
 
 app = typer.Typer(
     name="invar",
@@ -29,7 +30,7 @@ app = typer.Typer(
 console = Console()
 
 
-def _scan_and_check(path: Path, config: RuleConfig) -> GuardReport:
+def _scan_and_check(path: Path, config: RuleConfig) -> Result[GuardReport, str]:
     """Scan project files and check against rules."""
     report = GuardReport(files_checked=0)
     for file_result in scan_project(path):
@@ -40,18 +41,7 @@ def _scan_and_check(path: Path, config: RuleConfig) -> GuardReport:
         report.files_checked += 1
         for violation in check_all_rules(file_info, config):
             report.add_violation(violation)
-    return report
-
-
-@pre(lambda report, strict: isinstance(report, GuardReport))
-@post(lambda result: result in (0, 1))
-def _get_exit_code(report: GuardReport, strict: bool) -> int:
-    """Determine exit code based on report and strict mode."""
-    if report.errors > 0:
-        return 1
-    if strict and report.warnings > 0:
-        return 1
-    return 0
+    return Success(report)
 
 
 @app.command()
@@ -74,9 +64,13 @@ def guard(
     if strict_pure:
         config.strict_pure = True
 
-    report = _scan_and_check(path, config)
+    scan_result = _scan_and_check(path, config)
+    if isinstance(scan_result, Failure):
+        console.print(f"[red]Error:[/red] {scan_result.failure()}")
+        raise typer.Exit(1)
+    report = scan_result.unwrap()
     _output_json(report) if json_output else _output_rich(report, config.strict_pure)
-    raise typer.Exit(_get_exit_code(report, strict))
+    raise typer.Exit(get_exit_code(report, strict))
 
 
 def _output_rich(report: GuardReport, strict_pure: bool = False) -> None:
@@ -156,97 +150,6 @@ def sig_command(
         raise typer.Exit(1)
 
 
-_DEFAULT_PYPROJECT_CONFIG = '''\n# Invar Configuration
-[tool.invar.guard]
-core_paths = ["src/core"]
-shell_paths = ["src/shell"]
-max_file_lines = 300
-max_function_lines = 50
-require_contracts = true
-require_doctests = true
-forbidden_imports = ["os", "sys", "socket", "requests", "urllib", "subprocess", "shutil", "io", "pathlib"]
-exclude_paths = ["tests", "scripts", ".venv"]
-'''
-
-_DEFAULT_INVAR_TOML = '''# Invar Configuration
-# For projects without pyproject.toml
-
-[guard]
-core_paths = ["src/core"]
-shell_paths = ["src/shell"]
-max_file_lines = 300
-max_function_lines = 50
-require_contracts = true
-require_doctests = true
-forbidden_imports = ["os", "sys", "socket", "requests", "urllib", "subprocess", "shutil", "io", "pathlib"]
-exclude_paths = ["tests", "scripts", ".venv"]
-
-# Pattern-based classification (optional, takes priority over paths)
-# core_patterns = ["**/domain/**", "**/models/**"]
-# shell_patterns = ["**/api/**", "**/cli/**"]
-'''
-
-
-def _get_template_path(name: str) -> Path:
-    """Get path to a template file."""
-    import importlib.resources as resources
-    return Path(str(resources.files("invar.templates").joinpath(name)))
-
-
-def _copy_template(template_name: str, dest: Path, dest_name: str | None = None) -> bool:
-    """Copy a template file to destination. Returns True if copied."""
-    if dest_name is None:
-        dest_name = template_name.replace(".template", "")
-    dest_file = dest / dest_name
-    if dest_file.exists():
-        return False
-    template_path = _get_template_path(template_name)
-    if template_path.exists():
-        dest_file.write_text(template_path.read_text())
-        return True
-    return False
-
-
-def _add_config(path: Path) -> bool:
-    """Add configuration to project. Returns True if config was added."""
-    pyproject = path / "pyproject.toml"
-    invar_toml = path / "invar.toml"
-
-    # If pyproject.toml exists, add config there
-    if pyproject.exists():
-        content = pyproject.read_text()
-        if "[tool.invar]" not in content:
-            with pyproject.open("a") as f:
-                f.write(_DEFAULT_PYPROJECT_CONFIG)
-            console.print("[green]Added[/green] [tool.invar.guard] to pyproject.toml")
-            return True
-        return False
-
-    # Otherwise create invar.toml
-    if not invar_toml.exists():
-        invar_toml.write_text(_DEFAULT_INVAR_TOML)
-        console.print("[green]Created[/green] invar.toml")
-        return True
-
-    return False
-
-
-def _create_directories(path: Path) -> None:
-    """Create src/core and src/shell directories."""
-    core_path = path / "src" / "core"
-    shell_path = path / "src" / "shell"
-
-    if not core_path.exists():
-        core_path.mkdir(parents=True)
-        (core_path / "__init__.py").touch()
-        console.print("[green]Created[/green] src/core/")
-
-    if not shell_path.exists():
-        shell_path.mkdir(parents=True)
-        (shell_path / "__init__.py").touch()
-        console.print("[green]Created[/green] src/shell/")
-
-
 @app.command()
 def init(
     path: Path = typer.Argument(Path("."), help="Project root directory"),
@@ -261,34 +164,37 @@ def init(
 
     Use --dirs to always create directories, --no-dirs to skip.
     """
-    config_added = _add_config(path)
+    config_result = add_config(path, console)
+    if isinstance(config_result, Failure):
+        console.print(f"[red]Error:[/red] {config_result.failure()}")
+        raise typer.Exit(1)
+    config_added = config_result.unwrap()
 
-    if _copy_template("INVAR.md", path):
+    result = copy_template("INVAR.md", path)
+    if isinstance(result, Success) and result.unwrap():
         console.print("[green]Created[/green] INVAR.md (Invar Protocol)")
 
-    if _copy_template("CLAUDE.md.template", path, "CLAUDE.md"):
+    result = copy_template("CLAUDE.md.template", path, "CLAUDE.md")
+    if isinstance(result, Success) and result.unwrap():
         console.print("[green]Created[/green] CLAUDE.md (customize for your project)")
 
     # Handle directory creation based on --dirs flag
-    if dirs is True:
-        _create_directories(path)
-    elif dirs is False:
-        pass  # Skip directory creation
-    else:
-        # Default: create directories (for backwards compatibility)
-        _create_directories(path)
+    if dirs is not False:
+        create_directories(path, console)
 
     invar_dir = path / ".invar"
     if not invar_dir.exists():
         invar_dir.mkdir()
-        if _copy_template("context.md.template", invar_dir, "context.md"):
+        result = copy_template("context.md.template", invar_dir, "context.md")
+        if isinstance(result, Success) and result.unwrap():
             console.print("[green]Created[/green] .invar/context.md (context management)")
 
     # Create proposals directory for protocol governance
     proposals_dir = invar_dir / "proposals"
     if not proposals_dir.exists():
         proposals_dir.mkdir()
-        if _copy_template("proposal.md.template", proposals_dir, "TEMPLATE.md"):
+        result = copy_template("proposal.md.template", proposals_dir, "TEMPLATE.md")
+        if isinstance(result, Success) and result.unwrap():
             console.print("[green]Created[/green] .invar/proposals/TEMPLATE.md")
 
     if not config_added and not (path / "INVAR.md").exists():

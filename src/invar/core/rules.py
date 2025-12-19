@@ -243,6 +243,9 @@ def check_shell_result(file_info: FileInfo, config: RuleConfig) -> list[Violatio
         # Skip functions with no return type or returning None
         if "-> None" in symbol.signature or "->" not in symbol.signature:
             continue
+        # Skip generators (Iterator/Generator) - acceptable exception per protocol
+        if "Iterator[" in symbol.signature or "Generator[" in symbol.signature:
+            continue
         if "Result[" not in symbol.signature:
             violations.append(
                 Violation(
