@@ -89,8 +89,8 @@ strict_pure = true
 
 ## Documentation
 
-- [INVAR.md](./INVAR.md) - Protocol for AI agents (88 lines, compressed)
-- [docs/INVAR-DETAILED.md](./docs/INVAR-DETAILED.md) - Full protocol details
+- [INVAR.md](./INVAR.md) - Protocol for AI agents (90 lines, compressed)
+- [docs/VISION.md](./docs/VISION.md) - Design philosophy
 - [docs/DESIGN.md](./docs/DESIGN.md) - Technical architecture
 
 ## License

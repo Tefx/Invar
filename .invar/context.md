@@ -27,30 +27,37 @@ Human (Commander) ──directs──→ Agent (Executor) ──uses──→ In
 |-------|--------|-------------|
 | 1-8 | Complete | Core Guard, Perception, Agent-Native features |
 | 9 | Complete | PyPI release, CI/CD, documentation |
-| 10 | Future | Advanced verification (P7, P9, P10, P13) |
+| 10 | Future | P7, P17, P19 (+ simplified P16, P18) |
 
-## Future Work
+## Future Work (Phase 10)
 
-See `.invar/proposals/` for detailed proposals:
-- **P7:** Semantic contract validation
-- **P9:** Context sync command
-- **P10:** Contract inheritance
-- **P13:** Mechanical vs Reasoning audit
-- **P15-P23:** IDE integration, refactoring, etc. (see NEW-PROPOSALS-P15-P23.md)
+After proposal evaluation, retained:
+- **P7:** Semantic contract validation (pattern matching)
+- **P17:** Forbidden import alternatives
+- **P19:** Doctest/code line split
+
+Simplified:
+- **P16:** Just improve docstrings (skip `invar api`)
+- **P18:** Show function groups in warning (skip full analysis)
+
+Removed (not Agent-Native or too complex):
+- P9, P10, P15, P20, P21, P22, P23
+
+See `.invar/proposals/` for historical details.
 
 ## Key Files
 
 | File | Purpose |
 |------|---------|
-| INVAR.md | Protocol (88 lines) |
+| INVAR.md | Protocol (90 lines) |
 | docs/VISION.md | Design philosophy |
 | docs/DESIGN.md | Technical architecture |
 | CLAUDE.md | Development guide |
-| docs/INVAR-DETAILED.md | Full protocol details |
 
 ## Archived Documents
 
 Historical documents moved to `docs/archive/`:
+- INVAR-DETAILED-v3.16.md (superseded by compressed protocol + Guard hints)
 - VISION-ORIGINAL.md (pre-revision)
 - PHASE3_REVIEW.md
 - FIRST_PRINCIPLES_REVIEW.md

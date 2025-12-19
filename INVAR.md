@@ -2,6 +2,8 @@
 
 > **"Trade structure for safety."** Separate what CAN fail (I/O) from what SHOULD NOT fail (logic).
 
+**Design:** Agent-Native. Protocol optimized for AI agent consumption. See [docs/VISION.md](docs/VISION.md).
+
 ## Core/Shell Architecture
 
 | Zone | Location | Must Have | Example |
@@ -78,10 +80,10 @@ max_function_lines = 50
 
 | Topic | Location |
 |-------|----------|
-| Full protocol details | [docs/INVAR-DETAILED.md](docs/INVAR-DETAILED.md) |
+| Design philosophy | [docs/VISION.md](docs/VISION.md) |
 | Technical design | [docs/DESIGN.md](docs/DESIGN.md) |
+| Rule details | `invar rules` or `invar guard --explain` |
 | Project context | [.invar/context.md](.invar/context.md) |
-| Rule metadata | `invar rules --json` |
 
 ---
 

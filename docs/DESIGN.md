@@ -1,6 +1,8 @@
 # Invar: Technical Design
 
 > **Prerequisite:** Read [VISION.md](./VISION.md) for philosophy.
+>
+> **Design Principle:** Agent-Native Execution, Human-Directed Purpose. See [VISION.md](./VISION.md).
 
 ---
 
@@ -245,7 +247,7 @@ Enforce architecture rules. **Prompts can be ignored; Guard cannot.**
 | Architecture | Shell functions should return Result | WARNING |
 | Contracts | Public Core functions need @pre or @post | WARNING |
 | Contracts | Contracts need doctest examples | WARNING |
-| Size | File > 300 lines | ERROR |
+| Size | File > 500 lines | ERROR |
 | Size | Function > 50 lines | WARNING |
 | Style | No **kwargs in Core | WARNING |
 
@@ -272,7 +274,7 @@ core_paths = ["src/core", "src/domain"]
 shell_paths = ["src/shell", "src/api", "src/cli"]
 
 # Size limits
-max_file_lines = 300
+max_file_lines = 500
 max_function_lines = 50
 
 # Required for Core
@@ -603,7 +605,7 @@ Priority (highest to lowest):
 [guard]
 core_paths = ["src/core"]
 shell_paths = ["src/shell"]
-max_file_lines = 300
+max_file_lines = 500
 max_function_lines = 50
 require_contracts = true
 require_doctests = true
@@ -784,86 +786,36 @@ invar init --config-only # Only add config, no INVAR.md/CLAUDE.md
 - [x] Purity checks (internal imports, impure calls) for methods
 - [x] `exclude_doctest_lines` config option
 
-### Phase 7: Agent-Native Foundation ← Current
+### Phase 7: Agent-Native Foundation ✅ Complete
 
-**Goal:** Detect Agent-specific failure modes. Core insight: **Invar serves Agents, not humans.**
+**Goal:** Detect Agent-specific failure modes.
 
-Agents fail differently than humans - they achieve "formal compliance without substance":
-- `@pre(lambda x: True)` - passes Guard but provides zero verification
-- `@pre(lambda x: isinstance(x, int))` when `x: int` already declared - redundant
-
-| Task | Priority | Description |
-|------|----------|-------------|
-| 7.1 Empty contract | 🔴 Critical | Detect `@pre(lambda: True)` tautologies |
-| 7.2 Redundant type | 🟡 Medium | Detect isinstance-only when types annotated |
-| 7.3 Fix suggestions | 🔴 Critical | Generate usable code, not vague descriptions |
+**Deliverables:**
+- [x] Empty contract detection (`@pre(lambda: True)`)
+- [x] Redundant type detection (isinstance-only when typed)
+- [x] Concrete fix suggestions with lambda skeletons
 
 **New files:** `core/contracts.py`, `core/suggestions.py`
 
-**Technical approach - Empty contract detection:**
-```python
-# core/contracts.py
-def is_empty_contract(contract: Contract) -> bool:
-    """Detect contracts that are always True."""
-    # Parse lambda body, check if it's ast.Constant(True)
-    tree = ast.parse(contract.expression, mode='eval')
-    lambda_node = find_lambda(tree)
-    return (isinstance(lambda_node.body, ast.Constant)
-            and lambda_node.body.value is True)
-```
+### Phase 8: Agent Efficiency ✅ Complete
 
-**Technical approach - Redundant type detection:**
-```python
-def is_redundant_type_contract(contract: Contract, func_annotations: dict) -> bool:
-    """Detect contracts that only check types already in annotations."""
-    # Check if contract only contains isinstance() calls
-    # Compare checked types against function parameter annotations
-    isinstance_checks = extract_isinstance_calls(contract.expression)
-    if not is_only_isinstance_checks(contract.expression):
-        return False  # Has other constraints, not redundant
-    return all(
-        param in func_annotations and func_annotations[param] == type_name
-        for param, type_name in isinstance_checks
-    )
-```
+**Goal:** Optimize for Agent iteration speed.
 
-**Technical approach - Fix suggestions:**
-```python
-# core/suggestions.py
-def generate_suggestion(func: Symbol, violation_type: str) -> str:
-    """Generate concrete fix code based on function signature."""
-    # For int params: suggest >= 0 or > 0
-    # For str/list/dict: suggest len() > 0
-    # For Optional: suggest is not None
-    constraints = []
-    for param, type_hint in func.params:
-        if type_hint == "int":
-            constraints.append(f"{param} >= 0")
-        elif type_hint in ("str", "list"):
-            constraints.append(f"len({param}) > 0")
-    return f"@pre(lambda {', '.join(p[0] for p in func.params)}: {' and '.join(constraints)})"
-```
-
-### Phase 8: Agent Efficiency
-
-**Goal:** Optimize for Agent iteration speed and parseable output.
-
-| Task | Description |
-|------|-------------|
-| 8.1 `--changed` | Only check git-modified files for faster iteration |
-| 8.2 `--agent-mode` | JSON output with fix instructions Agent can apply directly |
-| 8.3 Param mismatch | Detect `@pre(lambda a, b: ...)` when function is `(x, y)` |
+**Deliverables:**
+- [x] `--changed` mode (git-modified files only)
+- [x] `--agent` mode (JSON output with fix instructions)
+- [x] @pre param mismatch detection
 
 **New files:** `shell/git.py`
 
-### Phase 9: Release
+### Phase 9: Release ✅ Complete
 
 **Goal:** Enable adoption by other projects.
 
 **Deliverables:**
-- [ ] PyPI release (`pip install invar`)
-- [ ] Usage documentation (README expansion)
-- [ ] CI templates (GitHub Actions example)
+- [x] PyPI release (`pip install python-invar`)
+- [x] Documentation (README, VISION, consolidated docs)
+- [x] CI templates (GitHub Actions)
 
 ### Phase 10: Agent-Native Advanced (Long-term)
 
@@ -891,14 +843,9 @@ def generate_suggestion(func: Symbol, violation_type: str) -> str:
 ```
 typer >= 0.9          # CLI framework
 rich >= 13.0          # Pretty output
-tomli >= 2.0          # TOML parsing (Python < 3.11)
-```
-
-**Recommended (not required):**
-```
+pydantic >= 2.0       # Validation
 deal >= 4.0           # Contracts
 returns >= 0.20       # Result type
-pydantic >= 2.0       # Validation
 ```
 
 **Development:**
