@@ -17,6 +17,7 @@ import tomllib
 from pathlib import Path
 from typing import Any, Literal
 
+from deal import post, pre
 from returns.result import Failure, Result, Success
 
 from invar.core.models import RuleConfig
@@ -67,6 +68,8 @@ def _read_toml(path: Path) -> Result[dict[str, Any], str]:
         return Failure(f"Failed to read {path.name}: {e}")
 
 
+@pre(lambda data, source: isinstance(data, dict) and source in ("pyproject", "invar", "invar_dir", "default"))
+@post(lambda result: isinstance(result, dict))
 def _extract_guard_section(data: dict[str, Any], source: ConfigSource) -> dict[str, Any]:
     """Extract guard config section based on source type."""
     if source == "pyproject":
@@ -75,6 +78,8 @@ def _extract_guard_section(data: dict[str, Any], source: ConfigSource) -> dict[s
     return data.get("guard", {})
 
 
+@pre(lambda guard_config: isinstance(guard_config, dict))
+@post(lambda result: isinstance(result, RuleConfig))
 def _parse_config(guard_config: dict[str, Any]) -> RuleConfig:
     """Parse configuration from guard section."""
     kwargs: dict[str, Any] = {}
@@ -213,6 +218,7 @@ def get_exclude_paths(project_root: Path) -> list[str]:
     return guard_config.get("exclude_paths", _DEFAULT_EXCLUDE_PATHS.copy())
 
 
+@pre(lambda file_path, patterns: isinstance(file_path, str) and isinstance(patterns, list))
 def matches_pattern(file_path: str, patterns: list[str]) -> bool:
     """
     Check if a file path matches any of the glob patterns.
@@ -249,6 +255,7 @@ def matches_pattern(file_path: str, patterns: list[str]) -> bool:
     return False
 
 
+@pre(lambda file_path, prefixes: isinstance(file_path, str) and isinstance(prefixes, list))
 def _matches_path_prefix(file_path: str, prefixes: list[str]) -> bool:
     """Check if file_path starts with any of the given prefixes."""
     return any(file_path.startswith(p) for p in prefixes)

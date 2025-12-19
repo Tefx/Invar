@@ -9,6 +9,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import typer
+from deal import post, pre
 from rich.console import Console
 from rich.table import Table
 
@@ -42,6 +43,8 @@ def _scan_and_check(path: Path, config: RuleConfig) -> GuardReport:
     return report
 
 
+@pre(lambda report, strict: isinstance(report, GuardReport))
+@post(lambda result: result in (0, 1))
 def _get_exit_code(report: GuardReport, strict: bool) -> int:
     """Determine exit code based on report and strict mode."""
     if report.errors > 0:

@@ -9,7 +9,7 @@ No I/O operations - returns formatted strings/dicts only.
 
 from __future__ import annotations
 
-from deal import pre
+from deal import post, pre
 
 from invar.core.models import PerceptionMap, Symbol, SymbolRefs
 
@@ -60,6 +60,8 @@ def format_map_text(perception_map: PerceptionMap, top_n: int = 0) -> str:
     return "\n".join(lines)
 
 
+@pre(lambda sr, level: isinstance(sr, SymbolRefs) and level in ("hot", "warm", "cold"))
+@post(lambda result: all(isinstance(line, str) for line in result))
 def _format_symbol_detail(sr: SymbolRefs, level: str) -> list[str]:
     """Format a single symbol with appropriate detail level."""
     lines: list[str] = []
@@ -109,6 +111,8 @@ def format_map_json(perception_map: PerceptionMap) -> dict:
     }
 
 
+@pre(lambda sr: isinstance(sr, SymbolRefs))
+@post(lambda result: "name" in result and "ref_count" in result)
 def _symbol_refs_to_dict(sr: SymbolRefs) -> dict:
     """Convert SymbolRefs to dict."""
     sym = sr.symbol

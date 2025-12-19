@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import ast
 
-from deal import pre
+from deal import post, pre
 
 from invar.core.models import FileInfo, RuleConfig, Severity, SymbolKind, Violation
 
@@ -107,6 +107,7 @@ def extract_impure_calls(node: ast.FunctionDef | ast.AsyncFunctionDef) -> list[s
     return list(set(impure))
 
 
+@pre(lambda call: isinstance(call, ast.Call))
 def _get_call_name(call: ast.Call) -> str | None:
     """Get the name of a function call as a string."""
     func = call.func
@@ -123,6 +124,7 @@ def _get_call_name(call: ast.Call) -> str | None:
     return None
 
 
+@pre(lambda call_name: isinstance(call_name, str) and len(call_name) > 0)
 def _is_impure_call(call_name: str) -> bool:
     """Check if a call name represents an impure function."""
     # Check simple names

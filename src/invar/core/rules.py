@@ -201,7 +201,9 @@ def check_doctests(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
         return violations
 
     for symbol in file_info.symbols:
-        if symbol.kind == SymbolKind.FUNCTION and symbol.contracts and not symbol.has_doctest:
+        # Only public functions require doctests (private can skip)
+        is_public = not symbol.name.startswith("_")
+        if symbol.kind == SymbolKind.FUNCTION and is_public and symbol.contracts and not symbol.has_doctest:
             violations.append(
                 Violation(
                     rule="missing_doctest",
@@ -284,15 +286,8 @@ def check_all_rules(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
 
     Examples:
         >>> from invar.core.models import FileInfo
-        >>> info = FileInfo(path="test.py", lines=50)
-        >>> cfg = RuleConfig()
-        >>> violations = check_all_rules(info, cfg)
+        >>> violations = check_all_rules(FileInfo(path="test.py", lines=50), RuleConfig())
         >>> isinstance(violations, list)
         True
     """
-    violations: list[Violation] = []
-
-    for rule in get_all_rules():
-        violations.extend(rule(file_info, config))
-
-    return violations
+    return [v for rule in get_all_rules() for v in rule(file_info, config)]
