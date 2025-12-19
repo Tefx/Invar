@@ -1,4 +1,4 @@
-# The Invar Protocol v3.14
+# The Invar Protocol v3.15
 
 > **"Trade structure for safety."**
 
@@ -589,25 +589,46 @@ invar init --no-dirs     # Skip directory creation (for existing projects)
 - Missing `Result[T, E]` return type in Shell functions (warns for public functions with return values)
 - Class method contracts, doctests, and size limits (Phase 6)
 - Doctest line counting for `exclude_doctest_lines` option (Phase 6)
+- **Empty contracts** (Phase 7): `@pre(lambda x: True)` → WARNING
+- **Redundant type contracts** (Phase 7): `@pre(lambda x: isinstance(x, int))` when `x: int` declared → INFO
+- **Concrete fix suggestions** (Phase 7): Generates usable `@pre` code based on function signature
 
 **CANNOT detect:**
 - Dynamic imports (`__import__`, `importlib`)
 - I/O through dependency injection (e.g., passing file handle to Core)
-- Contract semantic quality (`@pre(lambda x: True)` passes - see guidance below)
 - Transitive impurity (A calls B, B calls datetime.now)
 - Async function purity issues
 - Nested class methods (only top-level class methods checked)
+- Business logic correctness (e.g., `@pre(lambda x: x >= 0)` when x should be > 0)
 
-**Contract Quality Guidance:**
+**Contract Quality - Phase 7 Detection:**
 
-Guard checks contract PRESENCE, not QUALITY. These both pass Guard:
+Guard now detects Agent-specific failure modes (formal compliance without substance):
 ```python
-# ✅ Meaningful - specifies business logic invariant
-@pre(lambda items, rate: len(items) > 0 and 0 <= rate <= 1)
+# ⚠️ WARNING: Empty contract detected
+@pre(lambda items, rate: True)  # "has empty contract"
 
-# ⚠️ Meaningless - empty specification, provides no value
-@pre(lambda items, rate: True)
+# ℹ️ INFO: Redundant type contract detected
+def calc(x: int) -> int:
+    ...
+@pre(lambda x: isinstance(x, int))  # "contract only checks types already in annotations"
+
+# ✅ Passes - meaningful business logic constraint
+@pre(lambda items, rate: len(items) > 0 and 0 <= rate <= 1)
 ```
+
+**Concrete Fix Suggestions:**
+
+Guard generates usable fix code based on function signatures:
+```
+WARN :42 Function 'calc' has no @pre or @post contract
+  Suggestion: Add: @pre(lambda x, y: x >= 0 and y >= 0)
+```
+
+Type-based suggestions:
+- `int`/`float` → `param >= 0`
+- `str`/`list`/`dict` → `len(param) > 0`
+- `Optional[T]` → `param is not None`
 
 **Contracts should specify LOGIC invariants, not repeat type information:**
 ```python
@@ -636,9 +657,10 @@ def add_violation(self, v: Violation): ...
 
 ### Planned Improvements
 - Configurable impure function list
-- Contract quality detection (warn on `@pre(lambda: True)`)
 - @pre lambda signature validation (match function parameters)
 - Transitive impurity detection
+- `--changed` mode (only check git-modified files)
+- `--agent-mode` output (JSON with fix instructions)
 
 **Always remember:** These tools assist but don't replace engineering judgment.
 
