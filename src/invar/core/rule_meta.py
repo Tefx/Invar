@@ -1,0 +1,190 @@
+"""
+Centralized rule metadata for Guard rules.
+
+Phase 9.2 P3: Single source of truth for rule information.
+Used by: hints (P5), --agent output, invar rules command.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from enum import Enum
+
+from invar.core.models import Severity
+
+
+class RuleCategory(str, Enum):
+    """Categories for grouping rules."""
+
+    SIZE = "size"
+    CONTRACTS = "contracts"
+    PURITY = "purity"
+    SHELL = "shell"
+    DOCS = "docs"
+
+
+@dataclass(frozen=True)
+class RuleMeta:
+    """
+    Metadata for a Guard rule.
+
+    Examples:
+        >>> meta = RULE_META["file_size"]
+        >>> meta.category
+        <RuleCategory.SIZE: 'size'>
+        >>> "Split" in meta.hint
+        True
+    """
+
+    name: str
+    severity: Severity
+    category: RuleCategory
+    detects: str
+    cannot_detect: tuple[str, ...]
+    hint: str
+
+
+# All rule metadata definitions
+RULE_META: dict[str, RuleMeta] = {
+    # Size rules
+    "file_size": RuleMeta(
+        name="file_size",
+        severity=Severity.ERROR,
+        category=RuleCategory.SIZE,
+        detects="File exceeds max_file_lines limit",
+        cannot_detect=("Code complexity", "Logical cohesion", "Coupling between modules"),
+        hint="Split into smaller modules by responsibility",
+    ),
+    "file_size_warning": RuleMeta(
+        name="file_size_warning",
+        severity=Severity.WARNING,
+        category=RuleCategory.SIZE,
+        detects="File approaching max_file_lines limit (80% threshold)",
+        cannot_detect=("Whether split is actually needed",),
+        hint="Consider splitting before reaching limit",
+    ),
+    "function_size": RuleMeta(
+        name="function_size",
+        severity=Severity.WARNING,
+        category=RuleCategory.SIZE,
+        detects="Function exceeds max_function_lines limit",
+        cannot_detect=("Algorithm complexity", "Whether extraction helps readability"),
+        hint="Extract helper functions or simplify logic",
+    ),
+    # Contract rules
+    "missing_contract": RuleMeta(
+        name="missing_contract",
+        severity=Severity.WARNING,
+        category=RuleCategory.CONTRACTS,
+        detects="Core function without @pre or @post decorator",
+        cannot_detect=("Contract quality", "Whether contract is meaningful"),
+        hint="Ask: what inputs are invalid? what does output guarantee?",
+    ),
+    "empty_contract": RuleMeta(
+        name="empty_contract",
+        severity=Severity.WARNING,
+        category=RuleCategory.CONTRACTS,
+        detects="Contract with tautology like @pre(lambda: True)",
+        cannot_detect=("Subtle tautologies", "Semantic correctness"),
+        hint="Replace lambda: True with actual constraint on inputs/output",
+    ),
+    "redundant_type_contract": RuleMeta(
+        name="redundant_type_contract",
+        severity=Severity.INFO,
+        category=RuleCategory.CONTRACTS,
+        detects="Contract only checks types already in annotations",
+        cannot_detect=("Whether better constraints exist",),
+        hint="Add value constraints beyond type checks if possible",
+    ),
+    "param_mismatch": RuleMeta(
+        name="param_mismatch",
+        severity=Severity.ERROR,
+        category=RuleCategory.CONTRACTS,
+        detects="@pre lambda parameters don't match function signature",
+        cannot_detect=("Runtime binding errors",),
+        hint="Lambda must accept ALL function parameters in same order",
+    ),
+    # Purity rules
+    "forbidden_import": RuleMeta(
+        name="forbidden_import",
+        severity=Severity.ERROR,
+        category=RuleCategory.PURITY,
+        detects="Core module imports I/O libraries (os, sys, pathlib, etc.)",
+        cannot_detect=("Transitive imports", "Dynamic imports"),
+        hint="Move I/O operations to Shell layer",
+    ),
+    "internal_import": RuleMeta(
+        name="internal_import",
+        severity=Severity.WARNING,
+        category=RuleCategory.PURITY,
+        detects="Import statement inside function body",
+        cannot_detect=("Lazy imports for performance", "Circular import workarounds"),
+        hint="Move import to module top-level or justify with comment",
+    ),
+    "impure_call": RuleMeta(
+        name="impure_call",
+        severity=Severity.WARNING,
+        category=RuleCategory.PURITY,
+        detects="Call to impure function (datetime.now, random.*, print, open)",
+        cannot_detect=("Custom impure functions", "Impurity via method calls"),
+        hint="Inject impure values as parameters or move to Shell",
+    ),
+    # Shell rules
+    "shell_result": RuleMeta(
+        name="shell_result",
+        severity=Severity.WARNING,
+        category=RuleCategory.SHELL,
+        detects="Shell function not returning Result[T, E]",
+        cannot_detect=("Result usage correctness", "Error handling quality"),
+        hint="Wrap return value with Success() or return Failure()",
+    ),
+    # Documentation rules
+    "missing_doctest": RuleMeta(
+        name="missing_doctest",
+        severity=Severity.WARNING,
+        category=RuleCategory.DOCS,
+        detects="Core function without doctest examples",
+        cannot_detect=("Doctest quality", "Edge case coverage"),
+        hint="Add >>> examples showing typical usage and edge cases",
+    ),
+}
+
+
+def get_rule_meta(rule_name: str) -> RuleMeta | None:
+    """
+    Get metadata for a rule by name.
+
+    Examples:
+        >>> meta = get_rule_meta("file_size")
+        >>> meta is not None
+        True
+        >>> get_rule_meta("nonexistent") is None
+        True
+    """
+    return RULE_META.get(rule_name)
+
+
+def get_all_rule_names() -> list[str]:
+    """
+    Get list of all rule names.
+
+    Examples:
+        >>> names = get_all_rule_names()
+        >>> "file_size" in names
+        True
+        >>> len(names) >= 10
+        True
+    """
+    return list(RULE_META.keys())
+
+
+def get_rules_by_category(category: RuleCategory) -> list[RuleMeta]:
+    """
+    Get all rules in a category.
+
+    Examples:
+        >>> size_rules = get_rules_by_category(RuleCategory.SIZE)
+        >>> len(size_rules) >= 2
+        True
+    """
+    return [meta for meta in RULE_META.values() if meta.category == category]

@@ -124,19 +124,35 @@ class GuardReport(BaseModel):
         return self.errors == 0
 
 
+class RuleExclusion(BaseModel):
+    """
+    A rule exclusion pattern for specific files.
+
+    Examples:
+        >>> excl = RuleExclusion(pattern="**/generated/**", rules=["*"])
+        >>> excl.pattern
+        '**/generated/**'
+        >>> excl.rules
+        ['*']
+    """
+
+    pattern: str  # Glob pattern (fnmatch style with ** support)
+    rules: list[str]  # Rule names to exclude, or ["*"] for all
+
+
 class RuleConfig(BaseModel):
     """
     Configuration for rule checking.
 
     Examples:
         >>> config = RuleConfig()
-        >>> config.max_file_lines
-        300
-        >>> config.strict_pure
-        False
+        >>> config.max_file_lines  # Phase 9 P1: Raised from 300
+        500
+        >>> config.strict_pure  # Phase 9 P12: Default ON for agents
+        True
     """
 
-    max_file_lines: int = 300
+    max_file_lines: int = 500  # Phase 9 P1: Raised from 300 for less friction
     max_function_lines: int = 50
     forbidden_imports: tuple[str, ...] = (
         "os",
@@ -151,9 +167,17 @@ class RuleConfig(BaseModel):
     )
     require_contracts: bool = True
     require_doctests: bool = True
-    strict_pure: bool = False
+    strict_pure: bool = True  # Phase 9 P12: Default ON for agent-native
     use_code_lines: bool = False
     exclude_doctest_lines: bool = False
+    # Phase 9 P1: Rule exclusions for specific file patterns
+    rule_exclusions: list[RuleExclusion] = Field(default_factory=list)
+    # Phase 9 P2: Per-rule severity overrides (off, info, warning, error)
+    severity_overrides: dict[str, str] = Field(default_factory=lambda: {
+        "redundant_type_contract": "off",  # Expected behavior when forcing contracts
+    })
+    # Phase 9 P8: File size warning threshold (0 to disable, 0.8 = warn at 80%)
+    size_warning_threshold: float = 0.8
 
 
 # Phase 4: Perception models

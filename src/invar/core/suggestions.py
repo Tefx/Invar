@@ -139,10 +139,36 @@ def _suggest_constraint(name: str, type_hint: str) -> str | None:
     return None
 
 
+def _generate_lambda_skeleton(signature: str) -> str:
+    """
+    Generate a lambda skeleton from function signature (P4).
+
+    Returns skeleton with parameters extracted, condition placeholder.
+
+    Examples:
+        >>> _generate_lambda_skeleton("(x: int, y: int) -> int")
+        '@pre(lambda x, y: <condition>) or @post(lambda result: <condition>)'
+        >>> _generate_lambda_skeleton("(items: list) -> None")
+        '@pre(lambda items: <condition>) or @post(lambda result: <condition>)'
+        >>> _generate_lambda_skeleton("() -> int")
+        '@post(lambda result: <condition>)'
+    """
+    params = _extract_params(signature)
+    param_names = [name for name, _ in params]
+
+    if not param_names:
+        return "@post(lambda result: <condition>)"
+
+    params_str = ", ".join(param_names)
+    return f"@pre(lambda {params_str}: <condition>) or @post(lambda result: <condition>)"
+
+
 @pre(lambda symbol, violation_type: violation_type in ("missing_contract", "empty_contract", "redundant_type_contract", ""))
 def format_suggestion_for_violation(symbol: Symbol, violation_type: str) -> str:
     """
     Format a complete suggestion message for a violation.
+
+    Phase 9.2 P4: Generate lambda skeletons when no type-based suggestion available.
 
     Examples:
         >>> from invar.core.models import Symbol, SymbolKind
@@ -150,6 +176,12 @@ def format_suggestion_for_violation(symbol: Symbol, violation_type: str) -> str:
         ...     signature="(x: int, y: int) -> int")
         >>> msg = format_suggestion_for_violation(sym, "missing_contract")
         >>> "@pre(lambda x, y: x >= 0 and y >= 0)" in msg
+        True
+        >>> # P4: skeleton when no type-based suggestion
+        >>> sym2 = Symbol(name="process", kind=SymbolKind.FUNCTION, line=1, end_line=5,
+        ...     signature="(data, config)")
+        >>> msg2 = format_suggestion_for_violation(sym2, "missing_contract")
+        >>> "@pre(lambda data, config: <condition>)" in msg2
         True
     """
     if symbol.kind not in (SymbolKind.FUNCTION, SymbolKind.METHOD):
@@ -159,18 +191,22 @@ def format_suggestion_for_violation(symbol: Symbol, violation_type: str) -> str:
         suggestion = generate_contract_suggestion(symbol.signature)
         if suggestion:
             return f"Add: {suggestion}"
-        return "Add @pre for input validation or @post for output guarantee"
+        # P4: Generate lambda skeleton when no type-based suggestion
+        skeleton = _generate_lambda_skeleton(symbol.signature)
+        return f"Add: {skeleton}"
 
     if violation_type == "empty_contract":
         suggestion = generate_contract_suggestion(symbol.signature)
         if suggestion:
             return f"Replace with: {suggestion}"
-        return "Replace with meaningful constraint based on business logic"
+        skeleton = _generate_lambda_skeleton(symbol.signature)
+        return f"Replace with: {skeleton}"
 
     if violation_type == "redundant_type_contract":
         suggestion = generate_contract_suggestion(symbol.signature)
         if suggestion:
             return f"Replace with business logic: {suggestion}"
-        return "Replace with business logic constraint or remove"
+        skeleton = _generate_lambda_skeleton(symbol.signature)
+        return f"Replace with: {skeleton}"
 
     return ""

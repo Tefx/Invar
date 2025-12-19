@@ -6,6 +6,7 @@ Shell module: handles user interaction and file I/O.
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 import typer
@@ -13,6 +14,16 @@ from rich.console import Console
 from rich.table import Table
 
 from returns.result import Failure, Result, Success
+
+
+def _detect_agent_mode() -> bool:
+    """
+    Detect if running in agent context (Phase 9 P11).
+
+    Returns True if INVAR_MODE=agent environment variable is set.
+    This allows automatic JSON output for all commands when used by AI agents.
+    """
+    return os.getenv("INVAR_MODE") == "agent"
 
 from invar import __version__
 from invar.core.formatter import format_guard_agent
@@ -53,8 +64,12 @@ def guard(
     path: Path = typer.Argument(Path("."), help="Project root directory",
                                  exists=True, file_okay=False, dir_okay=True),
     strict: bool = typer.Option(False, "--strict", help="Treat warnings as errors"),
-    strict_pure: bool = typer.Option(False, "--strict-pure",
-                                      help="Enable strict purity checks (internal imports, impure calls)"),
+    no_strict_pure: bool = typer.Option(False, "--no-strict-pure",
+                                         help="Disable purity checks (internal imports, impure calls)"),
+    pedantic: bool = typer.Option(False, "--pedantic",
+                                   help="Show all violations including off-by-default rules"),
+    explain: bool = typer.Option(False, "--explain",
+                                  help="Show detailed explanations and limitations (Phase 9.2 P5)"),
     changed: bool = typer.Option(False, "--changed",
                                   help="Only check git-modified files (Phase 8.1)"),
     agent: bool = typer.Option(False, "--agent",
@@ -68,8 +83,11 @@ def guard(
         raise typer.Exit(1)
 
     config = config_result.unwrap()
-    if strict_pure:
-        config.strict_pure = True
+    if no_strict_pure:
+        config.strict_pure = False
+    # Phase 9 P2: --pedantic shows all rules including off-by-default
+    if pedantic:
+        config.severity_overrides = {}
 
     # Phase 8.1: --changed mode
     only_files: set[Path] | None = None
@@ -92,18 +110,50 @@ def guard(
         raise typer.Exit(1)
     report = scan_result.unwrap()
 
-    # Phase 8.2: --agent mode takes precedence over --json
-    if agent:
+    # Phase 9 P11: Auto-detect agent mode from environment
+    use_agent_output = agent or _detect_agent_mode()
+
+    if use_agent_output:
         _output_agent(report)
     elif json_output:
         _output_json(report)
     else:
-        _output_rich(report, config.strict_pure, changed)
+        _output_rich(report, config.strict_pure, changed, pedantic, explain)
     raise typer.Exit(get_exit_code(report, strict))
 
 
+def _show_file_context(file_path: str) -> None:
+    """
+    Show INSPECT section for a file (Phase 9.2 P14).
+
+    Displays file status and contract patterns to help agents understand context.
+    """
+    from pathlib import Path
+    from invar.core.inspect import analyze_file_context
+
+    try:
+        path = Path(file_path)
+        if not path.exists():
+            return
+
+        source = path.read_text()
+        ctx = analyze_file_context(source, file_path, max_lines=500)
+
+        # Show compact INSPECT section
+        console.print(f"  [dim]INSPECT: {ctx.lines} lines ({ctx.percentage}% of limit), "
+                      f"{ctx.functions_with_contracts}/{ctx.functions_total} functions with contracts[/dim]")
+        if ctx.contract_examples:
+            patterns = ", ".join(ctx.contract_examples[:2])
+            if len(patterns) > 60:
+                patterns = patterns[:57] + "..."
+            console.print(f"  [dim]Patterns: {patterns}[/dim]")
+    except Exception:
+        pass  # Silently ignore errors in context display
+
+
 def _output_rich(
-    report: GuardReport, strict_pure: bool = False, changed_mode: bool = False
+    report: GuardReport, strict_pure: bool = False, changed_mode: bool = False,
+    pedantic_mode: bool = False, explain_mode: bool = False
 ) -> None:
     """Output report using Rich formatting."""
     console.print("\n[bold]Invar Guard Report[/bold]")
@@ -113,6 +163,10 @@ def _output_rich(
         mode_info.append("strict-pure")
     if changed_mode:
         mode_info.append("changed-only")
+    if pedantic_mode:
+        mode_info.append("pedantic")
+    if explain_mode:
+        mode_info.append("explain")
     if mode_info:
         console.print(f"[cyan]({', '.join(mode_info)} mode)[/cyan]")
     console.print()
@@ -120,11 +174,16 @@ def _output_rich(
     if not report.violations:
         console.print("[green]No violations found.[/green]")
     else:
+        from invar.core.rule_meta import get_rule_meta
+
         by_file: dict[str, list] = {}
         for v in report.violations:
             by_file.setdefault(v.file, []).append(v)
         for fp, vs in sorted(by_file.items()):
             console.print(f"[bold]{fp}[/bold]")
+            # Phase 9.2 P14: Show INSPECT section in --changed mode
+            if changed_mode:
+                _show_file_context(fp)
             for v in vs:
                 if v.severity == Severity.ERROR:
                     icon = "[red]ERROR[/red]"
@@ -134,6 +193,15 @@ def _output_rich(
                     icon = "[blue]INFO[/blue]"
                 ln = f":{v.line}" if v.line else ""
                 console.print(f"  {icon} {ln} {v.message}")
+                # Phase 9.2 P5: Always-on hints from RULE_META
+                meta = get_rule_meta(v.rule)
+                if meta:
+                    console.print(f"    [dim cyan]→ {meta.hint}[/dim cyan]")
+                    # --explain: show detailed information
+                    if explain_mode:
+                        console.print(f"    [dim]Detects: {meta.detects}[/dim]")
+                        if meta.cannot_detect:
+                            console.print(f"    [dim]Cannot detect: {', '.join(meta.cannot_detect)}[/dim]")
             console.print()
 
     console.print("-" * 40)
@@ -183,7 +251,9 @@ def map_command(
     """Generate symbol map with reference counts."""
     from invar.shell.perception import run_map
 
-    result = run_map(path, top, json_output)
+    # Phase 9 P11: Auto-detect agent mode
+    use_json = json_output or _detect_agent_mode()
+    result = run_map(path, top, use_json)
     if isinstance(result, Failure):
         console.print(f"[red]Error:[/red] {result.failure()}")
         raise typer.Exit(1)
@@ -197,10 +267,80 @@ def sig_command(
     """Extract signatures from a file or symbol."""
     from invar.shell.perception import run_sig
 
-    result = run_sig(target, json_output)
+    # Phase 9 P11: Auto-detect agent mode
+    use_json = json_output or _detect_agent_mode()
+    result = run_sig(target, use_json)
     if isinstance(result, Failure):
         console.print(f"[red]Error:[/red] {result.failure()}")
         raise typer.Exit(1)
+
+
+@app.command()
+def rules(
+    json_output: bool = typer.Option(False, "--json", help="Output as JSON"),
+    category: str = typer.Option(None, "--category", "-c",
+                                  help="Filter by category (size, contracts, purity, shell, docs)"),
+) -> None:
+    """
+    List all Guard rules with their metadata.
+
+    Phase 9.2 P3: Shows what each rule detects and its limitations.
+    """
+    import json as json_lib
+    from invar.core.rule_meta import RULE_META, RuleCategory, get_rules_by_category
+
+    # Phase 9 P11: Auto-detect agent mode
+    use_json = json_output or _detect_agent_mode()
+
+    # Filter by category if specified
+    if category:
+        try:
+            cat = RuleCategory(category.lower())
+            rules_list = get_rules_by_category(cat)
+        except ValueError:
+            valid = ", ".join(c.value for c in RuleCategory)
+            console.print(f"[red]Error:[/red] Invalid category '{category}'. Valid: {valid}")
+            raise typer.Exit(1)
+    else:
+        rules_list = list(RULE_META.values())
+
+    if use_json:
+        # JSON output for agents
+        data = {
+            "rules": [
+                {
+                    "name": r.name,
+                    "severity": r.severity.value,
+                    "category": r.category.value,
+                    "detects": r.detects,
+                    "cannot_detect": list(r.cannot_detect),
+                    "hint": r.hint,
+                }
+                for r in rules_list
+            ]
+        }
+        console.print(json_lib.dumps(data, indent=2))
+    else:
+        # Rich table output for humans
+        table = Table(title="Invar Guard Rules")
+        table.add_column("Rule", style="cyan")
+        table.add_column("Severity", style="yellow")
+        table.add_column("Category")
+        table.add_column("Detects")
+        table.add_column("Hint", style="green")
+
+        for r in rules_list:
+            sev_style = {"error": "red", "warning": "yellow", "info": "blue"}.get(r.severity.value, "")
+            table.add_row(
+                r.name,
+                f"[{sev_style}]{r.severity.value.upper()}[/{sev_style}]",
+                r.category.value,
+                r.detects[:50] + "..." if len(r.detects) > 50 else r.detects,
+                r.hint[:40] + "..." if len(r.hint) > 40 else r.hint,
+            )
+
+        console.print(table)
+        console.print(f"\n[dim]{len(rules_list)} rules total. Use --json for full details.[/dim]")
 
 
 @app.command()

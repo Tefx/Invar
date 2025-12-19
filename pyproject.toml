@@ -68,7 +68,7 @@ core_paths = ["src/invar/core"]
 shell_paths = ["src/invar/shell"]
 
 # Size limits
-max_file_lines = 300
+max_file_lines = 500
 max_function_lines = 50
 
 # Required for Core

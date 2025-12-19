@@ -225,8 +225,12 @@ def format_guard_agent(report: GuardReport) -> dict:
 @pre(lambda v: isinstance(v, Violation))
 def _violation_to_fix(v: Violation) -> dict:
     """Convert a Violation to an Agent-friendly fix instruction."""
+    from invar.core.rule_meta import get_rule_meta
+
     fix_info = _parse_suggestion(v.suggestion, v.rule) if v.suggestion else None
-    return {
+
+    # Phase 9.2 P3: Include rule metadata
+    result: dict = {
         "file": v.file,
         "line": v.line,
         "rule": v.rule,
@@ -234,6 +238,17 @@ def _violation_to_fix(v: Violation) -> dict:
         "message": v.message,
         "fix": fix_info,
     }
+
+    meta = get_rule_meta(v.rule)
+    if meta:
+        result["rule_meta"] = {
+            "category": meta.category.value,
+            "detects": meta.detects,
+            "cannot_detect": list(meta.cannot_detect),
+            "hint": meta.hint,
+        }
+
+    return result
 
 
 @pre(lambda suggestion, rule: suggestion is None or isinstance(suggestion, str))

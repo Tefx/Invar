@@ -12,7 +12,7 @@ from typing import Any
 
 from deal import post, pre
 
-from invar.core.models import GuardReport, RuleConfig
+from invar.core.models import GuardReport, RuleConfig, RuleExclusion
 
 
 @pre(lambda report, strict: isinstance(report, GuardReport))
@@ -64,12 +64,17 @@ def parse_guard_config(guard_config: dict[str, Any]) -> RuleConfig:
     Parse configuration from guard section.
 
     Examples:
-        >>> cfg = parse_guard_config({"max_file_lines": 500})
+        >>> cfg = parse_guard_config({"max_file_lines": 400})
         >>> cfg.max_file_lines
-        500
+        400
         >>> cfg = parse_guard_config({})
-        >>> cfg.max_file_lines
-        300
+        >>> cfg.max_file_lines  # Phase 9 P1: Default is now 500
+        500
+        >>> cfg = parse_guard_config({"rule_exclusions": [{"pattern": "**/gen/**", "rules": ["*"]}]})
+        >>> len(cfg.rule_exclusions)
+        1
+        >>> cfg.rule_exclusions[0].pattern
+        '**/gen/**'
     """
     kwargs: dict[str, Any] = {}
 
@@ -96,6 +101,27 @@ def parse_guard_config(guard_config: dict[str, Any]) -> RuleConfig:
 
     if "exclude_doctest_lines" in guard_config:
         kwargs["exclude_doctest_lines"] = guard_config["exclude_doctest_lines"]
+
+    # Phase 9 P1: Parse rule_exclusions
+    if "rule_exclusions" in guard_config:
+        exclusions = []
+        for excl in guard_config["rule_exclusions"]:
+            exclusions.append(RuleExclusion(
+                pattern=excl["pattern"],
+                rules=excl["rules"],
+            ))
+        kwargs["rule_exclusions"] = exclusions
+
+    # Phase 9 P2: Parse severity_overrides (merge with defaults)
+    if "severity_overrides" in guard_config:
+        # Get default overrides and update with user config
+        defaults = {"redundant_type_contract": "off"}
+        defaults.update(guard_config["severity_overrides"])
+        kwargs["severity_overrides"] = defaults
+
+    # Phase 9 P8: Parse size_warning_threshold
+    if "size_warning_threshold" in guard_config:
+        kwargs["size_warning_threshold"] = guard_config["size_warning_threshold"]
 
     return RuleConfig(**kwargs)
 

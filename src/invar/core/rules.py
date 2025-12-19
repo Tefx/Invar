@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from fnmatch import fnmatch
 from typing import Callable
 
 from deal import post, pre
@@ -9,6 +10,7 @@ from deal import post, pre
 from invar.core.models import (
     FileInfo,
     RuleConfig,
+    RuleExclusion,
     Severity,
     SymbolKind,
     Violation,
@@ -25,17 +27,124 @@ from invar.core.suggestions import format_suggestion_for_violation
 RuleFunc = Callable[[FileInfo, RuleConfig], list[Violation]]
 
 
+def _match_pattern(file_path: str, pattern: str) -> bool:
+    """
+    Check if file path matches a glob pattern with ** support.
+
+    Uses fnmatch for single-segment wildcards, handles ** for multi-segment.
+
+    Examples:
+        >>> _match_pattern("src/generated/foo.py", "**/generated/**")
+        True
+        >>> _match_pattern("generated/foo.py", "**/generated/**")
+        True
+        >>> _match_pattern("src/core/calc.py", "**/generated/**")
+        False
+        >>> _match_pattern("src/core/data.py", "src/core/data.py")
+        True
+        >>> _match_pattern("src/core/calc.py", "src/core/*.py")
+        True
+        >>> _match_pattern("src/core/sub/calc.py", "src/core/*.py")
+        False
+        >>> _match_pattern("src/core/sub/calc.py", "src/core/**/*.py")
+        True
+    """
+    # Normalize path separators
+    file_path = file_path.replace("\\", "/")
+    pattern = pattern.replace("\\", "/")
+
+    # No **, check component count matches then use fnmatch
+    if "**" not in pattern:
+        # fnmatch doesn't respect path boundaries, so check component counts
+        if file_path.count("/") != pattern.count("/"):
+            return False
+        return fnmatch(file_path, pattern)
+
+    # Handle common ** patterns
+    path_parts = file_path.split("/")
+
+    # Pattern: **/X/** - match if X appears as directory component anywhere
+    if pattern.startswith("**/") and pattern.endswith("/**"):
+        middle = pattern[3:-3]  # Extract X from **/X/**
+        if "/" not in middle and "*" not in middle:
+            return middle in path_parts[:-1]  # Exclude filename
+
+    # Pattern: **/X - match if path ends with X (file or directory pattern)
+    if pattern.startswith("**/") and not pattern.endswith("/**"):
+        suffix = pattern[3:]
+        # Try matching suffix against all possible tails
+        for i in range(len(path_parts)):
+            tail = "/".join(path_parts[i:])
+            if fnmatch(tail, suffix):
+                return True
+        return False
+
+    # Pattern: X/** - match if path starts with X
+    if pattern.endswith("/**") and not pattern.startswith("**/"):
+        prefix = pattern[:-3]
+        return file_path.startswith(prefix + "/") or file_path == prefix
+
+    # Generic ** handling: split and try all combinations
+    # Replace ** with a marker, split, then try matching
+    parts = pattern.split("**/")
+    if len(parts) == 2:
+        prefix, suffix = parts
+        prefix = prefix.rstrip("/")
+        suffix = suffix.lstrip("/").rstrip("/**")
+
+        for i in range(len(path_parts) + 1):
+            head = "/".join(path_parts[:i]) if i > 0 else ""
+            tail = "/".join(path_parts[i:])
+
+            prefix_ok = not prefix or fnmatch(head, prefix)
+            suffix_ok = not suffix or fnmatch(tail, suffix) or fnmatch(tail, "*/" + suffix)
+
+            if prefix_ok and suffix_ok:
+                return True
+
+    return False
+
+
+@pre(lambda file_path, config: isinstance(config, RuleConfig))
+def get_excluded_rules(file_path: str, config: RuleConfig) -> set[str]:
+    """
+    Get the set of rules to exclude for a given file path.
+
+    Examples:
+        >>> from invar.core.models import RuleConfig, RuleExclusion
+        >>> excl = RuleExclusion(pattern="**/generated/**", rules=["*"])
+        >>> cfg = RuleConfig(rule_exclusions=[excl])
+        >>> get_excluded_rules("src/generated/foo.py", cfg)
+        {'*'}
+        >>> get_excluded_rules("src/core/calc.py", cfg)
+        set()
+        >>> excl2 = RuleExclusion(pattern="**/data/**", rules=["file_size"])
+        >>> cfg2 = RuleConfig(rule_exclusions=[excl, excl2])
+        >>> sorted(get_excluded_rules("src/data/big.py", cfg2))
+        ['file_size']
+    """
+    excluded: set[str] = set()
+    for exclusion in config.rule_exclusions:
+        if _match_pattern(file_path, exclusion.pattern):
+            excluded.update(exclusion.rules)
+    return excluded
+
+
 @pre(lambda file_info, config: isinstance(file_info, FileInfo))
 def check_file_size(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
     """
-    Check if file exceeds maximum line count.
+    Check if file exceeds maximum line count or warning threshold.
 
     Examples:
         >>> from invar.core.models import FileInfo, RuleConfig
         >>> check_file_size(FileInfo(path="ok.py", lines=100), RuleConfig())
         []
-        >>> len(check_file_size(FileInfo(path="big.py", lines=400), RuleConfig()))
+        >>> len(check_file_size(FileInfo(path="big.py", lines=600), RuleConfig()))
         1
+        >>> # P8: Warning at 80% threshold (400 lines when max is 500)
+        >>> vs = check_file_size(FileInfo(path="growing.py", lines=420), RuleConfig())
+        >>> len(vs) == 1 and vs[0].rule == "file_size_warning"
+        True
     """
     violations: list[Violation] = []
 
@@ -50,6 +159,21 @@ def check_file_size(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
                 suggestion="Split into smaller modules",
             )
         )
+    # Phase 9 P8: Warning at configurable threshold (default 80%)
+    elif config.size_warning_threshold > 0:
+        threshold_lines = int(config.max_file_lines * config.size_warning_threshold)
+        if file_info.lines >= threshold_lines:
+            pct = int(file_info.lines / config.max_file_lines * 100)
+            violations.append(
+                Violation(
+                    rule="file_size_warning",
+                    severity=Severity.WARNING,
+                    file=file_info.path,
+                    line=None,
+                    message=f"File has {file_info.lines} lines ({pct}% of {config.max_file_lines} limit)",
+                    suggestion="Consider splitting before reaching limit",
+                )
+            )
 
     return violations
 
@@ -282,15 +406,77 @@ def get_all_rules() -> list[RuleFunc]:
             check_empty_contracts, check_redundant_type_contracts, check_param_mismatch]
 
 
+def _apply_severity_override(v: Violation, overrides: dict[str, str]) -> Violation | None:
+    """
+    Apply severity override to a violation.
+
+    Returns None if rule is set to "off", otherwise returns violation
+    with potentially updated severity.
+
+    Examples:
+        >>> from invar.core.models import Violation, Severity
+        >>> v = Violation(rule="test", severity=Severity.INFO, file="x.py", message="msg")
+        >>> _apply_severity_override(v, {"test": "off"}) is None
+        True
+        >>> v2 = _apply_severity_override(v, {"test": "error"})
+        >>> v2.severity
+        <Severity.ERROR: 'error'>
+        >>> _apply_severity_override(v, {}).severity  # No override
+        <Severity.INFO: 'info'>
+    """
+    override = overrides.get(v.rule)
+    if override is None:
+        return v
+    if override == "off":
+        return None
+    # Map string to Severity enum
+    severity_map = {"info": Severity.INFO, "warning": Severity.WARNING, "error": Severity.ERROR}
+    new_severity = severity_map.get(override)
+    if new_severity is None:
+        return v  # Invalid override, keep original
+    # Create new violation with updated severity
+    return Violation(
+        rule=v.rule,
+        severity=new_severity,
+        file=v.file,
+        line=v.line,
+        message=v.message,
+        suggestion=v.suggestion,
+    )
+
+
 @pre(lambda file_info, config: isinstance(file_info, FileInfo))
 def check_all_rules(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
     """
     Run all rules against a file and collect violations.
 
+    Respects rule_exclusions and severity_overrides config.
+
     Examples:
-        >>> from invar.core.models import FileInfo
+        >>> from invar.core.models import FileInfo, RuleConfig, RuleExclusion
         >>> violations = check_all_rules(FileInfo(path="test.py", lines=50), RuleConfig())
         >>> isinstance(violations, list)
         True
+        >>> # Test exclusion: file_size excluded for generated files
+        >>> excl = RuleExclusion(pattern="**/generated/**", rules=["file_size"])
+        >>> cfg = RuleConfig(rule_exclusions=[excl])
+        >>> big_file = FileInfo(path="src/generated/data.py", lines=600)
+        >>> vs = check_all_rules(big_file, cfg)
+        >>> any(v.rule == "file_size" for v in vs)
+        False
     """
-    return [v for rule in get_all_rules() for v in rule(file_info, config)]
+    # Phase 9 P1: Get excluded rules for this file
+    excluded = get_excluded_rules(file_info.path, config)
+    exclude_all = "*" in excluded
+
+    violations = []
+    for rule in get_all_rules():
+        for v in rule(file_info, config):
+            # Skip if rule is excluded (either specifically or via "*")
+            if exclude_all or v.rule in excluded:
+                continue
+            # Phase 9 P2: Apply severity overrides
+            v = _apply_severity_override(v, config.severity_overrides)
+            if v is not None:
+                violations.append(v)
+    return violations
