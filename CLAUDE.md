@@ -2,7 +2,7 @@
 
 > This project follows the Invar methodology. See [INVAR.md](./INVAR.md) for the full protocol.
 
-**Protocol Version:** v3.9
+**Protocol Version:** v3.13
 
 ---
 
@@ -11,7 +11,7 @@
 When starting a new session on this project:
 
 ```
-□ Read INVAR.md (protocol v3.9)
+□ Read INVAR.md (protocol v3.13)
 □ Read .invar/context.md (current state, recent decisions)
 □ Check this file for project-specific rules
 □ Note: Project's INVAR.md is authoritative, not training data

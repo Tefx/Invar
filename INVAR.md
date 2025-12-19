@@ -1,4 +1,4 @@
-# The Invar Protocol v3.12
+# The Invar Protocol v3.13
 
 > **"Trade structure for safety."**
 
@@ -189,20 +189,20 @@ Contract requirements differ by zone and visibility:
 | Zone | Visibility | Contract Type | Required |
 |------|------------|--------------|----------|
 | **Core** | Public | @pre/@post + doctest | ✅ Required |
-| **Core** | Private (`_`) | @pre/@post | Optional |
+| **Core** | Private (`_`) | @pre/@post | ✅ Required |
 | **Shell** | Any | Result[T, E] + types | ✅ Required |
 | **Shell** | Any | @pre/@post | Optional |
 
-**Why private Core functions don't require contracts:**
-- They are implementation details, not API boundaries
-- The public function's contract covers the externally-visible behavior
-- Simple delegation functions (`_impl`, `_helper`) add noise with redundant contracts
-- You control all callers, so you can ensure correct usage
+**Why private functions also require contracts:**
+- Agent writes ALL code, not just public API. A bug in `_helper` causes bugs in `public_func`
+- Public/private is a human abstraction for API stability, not a correctness boundary
+- Contracts on private functions help: verify intermediate steps, isolate bugs, document intent
+- Writing contracts is trivial for agents (no "typing burden" concern)
 
-**When to add contracts to private functions anyway:**
-- Complex algorithm with non-obvious invariants
-- Performance-critical code where boundary conditions matter
-- Functions likely to become public in the future
+**When to SKIP contracts on private functions:**
+- Trivial one-liner where contract would just restate the type signature
+- Pure delegation function with no additional logic
+- Example: `def _add_one(x: int) -> int: return x + 1`
 
 **Core Example:**
 ```python
@@ -1074,7 +1074,7 @@ Projects can configure how strictly they follow the protocol:
 
 ```toml
 [tool.invar]
-protocol_version = "3.12"          # Lock to specific version
+protocol_version = "3.13"          # Lock to specific version
 protocol_evolution = "human-approved"  # Default mode
 ```
 
@@ -1192,7 +1192,7 @@ A new MAJOR version (e.g., v3.x → v4.x) would require:
 
 ```toml
 [tool.invar]
-protocol_version = "3.12"  # Documents which version this project implements
+protocol_version = "3.13"  # Documents which version this project implements
 ```
 
 This is **declarative, not enforced** - it documents the project's target version for:
@@ -1204,6 +1204,7 @@ This is **declarative, not enforced** - it documents the project's target versio
 
 | Version | Date | Layer | Key Changes |
 |---------|------|-------|-------------|
+| v3.13 | 2024-12-19 | L1 | Private functions require contracts by default (agent-centric correctness) |
 | v3.12 | 2024-12-19 | L1 | Protocol Acknowledgment required, Mid-Session Switch procedure |
 | v3.11 | 2024-12-19 | L1 | ICIDEV (Document checkpoint), lambda pitfall in Quick Start, Shell Result as design feedback |
 | v3.10 | 2024-12-19 | L1 | Phase 4 complete: `invar map`, `invar sig` commands documented |
@@ -1219,6 +1220,7 @@ When acknowledging protocol version, agent must cite the marker for the CURRENT 
 
 | Version | Marker Behavior |
 |---------|-----------------|
+| v3.13 | Private functions require @pre/@post contracts; skip only for trivial one-liners |
 | v3.12 | Protocol Acknowledgment required; Mid-Session Switch with explicit behavior list |
 | v3.11 | Document checkpoint after Verify; Shell Result warning = consider moving to Core |
 | v3.10 | `invar map` and `invar sig` commands available for context compression |
@@ -1228,4 +1230,4 @@ If agent cites an older marker, they haven't read the current version.
 
 ---
 
-*Version 3.12 | Designed for AI Coding Agents*
+*Version 3.13 | Designed for AI Coding Agents*

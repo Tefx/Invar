@@ -9,7 +9,7 @@
 - **Phase 3 (Guard Enhancement):** Complete ✅
 - **Phase 4 (Perception):** Complete ✅
 - **Phase 5 (Guard Refinement):** Complete ✅
-- **Protocol Version:** v3.12
+- **Protocol Version:** v3.13
 - **Blockers:** None
 
 ## Implementation Phases
@@ -159,7 +159,7 @@
 8. **Core vs Shell contracts** → Core needs @pre/@post, Shell needs Result[T, E]
 9. **CLI vs Config value** → Output functions should use config values, not CLI args
 10. **Module extraction** → When files exceed 300 lines, extract cohesive modules
-11. **Private function contracts** → Protocol says optional, but agents SHOULD add them. Contracts help agents verify correctness of ALL code, not just public API. "Private = no contract" is human-centric thinking
+11. **Private function contracts** → v3.13: Private functions now REQUIRE contracts by default. Public/private is a human abstraction; agents need contracts on ALL code to verify correctness. Skip only for trivial one-liners
 12. **Top-level only design** → Current parser only checks module-level functions, not class methods
 13. **Section 7 sync** → When implementing new Guard capabilities, ALWAYS update Section 7 (Honest Limitations)
 14. **AST reference counting** → Only count ast.Call nodes to avoid double-counting (Name + Call for same reference)
@@ -185,11 +185,13 @@ Items now organized into development phases (see CLAUDE.md):
 ### Phase 7: Advanced Verification
 - Class method checking
 - Configurable impure list
-- Private function contracts
 - Doctest line exclusion
 - Rule result aggregation
 - Rule severity config
 - Config profiles
+
+### Future Discussion
+- Production contract overhead: how to ensure `DEAL_DISABLE=1` or `-O` in production (humans forget)
 
 ## Documentation Checklist
 

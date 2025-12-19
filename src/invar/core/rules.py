@@ -159,8 +159,8 @@ def check_contracts(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
         return violations
 
     for symbol in file_info.symbols:
-        # Only check public functions (not _private)
-        if symbol.kind == SymbolKind.FUNCTION and not symbol.name.startswith("_"):
+        # Check all functions (public and private) - agent needs contracts everywhere
+        if symbol.kind == SymbolKind.FUNCTION:
             if not symbol.contracts:
                 violations.append(
                     Violation(
@@ -221,7 +221,7 @@ def check_shell_result(file_info: FileInfo, config: RuleConfig) -> list[Violatio
     """
     Check that Shell functions with return values use Result[T, E].
 
-    Skips: private functions, functions returning None (CLI entry points).
+    Skips: functions returning None (CLI entry points).
 
     Examples:
         >>> from invar.core.models import FileInfo, Symbol, SymbolKind, RuleConfig
@@ -236,7 +236,7 @@ def check_shell_result(file_info: FileInfo, config: RuleConfig) -> list[Violatio
         return violations
 
     for symbol in file_info.symbols:
-        if symbol.kind != SymbolKind.FUNCTION or symbol.name.startswith("_"):
+        if symbol.kind != SymbolKind.FUNCTION:
             continue
         # Skip functions with no return type or returning None
         if "-> None" in symbol.signature or "->" not in symbol.signature:
