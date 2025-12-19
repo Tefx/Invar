@@ -26,16 +26,23 @@
 | 9 | Release | ✅ Complete | PyPI (python-invar), CI workflows |
 | 10 | Agent-Native Advanced | Long-term | Rules YAML, precheck command |
 
-## Core Insight: Invar Serves Agents, Not Humans
+## Core Insight: Agent-Native Execution, Human-Directed Purpose
 
-**Fundamental realization:** Invar is built for AI Agents, not human programmers.
+**Clarified understanding:** Invar helps humans direct AI Agents to produce quality code.
 
-| Dimension | Human Programmer | AI Agent |
-|-----------|-----------------|----------|
-| Understanding | Intuition + experience | Pattern matching, needs explicit rules |
-| Failure mode | Carelessness, fatigue | Formal compliance without substance |
-| Verification | Subjective judgment | Needs machine-verifiable YES/NO |
-| Fixes | Understands suggestions | Needs exact code to apply |
+```
+Human (Commander) ──directs──→ Agent (Executor) ──uses──→ Invar (Protocol + Tools)
+```
+
+| Role | Relationship with Invar |
+|------|------------------------|
+| **Human** | Indirect. Benefits through better Agent output. |
+| **Agent** | Direct and primary. Invar's first-class user. |
+| **Invar** | Agent-Native design. Serves Agent to serve Human. |
+
+**Design Principle:** Protocol and Tools are Agent-Native (Agent is primary user), but the ultimate goal is Human success.
+
+See `docs/VISION-REVISED.md` for full details.
 
 ## Phase 8: Agent Efficiency ✅ Complete
 
@@ -118,6 +125,7 @@
 26. **Protocol compression** → Information available via commands/hints doesn't need to be in the protocol; compress once tooling provides discoverability
 27. **PyPI naming** → Check name availability early; `python-X` is valid convention when `X` is taken; PEP 541 allows reclaiming abandoned packages
 28. **Runtime vs dev deps** → If code imports it, it's a runtime dep; `deal` and `returns` used in src/ must be in dependencies, not dev
+29. **Agent-Native ≠ Agent-Only** → Invar is Agent-Native (Agent is primary user), but serves Human goals; design for Agent execution, measure by Human success
 
 ## Future Improvements
 
@@ -152,6 +160,7 @@
 |------|---------|
 | INVAR.md | Protocol v3.17 (compressed, 88 lines) |
 | docs/INVAR-DETAILED.md | Full protocol details |
+| docs/VISION-REVISED.md | Clarified design principles |
 | CLAUDE.md | Development guide |
 | docs/DESIGN.md | Technical design |
 | .invar/proposals/AGENT-IMPROVEMENTS.md | 14 improvement proposals |
