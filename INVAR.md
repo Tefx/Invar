@@ -526,13 +526,26 @@ exclude_paths = ["tests", ".venv", "venv", "__pycache__", ".git"]
 # ⚠️ The 50-line limit counts EVERYTHING: code + docstring + comments
 # Good doctests can push functions over the limit
 
-# ✅ SOLUTION: Extract helper functions when exceeded
+# ✅ SOLUTION 1: Extract helper functions when exceeded
 def _helper(x):  # Move logic to helper
     ...
 
 def main_function(x):
     """Extensive doctest examples here."""
     return _helper(x)
+```
+
+**Alternative: Configure line counting mode (pick ONE)**
+```toml
+[tool.invar.guard]
+# Option A: Exclude entire docstring (focus on logic size)
+use_code_lines = true
+
+# Option B: Exclude only doctest lines (reward good examples)
+exclude_doctest_lines = true
+
+# ⚠️ WARNING: Don't enable BOTH - doctests are inside docstrings
+# Enabling both would double-exclude doctest lines
 ```
 
 ### CLI Commands

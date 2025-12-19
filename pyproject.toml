@@ -86,7 +86,14 @@ exclude_paths = ["tests", "scripts", ".venv", "__pycache__"]
 
 # Phase 3: Guard Enhancement
 strict_pure = true          # Detect internal imports and impure calls in Core
-use_code_lines = false      # Use total lines (including docstrings) for size check
+
+# Function size counting options (mutually exclusive, pick ONE):
+# - use_code_lines=true: Excludes entire docstring from count (focus on logic size)
+# - exclude_doctest_lines=true: Subtracts doctest lines only (reward good examples)
+# - Both false (default): Counts all lines
+# WARNING: Don't enable both - doctests are inside docstrings, would double-exclude
+use_code_lines = false
+exclude_doctest_lines = false
 
 [tool.invar]
 # Protocol governance (see INVAR.md Section 12)
