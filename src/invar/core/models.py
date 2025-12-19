@@ -113,3 +113,70 @@ class GuardReport(BaseModel):
             True
         """
         return self.errors == 0
+
+
+class RuleConfig(BaseModel):
+    """
+    Configuration for rule checking.
+
+    Examples:
+        >>> config = RuleConfig()
+        >>> config.max_file_lines
+        300
+        >>> config.strict_pure
+        False
+    """
+
+    max_file_lines: int = 300
+    max_function_lines: int = 50
+    forbidden_imports: tuple[str, ...] = (
+        "os",
+        "sys",
+        "socket",
+        "requests",
+        "urllib",
+        "subprocess",
+        "shutil",
+        "io",
+        "pathlib",
+    )
+    require_contracts: bool = True
+    require_doctests: bool = True
+    strict_pure: bool = False
+    use_code_lines: bool = False
+
+
+# Phase 4: Perception models
+
+
+class SymbolRefs(BaseModel):
+    """
+    A symbol with its cross-file reference count.
+
+    Examples:
+        >>> from invar.core.models import Symbol, SymbolKind, SymbolRefs
+        >>> sym = Symbol(name="foo", kind=SymbolKind.FUNCTION, line=1, end_line=5)
+        >>> sr = SymbolRefs(symbol=sym, file_path="core/calc.py", ref_count=10)
+        >>> sr.ref_count
+        10
+    """
+
+    symbol: Symbol
+    file_path: str
+    ref_count: int = 0
+
+
+class PerceptionMap(BaseModel):
+    """
+    Complete perception map for a project.
+
+    Examples:
+        >>> pm = PerceptionMap(project_root="/test", total_files=5, total_symbols=20)
+        >>> pm.total_files
+        5
+    """
+
+    project_root: str
+    total_files: int
+    total_symbols: int
+    symbols: list[SymbolRefs] = Field(default_factory=list)

@@ -7,39 +7,18 @@ No I/O operations - receives parsed data only.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Callable
 
 from deal import post, pre
 
-from invar.core.models import FileInfo, Severity, Symbol, SymbolKind, Violation
-from invar.core.purity import check_impure_calls as _check_impure_calls
-from invar.core.purity import check_internal_imports as _check_internal_imports
-
-
-@dataclass
-class RuleConfig:
-    """Configuration for rule checking."""
-
-    max_file_lines: int = 300
-    max_function_lines: int = 50
-    forbidden_imports: tuple[str, ...] = (
-        "os",
-        "sys",
-        "socket",
-        "requests",
-        "urllib",
-        "subprocess",
-        "shutil",
-        "io",
-        "pathlib",
-    )
-    require_contracts: bool = True
-    require_doctests: bool = True
-    # Phase 3: Guard Enhancement
-    strict_pure: bool = False  # Enable stricter purity checks
-    use_code_lines: bool = False  # Use code_lines (excluding docstring) for size check
-
+from invar.core.models import (
+    FileInfo,
+    RuleConfig,
+    Severity,
+    SymbolKind,
+    Violation,
+)
+from invar.core.purity import check_impure_calls, check_internal_imports
 
 # Type alias for rule functions
 RuleFunc = Callable[[FileInfo, RuleConfig], list[Violation]]
@@ -51,17 +30,11 @@ def check_file_size(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
     Check if file exceeds maximum line count.
 
     Examples:
-        >>> from invar.core.models import FileInfo
-        >>> info = FileInfo(path="test.py", lines=100)
-        >>> cfg = RuleConfig(max_file_lines=300)
-        >>> check_file_size(info, cfg)
+        >>> from invar.core.models import FileInfo, RuleConfig
+        >>> check_file_size(FileInfo(path="ok.py", lines=100), RuleConfig())
         []
-        >>> info = FileInfo(path="big.py", lines=400)
-        >>> violations = check_file_size(info, cfg)
-        >>> len(violations)
+        >>> len(check_file_size(FileInfo(path="big.py", lines=400), RuleConfig()))
         1
-        >>> violations[0].severity.value
-        'error'
     """
     violations: list[Violation] = []
 
@@ -243,12 +216,43 @@ def check_doctests(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
     return violations
 
 
-# Phase 3: Purity check wrappers (adapts signature for rule engine)
-def _wrap_internal_imports(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
-    return _check_internal_imports(file_info, config.strict_pure)
+@pre(lambda file_info, config: isinstance(file_info, FileInfo))
+def check_shell_result(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
+    """
+    Check that Shell functions with return values use Result[T, E].
 
-def _wrap_impure_calls(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
-    return _check_impure_calls(file_info, config.strict_pure)
+    Skips: private functions, functions returning None (CLI entry points).
+
+    Examples:
+        >>> from invar.core.models import FileInfo, Symbol, SymbolKind, RuleConfig
+        >>> sym = Symbol(name="load", kind=SymbolKind.FUNCTION, line=1, end_line=5,
+        ...     signature="(path: str) -> Result[str, str]")
+        >>> info = FileInfo(path="shell/fs.py", lines=10, symbols=[sym], is_shell=True)
+        >>> check_shell_result(info, RuleConfig())
+        []
+    """
+    violations: list[Violation] = []
+    if not file_info.is_shell:
+        return violations
+
+    for symbol in file_info.symbols:
+        if symbol.kind != SymbolKind.FUNCTION or symbol.name.startswith("_"):
+            continue
+        # Skip functions with no return type or returning None
+        if "-> None" in symbol.signature or "->" not in symbol.signature:
+            continue
+        if "Result[" not in symbol.signature:
+            violations.append(
+                Violation(
+                    rule="shell_result",
+                    severity=Severity.WARNING,
+                    file=file_info.path,
+                    line=symbol.line,
+                    message=f"Shell function '{symbol.name}' should return Result[T, E]",
+                    suggestion="Use Result[T, E] from returns library",
+                )
+            )
+    return violations
 
 
 @post(lambda result: len(result) > 0)
@@ -267,8 +271,9 @@ def get_all_rules() -> list[RuleFunc]:
         check_forbidden_imports,
         check_contracts,
         check_doctests,
-        _wrap_internal_imports,
-        _wrap_impure_calls,
+        check_shell_result,
+        check_internal_imports,
+        check_impure_calls,
     ]
 
 

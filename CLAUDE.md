@@ -246,20 +246,20 @@ Enhanced verification for better self-dogfooding:
 - [x] `--strict-pure` CLI mode
 - [x] New `core/purity.py` module for purity detection
 
-### Phase 4: Perception ← Current
+### Phase 4: Perception ✅ Complete
 Context compression for large codebases:
-- [ ] core/references.py (reference counting)
-- [ ] core/formatter.py (output formatting)
-- [ ] shell/cli.py (map, sig commands)
+- [x] core/references.py (cross-file reference counting)
+- [x] core/formatter.py (text/JSON output formatting)
+- [x] shell/perception.py (map, sig command implementations)
+- [x] CLI: `invar map [path] --top N --json`, `invar sig <target> --json`
 
-### Phase 5: Guard Refinement
+### Phase 5: Guard Refinement ✅ Complete
 Code quality fixes from first-principles review:
-- [ ] **Shell Result validation** - Check Shell functions return `Result[T, E]`
-- [ ] **Unified rule signatures** - All rules use `(FileInfo, RuleConfig)` signature
-- [ ] **RuleConfig to Pydantic** - Consistency with other models
-- [ ] Config profiles - "strict", "standard", "relaxed" presets
+- [x] **Shell Result validation** - Check Shell functions return `Result[T, E]`
+- [x] **Unified rule signatures** - All rules use `(FileInfo, RuleConfig)` signature
+- [x] **RuleConfig to Pydantic** - Consistency with other models
 
-### Phase 6: Polish
+### Phase 6: Polish ← Current
 Documentation and release:
 - [ ] Documentation (usage guide)
 - [ ] CI templates
@@ -275,6 +275,7 @@ Extended checking capabilities:
 - [ ] Doctest line exclusion (option to exclude doctest from size)
 - [ ] Rule result aggregation (group related violations)
 - [ ] Rule severity config (user-customizable severity)
+- [ ] Config profiles - "strict", "standard", "relaxed" presets
 - [ ] Global variable modification detection
 - [ ] `# invar: pure` comment annotation support
 - [ ] Pureness validation (pure functions can't call impure)

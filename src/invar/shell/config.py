@@ -19,7 +19,7 @@ from typing import Any, Literal
 
 from returns.result import Failure, Result, Success
 
-from invar.core.rules import RuleConfig
+from invar.core.models import RuleConfig
 
 
 ConfigSource = Literal["pyproject", "invar", "invar_dir", "default"]

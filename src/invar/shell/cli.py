@@ -15,8 +15,8 @@ from rich.table import Table
 from returns.result import Failure, Success
 
 from invar import __version__
-from invar.core.models import GuardReport, Severity
-from invar.core.rules import RuleConfig, check_all_rules
+from invar.core.models import GuardReport, RuleConfig, Severity
+from invar.core.rules import check_all_rules
 from invar.shell.config import load_config
 from invar.shell.fs import scan_project
 
@@ -78,8 +78,7 @@ def guard(
 
 def _output_rich(report: GuardReport, strict_pure: bool = False) -> None:
     """Output report using Rich formatting."""
-    console.print()
-    console.print("[bold]Invar Guard Report[/bold]")
+    console.print("\n[bold]Invar Guard Report[/bold]")
     console.print("=" * 40)
     if strict_pure:
         console.print("[cyan](strict-pure mode enabled)[/cyan]")
@@ -88,37 +87,21 @@ def _output_rich(report: GuardReport, strict_pure: bool = False) -> None:
     if not report.violations:
         console.print("[green]No violations found.[/green]")
     else:
-        # Group violations by file
-        by_file: dict[str, list[tuple[str, str, int | None, str]]] = {}
+        by_file: dict[str, list] = {}
         for v in report.violations:
-            if v.file not in by_file:
-                by_file[v.file] = []
-            icon = "[red]ERROR[/red]" if v.severity == Severity.ERROR else "[yellow]WARN[/yellow]"
-            by_file[v.file].append((icon, v.rule, v.line, v.message))
-
-        for file_path, violations in sorted(by_file.items()):
-            console.print(f"[bold]{file_path}[/bold]")
-            for icon, rule, line, message in violations:
-                line_str = f":{line}" if line else ""
-                console.print(f"  {icon} [{rule}]{line_str} {message}")
+            by_file.setdefault(v.file, []).append(v)
+        for fp, vs in sorted(by_file.items()):
+            console.print(f"[bold]{fp}[/bold]")
+            for v in vs:
+                icon = "[red]ERROR[/red]" if v.severity == Severity.ERROR else "[yellow]WARN[/yellow]"
+                ln = f":{v.line}" if v.line else ""
+                console.print(f"  {icon} {ln} {v.message}")
             console.print()
 
-    # Summary
     console.print("-" * 40)
-    console.print(f"Files checked: {report.files_checked}")
-    console.print(f"Errors: {report.errors}")
-    console.print(f"Warnings: {report.warnings}")
-
-    if report.passed:
-        console.print("\n[green]Guard passed.[/green]")
-    else:
-        console.print("\n[red]Guard failed.[/red]")
-
-    console.print()
-    console.print(
-        "[dim]Note: Guard performs static analysis only. "
-        "Dynamic imports and runtime behavior are not checked.[/dim]"
-    )
+    console.print(f"Files checked: {report.files_checked}\nErrors: {report.errors}\nWarnings: {report.warnings}")
+    console.print(f"\n[{'green' if report.passed else 'red'}]Guard {'passed' if report.passed else 'failed'}.[/]")
+    console.print("\n[dim]Note: Guard performs static analysis only. Dynamic imports and runtime behavior are not checked.[/dim]")
 
 
 def _output_json(report: GuardReport) -> None:
@@ -139,6 +122,35 @@ def _output_json(report: GuardReport) -> None:
 def version() -> None:
     """Show Invar version."""
     console.print(f"invar {__version__}")
+
+
+@app.command("map")
+def map_command(
+    path: Path = typer.Argument(Path("."), help="Project root directory"),
+    top: int = typer.Option(0, "--top", help="Show top N most-referenced symbols"),
+    json_output: bool = typer.Option(False, "--json", help="Output as JSON"),
+) -> None:
+    """Generate symbol map with reference counts."""
+    from invar.shell.perception import run_map
+
+    result = run_map(path, top, json_output)
+    if isinstance(result, Failure):
+        console.print(f"[red]Error:[/red] {result.failure()}")
+        raise typer.Exit(1)
+
+
+@app.command("sig")
+def sig_command(
+    target: str = typer.Argument(..., help="File or file::symbol path"),
+    json_output: bool = typer.Option(False, "--json", help="Output as JSON"),
+) -> None:
+    """Extract signatures from a file or symbol."""
+    from invar.shell.perception import run_sig
+
+    result = run_sig(target, json_output)
+    if isinstance(result, Failure):
+        console.print(f"[red]Error:[/red] {result.failure()}")
+        raise typer.Exit(1)
 
 
 _DEFAULT_PYPROJECT_CONFIG = '''\n# Invar Configuration

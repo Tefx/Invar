@@ -498,17 +498,16 @@ invar init --no-dirs     # Skip directory creation (for existing projects)
 - Path-based and pattern-based Core/Shell classification
 - Function-internal imports (`--strict-pure` mode)
 - Common impure function calls: `datetime.now`, `random.*`, `open`, `print` (`--strict-pure` mode)
+- Missing `Result[T, E]` return type in Shell functions (warns for public functions with return values)
 
 **Invar CANNOT detect:**
 - Dynamic imports (`__import__`, `importlib`)
 - I/O through dependency injection (e.g., passing file handle to Core)
 - Contract semantic quality (`@pre(lambda x: True)` passes)
-- Missing `Result[T, E]` return type in Shell functions (not yet implemented)
 - Class method contracts (only checks top-level functions)
 - Async function purity issues
 
 **Planned improvements:**
-- Shell contract validation (check for Result return type)
 - Class method checking
 - Configurable impure function list
 

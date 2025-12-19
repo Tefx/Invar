@@ -7,6 +7,8 @@
 - **Phase 1 (Guard):** Complete ✅
 - **Phase 2 (Adoption):** Complete ✅
 - **Phase 3 (Guard Enhancement):** Complete ✅
+- **Phase 4 (Perception):** Complete ✅
+- **Phase 5 (Guard Refinement):** Complete ✅
 - **Protocol Version:** v3.9
 - **Blockers:** None
 
@@ -17,9 +19,9 @@
 | 1 | Guard (MVP) | ✅ Complete | Core architecture enforcement |
 | 2 | Adoption | ✅ Complete | Flexible config, pattern matching |
 | 3 | Guard Enhancement | ✅ Complete | Pureness detection, better line count |
-| 4 | Perception | ← Current | map, sig commands |
-| 5 | Guard Refinement | Pending | Shell validation, unified signatures, Pydantic RuleConfig |
-| 6 | Polish | Pending | Docs, CI, PyPI release |
+| 4 | Perception | ✅ Complete | map, sig commands for context compression |
+| 5 | Guard Refinement | ✅ Complete | Shell validation, unified signatures, Pydantic RuleConfig |
+| 6 | Polish | ← Current | Docs, CI, PyPI release |
 | 7 | Advanced Verification | Long-term | Class methods, config profiles |
 
 ## Phase 2: Adoption ✅ Complete
@@ -41,18 +43,37 @@
 4. [x] `--strict-pure` CLI mode
 5. [x] New `core/purity.py` module for purity detection logic
 
-## Phase 4: Perception (Current)
+## Phase 4: Perception ✅ Complete
 
 **Goal:** Context compression for large codebases.
 
-**Tasks:**
-1. [ ] core/references.py (reference counting)
-2. [ ] core/formatter.py (output formatting)
-3. [ ] shell/cli.py (map, sig commands)
+**Implemented:**
+1. [x] core/references.py (cross-file reference counting)
+2. [x] core/formatter.py (text/JSON output formatting)
+3. [x] shell/perception.py (map, sig command implementations)
+4. [x] CLI commands: `invar map [path] --top N --json`, `invar sig <target> --json`
+5. [x] New models: SymbolRefs, PerceptionMap
+
+## Phase 5: Guard Refinement ✅ Complete
+
+**Goal:** Clean technical debt and improve consistency.
+
+**Implemented:**
+1. [x] RuleConfig moved from @dataclass to Pydantic BaseModel
+2. [x] Unified rule signatures: all rules use (file_info, config) pattern
+3. [x] Shell Result validation: warns when Shell functions don't return Result[T, E]
+4. [x] Removed wrapper functions (_wrap_internal_imports, _wrap_impure_calls)
 
 ## Recent Decisions
 
-1. **Protocol Applied to Self** (2024-12-19)
+1. **Phase 4 & 5 Complete** (2024-12-19)
+   - Implemented Phase 5 first (Guard Refinement) to clean technical debt
+   - Then implemented Phase 4 (Perception) for context compression
+   - Cross-file reference counting: only counts references from OTHER files
+   - Shell Result rule skips functions returning None (CLI entry points)
+   - 6 warnings remain for Shell helper functions that are pure logic
+
+2. **Protocol Applied to Self** (2024-12-19)
    - Reorganized Future Improvements into Phases 5-7
    - Added Phase 5 (Guard Refinement), renamed Phase 6 (Polish), Phase 7 (Advanced)
    - Fixed wrapper functions to use `_private` prefix (passes strict mode now)
@@ -138,20 +159,18 @@
 11. **Private function contracts** → Private (`_`) Core functions don't require contracts (API boundary is the public function); but add them for complex algorithms with non-obvious invariants
 12. **Top-level only design** → Current parser only checks module-level functions, not class methods
 13. **Section 7 sync** → When implementing new Guard capabilities, ALWAYS update Section 7 (Honest Limitations)
+14. **AST reference counting** → Only count ast.Call nodes to avoid double-counting (Name + Call for same reference)
+15. **@pre lambda defaults** → Must include default values: `lambda pm, top_n=0:` not just `lambda pm:`
 
 ## Future Improvements
 
 Items now organized into development phases (see CLAUDE.md):
 
-### Phase 5: Guard Refinement
-- Shell Result validation
-- Unified rule signatures
-- RuleConfig to Pydantic
-- Config profiles
-
-### Phase 6: Polish
+### Phase 6: Polish (Current)
 - Documentation consolidation
 - Suggestion templates
+- CI templates
+- PyPI release
 
 ### Phase 7: Advanced Verification
 - Class method checking
@@ -160,6 +179,7 @@ Items now organized into development phases (see CLAUDE.md):
 - Doctest line exclusion
 - Rule result aggregation
 - Rule severity config
+- Config profiles
 
 ## Documentation Checklist
 

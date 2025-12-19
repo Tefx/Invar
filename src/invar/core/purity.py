@@ -15,7 +15,7 @@ import ast
 
 from deal import pre
 
-from invar.core.models import FileInfo, Severity, Symbol, SymbolKind, Violation
+from invar.core.models import FileInfo, RuleConfig, Severity, SymbolKind, Violation
 
 
 # Known impure functions that indicate side effects
@@ -181,27 +181,27 @@ def count_code_lines(node: ast.FunctionDef | ast.AsyncFunctionDef) -> int:
 # Rule checking functions
 
 
-@pre(lambda file_info, strict_pure: isinstance(file_info, FileInfo))
-def check_internal_imports(file_info: FileInfo, strict_pure: bool) -> list[Violation]:
+@pre(lambda file_info, config: isinstance(file_info, FileInfo))
+def check_internal_imports(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
     """
     Check for imports inside function bodies.
 
     Only applies to Core files when strict_pure is enabled.
 
     Examples:
-        >>> from invar.core.models import FileInfo, Symbol, SymbolKind
+        >>> from invar.core.models import FileInfo, Symbol, SymbolKind, RuleConfig
         >>> sym = Symbol(
         ...     name="foo", kind=SymbolKind.FUNCTION, line=1, end_line=5,
         ...     internal_imports=["os"]
         ... )
         >>> info = FileInfo(path="core/calc.py", lines=10, symbols=[sym], is_core=True)
-        >>> violations = check_internal_imports(info, strict_pure=True)
+        >>> violations = check_internal_imports(info, RuleConfig(strict_pure=True))
         >>> len(violations)
         1
     """
     violations: list[Violation] = []
 
-    if not file_info.is_core or not strict_pure:
+    if not file_info.is_core or not config.strict_pure:
         return violations
 
     for symbol in file_info.symbols:
@@ -223,27 +223,27 @@ def check_internal_imports(file_info: FileInfo, strict_pure: bool) -> list[Viola
     return violations
 
 
-@pre(lambda file_info, strict_pure: isinstance(file_info, FileInfo))
-def check_impure_calls(file_info: FileInfo, strict_pure: bool) -> list[Violation]:
+@pre(lambda file_info, config: isinstance(file_info, FileInfo))
+def check_impure_calls(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
     """
     Check for calls to known impure functions.
 
     Only applies to Core files when strict_pure is enabled.
 
     Examples:
-        >>> from invar.core.models import FileInfo, Symbol, SymbolKind
+        >>> from invar.core.models import FileInfo, Symbol, SymbolKind, RuleConfig
         >>> sym = Symbol(
         ...     name="foo", kind=SymbolKind.FUNCTION, line=1, end_line=5,
         ...     impure_calls=["datetime.now", "print"]
         ... )
         >>> info = FileInfo(path="core/calc.py", lines=10, symbols=[sym], is_core=True)
-        >>> violations = check_impure_calls(info, strict_pure=True)
+        >>> violations = check_impure_calls(info, RuleConfig(strict_pure=True))
         >>> len(violations)
         1
     """
     violations: list[Violation] = []
 
-    if not file_info.is_core or not strict_pure:
+    if not file_info.is_core or not config.strict_pure:
         return violations
 
     for symbol in file_info.symbols:
