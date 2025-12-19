@@ -1,5 +1,9 @@
 # Invar
 
+[![PyPI version](https://badge.fury.io/py/python-invar.svg)](https://badge.fury.io/py/python-invar)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 **Structure for AI-assisted development.**
 
 ---
@@ -49,14 +53,17 @@ your-project/
 └── shell/          ← I/O operations (calls core/ for logic)
 ```
 
-### 3. Maps as Compressed Context *(Phase 4)*
+### 3. Maps as Compressed Context
 
-Agents cannot "see" large codebases. Maps will provide high-signal summaries.
+Agents cannot "see" large codebases. Maps provide high-signal summaries.
+
+```bash
+invar map              # Symbol map with reference counts
+invar sig module.py    # Extract signatures from file
+```
 
 - **Without:** Agent reads 50 files to understand project
 - **With:** Agent reads summary with key symbols and contracts
-
-> Not yet implemented. Currently use IDE features or tools like Repomix.
 
 ### 4. Tools as Enforcement
 
@@ -69,7 +76,7 @@ Agents might forget instructions. But `invar guard` blocks non-compliant code.
 ### 1. Install
 
 ```bash
-pip install invar
+pip install python-invar
 ```
 
 ### 2. Initialize
@@ -93,8 +100,9 @@ Creates:
 ### 4. Verify
 
 ```bash
-invar guard              # Check structure
-invar guard --strict     # Warnings as errors
+invar guard              # Check structure (shows hints for violations)
+invar guard --changed    # Only check git-modified files
+invar guard --explain    # Show detailed explanations
 ```
 
 ## What Gets Enforced
@@ -103,8 +111,8 @@ invar guard --strict     # Warnings as errors
 |------|---------|
 | Core has no I/O imports | Business logic stays pure and testable |
 | Functions < 50 lines | Forces decomposition into understandable units |
-| Files < 300 lines | Prevents god-modules that know too much |
-| Public functions have contracts | Explicit boundaries prevent misuse |
+| Files < 500 lines | Prevents god-modules that know too much |
+| Core functions have contracts | `@pre`/`@post` make boundaries explicit |
 | No impure calls in Core | `datetime.now()`, `random()` break determinism |
 
 ## For Existing Projects
@@ -139,8 +147,9 @@ Invar enforces itself:
 ```bash
 git clone https://github.com/tefx/invar
 cd invar
-invar guard --strict
-# → 0 errors, 0 warnings
+pip install -e ".[dev]"
+invar guard
+# → Guard passed. (0 errors)
 ```
 
 ## When to Use Invar

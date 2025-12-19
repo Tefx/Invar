@@ -23,7 +23,7 @@
 | 6 | Verification Completeness | ✅ Complete | Class methods, pureness validation |
 | 7 | Agent-Native Foundation | ✅ Complete | Empty contract, fix suggestions |
 | 8 | Agent Efficiency | ✅ Complete | --changed, --agent, param mismatch |
-| 9 | Release | Next | PyPI, documentation, CI templates |
+| 9 | Release | ✅ Complete | PyPI (python-invar), CI workflows |
 | 10 | Agent-Native Advanced | Long-term | Rules YAML, precheck command |
 
 ## Core Insight: Invar Serves Agents, Not Humans
@@ -52,7 +52,14 @@
 
 ## Recent Decisions
 
-1. **Phase 9.3 Complete** (2025-12-20)
+1. **Phase 9 Release Complete** (2025-12-20)
+   - PyPI package name: `python-invar` (original `invar` taken, may apply PEP 541 later)
+   - CLI command: `invar` (unchanged)
+   - Fixed dependencies: `deal` and `returns` moved to runtime deps
+   - Added: LICENSE, py.typed, GitHub Actions CI/publish workflows
+   - README updated with badges and correct info
+
+2. **Phase 9.3 Complete** (2025-12-20)
    - P6: Protocol compression (INVAR.md 1296 → 88 lines)
    - Detailed protocol moved to `docs/INVAR-DETAILED.md`
    - Essential info preserved: Core/Shell, Contracts, Size Limits, Guard Commands, ICIDV, Config
@@ -109,6 +116,8 @@
 24. **Core imports are forbidden** → pathlib, os, sys etc. forbidden in Core; use fnmatch instead of PurePath for glob matching
 25. **fnmatch doesn't respect paths** → fnmatch's `*` matches `/`; check path component counts for non-** patterns
 26. **Protocol compression** → Information available via commands/hints doesn't need to be in the protocol; compress once tooling provides discoverability
+27. **PyPI naming** → Check name availability early; `python-X` is valid convention when `X` is taken; PEP 541 allows reclaiming abandoned packages
+28. **Runtime vs dev deps** → If code imports it, it's a runtime dep; `deal` and `returns` used in src/ must be in dependencies, not dev
 
 ## Future Improvements
 

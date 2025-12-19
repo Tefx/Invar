@@ -12,7 +12,7 @@ packages = ["src/invar"]
 "src/invar/templates/proposal.md.template" = "invar/templates/proposal.md.template"
 
 [project]
-name = "invar"
+name = "python-invar"
 version = "0.1.0"
 description = "AI-native software engineering framework with design-by-contract"
 readme = "README.md"
@@ -37,6 +37,8 @@ dependencies = [
     "typer>=0.9",
     "rich>=13.0",
     "pydantic>=2.0",
+    "deal>=4.0",
+    "returns>=0.20",
 ]
 
 [project.optional-dependencies]
@@ -46,17 +48,16 @@ dev = [
     "hypothesis>=6.0",
     "mypy>=1.0",
     "ruff>=0.1",
-    "deal>=4.0",
-    "returns>=0.20",
 ]
 
 [project.scripts]
 invar = "invar.shell.cli:app"
 
 [project.urls]
-Homepage = "https://github.com/invar/invar"
-Documentation = "https://invar.dev"
-Repository = "https://github.com/invar/invar"
+Homepage = "https://github.com/tefx/invar"
+Documentation = "https://github.com/tefx/invar#readme"
+Repository = "https://github.com/tefx/invar"
+Issues = "https://github.com/tefx/invar/issues"
 
 # =============================================================================
 # Tool Configuration
@@ -96,8 +97,8 @@ use_code_lines = false
 exclude_doctest_lines = false
 
 [tool.invar]
-# Protocol governance (see INVAR.md Section 12)
-protocol_version = "3.9"
+# Protocol governance
+protocol_version = "3.17"
 protocol_evolution = "human-approved"  # locked | human-approved | open
 
 # Test style: "inline" or "separate"
