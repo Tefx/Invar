@@ -15,11 +15,13 @@ from rich.table import Table
 from returns.result import Failure, Result, Success
 
 from invar import __version__
+from invar.core.formatter import format_guard_agent
 from invar.core.models import GuardReport, RuleConfig, Severity
 from invar.core.rules import check_all_rules
 from invar.core.utils import get_exit_code
 from invar.shell.config import load_config
 from invar.shell.fs import scan_project
+from invar.shell.git import get_changed_files, is_git_repo
 from invar.shell.templates import add_config, copy_template, create_directories
 
 app = typer.Typer(
@@ -30,10 +32,12 @@ app = typer.Typer(
 console = Console()
 
 
-def _scan_and_check(path: Path, config: RuleConfig) -> Result[GuardReport, str]:
+def _scan_and_check(
+    path: Path, config: RuleConfig, only_files: set[Path] | None = None
+) -> Result[GuardReport, str]:
     """Scan project files and check against rules."""
     report = GuardReport(files_checked=0)
-    for file_result in scan_project(path):
+    for file_result in scan_project(path, only_files):
         if isinstance(file_result, Failure):
             console.print(f"[yellow]Warning:[/yellow] {file_result.failure()}")
             continue
@@ -51,6 +55,10 @@ def guard(
     strict: bool = typer.Option(False, "--strict", help="Treat warnings as errors"),
     strict_pure: bool = typer.Option(False, "--strict-pure",
                                       help="Enable strict purity checks (internal imports, impure calls)"),
+    changed: bool = typer.Option(False, "--changed",
+                                  help="Only check git-modified files (Phase 8.1)"),
+    agent: bool = typer.Option(False, "--agent",
+                                help="Output JSON with fix instructions for agents (Phase 8.2)"),
     json_output: bool = typer.Option(False, "--json", help="Output as JSON"),
 ) -> None:
     """Check project against Invar architecture rules."""
@@ -60,25 +68,53 @@ def guard(
         raise typer.Exit(1)
 
     config = config_result.unwrap()
-    # Override strict_pure if specified on command line
     if strict_pure:
         config.strict_pure = True
 
-    scan_result = _scan_and_check(path, config)
+    # Phase 8.1: --changed mode
+    only_files: set[Path] | None = None
+    if changed:
+        if not is_git_repo(path):
+            console.print("[red]Error:[/red] --changed requires a git repository")
+            raise typer.Exit(1)
+        changed_result = get_changed_files(path)
+        if isinstance(changed_result, Failure):
+            console.print(f"[red]Error:[/red] {changed_result.failure()}")
+            raise typer.Exit(1)
+        only_files = changed_result.unwrap()
+        if not only_files:
+            console.print("[green]No changed Python files.[/green]")
+            raise typer.Exit(0)
+
+    scan_result = _scan_and_check(path, config, only_files)
     if isinstance(scan_result, Failure):
         console.print(f"[red]Error:[/red] {scan_result.failure()}")
         raise typer.Exit(1)
     report = scan_result.unwrap()
-    _output_json(report) if json_output else _output_rich(report, config.strict_pure)
+
+    # Phase 8.2: --agent mode takes precedence over --json
+    if agent:
+        _output_agent(report)
+    elif json_output:
+        _output_json(report)
+    else:
+        _output_rich(report, config.strict_pure, changed)
     raise typer.Exit(get_exit_code(report, strict))
 
 
-def _output_rich(report: GuardReport, strict_pure: bool = False) -> None:
+def _output_rich(
+    report: GuardReport, strict_pure: bool = False, changed_mode: bool = False
+) -> None:
     """Output report using Rich formatting."""
     console.print("\n[bold]Invar Guard Report[/bold]")
     console.print("=" * 40)
+    mode_info = []
     if strict_pure:
-        console.print("[cyan](strict-pure mode enabled)[/cyan]")
+        mode_info.append("strict-pure")
+    if changed_mode:
+        mode_info.append("changed-only")
+    if mode_info:
+        console.print(f"[cyan]({', '.join(mode_info)} mode)[/cyan]")
     console.print()
 
     if not report.violations:
@@ -121,6 +157,14 @@ def _output_json(report: GuardReport) -> None:
         "passed": report.passed,
         "violations": [v.model_dump() for v in report.violations],
     }
+    console.print(json.dumps(output, indent=2))
+
+
+def _output_agent(report: GuardReport) -> None:
+    """Output report in Agent-optimized JSON format (Phase 8.2)."""
+    import json
+
+    output = format_guard_agent(report)
     console.print(json.dumps(output, indent=2))
 
 

@@ -78,15 +78,25 @@ def read_and_parse_file(file_path: Path, project_root: Path) -> Result[FileInfo,
     return Success(file_info)
 
 
-def scan_project(project_root: Path) -> Iterator[Result[FileInfo, str]]:
+def scan_project(
+    project_root: Path,
+    only_files: set[Path] | None = None,
+) -> Iterator[Result[FileInfo, str]]:
     """
     Scan a project and yield FileInfo for each Python file.
 
     Args:
         project_root: Root directory of the project
+        only_files: If provided, only scan these files (for --changed mode)
 
     Yields:
         Result containing FileInfo or error message for each file
     """
-    for py_file in discover_python_files(project_root):
-        yield read_and_parse_file(py_file, project_root)
+    if only_files is not None:
+        # Phase 8.1: --changed mode - only scan specified files
+        for py_file in only_files:
+            if py_file.exists() and py_file.suffix == ".py":
+                yield read_and_parse_file(py_file, project_root)
+    else:
+        for py_file in discover_python_files(project_root):
+            yield read_and_parse_file(py_file, project_root)

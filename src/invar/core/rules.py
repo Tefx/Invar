@@ -1,9 +1,4 @@
-"""
-Rule engine for Guard.
-
-Rules check FileInfo and produce Violations.
-No I/O operations - receives parsed data only.
-"""
+"""Rule engine for Guard. Rules check FileInfo and produce Violations. No I/O."""
 
 from __future__ import annotations
 
@@ -18,7 +13,11 @@ from invar.core.models import (
     SymbolKind,
     Violation,
 )
-from invar.core.contracts import check_empty_contracts, check_redundant_type_contracts
+from invar.core.contracts import (
+    check_empty_contracts,
+    check_param_mismatch,
+    check_redundant_type_contracts,
+)
 from invar.core.purity import check_impure_calls, check_internal_imports
 from invar.core.suggestions import format_suggestion_for_violation
 
@@ -280,7 +279,7 @@ def get_all_rules() -> list[RuleFunc]:
     """
     return [check_file_size, check_function_size, check_forbidden_imports, check_contracts,
             check_doctests, check_shell_result, check_internal_imports, check_impure_calls,
-            check_empty_contracts, check_redundant_type_contracts]
+            check_empty_contracts, check_redundant_type_contracts, check_param_mismatch]
 
 
 @pre(lambda file_info, config: isinstance(file_info, FileInfo))

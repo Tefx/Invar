@@ -1,7 +1,7 @@
 """
-Output formatting for Perception (Phase 4).
+Output formatting for Perception (Phase 4) and Guard (Phase 8).
 
-This module provides functions to format perception output.
+This module provides functions to format perception and guard output.
 Supports both human-readable (Rich) and machine-readable (JSON) formats.
 
 No I/O operations - returns formatted strings/dicts only.
@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from deal import post, pre
 
-from invar.core.models import PerceptionMap, Symbol, SymbolRefs
+from invar.core.models import GuardReport, PerceptionMap, Symbol, SymbolRefs, Violation
 
 
 @pre(lambda perception_map, top_n=0: isinstance(perception_map, PerceptionMap))
@@ -185,3 +185,74 @@ def format_signatures_json(symbols: list[Symbol], file_path: str) -> dict:
             for sym in symbols
         ],
     }
+
+
+# Phase 8.2: Agent-mode formatting
+
+
+@pre(lambda report: isinstance(report, GuardReport))
+def format_guard_agent(report: GuardReport) -> dict:
+    """
+    Format Guard report for Agent consumption (Phase 8.2).
+
+    Provides structured output with actionable fix instructions.
+
+    Examples:
+        >>> from invar.core.models import GuardReport, Violation, Severity
+        >>> report = GuardReport(files_checked=1)
+        >>> v = Violation(rule="missing_contract", severity=Severity.WARNING,
+        ...     file="test.py", line=10, message="Function 'foo' has no contract",
+        ...     suggestion="Add: @pre(lambda x: x >= 0)")
+        >>> report.add_violation(v)
+        >>> d = format_guard_agent(report)
+        >>> d["status"]
+        'passed'
+        >>> len(d["fixes"])
+        1
+    """
+    return {
+        "status": "passed" if report.passed else "failed",
+        "summary": {
+            "files_checked": report.files_checked,
+            "errors": report.errors,
+            "warnings": report.warnings,
+            "infos": report.infos,
+        },
+        "fixes": [_violation_to_fix(v) for v in report.violations],
+    }
+
+
+@pre(lambda v: isinstance(v, Violation))
+def _violation_to_fix(v: Violation) -> dict:
+    """Convert a Violation to an Agent-friendly fix instruction."""
+    fix_info = _parse_suggestion(v.suggestion, v.rule) if v.suggestion else None
+    return {
+        "file": v.file,
+        "line": v.line,
+        "rule": v.rule,
+        "severity": v.severity.value,
+        "message": v.message,
+        "fix": fix_info,
+    }
+
+
+@pre(lambda suggestion, rule: suggestion is None or isinstance(suggestion, str))
+def _parse_suggestion(suggestion: str | None, rule: str) -> dict | None:
+    """Parse suggestion string into structured fix instruction."""
+    if not suggestion:
+        return None
+
+    # Parse "Add: @pre(...)" style suggestions
+    if suggestion.startswith("Add: "):
+        return {"action": "add_decorator", "code": suggestion[5:]}
+
+    # Parse "Replace with: @pre(...)" style suggestions
+    if suggestion.startswith("Replace with: "):
+        return {"action": "replace_decorator", "code": suggestion[14:]}
+
+    # Parse "Replace with business logic: @pre(...)" style
+    if suggestion.startswith("Replace with business logic: "):
+        return {"action": "replace_decorator", "code": suggestion[29:]}
+
+    # Default: return as instruction text
+    return {"action": "manual", "instruction": suggestion}

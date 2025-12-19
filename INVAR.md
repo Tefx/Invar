@@ -1,4 +1,4 @@
-# The Invar Protocol v3.15
+# The Invar Protocol v3.16
 
 > **"Trade structure for safety."**
 
@@ -592,6 +592,9 @@ invar init --no-dirs     # Skip directory creation (for existing projects)
 - **Empty contracts** (Phase 7): `@pre(lambda x: True)` → WARNING
 - **Redundant type contracts** (Phase 7): `@pre(lambda x: isinstance(x, int))` when `x: int` declared → INFO
 - **Concrete fix suggestions** (Phase 7): Generates usable `@pre` code based on function signature
+- **@pre param mismatch** (Phase 8): `@pre(lambda x: ...)` on `def f(x, y)` → ERROR (runtime bug)
+- **`--changed` mode** (Phase 8): Only check git-modified files for faster iteration
+- **`--agent` mode** (Phase 8): JSON output with structured fix instructions
 
 **CANNOT detect:**
 - Dynamic imports (`__import__`, `importlib`)
@@ -657,10 +660,8 @@ def add_violation(self, v: Violation): ...
 
 ### Planned Improvements
 - Configurable impure function list
-- @pre lambda signature validation (match function parameters)
 - Transitive impurity detection
-- `--changed` mode (only check git-modified files)
-- `--agent-mode` output (JSON with fix instructions)
+- `--guard-explain` (show why files are classified as Core/Shell)
 
 **Always remember:** These tools assist but don't replace engineering judgment.
 
