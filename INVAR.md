@@ -80,10 +80,9 @@ max_function_lines = 50
 
 | Topic | Location |
 |-------|----------|
+| Why & How (essential) | [docs/INVAR-GUIDE.md](docs/INVAR-GUIDE.md) |
 | Design philosophy | [docs/VISION.md](docs/VISION.md) |
-| Technical design | [docs/DESIGN.md](docs/DESIGN.md) |
 | Rule details | `invar rules` or `invar guard --explain` |
-| Project context | [.invar/context.md](.invar/context.md) |
 
 ---
 

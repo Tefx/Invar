@@ -50,8 +50,8 @@ See `.invar/proposals/` for historical details.
 | File | Purpose |
 |------|---------|
 | INVAR.md | Protocol (90 lines) |
+| docs/INVAR-GUIDE.md | Why & How (130 lines) |
 | docs/VISION.md | Design philosophy |
-| docs/DESIGN.md | Technical architecture |
 | CLAUDE.md | Development guide |
 
 ## Archived Documents
