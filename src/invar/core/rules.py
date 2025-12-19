@@ -59,6 +59,7 @@ def check_function_size(file_info: FileInfo, config: RuleConfig) -> list[Violati
     Check if any function exceeds maximum line count.
 
     When use_code_lines is True, uses code_lines (excluding docstring).
+    When exclude_doctest_lines is True, subtracts doctest lines from count.
 
     Examples:
         >>> from invar.core.models import FileInfo, Symbol, SymbolKind
@@ -72,13 +73,17 @@ def check_function_size(file_info: FileInfo, config: RuleConfig) -> list[Violati
 
     for symbol in file_info.symbols:
         if symbol.kind in (SymbolKind.FUNCTION, SymbolKind.METHOD):
-            # Use code_lines if available and enabled, otherwise total lines
+            # Calculate effective line count based on config
             if config.use_code_lines and symbol.code_lines is not None:
                 func_lines = symbol.code_lines
                 line_type = "code lines"
             else:
                 func_lines = symbol.end_line - symbol.line + 1
                 line_type = "lines"
+            # Optionally exclude doctest lines
+            if config.exclude_doctest_lines and symbol.doctest_lines > 0:
+                func_lines -= symbol.doctest_lines
+                line_type = f"{line_type} (excl. doctest)"
 
             if func_lines > config.max_function_lines:
                 violations.append(
@@ -87,10 +92,7 @@ def check_function_size(file_info: FileInfo, config: RuleConfig) -> list[Violati
                         severity=Severity.WARNING,
                         file=file_info.path,
                         line=symbol.line,
-                        message=(
-                            f"Function '{symbol.name}' has {func_lines} {line_type} "
-                            f"(max: {config.max_function_lines})"
-                        ),
+                        message=f"Function '{symbol.name}' has {func_lines} {line_type} (max: {config.max_function_lines})",
                         suggestion="Extract helper functions",
                     )
                 )
@@ -159,16 +161,17 @@ def check_contracts(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
         return violations
 
     for symbol in file_info.symbols:
-        # Check all functions (public and private) - agent needs contracts everywhere
-        if symbol.kind == SymbolKind.FUNCTION:
+        # Check all functions and methods - agent needs contracts everywhere
+        if symbol.kind in (SymbolKind.FUNCTION, SymbolKind.METHOD):
             if not symbol.contracts:
+                kind_name = "Method" if symbol.kind == SymbolKind.METHOD else "Function"
                 violations.append(
                     Violation(
                         rule="missing_contract",
                         severity=Severity.WARNING,
                         file=file_info.path,
                         line=symbol.line,
-                        message=f"Function '{symbol.name}' has no @pre or @post contract",
+                        message=f"{kind_name} '{symbol.name}' has no @pre or @post contract",
                         suggestion="Add @pre for input validation or @post for output guarantee",
                     )
                 )
@@ -201,16 +204,19 @@ def check_doctests(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
         return violations
 
     for symbol in file_info.symbols:
-        # Only public functions require doctests (private can skip)
-        is_public = not symbol.name.startswith("_")
-        if symbol.kind == SymbolKind.FUNCTION and is_public and symbol.contracts and not symbol.has_doctest:
+        # Only public functions/methods require doctests (private can skip)
+        # For methods, check if method name (after dot) starts with _
+        name_part = symbol.name.split(".")[-1] if "." in symbol.name else symbol.name
+        is_public = not name_part.startswith("_")
+        if symbol.kind in (SymbolKind.FUNCTION, SymbolKind.METHOD) and is_public and symbol.contracts and not symbol.has_doctest:
+            kind_name = "Method" if symbol.kind == SymbolKind.METHOD else "Function"
             violations.append(
                 Violation(
                     rule="missing_doctest",
                     severity=Severity.WARNING,
                     file=file_info.path,
                     line=symbol.line,
-                    message=f"Function '{symbol.name}' has contracts but no doctest examples",
+                    message=f"{kind_name} '{symbol.name}' has contracts but no doctest examples",
                     suggestion="Add >>> examples in docstring",
                 )
             )
@@ -266,20 +272,11 @@ def get_all_rules() -> list[RuleFunc]:
     Return all available rule functions.
 
     Examples:
-        >>> rules = get_all_rules()
-        >>> len(rules) >= 5
+        >>> len(get_all_rules()) >= 5
         True
     """
-    return [
-        check_file_size,
-        check_function_size,
-        check_forbidden_imports,
-        check_contracts,
-        check_doctests,
-        check_shell_result,
-        check_internal_imports,
-        check_impure_calls,
-    ]
+    return [check_file_size, check_function_size, check_forbidden_imports, check_contracts,
+            check_doctests, check_shell_result, check_internal_imports, check_impure_calls]
 
 
 @pre(lambda file_info, config: isinstance(file_info, FileInfo))

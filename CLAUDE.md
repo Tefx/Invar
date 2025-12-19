@@ -66,12 +66,16 @@ src/invar/
 │   ├── parser.py   # AST parsing: source string → symbols
 │   ├── rules.py    # Rule checking: file info → violations
 │   ├── purity.py   # Purity detection: internal imports, impure calls
-│   └── references.py  # Reference counting (Phase 4)
+│   ├── references.py  # Reference counting (Phase 4)
+│   ├── formatter.py   # Text/JSON output formatting (Phase 4)
+│   └── utils.py    # Pure utility functions (exit code, config parsing)
 │
 ├── shell/          # I/O operations
 │   ├── cli.py      # Typer CLI commands
 │   ├── fs.py       # File system: read files, walk directories
-│   └── config.py   # Load config from multiple sources
+│   ├── config.py   # Load config from multiple sources
+│   ├── perception.py  # map, sig command implementations (Phase 4)
+│   └── templates.py   # Template file operations for init
 │
 └── templates/      # Files copied by `invar init`
     ├── INVAR.md              # Protocol document
@@ -259,27 +263,69 @@ Code quality fixes from first-principles review:
 - [x] **Unified rule signatures** - All rules use `(FileInfo, RuleConfig)` signature
 - [x] **RuleConfig to Pydantic** - Consistency with other models
 
-### Phase 6: Polish ← Current
-Documentation and release:
-- [ ] Documentation (usage guide)
-- [ ] CI templates
-- [ ] PyPI release
-- [ ] Documentation consolidation (reduce INVAR.md/CLAUDE.md/VISION.md redundancy)
-- [ ] Suggestion message templates
+### Phase 6: Verification Completeness ← Current
+**Goal:** Fix critical gaps in what Guard can verify. These directly impact agent correctness.
 
-### Phase 7: Advanced Verification (Long-term)
-Extended checking capabilities:
-- [ ] Class method checking (extend to methods inside classes)
-- [ ] Configurable impure list (user-defined IMPURE_FUNCTIONS)
-- [ ] Private function contracts (option for `_private` functions)
-- [ ] Doctest line exclusion (option to exclude doctest from size)
-- [ ] Rule result aggregation (group related violations)
-- [ ] Rule severity config (user-customizable severity)
+| Task | Priority | Rationale |
+|------|----------|-----------|
+| Class method checking | 🔴 Critical | Current biggest blind spot: methods inside classes have NO contract/size checks |
+| Pureness validation | 🔴 High | Pure functions calling impure = bug. Ensure transitive purity |
+| Doctest line exclusion | 🟡 Medium | Good doctests shouldn't penalize function length |
+
+- [ ] **Class method checking** - Extend parser + rules to check methods inside classes
+  - Currently only module-level functions are checked
+  - Agent writes class methods constantly - all are unchecked
+  - Requires: update `parser.py` to extract methods, update rules to apply
+- [ ] **Pureness validation** - Verify pure functions don't call impure functions
+  - Build call graph from AST
+  - Flag Core functions that call known impure functions
+  - Builds on Phase 3's purity detection
+- [ ] **Doctest line exclusion** - `exclude_doctest_lines` config option
+  - Count function body lines excluding `>>> ` doctest lines
+  - Encourages thorough doctests without penalizing size
+
+### Phase 7: Release
+**Goal:** Enable adoption by other projects. Blocks external use of Invar.
+
+| Task | Priority | Rationale |
+|------|----------|-----------|
+| PyPI release | 🔴 Critical | Without this, no external adoption possible |
+| Usage documentation | 🟡 Medium | Help human adopters understand Invar |
+| CI templates | 🟢 Low | Convenience for human CI setup |
+
+- [ ] **PyPI release** - `pip install invar` should "just work"
+  - Finalize package metadata
+  - Set up release workflow
+  - Publish to PyPI
+- [ ] **Usage documentation** - README expansion, examples
+  - Quick start for new projects
+  - Migration guide for existing projects
+- [ ] **CI templates** - GitHub Actions example
+  - Example workflow for `invar guard` in CI
+
+### Phase 8: Advanced Features (Long-term)
+**Goal:** Nice-to-have improvements after core functionality is complete.
+
+**Config & Profiles:**
 - [ ] Config profiles - "strict", "standard", "relaxed" presets
+- [ ] Configurable impure list (user-defined IMPURE_FUNCTIONS)
+- [ ] Rule severity config (user-customizable severity)
+
+**Guard Enhancements:**
+- [ ] `invar guard --explain` - Show why files are classified as Core/Shell
+- [ ] Separate code/docstring line display - "55 lines (35 code, 20 docstring)"
+- [ ] Per-zone size limits - Different limits for Core (50) vs Shell (80)
+
+**Advanced Purity:**
 - [ ] Global variable modification detection
 - [ ] `# invar: pure` comment annotation support
-- [ ] Pureness validation (pure functions can't call impure)
 - [ ] Show pureness in `invar map` output
+
+**UI Improvements:**
+- [ ] Rule result aggregation (group related violations)
+
+**Removed/Deprecated:**
+- ~~Private function contracts option~~ - Conflicts with v3.13 (private functions require contracts)
 
 ---
 

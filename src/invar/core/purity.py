@@ -18,32 +18,15 @@ from deal import post, pre
 from invar.core.models import FileInfo, RuleConfig, Severity, SymbolKind, Violation
 
 
-# Known impure functions that indicate side effects
+# Known impure functions and method patterns
 IMPURE_FUNCTIONS: set[str] = {
-    # Time-related
-    "now", "today", "utcnow", "time",
-    # Randomness
-    "random", "randint", "randrange", "choice", "shuffle", "sample",
-    # I/O
-    "open", "print", "input",
-    # System
-    "getenv", "environ",
+    "now", "today", "utcnow", "time", "random", "randint", "randrange",
+    "choice", "shuffle", "sample", "open", "print", "input", "getenv", "environ",
 }
-
-# Known impure method calls (object.method patterns)
 IMPURE_PATTERNS: set[tuple[str, str]] = {
-    ("datetime", "now"),
-    ("datetime", "today"),
-    ("datetime", "utcnow"),
-    ("date", "today"),
-    ("time", "time"),
-    ("random", "random"),
-    ("random", "randint"),
-    ("random", "randrange"),
-    ("random", "choice"),
-    ("random", "shuffle"),
-    ("random", "sample"),
-    ("os", "getenv"),
+    ("datetime", "now"), ("datetime", "today"), ("datetime", "utcnow"), ("date", "today"),
+    ("time", "time"), ("random", "random"), ("random", "randint"), ("random", "randrange"),
+    ("random", "choice"), ("random", "shuffle"), ("random", "sample"), ("os", "getenv"),
 }
 
 
@@ -180,6 +163,54 @@ def count_code_lines(node: ast.FunctionDef | ast.AsyncFunctionDef) -> int:
     return total_lines - docstring_lines
 
 
+@pre(lambda node: isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef))
+def count_doctest_lines(node: ast.FunctionDef | ast.AsyncFunctionDef) -> int:
+    """
+    Count lines that are doctest examples in the docstring.
+
+    Counts both `>>> ` input lines and their expected output lines.
+
+    Examples:
+        >>> import ast
+        >>> code = '''
+        ... def foo():
+        ...     \"\"\"Example.
+        ...
+        ...     Examples:
+        ...         >>> foo()
+        ...         42
+        ...         >>> foo() + 1
+        ...         43
+        ...     \"\"\"
+        ...     return 42
+        ... '''
+        >>> tree = ast.parse(code)
+        >>> func = tree.body[0]
+        >>> count_doctest_lines(func)
+        4
+    """
+    docstring = ast.get_docstring(node)
+    if not docstring:
+        return 0
+
+    count = 0
+    in_doctest = False
+    for line in docstring.split("\n"):
+        stripped = line.strip()
+        if stripped.startswith(">>> "):
+            count += 1
+            in_doctest = True
+        elif stripped.startswith("... "):
+            count += 1  # Continuation line
+        elif in_doctest and stripped and not stripped.startswith(">>>"):
+            count += 1  # Expected output line
+            if not stripped:  # Empty line ends output
+                in_doctest = False
+        else:
+            in_doctest = False
+    return count
+
+
 # Rule checking functions
 
 
@@ -207,17 +238,15 @@ def check_internal_imports(file_info: FileInfo, config: RuleConfig) -> list[Viol
         return violations
 
     for symbol in file_info.symbols:
-        if symbol.kind == SymbolKind.FUNCTION and symbol.internal_imports:
+        if symbol.kind in (SymbolKind.FUNCTION, SymbolKind.METHOD) and symbol.internal_imports:
+            kind_name = "Method" if symbol.kind == SymbolKind.METHOD else "Function"
             violations.append(
                 Violation(
                     rule="internal_import",
                     severity=Severity.WARNING,
                     file=file_info.path,
                     line=symbol.line,
-                    message=(
-                        f"Function '{symbol.name}' has internal imports: "
-                        f"{', '.join(symbol.internal_imports)}"
-                    ),
+                    message=f"{kind_name} '{symbol.name}' has internal imports: {', '.join(symbol.internal_imports)}",
                     suggestion="Move imports to top of file or move function to Shell",
                 )
             )
@@ -249,17 +278,15 @@ def check_impure_calls(file_info: FileInfo, config: RuleConfig) -> list[Violatio
         return violations
 
     for symbol in file_info.symbols:
-        if symbol.kind == SymbolKind.FUNCTION and symbol.impure_calls:
+        if symbol.kind in (SymbolKind.FUNCTION, SymbolKind.METHOD) and symbol.impure_calls:
+            kind_name = "Method" if symbol.kind == SymbolKind.METHOD else "Function"
             violations.append(
                 Violation(
                     rule="impure_call",
                     severity=Severity.WARNING,
                     file=file_info.path,
                     line=symbol.line,
-                    message=(
-                        f"Function '{symbol.name}' calls impure functions: "
-                        f"{', '.join(symbol.impure_calls)}"
-                    ),
+                    message=f"{kind_name} '{symbol.name}' calls impure functions: {', '.join(symbol.impure_calls)}",
                     suggestion="Inject dependencies or move function to Shell",
                 )
             )

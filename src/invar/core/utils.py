@@ -94,6 +94,9 @@ def parse_guard_config(guard_config: dict[str, Any]) -> RuleConfig:
     if "use_code_lines" in guard_config:
         kwargs["use_code_lines"] = guard_config["use_code_lines"]
 
+    if "exclude_doctest_lines" in guard_config:
+        kwargs["exclude_doctest_lines"] = guard_config["exclude_doctest_lines"]
+
     return RuleConfig(**kwargs)
 
 

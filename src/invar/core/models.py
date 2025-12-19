@@ -10,6 +10,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import Literal
 
+from deal import pre
 from pydantic import BaseModel, Field
 
 
@@ -51,6 +52,8 @@ class Symbol(BaseModel):
     internal_imports: list[str] = Field(default_factory=list)
     impure_calls: list[str] = Field(default_factory=list)
     code_lines: int | None = None  # Lines excluding docstring/comments
+    # Phase 6: Verification Completeness
+    doctest_lines: int = 0  # Number of lines that are doctest examples
 
 
 class FileInfo(BaseModel):
@@ -83,6 +86,7 @@ class GuardReport(BaseModel):
     errors: int = 0
     warnings: int = 0
 
+    @pre(lambda self, violation: isinstance(violation, Violation))
     def add_violation(self, violation: Violation) -> None:
         """
         Add a violation and update counts.
@@ -102,6 +106,7 @@ class GuardReport(BaseModel):
             self.warnings += 1
 
     @property
+    @pre(lambda self: isinstance(self, GuardReport))
     def passed(self) -> bool:
         """
         Check if guard passed (no errors).
@@ -144,6 +149,7 @@ class RuleConfig(BaseModel):
     require_doctests: bool = True
     strict_pure: bool = False
     use_code_lines: bool = False
+    exclude_doctest_lines: bool = False
 
 
 # Phase 4: Perception models

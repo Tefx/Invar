@@ -742,76 +742,105 @@ invar init --config-only # Only add config, no INVAR.md/CLAUDE.md
 
 **Value:** Zero-refactor adoption for existing projects
 
-### Phase 3: Guard Enhancement
+### Phase 3: Guard Enhancement ✅ Complete
 
 **Goal:** Enhance verification for better self-dogfooding during Invar development.
 
-**Rationale:** By improving guard now, we get immediate feedback while developing subsequent phases.
-
 **Deliverables:**
-- Function-internal import detection (not just top-level)
-- Impure function call detection:
-  - Time: `datetime.now()`, `datetime.utcnow()`, `time.time()`
-  - Random: `random.random()`, `random.randint()`, `random.choice()`
-  - I/O: `open()`, `print()`, `input()`
-- Code line count excluding docstrings/comments
-- `invar guard --strict-pure` mode (new checks as WARNING)
+- [x] Function-internal import detection (not just top-level)
+- [x] Impure function call detection (datetime.now, random.*, open, print)
+- [x] Code line count excluding docstrings/comments
+- [x] `invar guard --strict-pure` mode
+- [x] New `core/purity.py` module
 
 **Value:** Catch common pureness violations; better line count accuracy
 
-**Technical approach:**
-```python
-# AST visitor to detect impure calls
-IMPURE_CALLS = {
-    ('datetime', 'now'), ('datetime', 'utcnow'),
-    ('time', 'time'), ('random', 'random'),
-    ('', 'open'), ('', 'print'), ('', 'input'),
-}
-
-def check_impure_calls(tree: ast.AST) -> list[Violation]:
-    """Walk AST and flag calls to known impure functions."""
-    ...
-
-# Separate code lines from docstring/comment lines
-def count_code_lines(source: str) -> tuple[int, int]:
-    """Returns (code_lines, docstring_comment_lines)."""
-    ...
-```
-
-### Phase 4: Perception
+### Phase 4: Perception ✅ Complete
 
 **Deliverables:**
-- `invar map` command (with AST-based reference analysis)
-- `invar sig` command
-- JSON output for agent consumption
+- [x] `invar map` command (with AST-based reference analysis)
+- [x] `invar sig` command
+- [x] JSON output for agent consumption
+- [x] core/references.py, core/formatter.py, shell/perception.py
 
 **Value:** Context compression for large projects
 
-### Phase 5: Polish
+### Phase 5: Guard Refinement ✅ Complete
 
 **Deliverables:**
-- Documentation (usage guide)
-- CI templates
-- PyPI release
+- [x] Shell Result validation (warn when Shell functions don't return Result)
+- [x] Unified rule signatures
+- [x] RuleConfig as Pydantic model
 
-### Phase 6: Advanced Verification (Long-term)
+**Value:** Self-consistency, cleaner codebase
 
-**Goal:** Enable explicit pureness declarations with validation.
+### Phase 6: Verification Completeness ← Current
+
+**Goal:** Fix critical gaps in what Guard can verify.
+
+**Priority by impact on agent correctness:**
+
+| Task | Priority | Rationale |
+|------|----------|-----------|
+| Class method checking | 🔴 Critical | Methods inside classes are not checked at all |
+| Pureness validation | 🔴 High | Ensure pure functions don't call impure |
+| Doctest line exclusion | 🟡 Medium | Good doctests shouldn't penalize size |
 
 **Deliverables:**
-- Global variable modification detection
-- Support `# invar: pure` comment annotation
-- Validate declared pure functions don't call impure functions
-- Show pureness status in `invar map` output
+- [ ] Extend parser to extract methods from classes
+- [ ] Apply contract/size rules to methods
+- [ ] Build call graph for pureness validation
+- [ ] `exclude_doctest_lines` config option
 
-**Configuration:**
-```toml
-[tool.invar.guard]
-# Require explicit purity annotations in Core
-require_pure_annotations = false  # default: false, opt-in
+**Technical approach - Class methods:**
+```python
+# In parser.py, iterate class bodies:
+for node in ast.walk(tree):
+    if isinstance(node, ast.ClassDef):
+        for item in node.body:
+            if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                # Extract method as Symbol with kind=METHOD
 ```
 
-**Value:** Explicit intent + automated verification
+**Technical approach - Pureness validation:**
+```python
+# Build call graph from AST
+# For each Core function, check if it calls any impure function
+# Uses IMPURE_FUNCTIONS from Phase 3's purity.py
+```
+
+### Phase 7: Release
+
+**Goal:** Enable adoption by other projects.
+
+**Deliverables:**
+- [ ] PyPI release (`pip install invar`)
+- [ ] Usage documentation (README expansion)
+- [ ] CI templates (GitHub Actions example)
+
+**Value:** External projects can use Invar
+
+### Phase 8: Advanced Features (Long-term)
+
+**Goal:** Nice-to-have improvements.
+
+**Config & Profiles:**
+- Config profiles ("strict", "standard", "relaxed" presets)
+- Configurable impure list (user-defined)
+- Rule severity config
+
+**Guard Enhancements:**
+- `invar guard --explain` (show classification reasons)
+- Separate code/docstring line display
+- Per-zone size limits (Core: 50, Shell: 80)
+
+**Advanced Purity:**
+- Global variable modification detection
+- `# invar: pure` comment annotation
+- Show pureness in `invar map` output
+
+**UI Improvements:**
+- Rule result aggregation
 
 ---
 

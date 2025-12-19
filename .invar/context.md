@@ -4,11 +4,8 @@
 
 ## Current State
 
-- **Phase 1 (Guard):** Complete ✅
-- **Phase 2 (Adoption):** Complete ✅
-- **Phase 3 (Guard Enhancement):** Complete ✅
-- **Phase 4 (Perception):** Complete ✅
-- **Phase 5 (Guard Refinement):** Complete ✅
+- **Phase 1-5:** Complete ✅
+- **Phase 6 (Verification Completeness):** ← Current
 - **Protocol Version:** v3.13
 - **Blockers:** None
 
@@ -21,8 +18,22 @@
 | 3 | Guard Enhancement | ✅ Complete | Pureness detection, better line count |
 | 4 | Perception | ✅ Complete | map, sig commands for context compression |
 | 5 | Guard Refinement | ✅ Complete | Shell validation, unified signatures, Pydantic RuleConfig |
-| 6 | Polish | ← Current | Docs, CI, PyPI release |
-| 7 | Advanced Verification | Long-term | Class methods, config profiles |
+| 6 | Verification Completeness | ← Current | Class methods, pureness validation, doctest exclusion |
+| 7 | Release | Next | PyPI, documentation, CI templates |
+| 8 | Advanced Features | Long-term | Config profiles, advanced purity, UI polish |
+
+## Phase Reorganization Rationale (2024-12-19)
+
+Phases were reorganized based on two principles:
+1. **Impact on agent correctness** - What helps agents write correct code?
+2. **Task dependencies** - What blocks what?
+
+**Key insight:** The biggest gap in Guard is that **class methods are not checked at all**. Agents write tons of class methods - this is a critical blind spot.
+
+Priority order:
+1. **Verification Completeness** (Phase 6) - Fix gaps that affect correctness
+2. **Release** (Phase 7) - Enable external adoption
+3. **Advanced Features** (Phase 8) - Nice-to-haves
 
 ## Phase 2: Adoption ✅ Complete
 
@@ -172,26 +183,30 @@
 
 Items now organized into development phases (see CLAUDE.md):
 
-### Phase 6: Polish (Current)
-- Documentation consolidation
-- CI templates (for automated `invar guard` in CI, not pre-commit)
-- PyPI release
+### Phase 6: Verification Completeness (Current)
+- **Class method checking** 🔴 - Biggest gap, agents write methods constantly
+- **Pureness validation** 🔴 - Pure functions can't call impure
+- **Doctest line exclusion** 🟡 - Don't penalize good documentation
+
+### Phase 7: Release
+- **PyPI release** 🔴 - Required for external adoption
+- Usage documentation
+- CI templates
+
+### Phase 8: Advanced Features (Long-term)
+- Config profiles ("strict", "standard", "relaxed")
+- Configurable impure list
+- Rule severity config
+- Guard --explain
+- Global variable detection
+- `# invar: pure` annotation
 
 ### Protocol Improvements (Layer 1 Proposals)
 - Add "Document" checkpoint to ICIDV workflow (Section 2)
-- Promote @pre lambda pitfall to Section 0 Quick Start
 - Add guidance: "Shell Result warning = design smell, consider moving to Core"
 
-### Phase 7: Advanced Verification
-- Class method checking
-- Configurable impure list
-- Doctest line exclusion
-- Rule result aggregation
-- Rule severity config
-- Config profiles
-
 ### Future Discussion
-- Production contract overhead: how to ensure `DEAL_DISABLE=1` or `-O` in production (humans forget)
+- Production contract overhead: how to ensure `DEAL_DISABLE=1` or `-O` in production
 
 ## Documentation Checklist
 

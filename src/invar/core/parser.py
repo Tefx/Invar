@@ -12,7 +12,7 @@ import ast
 from deal import post, pre
 
 from invar.core.models import Contract, FileInfo, Symbol, SymbolKind
-from invar.core.purity import count_code_lines, extract_impure_calls, extract_internal_imports
+from invar.core.purity import count_code_lines, count_doctest_lines, extract_impure_calls, extract_internal_imports
 
 
 @pre(lambda source, path="<string>": isinstance(source, str))
@@ -54,18 +54,32 @@ def parse_source(source: str, path: str = "<string>") -> FileInfo | None:
 
 
 @pre(lambda tree: isinstance(tree, ast.Module))
-@post(lambda result: all(s.kind in (SymbolKind.FUNCTION, SymbolKind.CLASS) for s in result))
 def _extract_symbols(tree: ast.Module) -> list[Symbol]:
-    """Extract function and class symbols from AST (top-level only)."""
+    """
+    Extract function, class, and method symbols from AST.
+
+    Examples:
+        >>> import ast
+        >>> tree = ast.parse("class Foo:\\n    def bar(self): pass")
+        >>> symbols = _extract_symbols(tree)
+        >>> len(symbols)
+        2
+        >>> symbols[0].kind.value
+        'class'
+        >>> symbols[1].kind.value
+        'method'
+    """
     symbols: list[Symbol] = []
 
     for node in tree.body:
         if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
-            symbol = _parse_function(node)
-            symbols.append(symbol)
+            symbols.append(_parse_function(node))
         elif isinstance(node, ast.ClassDef):
-            symbol = _parse_class(node)
-            symbols.append(symbol)
+            symbols.append(_parse_class(node))
+            # Extract methods from class body
+            for item in node.body:
+                if isinstance(item, ast.FunctionDef | ast.AsyncFunctionDef):
+                    symbols.append(_parse_method(item, node.name))
 
     return symbols
 
@@ -77,14 +91,11 @@ def _parse_function(node: ast.FunctionDef | ast.AsyncFunctionDef) -> Symbol:
     contracts = _extract_contracts(node)
     docstring = ast.get_docstring(node)
     has_doctest = docstring is not None and ">>>" in docstring
-
-    # Build signature
     signature = _build_signature(node)
-
-    # Phase 3: Extract additional info (from purity module)
     internal_imports = extract_internal_imports(node)
     impure_calls = extract_impure_calls(node)
     code_lines = count_code_lines(node)
+    doctest_lines = count_doctest_lines(node)
 
     return Symbol(
         name=node.name,
@@ -98,6 +109,48 @@ def _parse_function(node: ast.FunctionDef | ast.AsyncFunctionDef) -> Symbol:
         internal_imports=internal_imports,
         impure_calls=impure_calls,
         code_lines=code_lines,
+        doctest_lines=doctest_lines,
+    )
+
+
+@pre(lambda node, class_name: isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef))
+@post(lambda result: result.kind == SymbolKind.METHOD)
+def _parse_method(node: ast.FunctionDef | ast.AsyncFunctionDef, class_name: str) -> Symbol:
+    """
+    Parse a method definition into a Symbol.
+
+    Examples:
+        >>> import ast
+        >>> tree = ast.parse("class Foo:\\n    def bar(self): pass")
+        >>> method_node = tree.body[0].body[0]
+        >>> sym = _parse_method(method_node, "Foo")
+        >>> sym.name
+        'Foo.bar'
+        >>> sym.kind.value
+        'method'
+    """
+    contracts = _extract_contracts(node)
+    docstring = ast.get_docstring(node)
+    has_doctest = docstring is not None and ">>>" in docstring
+    signature = _build_signature(node)
+    internal_imports = extract_internal_imports(node)
+    impure_calls = extract_impure_calls(node)
+    code_lines = count_code_lines(node)
+    doctest_lines = count_doctest_lines(node)
+
+    return Symbol(
+        name=f"{class_name}.{node.name}",
+        kind=SymbolKind.METHOD,
+        line=node.lineno,
+        end_line=node.end_lineno or node.lineno,
+        signature=signature,
+        docstring=docstring,
+        contracts=contracts,
+        has_doctest=has_doctest,
+        internal_imports=internal_imports,
+        impure_calls=impure_calls,
+        code_lines=code_lines,
+        doctest_lines=doctest_lines,
     )
 
 
