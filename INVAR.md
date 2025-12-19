@@ -1,4 +1,4 @@
-# The Invar Protocol v3.13
+# The Invar Protocol v3.14
 
 > **"Trade structure for safety."**
 
@@ -568,19 +568,44 @@ invar init --no-dirs     # Skip directory creation (for existing projects)
 
 **CAN detect:**
 - Static `import` statements (top-level and function-internal)
-- Decorator presence (@pre, @post)
-- File and function size violations
+- Decorator presence (@pre, @post) on functions AND methods
+- File and function/method size violations
 - Path-based and pattern-based Core/Shell classification
 - Function-internal imports (`--strict-pure` mode)
 - Common impure function calls: `datetime.now`, `random.*`, `open`, `print` (`--strict-pure` mode)
 - Missing `Result[T, E]` return type in Shell functions (warns for public functions with return values)
+- Class method contracts, doctests, and size limits (Phase 6)
+- Doctest line counting for `exclude_doctest_lines` option (Phase 6)
 
 **CANNOT detect:**
 - Dynamic imports (`__import__`, `importlib`)
 - I/O through dependency injection (e.g., passing file handle to Core)
-- Contract semantic quality (`@pre(lambda x: True)` passes)
-- Class method contracts (only checks top-level functions)
+- Contract semantic quality (`@pre(lambda x: True)` passes - see guidance below)
+- Transitive impurity (A calls B, B calls datetime.now)
 - Async function purity issues
+- Nested class methods (only top-level class methods checked)
+
+**Contract Quality Guidance:**
+
+Guard checks contract PRESENCE, not QUALITY. These both pass Guard:
+```python
+# ✅ Meaningful - specifies business logic invariant
+@pre(lambda items, rate: len(items) > 0 and 0 <= rate <= 1)
+
+# ⚠️ Meaningless - empty specification, provides no value
+@pre(lambda items, rate: True)
+```
+
+**Contracts should specify LOGIC invariants, not repeat type information:**
+```python
+# ❌ Redundant - Pydantic/type hints already check this
+@pre(lambda self, v: isinstance(v, Violation))
+def add_violation(self, v: Violation): ...
+
+# ✅ Meaningful - checks business logic not expressible in types
+@pre(lambda self, v: v.file not in self._processed_files)
+def add_violation(self, v: Violation): ...
+```
 
 ### Map (Reference Analysis)
 
@@ -597,8 +622,10 @@ invar init --no-dirs     # Skip directory creation (for existing projects)
 - Attribute access patterns: `obj.method` without call
 
 ### Planned Improvements
-- Class method checking
 - Configurable impure function list
+- Contract quality detection (warn on `@pre(lambda: True)`)
+- @pre lambda signature validation (match function parameters)
+- Transitive impurity detection
 
 **Always remember:** These tools assist but don't replace engineering judgment.
 
