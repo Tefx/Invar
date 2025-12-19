@@ -263,69 +263,61 @@ Code quality fixes from first-principles review:
 - [x] **Unified rule signatures** - All rules use `(FileInfo, RuleConfig)` signature
 - [x] **RuleConfig to Pydantic** - Consistency with other models
 
-### Phase 6: Verification Completeness ← Current
-**Goal:** Fix critical gaps in what Guard can verify. These directly impact agent correctness.
+### Phase 6: Verification Completeness ✅ Complete
+- [x] **Class method checking** - Parser extracts methods, rules check contracts/doctests/size
+- [x] **Pureness validation** - Methods checked for internal imports and impure calls
+- [x] **Doctest line exclusion** - `exclude_doctest_lines` config option
 
-| Task | Priority | Rationale |
-|------|----------|-----------|
-| Class method checking | 🔴 Critical | Current biggest blind spot: methods inside classes have NO contract/size checks |
-| Pureness validation | 🔴 High | Pure functions calling impure = bug. Ensure transitive purity |
-| Doctest line exclusion | 🟡 Medium | Good doctests shouldn't penalize function length |
+### Phase 7: Agent-Native Foundation ← Current
+**Goal:** Invar serves Agents, not humans. Detect Agent-specific failure modes.
 
-- [ ] **Class method checking** - Extend parser + rules to check methods inside classes
-  - Currently only module-level functions are checked
-  - Agent writes class methods constantly - all are unchecked
-  - Requires: update `parser.py` to extract methods, update rules to apply
-- [ ] **Pureness validation** - Verify pure functions don't call impure functions
-  - Build call graph from AST
-  - Flag Core functions that call known impure functions
-  - Builds on Phase 3's purity detection
-- [ ] **Doctest line exclusion** - `exclude_doctest_lines` config option
-  - Count function body lines excluding `>>> ` doctest lines
-  - Encourages thorough doctests without penalizing size
+**Core insight:** Agents fail differently than humans - they achieve "formal compliance without substance" (e.g., `@pre(lambda x: True)`). Guard must detect these.
 
-### Phase 7: Release
-**Goal:** Enable adoption by other projects. Blocks external use of Invar.
+| Task | Status | Description |
+|------|--------|-------------|
+| 7.1 Empty contract detection | 🔄 | Detect `@pre(lambda: True)` and similar tautologies |
+| 7.2 Redundant type detection | ⬜ | Detect contracts that only check types already in annotations |
+| 7.3 Concrete fix suggestions | ⬜ | Generate usable code, not vague suggestions |
 
-| Task | Priority | Rationale |
-|------|----------|-----------|
-| PyPI release | 🔴 Critical | Without this, no external adoption possible |
-| Usage documentation | 🟡 Medium | Help human adopters understand Invar |
-| CI templates | 🟢 Low | Convenience for human CI setup |
+New files: `core/contracts.py`, `core/suggestions.py`
 
-- [ ] **PyPI release** - `pip install invar` should "just work"
-  - Finalize package metadata
-  - Set up release workflow
-  - Publish to PyPI
-- [ ] **Usage documentation** - README expansion, examples
-  - Quick start for new projects
-  - Migration guide for existing projects
+### Phase 8: Agent Efficiency
+**Goal:** Optimize for Agent iteration speed and parseable output.
+
+| Task | Description |
+|------|-------------|
+| 8.1 `--changed` mode | Only check git-modified files |
+| 8.2 `--agent-mode` output | JSON with fix instructions Agent can directly apply |
+| 8.3 Contract param mismatch | Detect `@pre(lambda a, b: ...)` when function has `(x, y)` |
+
+New files: `shell/git.py`
+
+### Phase 9: Release
+**Goal:** Enable external adoption.
+
+- [ ] **PyPI release** - `pip install invar`
+- [ ] **Usage documentation** - README, quick start, migration guide
 - [ ] **CI templates** - GitHub Actions example
-  - Example workflow for `invar guard` in CI
 
-### Phase 8: Advanced Features (Long-term)
-**Goal:** Nice-to-have improvements after core functionality is complete.
+### Phase 10: Agent-Native Advanced (Long-term)
+**Goal:** Full Agent-native architecture.
+
+**Rule Engine:**
+- [ ] Rules YAML化 - Machine-readable rule definitions with priorities
+- [ ] Rule conflict resolution - Clear priority when rules conflict
+- [ ] ICIDV checkpoints - `invar precheck` command
 
 **Config & Profiles:**
 - [ ] Config profiles - "strict", "standard", "relaxed" presets
 - [ ] Configurable impure list (user-defined IMPURE_FUNCTIONS)
-- [ ] Rule severity config (user-customizable severity)
 
 **Guard Enhancements:**
-- [ ] `invar guard --explain` - Show why files are classified as Core/Shell
-- [ ] Separate code/docstring line display - "55 lines (35 code, 20 docstring)"
-- [ ] Per-zone size limits - Different limits for Core (50) vs Shell (80)
-
-**Advanced Purity:**
-- [ ] Global variable modification detection
-- [ ] `# invar: pure` comment annotation support
-- [ ] Show pureness in `invar map` output
-
-**UI Improvements:**
-- [ ] Rule result aggregation (group related violations)
+- [ ] `invar guard --explain` - Show classification reasoning
+- [ ] Per-zone size limits - Different limits for Core vs Shell
+- [ ] Transitive impurity detection - Pure calling impure = error
 
 **Removed/Deprecated:**
-- ~~Private function contracts option~~ - Conflicts with v3.13 (private functions require contracts)
+- ~~Private function contracts option~~ - Conflicts with v3.13
 
 ---
 
