@@ -90,13 +90,21 @@ def _output_rich(report: GuardReport, strict_pure: bool = False) -> None:
         for fp, vs in sorted(by_file.items()):
             console.print(f"[bold]{fp}[/bold]")
             for v in vs:
-                icon = "[red]ERROR[/red]" if v.severity == Severity.ERROR else "[yellow]WARN[/yellow]"
+                if v.severity == Severity.ERROR:
+                    icon = "[red]ERROR[/red]"
+                elif v.severity == Severity.WARNING:
+                    icon = "[yellow]WARN[/yellow]"
+                else:
+                    icon = "[blue]INFO[/blue]"
                 ln = f":{v.line}" if v.line else ""
                 console.print(f"  {icon} {ln} {v.message}")
             console.print()
 
     console.print("-" * 40)
-    console.print(f"Files checked: {report.files_checked}\nErrors: {report.errors}\nWarnings: {report.warnings}")
+    summary = f"Files checked: {report.files_checked}\nErrors: {report.errors}\nWarnings: {report.warnings}"
+    if report.infos > 0:
+        summary += f"\nInfos: {report.infos}"
+    console.print(summary)
     console.print(f"\n[{'green' if report.passed else 'red'}]Guard {'passed' if report.passed else 'failed'}.[/]")
     console.print("\n[dim]Note: Guard performs static analysis only. Dynamic imports and runtime behavior are not checked.[/dim]")
 
@@ -109,6 +117,7 @@ def _output_json(report: GuardReport) -> None:
         "files_checked": report.files_checked,
         "errors": report.errors,
         "warnings": report.warnings,
+        "infos": report.infos,
         "passed": report.passed,
         "violations": [v.model_dump() for v in report.violations],
     }

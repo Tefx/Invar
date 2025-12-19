@@ -27,6 +27,7 @@ class Severity(str, Enum):
 
     ERROR = "error"
     WARNING = "warning"
+    INFO = "info"  # Phase 7: For informational issues like redundant type contracts
 
 
 class Contract(BaseModel):
@@ -85,6 +86,7 @@ class GuardReport(BaseModel):
     violations: list[Violation] = Field(default_factory=list)
     errors: int = 0
     warnings: int = 0
+    infos: int = 0  # Phase 7: Track INFO-level issues
 
     @pre(lambda self, violation: isinstance(violation, Violation))
     def add_violation(self, violation: Violation) -> None:
@@ -102,8 +104,10 @@ class GuardReport(BaseModel):
         self.violations.append(violation)
         if violation.severity == Severity.ERROR:
             self.errors += 1
-        else:
+        elif violation.severity == Severity.WARNING:
             self.warnings += 1
+        else:
+            self.infos += 1
 
     @property
     @pre(lambda self: isinstance(self, GuardReport))

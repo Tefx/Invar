@@ -18,6 +18,7 @@ from invar.core.models import (
     SymbolKind,
     Violation,
 )
+from invar.core.contracts import check_empty_contracts, check_redundant_type_contracts
 from invar.core.purity import check_impure_calls, check_internal_imports
 
 # Type alias for rule functions
@@ -276,7 +277,8 @@ def get_all_rules() -> list[RuleFunc]:
         True
     """
     return [check_file_size, check_function_size, check_forbidden_imports, check_contracts,
-            check_doctests, check_shell_result, check_internal_imports, check_impure_calls]
+            check_doctests, check_shell_result, check_internal_imports, check_impure_calls,
+            check_empty_contracts, check_redundant_type_contracts]
 
 
 @pre(lambda file_info, config: isinstance(file_info, FileInfo))
