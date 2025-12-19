@@ -87,7 +87,7 @@ Follow **ICIDV** for each task:
 ### I - Implementation
 ```
 □ Write code (< 50 lines per function)
-□ Keep files < 300 lines
+□ Keep files < 500 lines
 □ No **kwargs or eval in Core
 ```
 
@@ -109,8 +109,11 @@ pytest --doctest-modules
 # Check architecture rules
 invar guard
 
-# Check with strict mode (warnings as errors)
-invar guard --strict
+# Check only modified files (shows INSPECT info)
+invar guard --changed
+
+# Detailed explanations for violations
+invar guard --explain
 ```
 
 ---

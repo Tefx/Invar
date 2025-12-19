@@ -1,11 +1,16 @@
 # Agent-Native Improvements Roadmap
 
 *Created: 2025-12-19*
-*Status: Discussion*
+*Updated: 2025-12-20*
+*Status: Phase 9 Complete*
 
 ## Background
 
 These proposals emerged from reflecting on Invar from an AI agent's perspective after implementing Phases 1-8. The goal is to reduce friction, improve signal-to-noise ratio, and make Invar genuinely useful for agents rather than just "formally compliant."
+
+## Completion Summary
+
+**Phase 9 (v0.1.0):** Proposals P1-P6, P8, P11, P12, P14 implemented and released.
 
 ---
 
@@ -13,7 +18,7 @@ These proposals emerged from reflecting on Invar from an AI agent's perspective 
 
 ### P1: Relaxed Limits + Config-Level Exclusions (Revised)
 
-**Status:** Approved
+**Status:** Complete (v0.1.0)
 **Priority:** P0 (High impact, Low effort)
 **Affects:** Config, Guard
 
@@ -79,7 +84,7 @@ rule_exclusions = [
 
 ### P2: Severity Configuration
 
-**Status:** Approved
+**Status:** Complete (v0.1.0)
 **Priority:** P0 (High impact, Low effort)
 **Affects:** Config, Guard output
 
@@ -157,7 +162,7 @@ invar guard --pedantic  # Shows ALL violations including off-by-default
 
 ### P3: Rule Metadata System (Revised)
 
-**Status:** Approved
+**Status:** Complete (v0.1.0)
 **Priority:** P1 (High impact, Medium effort)
 **Affects:** Guard output, --agent mode, P5 hints, P6 compression
 **Dependencies:** Enhances P5, P11; Enables P6
@@ -346,7 +351,7 @@ When INVAR_MODE=agent (P11), outputs JSON automatically.
 
 ### P4: Contract Templates (Lambda Skeleton Only)
 
-**Status:** Approved
+**Status:** Complete (v0.1.0)
 **Priority:** P2 (Medium impact, Low effort)
 **Affects:** Suggestions, --agent mode
 
@@ -422,7 +427,7 @@ def _suggest_contract(symbol: Symbol) -> str:
 
 ### P5: Explain Mode (Revised: Always-On Hints)
 
-**Status:** Approved
+**Status:** Complete (v0.1.0)
 **Priority:** P1 (Medium impact, Medium effort)
 **Affects:** CLI, Agent understanding
 **Dependencies:** P3 (RULE_META provides hint content)
@@ -509,7 +514,7 @@ This ensures single source of truth for hint content.
 
 ### P6: Protocol Compression (Revised)
 
-**Status:** Approved
+**Status:** Complete (v0.1.0)
 **Priority:** P2 (Medium impact, Low effort)
 **Affects:** INVAR.md, Session start
 **Dependencies:** P5 (hints), P14 (inspection) - must implement first
@@ -644,7 +649,7 @@ TAUTOLOGIES = [
 
 ### P8: Size Warnings Before Limit
 
-**Status:** Approved
+**Status:** Complete (v0.1.0)
 **Priority:** P1 (Medium impact, Low effort)
 **Affects:** Guard output
 
@@ -749,9 +754,9 @@ invar context set phase 9                 # Updates phase field
 
 ---
 
-### P11: Agent Mode Auto-Detection (NEW)
+### P11: Agent Mode Auto-Detection
 
-**Status:** Approved
+**Status:** Complete (v0.1.0)
 **Priority:** P0 (High impact, Low effort)
 **Affects:** CLI, Environment
 
@@ -821,9 +826,9 @@ def _detect_agent_mode() -> bool:
 
 ---
 
-### P12: strict_pure Default ON (NEW)
+### P12: strict_pure Default ON
 
-**Status:** Approved
+**Status:** Complete (v0.1.0)
 **Priority:** P0 (High impact, Low effort)
 **Affects:** Guard defaults
 
@@ -876,9 +881,9 @@ severity_overrides = { internal_import = "off", impure_call = "off" }
 
 ---
 
-### P14: Automatic Inspection (NEW)
+### P14: Automatic Inspection
 
-**Status:** Approved
+**Status:** Complete (v0.1.0)
 **Priority:** P1 (High impact, Medium effort)
 **Affects:** Guard --changed output, ICIDV enforcement
 
@@ -1108,13 +1113,13 @@ class Derived(Base):
 
 ## Priority Matrix
 
-| Priority | Proposals | Rationale |
-|----------|-----------|-----------|
-| P0 | P1, P2, P11, P12 | Immediate friction reduction, agent-native defaults |
-| P1 | P3, P5, P8, P14 | Agent experience + ICIDV + rule metadata system |
-| P2 | P4, P6 | Better suggestions + token optimization (P6 depends on P3, P5, P14) |
-| P3 | P7, P9, P13 | Nice-to-have improvements |
-| P4 | P10 | Complex, long-term |
+| Priority | Proposals | Status |
+|----------|-----------|--------|
+| P0 | P1, P2, P11, P12 | Complete (v0.1.0) |
+| P1 | P3, P5, P8, P14 | Complete (v0.1.0) |
+| P2 | P4, P6 | Complete (v0.1.0) |
+| P3 | P7, P9, P13 | Future (Phase 10) |
+| P4 | P10 | Future (Phase 10) |
 
 **Key Decisions:**
 - P1: ~~Inline suppression~~ → Config-level exclusions + `max_file_lines` 500
@@ -1130,26 +1135,26 @@ class Derived(Base):
 
 ## Implementation Phases
 
-### Phase 9.1: Friction Reduction + Agent-Native Defaults
-- [ ] P1: Relaxed limits (500 lines) + config-level exclusions
-- [ ] P2: Severity configuration + `redundant_type_contract` OFF + `--pedantic` + `invar rules`
-- [ ] P8: File size warnings at 80% (function-level deferred)
-- [ ] P11: INVAR_MODE env var for agent auto-detection
-- [ ] P12: `strict_pure` default ON
+### Phase 9.1: Friction Reduction + Agent-Native Defaults (Complete)
+- [x] P1: Relaxed limits (500 lines) + config-level exclusions
+- [x] P2: Severity configuration + `redundant_type_contract` OFF + `--pedantic`
+- [x] P8: File size warnings at 80%
+- [x] P11: INVAR_MODE env var for agent auto-detection
+- [x] P12: `strict_pure` default ON
 
-### Phase 9.2: Agent Experience + ICIDV + Rule Metadata
-- [ ] P3: RULE_META system + auto-embed in output + `invar rules` command
-- [ ] P5: Always-on hints (uses P3 RULE_META.hint) + optional --explain
-- [ ] P4: Lambda skeleton templates (no example conditions)
-- [ ] P14: Automatic inspection in --changed mode (ICIDV Inspect)
+### Phase 9.2: Agent Experience + ICIDV + Rule Metadata (Complete)
+- [x] P3: RULE_META system + auto-embed in output + `invar rules` command
+- [x] P5: Always-on hints + optional --explain
+- [x] P4: Lambda skeleton templates
+- [x] P14: Automatic inspection in --changed mode
 
-### Phase 9.3: Token Optimization (depends on 9.2)
-- [ ] P6: Protocol compression (~80 lines) - after P3, P5, P14
+### Phase 9.3: Token Optimization (Complete)
+- [x] P6: Protocol compression (88 lines)
 
-### Phase 10: Advanced
-- [ ] P13: Mechanical vs Reasoning work audit
+### Phase 10: Advanced (Future)
 - [ ] P7: Semantic contract validation
-- [ ] P8b: Function-level size warnings (deferred from P8)
+- [ ] P13: Mechanical vs Reasoning work audit
+- [ ] P8b: Function-level size warnings
 - [ ] P9: Context sync command
 - [ ] P10: Contract inheritance validation
 

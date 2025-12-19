@@ -122,8 +122,8 @@ REVIEW CHECKLIST:
   - Known limitations documented?
 
 □ Code Quality
-  - File < 300 lines?
-  - Function < 30 lines?
+  - File < 500 lines?
+  - Function < 50 lines?
   - No **kwargs or dynamic magic?
   - Full type annotations?
 
