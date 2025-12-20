@@ -137,9 +137,9 @@ Use Reviewer for architecture decisions. Use Adversary for security-critical cod
 |-------|--------|-------------|
 | 1-8 | Complete | Guard, Perception, Agent-Native |
 | 9 | Complete | PyPI release (python-invar v0.1.0) |
-| 10 | Long-term | Advanced verification |
+| 10-11 | Complete | Agent decision support (P7, P24-P28) |
 
-See `.invar/context.md` for detailed progress and future proposals.
+Feature complete. See `.invar/context.md` for current state.
 
 ---
 
