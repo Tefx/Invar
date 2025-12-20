@@ -62,10 +62,14 @@ pip install python-invar
 
 ```bash
 cd your-project
-invar init
+invar init          # Basic setup
+invar init --hooks  # With pre-commit hooks (recommended)
 ```
 
-This creates `INVAR.md` (protocol for AI) and `CLAUDE.md` (project rules).
+This creates:
+- `INVAR.md` - Protocol for AI
+- `CLAUDE.md` - Project rules
+- `.pre-commit-config.yaml` - Automatic verification (with `--hooks`)
 
 ### 3. Tell your AI to follow the protocol
 
