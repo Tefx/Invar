@@ -127,7 +127,7 @@ def install_hooks(path: Path, console) -> Result[bool, str]:
 
     if result.unwrap():
         console.print("[green]Created[/green] .pre-commit-config.yaml")
-        console.print("[dim]Run: pip install pre-commit && pre-commit install[/dim]")
+        console.print("[dim]Run: pre-commit install[/dim]")
         return Success(True)
 
     return Success(False)

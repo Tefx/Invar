@@ -73,7 +73,7 @@ This creates:
 
 Then activate the hooks:
 ```bash
-pip install pre-commit && pre-commit install
+pre-commit install
 ```
 
 ### 3. Tell your AI to follow the protocol
