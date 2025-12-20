@@ -19,13 +19,35 @@ from invar.core.models import FileInfo, RuleConfig, Severity, SymbolKind, Violat
 
 # Known impure functions and method patterns
 IMPURE_FUNCTIONS: set[str] = {
-    "now", "today", "utcnow", "time", "random", "randint", "randrange",
-    "choice", "shuffle", "sample", "open", "print", "input", "getenv", "environ",
+    "now",
+    "today",
+    "utcnow",
+    "time",
+    "random",
+    "randint",
+    "randrange",
+    "choice",
+    "shuffle",
+    "sample",
+    "open",
+    "print",
+    "input",
+    "getenv",
+    "environ",
 }
 IMPURE_PATTERNS: set[tuple[str, str]] = {
-    ("datetime", "now"), ("datetime", "today"), ("datetime", "utcnow"), ("date", "today"),
-    ("time", "time"), ("random", "random"), ("random", "randint"), ("random", "randrange"),
-    ("random", "choice"), ("random", "shuffle"), ("random", "sample"), ("os", "getenv"),
+    ("datetime", "now"),
+    ("datetime", "today"),
+    ("datetime", "utcnow"),
+    ("date", "today"),
+    ("time", "time"),
+    ("random", "random"),
+    ("random", "randint"),
+    ("random", "randrange"),
+    ("random", "choice"),
+    ("random", "shuffle"),
+    ("random", "sample"),
+    ("os", "getenv"),
 }
 
 
@@ -195,9 +217,7 @@ def count_code_lines(node: ast.FunctionDef | ast.AsyncFunctionDef) -> int:
     ):
         docstring_node = node.body[0]
         docstring_lines = (
-            (docstring_node.end_lineno or docstring_node.lineno)
-            - docstring_node.lineno
-            + 1
+            (docstring_node.end_lineno or docstring_node.lineno) - docstring_node.lineno + 1
         )
 
     return total_lines - docstring_lines

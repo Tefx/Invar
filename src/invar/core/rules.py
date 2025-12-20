@@ -21,12 +21,18 @@ from invar.core.utils import get_excluded_rules
 
 # P17: Pure alternatives for forbidden imports (module → suggestion)
 FORBIDDEN_IMPORT_ALTERNATIVES: dict[str, str] = {
-    "os": "Inject paths as strings", "sys": "Pass sys.argv as parameter",
-    "pathlib": "Use string operations", "subprocess": "Move to Shell",
-    "shutil": "Move to Shell", "io": "Pass content as str/bytes",
-    "socket": "Move to Shell", "requests": "Move HTTP to Shell",
-    "urllib": "Move to Shell", "datetime": "Inject now as parameter",
-    "random": "Inject random values", "open": "Shell reads, Core processes",
+    "os": "Inject paths as strings",
+    "sys": "Pass sys.argv as parameter",
+    "pathlib": "Use string operations",
+    "subprocess": "Move to Shell",
+    "shutil": "Move to Shell",
+    "io": "Pass content as str/bytes",
+    "socket": "Move to Shell",
+    "requests": "Move HTTP to Shell",
+    "urllib": "Move to Shell",
+    "datetime": "Inject now as parameter",
+    "random": "Inject random values",
+    "open": "Shell reads, Core processes",
 }
 
 # Type alias for rule functions
@@ -54,9 +60,14 @@ def check_file_size(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
     """
     violations: list[Violation] = []
     # P18: Show top 5 largest functions in size warnings
-    funcs = sorted([(s.name, s.end_line - s.line + 1) for s in file_info.symbols
-                    if s.kind in (SymbolKind.FUNCTION, SymbolKind.METHOD)],
-                   key=lambda x: -x[1])[:5]
+    funcs = sorted(
+        [
+            (s.name, s.end_line - s.line + 1)
+            for s in file_info.symbols
+            if s.kind in (SymbolKind.FUNCTION, SymbolKind.METHOD)
+        ],
+        key=lambda x: -x[1],
+    )[:5]
     func_hint = f" Functions: {', '.join(f'{n}({sz}L)' for n, sz in funcs)}" if funcs else ""
 
     # P25: Get extractable groups with dependencies
@@ -270,7 +281,12 @@ def check_doctests(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
         # For methods, check if method name (after dot) starts with _
         name_part = symbol.name.split(".")[-1] if "." in symbol.name else symbol.name
         is_public = not name_part.startswith("_")
-        if symbol.kind in (SymbolKind.FUNCTION, SymbolKind.METHOD) and is_public and symbol.contracts and not symbol.has_doctest:
+        if (
+            symbol.kind in (SymbolKind.FUNCTION, SymbolKind.METHOD)
+            and is_public
+            and symbol.contracts
+            and not symbol.has_doctest
+        ):
             kind_name = "Method" if symbol.kind == SymbolKind.METHOD else "Function"
             violations.append(
                 Violation(
@@ -337,10 +353,21 @@ def get_all_rules() -> list[RuleFunc]:
         >>> len(get_all_rules()) >= 5
         True
     """
-    return [check_file_size, check_function_size, check_forbidden_imports, check_contracts,
-            check_doctests, check_shell_result, check_internal_imports, check_impure_calls,
-            check_empty_contracts, check_semantic_tautology, check_redundant_type_contracts,
-            check_param_mismatch, check_partial_contract]
+    return [
+        check_file_size,
+        check_function_size,
+        check_forbidden_imports,
+        check_contracts,
+        check_doctests,
+        check_shell_result,
+        check_internal_imports,
+        check_impure_calls,
+        check_empty_contracts,
+        check_semantic_tautology,
+        check_redundant_type_contracts,
+        check_param_mismatch,
+        check_partial_contract,
+    ]
 
 
 @post(lambda result: result is None or isinstance(result, Violation))

@@ -48,9 +48,11 @@ def format_map_text(perception_map: PerceptionMap, top_n: int = 0) -> str:
     warm = [s for s in symbols if 3 <= s.ref_count <= 10]
     cold = [s for s in symbols if s.ref_count < 3]
 
-    for label, group, level in [("Hot (refs > 10)", hot, "hot"),
-                                  ("Warm (refs 3-10)", warm, "warm"),
-                                  ("Cold (refs < 3)", cold, "cold")]:
+    for label, group, level in [
+        ("Hot (refs > 10)", hot, "hot"),
+        ("Warm (refs 3-10)", warm, "warm"),
+        ("Cold (refs < 3)", cold, "cold"),
+    ]:
         if group:
             lines.append(f"=== {label} ===")
             for sr in group:

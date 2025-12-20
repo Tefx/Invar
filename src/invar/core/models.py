@@ -240,9 +240,11 @@ class RuleConfig(BaseModel):
     # Phase 9 P1: Rule exclusions for specific file patterns
     rule_exclusions: list[RuleExclusion] = Field(default_factory=list)
     # Phase 9 P2: Per-rule severity overrides (off, info, warning, error)
-    severity_overrides: dict[str, str] = Field(default_factory=lambda: {
-        "redundant_type_contract": "off",  # Expected behavior when forcing contracts
-    })
+    severity_overrides: dict[str, str] = Field(
+        default_factory=lambda: {
+            "redundant_type_contract": "off",  # Expected behavior when forcing contracts
+        }
+    )
     # Phase 9 P8: File size warning threshold (0 to disable, 0.8 = warn at 80%)
     size_warning_threshold: float = 0.8
 

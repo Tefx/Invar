@@ -33,7 +33,11 @@ def is_empty_contract(expression: str) -> bool:
     try:
         tree = ast.parse(expression, mode="eval")
         lambda_node = find_lambda(tree)
-        return lambda_node is not None and isinstance(lambda_node.body, ast.Constant) and lambda_node.body.value is True
+        return (
+            lambda_node is not None
+            and isinstance(lambda_node.body, ast.Constant)
+            and lambda_node.body.value is True
+        )
     except SyntaxError:
         return False
 
@@ -82,28 +86,39 @@ def is_semantic_tautology(expression: str) -> tuple[bool, str]:
 def _check_tautology_patterns(node: ast.expr) -> tuple[bool, str]:
     """Check for common tautology patterns in AST node."""
     # Identity comparison pattern (e.g., x == x)
-    if (isinstance(node, ast.Compare)
-            and len(node.ops) == 1 and isinstance(node.ops[0], (ast.Eq, ast.Is))):
+    if (
+        isinstance(node, ast.Compare)
+        and len(node.ops) == 1
+        and isinstance(node.ops[0], (ast.Eq, ast.Is))
+    ):
         left = ast.unparse(node.left)
         right = ast.unparse(node.comparators[0])
         if left == right:
             return (True, f"{left} == {right} is always True")
 
     # Length non-negative pattern (e.g., len(x) >= 0)
-    if (isinstance(node, ast.Compare)
-            and len(node.ops) == 1 and len(node.comparators) == 1):
+    if isinstance(node, ast.Compare) and len(node.ops) == 1 and len(node.comparators) == 1:
         left = node.left
         op = node.ops[0]
         right = node.comparators[0]
-        if (isinstance(left, ast.Call) and isinstance(left.func, ast.Name)
-                and left.func.id == "len" and isinstance(op, ast.GtE)
-                and isinstance(right, ast.Constant) and right.value == 0):
+        if (
+            isinstance(left, ast.Call)
+            and isinstance(left.func, ast.Name)
+            and left.func.id == "len"
+            and isinstance(op, ast.GtE)
+            and isinstance(right, ast.Constant)
+            and right.value == 0
+        ):
             arg = ast.unparse(left.args[0]) if left.args else "x"
             return (True, f"len({arg}) >= 0 is always True for any sequence")
 
     # isinstance with object pattern (always True)
-    if (isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
-            and node.func.id == "isinstance" and len(node.args) == 2):
+    if (
+        isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == "isinstance"
+        and len(node.args) == 2
+    ):
         type_arg = node.args[1]
         if isinstance(type_arg, ast.Name) and type_arg.id == "object":
             arg = ast.unparse(node.args[0])
@@ -266,7 +281,10 @@ def has_param_mismatch(expression: str, signature: str) -> tuple[bool, str]:
         return (False, "")  # Can't determine, skip
 
     if len(lambda_params) != len(func_params):
-        return (True, f"lambda has {len(lambda_params)} param(s) but function has {len(func_params)}")
+        return (
+            True,
+            f"lambda has {len(lambda_params)} param(s) but function has {len(func_params)}",
+        )
 
     return (False, "")
 
@@ -294,11 +312,16 @@ def check_empty_contracts(file_info: FileInfo, config: RuleConfig) -> list[Viola
         for contract in symbol.contracts:
             if is_empty_contract(contract.expression):
                 kind = "Method" if symbol.kind == SymbolKind.METHOD else "Function"
-                violations.append(Violation(
-                    rule="empty_contract", severity=Severity.ERROR, file=file_info.path, line=contract.line,
-                    message=f"{kind} '{symbol.name}' has empty contract: @{contract.kind}({contract.expression})",
-                    suggestion=format_suggestion_for_violation(symbol, "empty_contract"),
-                ))
+                violations.append(
+                    Violation(
+                        rule="empty_contract",
+                        severity=Severity.ERROR,
+                        file=file_info.path,
+                        line=contract.line,
+                        message=f"{kind} '{symbol.name}' has empty contract: @{contract.kind}({contract.expression})",
+                        suggestion=format_suggestion_for_violation(symbol, "empty_contract"),
+                    )
+                )
     return violations
 
 
@@ -327,11 +350,16 @@ def check_semantic_tautology(file_info: FileInfo, config: RuleConfig) -> list[Vi
             is_tautology, pattern_desc = is_semantic_tautology(contract.expression)
             if is_tautology:
                 kind = "Method" if symbol.kind == SymbolKind.METHOD else "Function"
-                violations.append(Violation(
-                    rule="semantic_tautology", severity=Severity.WARNING, file=file_info.path, line=contract.line,
-                    message=f"{kind} '{symbol.name}' has tautological contract: {pattern_desc}",
-                    suggestion=format_suggestion_for_violation(symbol, "semantic_tautology"),
-                ))
+                violations.append(
+                    Violation(
+                        rule="semantic_tautology",
+                        severity=Severity.WARNING,
+                        file=file_info.path,
+                        line=contract.line,
+                        message=f"{kind} '{symbol.name}' has tautological contract: {pattern_desc}",
+                        suggestion=format_suggestion_for_violation(symbol, "semantic_tautology"),
+                    )
+                )
     return violations
 
 
@@ -358,11 +386,18 @@ def check_redundant_type_contracts(file_info: FileInfo, config: RuleConfig) -> l
         for contract in symbol.contracts:
             if is_redundant_type_contract(contract.expression, annotations):
                 kind = "Method" if symbol.kind == SymbolKind.METHOD else "Function"
-                violations.append(Violation(
-                    rule="redundant_type_contract", severity=Severity.INFO, file=file_info.path, line=contract.line,
-                    message=f"{kind} '{symbol.name}' contract only checks types already in annotations",
-                    suggestion=format_suggestion_for_violation(symbol, "redundant_type_contract"),
-                ))
+                violations.append(
+                    Violation(
+                        rule="redundant_type_contract",
+                        severity=Severity.INFO,
+                        file=file_info.path,
+                        line=contract.line,
+                        message=f"{kind} '{symbol.name}' contract only checks types already in annotations",
+                        suggestion=format_suggestion_for_violation(
+                            symbol, "redundant_type_contract"
+                        ),
+                    )
+                )
     return violations
 
 
@@ -392,11 +427,16 @@ def check_param_mismatch(file_info: FileInfo, config: RuleConfig) -> list[Violat
             mismatch, desc = has_param_mismatch(contract.expression, symbol.signature)
             if mismatch:
                 kind = "Method" if symbol.kind == SymbolKind.METHOD else "Function"
-                violations.append(Violation(
-                    rule="param_mismatch", severity=Severity.ERROR, file=file_info.path, line=contract.line,
-                    message=f"{kind} '{symbol.name}' @pre {desc}",
-                    suggestion="Lambda must include ALL function parameters",
-                ))
+                violations.append(
+                    Violation(
+                        rule="param_mismatch",
+                        severity=Severity.ERROR,
+                        file=file_info.path,
+                        line=contract.line,
+                        message=f"{kind} '{symbol.name}' @pre {desc}",
+                        suggestion="Lambda must include ALL function parameters",
+                    )
+                )
     return violations
 
 
@@ -438,12 +478,14 @@ def check_partial_contract(file_info: FileInfo, config: RuleConfig) -> list[Viol
                 kind = "Method" if symbol.kind == SymbolKind.METHOD else "Function"
                 unused_str = ", ".join(f"'{p}'" for p in unused)
                 used_str = ", ".join(f"'{p}'" for p in used) if used else "none"
-                violations.append(Violation(
-                    rule="partial_contract",
-                    severity=Severity.WARNING,
-                    file=file_info.path,
-                    line=contract.line,
-                    message=f"{kind} '{symbol.name}' @pre checks {used_str} but not {unused_str}",
-                    suggestion=f"Signature: {symbol.signature}\n→ Add constraint for {unused_str} or verify it needs none",
-                ))
+                violations.append(
+                    Violation(
+                        rule="partial_contract",
+                        severity=Severity.WARNING,
+                        file=file_info.path,
+                        line=contract.line,
+                        message=f"{kind} '{symbol.name}' @pre checks {used_str} but not {unused_str}",
+                        suggestion=f"Signature: {symbol.signature}\n→ Add constraint for {unused_str} or verify it needs none",
+                    )
+                )
     return violations

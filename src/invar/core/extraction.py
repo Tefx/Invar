@@ -37,8 +37,9 @@ def find_extractable_groups(file_info: FileInfo) -> list[dict]:
         30
     """
     # Get only functions/methods
-    funcs = {s.name: s for s in file_info.symbols
-             if s.kind in (SymbolKind.FUNCTION, SymbolKind.METHOD)}
+    funcs = {
+        s.name: s for s in file_info.symbols if s.kind in (SymbolKind.FUNCTION, SymbolKind.METHOD)
+    }
 
     if not funcs:
         return []
@@ -76,11 +77,13 @@ def find_extractable_groups(file_info: FileInfo) -> list[dict]:
         total_lines = sum(funcs[n].end_line - funcs[n].line + 1 for n in component)
         deps = _get_group_dependencies(component, funcs, file_info.imports)
 
-        groups.append({
-            "functions": sorted(component),
-            "lines": total_lines,
-            "dependencies": sorted(deps),
-        })
+        groups.append(
+            {
+                "functions": sorted(component),
+                "lines": total_lines,
+                "dependencies": sorted(deps),
+            }
+        )
 
     # Sort by lines (largest first)
     groups.sort(key=lambda g: -g["lines"])
@@ -137,6 +140,6 @@ def format_extraction_hint(file_info: FileInfo, max_groups: int = 3) -> str:
         funcs = ", ".join(group["functions"])
         lines = group["lines"]
         deps = ", ".join(group["dependencies"]) if group["dependencies"] else "none"
-        hints.append(f"[{chr(65+i)}] {funcs} ({lines}L) | Deps: {deps}")
+        hints.append(f"[{chr(65 + i)}] {funcs} ({lines}L) | Deps: {deps}")
 
     return "\n".join(hints)

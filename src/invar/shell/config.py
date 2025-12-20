@@ -122,11 +122,23 @@ _DEFAULT_SHELL_PATHS = ["src/shell", "shell"]
 
 # Default exclude paths
 _DEFAULT_EXCLUDE_PATHS = [
-    "tests", "test", "scripts",
-    ".venv", "venv", ".env",
-    "__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache",
-    ".git", ".hg", ".svn",
-    "node_modules", "dist", "build", ".tox",
+    "tests",
+    "test",
+    "scripts",
+    ".venv",
+    "venv",
+    ".env",
+    "__pycache__",
+    ".pytest_cache",
+    ".mypy_cache",
+    ".ruff_cache",
+    ".git",
+    ".hg",
+    ".svn",
+    "node_modules",
+    "dist",
+    "build",
+    ".tox",
 ]
 
 
@@ -210,10 +222,16 @@ def classify_file(file_path: str, project_root: Path) -> Result[tuple[bool, bool
         True
     """
     pattern_result = get_pattern_classification(project_root)
-    core_patterns, shell_patterns = pattern_result.unwrap() if isinstance(pattern_result, Success) else ([], [])
+    core_patterns, shell_patterns = (
+        pattern_result.unwrap() if isinstance(pattern_result, Success) else ([], [])
+    )
 
     path_result = get_path_classification(project_root)
-    core_paths, shell_paths = path_result.unwrap() if isinstance(path_result, Success) else (_DEFAULT_CORE_PATHS, _DEFAULT_SHELL_PATHS)
+    core_paths, shell_paths = (
+        path_result.unwrap()
+        if isinstance(path_result, Success)
+        else (_DEFAULT_CORE_PATHS, _DEFAULT_SHELL_PATHS)
+    )
 
     # Priority 1: Pattern-based classification
     if core_patterns and matches_pattern(file_path, core_patterns):

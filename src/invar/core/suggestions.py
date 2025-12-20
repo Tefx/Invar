@@ -247,7 +247,10 @@ def _generate_lambda_skeleton(signature: str) -> str:
     return f"@pre(lambda {params_str}: <condition>) or @post(lambda result: <condition>)"
 
 
-@pre(lambda symbol, violation_type: violation_type in ("missing_contract", "empty_contract", "redundant_type_contract", "semantic_tautology", ""))
+@pre(
+    lambda symbol, violation_type: violation_type
+    in ("missing_contract", "empty_contract", "redundant_type_contract", "semantic_tautology", "")
+)
 def format_suggestion_for_violation(symbol: Symbol, violation_type: str) -> str:
     """
     Format a complete suggestion message for a violation.

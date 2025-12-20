@@ -106,10 +106,12 @@ def parse_guard_config(guard_config: dict[str, Any]) -> RuleConfig:
     if "rule_exclusions" in guard_config:
         exclusions = []
         for excl in guard_config["rule_exclusions"]:
-            exclusions.append(RuleExclusion(
-                pattern=excl["pattern"],
-                rules=excl["rules"],
-            ))
+            exclusions.append(
+                RuleExclusion(
+                    pattern=excl["pattern"],
+                    rules=excl["rules"],
+                )
+            )
         kwargs["rule_exclusions"] = exclusions
 
     # Phase 9 P2: Parse severity_overrides (merge with defaults)
@@ -170,6 +172,7 @@ def matches_path_prefix(file_path: str, prefixes: list[str]) -> bool:
     return any(file_path.startswith(p) for p in prefixes)
 
 
+@post(lambda result: isinstance(result, bool))
 def match_glob_pattern(file_path: str, pattern: str) -> bool:
     """
     Check if file path matches a glob pattern with ** support.
@@ -218,8 +221,9 @@ def match_glob_pattern(file_path: str, pattern: str) -> bool:
         for i in range(len(path_parts) + 1):
             head = "/".join(path_parts[:i]) if i > 0 else ""
             tail = "/".join(path_parts[i:])
-            if (not prefix or fnmatch.fnmatch(head, prefix)) and \
-               (not suffix or fnmatch.fnmatch(tail, suffix) or fnmatch.fnmatch(tail, "*/" + suffix)):
+            if (not prefix or fnmatch.fnmatch(head, prefix)) and (
+                not suffix or fnmatch.fnmatch(tail, suffix) or fnmatch.fnmatch(tail, "*/" + suffix)
+            ):
                 return True
     return False
 

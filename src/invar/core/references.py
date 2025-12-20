@@ -19,9 +19,7 @@ from invar.core.models import FileInfo, PerceptionMap, SymbolKind, SymbolRefs
 
 @pre(lambda source, known_symbols: isinstance(source, str))
 @post(lambda result: isinstance(result, list))
-def find_references_in_source(
-    source: str, known_symbols: set[str]
-) -> list[tuple[str, int]]:
+def find_references_in_source(source: str, known_symbols: set[str]) -> list[tuple[str, int]]:
     """
     Find references to known symbols in source code.
 

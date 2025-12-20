@@ -77,7 +77,9 @@ def read_and_parse_file(file_path: Path, project_root: Path) -> Result[FileInfo,
 
     # Classify as Core or Shell based on patterns and paths
     classify_result = classify_file(relative_path, project_root)
-    file_info.is_core, file_info.is_shell = classify_result.unwrap() if isinstance(classify_result, Success) else (False, False)
+    file_info.is_core, file_info.is_shell = (
+        classify_result.unwrap() if isinstance(classify_result, Success) else (False, False)
+    )
 
     return Success(file_info)
 

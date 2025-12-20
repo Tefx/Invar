@@ -18,9 +18,7 @@ if TYPE_CHECKING:
 def _run_git(args: list[str], cwd: Path) -> Result[str, str]:
     """Run a git command and return stdout."""
     try:
-        result = subprocess.run(
-            ["git", *args], cwd=cwd, capture_output=True, text=True
-        )
+        result = subprocess.run(["git", *args], cwd=cwd, capture_output=True, text=True)
         if result.returncode != 0:
             return Failure(result.stderr.strip() or f"git {args[0]} failed")
         return Success(result.stdout)

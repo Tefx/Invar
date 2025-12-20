@@ -100,9 +100,7 @@ def analyze_file_context(source: str, path: str, max_lines: int = 500) -> FileCo
     contract_examples = _extract_contract_patterns(source)
 
     # Count functions with contracts (Symbol.contracts is non-empty)
-    functions_with_contracts = sum(
-        1 for f in functions if len(f.contracts) > 0
-    )
+    functions_with_contracts = sum(1 for f in functions if len(f.contracts) > 0)
 
     return FileContext(
         path=path,

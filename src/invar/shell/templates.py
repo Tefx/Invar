@@ -11,7 +11,7 @@ from pathlib import Path
 
 from returns.result import Failure, Result, Success
 
-_DEFAULT_PYPROJECT_CONFIG = '''\n# Invar Configuration
+_DEFAULT_PYPROJECT_CONFIG = """\n# Invar Configuration
 [tool.invar.guard]
 core_paths = ["src/core"]
 shell_paths = ["src/shell"]
@@ -21,9 +21,9 @@ require_contracts = true
 require_doctests = true
 forbidden_imports = ["os", "sys", "socket", "requests", "urllib", "subprocess", "shutil", "io", "pathlib"]
 exclude_paths = ["tests", "scripts", ".venv"]
-'''
+"""
 
-_DEFAULT_INVAR_TOML = '''# Invar Configuration
+_DEFAULT_INVAR_TOML = """# Invar Configuration
 # For projects without pyproject.toml
 
 [guard]
@@ -39,7 +39,7 @@ exclude_paths = ["tests", "scripts", ".venv"]
 # Pattern-based classification (optional, takes priority over paths)
 # core_patterns = ["**/domain/**", "**/models/**"]
 # shell_patterns = ["**/api/**", "**/cli/**"]
-'''
+"""
 
 
 def get_template_path(name: str) -> Result[Path, str]:
@@ -53,7 +53,9 @@ def get_template_path(name: str) -> Result[Path, str]:
         return Failure(f"Failed to get template path: {e}")
 
 
-def copy_template(template_name: str, dest: Path, dest_name: str | None = None) -> Result[bool, str]:
+def copy_template(
+    template_name: str, dest: Path, dest_name: str | None = None
+) -> Result[bool, str]:
     """Copy a template file to destination. Returns Success(True) if copied, Success(False) if skipped."""
     if dest_name is None:
         dest_name = template_name.replace(".template", "")

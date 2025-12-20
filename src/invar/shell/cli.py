@@ -16,13 +16,9 @@ from rich.table import Table
 
 
 def _detect_agent_mode() -> bool:
-    """
-    Detect if running in agent context (Phase 9 P11).
-
-    Returns True if INVAR_MODE=agent environment variable is set.
-    This allows automatic JSON output for all commands when used by AI agents.
-    """
+    """Detect if running in agent context. Returns True if INVAR_MODE=agent is set."""
     return os.getenv("INVAR_MODE") == "agent"
+
 
 from invar import __version__
 from invar.core.formatter import format_guard_agent
@@ -80,19 +76,25 @@ def _scan_and_check(
 
 @app.command()
 def guard(
-    path: Path = typer.Argument(Path(), help="Project root directory",
-                                 exists=True, file_okay=False, dir_okay=True),
+    path: Path = typer.Argument(
+        Path(), help="Project root directory", exists=True, file_okay=False, dir_okay=True
+    ),
     strict: bool = typer.Option(False, "--strict", help="Treat warnings as errors"),
-    no_strict_pure: bool = typer.Option(False, "--no-strict-pure",
-                                         help="Disable purity checks (internal imports, impure calls)"),
-    pedantic: bool = typer.Option(False, "--pedantic",
-                                   help="Show all violations including off-by-default rules"),
-    explain: bool = typer.Option(False, "--explain",
-                                  help="Show detailed explanations and limitations (Phase 9.2 P5)"),
-    changed: bool = typer.Option(False, "--changed",
-                                  help="Only check git-modified files (Phase 8.1)"),
-    agent: bool = typer.Option(False, "--agent",
-                                help="Output JSON with fix instructions for agents (Phase 8.2)"),
+    no_strict_pure: bool = typer.Option(
+        False, "--no-strict-pure", help="Disable purity checks (internal imports, impure calls)"
+    ),
+    pedantic: bool = typer.Option(
+        False, "--pedantic", help="Show all violations including off-by-default rules"
+    ),
+    explain: bool = typer.Option(
+        False, "--explain", help="Show detailed explanations and limitations (Phase 9.2 P5)"
+    ),
+    changed: bool = typer.Option(
+        False, "--changed", help="Only check git-modified files (Phase 8.1)"
+    ),
+    agent: bool = typer.Option(
+        False, "--agent", help="Output JSON with fix instructions for agents (Phase 8.2)"
+    ),
     json_output: bool = typer.Option(False, "--json", help="Output as JSON"),
 ) -> None:
     """Check project against Invar architecture rules."""
@@ -160,8 +162,10 @@ def _show_file_context(file_path: str) -> None:
         ctx = analyze_file_context(source, file_path, max_lines=500)
 
         # Show compact INSPECT section
-        console.print(f"  [dim]INSPECT: {ctx.lines} lines ({ctx.percentage}% of limit), "
-                      f"{ctx.functions_with_contracts}/{ctx.functions_total} functions with contracts[/dim]")
+        console.print(
+            f"  [dim]INSPECT: {ctx.lines} lines ({ctx.percentage}% of limit), "
+            f"{ctx.functions_with_contracts}/{ctx.functions_total} functions with contracts[/dim]"
+        )
         if ctx.contract_examples:
             patterns = ", ".join(ctx.contract_examples[:2])
             if len(patterns) > 60:
@@ -172,21 +176,17 @@ def _show_file_context(file_path: str) -> None:
 
 
 def _output_rich(
-    report: GuardReport, strict_pure: bool = False, changed_mode: bool = False,
-    pedantic_mode: bool = False, explain_mode: bool = False
+    report: GuardReport,
+    strict_pure: bool = False,
+    changed_mode: bool = False,
+    pedantic_mode: bool = False,
+    explain_mode: bool = False,
 ) -> None:
     """Output report using Rich formatting."""
     console.print("\n[bold]Invar Guard Report[/bold]")
     console.print("=" * 40)
-    mode_info = []
-    if strict_pure:
-        mode_info.append("strict-pure")
-    if changed_mode:
-        mode_info.append("changed-only")
-    if pedantic_mode:
-        mode_info.append("pedantic")
-    if explain_mode:
-        mode_info.append("explain")
+    mode_info = [m for m, c in [("strict-pure", strict_pure), ("changed-only", changed_mode),
+                                ("pedantic", pedantic_mode), ("explain", explain_mode)] if c]
     if mode_info:
         console.print(f"[cyan]({', '.join(mode_info)} mode)[/cyan]")
     console.print()
@@ -227,7 +227,9 @@ def _output_rich(
                         if explain_mode:
                             console.print(f"    [dim]Detects: {meta.detects}[/dim]")
                             if meta.cannot_detect:
-                                console.print(f"    [dim]Cannot detect: {', '.join(meta.cannot_detect)}[/dim]")
+                                console.print(
+                                    f"    [dim]Cannot detect: {', '.join(meta.cannot_detect)}[/dim]"
+                                )
             console.print()
 
     console.print("-" * 40)
@@ -239,7 +241,9 @@ def _output_rich(
     # P24: Contract coverage statistics (only show if core files exist)
     if report.core_functions_total > 0:
         pct = report.contract_coverage_pct
-        console.print(f"\n[bold]Contract coverage:[/bold] {pct}% ({report.core_functions_with_contracts}/{report.core_functions_total} functions)")
+        console.print(
+            f"\n[bold]Contract coverage:[/bold] {pct}% ({report.core_functions_with_contracts}/{report.core_functions_total} functions)"
+        )
         issues = report.contract_issue_counts
         issue_parts = []
         if issues["tautology"] > 0:
@@ -274,14 +278,22 @@ def _output_rich(
             health_color = "yellow"
             health_label = "Needs attention"
 
-        console.print(f"\n[bold]Code Health:[/bold] [{health_color}]{health}%[/{health_color}] {bar} ({health_label})")
+        console.print(
+            f"\n[bold]Code Health:[/bold] [{health_color}]{health}%[/{health_color}] {bar} ({health_label})"
+        )
 
         # Tip for fixing warnings
         if report.warnings > 0:
-            console.print("[dim]💡 Fix warnings in files you modified to improve code health.[/dim]")
+            console.print(
+                "[dim]💡 Fix warnings in files you modified to improve code health.[/dim]"
+            )
 
-    console.print(f"\n[{'green' if report.passed else 'red'}]Guard {'passed' if report.passed else 'failed'}.[/]")
-    console.print("\n[dim]Note: Guard performs static analysis only. Dynamic imports and runtime behavior are not checked.[/dim]")
+    console.print(
+        f"\n[{'green' if report.passed else 'red'}]Guard {'passed' if report.passed else 'failed'}.[/]"
+    )
+    console.print(
+        "\n[dim]Note: Guard performs static analysis only. Dynamic imports and runtime behavior are not checked.[/dim]"
+    )
 
 
 def _output_json(report: GuardReport) -> None:
@@ -349,8 +361,9 @@ def sig_command(
 @app.command()
 def rules(
     json_output: bool = typer.Option(False, "--json", help="Output as JSON"),
-    category: str = typer.Option(None, "--category", "-c",
-                                  help="Filter by category (size, contracts, purity, shell, docs)"),
+    category: str = typer.Option(
+        None, "--category", "-c", help="Filter by category (size, contracts, purity, shell, docs)"
+    ),
 ) -> None:
     """
     List all Guard rules with their metadata.
@@ -402,7 +415,9 @@ def rules(
         table.add_column("Hint", style="green")
 
         for r in rules_list:
-            sev_style = {"error": "red", "warning": "yellow", "info": "blue"}.get(r.severity.value, "")
+            sev_style = {"error": "red", "warning": "yellow", "info": "blue"}.get(
+                r.severity.value, ""
+            )
             table.add_row(
                 r.name,
                 f"[{sev_style}]{r.severity.value.upper()}[/{sev_style}]",
@@ -418,8 +433,12 @@ def rules(
 @app.command()
 def init(
     path: Path = typer.Argument(Path(), help="Project root directory"),
-    dirs: bool = typer.Option(None, "--dirs/--no-dirs", help="Create src/core and src/shell directories"),
-    hooks: bool = typer.Option(True, "--hooks/--no-hooks", help="Install pre-commit hooks (default: ON)"),
+    dirs: bool = typer.Option(
+        None, "--dirs/--no-dirs", help="Create src/core and src/shell directories"
+    ),
+    hooks: bool = typer.Option(
+        True, "--hooks/--no-hooks", help="Install pre-commit hooks (default: ON)"
+    ),
 ) -> None:
     """
     Initialize Invar configuration in a project.

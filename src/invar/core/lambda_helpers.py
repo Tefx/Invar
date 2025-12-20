@@ -5,7 +5,10 @@ from __future__ import annotations
 import ast
 import re
 
+from deal import post
 
+
+@post(lambda result: result is None or isinstance(result, ast.Lambda))
 def find_lambda(tree: ast.Expression) -> ast.Lambda | None:
     """Find the lambda node in an expression tree.
 
@@ -20,6 +23,7 @@ def find_lambda(tree: ast.Expression) -> ast.Lambda | None:
     return next((n for n in ast.walk(tree) if isinstance(n, ast.Lambda)), None)
 
 
+@post(lambda result: isinstance(result, dict))
 def extract_annotations(signature: str) -> dict[str, str]:
     """Extract parameter type annotations from signature.
 
@@ -47,6 +51,7 @@ def extract_annotations(signature: str) -> dict[str, str]:
     return annotations
 
 
+@post(lambda result: result is None or isinstance(result, list))
 def extract_lambda_params(expression: str) -> list[str] | None:
     """Extract parameter names from a lambda expression.
 
@@ -68,6 +73,7 @@ def extract_lambda_params(expression: str) -> list[str] | None:
         return None
 
 
+@post(lambda result: result is None or isinstance(result, list))
 def extract_func_param_names(signature: str) -> list[str] | None:
     """Extract parameter names from a function signature (handles nested brackets).
 
@@ -107,6 +113,7 @@ def extract_func_param_names(signature: str) -> list[str] | None:
     return params
 
 
+@post(lambda result: isinstance(result, set))
 def extract_used_names(node: ast.expr) -> set[str]:
     """Extract all variable names used in an expression (Load context).
 
