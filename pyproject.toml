@@ -10,6 +10,7 @@ packages = ["src/invar"]
 "src/invar/templates/CLAUDE.md.template" = "invar/templates/CLAUDE.md.template"
 "src/invar/templates/context.md.template" = "invar/templates/context.md.template"
 "src/invar/templates/proposal.md.template" = "invar/templates/proposal.md.template"
+"src/invar/templates/pre-commit-config.yaml.template" = "invar/templates/pre-commit-config.yaml.template"
 
 [project]
 name = "python-invar"

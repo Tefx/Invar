@@ -1,30 +1,48 @@
 # Project Development Guide
 
-> This project follows the Invar methodology. See [INVAR.md](./INVAR.md) for the full protocol.
-
-**Protocol Version:** See INVAR.md header (e.g., "The Invar Protocol v3.8")
+> This project uses Invar for verifiable AI-assisted development.
 
 ---
 
-## Session Start Checklist
+## Session Start (REQUIRED)
 
-When starting a new session on this project:
+Every session, before any code changes:
 
 ```
-□ Read THIS project's INVAR.md (each project may differ)
-□ Check protocol version in INVAR.md header
-□ Read .invar/context.md for current state
-□ Note: Project's INVAR.md is authoritative, not your training data
+1. Read INVAR.md (protocol rules)
+2. Read .invar/context.md (current state, recent decisions)
+3. Run: invar guard --changed (baseline check)
 ```
 
 ---
 
-## Context Recovery
+## Verification (REQUIRED)
 
-If starting a new session or context was summarized, read `.invar/context.md` for:
-- Current project state and progress
-- Recent design decisions
-- Lessons learned (pitfalls to avoid)
+After ANY code change, before considering the task complete:
+
+```bash
+invar guard --changed    # Architecture check - MUST PASS
+pytest --doctest-modules # Logic check - MUST PASS
+```
+
+**Do NOT skip verification. Do NOT use `git commit --no-verify`.**
+
+If Guard fails:
+1. Read the violation message and suggestion
+2. Fix the issue
+3. Re-run Guard
+4. Repeat until pass
+
+---
+
+## When to Use Exploration Tools
+
+| Situation | Command | What You Get |
+|-----------|---------|--------------|
+| First time seeing a file | `invar sig <file>` | All function signatures without reading code |
+| Need to find where X is defined | `invar map` | Symbol locations across project |
+| Understanding high-traffic code | `invar map --top 20` | Most-referenced symbols |
+| Before modifying unfamiliar code | `invar sig <file>::<function>` | Specific function with contracts |
 
 ---
 
@@ -32,99 +50,117 @@ If starting a new session or context was summarized, read `.invar/context.md` fo
 
 ```
 src/
-├── core/           # Pure logic, no I/O
-│   └── ...         # Business logic, validation, models
+├── core/           # Pure logic - NO I/O imports
+│   └── ...         # @pre/@post required, doctests required
 │
-└── shell/          # I/O adapters
-    └── ...         # CLI, API, file operations
+└── shell/          # I/O operations
+    └── ...         # Returns Result[T, E], calls core/ for logic
 ```
 
-**Key rule:** Core imports are one-way. Shell imports from Core, never the reverse.
+**Import rule:** Shell imports Core. Core never imports Shell.
 
 ---
 
-## Quick Rules
+## Writing Code
 
-1. **Separation:** `src/core/` (pure) vs `src/shell/` (I/O)
-2. **Contracts:** `@pre`/`@post` for Core functions
-3. **Results:** `Result[T, E]` for Shell functions that can fail
-4. **Verify:** Run `invar guard` + `pytest` after changes
+### Core Functions (REQUIRED pattern)
 
----
+```python
+from deal import pre, post
 
-## Development Workflow
+@pre(lambda x: x >= 0)  # What must be true BEFORE
+@post(lambda result: result >= 0)  # What must be true AFTER
+def calculate(x: int) -> int:
+    """
+    Brief description.
 
-Follow **ICIDV** for each task:
-
-### I - Intent
-```
-□ Understand what needs to be done
-□ Identify affected files
-□ Classify as Core or Shell
-```
-
-### C - Contract
-```
-□ Define function signature with types
-□ Add @pre/@post decorators
-□ Write doctest examples
+    >>> calculate(5)  # At least one example
+    10
+    """
+    return x * 2
 ```
 
-### I - Inspect
-```
-□ Check target file size (if >200 lines, be careful)
-□ Check existing function signature patterns
-□ Identify edge cases
-```
+### Shell Functions (REQUIRED pattern)
 
-### D - Design
-```
-□ If file will exceed 280 lines → plan extraction
-□ Match existing signature patterns
-□ Plan integration tests if adding config options
-```
+```python
+from returns.result import Result, Success, Failure
 
-### I - Implementation
-```
-□ Write code (< 50 lines per function)
-□ Keep files < 500 lines
-□ No **kwargs or eval in Core
-```
-
-### V - Verify
-```
-□ pytest --doctest-modules (unit)
-□ invar guard (architecture)
-□ Test config scenarios (integration)
+def load_data(path: str) -> Result[Data, str]:
+    """Load data from file."""
+    try:
+        content = Path(path).read_text()
+        return Success(parse(content))
+    except Exception as e:
+        return Failure(str(e))
 ```
 
 ---
 
-## Verification Commands
+## Workflow: ICIDV
 
-```bash
-# Run all tests including doctests
-pytest --doctest-modules
+For each task:
 
-# Check architecture rules
-invar guard
+**I - Intent**: What needs to be done? Core or Shell?
 
-# Check only modified files (shows INSPECT info)
-invar guard --changed
+**C - Contract**: Write signature + @pre/@post + doctest FIRST
 
-# Detailed explanations for violations
-invar guard --explain
+**I - Inspect**:
+- `invar sig <file>` to see existing patterns
+- Check file size (warning at 400+ lines)
+
+**D - Design**: If file > 400 lines, plan extraction before adding code
+
+**V - Verify**: `invar guard --changed && pytest --doctest-modules`
+
+---
+
+## Size Limits
+
+| Scope | Limit | What to Do When Approaching |
+|-------|-------|----------------------------|
+| File | 500 lines | Guard warns at 80%. Extract related functions to new module |
+| Function | 50 lines | Extract helper functions |
+
+Guard shows extractable groups when files get large:
 ```
+→ Extractable groups:
+→ [A] parse, validate, transform (95L) | Deps: re
+→ [B] format_output, write_result (60L) | Deps: none
+```
+
+---
+
+## Context Management
+
+After completing a phase or making important decisions:
+
+1. Update `.invar/context.md` with:
+   - What was done
+   - Key decisions made
+   - Lessons learned
+
+This ensures the next session (or summarized context) retains knowledge.
+
+---
+
+## Common Pitfalls
+
+| Mistake | Consequence | Prevention |
+|---------|-------------|------------|
+| Skip verification | Bugs in production | Always run Guard + pytest |
+| Empty contract `@pre(lambda: True)` | Guard warns | Write meaningful constraints |
+| I/O in Core | Guard fails | Move to Shell |
+| File > 500 lines | Guard fails | Split before reaching limit |
+| Forget context.md update | Next session loses knowledge | Update after each phase |
 
 ---
 
 ## Dependencies
 
-This project uses:
 - `deal` - Design by contract (@pre/@post)
 - `returns` - Result types for error handling
 - `pydantic` - Data validation models
 
 ---
 
-*Generated by `invar init`. Customize this file for your project.*
+*Generated by `invar init`. Customize for your project.*

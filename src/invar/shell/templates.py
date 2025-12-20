@@ -111,3 +111,23 @@ def create_directories(path: Path, console) -> None:
         shell_path.mkdir(parents=True)
         (shell_path / "__init__.py").touch()
         console.print("[green]Created[/green] src/shell/")
+
+
+def install_hooks(path: Path, console) -> Result[bool, str]:
+    """Install pre-commit hooks configuration."""
+    pre_commit_config = path / ".pre-commit-config.yaml"
+
+    if pre_commit_config.exists():
+        console.print("[yellow]Skipped[/yellow] .pre-commit-config.yaml (already exists)")
+        return Success(False)
+
+    result = copy_template("pre-commit-config.yaml.template", path, ".pre-commit-config.yaml")
+    if isinstance(result, Failure):
+        return result
+
+    if result.unwrap():
+        console.print("[green]Created[/green] .pre-commit-config.yaml")
+        console.print("[dim]Run: pip install pre-commit && pre-commit install[/dim]")
+        return Success(True)
+
+    return Success(False)

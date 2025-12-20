@@ -1,0 +1,24 @@
+# Invar Pre-commit Hooks
+# Install: pip install pre-commit && pre-commit install
+
+repos:
+  - repo: local
+    hooks:
+      # Invar Guard - Architecture verification
+      - id: invar-guard
+        name: Invar Guard
+        entry: invar guard --changed
+        language: system
+        pass_filenames: false
+        stages: [commit]
+        # Only run if Python files changed
+        types: [python]
+
+      # Pytest with doctests - Logic verification
+      - id: pytest-doctest
+        name: Pytest Doctests
+        entry: pytest --doctest-modules src/ -q --tb=short
+        language: system
+        pass_filenames: false
+        stages: [commit]
+        types: [python]

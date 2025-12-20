@@ -33,7 +33,7 @@ from invar.core.utils import get_exit_code
 from invar.shell.config import load_config
 from invar.shell.fs import scan_project
 from invar.shell.git import get_changed_files, is_git_repo
-from invar.shell.templates import add_config, copy_template, create_directories
+from invar.shell.templates import add_config, copy_template, create_directories, install_hooks
 
 app = typer.Typer(
     name="invar",
@@ -391,6 +391,7 @@ def rules(
 def init(
     path: Path = typer.Argument(Path("."), help="Project root directory"),
     dirs: bool = typer.Option(None, "--dirs/--no-dirs", help="Create src/core and src/shell directories"),
+    hooks: bool = typer.Option(False, "--hooks", help="Install pre-commit hooks"),
 ) -> None:
     """
     Initialize Invar configuration in a project.
@@ -400,6 +401,7 @@ def init(
     - Otherwise: creates invar.toml
 
     Use --dirs to always create directories, --no-dirs to skip.
+    Use --hooks to install pre-commit hooks for automatic verification.
     """
     config_result = add_config(path, console)
     if isinstance(config_result, Failure):
@@ -433,6 +435,10 @@ def init(
         result = copy_template("proposal.md.template", proposals_dir, "TEMPLATE.md")
         if isinstance(result, Success) and result.unwrap():
             console.print("[green]Created[/green] .invar/proposals/TEMPLATE.md")
+
+    # Install pre-commit hooks if requested
+    if hooks:
+        install_hooks(path, console)
 
     if not config_added and not (path / "INVAR.md").exists():
         console.print("[yellow]Invar already configured.[/yellow]")
