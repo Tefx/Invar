@@ -6,7 +6,7 @@ when files approach size limits.
 
 from __future__ import annotations
 
-from deal import pre
+from deal import post, pre
 
 from invar.core.models import FileInfo, Symbol, SymbolKind
 
@@ -87,6 +87,7 @@ def find_extractable_groups(file_info: FileInfo) -> list[dict]:
     return groups
 
 
+@post(lambda result: isinstance(result, set))
 def _get_group_dependencies(
     func_names: list[str],
     funcs: dict[str, Symbol],

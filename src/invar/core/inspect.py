@@ -10,7 +10,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
-from deal import pre
+from deal import post, pre
 
 from invar.core.parser import parse_source
 from invar.core.models import SymbolKind
@@ -44,6 +44,7 @@ class FileContext:
     contract_examples: list[str]
 
     @property
+    @post(lambda result: result >= 0)
     def percentage(self) -> int:
         """Percentage of max lines used."""
         if self.max_lines == 0:
@@ -51,6 +52,7 @@ class FileContext:
         return int(self.lines / self.max_lines * 100)
 
     @property
+    @post(lambda result: isinstance(result, bool))
     def has_patterns(self) -> bool:
         """Whether there are contract patterns to show."""
         return len(self.contract_examples) > 0
@@ -112,6 +114,7 @@ def analyze_file_context(source: str, path: str, max_lines: int = 500) -> FileCo
     )
 
 
+@post(lambda result: isinstance(result, list))
 def _extract_contract_patterns(source: str) -> list[str]:
     """
     Extract @pre/@post patterns from source.
