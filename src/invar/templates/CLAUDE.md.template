@@ -12,6 +12,7 @@ Every session, before any code changes:
 1. Read INVAR.md (protocol rules)
 2. Read .invar/context.md (current state, recent decisions)
 3. Run: invar guard --changed (baseline check)
+4. Run: invar map --top 10 (understand project structure)
 ```
 
 ---
@@ -33,16 +34,40 @@ If Guard fails:
 3. Re-run Guard
 4. Repeat until pass
 
+### Warning Policy
+
+| Situation | Action |
+|-----------|--------|
+| Warning in file YOU modified | Fix it (you touched it, you own it) |
+| Pre-existing warning elsewhere | Note in context.md if blocking |
+| All warnings fixed | ✓ Code Health 100% |
+
+**Goal:** Strive for zero warnings in files you touch.
+
 ---
 
-## When to Use Exploration Tools
+## Tool Selection
 
-| Situation | Command | What You Get |
-|-----------|---------|--------------|
-| First time seeing a file | `invar sig <file>` | All function signatures without reading code |
-| Need to find where X is defined | `invar map` | Symbol locations across project |
-| Understanding high-traffic code | `invar map --top 20` | Most-referenced symbols |
-| Before modifying unfamiliar code | `invar sig <file>::<function>` | Specific function with contracts |
+### Always Use Invar For:
+```bash
+invar sig <file>           # See contracts (UNIQUE: shows @pre/@post)
+invar map --top 20         # Find entry points (UNIQUE: reference count ranking)
+invar guard --changed      # Verify code quality (REQUIRED)
+```
+
+### Task-Based Selection:
+
+| I want to... | Tool | Fallback if unavailable |
+|--------------|------|-------------------------|
+| See contracts/patterns | `invar sig <file>` | — (only Invar shows contracts) |
+| Find hot spots/entry points | `invar map --top 20` | — (only Invar has ref counts) |
+| Find specific symbol | Serena `find_symbol` | `invar map` + grep |
+| Find who calls this | Serena `find_referencing_symbols` | `invar map` (shows ref count) |
+| Edit function body | Serena `replace_symbol_body` | Standard file edit |
+| Rename across project | Serena `rename_symbol` | Manual search & replace |
+| Verify after changes | `invar guard --changed` | — (always use Invar) |
+
+**Rule:** `invar sig` before reading code. Contracts tell you more than implementation.
 
 ---
 
@@ -104,8 +129,9 @@ For each task:
 
 **C - Contract**: Write signature + @pre/@post + doctest FIRST
 
-**I - Inspect**:
-- `invar sig <file>` to see existing patterns
+**I - Inspect** (use Invar tools):
+- `invar sig <file>` — see contracts and patterns BEFORE reading code
+- `invar map --top 10` — find related high-traffic symbols
 - Check file size (warning at 400+ lines)
 
 **D - Design**: If file > 400 lines, plan extraction before adding code

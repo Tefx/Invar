@@ -326,7 +326,7 @@ def check_impure_calls(file_info: FileInfo, config: RuleConfig) -> list[Violatio
             violations.append(
                 Violation(
                     rule="impure_call",
-                    severity=Severity.WARNING,
+                    severity=Severity.ERROR,
                     file=file_info.path,
                     line=symbol.line,
                     message=f"{kind_name} '{symbol.name}' calls impure functions: {', '.join(symbol.impure_calls)}",

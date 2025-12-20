@@ -5,7 +5,7 @@ from __future__ import annotations
 import ast
 import re
 
-from deal import pre
+from deal import post, pre
 
 from invar.core.models import FileInfo, RuleConfig, Severity, SymbolKind, Violation
 from invar.core.suggestions import format_suggestion_for_violation
@@ -75,6 +75,7 @@ def is_semantic_tautology(expression: str) -> tuple[bool, str]:
         return (False, "")
 
 
+@post(lambda result: isinstance(result, tuple) and len(result) == 2)
 def _check_tautology_patterns(node: ast.expr) -> tuple[bool, str]:
     """Check for common tautology patterns in AST node."""
     # Pattern: x == x (identity comparison)
@@ -141,6 +142,7 @@ def is_redundant_type_contract(expression: str, annotations: dict[str, str]) -> 
         return False
 
 
+@post(lambda result: result is None or isinstance(result, list))
 def _extract_isinstance_checks(node: ast.expr) -> list[tuple[str, str]] | None:
     """Extract isinstance checks. Returns None if other logic present."""
     if isinstance(node, ast.Call):
@@ -152,6 +154,7 @@ def _extract_isinstance_checks(node: ast.expr) -> list[tuple[str, str]] | None:
     return None
 
 
+@post(lambda result: result is None or (isinstance(result, tuple) and len(result) == 2))
 def _parse_isinstance_call(node: ast.Call) -> tuple[str, str] | None:
     """Parse isinstance(x, Type) call. Returns (param, type) or None."""
     if not (isinstance(node.func, ast.Name) and node.func.id == "isinstance"):
@@ -166,6 +169,7 @@ def _parse_isinstance_call(node: ast.Call) -> tuple[str, str] | None:
     return None
 
 
+@post(lambda result: isinstance(result, bool))
 def _types_match(annotation: str, type_name: str) -> bool:
     """Check if type annotation matches isinstance check.
 
@@ -290,7 +294,7 @@ def check_empty_contracts(file_info: FileInfo, config: RuleConfig) -> list[Viola
             if is_empty_contract(contract.expression):
                 kind = "Method" if symbol.kind == SymbolKind.METHOD else "Function"
                 violations.append(Violation(
-                    rule="empty_contract", severity=Severity.WARNING, file=file_info.path, line=contract.line,
+                    rule="empty_contract", severity=Severity.ERROR, file=file_info.path, line=contract.line,
                     message=f"{kind} '{symbol.name}' has empty contract: @{contract.kind}({contract.expression})",
                     suggestion=format_suggestion_for_violation(symbol, "empty_contract"),
                 ))

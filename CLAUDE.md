@@ -4,7 +4,7 @@
 
 This project follows the Invar methodology. See [INVAR.md](./INVAR.md) for the protocol.
 
-**Protocol Version:** v3.17 | **PyPI:** `python-invar` v0.1.0
+**Protocol Version:** v3.18 | **PyPI:** `python-invar`
 
 ---
 
@@ -28,6 +28,7 @@ Human (Commander) ──directs──→ Agent (Executor) ──uses──→ In
 □ Read INVAR.md (88 lines, compressed protocol)
 □ Read .invar/context.md (current state, lessons learned)
 □ Run: invar guard --changed (verify before changes)
+□ Run: invar map --top 10 (understand project structure)
 ```
 
 ---
@@ -39,6 +40,8 @@ Human (Commander) ──directs──→ Agent (Executor) ──uses──→ In
 2. **Agent-Native:** Design for Agent consumption. Automatic > Opt-in. Default ON > OFF.
 
 3. **Verify Always:** Run `invar guard` and `pytest --doctest-modules` after changes.
+
+4. **Warning Policy:** Fix warnings in files you modify (you touched it, you own it).
 
 ---
 
@@ -90,18 +93,36 @@ src/invar/
 
 1. **Intent** - Understand task, classify Core/Shell
 2. **Contract** - Define signature, @pre/@post, doctests
-3. **Inspect** - Check file sizes, existing patterns (use `--changed`)
+3. **Inspect** - `invar sig <file>` for contracts, `invar map --top 10` for entry points
 4. **Design** - Plan extraction if file > 400 lines
 5. **Implement** - Write explicit code
 6. **Verify** - `pytest --doctest-modules && invar guard`
 
 ---
 
-## Guard Commands
+## Tool Selection
 
+### Always Use Invar For:
 ```bash
-invar guard              # Check all files
-invar guard --changed    # Modified files only (shows INSPECT info)
+invar sig <file>           # See contracts (UNIQUE: shows @pre/@post)
+invar map --top 10         # Find entry points (UNIQUE: reference count ranking)
+invar guard --changed      # Verify code quality (REQUIRED)
+```
+
+### Task-Based Selection:
+
+| I want to... | Tool | Why |
+|--------------|------|-----|
+| See contracts/patterns | `invar sig <file>` | Only Invar shows @pre/@post |
+| Find hot spots | `invar map --top 10` | Only Invar has ref counts |
+| Find specific symbol | Serena `find_symbol` | More precise, pattern matching |
+| Find references | Serena `find_referencing_symbols` | Cross-file analysis |
+| Edit function body | Serena `replace_symbol_body` | Semantic editing |
+| Rename across project | Serena `rename_symbol` | Automatic refactoring |
+| Verify after changes | `invar guard --changed` | Required |
+
+### Other Commands
+```bash
 invar guard --explain    # Detailed explanations
 invar guard --agent      # JSON output
 invar rules              # List all rules

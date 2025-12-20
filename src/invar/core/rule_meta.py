@@ -10,6 +10,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
 
+from deal import post
+
 from invar.core.models import Severity
 
 
@@ -74,7 +76,7 @@ RULE_META: dict[str, RuleMeta] = {
     # Contract rules
     "missing_contract": RuleMeta(
         name="missing_contract",
-        severity=Severity.WARNING,
+        severity=Severity.ERROR,
         category=RuleCategory.CONTRACTS,
         detects="Core function without @pre or @post decorator",
         cannot_detect=("Contract quality", "Whether contract is meaningful"),
@@ -82,7 +84,7 @@ RULE_META: dict[str, RuleMeta] = {
     ),
     "empty_contract": RuleMeta(
         name="empty_contract",
-        severity=Severity.WARNING,
+        severity=Severity.ERROR,
         category=RuleCategory.CONTRACTS,
         detects="Contract with tautology like @pre(lambda: True)",
         cannot_detect=("Subtle tautologies", "Semantic correctness"),
@@ -123,7 +125,7 @@ RULE_META: dict[str, RuleMeta] = {
     ),
     "impure_call": RuleMeta(
         name="impure_call",
-        severity=Severity.WARNING,
+        severity=Severity.ERROR,
         category=RuleCategory.PURITY,
         detects="Call to impure function (datetime.now, random.*, print, open)",
         cannot_detect=("Custom impure functions", "Impurity via method calls"),
@@ -150,6 +152,7 @@ RULE_META: dict[str, RuleMeta] = {
 }
 
 
+@post(lambda result: result is None or isinstance(result, RuleMeta))
 def get_rule_meta(rule_name: str) -> RuleMeta | None:
     """
     Get metadata for a rule by name.
@@ -164,6 +167,7 @@ def get_rule_meta(rule_name: str) -> RuleMeta | None:
     return RULE_META.get(rule_name)
 
 
+@post(lambda result: len(result) > 0)
 def get_all_rule_names() -> list[str]:
     """
     Get list of all rule names.
@@ -178,6 +182,7 @@ def get_all_rule_names() -> list[str]:
     return list(RULE_META.keys())
 
 
+@post(lambda result: isinstance(result, list))
 def get_rules_by_category(category: RuleCategory) -> list[RuleMeta]:
     """
     Get all rules in a category.

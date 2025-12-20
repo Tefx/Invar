@@ -228,7 +228,7 @@ def check_contracts(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
                 violations.append(
                     Violation(
                         rule="missing_contract",
-                        severity=Severity.WARNING,
+                        severity=Severity.ERROR,
                         file=file_info.path,
                         line=symbol.line,
                         message=f"{kind_name} '{symbol.name}' has no @pre or @post contract",
@@ -341,6 +341,7 @@ def get_all_rules() -> list[RuleFunc]:
             check_param_mismatch, check_partial_contract]
 
 
+@post(lambda result: result is None or isinstance(result, Violation))
 def _apply_severity_override(v: Violation, overrides: dict[str, str]) -> Violation | None:
     """
     Apply severity override to a violation.

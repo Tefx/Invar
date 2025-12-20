@@ -253,6 +253,33 @@ def _output_rich(
         if issue_parts:
             console.print(f"[dim]Issues: {', '.join(issue_parts)}[/dim]")
 
+    # Code Health display (only when guard passes)
+    if report.passed and report.files_checked > 0:
+        # Calculate health: 100% for 0 warnings, decreases by 5% per warning, min 50%
+        health = max(50, 100 - report.warnings * 5)
+        bar_filled = health // 5  # 20 chars total
+        bar_empty = 20 - bar_filled
+        bar = "█" * bar_filled + "░" * bar_empty
+
+        if report.warnings == 0:
+            health_color = "green"
+            health_label = "Excellent"
+        elif report.warnings <= 2:
+            health_color = "green"
+            health_label = "Good"
+        elif report.warnings <= 5:
+            health_color = "yellow"
+            health_label = "Fair"
+        else:
+            health_color = "yellow"
+            health_label = "Needs attention"
+
+        console.print(f"\n[bold]Code Health:[/bold] [{health_color}]{health}%[/{health_color}] {bar} ({health_label})")
+
+        # Tip for fixing warnings
+        if report.warnings > 0:
+            console.print("[dim]💡 Fix warnings in files you modified to improve code health.[/dim]")
+
     console.print(f"\n[{'green' if report.passed else 'red'}]Guard {'passed' if report.passed else 'failed'}.[/]")
     console.print("\n[dim]Note: Guard performs static analysis only. Dynamic imports and runtime behavior are not checked.[/dim]")
 

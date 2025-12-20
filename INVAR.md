@@ -1,4 +1,4 @@
-# The Invar Protocol v3.17
+# The Invar Protocol v3.18
 
 > **"Trade structure for safety."** Separate what CAN fail (I/O) from what SHOULD NOT fail (logic).
 
@@ -35,6 +35,15 @@ def calculate(x: int, y: int) -> int:
 
 Guard provides hints and suggestions for violations. Use `invar guard --explain` for details.
 
+## Rule Severity
+
+| Level | Blocks Commit | Examples |
+|-------|---------------|----------|
+| **ERROR** | Yes | missing_contract, impure_call, empty_contract, forbidden_import |
+| **WARNING** | No | function_size, internal_import, shell_result, missing_doctest |
+
+Guard shows **Code Health** percentage based on warnings. Fix warnings in files you modify.
+
 ## Size Limits
 
 | Limit | Value | Warning |
@@ -42,16 +51,29 @@ Guard provides hints and suggestions for violations. Use `invar guard --explain`
 | File | 500 lines | 80% (400) |
 | Function | 50 lines | — |
 
-## Guard Commands
+## Commands
 
+### Verification
 ```bash
 invar guard              # Check rules (shows hints for violations)
 invar guard --changed    # Modified files only (shows file context)
 invar guard --explain    # Detailed explanations and limitations
 invar guard --agent      # JSON output with full context
-invar guard --pedantic   # Show all violations including off-by-default
 invar rules              # List all rules with severity and hints
 ```
+
+### Perception (use BEFORE reading/modifying code)
+```bash
+invar sig <file>           # Function signatures + contracts (no body)
+invar sig <file>::<symbol> # Specific function with contracts
+invar map                  # Symbol locations + reference counts
+invar map --top 20         # Most-referenced symbols (entry points)
+```
+
+**Why use Invar perception tools?**
+- `invar sig` shows **@pre/@post contracts** (generic tools don't)
+- `invar map --top` finds **entry points by reference count** (unique feature)
+- Both auto-output JSON in agent mode
 
 ## Workflow: ICIDV
 
@@ -60,7 +82,7 @@ Before implementing, follow **I**ntent → **C**ontract → **I**nspect → **D*
 ```
 □ Intent    — What are we trying to achieve?
 □ Contract  — What inputs are invalid? What does output guarantee?
-□ Inspect   — Check existing patterns (use: invar guard --changed)
+□ Inspect   — Run: invar sig <file> to see contracts, invar map --top 10 for entry points
 □ Design    — If file > 400 lines, plan extraction first
 □ Verify    — Run: invar guard && pytest --doctest-modules
 ```
@@ -86,4 +108,4 @@ max_function_lines = 50
 
 ---
 
-*Protocol v3.17 — Phase 9.3 compression. Essential information preserved; details available via Guard hints and commands.*
+*Protocol v3.18 — Stricter contract enforcement, Code Health metric.*

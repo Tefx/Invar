@@ -16,6 +16,14 @@
 
 1. [Pitfall or issue] → [Solution or workaround]
 
+## Technical Debt
+
+*Run `invar guard` to check current status.*
+
+| File | Warning | Priority |
+|------|---------|----------|
+| (none) | — | — |
+
 ## Key Files
 
 | File | Purpose |
