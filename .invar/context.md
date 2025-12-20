@@ -35,6 +35,20 @@ Based on Phase 10 development experience and detailed design discussions.
 
 ### Approved for Implementation
 
+**P24: Contract Coverage Statistics** (Priority: Low)
+```
+Design: Simplified from "strength scoring" to pure statistics
+Original idea: Score contracts as STRONG/MODERATE/WEAK
+Problem: "Strength" requires semantic understanding (Guard can't do)
+Simplified: Just report distribution, no judgment
+
+Output in Guard summary:
+  Contract coverage: 90% (45/50 functions)
+  Issues: 3 tautology, 5 type-check only
+
+Principle: Facts only, no subjective "strength" rating
+```
+
 **P25: Automatic Extraction Analysis** (Priority: High)
 ```
 Design: Guard enhancement, NOT a separate command
@@ -57,7 +71,6 @@ Principle: Guard provides options, Agent decides
 
 ### Under Consideration
 
-- **P24:** Contract strength scoring (meaningful > type-check > tautology)
 - **P26:** `invar check-contract <file>:<line>` for deep analysis
 
 ### Key Design Decisions (Phase 11)
