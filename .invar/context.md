@@ -69,9 +69,29 @@ Changes:
 Principle: Guard provides options, Agent decides
 ```
 
-### Under Consideration
+**P28: Partial Contract Detection** (Priority: Medium)
+```
+Design: Guard rule, NOT a command (replaces P26)
+Detects: @pre lambda has all params but doesn't use all
 
-- **P26:** `invar check-contract <file>:<line>` for deep analysis
+Example:
+  @pre(lambda x, y: x > 0)  # y is not checked
+  def f(x: int, y: int): ...
+  → WARN: @pre checks 'x' but not 'y'
+
+Note: Different from param_mismatch (P8.3):
+  - P8.3: lambda param count != function param count
+  - P28: lambda has all params but doesn't USE all
+
+Principle: Automatic detection as Guard rule
+```
+
+### Rejected
+
+- **P26:** `invar check-contract <file>:<line>` - Rejected
+  - Reason: Violates "Automatic > Opt-in"
+  - Agent can read code and reason about contracts
+  - Mechanical analysis covered by P7/P27/P28
 
 ### Key Design Decisions (Phase 11)
 
