@@ -11,7 +11,6 @@ from pathlib import Path
 
 from returns.result import Failure, Result, Success
 
-
 _DEFAULT_PYPROJECT_CONFIG = '''\n# Invar Configuration
 [tool.invar.guard]
 core_paths = ["src/core"]

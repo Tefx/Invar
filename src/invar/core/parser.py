@@ -13,8 +13,11 @@ from deal import post, pre
 
 from invar.core.models import Contract, FileInfo, Symbol, SymbolKind
 from invar.core.purity import (
-    count_code_lines, count_doctest_lines, extract_function_calls,
-    extract_impure_calls, extract_internal_imports,
+    count_code_lines,
+    count_doctest_lines,
+    extract_function_calls,
+    extract_impure_calls,
+    extract_internal_imports,
 )
 
 
@@ -256,8 +259,7 @@ def _extract_imports(tree: ast.Module) -> list[str]:
         if isinstance(node, ast.Import):
             for alias in node.names:
                 imports.append(alias.name.split(".")[0])
-        elif isinstance(node, ast.ImportFrom):
-            if node.module:
-                imports.append(node.module.split(".")[0])
+        elif isinstance(node, ast.ImportFrom) and node.module:
+            imports.append(node.module.split(".")[0])
 
     return list(set(imports))  # Deduplicate

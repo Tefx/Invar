@@ -167,6 +167,13 @@ select = [
 ]
 ignore = [
     "E501",   # line too long (handled by formatter)
+    "ARG001", # unused function argument (needed for interface consistency)
+    "ARG005", # unused lambda argument (needed for interface consistency)
+    "E402",   # imports not at top (cli.py uses lazy loading pattern)
+    "B008",   # typer.Argument in defaults (Typer pattern)
+    "B904",   # raise from clause (typer.Exit doesn't chain)
+    "B005",   # strip with multi-char (intentional for path patterns)
+    "SIM102", # nested if statements (improves readability in some cases)
 ]
 
 [tool.ruff.lint.isort]

@@ -10,10 +10,9 @@ import os
 from pathlib import Path
 
 import typer
+from returns.result import Failure, Result, Success
 from rich.console import Console
 from rich.table import Table
-
-from returns.result import Failure, Result, Success
 
 
 def _detect_agent_mode() -> bool:
@@ -81,7 +80,7 @@ def _scan_and_check(
 
 @app.command()
 def guard(
-    path: Path = typer.Argument(Path("."), help="Project root directory",
+    path: Path = typer.Argument(Path(), help="Project root directory",
                                  exists=True, file_okay=False, dir_okay=True),
     strict: bool = typer.Option(False, "--strict", help="Treat warnings as errors"),
     no_strict_pure: bool = typer.Option(False, "--no-strict-pure",
@@ -149,6 +148,7 @@ def _show_file_context(file_path: str) -> None:
     Displays file status and contract patterns to help agents understand context.
     """
     from pathlib import Path
+
     from invar.core.inspect import analyze_file_context
 
     try:
@@ -315,7 +315,7 @@ def version() -> None:
 
 @app.command("map")
 def map_command(
-    path: Path = typer.Argument(Path("."), help="Project root directory"),
+    path: Path = typer.Argument(Path(), help="Project root directory"),
     top: int = typer.Option(0, "--top", help="Show top N most-referenced symbols"),
     json_output: bool = typer.Option(False, "--json", help="Output as JSON"),
 ) -> None:
@@ -358,6 +358,7 @@ def rules(
     Phase 9.2 P3: Shows what each rule detects and its limitations.
     """
     import json as json_lib
+
     from invar.core.rule_meta import RULE_META, RuleCategory, get_rules_by_category
 
     # Phase 9 P11: Auto-detect agent mode
@@ -416,7 +417,7 @@ def rules(
 
 @app.command()
 def init(
-    path: Path = typer.Argument(Path("."), help="Project root directory"),
+    path: Path = typer.Argument(Path(), help="Project root directory"),
     dirs: bool = typer.Option(None, "--dirs/--no-dirs", help="Create src/core and src/shell directories"),
     hooks: bool = typer.Option(True, "--hooks/--no-hooks", help="Install pre-commit hooks (default: ON)"),
 ) -> None:

@@ -14,7 +14,7 @@ from collections import defaultdict
 
 from deal import post, pre
 
-from invar.core.models import FileInfo, PerceptionMap, Symbol, SymbolRefs, SymbolKind
+from invar.core.models import FileInfo, PerceptionMap, SymbolKind, SymbolRefs
 
 
 @pre(lambda source, known_symbols: isinstance(source, str))

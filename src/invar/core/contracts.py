@@ -7,12 +7,15 @@ import re
 
 from deal import post, pre
 
+from invar.core.lambda_helpers import (
+    extract_annotations,
+    extract_func_param_names,
+    extract_lambda_params,
+    extract_used_names,
+    find_lambda,
+)
 from invar.core.models import FileInfo, RuleConfig, Severity, SymbolKind, Violation
 from invar.core.suggestions import format_suggestion_for_violation
-from invar.core.lambda_helpers import (
-    find_lambda, extract_annotations, extract_lambda_params,
-    extract_func_param_names, extract_used_names,
-)
 
 
 @pre(lambda expression: "lambda" in expression or not expression.strip())
@@ -78,35 +81,33 @@ def is_semantic_tautology(expression: str) -> tuple[bool, str]:
 @post(lambda result: isinstance(result, tuple) and len(result) == 2)
 def _check_tautology_patterns(node: ast.expr) -> tuple[bool, str]:
     """Check for common tautology patterns in AST node."""
-    # Pattern: x == x (identity comparison)
-    if isinstance(node, ast.Compare):
-        if len(node.ops) == 1 and isinstance(node.ops[0], (ast.Eq, ast.Is)):
-            left = ast.unparse(node.left)
-            right = ast.unparse(node.comparators[0])
-            if left == right:
-                return (True, f"{left} == {right} is always True")
+    # Identity comparison pattern (e.g., x == x)
+    if (isinstance(node, ast.Compare)
+            and len(node.ops) == 1 and isinstance(node.ops[0], (ast.Eq, ast.Is))):
+        left = ast.unparse(node.left)
+        right = ast.unparse(node.comparators[0])
+        if left == right:
+            return (True, f"{left} == {right} is always True")
 
-    # Pattern: len(x) >= 0 or len(x) > -1 (length always non-negative)
-    if isinstance(node, ast.Compare):
-        if len(node.ops) == 1 and len(node.comparators) == 1:
-            left = node.left
-            op = node.ops[0]
-            right = node.comparators[0]
-            # len(x) >= 0
-            if (isinstance(left, ast.Call) and isinstance(left.func, ast.Name)
-                    and left.func.id == "len" and isinstance(op, ast.GtE)
-                    and isinstance(right, ast.Constant) and right.value == 0):
-                arg = ast.unparse(left.args[0]) if left.args else "x"
-                return (True, f"len({arg}) >= 0 is always True for any sequence")
+    # Length non-negative pattern (e.g., len(x) >= 0)
+    if (isinstance(node, ast.Compare)
+            and len(node.ops) == 1 and len(node.comparators) == 1):
+        left = node.left
+        op = node.ops[0]
+        right = node.comparators[0]
+        if (isinstance(left, ast.Call) and isinstance(left.func, ast.Name)
+                and left.func.id == "len" and isinstance(op, ast.GtE)
+                and isinstance(right, ast.Constant) and right.value == 0):
+            arg = ast.unparse(left.args[0]) if left.args else "x"
+            return (True, f"len({arg}) >= 0 is always True for any sequence")
 
-    # Pattern: isinstance(x, object)
-    if isinstance(node, ast.Call):
-        if (isinstance(node.func, ast.Name) and node.func.id == "isinstance"
-                and len(node.args) == 2):
-            type_arg = node.args[1]
-            if isinstance(type_arg, ast.Name) and type_arg.id == "object":
-                arg = ast.unparse(node.args[0])
-                return (True, f"isinstance({arg}, object) is always True")
+    # isinstance with object pattern (always True)
+    if (isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
+            and node.func.id == "isinstance" and len(node.args) == 2):
+        type_arg = node.args[1]
+        if isinstance(type_arg, ast.Name) and type_arg.id == "object":
+            arg = ast.unparse(node.args[0])
+            return (True, f"isinstance({arg}, object) is always True")
 
     # Pattern: x or True, True or x (always true)
     if isinstance(node, ast.BoolOp) and isinstance(node.op, ast.Or):

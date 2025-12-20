@@ -6,14 +6,18 @@ Shell module: performs file I/O operations.
 
 from __future__ import annotations
 
-from pathlib import Path
-from typing import Iterator
+from typing import TYPE_CHECKING
 
 from returns.result import Failure, Result, Success
 
-from invar.core.models import FileInfo
 from invar.core.parser import parse_source
 from invar.shell.config import classify_file, get_exclude_paths
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+    from pathlib import Path
+
+    from invar.core.models import FileInfo
 
 
 def discover_python_files(

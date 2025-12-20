@@ -13,10 +13,9 @@ from __future__ import annotations
 
 import ast
 
-from deal import post, pre
+from deal import pre
 
 from invar.core.models import FileInfo, RuleConfig, Severity, SymbolKind, Violation
-
 
 # Known impure functions and method patterns
 IMPURE_FUNCTIONS: set[str] = {
@@ -54,9 +53,8 @@ def extract_internal_imports(node: ast.FunctionDef | ast.AsyncFunctionDef) -> li
         if isinstance(child, ast.Import):
             for alias in child.names:
                 imports.append(alias.name.split(".")[0])
-        elif isinstance(child, ast.ImportFrom):
-            if child.module:
-                imports.append(child.module.split(".")[0])
+        elif isinstance(child, ast.ImportFrom) and child.module:
+            imports.append(child.module.split(".")[0])
 
     return list(set(imports))
 
@@ -143,9 +141,8 @@ def _get_call_name(call: ast.Call) -> str | None:
         return func.id
 
     # Attribute: datetime.now(), random.randint()
-    if isinstance(func, ast.Attribute):
-        if isinstance(func.value, ast.Name):
-            return f"{func.value.id}.{func.attr}"
+    if isinstance(func, ast.Attribute) and isinstance(func.value, ast.Name):
+        return f"{func.value.id}.{func.attr}"
 
     return None
 

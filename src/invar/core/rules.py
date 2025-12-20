@@ -2,19 +2,22 @@
 
 from __future__ import annotations
 
-from typing import Callable
+from collections.abc import Callable
 
 from deal import post, pre
 
-from invar.core.models import FileInfo, RuleConfig, Severity, SymbolKind, Violation
 from invar.core.contracts import (
-    check_empty_contracts, check_param_mismatch, check_partial_contract,
-    check_redundant_type_contracts, check_semantic_tautology,
+    check_empty_contracts,
+    check_param_mismatch,
+    check_partial_contract,
+    check_redundant_type_contracts,
+    check_semantic_tautology,
 )
+from invar.core.extraction import format_extraction_hint
+from invar.core.models import FileInfo, RuleConfig, Severity, SymbolKind, Violation
 from invar.core.purity import check_impure_calls, check_internal_imports
 from invar.core.suggestions import format_suggestion_for_violation
 from invar.core.utils import get_excluded_rules
-from invar.core.extraction import format_extraction_hint
 
 # P17: Pure alternatives for forbidden imports (module → suggestion)
 FORBIDDEN_IMPORT_ALTERNATIVES: dict[str, str] = {
@@ -221,20 +224,19 @@ def check_contracts(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
 
     for symbol in file_info.symbols:
         # Check all functions and methods - agent needs contracts everywhere
-        if symbol.kind in (SymbolKind.FUNCTION, SymbolKind.METHOD):
-            if not symbol.contracts:
-                kind_name = "Method" if symbol.kind == SymbolKind.METHOD else "Function"
-                suggestion = format_suggestion_for_violation(symbol, "missing_contract")
-                violations.append(
-                    Violation(
-                        rule="missing_contract",
-                        severity=Severity.ERROR,
-                        file=file_info.path,
-                        line=symbol.line,
-                        message=f"{kind_name} '{symbol.name}' has no @pre or @post contract",
-                        suggestion=suggestion,
-                    )
+        if symbol.kind in (SymbolKind.FUNCTION, SymbolKind.METHOD) and not symbol.contracts:
+            kind_name = "Method" if symbol.kind == SymbolKind.METHOD else "Function"
+            suggestion = format_suggestion_for_violation(symbol, "missing_contract")
+            violations.append(
+                Violation(
+                    rule="missing_contract",
+                    severity=Severity.ERROR,
+                    file=file_info.path,
+                    line=symbol.line,
+                    message=f"{kind_name} '{symbol.name}' has no @pre or @post contract",
+                    suggestion=suggestion,
                 )
+            )
 
     return violations
 

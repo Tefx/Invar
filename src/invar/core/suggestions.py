@@ -15,10 +15,9 @@ from __future__ import annotations
 
 import re
 
-from deal import pre
+from deal import post, pre
 
 from invar.core.models import Symbol, SymbolKind
-
 
 # P27: Common constraint patterns by type (ordered by commonality)
 CONSTRAINT_PATTERNS: dict[str, list[str]] = {
@@ -223,6 +222,7 @@ def generate_pattern_options(signature: str) -> str:
     return f"Patterns: {', '.join(all_patterns)}"
 
 
+@post(lambda result: isinstance(result, str))
 def _generate_lambda_skeleton(signature: str) -> str:
     """
     Generate a lambda skeleton from function signature (P4).

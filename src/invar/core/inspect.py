@@ -12,8 +12,8 @@ from dataclasses import dataclass
 
 from deal import post, pre
 
-from invar.core.parser import parse_source
 from invar.core.models import SymbolKind
+from invar.core.parser import parse_source
 
 
 @dataclass

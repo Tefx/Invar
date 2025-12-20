@@ -13,14 +13,20 @@ Configuration sources (priority order):
 from __future__ import annotations
 
 import tomllib
-from pathlib import Path
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 from returns.result import Failure, Result, Success
 
 from invar.core.models import RuleConfig
-from invar.core.utils import extract_guard_section, matches_path_prefix, matches_pattern, parse_guard_config
+from invar.core.utils import (
+    extract_guard_section,
+    matches_path_prefix,
+    matches_pattern,
+    parse_guard_config,
+)
 
+if TYPE_CHECKING:
+    from pathlib import Path
 
 ConfigSource = Literal["pyproject", "invar", "invar_dir", "default"]
 

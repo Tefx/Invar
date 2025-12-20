@@ -7,9 +7,12 @@ Shell module: handles git I/O for changed file detection.
 from __future__ import annotations
 
 import subprocess
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from returns.result import Failure, Result, Success
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def _run_git(args: list[str], cwd: Path) -> Result[str, str]:

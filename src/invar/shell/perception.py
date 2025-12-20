@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from returns.result import Failure, Result, Success
 from rich.console import Console
@@ -18,10 +19,12 @@ from invar.core.formatter import (
     format_signatures_json,
     format_signatures_text,
 )
-from invar.core.models import FileInfo, Symbol
 from invar.core.parser import parse_source
 from invar.core.references import build_perception_map
 from invar.shell.fs import discover_python_files
+
+if TYPE_CHECKING:
+    from invar.core.models import FileInfo, Symbol
 
 console = Console()
 
