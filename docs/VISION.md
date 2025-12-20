@@ -55,7 +55,7 @@
 
 **What agents do:**
 - Read and internalize INVAR.md
-- Follow ICIDV workflow
+- Follow ICIDIV workflow
 - Write contracts, separate Core/Shell
 - Run `invar guard` to verify compliance
 - Fix violations before presenting to human

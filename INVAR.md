@@ -1,4 +1,4 @@
-# The Invar Protocol v3.18
+# The Invar Protocol v3.19
 
 > **"Trade structure for safety."** Separate what CAN fail (I/O) from what SHOULD NOT fail (logic).
 
@@ -75,15 +75,16 @@ invar map --top 20         # Most-referenced symbols (entry points)
 - `invar map --top` finds **entry points by reference count** (unique feature)
 - Both auto-output JSON in agent mode
 
-## Workflow: ICIDV
+## Workflow: ICIDIV
 
-Before implementing, follow **I**ntent → **C**ontract → **I**nspect → **D**esign → **V**erify:
+**I**ntent → **C**ontract → **I**nspect → **D**esign → **I**mplement → **V**erify
 
 ```
 □ Intent    — What are we trying to achieve?
 □ Contract  — What inputs are invalid? What does output guarantee?
 □ Inspect   — Run: invar sig <file> to see contracts, invar map --top 10 for entry points
 □ Design    — If file > 400 lines, plan extraction first
+□ Implement — Write code with contracts and doctests
 □ Verify    — Run: invar guard && pytest --doctest-modules
 ```
 
@@ -108,4 +109,4 @@ max_function_lines = 50
 
 ---
 
-*Protocol v3.18 — Stricter contract enforcement, Code Health metric.*
+*Protocol v3.19 — ICIDIV workflow (6-step with Implement).*

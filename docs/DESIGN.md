@@ -54,7 +54,7 @@ The Protocol is a document that defines how agents should work. It provides sign
 └────────────────────────────────────────────────────────────────┘
 ```
 
-### The ICIDV Workflow
+### The ICIDIV Workflow
 
 ```
   ┌─────┐   ┌─────┐   ┌─────┐   ┌─────┐   ┌─────┐   ┌─────┐

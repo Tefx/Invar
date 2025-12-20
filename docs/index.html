@@ -19,6 +19,7 @@
             --accent-green: #3fb950;
             --accent-red: #f85149;
             --accent-yellow: #d29922;
+            --accent-purple: #a371f7;
             --code-bg: #1c2128;
         }
 
@@ -110,15 +111,24 @@
         }
 
         .hero .tagline {
-            font-size: 1.5rem;
+            font-size: 1.25rem;
             color: var(--text-secondary);
-            margin-bottom: 48px;
+            margin-bottom: 16px;
             max-width: 600px;
             margin-left: auto;
             margin-right: auto;
         }
 
-        .hero .tagline strong {
+        .hero .subtagline {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            margin-bottom: 48px;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .hero .subtagline strong {
             color: var(--accent-green);
         }
 
@@ -161,138 +171,242 @@
             border-color: var(--accent);
         }
 
-        /* Problem/Solution */
-        .problem-solution {
+        /* Section common */
+        section {
             padding: 80px 0;
         }
 
-        .comparison-grid {
-            display: grid;
-            grid-template-columns: 1fr auto 1fr;
-            gap: 32px;
-            align-items: center;
-        }
-
-        .comparison-card {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 32px;
-        }
-
-        .comparison-card.problem {
-            border-color: var(--accent-red);
-        }
-
-        .comparison-card.solution {
-            border-color: var(--accent-green);
-        }
-
-        .comparison-card h3 {
-            font-size: 1.25rem;
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .comparison-card.problem h3 {
-            color: var(--accent-red);
-        }
-
-        .comparison-card.solution h3 {
-            color: var(--accent-green);
-        }
-
-        .comparison-card ul {
-            list-style: none;
-        }
-
-        .comparison-card li {
-            padding: 8px 0;
-            color: var(--text-secondary);
-            display: flex;
-            align-items: flex-start;
-            gap: 8px;
-        }
-
-        .comparison-card li::before {
-            content: "→";
-            color: var(--text-secondary);
-        }
-
-        .arrow {
-            font-size: 2rem;
-            color: var(--accent);
-        }
-
-        /* Features */
-        .features {
-            padding: 80px 0;
-        }
-
-        .features h2 {
+        section h2 {
             text-align: center;
             font-size: 2.5rem;
             margin-bottom: 16px;
         }
 
-        .features .subtitle {
+        section .subtitle {
             text-align: center;
             color: var(--text-secondary);
-            margin-bottom: 64px;
+            margin-bottom: 48px;
         }
 
-        .features-grid {
+        /* The Four Laws */
+        .laws {
+            background: var(--bg-secondary);
+        }
+
+        .laws-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 24px;
         }
 
-        .feature-card {
+        .law-card {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            transition: border-color 0.2s, transform 0.2s;
+        }
+
+        .law-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-4px);
+        }
+
+        .law-number {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: #fff;
+            font-weight: 600;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+        }
+
+        .law-card h3 {
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+            color: var(--accent);
+        }
+
+        .law-card p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* ICIDIV Workflow */
+        .workflow {
+            overflow: hidden;
+        }
+
+        .workflow-diagram {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 48px;
+            flex-wrap: wrap;
+        }
+
+        .workflow-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .workflow-letter {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: var(--bg-secondary);
+            border: 2px solid var(--accent);
+            color: var(--accent);
+            font-weight: 700;
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .workflow-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .workflow-arrow {
+            color: var(--border);
+            font-size: 1.5rem;
+            margin-top: -24px;
+        }
+
+        .workflow-example {
             background: var(--bg-secondary);
             border: 1px solid var(--border);
             border-radius: 12px;
             padding: 32px;
-            transition: border-color 0.2s;
+            max-width: 800px;
+            margin: 0 auto;
         }
 
-        .feature-card:hover {
-            border-color: var(--accent);
+        .workflow-example h3 {
+            margin-bottom: 24px;
+            font-size: 1.1rem;
         }
 
-        .feature-icon {
-            font-size: 2rem;
-            margin-bottom: 16px;
+        .workflow-example h3 span {
+            color: var(--text-secondary);
+            font-weight: 400;
         }
 
-        .feature-card h3 {
+        .workflow-steps-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 24px;
+        }
+
+        .workflow-steps-table td {
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.9rem;
+        }
+
+        .workflow-steps-table td:first-child {
+            color: var(--accent);
+            font-weight: 500;
+            width: 100px;
+        }
+
+        .workflow-steps-table td:last-child {
+            color: var(--text-secondary);
+        }
+
+        .workflow-code {
+            background: var(--code-bg);
+            border-radius: 8px;
+            padding: 16px;
+            font-size: 0.85rem;
+            overflow-x: auto;
+        }
+
+        .workflow-code .decorator {
+            color: var(--accent-yellow);
+        }
+
+        .workflow-code .function {
+            color: var(--accent);
+        }
+
+        .workflow-code .string {
+            color: var(--accent-green);
+        }
+
+        .workflow-code .comment {
+            color: var(--text-secondary);
+        }
+
+        /* Why It Works */
+        .why-works {
+            background: var(--bg-secondary);
+        }
+
+        .why-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 32px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .why-card {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 32px;
+        }
+
+        .why-card h3 {
             font-size: 1.25rem;
-            margin-bottom: 12px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
 
-        .feature-card p {
+        .why-card h3 .icon {
+            font-size: 1.5rem;
+        }
+
+        .why-card p {
             color: var(--text-secondary);
             font-size: 0.95rem;
         }
 
-        /* Terminal Demo */
-        .demo {
-            padding: 80px 0;
-        }
-
-        .demo h2 {
+        .feedback-loop {
+            background: var(--code-bg);
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 16px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
             text-align: center;
-            font-size: 2.5rem;
-            margin-bottom: 48px;
         }
 
+        .feedback-loop .arrow {
+            color: var(--accent);
+        }
+
+        /* Terminal Demo */
         .terminal {
             background: var(--code-bg);
             border: 1px solid var(--border);
             border-radius: 12px;
             overflow: hidden;
-            max-width: 800px;
+            max-width: 700px;
             margin: 0 auto;
         }
 
@@ -316,14 +430,9 @@
         .terminal-dot.green { background: #27ca40; }
 
         .terminal-body {
-            padding: 24px;
-            font-size: 0.9rem;
+            padding: 20px;
+            font-size: 0.85rem;
             line-height: 1.8;
-        }
-
-        .terminal-line {
-            opacity: 0;
-            animation: fadeIn 0.3s forwards;
         }
 
         .terminal-line .prompt {
@@ -342,36 +451,8 @@
             color: var(--accent-green);
         }
 
-        .terminal-line .error {
-            color: var(--accent-red);
-        }
-
-        .terminal-line .warning {
-            color: var(--accent-yellow);
-        }
-
-        @keyframes fadeIn {
-            to { opacity: 1; }
-        }
-
-        .terminal-line:nth-child(1) { animation-delay: 0.2s; }
-        .terminal-line:nth-child(2) { animation-delay: 0.4s; }
-        .terminal-line:nth-child(3) { animation-delay: 0.6s; }
-        .terminal-line:nth-child(4) { animation-delay: 0.8s; }
-        .terminal-line:nth-child(5) { animation-delay: 1.0s; }
-        .terminal-line:nth-child(6) { animation-delay: 1.2s; }
-        .terminal-line:nth-child(7) { animation-delay: 1.4s; }
-        .terminal-line:nth-child(8) { animation-delay: 1.6s; }
-
         /* Quick Start */
-        .quickstart {
-            padding: 80px 0;
-            background: var(--bg-secondary);
-        }
-
         .quickstart h2 {
-            text-align: center;
-            font-size: 2.5rem;
             margin-bottom: 48px;
         }
 
@@ -380,7 +461,7 @@
             grid-template-columns: repeat(3, 1fr);
             gap: 24px;
             max-width: 900px;
-            margin: 0 auto;
+            margin: 0 auto 48px;
         }
 
         .step {
@@ -414,61 +495,36 @@
             color: var(--accent);
         }
 
-        /* Architecture */
-        .architecture {
-            padding: 80px 0;
-        }
-
-        .architecture h2 {
-            text-align: center;
-            font-size: 2.5rem;
-            margin-bottom: 16px;
-        }
-
-        .architecture .subtitle {
-            text-align: center;
-            color: var(--text-secondary);
-            margin-bottom: 48px;
-        }
-
-        .arch-diagram {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 32px;
-            max-width: 800px;
-            margin: 0 auto;
-        }
-
-        .arch-box {
+        .ai-tools {
             background: var(--bg-secondary);
             border: 1px solid var(--border);
             border-radius: 12px;
             padding: 24px;
+            max-width: 600px;
+            margin: 0 auto;
         }
 
-        .arch-box h4 {
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+        .ai-tools h4 {
+            margin-bottom: 16px;
+            text-align: center;
         }
 
-        .arch-box.core h4 {
-            color: var(--accent-green);
-        }
-
-        .arch-box.shell h4 {
-            color: var(--accent);
-        }
-
-        .arch-box ul {
-            list-style: none;
-        }
-
-        .arch-box li {
-            padding: 4px 0;
-            color: var(--text-secondary);
+        .ai-tools-list {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            text-align: center;
             font-size: 0.9rem;
+        }
+
+        .ai-tools-list .tool-name {
+            color: var(--text);
+            font-weight: 500;
+        }
+
+        .ai-tools-list .tool-config {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
         }
 
         /* Footer */
@@ -501,20 +557,31 @@
         }
 
         /* Responsive */
+        @media (max-width: 900px) {
+            .laws-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
         @media (max-width: 768px) {
             .hero h1 {
                 font-size: 2.5rem;
             }
 
-            .comparison-grid {
+            .laws-grid {
                 grid-template-columns: 1fr;
             }
 
-            .arrow {
-                transform: rotate(90deg);
+            .workflow-diagram {
+                flex-direction: column;
             }
 
-            .features-grid {
+            .workflow-arrow {
+                transform: rotate(90deg);
+                margin: 0;
+            }
+
+            .why-grid {
                 grid-template-columns: 1fr;
             }
 
@@ -522,7 +589,7 @@
                 grid-template-columns: 1fr;
             }
 
-            .arch-diagram {
+            .ai-tools-list {
                 grid-template-columns: 1fr;
             }
 
@@ -537,8 +604,8 @@
         <div class="container">
             <a href="#" class="logo">Inv<span>ar</span></a>
             <ul>
-                <li><a href="#features">Features</a></li>
-                <li><a href="#demo">Demo</a></li>
+                <li><a href="#laws">Laws</a></li>
+                <li><a href="#workflow">Workflow</a></li>
                 <li><a href="#quickstart">Quick Start</a></li>
                 <li><a href="https://github.com/tefx/invar">GitHub</a></li>
             </ul>
@@ -549,8 +616,10 @@
         <div class="container">
             <h1>Don't Hope AI Code Is Correct.<br>Know It.</h1>
             <p class="tagline">
-                Invar provides <strong>mechanical verification</strong> for AI-generated code.
-                Pre-commit hooks catch violations before they reach your repository.
+                You use AI to write code. How do you know it's correct?
+            </p>
+            <p class="subtagline">
+                Invar makes AI prove its code is correct through <strong>contracts</strong>, <strong>verification</strong>, and <strong>mechanical checks</strong>.
             </p>
             <div class="cta-group">
                 <a href="#quickstart" class="btn btn-primary">
@@ -566,51 +635,111 @@
         </div>
     </section>
 
-    <section class="problem-solution">
+    <section class="laws" id="laws">
         <div class="container">
-            <div class="comparison-grid">
-                <div class="comparison-card problem">
-                    <h3>Without Invar</h3>
-                    <ul>
-                        <li>AI writes code that looks correct</li>
-                        <li>You review but can't catch everything</li>
-                        <li>Bugs slip through to production</li>
-                        <li>Trust erodes over time</li>
-                    </ul>
+            <h2>The Four Laws</h2>
+            <p class="subtitle">These laws shape how AI writes and organizes code</p>
+            <div class="laws-grid">
+                <div class="law-card">
+                    <div class="law-number">1</div>
+                    <h3>Separation</h3>
+                    <p>Pure logic (Core) and I/O (Shell) must be physically separate</p>
                 </div>
-                <div class="arrow">→</div>
-                <div class="comparison-card solution">
-                    <h3>With Invar</h3>
-                    <ul>
-                        <li>AI writes code with contracts</li>
-                        <li>Guard mechanically verifies rules</li>
-                        <li>Pre-commit hooks block violations</li>
-                        <li>Confidence through verification</li>
-                    </ul>
+                <div class="law-card">
+                    <div class="law-number">2</div>
+                    <h3>Contract First</h3>
+                    <p>Define boundaries (@pre/@post) before implementation</p>
+                </div>
+                <div class="law-card">
+                    <div class="law-number">3</div>
+                    <h3>Context Economy</h3>
+                    <p>Read map → signatures → implementation (only if needed)</p>
+                </div>
+                <div class="law-card">
+                    <div class="law-number">4</div>
+                    <h3>Verify Immediately</h3>
+                    <p>Run invar guard && pytest after every change</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <section class="features" id="features">
+    <section class="workflow" id="workflow">
         <div class="container">
-            <h2>How It Works</h2>
-            <p class="subtitle">Three layers of mechanical verification</p>
-            <div class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-icon">🛡️</div>
-                    <h3>Guard</h3>
-                    <p>Static analysis checks architecture rules, contract presence, file sizes, and purity. Catches issues before they become bugs.</p>
+            <h2>The Workflow: ICIDIV</h2>
+            <p class="subtitle">AI follows this workflow for every task</p>
+
+            <div class="workflow-diagram">
+                <div class="workflow-step">
+                    <div class="workflow-letter">I</div>
+                    <div class="workflow-label">Intent</div>
                 </div>
-                <div class="feature-card">
-                    <div class="feature-icon">📝</div>
-                    <h3>Contracts</h3>
-                    <p>@pre/@post decorators document and enforce function behavior. Invalid inputs fail fast with clear messages.</p>
+                <div class="workflow-arrow">→</div>
+                <div class="workflow-step">
+                    <div class="workflow-letter">C</div>
+                    <div class="workflow-label">Contract</div>
                 </div>
-                <div class="feature-card">
-                    <div class="feature-icon">🚫</div>
-                    <h3>Pre-commit Hooks</h3>
-                    <p>Automatic enforcement on every commit. Violations block the commit. No exceptions, no "I forgot to run tests."</p>
+                <div class="workflow-arrow">→</div>
+                <div class="workflow-step">
+                    <div class="workflow-letter">I</div>
+                    <div class="workflow-label">Inspect</div>
+                </div>
+                <div class="workflow-arrow">→</div>
+                <div class="workflow-step">
+                    <div class="workflow-letter">D</div>
+                    <div class="workflow-label">Design</div>
+                </div>
+                <div class="workflow-arrow">→</div>
+                <div class="workflow-step">
+                    <div class="workflow-letter">I</div>
+                    <div class="workflow-label">Implement</div>
+                </div>
+                <div class="workflow-arrow">→</div>
+                <div class="workflow-step">
+                    <div class="workflow-letter">V</div>
+                    <div class="workflow-label">Verify</div>
+                </div>
+            </div>
+
+            <div class="workflow-example">
+                <h3>Example <span>— You: "Add a function to calculate discounted price"</span></h3>
+                <table class="workflow-steps-table">
+                    <tr><td>Intent</td><td>Core function (pure logic, no I/O)</td></tr>
+                    <tr><td>Contract</td><td>@pre: price > 0, discount ∈ [0,1]. @post: result ≥ 0</td></tr>
+                    <tr><td>Inspect</td><td>invar sig — check existing patterns</td></tr>
+                    <tr><td>Design</td><td>File size OK, no extraction needed</td></tr>
+                    <tr><td>Implement</td><td>Write code with contracts and doctest</td></tr>
+                    <tr><td>Verify</td><td>invar guard && pytest — all pass</td></tr>
+                </table>
+                <div class="workflow-code mono">
+<span class="decorator">@pre</span>(<span class="function">lambda</span> price, discount: price > 0 <span class="function">and</span> 0 <= discount <= 1)
+<span class="decorator">@post</span>(<span class="function">lambda</span> result: result >= 0)
+<span class="function">def</span> discounted_price(price: <span class="function">float</span>, discount: <span class="function">float</span>) -> <span class="function">float</span>:
+    <span class="string">"""
+    >>> discounted_price(100, 0.2)
+    80.0
+    """</span>
+    <span class="function">return</span> price * (1 - discount)
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="why-works">
+        <div class="container">
+            <h2>Why This Works</h2>
+            <p class="subtitle">Contracts are written by AI, not by you. You don't review every one.</p>
+            <div class="why-grid">
+                <div class="why-card">
+                    <h3><span class="icon">🎯</span> Constraints Produce Quality</h3>
+                    <p>Without constraints, AI writes code that "looks right." With constraints, AI must think through boundaries before writing — this thinking process itself reduces bugs.</p>
+                </div>
+                <div class="why-card">
+                    <h3><span class="icon">🔄</span> Verification Feedback Loop</h3>
+                    <p>AI can't ignore edge cases because Guard catches them. Violations are fixed before you even notice.</p>
+                    <div class="feedback-loop mono">
+                        AI writes <span class="arrow">→</span> Guard reports <span class="arrow">→</span> AI fixes <span class="arrow">→</span> Verify again
+                    </div>
                 </div>
             </div>
         </div>
@@ -619,6 +748,7 @@
     <section class="demo" id="demo">
         <div class="container">
             <h2>See It In Action</h2>
+            <p class="subtitle">Three commands to get started</p>
             <div class="terminal">
                 <div class="terminal-header">
                     <div class="terminal-dot red"></div>
@@ -630,37 +760,8 @@
                     <div class="terminal-line"><span class="output">Successfully installed python-invar</span></div>
                     <div class="terminal-line"><span class="prompt">$</span> <span class="command">invar init</span></div>
                     <div class="terminal-line"><span class="success">Created</span> <span class="output">INVAR.md, CLAUDE.md, .pre-commit-config.yaml</span></div>
-                    <div class="terminal-line"><span class="success">Installed</span> <span class="output">pre-commit hooks</span></div>
                     <div class="terminal-line"><span class="prompt">$</span> <span class="command">invar guard</span></div>
-                    <div class="terminal-line"><span class="output">Files checked: 12 | Errors: 0 | Warnings: 0</span></div>
-                    <div class="terminal-line"><span class="success">Code Health: 100%</span> <span class="output">████████████████████ (Excellent)</span></div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="architecture">
-        <div class="container">
-            <h2>Core/Shell Architecture</h2>
-            <p class="subtitle">Separate what CAN fail from what SHOULD NOT fail</p>
-            <div class="arch-diagram">
-                <div class="arch-box core">
-                    <h4>🧠 Core (Pure Logic)</h4>
-                    <ul>
-                        <li>No I/O operations</li>
-                        <li>@pre/@post contracts required</li>
-                        <li>Doctests for examples</li>
-                        <li>Fully deterministic</li>
-                    </ul>
-                </div>
-                <div class="arch-box shell">
-                    <h4>🐚 Shell (I/O Boundary)</h4>
-                    <ul>
-                        <li>File, network, CLI operations</li>
-                        <li>Returns Result[T, E]</li>
-                        <li>Calls Core for logic</li>
-                        <li>Handles the messy world</li>
-                    </ul>
+                    <div class="terminal-line"><span class="success">Code Health: 100%</span> <span class="output">████████████████████</span></div>
                 </div>
             </div>
         </div>
@@ -682,8 +783,25 @@
                 </div>
                 <div class="step">
                     <div class="step-number">3</div>
-                    <h3>Verify</h3>
-                    <code>invar guard</code>
+                    <h3>Use AI</h3>
+                    <code>AI follows INVAR.md</code>
+                </div>
+            </div>
+            <div class="ai-tools">
+                <h4>Configure Your AI Tool</h4>
+                <div class="ai-tools-list">
+                    <div>
+                        <div class="tool-name">Claude Code</div>
+                        <div class="tool-config">Automatic</div>
+                    </div>
+                    <div>
+                        <div class="tool-name">Cursor</div>
+                        <div class="tool-config">Rules → INVAR.md</div>
+                    </div>
+                    <div>
+                        <div class="tool-name">Others</div>
+                        <div class="tool-config">System prompt</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -698,8 +816,8 @@
                 <a href="https://github.com/tefx/invar/blob/main/docs/VISION.md">Vision</a>
             </div>
             <p class="copyright">
-                Invar is open source under MIT License.
-                Designed for AI agents, directed by humans.
+                Invar is open source under MIT License.<br>
+                Agent-Native Execution, Human-Directed Purpose.
             </p>
         </div>
     </footer>

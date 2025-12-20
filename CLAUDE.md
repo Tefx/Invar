@@ -89,7 +89,7 @@ src/invar/
 
 ---
 
-## Development Workflow (ICIDV)
+## Development Workflow (ICIDIV)
 
 1. **Intent** - Understand task, classify Core/Shell
 2. **Contract** - Define signature, @pre/@post, doctests

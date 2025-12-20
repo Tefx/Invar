@@ -1,5 +1,5 @@
 """
-File inspection for ICIDV Inspect step (Phase 9.2 P14).
+File inspection for ICIDIV Inspect step (Phase 9.2 P14).
 
 Provides context about a file to help agents understand existing patterns
 before making changes.

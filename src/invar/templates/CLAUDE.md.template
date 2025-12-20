@@ -123,9 +123,9 @@ def load_data(path: str) -> Result[Data, str]:
 
 ---
 
-## Workflow: ICIDV
+## Workflow: ICIDIV
 
-For each task:
+**I**ntent → **C**ontract → **I**nspect → **D**esign → **I**mplement → **V**erify
 
 **I - Intent**: What needs to be done? Core or Shell?
 
@@ -137,6 +137,8 @@ For each task:
 - Check file size (warning at 400+ lines)
 
 **D - Design**: If file > 400 lines, plan extraction before adding code
+
+**I - Implement**: Write code with contracts and doctests
 
 **V - Verify**: `invar guard --changed && pytest --doctest-modules`
 

@@ -1,4 +1,4 @@
-# The Invar Protocol v3.17
+# The Invar Protocol v3.19
 
 > **"Trade structure for safety."** Separate what CAN fail (I/O) from what SHOULD NOT fail (logic).
 
@@ -53,15 +53,16 @@ invar guard --pedantic   # Show all violations including off-by-default
 invar rules              # List all rules with severity and hints
 ```
 
-## Workflow: ICIDV
+## Workflow: ICIDIV
 
-Before implementing, follow **I**ntent → **C**ontract → **I**nspect → **D**esign → **V**erify:
+**I**ntent → **C**ontract → **I**nspect → **D**esign → **I**mplement → **V**erify
 
 ```
 □ Intent    — What are we trying to achieve?
 □ Contract  — What inputs are invalid? What does output guarantee?
-□ Inspect   — Check existing patterns (use: invar guard --changed)
+□ Inspect   — Run: invar sig <file> to see contracts, invar map --top 10 for entry points
 □ Design    — If file > 400 lines, plan extraction first
+□ Implement — Write code with contracts and doctests
 □ Verify    — Run: invar guard && pytest --doctest-modules
 ```
 
@@ -86,4 +87,4 @@ max_function_lines = 50
 
 ---
 
-*Protocol v3.17 — Phase 9.3 compression. Essential information preserved; details available via Guard hints and commands.*
+*Protocol v3.19 — ICIDIV workflow (6-step with Implement).*
