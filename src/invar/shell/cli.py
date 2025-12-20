@@ -391,7 +391,7 @@ def rules(
 def init(
     path: Path = typer.Argument(Path("."), help="Project root directory"),
     dirs: bool = typer.Option(None, "--dirs/--no-dirs", help="Create src/core and src/shell directories"),
-    hooks: bool = typer.Option(False, "--hooks", help="Install pre-commit hooks"),
+    hooks: bool = typer.Option(True, "--hooks/--no-hooks", help="Install pre-commit hooks (default: ON)"),
 ) -> None:
     """
     Initialize Invar configuration in a project.
@@ -401,7 +401,7 @@ def init(
     - Otherwise: creates invar.toml
 
     Use --dirs to always create directories, --no-dirs to skip.
-    Use --hooks to install pre-commit hooks for automatic verification.
+    Use --no-hooks to skip pre-commit hooks installation.
     """
     config_result = add_config(path, console)
     if isinstance(config_result, Failure):
