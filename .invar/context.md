@@ -53,10 +53,10 @@ Principle: Facts only, no subjective "strength" rating
 ```
 Design: Guard enhancement, NOT a separate command
 Trigger: file_size >= warning_threshold
-Output:
-  - Default: one-line summary of extractable groups
-  - --agent: full JSON with dependency analysis
-Principle: Automatic > Opt-in (no new command to remember)
+Output: Structured list of extractable groups with dependencies
+  [A] pattern_matching (88L): _match_pattern, get_excluded_rules
+      Deps: fnmatch, RuleConfig
+Principle: Automatic > Opt-in, Sufficient Context for Decision
 ```
 
 **P27: Enhanced Context for Agent Decision** (Priority: Medium)
@@ -72,18 +72,26 @@ Principle: Guard provides options, Agent decides
 **P28: Partial Contract Detection** (Priority: Medium)
 ```
 Design: Guard rule, NOT a command (replaces P26)
+Severity: WARN (not INFO) - Force Agent to think about boundaries
 Detects: @pre lambda has all params but doesn't use all
 
 Example:
   @pre(lambda x, y: x > 0)  # y is not checked
   def f(x: int, y: int): ...
   → WARN: @pre checks 'x' but not 'y'
+    Signature: (x: int, y: int) -> int
+    → Add constraint for 'y' or verify it needs none
+
+Rationale for WARN:
+  - Prevents hidden formal compliance (checking only 1 param to "have a contract")
+  - Consistent with P7 (empty_contract is also WARN)
+  - WARN allows pass, Agent can decide "this is intentional"
 
 Note: Different from param_mismatch (P8.3):
-  - P8.3: lambda param count != function param count
-  - P28: lambda has all params but doesn't USE all
+  - P8.3: lambda param count != function param count (ERROR)
+  - P28: lambda has all params but doesn't USE all (WARN)
 
-Principle: Automatic detection as Guard rule
+Principle: Automatic detection, Sufficient Context for Decision
 ```
 
 ### Rejected
@@ -98,6 +106,22 @@ Principle: Automatic detection as Guard rule
 1. **Guard vs Agent boundary**: Guard does mechanical analysis, Agent does semantic reasoning
 2. **No auto-fix**: Guard doesn't know correct answers, only patterns
 3. **Automatic embedding**: New info appears in existing output, not new commands
+4. **Sufficient Context for Decision**: Output should include enough info for Agent to act directly
+   - Don't optimize for "concise" (human habit)
+   - Include: signature, relevant context, action options
+   - Avoid: redundant info, info Agent already knows
+5. **WARN for formal compliance risks**: P28 uses WARN to force Agent to think about boundaries
+
+### Implementation Order
+
+```
+P28 → P25 → P27 → P24
+ │      │      │      │
+ │      │      │      └─ Statistics (depends on rules)
+ │      │      └─ Suggestion format (affects all)
+ │      └─ Extraction analysis (independent)
+ └─ New rule (independent, P27 will update its suggestion)
+```
 
 See `.invar/proposals/` for historical details.
 
@@ -132,6 +156,8 @@ Historical documents moved to `docs/archive/`:
 8. **Meta-detection works** - P7 caught tautologies in its own implementation
 9. **Guard provides options, not answers** - Guard can't understand business semantics
 10. **New commands = cognitive load** - Enhance existing commands instead
+11. **Sufficient Context > Concise** - Agent needs info to decide, not minimal output
+12. **Hidden formal compliance** - `@pre(lambda x,y: x>0)` looks valid but ignores y
 
 Full list in `.invar/proposals/AGENT-IMPROVEMENTS.md` Discussion Log.
 
