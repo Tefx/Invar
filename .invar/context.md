@@ -86,6 +86,19 @@ Human (Commander) ──directs──→ Agent (Executor) ──uses──→ In
 6. **Tool Complementarity** - Invar for contracts/verification, Serena for navigation/editing
 7. **Meta-changes Need Meta-verification** - Rule severity changes need full guard, not --changed
 
+## Release Process
+
+**Do NOT use `twine upload` manually.** GitHub Actions handles PyPI publishing.
+
+```bash
+# 1. Update version in pyproject.toml
+# 2. Commit and push
+git add -A && git commit -m "Bump version to X.Y.Z" && git push
+
+# 3. Create release (triggers automatic PyPI publish)
+gh release create vX.Y.Z --title "vX.Y.Z - Title" --notes "..."
+```
+
 ## Technical Debt
 
 *Run `invar guard` to check current status.*
