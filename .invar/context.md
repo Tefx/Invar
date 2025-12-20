@@ -90,8 +90,9 @@ Human (Commander) ──directs──→ Agent (Executor) ──uses──→ In
 
 | File | Warning | Priority |
 |------|---------|----------|
-| cli.py | 476 lines (95%) | Medium |
-| cli.py | 4 functions > 50 lines | Low |
+| cli.py | 495 lines (99%), 4 functions > 50 lines | Low |
+| contracts.py | 492 lines (98%) | Low |
+| rules.py | 430 lines (86%) | Low |
 
 ---
 
