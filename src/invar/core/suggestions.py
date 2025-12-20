@@ -163,12 +163,13 @@ def _generate_lambda_skeleton(signature: str) -> str:
     return f"@pre(lambda {params_str}: <condition>) or @post(lambda result: <condition>)"
 
 
-@pre(lambda symbol, violation_type: violation_type in ("missing_contract", "empty_contract", "redundant_type_contract", ""))
+@pre(lambda symbol, violation_type: violation_type in ("missing_contract", "empty_contract", "redundant_type_contract", "semantic_tautology", ""))
 def format_suggestion_for_violation(symbol: Symbol, violation_type: str) -> str:
     """
     Format a complete suggestion message for a violation.
 
     Phase 9.2 P4: Generate lambda skeletons when no type-based suggestion available.
+    P7: Added semantic_tautology support.
 
     Examples:
         >>> from invar.core.models import Symbol, SymbolKind
@@ -208,5 +209,13 @@ def format_suggestion_for_violation(symbol: Symbol, violation_type: str) -> str:
             return f"Replace with business logic: {suggestion}"
         skeleton = _generate_lambda_skeleton(symbol.signature)
         return f"Replace with: {skeleton}"
+
+    if violation_type == "semantic_tautology":
+        # P7: Semantic tautology - suggest meaningful constraint
+        suggestion = generate_contract_suggestion(symbol.signature)
+        if suggestion:
+            return f"Replace tautology with meaningful constraint: {suggestion}"
+        skeleton = _generate_lambda_skeleton(symbol.signature)
+        return f"Replace tautology with: {skeleton}"
 
     return ""

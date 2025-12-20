@@ -2,138 +2,39 @@
 
 from __future__ import annotations
 
-from fnmatch import fnmatch
 from typing import Callable
 
 from deal import post, pre
 
-from invar.core.models import (
-    FileInfo,
-    RuleConfig,
-    RuleExclusion,
-    Severity,
-    SymbolKind,
-    Violation,
-)
+from invar.core.models import FileInfo, RuleConfig, Severity, SymbolKind, Violation
 from invar.core.contracts import (
-    check_empty_contracts,
-    check_param_mismatch,
-    check_redundant_type_contracts,
+    check_empty_contracts, check_param_mismatch,
+    check_redundant_type_contracts, check_semantic_tautology,
 )
 from invar.core.purity import check_impure_calls, check_internal_imports
 from invar.core.suggestions import format_suggestion_for_violation
+from invar.core.utils import get_excluded_rules
+
+# P17: Pure alternatives for forbidden imports (module → suggestion)
+FORBIDDEN_IMPORT_ALTERNATIVES: dict[str, str] = {
+    "os": "Inject paths as strings", "sys": "Pass sys.argv as parameter",
+    "pathlib": "Use string operations", "subprocess": "Move to Shell",
+    "shutil": "Move to Shell", "io": "Pass content as str/bytes",
+    "socket": "Move to Shell", "requests": "Move HTTP to Shell",
+    "urllib": "Move to Shell", "datetime": "Inject now as parameter",
+    "random": "Inject random values", "open": "Shell reads, Core processes",
+}
 
 # Type alias for rule functions
 RuleFunc = Callable[[FileInfo, RuleConfig], list[Violation]]
-
-
-def _match_pattern(file_path: str, pattern: str) -> bool:
-    """
-    Check if file path matches a glob pattern with ** support.
-
-    Uses fnmatch for single-segment wildcards, handles ** for multi-segment.
-
-    Examples:
-        >>> _match_pattern("src/generated/foo.py", "**/generated/**")
-        True
-        >>> _match_pattern("generated/foo.py", "**/generated/**")
-        True
-        >>> _match_pattern("src/core/calc.py", "**/generated/**")
-        False
-        >>> _match_pattern("src/core/data.py", "src/core/data.py")
-        True
-        >>> _match_pattern("src/core/calc.py", "src/core/*.py")
-        True
-        >>> _match_pattern("src/core/sub/calc.py", "src/core/*.py")
-        False
-        >>> _match_pattern("src/core/sub/calc.py", "src/core/**/*.py")
-        True
-    """
-    # Normalize path separators
-    file_path = file_path.replace("\\", "/")
-    pattern = pattern.replace("\\", "/")
-
-    # No **, check component count matches then use fnmatch
-    if "**" not in pattern:
-        # fnmatch doesn't respect path boundaries, so check component counts
-        if file_path.count("/") != pattern.count("/"):
-            return False
-        return fnmatch(file_path, pattern)
-
-    # Handle common ** patterns
-    path_parts = file_path.split("/")
-
-    # Pattern: **/X/** - match if X appears as directory component anywhere
-    if pattern.startswith("**/") and pattern.endswith("/**"):
-        middle = pattern[3:-3]  # Extract X from **/X/**
-        if "/" not in middle and "*" not in middle:
-            return middle in path_parts[:-1]  # Exclude filename
-
-    # Pattern: **/X - match if path ends with X (file or directory pattern)
-    if pattern.startswith("**/") and not pattern.endswith("/**"):
-        suffix = pattern[3:]
-        # Try matching suffix against all possible tails
-        for i in range(len(path_parts)):
-            tail = "/".join(path_parts[i:])
-            if fnmatch(tail, suffix):
-                return True
-        return False
-
-    # Pattern: X/** - match if path starts with X
-    if pattern.endswith("/**") and not pattern.startswith("**/"):
-        prefix = pattern[:-3]
-        return file_path.startswith(prefix + "/") or file_path == prefix
-
-    # Generic ** handling: split and try all combinations
-    # Replace ** with a marker, split, then try matching
-    parts = pattern.split("**/")
-    if len(parts) == 2:
-        prefix, suffix = parts
-        prefix = prefix.rstrip("/")
-        suffix = suffix.lstrip("/").rstrip("/**")
-
-        for i in range(len(path_parts) + 1):
-            head = "/".join(path_parts[:i]) if i > 0 else ""
-            tail = "/".join(path_parts[i:])
-
-            prefix_ok = not prefix or fnmatch(head, prefix)
-            suffix_ok = not suffix or fnmatch(tail, suffix) or fnmatch(tail, "*/" + suffix)
-
-            if prefix_ok and suffix_ok:
-                return True
-
-    return False
-
-
-@pre(lambda file_path, config: isinstance(config, RuleConfig))
-def get_excluded_rules(file_path: str, config: RuleConfig) -> set[str]:
-    """
-    Get the set of rules to exclude for a given file path.
-
-    Examples:
-        >>> from invar.core.models import RuleConfig, RuleExclusion
-        >>> excl = RuleExclusion(pattern="**/generated/**", rules=["*"])
-        >>> cfg = RuleConfig(rule_exclusions=[excl])
-        >>> get_excluded_rules("src/generated/foo.py", cfg)
-        {'*'}
-        >>> get_excluded_rules("src/core/calc.py", cfg)
-        set()
-        >>> excl2 = RuleExclusion(pattern="**/data/**", rules=["file_size"])
-        >>> cfg2 = RuleConfig(rule_exclusions=[excl, excl2])
-        >>> sorted(get_excluded_rules("src/data/big.py", cfg2))
-        ['file_size']
-    """
-    excluded: set[str] = set()
-    for exclusion in config.rule_exclusions:
-        if _match_pattern(file_path, exclusion.pattern):
-            excluded.update(exclusion.rules)
-    return excluded
 
 
 @pre(lambda file_info, config: isinstance(file_info, FileInfo))
 def check_file_size(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
     """
     Check if file exceeds maximum line count or warning threshold.
+
+    P18: Shows function groups in size warnings to help agents decide what to extract.
 
     Examples:
         >>> from invar.core.models import FileInfo, RuleConfig
@@ -147,6 +48,11 @@ def check_file_size(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
         True
     """
     violations: list[Violation] = []
+    # P18: Show top 5 largest functions in size warnings
+    funcs = sorted([(s.name, s.end_line - s.line + 1) for s in file_info.symbols
+                    if s.kind in (SymbolKind.FUNCTION, SymbolKind.METHOD)],
+                   key=lambda x: -x[1])[:5]
+    func_hint = f" Functions: {', '.join(f'{n}({sz}L)' for n, sz in funcs)}" if funcs else ""
 
     if file_info.lines > config.max_file_lines:
         violations.append(
@@ -156,7 +62,7 @@ def check_file_size(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
                 file=file_info.path,
                 line=None,
                 message=f"File has {file_info.lines} lines (max: {config.max_file_lines})",
-                suggestion="Split into smaller modules",
+                suggestion=f"Split into smaller modules.{func_hint}" if func_hint else "Split into smaller modules",
             )
         )
     # Phase 9 P8: Warning at configurable threshold (default 80%)
@@ -171,7 +77,7 @@ def check_file_size(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
                     file=file_info.path,
                     line=None,
                     message=f"File has {file_info.lines} lines ({pct}% of {config.max_file_lines} limit)",
-                    suggestion="Consider splitting before reaching limit",
+                    suggestion=f"Consider splitting before reaching limit.{func_hint}" if func_hint else "Consider splitting before reaching limit",
                 )
             )
 
@@ -198,12 +104,13 @@ def check_function_size(file_info: FileInfo, config: RuleConfig) -> list[Violati
 
     for symbol in file_info.symbols:
         if symbol.kind in (SymbolKind.FUNCTION, SymbolKind.METHOD):
+            total_lines = symbol.end_line - symbol.line + 1
             # Calculate effective line count based on config
             if config.use_code_lines and symbol.code_lines is not None:
                 func_lines = symbol.code_lines
                 line_type = "code lines"
             else:
-                func_lines = symbol.end_line - symbol.line + 1
+                func_lines = total_lines
                 line_type = "lines"
             # Optionally exclude doctest lines
             if config.exclude_doctest_lines and symbol.doctest_lines > 0:
@@ -211,6 +118,13 @@ def check_function_size(file_info: FileInfo, config: RuleConfig) -> list[Violati
                 line_type = f"{line_type} (excl. doctest)"
 
             if func_lines > config.max_function_lines:
+                # P19: Show breakdown if doctest lines exist
+                if symbol.doctest_lines > 0 and not config.exclude_doctest_lines:
+                    code_only = total_lines - symbol.doctest_lines
+                    breakdown = f" ({code_only} code + {symbol.doctest_lines} doctest)"
+                    suggestion = f"Extract helper or set exclude_doctest_lines=true{breakdown}"
+                else:
+                    suggestion = "Extract helper functions"
                 violations.append(
                     Violation(
                         rule="function_size",
@@ -218,7 +132,7 @@ def check_function_size(file_info: FileInfo, config: RuleConfig) -> list[Violati
                         file=file_info.path,
                         line=symbol.line,
                         message=f"Function '{symbol.name}' has {func_lines} {line_type} (max: {config.max_function_lines})",
-                        suggestion="Extract helper functions",
+                        suggestion=suggestion,
                     )
                 )
 
@@ -250,6 +164,11 @@ def check_forbidden_imports(file_info: FileInfo, config: RuleConfig) -> list[Vio
 
     for imp in file_info.imports:
         if imp in config.forbidden_imports:
+            # P17: Include pure alternative in suggestion
+            alt = FORBIDDEN_IMPORT_ALTERNATIVES.get(imp, "")
+            suggestion = f"Move I/O code using '{imp}' to Shell"
+            if alt:
+                suggestion += f". Alternative: {alt}"
             violations.append(
                 Violation(
                     rule="forbidden_import",
@@ -257,7 +176,7 @@ def check_forbidden_imports(file_info: FileInfo, config: RuleConfig) -> list[Vio
                     file=file_info.path,
                     line=None,
                     message=f"Imports '{imp}' (forbidden in Core)",
-                    suggestion=f"Move I/O code using '{imp}' to Shell",
+                    suggestion=suggestion,
                 )
             )
 
@@ -403,7 +322,7 @@ def get_all_rules() -> list[RuleFunc]:
     """
     return [check_file_size, check_function_size, check_forbidden_imports, check_contracts,
             check_doctests, check_shell_result, check_internal_imports, check_impure_calls,
-            check_empty_contracts, check_redundant_type_contracts, check_param_mismatch]
+            check_empty_contracts, check_semantic_tautology, check_redundant_type_contracts, check_param_mismatch]
 
 
 def _apply_severity_override(v: Violation, overrides: dict[str, str]) -> Violation | None:

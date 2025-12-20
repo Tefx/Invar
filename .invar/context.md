@@ -6,7 +6,7 @@
 
 - **PyPI:** `python-invar` v0.1.0
 - **Protocol:** v3.17
-- **Phase 1-9:** Complete
+- **Phase 1-10:** Complete
 - **Blockers:** None
 
 ## Core Principle
@@ -27,21 +27,15 @@ Human (Commander) ──directs──→ Agent (Executor) ──uses──→ In
 |-------|--------|-------------|
 | 1-8 | Complete | Core Guard, Perception, Agent-Native features |
 | 9 | Complete | PyPI release, CI/CD, documentation |
-| 10 | Future | P7, P17, P19 (+ simplified P16, P18) |
+| 10 | Complete | P7 (tautology detection), P17, P18, P19 |
 
-## Future Work (Phase 10)
+## Future Work (Phase 11 Ideas)
 
-After proposal evaluation, retained:
-- **P7:** Semantic contract validation (pattern matching)
-- **P17:** Forbidden import alternatives
-- **P19:** Doctest/code line split
-
-Simplified:
-- **P16:** Just improve docstrings (skip `invar api`)
-- **P18:** Show function groups in warning (skip full analysis)
-
-Removed (not Agent-Native or too complex):
-- P9, P10, P15, P20, P21, P22, P23
+Potential improvements from Phase 10 development:
+- **P24:** Contract strength scoring (meaningful > type-check > tautology)
+- **P25:** Auto-extraction hints when files approach size limits
+- **P26:** `invar check-contract <file>:<line>` for deep analysis
+- **P27:** `invar guard --fix` for auto-fixing simple issues
 
 See `.invar/proposals/` for historical details.
 
@@ -73,6 +67,7 @@ Historical documents moved to `docs/archive/`:
 5. **Formal compliance ≠ verification** - `@pre(lambda: True)` is worthless
 6. **Mechanical vs Reasoning** - Tool time for mechanics, Agent time for reasoning
 7. **Protocol compression** - Info in commands/hints doesn't need to be in protocol
+8. **Meta-detection works** - P7 caught tautologies in its own implementation
 
 Full list of 29 lessons in `.invar/proposals/AGENT-IMPROVEMENTS.md` Discussion Log.
 

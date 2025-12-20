@@ -168,3 +168,82 @@ def matches_path_prefix(file_path: str, prefixes: list[str]) -> bool:
         False
     """
     return any(file_path.startswith(p) for p in prefixes)
+
+
+def match_glob_pattern(file_path: str, pattern: str) -> bool:
+    """
+    Check if file path matches a glob pattern with ** support.
+
+    Uses fnmatch for single-segment wildcards, handles ** for multi-segment.
+
+    Examples:
+        >>> match_glob_pattern("src/generated/foo.py", "**/generated/**")
+        True
+        >>> match_glob_pattern("generated/foo.py", "**/generated/**")
+        True
+        >>> match_glob_pattern("src/core/calc.py", "**/generated/**")
+        False
+        >>> match_glob_pattern("src/core/data.py", "src/core/data.py")
+        True
+        >>> match_glob_pattern("src/core/calc.py", "src/core/*.py")
+        True
+        >>> match_glob_pattern("src/core/sub/calc.py", "src/core/*.py")
+        False
+        >>> match_glob_pattern("src/core/sub/calc.py", "src/core/**/*.py")
+        True
+    """
+    file_path = file_path.replace("\\", "/")
+    pattern = pattern.replace("\\", "/")
+    if "**" not in pattern:
+        if file_path.count("/") != pattern.count("/"):
+            return False
+        return fnmatch.fnmatch(file_path, pattern)
+    path_parts = file_path.split("/")
+    if pattern.startswith("**/") and pattern.endswith("/**"):
+        middle = pattern[3:-3]
+        if "/" not in middle and "*" not in middle:
+            return middle in path_parts[:-1]
+    if pattern.startswith("**/") and not pattern.endswith("/**"):
+        suffix = pattern[3:]
+        for i in range(len(path_parts)):
+            if fnmatch.fnmatch("/".join(path_parts[i:]), suffix):
+                return True
+        return False
+    if pattern.endswith("/**") and not pattern.startswith("**/"):
+        prefix = pattern[:-3]
+        return file_path.startswith(prefix + "/") or file_path == prefix
+    parts = pattern.split("**/")
+    if len(parts) == 2:
+        prefix, suffix = parts[0].rstrip("/"), parts[1].lstrip("/").rstrip("/**")
+        for i in range(len(path_parts) + 1):
+            head = "/".join(path_parts[:i]) if i > 0 else ""
+            tail = "/".join(path_parts[i:])
+            if (not prefix or fnmatch.fnmatch(head, prefix)) and \
+               (not suffix or fnmatch.fnmatch(tail, suffix) or fnmatch.fnmatch(tail, "*/" + suffix)):
+                return True
+    return False
+
+
+@pre(lambda file_path, config: isinstance(config, RuleConfig))
+def get_excluded_rules(file_path: str, config: RuleConfig) -> set[str]:
+    """
+    Get the set of rules to exclude for a given file path.
+
+    Examples:
+        >>> from invar.core.models import RuleConfig, RuleExclusion
+        >>> excl = RuleExclusion(pattern="**/generated/**", rules=["*"])
+        >>> cfg = RuleConfig(rule_exclusions=[excl])
+        >>> get_excluded_rules("src/generated/foo.py", cfg)
+        {'*'}
+        >>> get_excluded_rules("src/core/calc.py", cfg)
+        set()
+        >>> excl2 = RuleExclusion(pattern="**/data/**", rules=["file_size"])
+        >>> cfg2 = RuleConfig(rule_exclusions=[excl, excl2])
+        >>> sorted(get_excluded_rules("src/data/big.py", cfg2))
+        ['file_size']
+    """
+    excluded: set[str] = set()
+    for exclusion in config.rule_exclusions:
+        if match_glob_pattern(file_path, exclusion.pattern):
+            excluded.update(exclusion.rules)
+    return excluded
