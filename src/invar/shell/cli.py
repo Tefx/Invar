@@ -43,6 +43,23 @@ app = typer.Typer(
 console = Console()
 
 
+def _count_core_functions(file_info) -> tuple[int, int]:
+    """Count functions and functions with contracts in a Core file (P24)."""
+    from invar.core.models import SymbolKind
+
+    if not file_info.is_core:
+        return (0, 0)
+
+    total = 0
+    with_contracts = 0
+    for sym in file_info.symbols:
+        if sym.kind in (SymbolKind.FUNCTION, SymbolKind.METHOD):
+            total += 1
+            if sym.contracts:
+                with_contracts += 1
+    return (total, with_contracts)
+
+
 def _scan_and_check(
     path: Path, config: RuleConfig, only_files: set[Path] | None = None
 ) -> Result[GuardReport, str]:
@@ -54,6 +71,9 @@ def _scan_and_check(
             continue
         file_info = file_result.unwrap()
         report.files_checked += 1
+        # P24: Track contract coverage for Core files
+        total, with_contracts = _count_core_functions(file_info)
+        report.update_coverage(total, with_contracts)
         for violation in check_all_rules(file_info, config):
             report.add_violation(violation)
     return Success(report)
@@ -215,6 +235,24 @@ def _output_rich(
     if report.infos > 0:
         summary += f"\nInfos: {report.infos}"
     console.print(summary)
+
+    # P24: Contract coverage statistics (only show if core files exist)
+    if report.core_functions_total > 0:
+        pct = report.contract_coverage_pct
+        console.print(f"\n[bold]Contract coverage:[/bold] {pct}% ({report.core_functions_with_contracts}/{report.core_functions_total} functions)")
+        issues = report.contract_issue_counts
+        issue_parts = []
+        if issues["tautology"] > 0:
+            issue_parts.append(f"{issues['tautology']} tautology")
+        if issues["empty"] > 0:
+            issue_parts.append(f"{issues['empty']} empty")
+        if issues["partial"] > 0:
+            issue_parts.append(f"{issues['partial']} partial")
+        if issues["type_only"] > 0:
+            issue_parts.append(f"{issues['type_only']} type-check only")
+        if issue_parts:
+            console.print(f"[dim]Issues: {', '.join(issue_parts)}[/dim]")
+
     console.print(f"\n[{'green' if report.passed else 'red'}]Guard {'passed' if report.passed else 'failed'}.[/]")
     console.print("\n[dim]Note: Guard performs static analysis only. Dynamic imports and runtime behavior are not checked.[/dim]")
 

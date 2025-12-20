@@ -89,6 +89,9 @@ class GuardReport(BaseModel):
     errors: int = 0
     warnings: int = 0
     infos: int = 0  # Phase 7: Track INFO-level issues
+    # P24: Contract coverage statistics (Core files only)
+    core_functions_total: int = 0
+    core_functions_with_contracts: int = 0
 
     @pre(lambda self, violation: isinstance(violation, Violation))
     def add_violation(self, violation: Violation) -> None:
@@ -110,6 +113,68 @@ class GuardReport(BaseModel):
             self.warnings += 1
         else:
             self.infos += 1
+
+    @pre(lambda self, total, with_contracts: total >= 0 and with_contracts >= 0)
+    def update_coverage(self, total: int, with_contracts: int) -> None:
+        """
+        Update contract coverage statistics (P24).
+
+        Examples:
+            >>> from invar.core.models import GuardReport
+            >>> report = GuardReport(files_checked=1)
+            >>> report.update_coverage(10, 8)
+            >>> report.core_functions_total
+            10
+            >>> report.core_functions_with_contracts
+            8
+        """
+        self.core_functions_total += total
+        self.core_functions_with_contracts += with_contracts
+
+    @property
+    @pre(lambda self: isinstance(self, GuardReport))
+    def contract_coverage_pct(self) -> int:
+        """
+        Get contract coverage percentage (P24).
+
+        Examples:
+            >>> from invar.core.models import GuardReport
+            >>> report = GuardReport(files_checked=1)
+            >>> report.update_coverage(10, 8)
+            >>> report.contract_coverage_pct
+            80
+        """
+        if self.core_functions_total == 0:
+            return 100
+        return int(self.core_functions_with_contracts / self.core_functions_total * 100)
+
+    @property
+    @pre(lambda self: isinstance(self, GuardReport))
+    def contract_issue_counts(self) -> dict[str, int]:
+        """
+        Count contract quality issues by type (P24).
+
+        Examples:
+            >>> from invar.core.models import GuardReport, Violation, Severity
+            >>> report = GuardReport(files_checked=1)
+            >>> v1 = Violation(rule="empty_contract", severity=Severity.WARNING, file="x.py", message="m")
+            >>> v2 = Violation(rule="semantic_tautology", severity=Severity.WARNING, file="x.py", message="m")
+            >>> report.add_violation(v1)
+            >>> report.add_violation(v2)
+            >>> report.contract_issue_counts
+            {'tautology': 1, 'empty': 1, 'partial': 0, 'type_only': 0}
+        """
+        counts = {"tautology": 0, "empty": 0, "partial": 0, "type_only": 0}
+        for v in self.violations:
+            if v.rule == "semantic_tautology":
+                counts["tautology"] += 1
+            elif v.rule == "empty_contract":
+                counts["empty"] += 1
+            elif v.rule == "partial_contract":
+                counts["partial"] += 1
+            elif v.rule == "redundant_type_contract":
+                counts["type_only"] += 1
+        return counts
 
     @property
     @pre(lambda self: isinstance(self, GuardReport))
