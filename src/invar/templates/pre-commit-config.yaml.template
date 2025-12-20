@@ -5,7 +5,8 @@
 repos:
   - repo: local
     hooks:
-      # Invar Guard - Architecture verification
+      # Invar Guard - Architecture verification (REQUIRED)
+      # Checks: contracts, file size, imports, etc.
       - id: invar-guard
         name: Invar Guard
         entry: invar guard --changed
@@ -15,13 +16,15 @@ repos:
         stages: [pre-commit]
         types: [python]
 
-      # Pytest with doctests - Logic verification
-      # Note: Customize src/ path if your project structure differs
-      - id: pytest-doctest
-        name: Pytest Doctests
-        entry: pytest --doctest-modules src/ -q --tb=short
-        language: python
-        additional_dependencies: ['pytest']
-        pass_filenames: false
-        stages: [pre-commit]
-        types: [python]
+  # Optional: Uncomment to enable strict doctest verification
+  # Note: Will fail if Python files have no doctests (exit code 5)
+  # - repo: local
+  #   hooks:
+  #     - id: pytest-doctest
+  #       name: Pytest Doctests
+  #       entry: pytest --doctest-modules src/ -q --tb=short
+  #       language: python
+  #       additional_dependencies: ['pytest']
+  #       pass_filenames: false
+  #       stages: [pre-commit]
+  #       types: [python]
