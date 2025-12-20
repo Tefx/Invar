@@ -1,5 +1,6 @@
 # Invar Pre-commit Hooks
-# Install: pip install pre-commit && pre-commit install
+# Install: pre-commit install
+# Note: pre-commit manages its own environment, works with any venv manager (poetry, uv, etc.)
 
 repos:
   - repo: local
@@ -8,17 +9,19 @@ repos:
       - id: invar-guard
         name: Invar Guard
         entry: invar guard --changed
-        language: system
+        language: python
+        additional_dependencies: ['python-invar']
         pass_filenames: false
-        stages: [commit]
-        # Only run if Python files changed
+        stages: [pre-commit]
         types: [python]
 
       # Pytest with doctests - Logic verification
+      # Note: Customize src/ path if your project structure differs
       - id: pytest-doctest
         name: Pytest Doctests
         entry: pytest --doctest-modules src/ -q --tb=short
-        language: system
+        language: python
+        additional_dependencies: ['pytest']
         pass_filenames: false
-        stages: [commit]
+        stages: [pre-commit]
         types: [python]
