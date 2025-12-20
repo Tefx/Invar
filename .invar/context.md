@@ -4,11 +4,27 @@
 
 ## Current State
 
-- **PyPI:** `python-invar` v0.2.2
-- **Protocol:** v3.17
-- **Phase 1-11:** Complete
-- **Status:** Feature complete, ready for external testing
+- **PyPI:** `python-invar` v0.3.0
+- **Protocol:** v3.18
+- **GitHub Pages:** https://tefx.github.io/Invar/
+- **Status:** Feature complete, stricter enforcement enabled
 - **Blockers:** None
+
+## Recent Changes (v0.3.0)
+
+### Breaking Changes
+| Rule | Before | After |
+|------|--------|-------|
+| `missing_contract` | WARNING | **ERROR** |
+| `impure_call` | WARNING | **ERROR** |
+| `empty_contract` | WARNING | **ERROR** |
+
+### New Features
+- **Code Health Display** - Percentage + progress bar in Guard output
+- **Warning Policy** - "You touched it, you own it" in CLAUDE.md
+- **Tool Selection Guide** - Task-based with Serena fallbacks
+- **Technical Debt Section** - In context.md template
+- **GitHub Pages** - Project landing page
 
 ## Core Principle
 
@@ -18,10 +34,6 @@
 Human (Commander) ──directs──→ Agent (Executor) ──uses──→ Invar (Protocol + Tools)
 ```
 
-- Protocol and Tools are Agent-Native (Agent is primary user)
-- Ultimate goal is Human success through Agent effectiveness
-- See `docs/VISION.md` for full philosophy
-
 ## Implementation Summary
 
 | Phase | Status | Key Features |
@@ -30,49 +42,38 @@ Human (Commander) ──directs──→ Agent (Executor) ──uses──→ In
 | 9 | Complete | PyPI release, RULE_META, Protocol compression |
 | 10 | Complete | Tautology detection (P7), Import alternatives (P17) |
 | 11 | Complete | Coverage stats (P24), Extraction analysis (P25), Pattern alternatives (P27), Partial contract detection (P28) |
+| 12 | Complete | Stricter enforcement, Code Health, GitHub Pages |
 
-## Version Roadmap
+## Version History
 
-| Version | Status | Scope |
-|---------|--------|-------|
-| 0.1.0 | Released | Phase 9 (PyPI, core features) |
-| 0.2.0 | Ready | Phase 10-11 (Agent decision support) |
-| 1.0.0 | Pending | After external project testing |
+| Version | Date | Highlights |
+|---------|------|------------|
+| 0.1.0 | 2025-12 | Initial PyPI release |
+| 0.2.0 | 2025-12 | README rewrite, pre-commit hooks |
+| 0.2.1 | 2025-12 | Hooks default ON |
+| 0.2.2 | 2025-12 | Auto-install hooks, universal venv support |
+| 0.3.0 | 2025-12 | Stricter enforcement, Code Health, GitHub Pages |
 
-## Next Steps
+## Tool Priority
 
-1. Test on new external project
-2. Collect real usage feedback
-3. Release 0.2.0 if testing successful
-4. Consider 1.0.0 after proven stable
-
-## Proposals Status
-
-All proposals closed. See `.invar/proposals/AGENT-IMPROVEMENTS.md` for summary.
-
-**Rejected/Deferred:**
-- P9 (Context Sync): Solves non-problem
-- P10 (Liskov): Too complex for rare case
-- P15 (LSP): Human-centric, not Agent-Native
-- P21 (Inference): Crosses Guard/Agent boundary
-- P22 (Refactor): Requires semantic judgment
+| Task | Primary | Fallback |
+|------|---------|----------|
+| See contracts | `invar sig` | — |
+| Find entry points | `invar map --top` | — |
+| Find specific symbol | Serena `find_symbol` | `invar map` + grep |
+| Find references | Serena `find_referencing_symbols` | `invar map` |
+| Edit function | Serena `replace_symbol_body` | Standard edit |
+| Verify | `invar guard` | — |
 
 ## Key Files
 
 | File | Purpose |
 |------|---------|
-| INVAR.md | Protocol (88 lines) |
-| docs/INVAR-GUIDE.md | Why & How (130 lines) |
+| INVAR.md | Protocol v3.18 |
+| docs/INVAR-GUIDE.md | Why & How |
 | docs/VISION.md | Design philosophy |
 | CLAUDE.md | Development guide |
-
-## Archived Documents
-
-Historical documents in `docs/archive/`:
-- INVAR-DETAILED-v3.16.md
-- proposals-P15-P23-2025.md
-- proposals-phase9-reflection-2025.md
-- VISION-ORIGINAL.md, decisions-2024.md, etc.
+| docs/index.html | GitHub Pages |
 
 ## Lessons Learned
 
@@ -80,7 +81,17 @@ Historical documents in `docs/archive/`:
 2. **Automatic > Opt-in** - Agents won't use flags they don't know about
 3. **Guard/Agent Boundary** - Guard does mechanical analysis, Agent does reasoning
 4. **Facts Only** - Report facts, don't judge "strength" or "quality"
-5. **Sufficient Context > Concise** - Agent needs info to decide
+5. **Stricter is Better** - Enforce architecture at commit time, not review time
+6. **Tool Complementarity** - Invar for contracts/verification, Serena for navigation/editing
+
+## Technical Debt
+
+*Run `invar guard` to check current status.*
+
+| File | Warning | Priority |
+|------|---------|----------|
+| cli.py | 476 lines (95%) | Medium |
+| cli.py | 4 functions > 50 lines | Low |
 
 ---
 
