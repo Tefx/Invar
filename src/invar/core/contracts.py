@@ -1,4 +1,4 @@
-"""Contract quality detection for Guard (Phase 7, 8). No I/O operations."""
+"""Contract quality detection for Guard (Phase 7, 8, 11). No I/O operations."""
 
 from __future__ import annotations
 
@@ -9,6 +9,10 @@ from deal import pre
 
 from invar.core.models import FileInfo, RuleConfig, Severity, SymbolKind, Violation
 from invar.core.suggestions import format_suggestion_for_violation
+from invar.core.lambda_helpers import (
+    find_lambda, extract_annotations, extract_lambda_params,
+    extract_func_param_names, extract_used_names,
+)
 
 
 @pre(lambda expression: "lambda" in expression or not expression.strip())
@@ -25,7 +29,7 @@ def is_empty_contract(expression: str) -> bool:
         return False
     try:
         tree = ast.parse(expression, mode="eval")
-        lambda_node = _find_lambda(tree)
+        lambda_node = find_lambda(tree)
         return lambda_node is not None and isinstance(lambda_node.body, ast.Constant) and lambda_node.body.value is True
     except SyntaxError:
         return False
@@ -63,7 +67,7 @@ def is_semantic_tautology(expression: str) -> tuple[bool, str]:
         return (False, "")
     try:
         tree = ast.parse(expression, mode="eval")
-        lambda_node = _find_lambda(tree)
+        lambda_node = find_lambda(tree)
         if lambda_node is None:
             return (False, "")
         return _check_tautology_patterns(lambda_node.body)
@@ -112,11 +116,6 @@ def _check_tautology_patterns(node: ast.expr) -> tuple[bool, str]:
     return (False, "")
 
 
-def _find_lambda(tree: ast.Expression) -> ast.Lambda | None:
-    """Find the lambda node in an expression tree."""
-    return next((n for n in ast.walk(tree) if isinstance(n, ast.Lambda)), None)
-
-
 @pre(lambda expression, annotations: "lambda" in expression or not expression.strip())
 def is_redundant_type_contract(expression: str, annotations: dict[str, str]) -> bool:
     """Check if a contract only checks types already in annotations.
@@ -131,7 +130,7 @@ def is_redundant_type_contract(expression: str, annotations: dict[str, str]) -> 
         return False
     try:
         tree = ast.parse(expression, mode="eval")
-        lambda_node = _find_lambda(tree)
+        lambda_node = find_lambda(tree)
         if lambda_node is None:
             return False
         checks = _extract_isinstance_checks(lambda_node.body)
@@ -180,29 +179,59 @@ def _types_match(annotation: str, type_name: str) -> bool:
     return bool(base_match and base_match.group(1) == type_name)
 
 
-@pre(lambda signature: signature.startswith("("))
-def _extract_annotations(signature: str) -> dict[str, str]:
-    """Extract parameter type annotations from signature.
+# Phase 8.3: Parameter mismatch detection
+
+
+@pre(lambda expression, signature: "lambda" in expression or not expression.strip())
+def has_unused_params(expression: str, signature: str) -> tuple[bool, list[str], list[str]]:
+    """
+    Check if lambda has params it doesn't use (P28: Partial Contract Detection).
+
+    Returns (has_unused, unused_params, used_params).
+
+    Different from param_mismatch:
+    - param_mismatch: lambda param COUNT != function param count (ERROR)
+    - unused_params: lambda has all params but doesn't USE all (WARN)
 
     Examples:
-        >>> _extract_annotations("(x: int, y: str) -> bool")
-        {'x': 'int', 'y': 'str'}
+        >>> has_unused_params("lambda x, y: x > 0", "(x: int, y: int) -> int")
+        (True, ['y'], ['x'])
+        >>> has_unused_params("lambda x, y: x > 0 and y < 10", "(x: int, y: int) -> int")
+        (False, [], ['x', 'y'])
+        >>> has_unused_params("lambda x: x > 0", "(x: int, y: int) -> int")
+        (False, [], [])
+        >>> has_unused_params("lambda items: len(items) > 0", "(items: list) -> int")
+        (False, [], ['items'])
     """
-    annotations = {}
-    match = re.match(r"\(([^)]*)\)", signature)
-    if not match:
-        return annotations
-    for param in match.group(1).split(","):
-        param = param.strip()
-        if ": " in param:
-            name, type_hint = param.split(": ", 1)
-            if "=" in type_hint:
-                type_hint = type_hint.split("=")[0].strip()
-            annotations[name.strip()] = type_hint.strip()
-    return annotations
+    if not expression.strip() or not signature:
+        return (False, [], [])
 
+    lambda_params = extract_lambda_params(expression)
+    func_params = extract_func_param_names(signature)
 
-# Phase 8.3: Parameter mismatch detection
+    if lambda_params is None or func_params is None:
+        return (False, [], [])
+
+    # Only check when lambda has same param count as function
+    # (if different count, that's param_mismatch, not this check)
+    if len(lambda_params) != len(func_params):
+        return (False, [], [])
+
+    # Extract used names from lambda body
+    try:
+        tree = ast.parse(expression, mode="eval")
+        lambda_node = find_lambda(tree)
+        if lambda_node is None:
+            return (False, [], [])
+        used_names = extract_used_names(lambda_node.body)
+    except SyntaxError:
+        return (False, [], [])
+
+    # Check which params are actually used
+    used_params = [p for p in lambda_params if p in used_names]
+    unused_params = [p for p in lambda_params if p not in used_names]
+
+    return (len(unused_params) > 0, unused_params, used_params)
 
 
 @pre(lambda expression, signature: "lambda" in expression or not expression.strip())
@@ -225,8 +254,8 @@ def has_param_mismatch(expression: str, signature: str) -> tuple[bool, str]:
     if not expression.strip() or not signature:
         return (False, "")
 
-    lambda_params = _extract_lambda_params(expression)
-    func_params = _extract_func_param_names(signature)
+    lambda_params = extract_lambda_params(expression)
+    func_params = extract_func_param_names(signature)
 
     if lambda_params is None or func_params is None:
         return (False, "")  # Can't determine, skip
@@ -235,50 +264,6 @@ def has_param_mismatch(expression: str, signature: str) -> tuple[bool, str]:
         return (True, f"lambda has {len(lambda_params)} param(s) but function has {len(func_params)}")
 
     return (False, "")
-
-
-@pre(lambda expression: "lambda" in expression or not expression.strip())
-def _extract_lambda_params(expression: str) -> list[str] | None:
-    """Extract parameter names from a lambda expression."""
-    if not expression.strip():
-        return None
-    try:
-        tree = ast.parse(expression, mode="eval")
-        lambda_node = _find_lambda(tree)
-        return [arg.arg for arg in lambda_node.args.args] if lambda_node else None
-    except SyntaxError:
-        return None
-
-
-@pre(lambda signature: signature.startswith("(") or signature == "")
-def _extract_func_param_names(signature: str) -> list[str] | None:
-    """Extract parameter names from a function signature (handles nested brackets)."""
-    if not signature:
-        return None
-    match = re.match(r"\(([^)]*)\)", signature)
-    if not match:
-        return None
-    content = match.group(1).strip()
-    if not content:
-        return []
-    # Split by comma, but respect brackets (for dict[K, V], tuple[A, B], etc.)
-    params = []
-    current = ""
-    depth = 0
-    for char in content:
-        if char in "([{":
-            depth += 1
-        elif char in ")]}":
-            depth -= 1
-        elif char == "," and depth == 0:
-            if current.strip():
-                params.append(current.strip().split(":")[0].split("=")[0].strip())
-            current = ""
-            continue
-        current += char
-    if current.strip():
-        params.append(current.strip().split(":")[0].split("=")[0].strip())
-    return params
 
 
 # Rule checking functions
@@ -362,7 +347,7 @@ def check_redundant_type_contracts(file_info: FileInfo, config: RuleConfig) -> l
     for symbol in file_info.symbols:
         if symbol.kind not in (SymbolKind.FUNCTION, SymbolKind.METHOD):
             continue
-        annotations = _extract_annotations(symbol.signature)
+        annotations = extract_annotations(symbol.signature)
         if not annotations:
             continue
         for contract in symbol.contracts:
@@ -406,5 +391,54 @@ def check_param_mismatch(file_info: FileInfo, config: RuleConfig) -> list[Violat
                     rule="param_mismatch", severity=Severity.ERROR, file=file_info.path, line=contract.line,
                     message=f"{kind} '{symbol.name}' @pre {desc}",
                     suggestion="Lambda must include ALL function parameters",
+                ))
+    return violations
+
+
+@pre(lambda file_info, config: isinstance(file_info, FileInfo))
+def check_partial_contract(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
+    """Check @pre contracts that don't use all declared params (P28). Core files only. WARN severity.
+
+    P28: Detects hidden formal compliance - lambda declares all params but doesn't use all.
+    Forces Agent to think about whether unchecked params need constraints.
+
+    Different from param_mismatch (P8.3):
+    - param_mismatch: lambda param COUNT != function param count (ERROR)
+    - partial_contract: lambda has all params but doesn't USE all (WARN)
+
+    Examples:
+        >>> from invar.core.models import FileInfo, Symbol, SymbolKind, Contract, RuleConfig
+        >>> c = Contract(kind="pre", expression="lambda x, y: x > 0", line=1)
+        >>> s = Symbol(name="f", kind=SymbolKind.FUNCTION, line=1, end_line=5, signature="(x: int, y: int) -> int", contracts=[c])
+        >>> vs = check_partial_contract(FileInfo(path="c.py", lines=10, symbols=[s], is_core=True), RuleConfig())
+        >>> vs[0].rule
+        'partial_contract'
+        >>> vs[0].severity
+        <Severity.WARNING: 'warning'>
+        >>> "y" in vs[0].message
+        True
+    """
+    violations: list[Violation] = []
+    if not file_info.is_core:
+        return violations
+    for symbol in file_info.symbols:
+        if symbol.kind not in (SymbolKind.FUNCTION, SymbolKind.METHOD) or not symbol.signature:
+            continue
+        for contract in symbol.contracts:
+            # Only check @pre contracts (not @post which takes 'result')
+            if contract.kind != "pre":
+                continue
+            has_unused, unused, used = has_unused_params(contract.expression, symbol.signature)
+            if has_unused:
+                kind = "Method" if symbol.kind == SymbolKind.METHOD else "Function"
+                unused_str = ", ".join(f"'{p}'" for p in unused)
+                used_str = ", ".join(f"'{p}'" for p in used) if used else "none"
+                violations.append(Violation(
+                    rule="partial_contract",
+                    severity=Severity.WARNING,
+                    file=file_info.path,
+                    line=contract.line,
+                    message=f"{kind} '{symbol.name}' @pre checks {used_str} but not {unused_str}",
+                    suggestion=f"Signature: {symbol.signature}\n→ Add constraint for {unused_str} or verify it needs none",
                 ))
     return violations

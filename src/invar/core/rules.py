@@ -8,7 +8,7 @@ from deal import post, pre
 
 from invar.core.models import FileInfo, RuleConfig, Severity, SymbolKind, Violation
 from invar.core.contracts import (
-    check_empty_contracts, check_param_mismatch,
+    check_empty_contracts, check_param_mismatch, check_partial_contract,
     check_redundant_type_contracts, check_semantic_tautology,
 )
 from invar.core.purity import check_impure_calls, check_internal_imports
@@ -322,7 +322,8 @@ def get_all_rules() -> list[RuleFunc]:
     """
     return [check_file_size, check_function_size, check_forbidden_imports, check_contracts,
             check_doctests, check_shell_result, check_internal_imports, check_impure_calls,
-            check_empty_contracts, check_semantic_tautology, check_redundant_type_contracts, check_param_mismatch]
+            check_empty_contracts, check_semantic_tautology, check_redundant_type_contracts,
+            check_param_mismatch, check_partial_contract]
 
 
 def _apply_severity_override(v: Violation, overrides: dict[str, str]) -> Violation | None:
