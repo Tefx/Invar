@@ -29,13 +29,42 @@ Human (Commander) ──directs──→ Agent (Executor) ──uses──→ In
 | 9 | Complete | PyPI release, CI/CD, documentation |
 | 10 | Complete | P7 (tautology detection), P17, P18, P19 |
 
-## Future Work (Phase 11 Ideas)
+## Phase 11 Plan
 
-Potential improvements from Phase 10 development:
+Based on Phase 10 development experience and detailed design discussions.
+
+### Approved for Implementation
+
+**P25: Automatic Extraction Analysis** (Priority: High)
+```
+Design: Guard enhancement, NOT a separate command
+Trigger: file_size >= warning_threshold
+Output:
+  - Default: one-line summary of extractable groups
+  - --agent: full JSON with dependency analysis
+Principle: Automatic > Opt-in (no new command to remember)
+```
+
+**P27: Enhanced Context for Agent Decision** (Priority: Medium)
+```
+Design: Improve suggestion quality, NOT auto-fix
+Changes:
+  1. Suggestion wording: "Add X" → "Patterns: X | Y | Z"
+  2. Include docstring/param info in --agent output
+  3. Mark confidence level (HIGH/MEDIUM/LOW)
+Principle: Guard provides options, Agent decides
+```
+
+### Under Consideration
+
 - **P24:** Contract strength scoring (meaningful > type-check > tautology)
-- **P25:** Auto-extraction hints when files approach size limits
 - **P26:** `invar check-contract <file>:<line>` for deep analysis
-- **P27:** `invar guard --fix` for auto-fixing simple issues
+
+### Key Design Decisions (Phase 11)
+
+1. **Guard vs Agent boundary**: Guard does mechanical analysis, Agent does semantic reasoning
+2. **No auto-fix**: Guard doesn't know correct answers, only patterns
+3. **Automatic embedding**: New info appears in existing output, not new commands
 
 See `.invar/proposals/` for historical details.
 
@@ -68,8 +97,10 @@ Historical documents moved to `docs/archive/`:
 6. **Mechanical vs Reasoning** - Tool time for mechanics, Agent time for reasoning
 7. **Protocol compression** - Info in commands/hints doesn't need to be in protocol
 8. **Meta-detection works** - P7 caught tautologies in its own implementation
+9. **Guard provides options, not answers** - Guard can't understand business semantics
+10. **New commands = cognitive load** - Enhance existing commands instead
 
-Full list of 29 lessons in `.invar/proposals/AGENT-IMPROVEMENTS.md` Discussion Log.
+Full list in `.invar/proposals/AGENT-IMPROVEMENTS.md` Discussion Log.
 
 ---
 
