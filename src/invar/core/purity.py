@@ -90,6 +90,49 @@ def extract_impure_calls(node: ast.FunctionDef | ast.AsyncFunctionDef) -> list[s
     return list(set(impure))
 
 
+@pre(lambda node: isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef))
+def extract_function_calls(node: ast.FunctionDef | ast.AsyncFunctionDef) -> list[str]:
+    """
+    Extract all function calls from a function body (P25: for extraction analysis).
+
+    Only extracts simple function calls (not method calls on objects).
+    Used to build call graph for grouping related functions.
+
+    Examples:
+        >>> import ast
+        >>> code = '''
+        ... def foo():
+        ...     helper()
+        ...     result = calculate(x)
+        ...     return result
+        ... '''
+        >>> tree = ast.parse(code)
+        >>> func = tree.body[0]
+        >>> sorted(extract_function_calls(func))
+        ['calculate', 'helper']
+        >>> # Method calls are excluded
+        >>> code2 = '''
+        ... def bar():
+        ...     self.method()
+        ...     obj.call()
+        ...     helper()
+        ... '''
+        >>> tree2 = ast.parse(code2)
+        >>> func2 = tree2.body[0]
+        >>> extract_function_calls(func2)
+        ['helper']
+    """
+    calls: list[str] = []
+
+    for child in ast.walk(node):
+        if isinstance(child, ast.Call):
+            # Only simple function calls (not x.method())
+            if isinstance(child.func, ast.Name):
+                calls.append(child.func.id)
+
+    return list(set(calls))
+
+
 @pre(lambda call: isinstance(call, ast.Call))
 def _get_call_name(call: ast.Call) -> str | None:
     """Get the name of a function call as a string."""

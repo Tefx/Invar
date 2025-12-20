@@ -55,6 +55,8 @@ class Symbol(BaseModel):
     code_lines: int | None = None  # Lines excluding docstring/comments
     # Phase 6: Verification Completeness
     doctest_lines: int = 0  # Number of lines that are doctest examples
+    # Phase 11 P25: For extraction analysis
+    function_calls: list[str] = Field(default_factory=list)  # Functions called within this function
 
 
 class FileInfo(BaseModel):

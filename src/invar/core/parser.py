@@ -12,7 +12,10 @@ import ast
 from deal import post, pre
 
 from invar.core.models import Contract, FileInfo, Symbol, SymbolKind
-from invar.core.purity import count_code_lines, count_doctest_lines, extract_impure_calls, extract_internal_imports
+from invar.core.purity import (
+    count_code_lines, count_doctest_lines, extract_function_calls,
+    extract_impure_calls, extract_internal_imports,
+)
 
 
 @pre(lambda source, path="<string>": isinstance(source, str))
@@ -96,6 +99,7 @@ def _parse_function(node: ast.FunctionDef | ast.AsyncFunctionDef) -> Symbol:
     impure_calls = extract_impure_calls(node)
     code_lines = count_code_lines(node)
     doctest_lines = count_doctest_lines(node)
+    function_calls = extract_function_calls(node)  # P25
 
     return Symbol(
         name=node.name,
@@ -110,6 +114,7 @@ def _parse_function(node: ast.FunctionDef | ast.AsyncFunctionDef) -> Symbol:
         impure_calls=impure_calls,
         code_lines=code_lines,
         doctest_lines=doctest_lines,
+        function_calls=function_calls,
     )
 
 
@@ -137,6 +142,7 @@ def _parse_method(node: ast.FunctionDef | ast.AsyncFunctionDef, class_name: str)
     impure_calls = extract_impure_calls(node)
     code_lines = count_code_lines(node)
     doctest_lines = count_doctest_lines(node)
+    function_calls = extract_function_calls(node)  # P25
 
     return Symbol(
         name=f"{class_name}.{node.name}",
@@ -151,6 +157,7 @@ def _parse_method(node: ast.FunctionDef | ast.AsyncFunctionDef, class_name: str)
         impure_calls=impure_calls,
         code_lines=code_lines,
         doctest_lines=doctest_lines,
+        function_calls=function_calls,
     )
 
 

@@ -14,6 +14,7 @@ from invar.core.contracts import (
 from invar.core.purity import check_impure_calls, check_internal_imports
 from invar.core.suggestions import format_suggestion_for_violation
 from invar.core.utils import get_excluded_rules
+from invar.core.extraction import format_extraction_hint
 
 # P17: Pure alternatives for forbidden imports (module → suggestion)
 FORBIDDEN_IMPORT_ALTERNATIVES: dict[str, str] = {
@@ -35,6 +36,7 @@ def check_file_size(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
     Check if file exceeds maximum line count or warning threshold.
 
     P18: Shows function groups in size warnings to help agents decide what to extract.
+    P25: Shows extractable groups with dependencies for warnings.
 
     Examples:
         >>> from invar.core.models import FileInfo, RuleConfig
@@ -54,7 +56,15 @@ def check_file_size(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
                    key=lambda x: -x[1])[:5]
     func_hint = f" Functions: {', '.join(f'{n}({sz}L)' for n, sz in funcs)}" if funcs else ""
 
+    # P25: Get extractable groups with dependencies
+    extraction_hint = format_extraction_hint(file_info)
+
     if file_info.lines > config.max_file_lines:
+        suggestion = "Split into smaller modules."
+        if extraction_hint:
+            suggestion += f"\nExtractable groups:\n{extraction_hint}"
+        elif func_hint:
+            suggestion += func_hint
         violations.append(
             Violation(
                 rule="file_size",
@@ -62,7 +72,7 @@ def check_file_size(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
                 file=file_info.path,
                 line=None,
                 message=f"File has {file_info.lines} lines (max: {config.max_file_lines})",
-                suggestion=f"Split into smaller modules.{func_hint}" if func_hint else "Split into smaller modules",
+                suggestion=suggestion,
             )
         )
     # Phase 9 P8: Warning at configurable threshold (default 80%)
@@ -70,6 +80,11 @@ def check_file_size(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
         threshold_lines = int(config.max_file_lines * config.size_warning_threshold)
         if file_info.lines >= threshold_lines:
             pct = int(file_info.lines / config.max_file_lines * 100)
+            suggestion = "Consider splitting before reaching limit."
+            if extraction_hint:
+                suggestion += f"\nExtractable groups:\n{extraction_hint}"
+            elif func_hint:
+                suggestion += func_hint
             violations.append(
                 Violation(
                     rule="file_size_warning",
@@ -77,7 +92,7 @@ def check_file_size(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
                     file=file_info.path,
                     line=None,
                     message=f"File has {file_info.lines} lines ({pct}% of {config.max_file_lines} limit)",
-                    suggestion=f"Consider splitting before reaching limit.{func_hint}" if func_hint else "Consider splitting before reaching limit",
+                    suggestion=suggestion,
                 )
             )
 

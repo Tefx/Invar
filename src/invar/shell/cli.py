@@ -193,15 +193,21 @@ def _output_rich(
                     icon = "[blue]INFO[/blue]"
                 ln = f":{v.line}" if v.line else ""
                 console.print(f"  {icon} {ln} {v.message}")
-                # Phase 9.2 P5: Always-on hints from RULE_META
-                meta = get_rule_meta(v.rule)
-                if meta:
-                    console.print(f"    [dim cyan]→ {meta.hint}[/dim cyan]")
-                    # --explain: show detailed information
-                    if explain_mode:
-                        console.print(f"    [dim]Detects: {meta.detects}[/dim]")
-                        if meta.cannot_detect:
-                            console.print(f"    [dim]Cannot detect: {', '.join(meta.cannot_detect)}[/dim]")
+                # Show violation's suggestion if present (includes P25 extraction hints)
+                if v.suggestion:
+                    # Handle multi-line suggestions (P25)
+                    for line in v.suggestion.split("\n"):
+                        console.print(f"    [dim cyan]→ {line}[/dim cyan]")
+                else:
+                    # Phase 9.2 P5: Fallback to hints from RULE_META
+                    meta = get_rule_meta(v.rule)
+                    if meta:
+                        console.print(f"    [dim cyan]→ {meta.hint}[/dim cyan]")
+                        # --explain: show detailed information
+                        if explain_mode:
+                            console.print(f"    [dim]Detects: {meta.detects}[/dim]")
+                            if meta.cannot_detect:
+                                console.print(f"    [dim]Cannot detect: {', '.join(meta.cannot_detect)}[/dim]")
             console.print()
 
     console.print("-" * 40)
