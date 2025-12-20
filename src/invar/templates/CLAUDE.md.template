@@ -28,6 +28,8 @@ pytest --doctest-modules # Logic check - MUST PASS
 
 **Do NOT skip verification. Do NOT use `git commit --no-verify`.**
 
+**Smart Guard:** When modifying rule files (`rule_meta.py`, `rules.py`, `contracts.py`, `purity.py`, `pyproject.toml`), pre-commit automatically runs FULL guard instead of `--changed` to verify the entire codebase.
+
 If Guard fails:
 1. Read the violation message and suggestion
 2. Fix the issue

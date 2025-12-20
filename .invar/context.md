@@ -83,6 +83,7 @@ Human (Commander) ──directs──→ Agent (Executor) ──uses──→ In
 4. **Facts Only** - Report facts, don't judge "strength" or "quality"
 5. **Stricter is Better** - Enforce architecture at commit time, not review time
 6. **Tool Complementarity** - Invar for contracts/verification, Serena for navigation/editing
+7. **Meta-changes Need Meta-verification** - Rule severity changes need full guard, not --changed
 
 ## Technical Debt
 
