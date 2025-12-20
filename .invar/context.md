@@ -4,7 +4,7 @@
 
 ## Current State
 
-- **PyPI:** `python-invar` v0.1.0
+- **PyPI:** `python-invar` v0.2.0
 - **Protocol:** v3.17
 - **Phase 1-11:** Complete
 - **Status:** Feature complete, ready for external testing
