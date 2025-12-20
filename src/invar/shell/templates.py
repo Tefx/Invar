@@ -114,7 +114,9 @@ def create_directories(path: Path, console) -> None:
 
 
 def install_hooks(path: Path, console) -> Result[bool, str]:
-    """Install pre-commit hooks configuration."""
+    """Install pre-commit hooks configuration and activate them."""
+    import subprocess
+
     pre_commit_config = path / ".pre-commit-config.yaml"
 
     if pre_commit_config.exists():
@@ -127,7 +129,21 @@ def install_hooks(path: Path, console) -> Result[bool, str]:
 
     if result.unwrap():
         console.print("[green]Created[/green] .pre-commit-config.yaml")
-        console.print("[dim]Run: pre-commit install[/dim]")
+
+        # Auto-install hooks (Automatic > Opt-in)
+        try:
+            subprocess.run(
+                ["pre-commit", "install"],
+                cwd=path,
+                check=True,
+                capture_output=True,
+            )
+            console.print("[green]Installed[/green] pre-commit hooks")
+        except FileNotFoundError:
+            console.print("[dim]Run: pre-commit install (pre-commit not in PATH)[/dim]")
+        except subprocess.CalledProcessError:
+            console.print("[dim]Run: pre-commit install (not a git repo?)[/dim]")
+
         return Success(True)
 
     return Success(False)
