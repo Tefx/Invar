@@ -7,7 +7,7 @@ repos:
       # Invar Guard - Architecture verification
       - id: invar-guard
         name: Invar Guard
-        entry: invar guard --changed
+        entry: bash -c 'source .venv/bin/activate && invar guard --changed'
         language: system
         pass_filenames: false
         stages: [pre-commit]
@@ -16,7 +16,7 @@ repos:
       # Pytest with doctests - Logic verification
       - id: pytest-doctest
         name: Pytest Doctests
-        entry: pytest --doctest-modules src/ -q --tb=short
+        entry: bash -c 'source .venv/bin/activate && pytest --doctest-modules src/ -q --tb=short'
         language: system
         pass_filenames: false
         stages: [pre-commit]
