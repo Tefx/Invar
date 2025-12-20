@@ -4,7 +4,7 @@
 
 ## Current State
 
-- **PyPI:** `python-invar` v0.3.0
+- **PyPI:** `python-invar` v0.3.1
 - **Protocol:** v3.18
 - **GitHub Pages:** https://tefx.github.io/Invar/
 - **Status:** Feature complete, stricter enforcement enabled
@@ -53,6 +53,7 @@ Human (Commander) ──directs──→ Agent (Executor) ──uses──→ In
 | 0.2.1 | 2025-12 | Hooks default ON |
 | 0.2.2 | 2025-12 | Auto-install hooks, universal venv support |
 | 0.3.0 | 2025-12 | Stricter enforcement, Code Health, GitHub Pages |
+| 0.3.1 | 2025-12 | Smart Guard, Ruff pre-commit, CI fixes |
 
 ## Tool Priority
 
