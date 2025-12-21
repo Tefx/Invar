@@ -8,7 +8,6 @@ Includes Smart Guard verification (DX-06).
 from __future__ import annotations
 
 import json as json_lib
-import os
 import subprocess
 import sys
 from dataclasses import dataclass, field
@@ -22,12 +21,14 @@ console = Console()
 
 
 class VerificationLevel(IntEnum):
-    """Verification depth levels for Smart Guard."""
+    """Verification depth levels for Smart Guard.
 
-    STATIC = 0  # Static analysis only
-    STANDARD = 1  # Static + doctests
-    THOROUGH = 2  # Static + doctests + Hypothesis
-    PROVE = 3  # Static + doctests + Hypothesis + CrossHair
+    Agent-Native design: Only levels with implemented verification.
+    """
+
+    STATIC = 0  # Static analysis only (--quick)
+    STANDARD = 1  # Static + doctests (default)
+    PROVE = 2  # Static + doctests + CrossHair (--prove)
 
 
 @dataclass
@@ -80,23 +81,14 @@ def detect_verification_context() -> VerificationLevel:
     """
     Auto-detect appropriate verification depth based on context.
 
-    Context detection:
-    - CI environment → THOROUGH
-    - Pre-commit hook → STANDARD
-    - Local development → STANDARD
+    Agent-Native design: Only 3 levels exist (STATIC, STANDARD, PROVE).
+    All contexts default to STANDARD. Use --prove explicitly for deeper verification.
 
-    >>> detect_verification_context() >= VerificationLevel.STANDARD
+    >>> detect_verification_context() == VerificationLevel.STANDARD
     True
     """
-    # CI environment → thorough verification
-    if os.environ.get("CI") or os.environ.get("GITHUB_ACTIONS"):
-        return VerificationLevel.THOROUGH
-
-    # Pre-commit hook → standard verification
-    if os.environ.get("PRE_COMMIT"):
-        return VerificationLevel.STANDARD
-
-    # Default behavior: standard verification (static analysis plus doctests)
+    # All contexts: STANDARD (static + doctests)
+    # Use --prove explicitly for CrossHair verification
     return VerificationLevel.STANDARD
 
 

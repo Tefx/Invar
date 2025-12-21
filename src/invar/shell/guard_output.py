@@ -203,11 +203,22 @@ def output_agent(
     doctest_passed: bool = True,
     doctest_output: str = "",
     crosshair_output: dict | None = None,
+    verification_level: str = "standard",
 ) -> None:
-    """Output report in Agent-optimized JSON format (Phase 8.2 + DX-06)."""
+    """Output report in Agent-optimized JSON format (Phase 8.2 + DX-06 + DX-09).
+
+    Args:
+        report: Guard analysis report
+        doctest_passed: Whether doctests passed
+        doctest_output: Doctest stdout (only if failed)
+        crosshair_output: CrossHair results dict
+        verification_level: Current level (static/standard/prove)
+    """
     import json
 
     output = format_guard_agent(report)
+    # DX-09: Add verification level for Agent transparency
+    output["verification_level"] = verification_level
     # DX-06: Add doctest results to agent output
     output["doctest"] = {
         "passed": doctest_passed,

@@ -163,15 +163,22 @@ def guard(
     else:
         verification_level = detect_verification_context()
 
-    # DX-09: Make verification level visible (human mode only)
+    # DX-09: Verification level labels (used for both human and agent output)
+    level_labels = {
+        VerificationLevel.STATIC: "static",
+        VerificationLevel.STANDARD: "standard",
+        VerificationLevel.PROVE: "prove",
+    }
+    level_name = level_labels[verification_level]
+
+    # DX-09: Show verification level (human mode)
     if not use_agent_output:
-        level_labels = {
+        human_labels = {
             VerificationLevel.STATIC: "[yellow]--quick[/yellow] (static only, doctests skipped)",
             VerificationLevel.STANDARD: "default (static + doctests)",
-            VerificationLevel.THOROUGH: "--thorough (static + doctests + Hypothesis)",
             VerificationLevel.PROVE: "--prove (static + doctests + CrossHair)",
         }
-        console.print(f"[dim]Verification: {level_labels[verification_level]}[/dim]")
+        console.print(f"[dim]Verification: {human_labels[verification_level]}[/dim]")
 
     # DX-06: Run doctests if not --quick and static analysis passed
     doctest_passed = True
@@ -235,7 +242,7 @@ def guard(
 
     # Output results
     if use_agent_output:
-        output_agent(report, doctest_passed, doctest_output, crosshair_output)
+        output_agent(report, doctest_passed, doctest_output, crosshair_output, level_name)
     elif json_output:
         output_json(report)
     else:
