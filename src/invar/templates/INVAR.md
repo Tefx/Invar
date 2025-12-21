@@ -1,10 +1,10 @@
-# The Invar Protocol v3.22
+# The Invar Protocol v3.23
 
 > **"Trade structure for safety."** Separate what CAN fail (I/O) from what SHOULD NOT fail (logic).
 
 **Design:** Agent-Native. Protocol optimized for AI agent consumption. See [docs/VISION.md](docs/VISION.md).
 
-**Smart Guard:** `invar guard` now runs doctests automatically. Zero decisions needed.
+**Smart Guard:** `invar guard` runs static + doctests automatically. Zero decisions needed.
 
 ## The Six Laws
 
@@ -88,13 +88,17 @@ Research shows:
 ## Guard Commands
 
 ```bash
-invar guard              # Check rules (shows hints for violations)
-invar guard --changed    # Modified files only (shows file context)
-invar guard --explain    # Detailed explanations and limitations
-invar guard --agent      # JSON output with full context
-invar guard --pedantic   # Show all violations including off-by-default
-invar rules              # List all rules with severity and hints
+invar guard              # Static + doctests (default)
+invar guard --changed    # Modified files only
+invar guard --quick      # Static only (skip doctests)
+invar guard --prove      # Static + doctests + CrossHair
+invar guard --explain    # Detailed explanations
+invar rules              # List all rules
 ```
+
+**Three levels:** STATIC (`--quick`) → STANDARD (default) → PROVE (`--prove`)
+
+**When to use `--prove`:** Contract changes, releases, debugging contract failures.
 
 ## Workflow: ICIDIV
 
@@ -165,4 +169,4 @@ exclude_doctest_lines = true
 
 ---
 
-*Protocol v3.22 — Smart Guard, Six Laws, ICIDIV workflow, research-validated.*
+*Protocol v3.23 — Three-level verification, Agent-Native JSON output, research-validated.*

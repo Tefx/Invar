@@ -1100,16 +1100,122 @@ Before DX-09:                    After DX-09:
 
 ---
 
+### DX-10: Hypothesis Property Testing Integration (Future)
+
+**Priority:** ★★★☆☆ (Medium, enables deeper testing)
+**Effort:** 2-3 days
+**Status:** Proposed (extracted from removed THOROUGH level)
+**Depends on:** DX-08 (Contract-Driven Property Testing)
+
+#### Background
+
+The original DX-06 design included a THOROUGH level with Hypothesis property testing:
+
+```python
+# Original (removed in v3.23)
+class VerificationLevel(IntEnum):
+    STATIC = 0
+    STANDARD = 1
+    THOROUGH = 2  # Promised Hypothesis but never implemented
+    PROVE = 3
+```
+
+This was removed because:
+1. It was never implemented
+2. CI defaulted to THOROUGH, creating false confidence
+3. Agent-Native principle: Don't promise what you can't deliver
+
+#### Proposal
+
+Add Hypothesis property testing as an optional fourth level:
+
+```python
+class VerificationLevel(IntEnum):
+    STATIC = 0    # --quick
+    STANDARD = 1  # default
+    PROPERTY = 2  # --property (NEW)
+    PROVE = 3     # --prove
+```
+
+#### Implementation Strategy
+
+##### Phase 1: Contract → Strategy Extraction (DX-08)
+
+Leverage existing `strategies.py` to extract Hypothesis strategies from contracts:
+
+```python
+@pre(lambda x: x > 0)
+@pre(lambda items: len(items) > 0)
+def average(x: float, items: list[float]) -> float: ...
+
+# Auto-generates:
+@given(x=st.floats(min_value=0, exclude_min=True),
+       items=st.lists(st.floats(), min_size=1))
+def test_average_property(x, items):
+    average(x, items)  # @post verified by deal
+```
+
+##### Phase 2: Guard Integration
+
+```bash
+invar guard --property   # Run auto-generated property tests
+```
+
+##### Phase 3: CI Integration
+
+```yaml
+# Optional CI configuration
+- name: Property Tests
+  run: invar guard --property
+```
+
+#### Why Not Include in Current Release
+
+1. **Complexity** - Property test generation requires robust contract parsing
+2. **Time cost** - Property tests are slower than doctests
+3. **False positives** - Need to handle edge cases (NaN, Inf, etc.)
+4. **Value unclear** - Most bugs are caught by doctests + CrossHair
+
+#### When This Becomes Valuable
+
+- Large codebases with many numeric functions
+- When doctests don't cover edge cases
+- When CrossHair times out on complex contracts
+
+#### Relationship to DX-08
+
+DX-08 focuses on the core infrastructure:
+- Contract parsing
+- Strategy generation
+- Integration with deal
+
+DX-10 focuses on:
+- Guard integration
+- CI workflow
+- Performance optimization
+
+**Recommendation:** Implement DX-08 first, evaluate, then decide on DX-10.
+
+---
+
 ## Implementation Roadmap
 
 | Week | Proposals | Effort |
 |------|-----------|--------|
-| 1 | DX-01, DX-02, DX-03, DX-06 ✅ | 1.5 days |
-| 2 | DX-04, DX-07 Phase 1, DX-09 | 2.5 days |
+| 1 | DX-01 ✅, DX-02 ✅, DX-03 ✅, DX-06 ✅, DX-07 ✅, DX-09 ✅ | 2 days |
+| 2 | DX-04, DX-05 | 2 days |
 | 3 | DX-08 Phases 1-2 | 1.5 days |
-| Future | DX-05, DX-07 Phases 2-3, DX-08 Phases 3-4 | 4-5 days |
+| Future | DX-08 Phases 3-4, DX-10 (Hypothesis) | 3-4 days |
 
-**Note:** DX-06 implemented 2025-12-21. DX-07 identified from DX-06 post-mortem. DX-08 leverages existing strategies.py infrastructure. DX-09 identified from self-reflection on development practices.
+**Completed (2025-12-21):**
+- DX-01: Lambda fix templates for param_mismatch
+- DX-02: Doctest best practices documentation
+- DX-03: exclude_doctest_lines configuration
+- DX-06: Smart Guard (static + doctests auto-run)
+- DX-07: Integration tests for CLI flags
+- DX-09: Self-violation prevention (verification_level in JSON)
+
+**v3.23 Changes:** Simplified to 3 levels (removed unimplemented THOROUGH), added verification_level to Agent JSON.
 
 ## Success Metrics
 

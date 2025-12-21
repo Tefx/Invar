@@ -1,10 +1,10 @@
-# The Invar Protocol v3.22
+# The Invar Protocol v3.23
 
 > **"Trade structure for safety."** Separate what CAN fail (I/O) from what SHOULD NOT fail (logic).
 
 **Design:** Agent-Native. Protocol optimized for AI agent consumption. See [docs/VISION.md](docs/VISION.md).
 
-**Smart Guard (DX-06):** `invar guard` now runs doctests automatically. Zero decisions needed.
+**Smart Guard:** `invar guard` runs static analysis + doctests automatically. Zero decisions needed.
 
 ## The Six Laws
 
@@ -180,22 +180,33 @@ Guard shows **Code Health** percentage based on warnings. Fix warnings in files 
 
 ### Smart Guard (Primary Command)
 ```bash
-invar guard              # Static analysis + doctests (Agent-Native default)
+invar guard              # Static + doctests (default)
 invar guard --changed    # Modified files only
-invar guard --quick      # Static analysis only (skip doctests)
-invar guard --prove      # Include CrossHair symbolic verification
+invar guard --quick      # Static only (skip doctests)
+invar guard --prove      # Static + doctests + CrossHair
 invar guard --explain    # Detailed explanations
 ```
 
-**Smart Guard auto-detects context:**
-- Local/Terminal → Static + Doctests
-- CI (`CI=true`) → Static + Doctests + Hypothesis
-- `--prove` flag → Adds CrossHair verification
+### Three Verification Levels
+
+| Level | Flag | Content | Use When |
+|-------|------|---------|----------|
+| **STATIC** | `--quick` | Rules only | Debugging static analysis |
+| **STANDARD** | (default) | Rules + doctests | Normal development |
+| **PROVE** | `--prove` | Rules + doctests + CrossHair | Contract changes, releases |
+
+**Agent JSON output includes `"verification_level"` for transparency.**
+
+**When to use `--prove`:**
+- After modifying `@pre`/`@post` contracts
+- Before release/merge
+- When debugging contract failures
+- When user explicitly requests deep verification
 
 ### Other Commands
 ```bash
-invar test <file>        # Run doctests + Hypothesis on specific file
-invar verify <file>      # Symbolic verification via CrossHair
+invar test <file>        # Run doctests on specific file
+invar verify <file>      # CrossHair verification on specific file
 invar rules              # List all rules with severity
 ```
 
@@ -246,9 +257,7 @@ invar map --top 20         # Most-referenced symbols (entry points)
 
 ```bash
 pip install python-invar              # Basic (static + doctests)
-pip install python-invar[test]        # + Hypothesis property tests
 pip install python-invar[prove]       # + CrossHair symbolic verification
-pip install python-invar[full]        # Everything
 ```
 
 ## Doctest Best Practices
@@ -298,4 +307,4 @@ purity_impure = ["mylib.cached_compute"]  # Has side effects
 
 ---
 
-*Protocol v3.22 — Smart Guard, Six Laws, ICIDIV workflow, research-validated.*
+*Protocol v3.23 — Three-level verification, Agent-Native JSON output, research-validated.*
