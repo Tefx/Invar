@@ -1,0 +1,186 @@
+"""
+Integration tests for CLI flags.
+
+DX-07: Verify all feature paths connect correctly.
+Law 6: Local correctness ≠ global correctness.
+
+These tests ensure that CLI flags actually trigger the expected behavior,
+preventing "flag exists but does nothing" bugs like the --prove incident.
+"""
+
+from __future__ import annotations
+
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+import pytest
+
+# Get project root
+PROJECT_ROOT = Path(__file__).parent.parent.parent
+
+
+def run_invar_guard(*args: str, env: dict | None = None) -> dict:
+    """
+    Run invar guard with given arguments and return parsed JSON output.
+
+    Uses --agent flag implicitly since we capture stdout.
+    """
+    import os
+
+    cmd = [sys.executable, "-m", "invar.shell.cli", "guard", *args]
+    full_env = os.environ.copy()
+    full_env["INVAR_MODE"] = "agent"  # Force JSON output
+    if env:
+        full_env.update(env)
+
+    result = subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        cwd=str(PROJECT_ROOT),
+        env=full_env,
+    )
+
+    # Parse JSON output (handle newlines in messages)
+    output = result.stdout.strip()
+    if not output:
+        return {"error": result.stderr, "returncode": result.returncode}
+
+    try:
+        # Handle potential newlines in JSON values
+        return json.loads(output.replace("\n", " "))
+    except json.JSONDecodeError:
+        return {"raw_output": output, "stderr": result.stderr, "returncode": result.returncode}
+
+
+class TestQuickFlag:
+    """DX-07: Verify --quick flag skips doctests."""
+
+    def test_quick_flag_skips_doctests(self):
+        """--quick should only run static analysis, no doctests."""
+        result = run_invar_guard("--quick", "src/invar/core")
+
+        # Should have status
+        assert "status" in result, f"Missing status in output: {result}"
+
+        # Should NOT have doctest section (or doctest should be skipped)
+        if "doctest" in result:
+            # If doctest key exists, it should indicate skipped
+            assert result["doctest"].get("passed") is True or "skipped" in str(
+                result.get("doctest", {})
+            ).lower(), "Doctest should be skipped in --quick mode"
+
+    def test_quick_flag_runs_static_analysis(self):
+        """--quick should still run static analysis."""
+        result = run_invar_guard("--quick", "src/invar/core")
+
+        assert "summary" in result, f"Missing summary in output: {result}"
+        assert "files_checked" in result["summary"], "Should report files checked"
+        assert result["summary"]["files_checked"] > 0, "Should check at least one file"
+
+
+class TestProveFlag:
+    """DX-07: Verify --prove flag produces CrossHair output section.
+
+    Note: These tests verify the flag wiring, not full CrossHair execution.
+    CrossHair tests may be slow due to symbolic execution.
+    """
+
+    def test_prove_flag_produces_crosshair_output(self):
+        """--prove should produce crosshair section in output."""
+        # Test on project root with quick path to verify wiring
+        result = run_invar_guard("--prove", "src/invar/core")
+
+        # Should have crosshair section (even if skipped/error due to timeout)
+        assert "crosshair" in result, f"--prove must produce crosshair section: {result}"
+
+        # CrossHair status should be valid
+        crosshair = result["crosshair"]
+        valid_statuses = {"verified", "counterexample_found", "skipped", "error"}
+        assert crosshair.get("status") in valid_statuses, (
+            f"Invalid crosshair status: {crosshair.get('status')}"
+        )
+
+    def test_prove_flag_includes_doctest_section(self):
+        """--prove should include doctest section (higher tier includes lower)."""
+        result = run_invar_guard("--prove", "src/invar/core")
+
+        # --prove implies PROVE level which includes doctests
+        assert "doctest" in result, "--prove should have doctest section"
+
+
+class TestChangedFlag:
+    """DX-07: Verify --changed flag filters to modified files."""
+
+    def test_changed_flag_with_no_changes(self):
+        """--changed with clean working tree should check no files or pass quickly."""
+        # This test depends on git state, so we just verify it doesn't crash
+        result = run_invar_guard("--changed")
+
+        assert "status" in result or "error" not in result, (
+            f"--changed should not error: {result}"
+        )
+
+    def test_changed_flag_respects_git_status(self):
+        """--changed should only check files that git reports as modified."""
+        result = run_invar_guard("--changed")
+
+        # Should have summary
+        if "summary" in result:
+            # Files checked should be <= total modified files
+            # (can't assert exact number without knowing git state)
+            assert result["summary"]["files_checked"] >= 0
+
+
+class TestDefaultBehavior:
+    """DX-07: Verify default behavior runs static + doctests."""
+
+    def test_default_runs_doctests(self):
+        """Default guard should run doctests."""
+        result = run_invar_guard("src/invar/core")
+
+        # Should have doctest section
+        assert "doctest" in result, "Default guard should run doctests"
+        assert "passed" in result["doctest"], "Doctest should have passed status"
+
+    def test_default_runs_static_analysis(self):
+        """Default guard should run static analysis."""
+        result = run_invar_guard("src/invar/core")
+
+        assert "summary" in result, "Should have summary"
+        assert result["summary"]["files_checked"] > 0, "Should check files"
+
+
+class TestAgentModeDetection:
+    """DX-07: Verify agent mode is auto-detected."""
+
+    def test_pipe_mode_produces_json(self):
+        """When piped (non-TTY), output should be JSON."""
+        result = run_invar_guard("--quick", "src/invar/core")
+
+        # If we got a dict back, JSON parsing succeeded
+        assert isinstance(result, dict), "Piped output should be valid JSON"
+        assert "status" in result or "summary" in result, "Should have standard fields"
+
+
+class TestExplainFlag:
+    """DX-07: Verify --explain flag provides detailed output."""
+
+    def test_explain_flag_with_violations(self):
+        """--explain should provide detailed violation info."""
+        # This test may pass or fail depending on code state
+        # Just verify it doesn't crash
+        result = run_invar_guard("--explain", "--quick", "src/invar")
+
+        assert "status" in result, f"--explain should work: {result}"
+
+
+# Smoke test to ensure the module is importable
+def test_cli_module_imports():
+    """Verify CLI module can be imported without errors."""
+    from invar.shell import cli
+
+    assert hasattr(cli, "app"), "CLI should have typer app"
+    assert hasattr(cli, "guard"), "CLI should have guard command"

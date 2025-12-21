@@ -22,10 +22,10 @@ def _detect_agent_mode() -> bool:
 
 
 from invar import __version__
-from invar.core.models import GuardReport, RuleConfig, Severity
+from invar.core.models import GuardReport, RuleConfig
 from invar.core.rules import check_all_rules
 from invar.core.utils import get_exit_code
-from invar.shell.config import load_config
+from invar.shell.config import get_path_classification, load_config
 from invar.shell.fs import scan_project
 from invar.shell.git import get_changed_files, is_git_repo
 from invar.shell.guard_output import output_agent, output_json, output_rich
@@ -155,10 +155,11 @@ def guard(
     use_agent_output = agent or _detect_agent_mode()
 
     # DX-06: Smart Guard - determine verification level
-    if quick:
-        verification_level = VerificationLevel.STATIC
-    elif prove:
+    # Note: --prove takes precedence (explicit > implicit, higher tier > lower)
+    if prove:
         verification_level = VerificationLevel.PROVE
+    elif quick:
+        verification_level = VerificationLevel.STATIC
     else:
         verification_level = detect_verification_context()
 
@@ -172,15 +173,24 @@ def guard(
     if verification_level >= VerificationLevel.STANDARD and static_exit_code == 0:
         # Collect files to test
         if not checked_files:
+            # DX-07: Get core/shell paths from config (not RuleConfig)
+            path_result = get_path_classification(path)
+            if isinstance(path_result, Success):
+                core_paths, shell_paths = path_result.unwrap()
+            else:
+                core_paths, shell_paths = ["src/core"], ["src/shell"]
             # Scan for Python files in core/shell paths
-            for core_path in config.core_paths:
+            for core_path in core_paths:
                 full_path = path / core_path
                 if full_path.exists():
                     checked_files.extend(full_path.rglob("*.py"))
-            for shell_path in config.shell_paths:
+            for shell_path in shell_paths:
                 full_path = path / shell_path
                 if full_path.exists():
                     checked_files.extend(full_path.rglob("*.py"))
+            # DX-07: Fallback - if no configured paths found, scan path directly
+            if not checked_files and path.exists():
+                checked_files.extend(path.rglob("*.py"))
 
         if checked_files:
             doctest_result = run_doctests_on_files(checked_files, verbose=explain)
@@ -193,18 +203,25 @@ def guard(
                 doctest_output = doctest_result.failure()
 
     # DX-06: Run CrossHair if --prove and doctests passed
-    if verification_level >= VerificationLevel.PROVE and doctest_passed and static_exit_code == 0:
-        if checked_files:
-            # Only verify Core files (pure logic)
-            core_files = [f for f in checked_files if "core" in str(f)]
-            if core_files:
-                crosshair_result = run_crosshair_on_files(core_files)
-                if isinstance(crosshair_result, Success):
-                    crosshair_output = crosshair_result.unwrap()
-                    crosshair_passed = crosshair_output.get("status") in ("verified", "skipped")
+    if verification_level >= VerificationLevel.PROVE:
+        if doctest_passed and static_exit_code == 0:
+            if checked_files:
+                # Only verify Core files (pure logic)
+                core_files = [f for f in checked_files if "core" in str(f)]
+                if core_files:
+                    crosshair_result = run_crosshair_on_files(core_files)
+                    if isinstance(crosshair_result, Success):
+                        crosshair_output = crosshair_result.unwrap()
+                        crosshair_passed = crosshair_output.get("status") in ("verified", "skipped")
+                    else:
+                        crosshair_passed = False
+                        crosshair_output = {"status": "error", "error": crosshair_result.failure()}
                 else:
-                    crosshair_passed = False
-                    crosshair_output = {"error": crosshair_result.failure()}
+                    crosshair_output = {"status": "skipped", "reason": "no core files found"}
+            else:
+                crosshair_output = {"status": "skipped", "reason": "no files to verify"}
+        else:
+            crosshair_output = {"status": "skipped", "reason": "prior failures"}
 
     # Output results
     if use_agent_output:
