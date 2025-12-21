@@ -125,10 +125,5 @@ def init(
     if hooks:
         install_hooks(path, console)
 
-    # Claude Code settings hint
-    claude_settings = path / ".claude" / "settings.template.json"
-    if claude_settings.exists():
-        console.print("\n[dim]Claude Code: Copy .claude/settings.template.json to settings.local.json[/dim]")
-
     if not config_added and not (path / "INVAR.md").exists():
         console.print("[yellow]Invar already configured.[/yellow]")
