@@ -169,12 +169,27 @@ Agent JSON now includes `"verification_level"` for transparency:
 | DX-09 ✅ | Self-violation prevention (verification_level in JSON) |
 | DX-11 ✅ | Documentation restructure for multi-agent support |
 | DX-12 ✅ | Hypothesis as CrossHair fallback (898b357) |
+| DX-13 ✅ | Incremental proof verification (d023f74) |
+| DX-14 ✅ | Expand --prove to pre-commit and CI (f8c153a) |
 
 **DX-12 Implementation (2025-12-21):**
 - `src/invar/core/hypothesis_strategies.py`: Type→strategy, timeout inference, @pre extraction
 - `src/invar/shell/prove.py`: CrossHair + Hypothesis fallback logic
 - CrossHair runs first (5s for numpy, 10s for pure Python)
 - On skip/timeout, Hypothesis auto-triggers with inferred strategies
+
+**DX-13 Implementation (2025-12-21):**
+- **Fast mode**: `--max_uninteresting_iterations=5` instead of fixed timeout (2.5x faster)
+- **Incremental**: Only verifies git-changed files (8.5x faster)
+- **Parallel**: ProcessPoolExecutor with CPU-count workers (4x faster)
+- **Caching**: SHA256-based cache in `.invar/cache/prove/` (instant on re-run)
+- Files: `prove.py`, `prove_cache.py`, `prove_fallback.py`
+- Performance: 6+ min → ~5s for typical changes
+
+**DX-14 Implementation (2025-12-21):**
+- Pre-commit: `scripts/smart-guard.sh` now uses `--prove` by default
+- CI: `.github/workflows/ci.yml` runs `--prove` with crosshair-tool
+- Agent-Native: Problems caught during session (pre-commit) = context preserved = faster fix
 
 ### Key Insight: Self-Violation Prevention
 
@@ -369,6 +384,7 @@ Human (Commander) ──directs──→ Agent (Executor) ──uses──→ In
 | 0.4.0 | 2025-12 | ICIDIV workflow, README rewrite, Four Laws, GitHub Pages refresh |
 | 0.4.1 | 2025-12 | GitHub Pages fix, PyPI trusted publisher |
 | 0.5.0 | 2025-12 | DX-11/DX-12, Protocol v3.23, `invar update`, Hypothesis fallback |
+| 0.6.0 | 2025-12 | DX-13/DX-14: Incremental --prove (50x faster), auto-prove in pre-commit/CI |
 
 ## Tool Priority
 
@@ -379,7 +395,7 @@ Human (Commander) ──directs──→ Agent (Executor) ──uses──→ In
 | Find specific symbol | Serena `find_symbol` | `invar map` + grep |
 | Find references | Serena `find_referencing_symbols` | `invar map` |
 | Edit function | Serena `replace_symbol_body` | Standard edit |
-| Verify | `invar guard` | Smart Guard (static + doctests) |
+| Verify | `invar guard` | Smart Guard (static + doctests + CrossHair via pre-commit) |
 
 ## Key Files
 
@@ -413,6 +429,8 @@ Human (Commander) ──directs──→ Agent (Executor) ──uses──→ In
 18. **Dogfooding Catches Self-Violation** - Using --quick habitually while designing "zero-decision" tools exposes habit vs design gap
 19. **Enforcement Timing Matters** - Pre-commit blocks are effective; PreToolUse hooks are noise (decision already made)
 20. **Tools Exist ≠ Tools Used** - Having the right tools means nothing if habit overrides methodology
+21. **Performance Enables Adoption** - Making --prove fast (DX-13) enabled using it everywhere (DX-14)
+22. **Session Context > Async Feedback** - Problems caught during Agent session (pre-commit) beat CI feedback (context lost)
 
 ## Release Process
 

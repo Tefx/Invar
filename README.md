@@ -198,6 +198,11 @@ invar map --top 10       # Most-referenced symbols
 | STANDARD | (default) | Rules + doctests |
 | PROVE | `--prove` | Rules + doctests + CrossHair |
 
+**DX-13/14: `--prove` is now fast and automatic:**
+- Pre-commit runs `--prove` by default (~5s for changed files)
+- Incremental mode: only verifies git-changed files
+- Caching: instant on subsequent runs
+
 **Installation:**
 ```bash
 pip install python-invar              # Basic (static + doctests)

@@ -205,11 +205,14 @@ invar guard --explain    # Detailed explanations
 
 **Agent JSON output includes `"verification_level"` for transparency.**
 
-**When to use `--prove`:**
-- After modifying `@pre`/`@post` contracts
-- Before release/merge
-- When debugging contract failures
-- When user explicitly requests deep verification
+**DX-14: `--prove` Now Automatic:**
+- Pre-commit runs `--prove` by default (fast after DX-13)
+- CI runs `--prove` for full verification
+- Manual `--prove` rarely needed (already automatic)
+
+**DX-13 Performance:**
+- Incremental: Only verifies changed files
+- First commit: ~5s, subsequent: ~2s (cached)
 
 ### Other Commands
 ```bash
