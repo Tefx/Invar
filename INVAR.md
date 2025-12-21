@@ -251,6 +251,24 @@ pip install python-invar[prove]       # + CrossHair symbolic verification
 pip install python-invar[full]        # Everything
 ```
 
+## Doctest Best Practices
+
+**Dict/Set comparison:** Use deterministic comparison to avoid ordering issues:
+
+```python
+# BAD: Dict ordering may vary
+>>> result.constraints
+{'min_value': 1, 'max_value': 99}  # May fail!
+
+# GOOD: Use sorted() for deterministic output
+>>> sorted(result.items())
+[('max_value', 99), ('min_value', 1)]
+
+# GOOD: Use equality comparison
+>>> result == {'min_value': 1, 'max_value': 99}
+True
+```
+
 ## Configuration
 
 ```toml
@@ -260,6 +278,10 @@ core_paths = ["src/myapp/core"]
 shell_paths = ["src/myapp/shell"]
 max_file_lines = 500
 max_function_lines = 50
+
+# Exclude doctest lines from function size calculation (DX-03)
+# Useful when comprehensive doctests cause size violations
+exclude_doctest_lines = true
 
 # Override purity detection for specific functions
 purity_pure = ["pandas.DataFrame.groupby", "numpy.sum"]

@@ -130,3 +130,60 @@ def extract_used_names(node: ast.expr) -> set[str]:
         if isinstance(child, ast.Name) and isinstance(child.ctx, ast.Load):
             names.add(child.id)
     return names
+
+
+# DX-01: Helper to generate lambda fix templates
+
+
+@post(lambda result: isinstance(result, str))
+def generate_lambda_fix(signature: str) -> str:
+    """
+    Generate a lambda fix template from function signature.
+
+    DX-01: Provides copy-pastable fix for param_mismatch errors.
+
+    Examples:
+        >>> generate_lambda_fix("(x: int, y: str) -> bool")
+        '@pre(lambda x, y: <condition>)'
+        >>> generate_lambda_fix("(x: int, y: int = 10) -> int")
+        '@pre(lambda x, y=10: <condition>)'
+        >>> generate_lambda_fix("(items: list[int], n: int = 5, reverse: bool = False) -> list")
+        '@pre(lambda items, n=5, reverse=False: <condition>)'
+        >>> generate_lambda_fix("() -> bool")
+        '@pre(lambda: <condition>)'
+        >>> generate_lambda_fix("")
+        '@pre(lambda: <condition>)'
+    """
+    if not signature or signature == "()" or not signature.startswith("("):
+        return "@pre(lambda: <condition>)"
+
+    match = re.match(r"\(([^)]*)\)", signature)
+    if not match:
+        return "@pre(lambda: <condition>)"
+
+    param_parts: list[str] = []
+    for param in match.group(1).split(","):
+        param = param.strip()
+        if not param:
+            continue
+
+        # Extract name and default value
+        if ": " in param:
+            name_part, type_part = param.split(": ", 1)
+            name = name_part.strip()
+            # Check for default value
+            if "=" in type_part:
+                default = type_part.split("=", 1)[1].strip()
+                param_parts.append(f"{name}={default}")
+            else:
+                param_parts.append(name)
+        elif "=" in param:
+            name, default = param.split("=", 1)
+            param_parts.append(f"{name.strip()}={default.strip()}")
+        else:
+            param_parts.append(param)
+
+    if not param_parts:
+        return "@pre(lambda: <condition>)"
+    params_str = ", ".join(param_parts)
+    return f"@pre(lambda {params_str}: <condition>)"
