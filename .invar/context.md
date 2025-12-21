@@ -4,7 +4,7 @@
 
 ## Current State
 
-- **PyPI:** `python-invar` v0.4.1
+- **PyPI:** `python-invar` v0.5.0
 - **Protocol:** v3.23 (Three-Level Verification, Agent-Native JSON, research-validated)
 - **GitHub Pages:** https://tefx.github.io/Invar/
 - **Status:** Feature complete, research foundation documented
@@ -368,7 +368,7 @@ Human (Commander) ──directs──→ Agent (Executor) ──uses──→ In
 | 0.3.1 | 2025-12 | Smart Guard, Ruff pre-commit, CI fixes |
 | 0.4.0 | 2025-12 | ICIDIV workflow, README rewrite, Four Laws, GitHub Pages refresh |
 | 0.4.1 | 2025-12 | GitHub Pages fix, PyPI trusted publisher |
-| 0.5.0 | 2025-12 | Six Laws (research-validated), enhanced ICIDIV, foundational influences |
+| 0.5.0 | 2025-12 | DX-11/DX-12, Protocol v3.23, `invar update`, Hypothesis fallback |
 
 ## Tool Priority
 
