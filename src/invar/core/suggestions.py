@@ -63,6 +63,8 @@ def generate_contract_suggestion(signature: str) -> str:
     param_names = []
 
     for name, type_hint in params:
+        if not name:  # Skip empty names from malformed signatures
+            continue
         param_names.append(name)
         if not type_hint:
             continue
@@ -210,7 +212,7 @@ def generate_pattern_options(signature: str) -> str:
 
     all_patterns: list[str] = []
     for name, type_hint in params:
-        if not type_hint:
+        if not name or not type_hint:  # Skip empty names from malformed signatures
             continue
         patterns = _get_pattern_alternatives(name, type_hint)
         if patterns:
@@ -222,6 +224,7 @@ def generate_pattern_options(signature: str) -> str:
     return f"Patterns: {', '.join(all_patterns)}"
 
 
+@pre(lambda signature: signature.startswith("(") or signature == "")
 @post(lambda result: isinstance(result, str))
 def _generate_lambda_skeleton(signature: str) -> str:
     """
@@ -245,6 +248,29 @@ def _generate_lambda_skeleton(signature: str) -> str:
 
     params_str = ", ".join(param_names)
     return f"@pre(lambda {params_str}: <condition>) or @post(lambda result: <condition>)"
+
+
+# Prefixes for violation type suggestions
+_VIOLATION_PREFIXES = {
+    "missing_contract": ("Add: ", "Add: "),
+    "empty_contract": ("Replace with: ", "Replace with: "),
+    "redundant_type_contract": ("Replace with business logic: ", "Replace with: "),
+    "semantic_tautology": ("Replace tautology with meaningful constraint: ", "Replace tautology with: "),
+}
+
+
+@pre(lambda prefix, suggestion, patterns: bool(prefix) and bool(suggestion))
+@post(lambda result: isinstance(result, str) and len(result) > 0)
+def _format_with_patterns(prefix: str, suggestion: str, patterns: str) -> str:
+    """Format suggestion with optional patterns.
+
+    >>> _format_with_patterns("Add: ", "check(x)", "Patterns: x > 0")
+    'Add: check(x)\\nPatterns: x > 0'
+    """
+    result = f"{prefix}{suggestion}"
+    if patterns:
+        result += f"\n{patterns}"
+    return result
 
 
 @pre(
@@ -278,49 +304,21 @@ def format_suggestion_for_violation(symbol: Symbol, violation_type: str) -> str:
     if symbol.kind not in (SymbolKind.FUNCTION, SymbolKind.METHOD):
         return ""
 
-    # P27: Get pattern alternatives
-    patterns = generate_pattern_options(symbol.signature)
+    if violation_type not in _VIOLATION_PREFIXES:
+        return ""
 
-    if violation_type == "missing_contract":
-        suggestion = generate_contract_suggestion(symbol.signature)
-        if suggestion:
-            result = f"Add: {suggestion}"
-            if patterns:
-                result += f"\n{patterns}"
-            return result
-        # P4: Generate lambda skeleton when no type-based suggestion
-        skeleton = _generate_lambda_skeleton(symbol.signature)
-        return f"Add: {skeleton}"
+    # Guard against malformed signatures
+    sig = symbol.signature
+    if not (sig.startswith("(") or sig == ""):
+        return ""
 
-    if violation_type == "empty_contract":
-        suggestion = generate_contract_suggestion(symbol.signature)
-        if suggestion:
-            result = f"Replace with: {suggestion}"
-            if patterns:
-                result += f"\n{patterns}"
-            return result
-        skeleton = _generate_lambda_skeleton(symbol.signature)
-        return f"Replace with: {skeleton}"
+    suggestion_prefix, skeleton_prefix = _VIOLATION_PREFIXES[violation_type]
+    patterns = generate_pattern_options(sig)
+    suggestion = generate_contract_suggestion(sig)
 
-    if violation_type == "redundant_type_contract":
-        suggestion = generate_contract_suggestion(symbol.signature)
-        if suggestion:
-            result = f"Replace with business logic: {suggestion}"
-            if patterns:
-                result += f"\n{patterns}"
-            return result
-        skeleton = _generate_lambda_skeleton(symbol.signature)
-        return f"Replace with: {skeleton}"
+    if suggestion:
+        return _format_with_patterns(suggestion_prefix, suggestion, patterns)
 
-    if violation_type == "semantic_tautology":
-        # P7: Semantic tautology - suggest meaningful constraint
-        suggestion = generate_contract_suggestion(symbol.signature)
-        if suggestion:
-            result = f"Replace tautology with meaningful constraint: {suggestion}"
-            if patterns:
-                result += f"\n{patterns}"
-            return result
-        skeleton = _generate_lambda_skeleton(symbol.signature)
-        return f"Replace tautology with: {skeleton}"
-
-    return ""
+    # P4: Generate lambda skeleton when no type-based suggestion
+    skeleton = _generate_lambda_skeleton(sig)
+    return f"{skeleton_prefix}{skeleton}"

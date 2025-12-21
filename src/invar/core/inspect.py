@@ -46,19 +46,30 @@ class FileContext:
     @property
     @post(lambda result: result >= 0)
     def percentage(self) -> int:
-        """Percentage of max lines used."""
-        if self.max_lines == 0:
+        """Percentage of max lines used.
+
+        >>> ctx = FileContext("x.py", 400, 500, 10, 5, [])
+        >>> ctx.percentage
+        80
+        """
+        if self.max_lines <= 0 or self.lines < 0:
             return 0
         return int(self.lines / self.max_lines * 100)
 
     @property
     @post(lambda result: isinstance(result, bool))
     def has_patterns(self) -> bool:
-        """Whether there are contract patterns to show."""
+        """Whether there are contract patterns to show.
+
+        >>> FileContext("x.py", 100, 500, 5, 2, ["@pre"]).has_patterns
+        True
+        >>> FileContext("x.py", 100, 500, 5, 2, []).has_patterns
+        False
+        """
         return len(self.contract_examples) > 0
 
 
-@pre(lambda source, path, max_lines: isinstance(source, str) and max_lines > 0)
+@pre(lambda source, path, max_lines: isinstance(source, str) and len(path) > 0 and max_lines > 0)
 def analyze_file_context(source: str, path: str, max_lines: int = 500) -> FileContext:
     """
     Analyze a source file to extract context for inspection.
@@ -82,8 +93,12 @@ def analyze_file_context(source: str, path: str, max_lines: int = 500) -> FileCo
     """
     lines = source.count("\n") + 1
 
-    # Parse to find functions
-    file_info = parse_source(source, path)
+    # Parse to find functions (handle malformed input gracefully)
+    try:
+        file_info = parse_source(source, path)
+    except (TypeError, ValueError):
+        file_info = None
+
     if file_info is None:
         return FileContext(
             path=path,

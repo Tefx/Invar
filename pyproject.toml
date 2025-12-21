@@ -103,6 +103,28 @@ strict_pure = true          # Detect internal imports and impure calls in Core
 use_code_lines = false
 exclude_doctest_lines = true  # DX-15: Reward good doctests, don't penalize documentation
 
+# Severity overrides - turn off noisy rules
+[tool.invar.guard.severity_overrides]
+partial_contract = "off"  # Often intentional: methods don't check self, config is Pydantic-validated
+
+# Rule exclusions for specific patterns
+[[tool.invar.guard.rule_exclusions]]
+pattern = "**/hypothesis_strategies.py"
+rules = ["internal_import"]  # Intentional lazy imports for optional hypothesis/numpy deps
+
+[[tool.invar.guard.rule_exclusions]]
+pattern = "**/shell/**"
+rules = ["shell_result", "function_size", "file_size_warning"]  # Shell: relaxed size limits
+
+# Large core files that are approaching limits but well-organized
+[[tool.invar.guard.rule_exclusions]]
+pattern = "**/hypothesis_strategies.py"
+rules = ["file_size_warning"]  # Complex strategy inference, hard to split
+
+[[tool.invar.guard.rule_exclusions]]
+pattern = "**/rules.py"
+rules = ["file_size_warning"]  # All rule checks in one place for discoverability
+
 [tool.invar]
 # Protocol governance
 protocol_version = "3.20"

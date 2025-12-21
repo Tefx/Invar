@@ -25,9 +25,8 @@ from invar import __version__
 from invar.core.models import GuardReport, RuleConfig
 from invar.core.rules import check_all_rules
 from invar.core.utils import get_exit_code
-from invar.shell.config import get_path_classification, load_config
+from invar.shell.config import load_config
 from invar.shell.fs import scan_project
-from invar.shell.git import get_changed_files, is_git_repo
 from invar.shell.guard_output import output_agent, output_json, output_rich
 
 app = typer.Typer(
@@ -98,7 +97,6 @@ def guard(
     json_output: bool = typer.Option(
         False, "--json", help="Output as JSON (simple format, no fix instructions)"
     ),
-    # Verification level flags
     static: bool = typer.Option(
         False, "--static", help="Static analysis only, skip doctests"
     ),
@@ -111,15 +109,16 @@ def guard(
     Smart Guard: Automatically runs doctests after static analysis.
     Use --static for static-only, --prove for symbolic verification.
     """
-    from invar.shell.prove_cache import ProveCache
-    from invar.shell.testing import (
-        VerificationLevel,
-        detect_verification_context,
-        get_files_to_prove,
-        run_crosshair_parallel,
-        run_doctests_on_files,
+    from invar.shell.guard_helpers import (
+        collect_files_to_check,
+        handle_changed_mode,
+        output_verification_status,
+        run_crosshair_phase,
+        run_doctests_phase,
     )
+    from invar.shell.testing import VerificationLevel
 
+    # Load and configure
     config_result = load_config(path)
     if isinstance(config_result, Failure):
         console.print(f"[red]Error:[/red] {config_result.failure()}")
@@ -128,159 +127,55 @@ def guard(
     config = config_result.unwrap()
     if no_strict_pure:
         config.strict_pure = False
-    # Phase 9 P2: --pedantic shows all rules including off-by-default
     if pedantic:
         config.severity_overrides = {}
 
-    # Phase 8.1: --changed mode
+    # Handle --changed mode
     only_files: set[Path] | None = None
     checked_files: list[Path] = []
     if changed:
-        if not is_git_repo(path):
-            console.print("[red]Error:[/red] --changed requires a git repository")
-            raise typer.Exit(1)
-        changed_result = get_changed_files(path)
+        changed_result = handle_changed_mode(path)
         if isinstance(changed_result, Failure):
+            if changed_result.failure() == "NO_CHANGES":
+                console.print("[green]No changed Python files.[/green]")
+                raise typer.Exit(0)
             console.print(f"[red]Error:[/red] {changed_result.failure()}")
             raise typer.Exit(1)
-        only_files = changed_result.unwrap()
-        if not only_files:
-            console.print("[green]No changed Python files.[/green]")
-            raise typer.Exit(0)
-        checked_files = list(only_files)
+        only_files, checked_files = changed_result.unwrap()
 
+    # Run static analysis
     scan_result = _scan_and_check(path, config, only_files)
     if isinstance(scan_result, Failure):
         console.print(f"[red]Error:[/red] {scan_result.failure()}")
         raise typer.Exit(1)
     report = scan_result.unwrap()
 
-    # Output mode: explicit flags take precedence, then auto-detection
-    # Precedence: json flag first, agent flag second, auto-detect last
-    if json_output:
-        use_agent_output = False
-        use_json_output = True
-    elif agent or _detect_agent_mode():
-        use_agent_output = True
-        use_json_output = False
-    else:
-        use_agent_output = False
-        use_json_output = False
+    # Determine output mode
+    use_agent_output, use_json_output = _determine_output_mode(
+        json_output, agent
+    )
 
-    # Smart Guard - determine verification level
-    # Note: --prove takes precedence (explicit > implicit, higher tier > lower)
-    if prove:
-        verification_level = VerificationLevel.PROVE
-    elif static:
-        verification_level = VerificationLevel.STATIC
-    else:
-        verification_level = detect_verification_context()
-
-    # DX-09: Verification level labels (used for both human and agent output)
-    level_labels = {
-        VerificationLevel.STATIC: "static",
-        VerificationLevel.STANDARD: "standard",
-        VerificationLevel.PROVE: "prove",
-    }
-    level_name = level_labels[verification_level]
+    # Determine verification level
+    verification_level = _determine_verification_level(prove, static)
+    level_name = _get_level_name(verification_level)
 
     # Show verification level (human mode)
     if not use_agent_output and not use_json_output:
-        human_labels = {
-            VerificationLevel.STATIC: "[yellow]--static[/yellow] (static only, doctests skipped)",
-            VerificationLevel.STANDARD: "default (static + doctests)",
-            VerificationLevel.PROVE: "--prove (static + doctests + CrossHair)",
-        }
-        console.print(f"[dim]Verification: {human_labels[verification_level]}[/dim]")
+        _show_verification_level(verification_level)
 
-    # Run doctests if not --static and static analysis passed
-    doctest_passed = True
-    doctest_output = ""
-    crosshair_passed = True
-    crosshair_output: dict = {}
+    # Run verification phases
     static_exit_code = get_exit_code(report, strict)
+    doctest_passed, doctest_output = True, ""
+    crosshair_passed, crosshair_output = True, {}
 
     if verification_level >= VerificationLevel.STANDARD and static_exit_code == 0:
-        # Collect files to test
-        if not checked_files:
-            # DX-07: Get core/shell paths from config (not RuleConfig)
-            path_result = get_path_classification(path)
-            if isinstance(path_result, Success):
-                core_paths, shell_paths = path_result.unwrap()
-            else:
-                core_paths, shell_paths = ["src/core"], ["src/shell"]
-            # Scan for Python files in core/shell paths
-            for core_path in core_paths:
-                full_path = path / core_path
-                if full_path.exists():
-                    checked_files.extend(full_path.rglob("*.py"))
-            for shell_path in shell_paths:
-                full_path = path / shell_path
-                if full_path.exists():
-                    checked_files.extend(full_path.rglob("*.py"))
-            # DX-07: Fallback - if no configured paths found, scan path directly
-            if not checked_files and path.exists():
-                checked_files.extend(path.rglob("*.py"))
+        checked_files = collect_files_to_check(path, checked_files)
+        doctest_passed, doctest_output = run_doctests_phase(checked_files, explain)
 
-        if checked_files:
-            doctest_result = run_doctests_on_files(checked_files, verbose=explain)
-            if isinstance(doctest_result, Success):
-                result_data = doctest_result.unwrap()
-                doctest_passed = result_data.get("status") in ("passed", "skipped")
-                doctest_output = result_data.get("stdout", "")
-            else:
-                doctest_passed = False
-                doctest_output = doctest_result.failure()
-
-    # DX-06: Run CrossHair if --prove and doctests passed
-    # DX-13: Uses incremental mode, parallel execution, and caching
     if verification_level >= VerificationLevel.PROVE:
-        if doctest_passed and static_exit_code == 0:
-            if checked_files:
-                # Only verify Core files (pure logic)
-                core_files = [f for f in checked_files if "core" in str(f)]
-                if core_files:
-                    # DX-13: Automatic incremental mode - only verify changed files
-                    files_to_prove = get_files_to_prove(
-                        path, core_files, changed_only=True
-                    )
-
-                    if not files_to_prove:
-                        crosshair_output = {
-                            "status": "verified",
-                            "reason": "no changes to verify",
-                            "files_verified": 0,
-                            "files_cached": len(core_files),
-                        }
-                    else:
-                        # DX-13: Create cache for verification results
-                        cache = ProveCache(path / ".invar" / "cache" / "prove")
-
-                        # DX-13: Run parallel verification with caching
-                        crosshair_result = run_crosshair_parallel(
-                            files_to_prove,
-                            max_iterations=5,  # Fast mode
-                            max_workers=None,  # Auto-detect
-                            cache=cache,
-                        )
-                        if isinstance(crosshair_result, Success):
-                            crosshair_output = crosshair_result.unwrap()
-                            crosshair_passed = crosshair_output.get("status") in (
-                                "verified",
-                                "skipped",
-                            )
-                        else:
-                            crosshair_passed = False
-                            crosshair_output = {
-                                "status": "error",
-                                "error": crosshair_result.failure(),
-                            }
-                else:
-                    crosshair_output = {"status": "skipped", "reason": "no core files found"}
-            else:
-                crosshair_output = {"status": "skipped", "reason": "no files to verify"}
-        else:
-            crosshair_output = {"status": "skipped", "reason": "prior failures"}
+        crosshair_passed, crosshair_output = run_crosshair_phase(
+            path, checked_files, doctest_passed, static_exit_code
+        )
 
     # Output results
     if use_agent_output:
@@ -289,60 +184,58 @@ def guard(
         output_json(report)
     else:
         output_rich(report, config.strict_pure, changed, pedantic, explain)
-        # DX-06: Show doctest results
-        if verification_level >= VerificationLevel.STANDARD:
-            if static_exit_code == 0:
-                if doctest_passed:
-                    console.print("[green]✓ Doctests passed[/green]")
-                else:
-                    console.print("[red]✗ Doctests failed[/red]")
-                    if doctest_output and explain:
-                        console.print(doctest_output)
-            else:
-                console.print("[dim]⊘ Doctests skipped (static errors)[/dim]")
-        # DX-06: Show CrossHair results
-        # DX-13: Enhanced output with stats (verified, cached, time, workers)
-        if verification_level >= VerificationLevel.PROVE:
-            if static_exit_code == 0 and doctest_passed:
-                status = crosshair_output.get("status", "unknown")
-                if status == "verified":
-                    # DX-13: Show detailed stats
-                    verified_count = crosshair_output.get("files_verified", 0)
-                    cached_count = crosshair_output.get("files_cached", 0)
-                    time_ms = crosshair_output.get("total_time_ms", 0)
-                    workers = crosshair_output.get("workers", 1)
-
-                    if verified_count == 0 and cached_count > 0:
-                        # All from cache/no changes
-                        reason = crosshair_output.get("reason", "cached")
-                        console.print(f"[green]✓ CrossHair verified ({reason})[/green]")
-                    elif time_ms > 0:
-                        time_sec = time_ms / 1000
-                        stats = f"{verified_count} verified"
-                        if cached_count > 0:
-                            stats += f", {cached_count} cached"
-                        if workers > 1:
-                            stats += f", {workers} workers"
-                        console.print(
-                            f"[green]✓ CrossHair verified[/green] "
-                            f"[dim]({stats}, {time_sec:.1f}s)[/dim]"
-                        )
-                    else:
-                        console.print("[green]✓ CrossHair verified[/green]")
-                elif status == "skipped":
-                    reason = crosshair_output.get("reason", "no files")
-                    console.print(f"[dim]⊘ CrossHair skipped ({reason})[/dim]")
-                else:
-                    console.print("[yellow]! CrossHair found counterexamples[/yellow]")
-                    for ce in crosshair_output.get("counterexamples", [])[:5]:
-                        console.print(f"  {ce}")
-            else:
-                console.print("[dim]⊘ CrossHair skipped (prior failures)[/dim]")
+        output_verification_status(
+            verification_level, static_exit_code, doctest_passed,
+            doctest_output, crosshair_output, explain
+        )
 
     # Exit with combined status
     all_passed = doctest_passed and crosshair_passed
     final_exit = static_exit_code if all_passed else 1
     raise typer.Exit(final_exit)
+
+
+def _determine_output_mode(json_output: bool, agent: bool) -> tuple[bool, bool]:
+    """Determine output mode based on flags and context."""
+    if json_output:
+        return False, True
+    if agent or _detect_agent_mode():
+        return True, False
+    return False, False
+
+
+def _determine_verification_level(prove: bool, static: bool):
+    """Determine verification level from flags."""
+    from invar.shell.testing import VerificationLevel, detect_verification_context
+
+    if prove:
+        return VerificationLevel.PROVE
+    if static:
+        return VerificationLevel.STATIC
+    return detect_verification_context()
+
+
+def _get_level_name(verification_level) -> str:
+    """Get string name for verification level."""
+    from invar.shell.testing import VerificationLevel
+
+    return {
+        VerificationLevel.STATIC: "static",
+        VerificationLevel.STANDARD: "standard",
+        VerificationLevel.PROVE: "prove",
+    }[verification_level]
+
+
+def _show_verification_level(verification_level) -> None:
+    """Show verification level in human-readable format."""
+    from invar.shell.testing import VerificationLevel
+
+    labels = {
+        VerificationLevel.STATIC: "[yellow]--static[/yellow] (static only, doctests skipped)",
+        VerificationLevel.STANDARD: "default (static + doctests)",
+        VerificationLevel.PROVE: "--prove (static + doctests + CrossHair)",
+    }
+    console.print(f"[dim]Verification: {labels[verification_level]}[/dim]")
 
 
 @app.command()

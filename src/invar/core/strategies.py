@@ -28,15 +28,34 @@ class StrategyHint:
 
     @post(lambda result: isinstance(result, dict))
     def to_hypothesis_args(self) -> dict[str, Any]:
-        """Convert constraints to Hypothesis strategy arguments."""
+        """Convert constraints to Hypothesis strategy arguments.
+
+        >>> hint = StrategyHint("x", int, {"min_value": 0, "max_value": 100})
+        >>> hint.to_hypothesis_args()
+        {'min_value': 0, 'max_value': 100}
+        """
         return self.constraints.copy()
 
 
 # Helper to parse numbers (int or float, including scientific notation)
-@pre(lambda s: isinstance(s, str) and len(s.strip()) > 0)
+# Pattern matches valid number literals extracted from regex patterns
+# Uses [0-9] instead of \d to avoid matching Unicode digits
+# Requires at least one digit before optional decimal/exponent parts
+_NUMBER_PATTERN = re.compile(r"^-?[0-9]+\.?[0-9]*(?:e[+-]?[0-9]+)?$", re.IGNORECASE)
+
+
+@pre(lambda s: isinstance(s, str) and _NUMBER_PATTERN.match(s.strip()))
 @post(lambda result: isinstance(result, (int, float)))
 def _parse_number(s: str) -> int | float:
-    """Parse a number string to int or float."""
+    """Parse a number string to int or float.
+
+    >>> _parse_number("42")
+    42
+    >>> _parse_number("-3.14")
+    -3.14
+    >>> _parse_number("1e-5")
+    1e-05
+    """
     s = s.strip()
     if "." in s or "e" in s.lower():
         return float(s)

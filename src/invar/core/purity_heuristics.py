@@ -75,6 +75,72 @@ class HeuristicResult:
     hints: list[str]
 
 
+@pre(lambda func_name, hints: isinstance(func_name, str) and isinstance(hints, list))
+@post(lambda result: isinstance(result, tuple) and len(result) == 2)
+def _analyze_name_patterns(func_name: str, hints: list[str]) -> tuple[int, int]:
+    """Analyze function name for purity hints. Returns (impure_score, pure_score).
+
+    >>> h = []
+    >>> _analyze_name_patterns("read_file", h)
+    (2, 0)
+    >>> len(h) > 0
+    True
+    """
+    impure, pure = 0, 0
+    for pattern in IMPURE_NAME_PATTERNS:
+        if re.search(pattern, func_name, re.IGNORECASE):
+            hints.append(f"Name: {pattern}")
+            impure += 2
+    for pattern in PURE_NAME_PATTERNS:
+        if re.search(pattern, func_name, re.IGNORECASE):
+            hints.append(f"Name suggests pure: {pattern}")
+            pure += 1
+    return impure, pure
+
+
+@pre(lambda signature, hints: isinstance(hints, list))
+@post(lambda result: isinstance(result, tuple) and len(result) == 2)
+def _analyze_signature(signature: str | None, hints: list[str]) -> tuple[int, int]:
+    """Analyze signature for purity hints. Returns (impure_score, pure_score).
+
+    >>> h = []
+    >>> _analyze_signature("(path: str) -> None", h)
+    (3, 0)
+    """
+    if not signature:
+        return 0, 0
+    impure, pure = 0, 0
+    if "-> None" in signature:
+        hints.append("Returns None (side effect?)")
+        impure += 1
+    if re.search(r"path|file", signature, re.IGNORECASE):
+        hints.append("Has path/file parameter")
+        impure += 2
+    if "->" in signature and "None" not in signature:
+        hints.append("Returns value")
+        pure += 1
+    return impure, pure
+
+
+@pre(lambda docstring, hints: isinstance(hints, list))
+@post(lambda result: isinstance(result, int) and result >= 0)
+def _analyze_docstring(docstring: str | None, hints: list[str]) -> int:
+    """Analyze docstring for purity hints. Returns impure_score.
+
+    >>> h = []
+    >>> _analyze_docstring("Reads from file system.", h)
+    1
+    """
+    if not docstring:
+        return 0
+    doc_lower = docstring.lower()
+    for keyword in IMPURE_DOC_KEYWORDS:
+        if keyword in doc_lower:
+            hints.append(f"Docstring: '{keyword}'")
+            return 1
+    return 0
+
+
 @pre(lambda func_name, signature=None, docstring=None: isinstance(func_name, str))
 @post(lambda result: isinstance(result, HeuristicResult))
 def analyze_purity_heuristic(
@@ -100,46 +166,14 @@ def analyze_purity_heuristic(
     True
     """
     hints: list[str] = []
-    impure_score = 0
-    pure_score = 0
 
-    # Check impure name patterns
-    for pattern in IMPURE_NAME_PATTERNS:
-        if re.search(pattern, func_name, re.IGNORECASE):
-            hints.append(f"Name: {pattern}")
-            impure_score += 2
+    name_impure, name_pure = _analyze_name_patterns(func_name, hints)
+    sig_impure, sig_pure = _analyze_signature(signature, hints)
+    doc_impure = _analyze_docstring(docstring, hints)
 
-    # Check pure name patterns
-    for pattern in PURE_NAME_PATTERNS:
-        if re.search(pattern, func_name, re.IGNORECASE):
-            hints.append(f"Name suggests pure: {pattern}")
-            pure_score += 1
+    impure_score = name_impure + sig_impure + doc_impure
+    pure_score = name_pure + sig_pure
 
-    # Check signature if provided
-    if signature:
-        # Returns None with no args → likely side effect
-        if "-> None" in signature:
-            hints.append("Returns None (side effect?)")
-            impure_score += 1
-        # Has path/file parameter
-        if re.search(r"path|file", signature, re.IGNORECASE):
-            hints.append("Has path/file parameter")
-            impure_score += 2
-        # Returns non-None → more likely pure
-        if "->" in signature and "None" not in signature:
-            hints.append("Returns value")
-            pure_score += 1
-
-    # Check docstring if provided
-    if docstring:
-        doc_lower = docstring.lower()
-        for keyword in IMPURE_DOC_KEYWORDS:
-            if keyword in doc_lower:
-                hints.append(f"Docstring: '{keyword}'")
-                impure_score += 1
-                break  # Only count once
-
-    # Calculate result
     total = impure_score + pure_score
     if total == 0:
         return HeuristicResult(likely_pure=True, confidence=0.5, hints=["No indicators"])

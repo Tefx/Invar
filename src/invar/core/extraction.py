@@ -11,6 +11,50 @@ from deal import post, pre
 from invar.core.models import FileInfo, Symbol, SymbolKind
 
 
+@pre(lambda funcs: isinstance(funcs, dict))
+@post(lambda result: isinstance(result, dict))
+def _build_call_graph(funcs: dict[str, Symbol]) -> dict[str, set[str]]:
+    """Build bidirectional call graph for function grouping.
+
+    >>> from invar.core.models import Symbol, SymbolKind
+    >>> s = Symbol(name="a", kind=SymbolKind.FUNCTION, line=1, end_line=5, function_calls=["b"])
+    >>> g = _build_call_graph({"a": s})
+    >>> "a" in g
+    True
+    """
+    func_names = set(funcs.keys())
+    graph: dict[str, set[str]] = {name: set() for name in func_names}
+
+    for name, sym in funcs.items():
+        for called in sym.function_calls:
+            if called in func_names:
+                graph[name].add(called)
+                graph[called].add(name)
+    return graph
+
+
+@pre(lambda start, graph, visited: start and isinstance(graph, dict) and start in graph)
+@post(lambda result: isinstance(result, list))
+def _find_connected_component(start: str, graph: dict[str, set[str]], visited: set[str]) -> list[str]:
+    """BFS to find all functions connected to start.
+
+    >>> g = {"a": {"b"}, "b": {"a"}, "c": set()}
+    >>> v = set()
+    >>> _find_connected_component("a", g, v)
+    ['a', 'b']
+    """
+    component: list[str] = []
+    queue = [start]
+    while queue:
+        current = queue.pop(0)
+        if current in visited or current not in graph:
+            continue
+        visited.add(current)
+        component.append(current)
+        queue.extend(n for n in graph[current] if n not in visited)
+    return component
+
+
 @pre(lambda file_info: isinstance(file_info, FileInfo))
 def find_extractable_groups(file_info: FileInfo) -> list[dict]:
     """
@@ -36,70 +80,53 @@ def find_extractable_groups(file_info: FileInfo) -> list[dict]:
         >>> groups[0]["lines"]
         30
     """
-    # Get only functions/methods
     funcs = {
         s.name: s for s in file_info.symbols if s.kind in (SymbolKind.FUNCTION, SymbolKind.METHOD)
     }
-
     if not funcs:
         return []
 
-    # Build call graph (only internal calls)
-    func_names = set(funcs.keys())
-    graph: dict[str, set[str]] = {name: set() for name in func_names}
-
-    for name, sym in funcs.items():
-        for called in sym.function_calls:
-            if called in func_names:
-                graph[name].add(called)
-                graph[called].add(name)  # Bidirectional for grouping
-
-    # Find connected components
+    graph = _build_call_graph(funcs)
     visited: set[str] = set()
     groups: list[dict] = []
 
-    for name in func_names:
+    for name in funcs:
         if name in visited:
             continue
 
-        # BFS to find all connected functions
-        component: list[str] = []
-        queue = [name]
-        while queue:
-            current = queue.pop(0)
-            if current in visited:
-                continue
-            visited.add(current)
-            component.append(current)
-            queue.extend(n for n in graph[current] if n not in visited)
-
-        # Calculate group stats
+        component = _find_connected_component(name, graph, visited)
         total_lines = sum(funcs[n].end_line - funcs[n].line + 1 for n in component)
         deps = _get_group_dependencies(component, funcs, file_info.imports)
 
-        groups.append(
-            {
-                "functions": sorted(component),
-                "lines": total_lines,
-                "dependencies": sorted(deps),
-            }
-        )
+        groups.append({
+            "functions": sorted(component),
+            "lines": total_lines,
+            "dependencies": sorted(deps),
+        })
 
-    # Sort by lines (largest first)
     groups.sort(key=lambda g: -g["lines"])
     return groups
 
 
+@pre(lambda func_names, funcs, file_imports: all(n in funcs for n in func_names if n))
 @post(lambda result: isinstance(result, set))
 def _get_group_dependencies(
     func_names: list[str],
     funcs: dict[str, Symbol],
     file_imports: list[str],
 ) -> set[str]:
-    """Get external dependencies used by a group of functions."""
+    """Get external dependencies used by a group of functions.
+
+    >>> from invar.core.models import Symbol, SymbolKind
+    >>> s = Symbol(name="f", kind=SymbolKind.FUNCTION, line=1, end_line=5, internal_imports=["os"])
+    >>> _get_group_dependencies(["f"], {"f": s}, ["os", "sys"])
+    {'os'}
+    """
     deps: set[str] = set()
 
     for name in func_names:
+        if not name or name not in funcs:
+            continue
         sym = funcs[name]
         # Add internal imports used by this function
         deps.update(sym.internal_imports)
