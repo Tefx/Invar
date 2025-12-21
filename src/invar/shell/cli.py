@@ -391,10 +391,12 @@ def rules(
         console.print(f"\n[dim]{len(rules_list)} rules total. Use --json for full details.[/dim]")
 
 
-# Import init from separate module to reduce file size
+# Import init and update from separate modules to reduce file size
 from invar.shell.init_cmd import init
+from invar.shell.update_cmd import update
 
 app.command()(init)
+app.command()(update)
 
 
 @app.command()
