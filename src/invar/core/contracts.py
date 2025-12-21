@@ -18,6 +18,62 @@ from invar.core.models import FileInfo, RuleConfig, Severity, SymbolKind, Violat
 from invar.core.suggestions import format_suggestion_for_violation
 
 
+# DX-01: Helper to generate lambda fix templates
+
+
+@pre(lambda signature: signature.startswith("(") or signature == "")
+@post(lambda result: isinstance(result, str))
+def generate_lambda_fix(signature: str) -> str:
+    """
+    Generate a lambda fix template from function signature.
+
+    DX-01: Provides copy-pastable fix for param_mismatch errors.
+
+    Examples:
+        >>> generate_lambda_fix("(x: int, y: str) -> bool")
+        '@pre(lambda x, y: <condition>)'
+        >>> generate_lambda_fix("(x: int, y: int = 10) -> int")
+        '@pre(lambda x, y=10: <condition>)'
+        >>> generate_lambda_fix("(items: list[int], n: int = 5, reverse: bool = False) -> list")
+        '@pre(lambda items, n=5, reverse=False: <condition>)'
+        >>> generate_lambda_fix("() -> bool")
+        '@pre(lambda: <condition>)'
+    """
+    if not signature or signature == "()":
+        return "@pre(lambda: <condition>)"
+
+    match = re.match(r"\(([^)]*)\)", signature)
+    if not match:
+        return "@pre(lambda: <condition>)"
+
+    param_parts: list[str] = []
+    for param in match.group(1).split(","):
+        param = param.strip()
+        if not param:
+            continue
+
+        # Extract name and default value
+        if ": " in param:
+            name_part, type_part = param.split(": ", 1)
+            name = name_part.strip()
+            # Check for default value
+            if "=" in type_part:
+                default = type_part.split("=", 1)[1].strip()
+                param_parts.append(f"{name}={default}")
+            else:
+                param_parts.append(name)
+        elif "=" in param:
+            name, default = param.split("=", 1)
+            param_parts.append(f"{name.strip()}={default.strip()}")
+        else:
+            param_parts.append(param)
+
+    if not param_parts:
+        return "@pre(lambda: <condition>)"
+    params_str = ", ".join(param_parts)
+    return f"@pre(lambda {params_str}: <condition>)"
+
+
 @pre(lambda expression: "lambda" in expression or not expression.strip())
 def is_empty_contract(expression: str) -> bool:
     """Check if a contract expression is always True (tautological).
@@ -411,8 +467,11 @@ def check_param_mismatch(file_info: FileInfo, config: RuleConfig) -> list[Violat
         >>> from invar.core.models import FileInfo, Symbol, SymbolKind, Contract, RuleConfig
         >>> c = Contract(kind="pre", expression="lambda x: x > 0", line=1)
         >>> s = Symbol(name="f", kind=SymbolKind.FUNCTION, line=1, end_line=5, signature="(x: int, y: int) -> int", contracts=[c])
-        >>> check_param_mismatch(FileInfo(path="c.py", lines=10, symbols=[s], is_core=True), RuleConfig())[0].rule
+        >>> v = check_param_mismatch(FileInfo(path="c.py", lines=10, symbols=[s], is_core=True), RuleConfig())[0]
+        >>> v.rule
         'param_mismatch'
+        >>> v.suggestion  # DX-01: Now includes fix template
+        'Fix: @pre(lambda x, y: <condition>)'
     """
     violations: list[Violation] = []
     if not file_info.is_core:
@@ -427,6 +486,8 @@ def check_param_mismatch(file_info: FileInfo, config: RuleConfig) -> list[Violat
             mismatch, desc = has_param_mismatch(contract.expression, symbol.signature)
             if mismatch:
                 kind = "Method" if symbol.kind == SymbolKind.METHOD else "Function"
+                # DX-01: Generate copy-pastable lambda fix template
+                fix_template = generate_lambda_fix(symbol.signature)
                 violations.append(
                     Violation(
                         rule="param_mismatch",
@@ -434,7 +495,7 @@ def check_param_mismatch(file_info: FileInfo, config: RuleConfig) -> list[Violat
                         file=file_info.path,
                         line=contract.line,
                         message=f"{kind} '{symbol.name}' @pre {desc}",
-                        suggestion="Lambda must include ALL function parameters",
+                        suggestion=f"Fix: {fix_template}",
                     )
                 )
     return violations

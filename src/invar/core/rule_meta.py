@@ -104,7 +104,7 @@ RULE_META: dict[str, RuleMeta] = {
         category=RuleCategory.CONTRACTS,
         detects="@pre lambda parameters don't match function signature",
         cannot_detect=("Runtime binding errors",),
-        hint="Lambda must accept ALL function parameters in same order",
+        hint="Lambda must accept ALL function parameters (include defaults like x=10)",
     ),
     "must_use_ignored": RuleMeta(
         name="must_use_ignored",
