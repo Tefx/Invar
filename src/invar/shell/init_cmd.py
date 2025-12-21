@@ -80,7 +80,12 @@ def init(
 
     # Agent detection and configuration (DX-11)
     console.print("\n[bold]Checking for agent configurations...[/bold]")
-    agent_status = detect_agent_configs(path)
+    agent_result = detect_agent_configs(path)
+    if isinstance(agent_result, Failure):
+        console.print(f"[yellow]Warning:[/yellow] {agent_result.failure()}")
+        agent_status: dict[str, str] = {}
+    else:
+        agent_status = agent_result.unwrap()
 
     # Handle existing configs
     for agent, status in agent_status.items():

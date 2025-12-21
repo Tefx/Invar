@@ -13,7 +13,7 @@ import typer
 from returns.result import Failure, Result, Success
 from rich.console import Console
 
-from invar.shell.templates import copy_examples_directory, copy_template, get_template_path
+from invar.shell.templates import copy_examples_directory, get_template_path
 
 console = Console()
 
@@ -165,7 +165,7 @@ def update(
         return
 
     # Perform update
-    console.print(f"\n[bold]Updating Invar files...[/bold]")
+    console.print("\n[bold]Updating Invar files...[/bold]")
     console.print(f"  Version: {current_str} → {template_str}")
     console.print()
 

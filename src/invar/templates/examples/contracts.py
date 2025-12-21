@@ -5,7 +5,7 @@ Reference patterns for @pre/@post contracts and doctests.
 Managed by Invar - do not edit directly.
 """
 
-from deal import pre, post
+from deal import post, pre
 
 # =============================================================================
 # GOOD: Complete Contract
@@ -78,7 +78,7 @@ def normalize_keys(data: dict[str, int]) -> dict[str, int]:
 # DON'T: Empty contract tells nothing
 # @pre(lambda: True)
 # @post(lambda result: True)
-# def process(x): ...
+# def process(x): ...  # noqa: ERA001
 
 # DON'T: Missing edge cases in doctests
 # def divide(a, b):

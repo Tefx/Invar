@@ -159,20 +159,37 @@ AGENT_CONFIGS = {
 }
 
 
-def detect_agent_configs(path: Path) -> dict[str, str]:
-    """Detect existing agent configuration files. Returns dict of agent -> status."""
-    results = {}
-    for agent, config in AGENT_CONFIGS.items():
-        config_path = path / config["file"]
-        if config_path.exists():
-            content = config_path.read_text()
-            if config["check_pattern"] in content:
-                results[agent] = "configured"
+def detect_agent_configs(path: Path) -> Result[dict[str, str], str]:
+    """
+    Detect existing agent configuration files.
+
+    Returns dict of agent -> status where status is one of:
+    - "configured": File exists and contains Invar reference
+    - "found": File exists but no Invar reference
+    - "not_found": File does not exist
+
+    >>> from pathlib import Path
+    >>> import tempfile
+    >>> with tempfile.TemporaryDirectory() as tmp:
+    ...     result = detect_agent_configs(Path(tmp))
+    ...     result.unwrap()["claude"]
+    'not_found'
+    """
+    try:
+        results = {}
+        for agent, config in AGENT_CONFIGS.items():
+            config_path = path / config["file"]
+            if config_path.exists():
+                content = config_path.read_text()
+                if config["check_pattern"] in content:
+                    results[agent] = "configured"
+                else:
+                    results[agent] = "found"
             else:
-                results[agent] = "found"
-        else:
-            results[agent] = "not_found"
-    return results
+                results[agent] = "not_found"
+        return Success(results)
+    except OSError as e:
+        return Failure(f"Failed to detect agent configs: {e}")
 
 
 def add_invar_reference(path: Path, agent: str, console) -> Result[bool, str]:
