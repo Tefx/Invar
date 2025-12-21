@@ -32,36 +32,68 @@ class StrategyHint:
         return self.constraints.copy()
 
 
+# Helper to parse numbers (int or float, including scientific notation)
+@pre(lambda s: isinstance(s, str) and len(s.strip()) > 0)
+@post(lambda result: isinstance(result, (int, float)))
+def _parse_number(s: str) -> int | float:
+    """Parse a number string to int or float."""
+    s = s.strip()
+    if "." in s or "e" in s.lower():
+        return float(s)
+    return int(s)
+
+
 # Pattern → Constraint extraction
 # Each pattern maps to a function that extracts constraints from regex match
+# DX-12: Added float support with exclude_min/exclude_max for precise bounds
 PATTERNS: list[tuple[str, Callable[[re.Match, str], dict[str, Any] | None]]] = [
-    # Numeric comparisons: x > 5, x >= 5
+    # Numeric comparisons: x > 5, x >= 5 (supports int, float, scientific notation)
     (
-        r"(\w+)\s*>\s*(-?\d+)",
-        lambda m, p: {"min_value": int(m.group(2)) + 1} if m.group(1) == p else None,
+        r"(\w+)\s*>\s*(-?[\d.]+(?:e[+-]?\d+)?)",
+        lambda m, p: {"min_value": _parse_number(m.group(2)), "exclude_min": True}
+        if m.group(1) == p
+        else None,
     ),
     (
-        r"(\w+)\s*>=\s*(-?\d+)",
-        lambda m, p: {"min_value": int(m.group(2))} if m.group(1) == p else None,
+        r"(\w+)\s*>=\s*(-?[\d.]+(?:e[+-]?\d+)?)",
+        lambda m, p: {"min_value": _parse_number(m.group(2))} if m.group(1) == p else None,
     ),
     (
-        r"(\w+)\s*<\s*(-?\d+)",
-        lambda m, p: {"max_value": int(m.group(2)) - 1} if m.group(1) == p else None,
+        r"(\w+)\s*<\s*(-?[\d.]+(?:e[+-]?\d+)?)",
+        lambda m, p: {"max_value": _parse_number(m.group(2)), "exclude_max": True}
+        if m.group(1) == p
+        else None,
     ),
     (
-        r"(\w+)\s*<=\s*(-?\d+)",
-        lambda m, p: {"max_value": int(m.group(2))} if m.group(1) == p else None,
+        r"(\w+)\s*<=\s*(-?[\d.]+(?:e[+-]?\d+)?)",
+        lambda m, p: {"max_value": _parse_number(m.group(2))} if m.group(1) == p else None,
     ),
-    # Pattern: Range comparison (e.g. 0 < x < 10)
+    # Reversed comparisons: 5 < x, 5 <= x
     (
-        r"(-?\d+)\s*<\s*(\w+)\s*<\s*(-?\d+)",
-        lambda m, p: {"min_value": int(m.group(1)) + 1, "max_value": int(m.group(3)) - 1}
+        r"(-?[\d.]+(?:e[+-]?\d+)?)\s*<\s*(\w+)(?!\s*<)",
+        lambda m, p: {"min_value": _parse_number(m.group(1)), "exclude_min": True}
         if m.group(2) == p
         else None,
     ),
     (
-        r"(-?\d+)\s*<=\s*(\w+)\s*<=\s*(-?\d+)",
-        lambda m, p: {"min_value": int(m.group(1)), "max_value": int(m.group(3))}
+        r"(-?[\d.]+(?:e[+-]?\d+)?)\s*<=\s*(\w+)(?!\s*<)",
+        lambda m, p: {"min_value": _parse_number(m.group(1))} if m.group(2) == p else None,
+    ),
+    # Pattern: Range comparison (e.g. 0 < x < 10)
+    (
+        r"(-?[\d.]+(?:e[+-]?\d+)?)\s*<\s*(\w+)\s*<\s*(-?[\d.]+(?:e[+-]?\d+)?)",
+        lambda m, p: {
+            "min_value": _parse_number(m.group(1)),
+            "max_value": _parse_number(m.group(3)),
+            "exclude_min": True,
+            "exclude_max": True,
+        }
+        if m.group(2) == p
+        else None,
+    ),
+    (
+        r"(-?[\d.]+(?:e[+-]?\d+)?)\s*<=\s*(\w+)\s*<=\s*(-?[\d.]+(?:e[+-]?\d+)?)",
+        lambda m, p: {"min_value": _parse_number(m.group(1)), "max_value": _parse_number(m.group(3))}
         if m.group(2) == p
         else None,
     ),
@@ -103,21 +135,28 @@ def infer_from_lambda(
     """
     Parse @pre lambda source to infer strategy constraints.
 
-    >>> hint = infer_from_lambda("lambda x: x > 0", "x", int)
-    >>> hint.constraints
-    {'min_value': 1}
+    DX-12: Now returns exclude_min/exclude_max for strict inequalities,
+    allowing Hypothesis to generate precise bounds for floats.
 
-    >>> hint = infer_from_lambda("lambda x: 0 < x < 100", "x", int)
-    >>> sorted(hint.constraints.items())
-    [('max_value', 99), ('min_value', 1)]
+    >>> hint = infer_from_lambda("lambda x: x > 0", "x", int)
+    >>> hint.constraints['min_value']
+    0
+    >>> hint.constraints.get('exclude_min')
+    True
+
+    >>> hint = infer_from_lambda("lambda x: 0 < x < 100", "x", float)
+    >>> hint.constraints['min_value'], hint.constraints['max_value']
+    (0, 100)
+    >>> hint.constraints.get('exclude_min'), hint.constraints.get('exclude_max')
+    (True, True)
 
     >>> hint = infer_from_lambda("lambda x: len(x) > 0", "x", list)
     >>> hint.constraints
     {'min_size': 1}
 
     >>> hint = infer_from_lambda("lambda x, y: x > 5 and y < 10", "x", int)
-    >>> hint.constraints
-    {'min_value': 6}
+    >>> hint.constraints['min_value']
+    5
     """
     constraints: dict[str, Any] = {}
     hints: list[str] = []
@@ -151,9 +190,11 @@ def infer_from_multiple(
     """
     Combine constraints from multiple @pre contracts.
 
-    >>> hints = infer_from_multiple(["lambda x: x > 0", "lambda x: x < 100"], "x", int)
-    >>> sorted(hints.constraints.items())
-    [('max_value', 99), ('min_value', 1)]
+    >>> hints = infer_from_multiple(["lambda x: x > 0", "lambda x: x < 100"], "x", float)
+    >>> hints.constraints['min_value'], hints.constraints['max_value']
+    (0, 100)
+    >>> hints.constraints.get('exclude_min'), hints.constraints.get('exclude_max')
+    (True, True)
     """
     combined: dict[str, Any] = {}
     descriptions: list[str] = []
@@ -178,9 +219,13 @@ def format_strategy_hint(hint: StrategyHint) -> str:
     """
     Format a strategy hint as a human-readable string.
 
-    >>> hint = StrategyHint("x", int, {"min_value": 1, "max_value": 99})
+    >>> hint = StrategyHint("x", int, {"min_value": 0, "max_value": 100})
     >>> format_strategy_hint(hint)
-    'x: integers(min_value=1, max_value=99)'
+    'x: integers(min_value=0, max_value=100)'
+
+    >>> hint = StrategyHint("y", float, {"min_value": 0, "exclude_min": True})
+    >>> 'floats' in format_strategy_hint(hint)
+    True
     """
     if not hint.constraints:
         if hint.param_type:

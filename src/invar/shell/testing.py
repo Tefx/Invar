@@ -3,6 +3,7 @@ Testing commands for Invar.
 
 Shell module: handles I/O for testing operations.
 Includes Smart Guard verification (DX-06).
+DX-12: Hypothesis as CrossHair fallback (see prove.py).
 """
 
 from __future__ import annotations
@@ -17,7 +18,30 @@ from pathlib import Path
 from returns.result import Failure, Result, Success
 from rich.console import Console
 
+# DX-12: Import from prove module
+from invar.shell.prove import (
+    CrossHairStatus,
+    run_crosshair_on_files,
+    run_hypothesis_fallback,
+    run_prove_with_fallback,
+)
+
 console = Console()
+
+# Re-export for backwards compatibility
+__all__ = [
+    "CrossHairStatus",
+    "VerificationLevel",
+    "VerificationResult",
+    "detect_verification_context",
+    "get_available_verifiers",
+    "run_crosshair_on_files",
+    "run_doctests_on_files",
+    "run_hypothesis_fallback",
+    "run_prove_with_fallback",
+    "run_test",
+    "run_verify",
+]
 
 
 class VerificationLevel(IntEnum):
@@ -115,105 +139,28 @@ def run_doctests_on_files(
 
     # Build pytest command
     cmd = [
-        sys.executable,
-        "-m",
-        "pytest",
-        "--doctest-modules",
-        "-x",  # Stop on first failure
-        "--tb=short",
+        sys.executable, "-m", "pytest",
+        "--doctest-modules", "-x", "--tb=short",
     ]
     cmd.extend(str(f) for f in py_files)
-
     if verbose:
         cmd.append("-v")
 
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
-
         # Pytest exit codes: 0=passed, 5=no tests collected (also OK)
-        # DX-09: Treat "no tests collected" as passed, not failed
         is_passed = result.returncode in (0, 5)
-        return Success(
-            {
-                "status": "passed" if is_passed else "failed",
-                "files": [str(f) for f in py_files],
-                "exit_code": result.returncode,
-                "stdout": result.stdout,
-                "stderr": result.stderr,
-            }
-        )
-
+        return Success({
+            "status": "passed" if is_passed else "failed",
+            "files": [str(f) for f in py_files],
+            "exit_code": result.returncode,
+            "stdout": result.stdout,
+            "stderr": result.stderr,
+        })
     except subprocess.TimeoutExpired:
         return Failure("Doctest timeout (120s)")
     except Exception as e:
         return Failure(f"Doctest error: {e}")
-
-
-def run_crosshair_on_files(
-    files: list[Path], timeout: int = 10
-) -> Result[dict, str]:
-    """
-    Run CrossHair symbolic verification on a list of Python files.
-
-    Args:
-        files: List of Python file paths to verify
-        timeout: Timeout per condition in seconds
-
-    Returns:
-        Success with verification results or Failure with error message
-    """
-    # Check if crosshair is available
-    try:
-        import crosshair  # noqa: F401
-    except ImportError:
-        return Success({
-            "status": "skipped",
-            "reason": "CrossHair not installed (pip install crosshair-tool)",
-            "files": []
-        })
-
-    if not files:
-        return Success({"status": "skipped", "reason": "no files", "files": []})
-
-    # Filter to Python files only
-    py_files = [f for f in files if f.suffix == ".py" and f.exists()]
-    if not py_files:
-        return Success({"status": "skipped", "reason": "no Python files", "files": []})
-
-    # Run crosshair on each file, collect results
-    all_counterexamples: list[str] = []
-    verified_files: list[str] = []
-    failed_files: list[str] = []
-
-    for py_file in py_files:
-        cmd = [
-            sys.executable, "-m", "crosshair", "check",
-            str(py_file), f"--per_condition_timeout={timeout}"
-        ]
-        try:
-            result = subprocess.run(
-                cmd, capture_output=True, text=True, timeout=timeout * 20
-            )
-            if result.returncode == 0:
-                verified_files.append(str(py_file))
-            else:
-                failed_files.append(str(py_file))
-                for line in result.stdout.split("\n"):
-                    if line.strip():
-                        all_counterexamples.append(f"{py_file.name}: {line.strip()}")
-        except subprocess.TimeoutExpired:
-            failed_files.append(f"{py_file} (timeout)")
-        except Exception as e:
-            failed_files.append(f"{py_file} ({e})")
-
-    status = "verified" if not failed_files else "counterexample_found"
-    return Success({
-        "status": status,
-        "verified": verified_files,
-        "failed": failed_files,
-        "counterexamples": all_counterexamples,
-        "files": [str(f) for f in py_files]
-    })
 
 
 def run_test(
@@ -230,31 +177,21 @@ def run_test(
     Returns:
         Success with test results or Failure with error message
     """
-    # Resolve target to a file path
     target_path = Path(target)
     if not target_path.exists():
         return Failure(f"Target not found: {target}")
-
     if target_path.suffix != ".py":
         return Failure(f"Target must be a Python file: {target}")
 
-    # Build pytest command with doctest and hypothesis
     cmd = [
-        sys.executable,
-        "-m",
-        "pytest",
-        str(target_path),
-        "--doctest-modules",
-        "-x",  # Stop on first failure
-        "--tb=short",
+        sys.executable, "-m", "pytest",
+        str(target_path), "--doctest-modules", "-x", "--tb=short",
     ]
-
     if verbose:
         cmd.append("-v")
 
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
-
         test_result = {
             "status": "passed" if result.returncode == 0 else "failed",
             "target": str(target_path),
@@ -277,7 +214,6 @@ def run_test(
                     console.print(f"[red]{result.stderr}[/red]")
 
         return Success(test_result)
-
     except subprocess.TimeoutExpired:
         return Failure(f"Test timeout (300s): {target}")
     except Exception as e:
@@ -298,7 +234,6 @@ def run_verify(
     Returns:
         Success with verification results or Failure with error message
     """
-    # Check if crosshair is available
     try:
         import crosshair  # noqa: F401
     except ImportError:
@@ -307,32 +242,24 @@ def run_verify(
             "Note: CrossHair requires Python 3.8-3.12 (not 3.14)"
         )
 
-    # Resolve target
     target_path = Path(target)
     if not target_path.exists():
         return Failure(f"Target not found: {target}")
-
     if target_path.suffix != ".py":
         return Failure(f"Target must be a Python file: {target}")
 
-    # Build crosshair command
     cmd = [
-        sys.executable,
-        "-m",
-        "crosshair",
-        "check",
-        str(target_path),
-        f"--per_condition_timeout={timeout}",
+        sys.executable, "-m", "crosshair", "check",
+        str(target_path), f"--per_condition_timeout={timeout}",
     ]
 
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout * 10)
 
-        # Parse crosshair output
-        counterexamples = []
-        for line in result.stdout.split("\n"):
-            if "error" in line.lower() or "counterexample" in line.lower():
-                counterexamples.append(line.strip())
+        counterexamples = [
+            line.strip() for line in result.stdout.split("\n")
+            if "error" in line.lower() or "counterexample" in line.lower()
+        ]
 
         verify_result = {
             "status": "verified" if result.returncode == 0 else "counterexample_found",
@@ -354,7 +281,6 @@ def run_verify(
                     console.print(f"  {ce}")
 
         return Success(verify_result)
-
     except subprocess.TimeoutExpired:
         return Failure(f"Verification timeout ({timeout * 10}s): {target}")
     except Exception as e:

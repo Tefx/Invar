@@ -163,8 +163,19 @@ Agent JSON now includes `"verification_level"` for transparency:
 | DX-01 ✅ | Lambda fix templates for param_mismatch errors |
 | DX-02 ✅ | Doctest best practices documentation |
 | DX-03 ✅ | exclude_doctest_lines configuration |
+| DX-05 ✅ | Contract templates library (NonEmpty, Sorted, InRange...) |
+| DX-06 ✅ | Smart Guard (static + doctests by default) |
 | DX-07 ✅ | Integration tests for CLI flags |
 | DX-09 ✅ | Self-violation prevention (verification_level in JSON) |
+| DX-11 ✅ | Documentation restructure for multi-agent support |
+
+### DX Proposals Active
+
+| Proposal | Description | Status |
+|----------|-------------|--------|
+| DX-12 | Hypothesis as CrossHair fallback | Draft |
+
+**DX-12: Hypothesis Fallback** - Property-based testing fallback for numpy/pandas code where CrossHair times out. Three components: (1) library-aware timeout, (2) type-based strategy generation, (3) @pre bound extraction. See `.invar/proposals/DX-12-hypothesis-fallback.md`.
 
 ### Key Insight: Self-Violation Prevention
 

@@ -52,8 +52,9 @@ dev = [
 ]
 
 # DX-06: Verification tiers (agent doesn't need to know these exist)
+# DX-12: Hypothesis added to prove as fallback for CrossHair
 test = ["hypothesis>=6.0"]
-prove = ["crosshair-tool>=0.0.60"]
+prove = ["crosshair-tool>=0.0.60", "hypothesis>=6.0"]
 full = ["hypothesis>=6.0", "crosshair-tool>=0.0.60"]
 
 [project.scripts]
