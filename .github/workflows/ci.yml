@@ -25,14 +25,17 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
+          pip install crosshair-tool  # DX-14: Required for --prove
 
       - name: Run tests with pytest
         run: |
           pytest --doctest-modules src/invar/ -v
 
-      - name: Run Invar Guard
+      # DX-14: CI uses --prove for symbolic verification
+      # DX-13: Incremental mode makes this fast (~8s instead of 6+ min)
+      - name: Run Invar Guard with Proof
         run: |
-          invar guard
+          invar guard --prove
 
       - name: Check types with mypy
         run: |

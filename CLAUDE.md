@@ -147,7 +147,11 @@ invar rules              # List all rules
 
 **Why?** Default is only 0.4s slower. Bypassing doctests saves 0.4s but risks missing failures.
 
-**Before major changes:** Run `invar guard --prove` for full verification including CrossHair.
+**DX-14: --prove Now Automatic:**
+- Pre-commit: Runs `--prove` automatically (fast after DX-13)
+- CI: Runs `--prove` for full verification
+- First commit: ~5s (verifies changed files)
+- Subsequent: ~2s (cached)
 
 ---
 

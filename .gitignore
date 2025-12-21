@@ -44,6 +44,9 @@ htmlcov/
 # ruff
 .ruff_cache/
 
+# Invar cache (DX-13)
+.invar/cache/
+
 # OS
 .DS_Store
 Thumbs.db
