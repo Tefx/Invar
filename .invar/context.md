@@ -25,6 +25,110 @@
 
 ---
 
+## Session 2025-12-21 Evening: DX-11 & Enforcement Reflection
+
+### Completed Work
+
+| Item | Description | Commits |
+|------|-------------|---------|
+| DX-11 Implementation | Multi-agent documentation restructure | 59bbe87 |
+| `invar update` command | Self-update managed files (INVAR.md, examples/) | 4c7a28e |
+| Workflow compliance fix | `detect_agent_configs` returns `Result[T, E]` | 1539a63 |
+| Enforcement attempt | PreToolUse hooks → removed after reflection | 0fc318e → 6ee06b3 |
+
+### DX-11: Multi-Agent Support
+
+Implemented documentation restructure for multiple AI agents:
+
+```
+.claude/
+├── commands/          # Slash commands (review, attack)
+└── settings.local.json  # Personal permissions (not committed)
+
+Templates added:
+├── AGENT_CONFIGS      # Claude, Cursor, Aider detection
+├── detect_agent_configs()  # Status: configured/found/not_found
+├── add_invar_reference()   # Safe config modification
+└── copy_examples_directory()  # Reference examples
+```
+
+Pre-commit protection:
+```yaml
+- id: invar-md-protected
+  entry: bash -c 'if git diff --cached --name-only | grep -q "^INVAR.md$"; then echo "Warning..."; exit 1; fi'
+```
+
+### `invar update` Command
+
+New command to update Invar-managed files:
+
+```bash
+invar update           # Update if newer version available
+invar update --check   # Check without applying
+invar update --force   # Update even if same version
+```
+
+Safely updates:
+- ✅ INVAR.md (overwrites)
+- ✅ .invar/examples/ (replaces)
+
+Never touches:
+- ❌ CLAUDE.md (user-managed)
+- ❌ .invar/context.md (user-managed)
+- ❌ pyproject.toml [tool.invar] (user config)
+
+### Key Insight: Enforcement Timing
+
+**Attempted:** PreToolUse hook to warn when `Read` used on `.py` files
+
+**Result:** Removed after reflection. Ineffective because:
+
+```
+Decision timeline:
+1. Agent decides to use Read     ← Decision made HERE
+2. Agent calls Read tool
+3. Hook triggers                 ← Warning comes HERE (too late!)
+4. Agent clicks "confirm"        ← Just bypasses
+```
+
+**Effective enforcement points:**
+
+| Point | Mechanism | Strength |
+|-------|-----------|----------|
+| Before work starts | Session context (claude-mem) | Soft guide |
+| During decisions | CLAUDE.md tool table | Reference |
+| Before commit | Pre-commit hook | **Hard block** |
+| After action | PreToolUse hook | ❌ Too late |
+
+**Lesson #19:** 干预时机决定效果。提交前阻止 = 有效。操作后提醒 = 噪音。
+
+### Workflow Compliance Issue Found
+
+During ICIDIV review, found `detect_agent_configs` didn't return `Result[T, E]`:
+
+```python
+# Before (violated Shell convention)
+def detect_agent_configs(path: Path) -> dict[str, str]:
+
+# After (compliant)
+def detect_agent_configs(path: Path) -> Result[dict[str, str], str]:
+```
+
+Also fixed: `init_cmd.py` to properly unwrap the Result.
+
+### Self-Reflection: Tool Usage
+
+During this session, I:
+- ❌ Didn't use `invar sig` before reading files
+- ❌ Used `Read` instead of Serena `find_symbol`
+- ❌ Ran `python3 -m doctest` directly instead of `invar guard`
+
+**Root cause:** Habit over methodology. Tools exist but weren't used.
+
+**Fix approach:** Not more hooks (wrong timing), but better session-start context.
+
+---
+
 ## v3.23 Changes (2025-12-21)
 
 ### Three-Level Verification System
@@ -293,6 +397,8 @@ Human (Commander) ──directs──→ Agent (Executor) ──uses──→ In
 16. **Don't Promise Unimplemented** - THOROUGH level was removed because it promised Hypothesis but never ran it (DX-09)
 17. **Agent Transparency** - Agent JSON output must include context (verification_level) for Agent to reason about
 18. **Dogfooding Catches Self-Violation** - Using --quick habitually while designing "zero-decision" tools exposes habit vs design gap
+19. **Enforcement Timing Matters** - Pre-commit blocks are effective; PreToolUse hooks are noise (decision already made)
+20. **Tools Exist ≠ Tools Used** - Having the right tools means nothing if habit overrides methodology
 
 ## Release Process
 
