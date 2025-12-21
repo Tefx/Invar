@@ -12,6 +12,7 @@ from __future__ import annotations
 from deal import post, pre
 
 from invar.core.models import GuardReport, PerceptionMap, Symbol, SymbolRefs, Violation
+from invar.core.rule_meta import get_rule_meta
 
 
 @pre(lambda perception_map, top_n=0: isinstance(perception_map, PerceptionMap))
@@ -227,8 +228,6 @@ def format_guard_agent(report: GuardReport) -> dict:
 @pre(lambda v: isinstance(v, Violation))
 def _violation_to_fix(v: Violation) -> dict:
     """Convert a Violation to an Agent-friendly fix instruction."""
-    from invar.core.rule_meta import get_rule_meta
-
     fix_info = _parse_suggestion(v.suggestion, v.rule) if v.suggestion else None
 
     # Phase 9.2 P3: Include rule metadata

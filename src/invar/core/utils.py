@@ -37,7 +37,7 @@ def get_exit_code(report: GuardReport, strict: bool) -> int:
     return 0
 
 
-@pre(lambda data, source: isinstance(data, dict))
+@pre(lambda data, source: isinstance(data, dict) and isinstance(source, str))
 @post(lambda result: isinstance(result, dict))
 def extract_guard_section(data: dict[str, Any], source: str) -> dict[str, Any]:
     """
@@ -50,11 +50,74 @@ def extract_guard_section(data: dict[str, Any], source: str) -> dict[str, Any]:
         {'y': 2}
         >>> extract_guard_section({}, "default")
         {}
+        >>> extract_guard_section({"guard": 0}, "invar")  # Non-dict value returns empty
+        {}
     """
     if source == "pyproject":
-        return data.get("tool", {}).get("invar", {}).get("guard", {})
+        result = data.get("tool", {})
+        if not isinstance(result, dict):
+            return {}
+        result = result.get("invar", {})
+        if not isinstance(result, dict):
+            return {}
+        result = result.get("guard", {})
+        return result if isinstance(result, dict) else {}
     # invar.toml and .invar/config.toml use [guard] directly
-    return data.get("guard", {})
+    result = data.get("guard", {})
+    return result if isinstance(result, dict) else {}
+
+
+@pre(lambda config, key: isinstance(config, dict) and isinstance(key, str))
+@post(lambda result: result is None or isinstance(result, bool))
+def _get_bool(config: dict[str, Any], key: str) -> bool | None:
+    """
+    Safely extract a boolean from config, returning None if invalid.
+
+    >>> _get_bool({"a": True}, "a")
+    True
+    >>> _get_bool({"a": "not bool"}, "a") is None
+    True
+    """
+    val = config.get(key)
+    if isinstance(val, bool):
+        return bool(val)  # Convert to ensure real Python bool
+    return None
+
+
+@pre(lambda config, key: isinstance(config, dict) and isinstance(key, str))
+@post(lambda result: result is None or isinstance(result, int))
+def _get_int(config: dict[str, Any], key: str) -> int | None:
+    """
+    Safely extract an integer from config, returning None if invalid.
+
+    >>> _get_int({"a": 42}, "a")
+    42
+    >>> _get_int({"a": "not int"}, "a") is None
+    True
+    """
+    val = config.get(key)
+    if isinstance(val, int) and not isinstance(val, bool):
+        return int(val)  # Convert to ensure real Python int
+    return None
+
+
+@pre(lambda config, key: isinstance(config, dict) and isinstance(key, str))
+@post(lambda result: result is None or isinstance(result, float))
+def _get_float(config: dict[str, Any], key: str) -> float | None:
+    """
+    Safely extract a float from config, returning None if invalid.
+
+    >>> _get_float({"a": 3.14}, "a")
+    3.14
+    >>> _get_float({"a": 10}, "a")
+    10.0
+    >>> _get_float({"a": "not float"}, "a") is None
+    True
+    """
+    val = config.get(key)
+    if isinstance(val, (int, float)) and not isinstance(val, bool):
+        return float(val)
+    return None
 
 
 @pre(lambda guard_config: isinstance(guard_config, dict))
@@ -75,63 +138,91 @@ def parse_guard_config(guard_config: dict[str, Any]) -> RuleConfig:
         1
         >>> cfg.rule_exclusions[0].pattern
         '**/gen/**'
+        >>> cfg = parse_guard_config({"use_code_lines": "invalid"})  # Invalid type ignored
+        >>> cfg.use_code_lines  # Falls back to model default (False)
+        False
     """
     kwargs: dict[str, Any] = {}
 
-    if "max_file_lines" in guard_config:
-        kwargs["max_file_lines"] = guard_config["max_file_lines"]
+    val = _get_int(guard_config, "max_file_lines")
+    if val is not None:
+        kwargs["max_file_lines"] = val
 
-    if "max_function_lines" in guard_config:
-        kwargs["max_function_lines"] = guard_config["max_function_lines"]
+    val = _get_int(guard_config, "max_function_lines")
+    if val is not None:
+        kwargs["max_function_lines"] = val
 
     if "forbidden_imports" in guard_config:
-        kwargs["forbidden_imports"] = tuple(guard_config["forbidden_imports"])
+        v = guard_config["forbidden_imports"]
+        if isinstance(v, (list, tuple)):
+            kwargs["forbidden_imports"] = tuple(v)
 
-    if "require_contracts" in guard_config:
-        kwargs["require_contracts"] = guard_config["require_contracts"]
+    bval = _get_bool(guard_config, "require_contracts")
+    if bval is not None:
+        kwargs["require_contracts"] = bval
 
-    if "require_doctests" in guard_config:
-        kwargs["require_doctests"] = guard_config["require_doctests"]
+    bval = _get_bool(guard_config, "require_doctests")
+    if bval is not None:
+        kwargs["require_doctests"] = bval
 
-    if "strict_pure" in guard_config:
-        kwargs["strict_pure"] = guard_config["strict_pure"]
+    bval = _get_bool(guard_config, "strict_pure")
+    if bval is not None:
+        kwargs["strict_pure"] = bval
 
-    if "use_code_lines" in guard_config:
-        kwargs["use_code_lines"] = guard_config["use_code_lines"]
+    bval = _get_bool(guard_config, "use_code_lines")
+    if bval is not None:
+        kwargs["use_code_lines"] = bval
 
-    if "exclude_doctest_lines" in guard_config:
-        kwargs["exclude_doctest_lines"] = guard_config["exclude_doctest_lines"]
+    bval = _get_bool(guard_config, "exclude_doctest_lines")
+    if bval is not None:
+        kwargs["exclude_doctest_lines"] = bval
 
     # Phase 9 P1: Parse rule_exclusions
     if "rule_exclusions" in guard_config:
-        exclusions = []
-        for excl in guard_config["rule_exclusions"]:
-            exclusions.append(
-                RuleExclusion(
-                    pattern=excl["pattern"],
-                    rules=excl["rules"],
-                )
-            )
-        kwargs["rule_exclusions"] = exclusions
+        raw_exclusions = guard_config["rule_exclusions"]
+        if isinstance(raw_exclusions, list):
+            exclusions = []
+            for excl in raw_exclusions:
+                if isinstance(excl, dict) and "pattern" in excl and "rules" in excl:
+                    pattern = excl["pattern"]
+                    rules = excl["rules"]
+                    if isinstance(pattern, str) and isinstance(rules, list):
+                        exclusions.append(
+                            RuleExclusion(pattern=str(pattern), rules=[str(r) for r in rules])
+                        )
+            if exclusions:
+                kwargs["rule_exclusions"] = exclusions
 
     # Phase 9 P2: Parse severity_overrides (merge with defaults)
     if "severity_overrides" in guard_config:
-        # Get default overrides and update with user config
-        defaults = {"redundant_type_contract": "off"}
-        defaults.update(guard_config["severity_overrides"])
-        kwargs["severity_overrides"] = defaults
+        raw_overrides = guard_config["severity_overrides"]
+        if isinstance(raw_overrides, dict):
+            defaults: dict[str, str] = {"redundant_type_contract": "off"}
+            for k, v in raw_overrides.items():
+                if isinstance(k, str) and isinstance(v, str):
+                    defaults[str(k)] = str(v)  # Convert to real Python strings
+            kwargs["severity_overrides"] = defaults
 
     # Phase 9 P8: Parse size_warning_threshold
-    if "size_warning_threshold" in guard_config:
-        kwargs["size_warning_threshold"] = guard_config["size_warning_threshold"]
+    fval = _get_float(guard_config, "size_warning_threshold")
+    if fval is not None:
+        kwargs["size_warning_threshold"] = fval
 
     # B4: Parse purity declarations
     if "purity_pure" in guard_config:
-        kwargs["purity_pure"] = list(guard_config["purity_pure"])
+        v = guard_config["purity_pure"]
+        if isinstance(v, (list, tuple)):
+            kwargs["purity_pure"] = [str(x) for x in v if isinstance(x, str)]
     if "purity_impure" in guard_config:
-        kwargs["purity_impure"] = list(guard_config["purity_impure"])
+        v = guard_config["purity_impure"]
+        if isinstance(v, (list, tuple)):
+            kwargs["purity_impure"] = [str(x) for x in v if isinstance(x, str)]
 
-    return RuleConfig(**kwargs)
+    try:
+        return RuleConfig(**kwargs)
+    except Exception:
+        # Invalid config values - return defaults
+        return RuleConfig()
 
 
 @pre(lambda file_path, patterns: isinstance(file_path, str) and isinstance(patterns, list))

@@ -153,7 +153,7 @@ def extract_function_calls(node: ast.FunctionDef | ast.AsyncFunctionDef) -> list
     return list(set(calls))
 
 
-@pre(lambda call: isinstance(call, ast.Call))
+@pre(lambda call: isinstance(call, ast.Call) and hasattr(call, "func"))
 def _get_call_name(call: ast.Call) -> str | None:
     """Get the name of a function call as a string."""
     func = call.func
@@ -185,7 +185,10 @@ def _is_impure_call(call_name: str) -> bool:
     return False
 
 
-@pre(lambda node: isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef))
+@pre(
+    lambda node: isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef)
+    and hasattr(node, "lineno")
+)
 def count_code_lines(node: ast.FunctionDef | ast.AsyncFunctionDef) -> int:
     """
     Count lines of code excluding docstring.
