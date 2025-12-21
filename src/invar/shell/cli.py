@@ -98,12 +98,9 @@ def guard(
     json_output: bool = typer.Option(
         False, "--json", help="Output as JSON (simple format, no fix instructions)"
     ),
-    # Smart Guard flags - --static is primary, --quick is hidden alias
+    # Verification level flags
     static: bool = typer.Option(
         False, "--static", help="Static analysis only, skip doctests"
-    ),
-    quick: bool = typer.Option(
-        False, "--quick", hidden=True, help="Alias for --static"
     ),
     prove: bool = typer.Option(
         False, "--prove", help="Add symbolic verification with CrossHair"
@@ -175,10 +172,9 @@ def guard(
 
     # Smart Guard - determine verification level
     # Note: --prove takes precedence (explicit > implicit, higher tier > lower)
-    use_static = static or quick  # --quick is hidden alias for --static
     if prove:
         verification_level = VerificationLevel.PROVE
-    elif use_static:
+    elif static:
         verification_level = VerificationLevel.STATIC
     else:
         verification_level = detect_verification_context()
@@ -200,7 +196,7 @@ def guard(
         }
         console.print(f"[dim]Verification: {human_labels[verification_level]}[/dim]")
 
-    # DX-06: Run doctests if not --quick and static analysis passed
+    # Run doctests if not --static and static analysis passed
     doctest_passed = True
     doctest_output = ""
     crosshair_passed = True

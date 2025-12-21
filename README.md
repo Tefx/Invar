@@ -131,9 +131,9 @@ redundant_type_contract = "off"
 |-------|---------|--------|-------------|
 | STATIC | `--static` | Rules only | Debugging static analysis |
 | STANDARD | (default) | Rules + doctests | Normal development |
-| PROVE | `--prove` | + CrossHair | Before commit, CI |
+| PROVE | `--prove` | + CrossHair | Releases, CI |
 
-`--prove` is automatic in pre-commit and runs incrementally (~5s for changed files).
+Pre-commit uses STANDARD by default. Add `--prove` to CI for full verification.
 
 ---
 

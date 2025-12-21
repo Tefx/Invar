@@ -205,12 +205,12 @@ invar guard --explain    # Detailed explanations
 
 **Agent JSON output includes `"verification_level"` for transparency.**
 
-**`--prove` runs automatically:**
-- Pre-commit runs `--prove` by default
-- CI runs `--prove` for full verification
-- Manual `--prove` rarely needed
+**When to use `--prove`:**
+- Before releases or contract changes
+- In CI for full verification (recommended)
+- Pre-commit uses STANDARD by default
 
-**Incremental verification:**
+**Incremental verification (with `--prove`):**
 - Only verifies changed files
 - First commit: ~5s, subsequent: ~2s (cached)
 

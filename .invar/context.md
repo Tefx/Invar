@@ -137,7 +137,7 @@ During this session, I:
 
 ### CLI Improvements
 
-1. **Renamed `--quick` to `--static`** - More intuitive naming (`--quick` kept as hidden alias)
+1. **Renamed `--quick` to `--static`** - More intuitive naming for static-only verification
 2. **Added `--changed` to test/verify commands** - Now can run `invar test --changed` and `invar verify --changed`
 3. **Fixed `--json` vs `--agent` precedence** - Explicit `--json` now takes precedence over auto-detection
 

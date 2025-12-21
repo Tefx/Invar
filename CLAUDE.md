@@ -148,7 +148,10 @@ invar rules              # List all rules
 
 **Why?** Default is only 0.4s slower. Bypassing doctests saves 0.4s but risks missing failures.
 
-**Before major changes:** Run `invar guard --prove` for full verification including CrossHair.
+**When to use `--prove`:**
+- Before releases or when modifying contracts
+- In CI pipelines (recommended)
+- After significant refactoring
 
 ### Test and Verify Commands
 
