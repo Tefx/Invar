@@ -138,9 +138,12 @@ def run_doctests_on_files(
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
 
+        # Pytest exit codes: 0=passed, 5=no tests collected (also OK)
+        # DX-09: Treat "no tests collected" as passed, not failed
+        is_passed = result.returncode in (0, 5)
         return Success(
             {
-                "status": "passed" if result.returncode == 0 else "failed",
+                "status": "passed" if is_passed else "failed",
                 "files": [str(f) for f in py_files],
                 "exit_code": result.returncode,
                 "stdout": result.stdout,

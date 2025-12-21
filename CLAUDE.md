@@ -131,13 +131,23 @@ invar guard --changed      # Verify code quality (REQUIRED)
 
 ### Other Commands
 ```bash
-invar guard --quick      # Static analysis only (skip doctests)
 invar guard --prove      # Add CrossHair symbolic verification
 invar guard --explain    # Detailed explanations
 invar rules              # List all rules
 ```
 
-**Note**: Smart Guard (DX-06) auto-runs doctests. Use `--quick` to skip, `--prove` to add symbolic verification.
+### Guard Usage (DX-09)
+
+**Default:** `invar guard` runs STANDARD = static + doctests. **Trust this.**
+
+**Do NOT use --quick unless:**
+- Debugging a specific static analysis issue
+- Performance profiling the guard itself
+- Explicitly testing --quick behavior
+
+**Why?** Default is only 0.4s slower. Bypassing doctests saves 0.4s but risks missing failures.
+
+**Before major changes:** Run `invar guard --prove` for full verification including CrossHair.
 
 ---
 

@@ -936,16 +936,180 @@ def average(items: list[float]) -> float:
 
 ---
 
+### DX-09: Self-Violation Prevention (Dogfooding Enforcement)
+
+**Priority:** ★★★★☆ (High impact, prevents regression)
+**Effort:** 0.5 day
+**Source:** Ultrathink self-reflection on development practices
+
+#### Problem
+
+During Invar development, the developer (AI agent) designed "zero-decision" tools but then bypassed them:
+
+```bash
+# Design intent (DX-06):
+invar guard                  # Auto-runs doctests, zero decisions
+
+# Actual development behavior:
+invar guard --quick          # Manually skipped doctests
+python -m doctest file.py    # Then ran doctests separately
+```
+
+**Irony:** The designer of "Agent-Native, automatic > manual" used manual overrides.
+
+**Root Causes:**
+1. Old habits override new design
+2. Speed anxiety (unfounded: difference is only 0.4s)
+3. No feedback mechanism to detect self-violation
+
+#### Measured Impact
+
+```
+Command              Time     Content
+--quick              0.2s     Static only
+Default (STANDARD)   0.6s     Static + doctests
+                     ----
+Difference           0.4s     ← Not worth bypassing
+```
+
+#### Solution: Multi-Layer Prevention
+
+##### Layer 1: CLAUDE.md Explicit Guidance
+
+Add explicit rule that makes --quick usage visible as a deliberate exception:
+
+```markdown
+## Guard Usage
+
+**Default:** `invar guard` (STANDARD = static + doctests)
+
+**Do NOT use --quick unless:**
+- Debugging a specific static analysis issue
+- Performance profiling the guard itself
+- Explicitly testing --quick behavior
+
+**Why:** Default is only 0.4s slower. Trust the design.
+```
+
+##### Layer 2: Usage Telemetry (Optional)
+
+Track verification levels in guard output:
+
+```python
+# src/invar/shell/cli.py
+
+def guard(...):
+    # Log verification level for visibility
+    if verification_level == VerificationLevel.STATIC:
+        console.print("[dim]Mode: --quick (static only, doctests skipped)[/dim]")
+    elif verification_level == VerificationLevel.STANDARD:
+        console.print("[dim]Mode: default (static + doctests)[/dim]")
+```
+
+Benefits:
+- Makes --quick usage visible
+- Developer sees "doctests skipped" message
+- Creates friction for unnecessary bypassing
+
+##### Layer 3: Context.md Reflection Prompt
+
+Add to `.invar/context.md`:
+
+```markdown
+## Self-Check Questions
+
+Before committing, ask:
+- Did I use `--quick`? Was it necessary?
+- Did I run `--prove` before major changes?
+- Am I trusting Invar's defaults?
+```
+
+##### Layer 4: CI Enforcement (Strong)
+
+```yaml
+# .github/workflows/test.yml
+- name: Guard (must not use --quick in CI)
+  run: |
+    # CI always runs THOROUGH, no --quick allowed
+    invar guard
+    if [ "$?" != "0" ]; then
+      echo "::error::Guard failed. Fix before merge."
+      exit 1
+    fi
+```
+
+#### Implementation
+
+```python
+# src/invar/shell/cli.py - Add visibility message
+
+@app.command("guard")
+def guard(
+    path: str = typer.Argument(...),
+    quick: bool = typer.Option(False, "--quick", help="Static only"),
+    ...
+):
+    # DX-09: Make verification level visible
+    level_name = {
+        VerificationLevel.STATIC: "[yellow]--quick[/yellow] (static only)",
+        VerificationLevel.STANDARD: "default (static + doctests)",
+        VerificationLevel.THOROUGH: "--thorough (+ Hypothesis)",
+        VerificationLevel.PROVE: "--prove (+ CrossHair)"
+    }
+
+    if not agent_mode:
+        console.print(f"[dim]Verification: {level_name[verification_level]}[/dim]")
+```
+
+#### Why This Works
+
+| Layer | Prevents | Mechanism |
+|-------|----------|-----------|
+| CLAUDE.md | Unconscious bypass | Explicit rule |
+| Telemetry | Hidden --quick | Visible message |
+| Reflection | Habit without thinking | Prompt questions |
+| CI | Production bypass | Hard enforcement |
+
+#### Key Insight
+
+**The goal is not to prevent --quick usage, but to make it a conscious choice.**
+
+```
+Before DX-09:                    After DX-09:
+--quick (unconscious habit)  →   --quick + visible "doctests skipped" message
+                             →   Developer pauses: "Do I need this?"
+                             →   Usually: "No, 0.4s is fine"
+```
+
+#### Tasks
+
+```
+□ Update CLAUDE.md with explicit --quick guidance
+□ Add verification level visibility message to guard
+□ Add self-check questions to context.md template
+□ Document in INVAR.md
+```
+
+#### Success Metrics
+
+| Metric | Before | Target |
+|--------|--------|--------|
+| --quick usage in development | Common | Rare (exceptions only) |
+| Doctest failures caught | Sometimes | Always (default runs them) |
+| Developer awareness of mode | Low | High (visible message) |
+
+---
+
 ## Implementation Roadmap
 
 | Week | Proposals | Effort |
 |------|-----------|--------|
 | 1 | DX-01, DX-02, DX-03, DX-06 ✅ | 1.5 days |
-| 2 | DX-04, DX-07 Phase 1 | 2 days |
+| 2 | DX-04, DX-07 Phase 1, DX-09 | 2.5 days |
 | 3 | DX-08 Phases 1-2 | 1.5 days |
 | Future | DX-05, DX-07 Phases 2-3, DX-08 Phases 3-4 | 4-5 days |
 
-**Note:** DX-06 implemented 2025-12-21. DX-07 identified from DX-06 post-mortem. DX-08 leverages existing strategies.py infrastructure.
+**Note:** DX-06 implemented 2025-12-21. DX-07 identified from DX-06 post-mortem. DX-08 leverages existing strategies.py infrastructure. DX-09 identified from self-reflection on development practices.
 
 ## Success Metrics
 
