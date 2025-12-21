@@ -7,7 +7,7 @@ Managed by Invar - do not edit directly.
 
 from pathlib import Path
 
-from deal import pre, post
+from deal import post, pre
 from returns.result import Failure, Result, Success
 
 # =============================================================================
@@ -101,21 +101,21 @@ def count_lines_in_file(path: Path) -> Result[dict[str, int], str]:
 
 # DON'T: I/O in Core
 # def parse_file(path: Path):  # BAD: Path in Core
-#     content = path.read_text()  # BAD: I/O in Core
-#     return parse_lines(content)
+#     content = path.read_text()  # BAD: I/O in Core  # noqa: ERA001
+#     return parse_lines(content)  # noqa: ERA001
 
 # DO: Core receives content, not paths
 # def parse_content(content: str):  # GOOD: receives data
-#     return parse_lines(content)
+#     return parse_lines(content)  # noqa: ERA001
 
 
 # DON'T: Missing Result in Shell
 # def load_config(path: Path) -> dict:  # BAD: no Result type
-#     return json.loads(path.read_text())  # Exceptions not handled
+#     return json.loads(path.read_text())  # Exceptions not handled  # noqa: ERA001
 
 # DO: Return Result[T, E]
 # def load_config(path: Path) -> Result[dict, str]:  # GOOD
-#     try:
-#         return Success(json.loads(path.read_text()))
-#     except Exception as e:
-#         return Failure(str(e))
+#     try:  # noqa: ERA001
+#         return Success(json.loads(path.read_text()))  # noqa: ERA001
+#     except Exception as e:  # noqa: ERA001
+#         return Failure(str(e))  # noqa: ERA001

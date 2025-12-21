@@ -177,10 +177,14 @@ Use Reviewer for architecture decisions. Use Adversary for security-critical cod
 
 | File | Owner | Edit? | Purpose |
 |------|-------|-------|---------|
-| INVAR.md | Invar | No | Protocol (`invar update` to sync) |
+| INVAR.md | **Source** | Yes | Full protocol (this IS the source) |
 | CLAUDE.md | User | Yes | Project customization (this file) |
 | .invar/context.md | User | Yes | Project state, lessons learned |
-| .invar/examples/ | Invar | No | Reference examples |
+| .invar/examples/ | Sync | `invar update` | Reference examples (from templates) |
+
+**Note:** This is the Invar project itself. INVAR.md here is the **source**, not a copy.
+- Template at `src/invar/templates/INVAR.md` is a compact version for other projects.
+- Do NOT run `invar update` on INVAR.md - it would replace the full version!
 
 **Decision rule:** Is this Invar protocol or project-specific?
 - Protocol content → Already in INVAR.md, don't duplicate

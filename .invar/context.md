@@ -14,10 +14,14 @@
 
 | File | Owner | Edit? |
 |------|-------|-------|
-| INVAR.md | Invar | No — use `invar update` |
+| INVAR.md | **Source** | Yes (this IS the source) |
 | CLAUDE.md | User | Yes |
 | .invar/context.md | User | Yes (this file) |
-| .invar/examples/ | Invar | No |
+| .invar/examples/ | Sync | `invar update --force` |
+
+**Note:** This is the Invar project. INVAR.md is the **source**, not a copy.
+- Do NOT use `invar update` on INVAR.md here!
+- Examples can be synced with `invar update --force`
 
 **Decision rule:** Is this Invar protocol or project-specific?
 - Protocol content → Already in INVAR.md, don't duplicate
