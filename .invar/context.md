@@ -168,14 +168,13 @@ Agent JSON now includes `"verification_level"` for transparency:
 | DX-07 ✅ | Integration tests for CLI flags |
 | DX-09 ✅ | Self-violation prevention (verification_level in JSON) |
 | DX-11 ✅ | Documentation restructure for multi-agent support |
+| DX-12 ✅ | Hypothesis as CrossHair fallback (898b357) |
 
-### DX Proposals Active
-
-| Proposal | Description | Status |
-|----------|-------------|--------|
-| DX-12 | Hypothesis as CrossHair fallback | Draft |
-
-**DX-12: Hypothesis Fallback** - Property-based testing fallback for numpy/pandas code where CrossHair times out. Three components: (1) library-aware timeout, (2) type-based strategy generation, (3) @pre bound extraction. See `.invar/proposals/DX-12-hypothesis-fallback.md`.
+**DX-12 Implementation (2025-12-21):**
+- `src/invar/core/hypothesis_strategies.py`: Type→strategy, timeout inference, @pre extraction
+- `src/invar/shell/prove.py`: CrossHair + Hypothesis fallback logic
+- CrossHair runs first (5s for numpy, 10s for pure Python)
+- On skip/timeout, Hypothesis auto-triggers with inferred strategies
 
 ### Key Insight: Self-Violation Prevention
 
