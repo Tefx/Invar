@@ -106,6 +106,14 @@ RULE_META: dict[str, RuleMeta] = {
         cannot_detect=("Runtime binding errors",),
         hint="Lambda must accept ALL function parameters in same order",
     ),
+    "must_use_ignored": RuleMeta(
+        name="must_use_ignored",
+        severity=Severity.WARNING,
+        category=RuleCategory.CONTRACTS,
+        detects="Return value of @must_use function is ignored",
+        cannot_detect=("Cross-module must_use", "Dynamic function references"),
+        hint="Assign or use the return value - it may contain errors or resources",
+    ),
     # Purity rules
     "forbidden_import": RuleMeta(
         name="forbidden_import",

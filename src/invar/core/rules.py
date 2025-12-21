@@ -15,6 +15,7 @@ from invar.core.contracts import (
 )
 from invar.core.extraction import format_extraction_hint
 from invar.core.models import FileInfo, RuleConfig, Severity, SymbolKind, Violation
+from invar.core.must_use import check_must_use
 from invar.core.purity import check_impure_calls, check_internal_imports
 from invar.core.suggestions import format_suggestion_for_violation
 from invar.core.utils import get_excluded_rules
@@ -367,6 +368,7 @@ def get_all_rules() -> list[RuleFunc]:
         check_redundant_type_contracts,
         check_param_mismatch,
         check_partial_contract,
+        check_must_use,
     ]
 
 

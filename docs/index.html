@@ -188,15 +188,15 @@
             margin-bottom: 48px;
         }
 
-        /* The Four Laws */
+        /* The Six Laws */
         .laws {
             background: var(--bg-secondary);
         }
 
         .laws-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 24px;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 20px;
         }
 
         .law-card {
@@ -559,6 +559,12 @@
         }
 
         /* Responsive */
+        @media (max-width: 1100px) {
+            .laws-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
         @media (max-width: 900px) {
             .laws-grid {
                 grid-template-columns: repeat(2, 1fr);
@@ -639,8 +645,8 @@
 
     <section class="laws" id="laws">
         <div class="container">
-            <h2>The Four Laws</h2>
-            <p class="subtitle">These laws shape how AI writes and organizes code</p>
+            <h2>The Six Laws</h2>
+            <p class="subtitle">Research-validated principles for AI code generation</p>
             <div class="laws-grid">
                 <div class="law-card">
                     <div class="law-number">1</div>
@@ -649,8 +655,8 @@
                 </div>
                 <div class="law-card">
                     <div class="law-number">2</div>
-                    <h3>Contract First</h3>
-                    <p>Define boundaries (@pre/@post) before implementation</p>
+                    <h3>Contract Complete</h3>
+                    <p>Define COMPLETE boundaries that uniquely determine implementation</p>
                 </div>
                 <div class="law-card">
                     <div class="law-number">3</div>
@@ -659,8 +665,18 @@
                 </div>
                 <div class="law-card">
                     <div class="law-number">4</div>
-                    <h3>Verify Immediately</h3>
-                    <p>Run invar guard && pytest after every change</p>
+                    <h3>Decompose First</h3>
+                    <p>Break complex tasks into sub-functions before implementing</p>
+                </div>
+                <div class="law-card">
+                    <div class="law-number">5</div>
+                    <h3>Verify Reflectively</h3>
+                    <p>If fail: Reflect (why?) → Fix → Verify again</p>
+                </div>
+                <div class="law-card">
+                    <div class="law-number">6</div>
+                    <h3>Integrate Fully</h3>
+                    <p>Verify all feature paths connect; local correctness ≠ global correctness</p>
                 </div>
             </div>
         </div>
@@ -711,7 +727,7 @@
                     <tr><td>Inspect</td><td>invar sig — check existing patterns</td></tr>
                     <tr><td>Design</td><td>File size OK, no extraction needed</td></tr>
                     <tr><td>Implement</td><td>Write code with contracts and doctest</td></tr>
-                    <tr><td>Verify</td><td>invar guard && pytest — all pass</td></tr>
+                    <tr><td>Verify</td><td>invar guard — Smart Guard runs static + doctests</td></tr>
                 </table>
                 <div class="workflow-code mono">
 <span class="decorator">@pre</span>(<span class="function">lambda</span> price, discount: price > 0 <span class="function">and</span> 0 <= discount <= 1)
@@ -762,8 +778,9 @@
                     <div class="terminal-line"><span class="output">Successfully installed python-invar</span></div>
                     <div class="terminal-line"><span class="prompt">$</span> <span class="command">invar init</span></div>
                     <div class="terminal-line"><span class="success">Created</span> <span class="output">INVAR.md, CLAUDE.md, .pre-commit-config.yaml</span></div>
-                    <div class="terminal-line"><span class="prompt">$</span> <span class="command">invar guard</span></div>
+                    <div class="terminal-line"><span class="prompt">$</span> <span class="command">invar guard</span>  <span class="output"># Smart Guard: static + doctests</span></div>
                     <div class="terminal-line"><span class="success">Code Health: 100%</span> <span class="output">████████████████████</span></div>
+                    <div class="terminal-line"><span class="success">✓ Doctests passed</span></div>
                 </div>
             </div>
         </div>
@@ -819,7 +836,7 @@
             </div>
             <p class="copyright">
                 Invar is open source under MIT License.<br>
-                Agent-Native Execution, Human-Directed Purpose.
+                Smart Guard • Agent-Native Execution • Human-Directed Purpose
             </p>
         </div>
     </footer>

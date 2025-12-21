@@ -47,10 +47,14 @@ dependencies = [
 dev = [
     "pytest>=7.0",
     "pytest-cov>=4.0",
-    "hypothesis>=6.0",
     "mypy>=1.0",
     "ruff>=0.1",
 ]
+
+# DX-06: Verification tiers (agent doesn't need to know these exist)
+test = ["hypothesis>=6.0"]
+prove = ["crosshair-tool>=0.0.60"]
+full = ["hypothesis>=6.0", "crosshair-tool>=0.0.60"]
 
 [project.scripts]
 invar = "invar.shell.cli:app"
@@ -100,7 +104,7 @@ exclude_doctest_lines = false
 
 [tool.invar]
 # Protocol governance
-protocol_version = "3.17"
+protocol_version = "3.20"
 protocol_evolution = "human-approved"  # locked | human-approved | open
 
 # Test style: "inline" or "separate"

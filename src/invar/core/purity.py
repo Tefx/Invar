@@ -320,6 +320,7 @@ def check_impure_calls(file_info: FileInfo, config: RuleConfig) -> list[Violatio
     Check for calls to known impure functions.
 
     Only applies to Core files when strict_pure is enabled.
+    Respects config.purity_pure for user-declared pure functions.
 
     Examples:
         >>> from invar.core.models import FileInfo, Symbol, SymbolKind, RuleConfig
@@ -331,24 +332,34 @@ def check_impure_calls(file_info: FileInfo, config: RuleConfig) -> list[Violatio
         >>> violations = check_impure_calls(info, RuleConfig(strict_pure=True))
         >>> len(violations)
         1
+        >>> # User declares print as pure → no violation
+        >>> violations = check_impure_calls(info, RuleConfig(purity_pure=["print"]))
+        >>> any("print" in v.message for v in violations)
+        False
     """
     violations: list[Violation] = []
 
     if not file_info.is_core or not config.strict_pure:
         return violations
 
+    # B4: User-declared pure functions override blacklist
+    pure_set = set(config.purity_pure)
+
     for symbol in file_info.symbols:
         if symbol.kind in (SymbolKind.FUNCTION, SymbolKind.METHOD) and symbol.impure_calls:
-            kind_name = "Method" if symbol.kind == SymbolKind.METHOD else "Function"
-            violations.append(
-                Violation(
-                    rule="impure_call",
-                    severity=Severity.ERROR,
-                    file=file_info.path,
-                    line=symbol.line,
-                    message=f"{kind_name} '{symbol.name}' calls impure functions: {', '.join(symbol.impure_calls)}",
-                    suggestion="Inject dependencies or move function to Shell",
+            # Filter out user-declared pure functions
+            actual_impure = [c for c in symbol.impure_calls if c not in pure_set]
+            if actual_impure:
+                kind_name = "Method" if symbol.kind == SymbolKind.METHOD else "Function"
+                violations.append(
+                    Violation(
+                        rule="impure_call",
+                        severity=Severity.ERROR,
+                        file=file_info.path,
+                        line=symbol.line,
+                        message=f"{kind_name} '{symbol.name}' calls impure functions: {', '.join(actual_impure)}",
+                        suggestion="Inject dependencies or move function to Shell",
+                    )
                 )
-            )
 
     return violations

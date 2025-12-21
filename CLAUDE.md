@@ -4,7 +4,7 @@
 
 This project follows the Invar methodology. See [INVAR.md](./INVAR.md) for the protocol.
 
-**Protocol Version:** v3.18 | **PyPI:** `python-invar`
+**Protocol Version:** v3.22 | **PyPI:** `python-invar` | **Smart Guard:** `invar guard` = static + doctests
 
 ---
 
@@ -39,7 +39,7 @@ Human (Commander) ──directs──→ Agent (Executor) ──uses──→ In
 
 2. **Agent-Native:** Design for Agent consumption. Automatic > Opt-in. Default ON > OFF.
 
-3. **Verify Always:** Run `invar guard` and `pytest --doctest-modules` after changes.
+3. **Verify Always:** Run `invar guard` after changes (Smart Guard runs static + doctests).
 
 4. **Warning Policy:** Fix warnings in files you modify (you touched it, you own it).
 
@@ -68,7 +68,9 @@ src/invar/
 │   ├── config.py      # Config loading
 │   ├── git.py         # Git operations (--changed mode)
 │   ├── perception.py  # map, sig commands
-│   └── templates.py   # Template operations
+│   ├── templates.py   # Template operations
+│   ├── init_cmd.py    # init command
+│   └── testing.py     # test, verify commands
 │
 └── templates/         # Files for invar init
 ```
@@ -91,12 +93,18 @@ src/invar/
 
 ## Development Workflow (ICIDIV)
 
-1. **Intent** - Understand task, classify Core/Shell
-2. **Contract** - Define signature, @pre/@post, doctests
+1. **Intent** - Understand task, classify Core/Shell, list edge cases
+2. **Contract** - Write COMPLETE @pre/@post AND doctests BEFORE code
+   - Include: normal case, boundaries, edge conditions
+   - Self-test: Can this contract regenerate the function?
 3. **Inspect** - `invar sig <file>` for contracts, `invar map --top 10` for entry points
-4. **Design** - Plan extraction if file > 400 lines
-5. **Implement** - Write explicit code
-6. **Verify** - `pytest --doctest-modules && invar guard`
+4. **Design** - Decompose into sub-functions:
+   - List functions (name + description)
+   - Identify dependencies, order: leaves first
+   - If file > 400 lines, plan extraction
+5. **Implement** - Write code to pass the doctests you already wrote
+6. **Verify** - `invar guard` (Smart Guard: static + doctests, zero decisions)
+   - If violations: Reflect (why?) → Fix → Verify again
 
 ---
 
@@ -119,14 +127,17 @@ invar guard --changed      # Verify code quality (REQUIRED)
 | Find references | Serena `find_referencing_symbols` | Cross-file analysis |
 | Edit function body | Serena `replace_symbol_body` | Semantic editing |
 | Rename across project | Serena `rename_symbol` | Automatic refactoring |
-| Verify after changes | `invar guard --changed` | Required |
+| Verify after changes | `invar guard --changed` | Smart Guard (static + doctests) |
 
 ### Other Commands
 ```bash
+invar guard --quick      # Static analysis only (skip doctests)
+invar guard --prove      # Add CrossHair symbolic verification
 invar guard --explain    # Detailed explanations
-invar guard --agent      # JSON output
 invar rules              # List all rules
 ```
+
+**Note**: Smart Guard (DX-06) auto-runs doctests. Use `--quick` to skip, `--prove` to add symbolic verification.
 
 ---
 

@@ -68,6 +68,7 @@ class FileInfo(BaseModel):
     imports: list[str] = Field(default_factory=list)
     is_core: bool = False
     is_shell: bool = False
+    source: str = ""  # Original source code for advanced analysis
 
 
 class Violation(BaseModel):
@@ -247,6 +248,9 @@ class RuleConfig(BaseModel):
     )
     # Phase 9 P8: File size warning threshold (0 to disable, 0.8 = warn at 80%)
     size_warning_threshold: float = 0.8
+    # B4: User-declared purity (override heuristics)
+    purity_pure: list[str] = Field(default_factory=list)  # Known pure functions
+    purity_impure: list[str] = Field(default_factory=list)  # Known impure functions
 
 
 # Phase 4: Perception models

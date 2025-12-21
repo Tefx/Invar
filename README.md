@@ -35,7 +35,7 @@ Contracts (`@pre`/`@post`) are checked at runtime. Violations fail immediately�
 ## Quick Start
 
 ```bash
-pip install python-invar
+pip install python-invar      # Or: pip install python-invar[full] for all features
 cd your-project
 invar init
 ```
@@ -50,14 +50,16 @@ This creates `INVAR.md` (protocol), `CLAUDE.md` (project rules), and pre-commit 
 
 ---
 
-## The Four Laws
+## The Six Laws
 
-| Law | Principle |
-|-----|-----------|
-| **1. Separation** | Pure logic (Core) and I/O (Shell) must be physically separate |
-| **2. Contract First** | Define boundaries (`@pre`/`@post`) before implementation |
-| **3. Context Economy** | Read map → signatures → implementation (only if needed) |
-| **4. Verify Immediately** | Run `invar guard && pytest` after every change |
+| Law | Principle | Why |
+|-----|-----------|-----|
+| **1. Separation** | Pure logic (Core) and I/O (Shell) must be physically separate | Determinism enables testing |
+| **2. Contract Complete** | Define COMPLETE boundaries that uniquely determine implementation | [Clover](https://arxiv.org/abs/2310.17807): 87% accept, 0% false positive |
+| **3. Context Economy** | Read map → signatures → implementation (only if needed) | Token efficiency |
+| **4. Decompose First** | Break complex tasks into sub-functions before implementing | [Parsel](https://arxiv.org/abs/2212.10561): +75% pass rate |
+| **5. Verify Reflectively** | If fail: Reflect (why?) → Fix → Verify again | [Reflexion](https://arxiv.org/abs/2303.11366): +11% success |
+| **6. Integrate Fully** | Verify all feature paths connect; local correctness ≠ global correctness | Post-mortem driven |
 
 ---
 
@@ -77,11 +79,11 @@ Intent  Contract  Inspect  Design  Implement  Verify
 | Step | AI does |
 |------|---------|
 | **Intent** | Core function (pure logic, no I/O) |
-| **Contract** | `@pre`: price > 0, discount ∈ [0,1]. `@post`: result ≥ 0 |
+| **Contract** | Write COMPLETE boundaries: `@pre`: price > 0, discount ∈ [0,1]. `@post`: result ≥ 0. Doctests that prove behavior |
 | **Inspect** | `invar sig` — check existing patterns |
-| **Design** | File size OK, no extraction needed |
+| **Design** | If complex: decompose into sub-functions first (leaves → parents) |
 | **Implement** | Write code with contracts and doctest |
-| **Verify** | `invar guard && pytest` — all pass |
+| **Verify** | `invar guard` — Smart Guard runs static + doctests. If fail: Reflect → Fix → Verify again |
 
 ```python
 @pre(lambda price, discount: price > 0 and 0 <= discount <= 1)
@@ -98,7 +100,7 @@ def discounted_price(price: float, discount: float) -> float:
 git commit → pre-commit hook runs invar guard → ✓ Commit succeeds
 ```
 
-Verification fails? AI sees the report, fixes it, verifies again.
+Verification fails? AI reflects on *why* it failed, fixes the root cause, verifies again.
 
 ---
 
@@ -170,13 +172,24 @@ Invar applies them to AI output with automatic verification.
 ## Command Reference
 
 ```bash
-invar guard              # Check architecture rules
+# Smart Guard (primary command)
+invar guard              # Static analysis + doctests (zero decisions needed)
 invar guard --changed    # Only git-modified files
-invar guard --explain    # Detailed explanations
-invar guard --agent      # JSON output for automation
+invar guard --quick      # Static analysis only (skip doctests)
+invar guard --prove      # Add CrossHair symbolic verification
+
+# Other commands
 invar rules              # List all rules
 invar sig <file>         # Function signatures + contracts
 invar map --top 10       # Most-referenced symbols
+```
+
+**Installation tiers:**
+```bash
+pip install python-invar              # Basic
+pip install python-invar[test]        # + Hypothesis
+pip install python-invar[prove]       # + CrossHair
+pip install python-invar[full]        # Everything
 ```
 
 ---

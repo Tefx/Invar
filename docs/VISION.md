@@ -172,3 +172,118 @@ Where:
 | **Success Metric** | Human achieves goals through Agent |
 
 > *"Invar is Agent infrastructure that serves Human goals."*
+
+---
+
+## Foundational Influences
+
+Invar's Core/Shell architecture builds on two foundational software design patterns:
+
+### Hexagonal Architecture (Ports and Adapters)
+> Alistair Cockburn, 2005 — https://alistair.cockburn.us/hexagonal-architecture
+
+The application's business logic (Core) is isolated from external concerns (Shell) through ports and adapters. This enables testing without I/O and makes the system adaptable to different external systems.
+
+### Functional Core, Imperative Shell
+> Gary Bernhardt, 2012 — https://github.com/kbilsted/Functional-core-imperative-shell
+
+Pure, functional code (Core) handles all logic and decisions. Imperative code (Shell) handles I/O and side effects. The Shell is a thin wrapper that calls Core functions and performs I/O.
+
+### Invar's Contribution
+
+Invar extends these patterns for **Agent-Native development**:
+
+| Classic Pattern | Invar Extension |
+|-----------------|-----------------|
+| Separate Core/Shell | + Design-by-Contract (@pre/@post) |
+| Pure functions | + Contract completeness (uniquely determines impl) |
+| Testable logic | + Reflective verification (understand before fix) |
+| Ports/Adapters | + Hierarchical decomposition (leaves first) |
+
+---
+
+## Research Foundation
+
+Invar's methodology is validated by recent AI code generation research (6 papers).
+
+### The Six Laws
+
+| Law | Principle | Research Source |
+|-----|-----------|-----------------|
+| **1. Separation** | Pure logic (Core) and I/O (Shell) physically separate | Determinism enables testing |
+| **2. Contract Complete** | Define COMPLETE, RECOVERABLE boundaries | Clover (2024): 87% accept, 0% false positive |
+| **3. Context Economy** | map → signatures → implementation | Token efficiency |
+| **4. Decompose First** | Break into sub-functions before implementing | Parsel (2023): +75% pass rate |
+| **5. Verify Reflectively** | Reflect (why?) → Fix → Verify | Reflexion (2023): +11% success |
+| **6. Integrate Fully** | Verify all feature paths connect correctly | DX-07 post-mortem: local ≠ global |
+
+### Core Formula
+
+```
+Human Success = Agent Effectiveness × Invar Support × Problem Solvability
+
+Where:
+  Problem Solvability = Contract Completeness × Decomposition Quality
+```
+
+### AlphaCodium (2024)
+Test-first approach improved GPT-4 accuracy from 19% to 44%.
+> "Generating tests is easier than generating code."
+
+This validates Invar's Contract-First principle.
+
+### Pel (2025)
+Contracts/docstrings serve as recovery context for auto-fixing errors.
+> "When an error occurs, the Agent analyzes the discrepancy between
+> code and expected usage (based on docstring) to propose corrections."
+
+This extends Invar's philosophy: contracts are both verification AND recovery tools.
+
+### Parsel (2022/2023)
+Hierarchical decomposition improved pass rates by 75%+ on competition problems.
+> "Like human programmers, start with high-level design, then implement
+> each part gradually."
+
+This validates Invar's Design step: decompose before implement.
+
+### SWE-bench (2023/2024)
+Real-world GitHub issues reveal that underspecified problems are unsolvable.
+Best model (Claude 2) solved only 1.96% of 2,294 real issues.
+> "Underspecified issue descriptions led to ambiguity on what the problem
+> was and how it should be solved."
+
+This validates Invar's core insight: **Contracts eliminate ambiguity.**
+- @pre/@post make expectations explicit
+- Doctests provide concrete examples
+- Clear specs → Solvable problems
+
+### Reflexion (2023)
+Verbal reflection on failures improved HumanEval pass@1 from 80% to 91%.
+> "Reflexion agents verbally reflect on task feedback signals, then maintain
+> their reflective text in episodic memory to induce better decision-making."
+
+This enhances Invar's Verify step: **Don't just fix—understand why it failed first.**
+
+### Clover (2023/2024)
+Three-way consistency checking achieves 87% acceptance while maintaining zero false positives.
+> "To prevent annotations that are too trivial from being accepted, they test whether
+> the annotations contain enough information to reconstruct functionally equivalent code."
+
+This introduces **contract completeness**: A complete contract uniquely determines the implementation.
+
+### Unified Insight
+
+The research converges on a single principle:
+
+**Structure before code. Completeness in contracts. Reflection before fix.**
+
+1. **Design** - Decompose task into sub-functions
+2. **Contract** - Write COMPLETE tests for each function (eliminates ambiguity)
+3. **Implement** - Write code to pass the tests (leaves first)
+4. **Verify** - If failure, reflect first, then fix
+
+Time spent on structure pays dividends at every stage:
+- During implementation → Clearer targets (complete contracts = one valid solution)
+- During verification → Catch bugs early (three-way consistency)
+- During recovery → Reflection + contracts guide fixes
+- For solvability → Clear, complete specs make problems tractable

@@ -36,21 +36,32 @@
 
 The Protocol is a document that defines how agents should work. It provides significant value with zero dependencies.
 
-### The Four Laws
+### The Six Laws
 
 ```
 ┌────────────────────────────────────────────────────────────────┐
 │ LAW 1: SEPARATION                                              │
 │ Pure logic (Core) and I/O (Shell) must be physically separate  │
 ├────────────────────────────────────────────────────────────────┤
-│ LAW 2: CONTRACT FIRST                                          │
-│ Define boundaries before implementation                         │
+│ LAW 2: CONTRACT COMPLETE                                       │
+│ Define COMPLETE, RECOVERABLE boundaries before implementation  │
+│ Complete = uniquely determines implementation (Clover)         │
+│ Recoverable = guides fixes when violations occur (Pel)         │
 ├────────────────────────────────────────────────────────────────┤
 │ LAW 3: CONTEXT ECONOMY                                         │
 │ Read map → signatures → implementation (only if needed)        │
 ├────────────────────────────────────────────────────────────────┤
-│ LAW 4: VERIFY IMMEDIATELY                                      │
-│ Unit + integration + self-check (invar guard)                   │
+│ LAW 4: DECOMPOSE FIRST                                         │
+│ Break complex tasks into sub-functions before implementing     │
+│ Implement leaves first, then compose (Parsel: +75%)            │
+├────────────────────────────────────────────────────────────────┤
+│ LAW 5: VERIFY REFLECTIVELY                                     │
+│ If fail: Reflect (why?) → Fix → Verify again                   │
+│ Don't just fix—understand first (Reflexion: +11%)              │
+├────────────────────────────────────────────────────────────────┤
+│ LAW 6: INTEGRATE FULLY                                         │
+│ Verify all feature paths connect correctly                     │
+│ Local correctness ≠ global correctness (DX-07 post-mortem)     │
 └────────────────────────────────────────────────────────────────┘
 ```
 
@@ -76,28 +87,40 @@ Each step has a checkpoint the agent must pass:
 □ Read map or project structure
 □ Identified affected symbols
 □ Classified as Core or Shell
+□ Listed potential edge cases
 ```
 
 **After Contract:**
 ```
 □ All parameters have type hints
-□ @pre/@post decorators defined
-□ Docstring has Examples (>>>)
-□ Considered edge cases: empty, zero, negative, large
+□ @pre AND @post decorators defined (complete contract)
+□ Docstring has Examples (>>> normal, boundary, edge)
+□ Self-test: Can this contract regenerate the function?
+□ Three-way consistency: Code ↔ Contract ↔ Doctests
+```
+
+**After Design:**
+```
+□ Complex task decomposed into sub-functions
+□ Dependencies identified (which calls which)
+□ Implementation order determined (leaves first)
+□ File size checked (< 400 lines or plan extraction)
 ```
 
 **After Implementation:**
 ```
 □ Code is explicit (no **kwargs, no eval)
-□ Function < 50 lines, File < 300 lines
+□ Function < 50 lines, File < 500 lines
 □ Full type annotations
+□ Code passes the doctests already written
 ```
 
 **After Verify:**
 ```
 □ pytest passes (including doctests)
-□ Property tests found no counterexamples
-□ invar guard passes (if installed)
+□ invar guard passes
+□ If violations: reflected on WHY before fixing
+□ Property tests found no counterexamples (if applicable)
 ```
 
 ---

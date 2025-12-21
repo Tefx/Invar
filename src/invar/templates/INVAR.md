@@ -1,8 +1,21 @@
-# The Invar Protocol v3.19
+# The Invar Protocol v3.22
 
 > **"Trade structure for safety."** Separate what CAN fail (I/O) from what SHOULD NOT fail (logic).
 
 **Design:** Agent-Native. Protocol optimized for AI agent consumption. See [docs/VISION.md](docs/VISION.md).
+
+**Smart Guard:** `invar guard` now runs doctests automatically. Zero decisions needed.
+
+## The Six Laws
+
+| Law | Principle | Research Basis |
+|-----|-----------|----------------|
+| **1. Separation** | Pure logic (Core) and I/O (Shell) must be physically separate | Determinism enables testing |
+| **2. Contract Complete** | Define COMPLETE, RECOVERABLE boundaries before implementation | Clover: 87% accept, 0% false positive |
+| **3. Context Economy** | Read map → signatures → implementation (only if needed) | Token efficiency |
+| **4. Decompose First** | Break complex tasks into sub-functions before implementing | Parsel: +75% pass rate |
+| **5. Verify Reflectively** | If fail: Reflect (why?) → Fix → Verify again | Reflexion: +11% success |
+| **6. Integrate Fully** | Verify all feature paths connect; local correctness ≠ global correctness | Post-mortem driven |
 
 ## Core/Shell Architecture
 
@@ -15,25 +28,55 @@
 
 **Core receives data, not paths** — Shell reads files, passes content to Core.
 
-## Contracts
+## Contracts (Test-First)
 
-Every Core function must have `@pre` or `@post`:
+Before implementation, define COMPLETE contracts:
 
 ```python
 from deal import pre, post
 
-@pre(lambda x, y: x > 0 and y > 0)  # Lambda must match ALL parameters
-def calculate(x: int, y: int) -> int:
+@pre(lambda price, discount: price > 0 and 0 <= discount <= 1)
+@post(lambda result: result >= 0)
+def discounted_price(price: float, discount: float) -> float:
     """
-    Calculate something.
+    Apply discount to price.
 
-    >>> calculate(2, 3)
-    5
+    >>> discounted_price(100, 0.2)    # Normal case
+    80.0
+    >>> discounted_price(100, 0)      # Edge: no discount
+    100.0
+    >>> discounted_price(100, 1)      # Edge: full discount
+    0.0
     """
-    return x + y
+    return price * (1 - discount)
 ```
 
-Guard provides hints and suggestions for violations. Use `invar guard --explain` for details.
+**Complete Contract = uniquely determines implementation.**
+
+Self-test: "Given only @pre/@post and doctests, could someone else write the exact same function?"
+
+**Three-Way Consistency:**
+
+```
+        Code
+       /    \
+      /      \
+@pre/@post ↔ Doctests
+```
+
+All three must align. Any conflict is a bug.
+
+## Why Contracts Matter
+
+Contracts serve **dual purpose**:
+
+1. **Verification** — Catch violations before they become bugs
+2. **Recovery** — When violations occur, contracts guide the fix
+
+Research shows:
+- Underspecified problems are unsolvable (SWE-bench: 1.96% solve rate)
+- Clear contracts make problems tractable (Clover: 87% acceptance)
+- Good contracts enable auto-recovery (Pel: self-healing agents)
 
 ## Size Limits
 
@@ -58,12 +101,29 @@ invar rules              # List all rules with severity and hints
 **I**ntent → **C**ontract → **I**nspect → **D**esign → **I**mplement → **V**erify
 
 ```
-□ Intent    — What are we trying to achieve?
-□ Contract  — What inputs are invalid? What does output guarantee?
-□ Inspect   — Run: invar sig <file> to see contracts, invar map --top 10 for entry points
-□ Design    — If file > 400 lines, plan extraction first
-□ Implement — Write code with contracts and doctests
+□ Intent    — What are we trying to achieve? List edge cases.
+
+□ Contract  — Write COMPLETE @pre/@post AND doctests BEFORE code.
+              Include: normal case, boundaries, edge conditions.
+              Self-test: Can this contract regenerate the function?
+
+□ Inspect   — Run: invar sig <file>, invar map --top 10
+
+□ Design    — Decompose into sub-functions:
+              1. List functions (name + description)
+              2. Identify dependencies
+              3. Order: leaves first, then compose
+              4. If file > 400 lines, plan extraction
+
+□ Implement — For each function (in dependency order):
+              Write code to pass the doctests you already wrote
+
 □ Verify    — Run: invar guard && pytest --doctest-modules
+              If violations:
+              1. Reflect: Why did this fail? What was misunderstood?
+              2. Read: contract + doctest + error message
+              3. Fix based on understanding
+              4. Verify again
 ```
 
 ## Configuration
@@ -87,4 +147,4 @@ max_function_lines = 50
 
 ---
 
-*Protocol v3.19 — ICIDIV workflow (6-step with Implement).*
+*Protocol v3.22 — Smart Guard, Six Laws, ICIDIV workflow, research-validated.*

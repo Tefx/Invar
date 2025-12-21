@@ -16,8 +16,9 @@ from rich.table import Table
 
 
 def _detect_agent_mode() -> bool:
-    """Detect if running in agent context. Returns True if INVAR_MODE=agent is set."""
-    return os.getenv("INVAR_MODE") == "agent"
+    """Detect agent context: INVAR_MODE=agent OR non-TTY (pipe/redirect)."""
+    import sys
+    return os.getenv("INVAR_MODE") == "agent" or not sys.stdout.isatty()
 
 
 from invar import __version__
@@ -28,7 +29,6 @@ from invar.core.utils import get_exit_code
 from invar.shell.config import load_config
 from invar.shell.fs import scan_project
 from invar.shell.git import get_changed_files, is_git_repo
-from invar.shell.templates import add_config, copy_template, create_directories, install_hooks
 
 app = typer.Typer(
     name="invar",
@@ -96,8 +96,26 @@ def guard(
         False, "--agent", help="Output JSON with fix instructions for agents (Phase 8.2)"
     ),
     json_output: bool = typer.Option(False, "--json", help="Output as JSON"),
+    # DX-06: Smart Guard flags
+    quick: bool = typer.Option(
+        False, "--quick", help="Static analysis only, skip doctests (DX-06)"
+    ),
+    prove: bool = typer.Option(
+        False, "--prove", help="Force symbolic verification with CrossHair (DX-06)"
+    ),
 ) -> None:
-    """Check project against Invar architecture rules."""
+    """Check project against Invar architecture rules.
+
+    Smart Guard (DX-06): Automatically runs doctests after static analysis.
+    Use --quick for static-only, --prove for symbolic verification.
+    """
+    from invar.shell.testing import (
+        VerificationLevel,
+        detect_verification_context,
+        run_crosshair_on_files,
+        run_doctests_on_files,
+    )
+
     config_result = load_config(path)
     if isinstance(config_result, Failure):
         console.print(f"[red]Error:[/red] {config_result.failure()}")
@@ -112,6 +130,7 @@ def guard(
 
     # Phase 8.1: --changed mode
     only_files: set[Path] | None = None
+    checked_files: list[Path] = []
     if changed:
         if not is_git_repo(path):
             console.print("[red]Error:[/red] --changed requires a git repository")
@@ -124,6 +143,7 @@ def guard(
         if not only_files:
             console.print("[green]No changed Python files.[/green]")
             raise typer.Exit(0)
+        checked_files = list(only_files)
 
     scan_result = _scan_and_check(path, config, only_files)
     if isinstance(scan_result, Failure):
@@ -134,13 +154,96 @@ def guard(
     # Phase 9 P11: Auto-detect agent mode from environment
     use_agent_output = agent or _detect_agent_mode()
 
+    # DX-06: Smart Guard - determine verification level
+    if quick:
+        verification_level = VerificationLevel.STATIC
+    elif prove:
+        verification_level = VerificationLevel.PROVE
+    else:
+        verification_level = detect_verification_context()
+
+    # DX-06: Run doctests if not --quick and static analysis passed
+    doctest_passed = True
+    doctest_output = ""
+    crosshair_passed = True
+    crosshair_output: dict = {}
+    static_exit_code = get_exit_code(report, strict)
+
+    if verification_level >= VerificationLevel.STANDARD and static_exit_code == 0:
+        # Collect files to test
+        if not checked_files:
+            # Scan for Python files in core/shell paths
+            for core_path in config.core_paths:
+                full_path = path / core_path
+                if full_path.exists():
+                    checked_files.extend(full_path.rglob("*.py"))
+            for shell_path in config.shell_paths:
+                full_path = path / shell_path
+                if full_path.exists():
+                    checked_files.extend(full_path.rglob("*.py"))
+
+        if checked_files:
+            doctest_result = run_doctests_on_files(checked_files, verbose=explain)
+            if isinstance(doctest_result, Success):
+                result_data = doctest_result.unwrap()
+                doctest_passed = result_data.get("status") in ("passed", "skipped")
+                doctest_output = result_data.get("stdout", "")
+            else:
+                doctest_passed = False
+                doctest_output = doctest_result.failure()
+
+    # DX-06: Run CrossHair if --prove and doctests passed
+    if verification_level >= VerificationLevel.PROVE and doctest_passed and static_exit_code == 0:
+        if checked_files:
+            # Only verify Core files (pure logic)
+            core_files = [f for f in checked_files if "core" in str(f)]
+            if core_files:
+                crosshair_result = run_crosshair_on_files(core_files)
+                if isinstance(crosshair_result, Success):
+                    crosshair_output = crosshair_result.unwrap()
+                    crosshair_passed = crosshair_output.get("status") in ("verified", "skipped")
+                else:
+                    crosshair_passed = False
+                    crosshair_output = {"error": crosshair_result.failure()}
+
+    # Output results
     if use_agent_output:
-        _output_agent(report)
+        _output_agent(report, doctest_passed, doctest_output, crosshair_output)
     elif json_output:
         _output_json(report)
     else:
         _output_rich(report, config.strict_pure, changed, pedantic, explain)
-    raise typer.Exit(get_exit_code(report, strict))
+        # DX-06: Show doctest results
+        if verification_level >= VerificationLevel.STANDARD:
+            if static_exit_code == 0:
+                if doctest_passed:
+                    console.print("[green]✓ Doctests passed[/green]")
+                else:
+                    console.print("[red]✗ Doctests failed[/red]")
+                    if doctest_output and explain:
+                        console.print(doctest_output)
+            else:
+                console.print("[dim]⊘ Doctests skipped (static errors)[/dim]")
+        # DX-06: Show CrossHair results
+        if verification_level >= VerificationLevel.PROVE:
+            if static_exit_code == 0 and doctest_passed:
+                status = crosshair_output.get("status", "unknown")
+                if status == "verified":
+                    console.print("[green]✓ CrossHair verified[/green]")
+                elif status == "skipped":
+                    reason = crosshair_output.get("reason", "no files")
+                    console.print(f"[dim]⊘ CrossHair skipped ({reason})[/dim]")
+                else:
+                    console.print("[yellow]! CrossHair found counterexamples[/yellow]")
+                    for ce in crosshair_output.get("counterexamples", [])[:5]:
+                        console.print(f"  {ce}")
+            else:
+                console.print("[dim]⊘ CrossHair skipped (prior failures)[/dim]")
+
+    # Exit with combined status
+    all_passed = doctest_passed and crosshair_passed
+    final_exit = static_exit_code if all_passed else 1
+    raise typer.Exit(final_exit)
 
 
 def _show_file_context(file_path: str) -> None:
@@ -311,11 +414,24 @@ def _output_json(report: GuardReport) -> None:
     console.print(json.dumps(output, indent=2))
 
 
-def _output_agent(report: GuardReport) -> None:
-    """Output report in Agent-optimized JSON format (Phase 8.2)."""
+def _output_agent(
+    report: GuardReport,
+    doctest_passed: bool = True,
+    doctest_output: str = "",
+    crosshair_output: dict | None = None,
+) -> None:
+    """Output report in Agent-optimized JSON format (Phase 8.2 + DX-06)."""
     import json
 
     output = format_guard_agent(report)
+    # DX-06: Add doctest results to agent output
+    output["doctest"] = {
+        "passed": doctest_passed,
+        "output": doctest_output if not doctest_passed else "",
+    }
+    # DX-06: Add CrossHair results if available
+    if crosshair_output:
+        output["crosshair"] = crosshair_output
     console.print(json.dumps(output, indent=2))
 
 
@@ -430,65 +546,42 @@ def rules(
         console.print(f"\n[dim]{len(rules_list)} rules total. Use --json for full details.[/dim]")
 
 
+# Import init from separate module to reduce file size
+from invar.shell.init_cmd import init
+
+app.command()(init)
+
+
 @app.command()
-def init(
-    path: Path = typer.Argument(Path(), help="Project root directory"),
-    dirs: bool = typer.Option(
-        None, "--dirs/--no-dirs", help="Create src/core and src/shell directories"
-    ),
-    hooks: bool = typer.Option(
-        True, "--hooks/--no-hooks", help="Install pre-commit hooks (default: ON)"
-    ),
+def test(
+    target: str = typer.Argument(..., help="File to test"),
+    verbose: bool = typer.Option(False, "-v", "--verbose", help="Verbose output"),
+    json_output: bool = typer.Option(False, "--json", help="Output as JSON"),
 ) -> None:
-    """
-    Initialize Invar configuration in a project.
+    """Run property-based tests using Hypothesis via deal.cases."""
+    from invar.shell.testing import run_test
 
-    Works with or without pyproject.toml:
-    - If pyproject.toml exists: adds [tool.invar.guard] section
-    - Otherwise: creates invar.toml
-
-    Use --dirs to always create directories, --no-dirs to skip.
-    Use --no-hooks to skip pre-commit hooks installation.
-    """
-    config_result = add_config(path, console)
-    if isinstance(config_result, Failure):
-        console.print(f"[red]Error:[/red] {config_result.failure()}")
+    use_json = json_output or _detect_agent_mode()
+    result = run_test(target, use_json, verbose)
+    if isinstance(result, Failure):
+        console.print(f"[red]Error:[/red] {result.failure()}")
         raise typer.Exit(1)
-    config_added = config_result.unwrap()
 
-    result = copy_template("INVAR.md", path)
-    if isinstance(result, Success) and result.unwrap():
-        console.print("[green]Created[/green] INVAR.md (Invar Protocol)")
 
-    result = copy_template("CLAUDE.md.template", path, "CLAUDE.md")
-    if isinstance(result, Success) and result.unwrap():
-        console.print("[green]Created[/green] CLAUDE.md (customize for your project)")
+@app.command()
+def verify(
+    target: str = typer.Argument(..., help="File to verify"),
+    timeout: int = typer.Option(30, "--timeout", help="Timeout per function (seconds)"),
+    json_output: bool = typer.Option(False, "--json", help="Output as JSON"),
+) -> None:
+    """Run symbolic verification using CrossHair."""
+    from invar.shell.testing import run_verify
 
-    # Handle directory creation based on --dirs flag
-    if dirs is not False:
-        create_directories(path, console)
-
-    invar_dir = path / ".invar"
-    if not invar_dir.exists():
-        invar_dir.mkdir()
-        result = copy_template("context.md.template", invar_dir, "context.md")
-        if isinstance(result, Success) and result.unwrap():
-            console.print("[green]Created[/green] .invar/context.md (context management)")
-
-    # Create proposals directory for protocol governance
-    proposals_dir = invar_dir / "proposals"
-    if not proposals_dir.exists():
-        proposals_dir.mkdir()
-        result = copy_template("proposal.md.template", proposals_dir, "TEMPLATE.md")
-        if isinstance(result, Success) and result.unwrap():
-            console.print("[green]Created[/green] .invar/proposals/TEMPLATE.md")
-
-    # Install pre-commit hooks if requested
-    if hooks:
-        install_hooks(path, console)
-
-    if not config_added and not (path / "INVAR.md").exists():
-        console.print("[yellow]Invar already configured.[/yellow]")
+    use_json = json_output or _detect_agent_mode()
+    result = run_verify(target, use_json, timeout)
+    if isinstance(result, Failure):
+        console.print(f"[red]Error:[/red] {result.failure()}")
+        raise typer.Exit(1)
 
 
 if __name__ == "__main__":

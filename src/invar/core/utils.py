@@ -125,6 +125,12 @@ def parse_guard_config(guard_config: dict[str, Any]) -> RuleConfig:
     if "size_warning_threshold" in guard_config:
         kwargs["size_warning_threshold"] = guard_config["size_warning_threshold"]
 
+    # B4: Parse purity declarations
+    if "purity_pure" in guard_config:
+        kwargs["purity_pure"] = list(guard_config["purity_pure"])
+    if "purity_impure" in guard_config:
+        kwargs["purity_impure"] = list(guard_config["purity_impure"])
+
     return RuleConfig(**kwargs)
 
 

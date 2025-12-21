@@ -56,6 +56,7 @@ def parse_source(source: str, path: str = "<string>") -> FileInfo | None:
         lines=lines,
         symbols=symbols,
         imports=imports,
+        source=source,
     )
 
 
