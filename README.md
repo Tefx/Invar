@@ -173,10 +173,10 @@ Invar applies them to AI output with automatic verification.
 
 ```bash
 # Smart Guard (primary command)
-invar guard              # Static analysis + doctests (zero decisions needed)
+invar guard              # Static + doctests (default)
 invar guard --changed    # Only git-modified files
-invar guard --quick      # Static analysis only (skip doctests)
-invar guard --prove      # Add CrossHair symbolic verification
+invar guard --quick      # Static only (skip doctests)
+invar guard --prove      # Static + doctests + CrossHair
 
 # Other commands
 invar rules              # List all rules
@@ -184,12 +184,18 @@ invar sig <file>         # Function signatures + contracts
 invar map --top 10       # Most-referenced symbols
 ```
 
-**Installation tiers:**
+**Three verification levels:**
+
+| Level | Flag | Content |
+|-------|------|---------|
+| STATIC | `--quick` | Rules only |
+| STANDARD | (default) | Rules + doctests |
+| PROVE | `--prove` | Rules + doctests + CrossHair |
+
+**Installation:**
 ```bash
-pip install python-invar              # Basic
-pip install python-invar[test]        # + Hypothesis
-pip install python-invar[prove]       # + CrossHair
-pip install python-invar[full]        # Everything
+pip install python-invar              # Basic (static + doctests)
+pip install python-invar[prove]       # + CrossHair symbolic verification
 ```
 
 ---

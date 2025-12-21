@@ -5,10 +5,47 @@
 ## Current State
 
 - **PyPI:** `python-invar` v0.4.1
-- **Protocol:** v3.22 (Smart Guard, Six Laws, ICIDIV workflow, research-validated)
+- **Protocol:** v3.23 (Three-Level Verification, Agent-Native JSON, research-validated)
 - **GitHub Pages:** https://tefx.github.io/Invar/
 - **Status:** Feature complete, research foundation documented
 - **Blockers:** None
+
+## v3.23 Changes (2025-12-21)
+
+### Three-Level Verification System
+
+Simplified from 4 levels to 3 (removed unimplemented THOROUGH):
+
+| Level | Flag | Content | Use When |
+|-------|------|---------|----------|
+| STATIC | `--quick` | Rules only | Debugging static analysis |
+| STANDARD | (default) | Rules + doctests | Normal development |
+| PROVE | `--prove` | Rules + doctests + CrossHair | Contract changes, releases |
+
+### Agent JSON Output Enhancement
+
+Agent JSON now includes `"verification_level"` for transparency:
+```json
+{
+  "status": "passed",
+  "verification_level": "standard",
+  "doctest": {"passed": true}
+}
+```
+
+### DX Proposals Completed
+
+| Proposal | Description |
+|----------|-------------|
+| DX-01 ✅ | Lambda fix templates for param_mismatch errors |
+| DX-02 ✅ | Doctest best practices documentation |
+| DX-03 ✅ | exclude_doctest_lines configuration |
+| DX-07 ✅ | Integration tests for CLI flags |
+| DX-09 ✅ | Self-violation prevention (verification_level in JSON) |
+
+### Key Insight: Self-Violation Prevention
+
+During development, the agent designed "zero-decision" tools but used `--quick` habitually. This violated Agent-Native principles. Fix: Make verification level visible in output, explicit guidance in CLAUDE.md.
 
 ## Recent Changes (v0.3.0)
 
@@ -83,11 +120,10 @@
 ### DX-06: Smart Guard ✅
 - `invar guard` now automatically runs doctests after static analysis passes
 - Zero decisions needed - Agent-Native design principle
-- Context auto-detection: CI → THOROUGH, pre-commit → STANDARD, local → STANDARD
-- New flags: `--quick` (static only), `--prove` (add CrossHair)
-- Optional dependencies: `[test]` for Hypothesis, `[prove]` for CrossHair, `[full]` for both
+- Three levels: STATIC (`--quick`) → STANDARD (default) → PROVE (`--prove`)
+- Agent JSON includes `verification_level` for transparency
 - Files modified: `src/invar/shell/cli.py`, `src/invar/shell/testing.py`, `pyproject.toml`
-- Protocol updated to v3.21
+- Protocol updated to v3.23
 
 ### Development Experience Observation
 **Issue**: `cli.py` at 474 lines (94% limit) after extracting init
@@ -216,7 +252,7 @@ Human (Commander) ──directs──→ Agent (Executor) ──uses──→ In
 
 | File | Purpose |
 |------|---------|
-| INVAR.md | Protocol v3.18 |
+| INVAR.md | Protocol v3.23 |
 | docs/INVAR-GUIDE.md | Why & How |
 | docs/VISION.md | Design philosophy |
 | CLAUDE.md | Development guide |
@@ -239,6 +275,9 @@ Human (Commander) ──directs──→ Agent (Executor) ──uses──→ In
 13. **Contract 必须具体到可验证** - "Add X" is insufficient; need "@post: output contains Y" level specificity
 14. **局部正确性 ≠ 全局正确性** - Function-level contracts don't guarantee feature-level completeness; integration paths need explicit verification
 15. **验证的验证** - Verification tools themselves need verification; who verifies the verifier?
+16. **Don't Promise Unimplemented** - THOROUGH level was removed because it promised Hypothesis but never ran it (DX-09)
+17. **Agent Transparency** - Agent JSON output must include context (verification_level) for Agent to reason about
+18. **Dogfooding Catches Self-Violation** - Using --quick habitually while designing "zero-decision" tools exposes habit vs design gap
 
 ## Release Process
 

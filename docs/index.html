@@ -765,8 +765,8 @@
 
     <section class="demo" id="demo">
         <div class="container">
-            <h2>See It In Action</h2>
-            <p class="subtitle">Three commands to get started</p>
+            <h2>Three Verification Levels</h2>
+            <p class="subtitle">Choose depth based on your needs</p>
             <div class="terminal">
                 <div class="terminal-header">
                     <div class="terminal-dot red"></div>
@@ -774,13 +774,17 @@
                     <div class="terminal-dot green"></div>
                 </div>
                 <div class="terminal-body mono">
-                    <div class="terminal-line"><span class="prompt">$</span> <span class="command">pip install python-invar</span></div>
-                    <div class="terminal-line"><span class="output">Successfully installed python-invar</span></div>
-                    <div class="terminal-line"><span class="prompt">$</span> <span class="command">invar init</span></div>
-                    <div class="terminal-line"><span class="success">Created</span> <span class="output">INVAR.md, CLAUDE.md, .pre-commit-config.yaml</span></div>
-                    <div class="terminal-line"><span class="prompt">$</span> <span class="command">invar guard</span>  <span class="output"># Smart Guard: static + doctests</span></div>
-                    <div class="terminal-line"><span class="success">Code Health: 100%</span> <span class="output">████████████████████</span></div>
+                    <div class="terminal-line"><span class="prompt">$</span> <span class="command">invar guard --quick</span>  <span class="output"># STATIC: rules only</span></div>
+                    <div class="terminal-line"><span class="success">✓ Static analysis passed</span></div>
+                    <div class="terminal-line"></div>
+                    <div class="terminal-line"><span class="prompt">$</span> <span class="command">invar guard</span>  <span class="output"># STANDARD: rules + doctests (default)</span></div>
+                    <div class="terminal-line"><span class="success">✓ Static analysis passed</span></div>
                     <div class="terminal-line"><span class="success">✓ Doctests passed</span></div>
+                    <div class="terminal-line"></div>
+                    <div class="terminal-line"><span class="prompt">$</span> <span class="command">invar guard --prove</span>  <span class="output"># PROVE: + CrossHair verification</span></div>
+                    <div class="terminal-line"><span class="success">✓ Static analysis passed</span></div>
+                    <div class="terminal-line"><span class="success">✓ Doctests passed</span></div>
+                    <div class="terminal-line"><span class="success">✓ CrossHair verified</span></div>
                 </div>
             </div>
         </div>
@@ -835,8 +839,8 @@
                 <a href="https://github.com/tefx/invar/blob/main/docs/VISION.md">Vision</a>
             </div>
             <p class="copyright">
-                Invar is open source under MIT License.<br>
-                Smart Guard • Agent-Native Execution • Human-Directed Purpose
+                Invar Protocol v3.23 — Open source under MIT License<br>
+                Three-Level Verification • Agent-Native JSON • Human-Directed Purpose
             </p>
         </div>
     </footer>
