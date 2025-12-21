@@ -38,10 +38,10 @@ def test(
 
     # Get files to test
     if changed:
-        if not is_git_repo(Path(".")):
+        if not is_git_repo(Path()):
             console.print("[red]Error:[/red] --changed requires a git repository")
             raise typer.Exit(1)
-        changed_result = get_changed_files(Path("."))
+        changed_result = get_changed_files(Path())
         if isinstance(changed_result, Failure):
             console.print(f"[red]Error:[/red] {changed_result.failure()}")
             raise typer.Exit(1)
@@ -80,10 +80,10 @@ def verify(
 
     # Get files to verify
     if changed:
-        if not is_git_repo(Path(".")):
+        if not is_git_repo(Path()):
             console.print("[red]Error:[/red] --changed requires a git repository")
             raise typer.Exit(1)
-        changed_result = get_changed_files(Path("."))
+        changed_result = get_changed_files(Path())
         if isinstance(changed_result, Failure):
             console.print(f"[red]Error:[/red] {changed_result.failure()}")
             raise typer.Exit(1)

@@ -155,15 +155,12 @@ def guard(
         raise typer.Exit(1)
     report = scan_result.unwrap()
 
-    # Output mode: explicit flags take precedence over auto-detection
-    # Priority: --json (simple) > --agent (full) > auto-detect
+    # Output mode: explicit flags take precedence, then auto-detection
+    # Precedence: json flag first, agent flag second, auto-detect last
     if json_output:
         use_agent_output = False
         use_json_output = True
-    elif agent:
-        use_agent_output = True
-        use_json_output = False
-    elif _detect_agent_mode():
+    elif agent or _detect_agent_mode():
         use_agent_output = True
         use_json_output = False
     else:
@@ -461,8 +458,8 @@ def rules(
 
 # Import commands from separate modules to reduce file size
 from invar.shell.init_cmd import init
-from invar.shell.update_cmd import update
 from invar.shell.test_cmd import test, verify
+from invar.shell.update_cmd import update
 
 app.command()(init)
 app.command()(update)
