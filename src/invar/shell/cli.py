@@ -95,10 +95,15 @@ def guard(
     agent: bool = typer.Option(
         False, "--agent", help="Output JSON with fix instructions for agents"
     ),
-    json_output: bool = typer.Option(False, "--json", help="Output as JSON"),
-    # Smart Guard flags
+    json_output: bool = typer.Option(
+        False, "--json", help="Output as JSON (simple format, no fix instructions)"
+    ),
+    # Smart Guard flags - --static is primary, --quick is hidden alias
+    static: bool = typer.Option(
+        False, "--static", help="Static analysis only, skip doctests"
+    ),
     quick: bool = typer.Option(
-        False, "--quick", help="Static analysis only, skip doctests"
+        False, "--quick", hidden=True, help="Alias for --static"
     ),
     prove: bool = typer.Option(
         False, "--prove", help="Add symbolic verification with CrossHair"
@@ -107,7 +112,7 @@ def guard(
     """Check project against Invar architecture rules.
 
     Smart Guard: Automatically runs doctests after static analysis.
-    Use --quick for static-only, --prove for symbolic verification.
+    Use --static for static-only, --prove for symbolic verification.
     """
     from invar.shell.prove_cache import ProveCache
     from invar.shell.testing import (
@@ -153,14 +158,27 @@ def guard(
         raise typer.Exit(1)
     report = scan_result.unwrap()
 
-    # Phase 9 P11: Auto-detect agent mode from environment
-    use_agent_output = agent or _detect_agent_mode()
+    # Output mode: explicit flags take precedence over auto-detection
+    # Priority: --json (simple) > --agent (full) > auto-detect
+    if json_output:
+        use_agent_output = False
+        use_json_output = True
+    elif agent:
+        use_agent_output = True
+        use_json_output = False
+    elif _detect_agent_mode():
+        use_agent_output = True
+        use_json_output = False
+    else:
+        use_agent_output = False
+        use_json_output = False
 
-    # DX-06: Smart Guard - determine verification level
+    # Smart Guard - determine verification level
     # Note: --prove takes precedence (explicit > implicit, higher tier > lower)
+    use_static = static or quick  # --quick is hidden alias for --static
     if prove:
         verification_level = VerificationLevel.PROVE
-    elif quick:
+    elif use_static:
         verification_level = VerificationLevel.STATIC
     else:
         verification_level = detect_verification_context()
@@ -173,10 +191,10 @@ def guard(
     }
     level_name = level_labels[verification_level]
 
-    # DX-09: Show verification level (human mode)
-    if not use_agent_output:
+    # Show verification level (human mode)
+    if not use_agent_output and not use_json_output:
         human_labels = {
-            VerificationLevel.STATIC: "[yellow]--quick[/yellow] (static only, doctests skipped)",
+            VerificationLevel.STATIC: "[yellow]--static[/yellow] (static only, doctests skipped)",
             VerificationLevel.STANDARD: "default (static + doctests)",
             VerificationLevel.PROVE: "--prove (static + doctests + CrossHair)",
         }
@@ -274,7 +292,7 @@ def guard(
     # Output results
     if use_agent_output:
         output_agent(report, doctest_passed, doctest_output, crosshair_output, level_name)
-    elif json_output:
+    elif use_json_output:
         output_json(report)
     else:
         output_rich(report, config.strict_pure, changed, pedantic, explain)
@@ -445,44 +463,15 @@ def rules(
         console.print(f"\n[dim]{len(rules_list)} rules total. Use --json for full details.[/dim]")
 
 
-# Import init and update from separate modules to reduce file size
+# Import commands from separate modules to reduce file size
 from invar.shell.init_cmd import init
 from invar.shell.update_cmd import update
+from invar.shell.test_cmd import test, verify
 
 app.command()(init)
 app.command()(update)
-
-
-@app.command()
-def test(
-    target: str = typer.Argument(..., help="File to test"),
-    verbose: bool = typer.Option(False, "-v", "--verbose", help="Verbose output"),
-    json_output: bool = typer.Option(False, "--json", help="Output as JSON"),
-) -> None:
-    """Run property-based tests using Hypothesis via deal.cases."""
-    from invar.shell.testing import run_test
-
-    use_json = json_output or _detect_agent_mode()
-    result = run_test(target, use_json, verbose)
-    if isinstance(result, Failure):
-        console.print(f"[red]Error:[/red] {result.failure()}")
-        raise typer.Exit(1)
-
-
-@app.command()
-def verify(
-    target: str = typer.Argument(..., help="File to verify"),
-    timeout: int = typer.Option(30, "--timeout", help="Timeout per function (seconds)"),
-    json_output: bool = typer.Option(False, "--json", help="Output as JSON"),
-) -> None:
-    """Run symbolic verification using CrossHair."""
-    from invar.shell.testing import run_verify
-
-    use_json = json_output or _detect_agent_mode()
-    result = run_verify(target, use_json, timeout)
-    if isinstance(result, Failure):
-        console.print(f"[red]Error:[/red] {result.failure()}")
-        raise typer.Exit(1)
+app.command()(test)
+app.command()(verify)
 
 
 if __name__ == "__main__":

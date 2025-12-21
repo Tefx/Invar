@@ -56,7 +56,7 @@ invar guard         # Verify code quality
 ```bash
 invar guard              # Static + doctests (default)
 invar guard --changed    # Only git-modified files
-invar guard --quick      # Static only
+invar guard --static     # Static only (skip doctests)
 invar guard --prove      # + CrossHair verification
 ```
 
@@ -76,7 +76,9 @@ invar sig <file>         # Show signatures + contracts
 invar map --top 10       # Most-referenced symbols
 invar rules              # List all rules
 invar test <file>        # Property-based testing (Hypothesis)
+invar test --changed     # Test git-modified files
 invar verify <file>      # Symbolic verification (CrossHair)
+invar verify --changed   # Verify git-modified files
 invar update             # Update managed files
 ```
 
@@ -127,7 +129,7 @@ redundant_type_contract = "off"
 
 | Level | Command | Checks | When to Use |
 |-------|---------|--------|-------------|
-| STATIC | `--quick` | Rules only | Quick iteration |
+| STATIC | `--static` | Rules only | Debugging static analysis |
 | STANDARD | (default) | Rules + doctests | Normal development |
 | PROVE | `--prove` | + CrossHair | Before commit, CI |
 
@@ -199,7 +201,7 @@ DEAL_DISABLE=1 python app.py
 
 **Guard is slow:**
 - Use `--changed` for incremental checks
-- Use `--quick` to skip doctests during iteration
+- Use `--static` to skip doctests during debugging
 
 **Too many warnings:**
 - Add exclusions for generated code

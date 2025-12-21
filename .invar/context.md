@@ -5,7 +5,7 @@
 ## Current State
 
 - **PyPI:** `python-invar` v0.5.0
-- **Protocol:** v3.23 (Three-Level Verification, Agent-Native JSON, research-validated)
+- **Protocol:** v3.24 (--static flag, --changed for test/verify, improved flag precedence)
 - **GitHub Pages:** https://tefx.github.io/Invar/
 - **Status:** Feature complete, research foundation documented
 - **Blockers:** None
@@ -133,6 +133,24 @@ During this session, I:
 
 ---
 
+## v3.24 Changes (2025-12-22)
+
+### CLI Improvements
+
+1. **Renamed `--quick` to `--static`** - More intuitive naming (`--quick` kept as hidden alias)
+2. **Added `--changed` to test/verify commands** - Now can run `invar test --changed` and `invar verify --changed`
+3. **Fixed `--json` vs `--agent` precedence** - Explicit `--json` now takes precedence over auto-detection
+
+### Verification Levels (updated flag names)
+
+| Level | Flag | Content | Use When |
+|-------|------|---------|----------|
+| STATIC | `--static` | Rules only | Debugging static analysis |
+| STANDARD | (default) | Rules + doctests | Normal development |
+| PROVE | `--prove` | Rules + doctests + CrossHair | Contract changes, releases |
+
+---
+
 ## v3.23 Changes (2025-12-21)
 
 ### Three-Level Verification System
@@ -141,7 +159,7 @@ Simplified from 4 levels to 3 (removed unimplemented THOROUGH):
 
 | Level | Flag | Content | Use When |
 |-------|------|---------|----------|
-| STATIC | `--quick` | Rules only | Debugging static analysis |
+| STATIC | `--quick` (now `--static`) | Rules only | Debugging static analysis |
 | STANDARD | (default) | Rules + doctests | Normal development |
 | PROVE | `--prove` | Rules + doctests + CrossHair | Contract changes, releases |
 

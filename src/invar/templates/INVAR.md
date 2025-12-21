@@ -6,7 +6,7 @@
   │ `invar update`. Add project content to CLAUDE.md instead.   │
   └─────────────────────────────────────────────────────────────┘
 -->
-# The Invar Protocol v3.23
+# The Invar Protocol v3.24
 
 > **"Trade structure for safety."**
 
@@ -66,9 +66,11 @@ More examples: `.invar/examples/`
 
 ```bash
 invar guard              # Static + doctests (default)
-invar guard --quick      # Static only
+invar guard --static     # Static only (skip doctests)
 invar guard --prove      # + CrossHair symbolic verification
 invar guard --changed    # Modified files only
+invar test --changed     # Test git-modified files
+invar verify --changed   # Verify git-modified files
 invar sig <file>         # Show contracts + signatures
 invar map --top 10       # Most-referenced symbols
 ```
@@ -84,4 +86,4 @@ exclude_doctest_lines = true  # Don't count doctests in function size
 
 ---
 
-*Protocol v3.23 | [Guide](docs/INVAR-GUIDE.md) | [Examples](.invar/examples/)*
+*Protocol v3.24 | [Guide](docs/INVAR-GUIDE.md) | [Examples](.invar/examples/)*

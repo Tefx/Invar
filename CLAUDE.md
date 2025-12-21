@@ -4,7 +4,7 @@
 
 This project follows the Invar methodology. See [INVAR.md](./INVAR.md) for the protocol.
 
-**Protocol Version:** v3.23 | **PyPI:** `python-invar` | **Smart Guard:** `invar guard` = static + doctests
+**Protocol Version:** v3.24 | **PyPI:** `python-invar` | **Smart Guard:** `invar guard` = static + doctests
 
 ---
 
@@ -63,14 +63,15 @@ src/invar/
 │   └── utils.py       # Pure utilities
 │
 ├── shell/             # I/O operations, returns Result[T, E]
-│   ├── cli.py         # Typer CLI commands
+│   ├── cli.py         # Typer CLI: guard, map, sig, rules, version
 │   ├── fs.py          # File system operations
 │   ├── config.py      # Config loading
 │   ├── git.py         # Git operations (--changed mode)
 │   ├── perception.py  # map, sig commands
 │   ├── templates.py   # Template operations
 │   ├── init_cmd.py    # init command
-│   └── testing.py     # test, verify commands
+│   ├── test_cmd.py    # test, verify commands
+│   └── testing.py     # Testing utilities
 │
 └── templates/         # Files for invar init
 ```
@@ -140,14 +141,23 @@ invar rules              # List all rules
 
 **Default:** `invar guard` runs STANDARD = static + doctests. **Trust this.**
 
-**Do NOT use --quick unless:**
+**Do NOT use --static unless:**
 - Debugging a specific static analysis issue
 - Performance profiling the guard itself
-- Explicitly testing --quick behavior
+- Explicitly testing --static behavior
 
 **Why?** Default is only 0.4s slower. Bypassing doctests saves 0.4s but risks missing failures.
 
 **Before major changes:** Run `invar guard --prove` for full verification including CrossHair.
+
+### Test and Verify Commands
+
+```bash
+invar test <file>        # Hypothesis property tests on single file
+invar test --changed     # Test all git-modified files
+invar verify <file>      # CrossHair symbolic verification
+invar verify --changed   # Verify all git-modified files
+```
 
 ---
 

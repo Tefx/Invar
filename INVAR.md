@@ -6,7 +6,7 @@
   │ `invar update`. Add project content to CLAUDE.md instead.   │
   └─────────────────────────────────────────────────────────────┘
 -->
-# The Invar Protocol v3.23
+# The Invar Protocol v3.24
 
 > **"Trade structure for safety."** Separate what CAN fail (I/O) from what SHOULD NOT fail (logic).
 
@@ -190,7 +190,7 @@ Guard shows **Code Health** percentage based on warnings. Fix warnings in files 
 ```bash
 invar guard              # Static + doctests (default)
 invar guard --changed    # Modified files only
-invar guard --quick      # Static only (skip doctests)
+invar guard --static     # Static only (skip doctests)
 invar guard --prove      # Static + doctests + CrossHair
 invar guard --explain    # Detailed explanations
 ```
@@ -199,7 +199,7 @@ invar guard --explain    # Detailed explanations
 
 | Level | Flag | Content | Use When |
 |-------|------|---------|----------|
-| **STATIC** | `--quick` | Rules only | Debugging static analysis |
+| **STATIC** | `--static` | Rules only | Debugging static analysis |
 | **STANDARD** | (default) | Rules + doctests | Normal development |
 | **PROVE** | `--prove` | Rules + doctests + CrossHair | Contract changes, releases |
 
@@ -217,7 +217,9 @@ invar guard --explain    # Detailed explanations
 ### Other Commands
 ```bash
 invar test <file>        # Property-based tests (Hypothesis)
+invar test --changed     # Test git-modified files
 invar verify <file>      # Symbolic verification (CrossHair)
+invar verify --changed   # Verify git-modified files
 invar rules              # List all rules with severity
 ```
 
@@ -318,4 +320,4 @@ purity_impure = ["mylib.cached_compute"]  # Has side effects
 
 ---
 
-*Protocol v3.23 — Three-level verification, Agent-Native JSON output, research-validated.*
+*Protocol v3.24 — --static flag, --changed for test/verify, improved flag precedence.*
