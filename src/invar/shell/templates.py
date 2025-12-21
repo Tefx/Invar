@@ -114,6 +114,92 @@ def create_directories(path: Path, console) -> None:
         console.print("[green]Created[/green] src/shell/")
 
 
+def copy_examples_directory(dest: Path, console) -> Result[bool, str]:
+    """Copy examples directory to .invar/examples/. Returns Success(True) if copied."""
+    import shutil
+
+    examples_dest = dest / ".invar" / "examples"
+    if examples_dest.exists():
+        return Success(False)
+
+    try:
+        examples_src = Path(str(resources.files("invar.templates").joinpath("examples")))
+        if not examples_src.exists():
+            return Failure("Examples template directory not found")
+
+        # Create .invar if needed
+        invar_dir = dest / ".invar"
+        if not invar_dir.exists():
+            invar_dir.mkdir()
+
+        shutil.copytree(examples_src, examples_dest)
+        console.print("[green]Created[/green] .invar/examples/ (reference examples)")
+        return Success(True)
+    except OSError as e:
+        return Failure(f"Failed to copy examples: {e}")
+
+
+# Agent configuration for multi-agent support (DX-11)
+AGENT_CONFIGS = {
+    "claude": {
+        "file": "CLAUDE.md",
+        "reference": '> **Protocol:** Follow [INVAR.md](./INVAR.md) for the Invar development methodology.\n',
+        "check_pattern": "INVAR.md",
+    },
+    "cursor": {
+        "file": ".cursorrules",
+        "reference": "Follow the Invar Protocol in INVAR.md.\n\n",
+        "check_pattern": "INVAR.md",
+    },
+    "aider": {
+        "file": ".aider.conf.yml",
+        "reference": "# Follow the Invar Protocol in INVAR.md\nread:\n  - INVAR.md\n",
+        "check_pattern": "INVAR.md",
+    },
+}
+
+
+def detect_agent_configs(path: Path) -> dict[str, str]:
+    """Detect existing agent configuration files. Returns dict of agent -> status."""
+    results = {}
+    for agent, config in AGENT_CONFIGS.items():
+        config_path = path / config["file"]
+        if config_path.exists():
+            content = config_path.read_text()
+            if config["check_pattern"] in content:
+                results[agent] = "configured"
+            else:
+                results[agent] = "found"
+        else:
+            results[agent] = "not_found"
+    return results
+
+
+def add_invar_reference(path: Path, agent: str, console) -> Result[bool, str]:
+    """Add Invar reference to an existing agent config file."""
+    if agent not in AGENT_CONFIGS:
+        return Failure(f"Unknown agent: {agent}")
+
+    config = AGENT_CONFIGS[agent]
+    config_path = path / config["file"]
+
+    if not config_path.exists():
+        return Failure(f"Config file not found: {config['file']}")
+
+    try:
+        content = config_path.read_text()
+        if config["check_pattern"] in content:
+            return Success(False)  # Already configured
+
+        # Prepend reference
+        new_content = config["reference"] + content
+        config_path.write_text(new_content)
+        console.print(f"[green]Updated[/green] {config['file']} (added Invar reference)")
+        return Success(True)
+    except OSError as e:
+        return Failure(f"Failed to update {config['file']}: {e}")
+
+
 def install_hooks(path: Path, console) -> Result[bool, str]:
     """Install pre-commit hooks configuration and activate them."""
     import subprocess

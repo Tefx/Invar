@@ -10,6 +10,21 @@
 - **Status:** Feature complete, research foundation documented
 - **Blockers:** None
 
+## Documentation Structure (DX-11)
+
+| File | Owner | Edit? |
+|------|-------|-------|
+| INVAR.md | Invar | No — use `invar update` |
+| CLAUDE.md | User | Yes |
+| .invar/context.md | User | Yes (this file) |
+| .invar/examples/ | Invar | No |
+
+**Decision rule:** Is this Invar protocol or project-specific?
+- Protocol content → Already in INVAR.md, don't duplicate
+- Project-specific → Add to CLAUDE.md or here
+
+---
+
 ## v3.23 Changes (2025-12-21)
 
 ### Three-Level Verification System

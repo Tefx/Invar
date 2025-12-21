@@ -35,18 +35,24 @@ Contracts (`@pre`/`@post`) are checked at runtime. Violations fail immediately�
 ## Quick Start
 
 ```bash
-pip install python-invar      # Or: pip install python-invar[full] for all features
+pip install python-invar      # Or: pip install python-invar[prove] for all features
 cd your-project
-invar init
+invar init                    # Creates INVAR.md, CLAUDE.md, .invar/examples/
 ```
 
-This creates `INVAR.md` (protocol), `CLAUDE.md` (project rules), and pre-commit hooks.
+**Multi-Agent Support (DX-11):** Invar detects and configures multiple AI agents:
 
 | AI Tool | Configuration |
 |---------|---------------|
-| Claude Code | Works automatically (reads CLAUDE.md) |
-| Cursor | Settings → Rules → "Follow the INVAR.md protocol" |
+| Claude Code | `invar init` creates CLAUDE.md (auto-detected) |
+| Cursor | `invar init` adds reference to .cursorrules if present |
+| Aider | `invar init` adds reference to .aider.conf.yml if present |
 | Others | Add "Follow the INVAR.md protocol" to system prompt |
+
+**File Ownership:**
+- `INVAR.md` — Protocol, managed by Invar (don't edit directly)
+- `CLAUDE.md` — Project config, customize freely
+- `.invar/examples/` — Reference examples, managed by Invar
 
 ---
 
@@ -217,7 +223,9 @@ shell_patterns = ["**/api/**", "**/cli/**", "**/db/**"]
 
 | Document | Content |
 |----------|---------|
-| [INVAR.md](./INVAR.md) | Protocol for AI |
+| [INVAR.md](./INVAR.md) | Protocol (Invar-managed) |
+| [CLAUDE.md](./CLAUDE.md) | Project guide (customize) |
+| [.invar/examples/](./.invar/examples/) | Contract patterns, Core/Shell examples |
 | [docs/VISION.md](./docs/VISION.md) | Design philosophy |
 | [docs/INVAR-GUIDE.md](./docs/INVAR-GUIDE.md) | Detailed guide |
 

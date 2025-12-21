@@ -1,196 +1,41 @@
 # Project Development Guide
 
-> This project uses Invar for verifiable AI-assisted development.
+> **Protocol:** Follow [INVAR.md](./INVAR.md) for the Invar development methodology.
 
----
-
-## Session Start (REQUIRED)
-
-Every session, before any code changes:
+## Session Start
 
 ```
-1. Read INVAR.md (protocol rules)
-2. Read .invar/context.md (current state, recent decisions)
-3. Run: invar guard --changed (baseline check)
-4. Run: invar map --top 10 (understand project structure)
+□ Read INVAR.md (protocol)
+□ Read .invar/context.md (current state)
+□ Run: invar guard --changed
+□ Run: invar map --top 10
 ```
-
----
-
-## Verification (REQUIRED)
-
-After ANY code change, before considering the task complete:
-
-```bash
-invar guard --changed    # Architecture check - MUST PASS
-pytest --doctest-modules # Logic check - MUST PASS
-```
-
-**Do NOT skip verification. Do NOT use `git commit --no-verify`.**
-
-**Smart Guard:** When modifying rule files (`rule_meta.py`, `rules.py`, `contracts.py`, `purity.py`, `pyproject.toml`), pre-commit automatically runs FULL guard instead of `--changed` to verify the entire codebase.
-
-If Guard fails:
-1. Read the violation message and suggestion
-2. Fix the issue
-3. Re-run Guard
-4. Repeat until pass
-
-### Warning Policy
-
-| Situation | Action |
-|-----------|--------|
-| Warning in file YOU modified | Fix it (you touched it, you own it) |
-| Pre-existing warning elsewhere | Note in context.md if blocking |
-| All warnings fixed | ✓ Code Health 100% |
-
-**Goal:** Strive for zero warnings in files you touch.
-
----
-
-## Tool Selection
-
-### Always Use Invar For:
-```bash
-invar sig <file>           # See contracts (UNIQUE: shows @pre/@post)
-invar map --top 20         # Find entry points (UNIQUE: reference count ranking)
-invar guard --changed      # Verify code quality (REQUIRED)
-```
-
-### Task-Based Selection:
-
-| I want to... | Tool | Fallback if unavailable |
-|--------------|------|-------------------------|
-| See contracts/patterns | `invar sig <file>` | — (only Invar shows contracts) |
-| Find hot spots/entry points | `invar map --top 20` | — (only Invar has ref counts) |
-| Find specific symbol | Serena `find_symbol` | `invar map` + grep |
-| Find who calls this | Serena `find_referencing_symbols` | `invar map` (shows ref count) |
-| Edit function body | Serena `replace_symbol_body` | Standard file edit |
-| Rename across project | Serena `rename_symbol` | Manual search & replace |
-| Verify after changes | `invar guard --changed` | — (always use Invar) |
-
-**Rule:** `invar sig` before reading code. Contracts tell you more than implementation.
-
----
 
 ## Project Structure
 
 ```
-src/
-├── core/           # Pure logic - NO I/O imports
-│   └── ...         # @pre/@post required, doctests required
-│
-└── shell/          # I/O operations
-    └── ...         # Returns Result[T, E], calls core/ for logic
+src/{project}/
+├── core/    # Pure logic (@pre/@post required)
+└── shell/   # I/O operations (Result[T, E] required)
 ```
 
-**Import rule:** Shell imports Core. Core never imports Shell.
+## Documentation Structure
+
+| File | Owner | Edit? | Purpose |
+|------|-------|-------|---------|
+| INVAR.md | Invar | No | Protocol (`invar update` to sync) |
+| CLAUDE.md | User | Yes | Project customization (this file) |
+| .invar/context.md | User | Yes | Project state, lessons learned |
+| .invar/examples/ | Invar | No | Reference examples |
+
+## Project-Specific Rules
+
+<!-- Add your team conventions below -->
+
+## Overrides
+
+<!-- Document any exceptions to INVAR.md rules -->
 
 ---
 
-## Writing Code
-
-### Core Functions (REQUIRED pattern)
-
-```python
-from deal import pre, post
-
-@pre(lambda x: x >= 0)  # What must be true BEFORE
-@post(lambda result: result >= 0)  # What must be true AFTER
-def calculate(x: int) -> int:
-    """
-    Brief description.
-
-    >>> calculate(5)  # At least one example
-    10
-    """
-    return x * 2
-```
-
-### Shell Functions (REQUIRED pattern)
-
-```python
-from returns.result import Result, Success, Failure
-
-def load_data(path: str) -> Result[Data, str]:
-    """Load data from file."""
-    try:
-        content = Path(path).read_text()
-        return Success(parse(content))
-    except Exception as e:
-        return Failure(str(e))
-```
-
----
-
-## Workflow: ICIDIV
-
-**I**ntent → **C**ontract → **I**nspect → **D**esign → **I**mplement → **V**erify
-
-**I - Intent**: What needs to be done? Core or Shell?
-
-**C - Contract**: Write signature + @pre/@post + doctest FIRST
-
-**I - Inspect** (use Invar tools):
-- `invar sig <file>` — see contracts and patterns BEFORE reading code
-- `invar map --top 10` — find related high-traffic symbols
-- Check file size (warning at 400+ lines)
-
-**D - Design**: If file > 400 lines, plan extraction before adding code
-
-**I - Implement**: Write code with contracts and doctests
-
-**V - Verify**: `invar guard --changed && pytest --doctest-modules`
-
----
-
-## Size Limits
-
-| Scope | Limit | What to Do When Approaching |
-|-------|-------|----------------------------|
-| File | 500 lines | Guard warns at 80%. Extract related functions to new module |
-| Function | 50 lines | Extract helper functions |
-
-Guard shows extractable groups when files get large:
-```
-→ Extractable groups:
-→ [A] parse, validate, transform (95L) | Deps: re
-→ [B] format_output, write_result (60L) | Deps: none
-```
-
----
-
-## Context Management
-
-After completing a phase or making important decisions:
-
-1. Update `.invar/context.md` with:
-   - What was done
-   - Key decisions made
-   - Lessons learned
-
-This ensures the next session (or summarized context) retains knowledge.
-
----
-
-## Common Pitfalls
-
-| Mistake | Consequence | Prevention |
-|---------|-------------|------------|
-| Skip verification | Bugs in production | Always run Guard + pytest |
-| Empty contract `@pre(lambda: True)` | Guard warns | Write meaningful constraints |
-| I/O in Core | Guard fails | Move to Shell |
-| File > 500 lines | Guard fails | Split before reaching limit |
-| Forget context.md update | Next session loses knowledge | Update after each phase |
-
----
-
-## Dependencies
-
-- `deal` - Design by contract (@pre/@post)
-- `returns` - Result types for error handling
-- `pydantic` - Data validation models
-
----
-
-*Generated by `invar init`. Customize for your project.*
+*Generated by `invar init`. Customize freely.*

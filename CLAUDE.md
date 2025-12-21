@@ -4,7 +4,7 @@
 
 This project follows the Invar methodology. See [INVAR.md](./INVAR.md) for the protocol.
 
-**Protocol Version:** v3.22 | **PyPI:** `python-invar` | **Smart Guard:** `invar guard` = static + doctests
+**Protocol Version:** v3.23 | **PyPI:** `python-invar` | **Smart Guard:** `invar guard` = static + doctests
 
 ---
 
@@ -166,10 +166,25 @@ Use Reviewer for architecture decisions. Use Adversary for security-critical cod
 
 | Document | Purpose |
 |----------|---------|
-| [INVAR.md](./INVAR.md) | Protocol (88 lines) |
+| [INVAR.md](./INVAR.md) | Protocol reference |
 | [docs/VISION.md](./docs/VISION.md) | Design philosophy |
 | [docs/DESIGN.md](./docs/DESIGN.md) | Technical architecture |
 | [.invar/context.md](./.invar/context.md) | Current state, lessons |
+
+---
+
+## Documentation Structure (DX-11)
+
+| File | Owner | Edit? | Purpose |
+|------|-------|-------|---------|
+| INVAR.md | Invar | No | Protocol (`invar update` to sync) |
+| CLAUDE.md | User | Yes | Project customization (this file) |
+| .invar/context.md | User | Yes | Project state, lessons learned |
+| .invar/examples/ | Invar | No | Reference examples |
+
+**Decision rule:** Is this Invar protocol or project-specific?
+- Protocol content → Already in INVAR.md, don't duplicate
+- Project-specific → Add to CLAUDE.md or context.md
 
 ---
 

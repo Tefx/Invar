@@ -1,3 +1,11 @@
+<!--
+  ┌─────────────────────────────────────────────────────────────┐
+  │ INVAR-MANAGED FILE - DO NOT EDIT DIRECTLY                   │
+  │                                                             │
+  │ This file is managed by Invar. Changes may be lost on       │
+  │ `invar update`. Add project content to CLAUDE.md instead.   │
+  └─────────────────────────────────────────────────────────────┘
+-->
 # The Invar Protocol v3.23
 
 > **"Trade structure for safety."** Separate what CAN fail (I/O) from what SHOULD NOT fail (logic).
