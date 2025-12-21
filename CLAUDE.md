@@ -136,7 +136,7 @@ invar guard --explain    # Detailed explanations
 invar rules              # List all rules
 ```
 
-### Guard Usage (DX-09)
+### Guard Usage
 
 **Default:** `invar guard` runs STANDARD = static + doctests. **Trust this.**
 
@@ -147,11 +147,7 @@ invar rules              # List all rules
 
 **Why?** Default is only 0.4s slower. Bypassing doctests saves 0.4s but risks missing failures.
 
-**DX-14: --prove Now Automatic:**
-- Pre-commit: Runs `--prove` automatically (fast after DX-13)
-- CI: Runs `--prove` for full verification
-- First commit: ~5s (verifies changed files)
-- Subsequent: ~2s (cached)
+**Before major changes:** Run `invar guard --prove` for full verification including CrossHair.
 
 ---
 
@@ -177,7 +173,7 @@ Use Reviewer for architecture decisions. Use Adversary for security-critical cod
 
 ---
 
-## Documentation Structure (DX-11)
+## Documentation Structure
 
 | File | Owner | Edit? | Purpose |
 |------|-------|-------|---------|

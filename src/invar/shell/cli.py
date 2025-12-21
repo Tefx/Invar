@@ -87,26 +87,26 @@ def guard(
         False, "--pedantic", help="Show all violations including off-by-default rules"
     ),
     explain: bool = typer.Option(
-        False, "--explain", help="Show detailed explanations and limitations (Phase 9.2 P5)"
+        False, "--explain", help="Show detailed explanations and limitations"
     ),
     changed: bool = typer.Option(
-        False, "--changed", help="Only check git-modified files (Phase 8.1)"
+        False, "--changed", help="Only check git-modified files"
     ),
     agent: bool = typer.Option(
-        False, "--agent", help="Output JSON with fix instructions for agents (Phase 8.2)"
+        False, "--agent", help="Output JSON with fix instructions for agents"
     ),
     json_output: bool = typer.Option(False, "--json", help="Output as JSON"),
-    # DX-06: Smart Guard flags
+    # Smart Guard flags
     quick: bool = typer.Option(
-        False, "--quick", help="Static analysis only, skip doctests (DX-06)"
+        False, "--quick", help="Static analysis only, skip doctests"
     ),
     prove: bool = typer.Option(
-        False, "--prove", help="Force symbolic verification with CrossHair (DX-06)"
+        False, "--prove", help="Add symbolic verification with CrossHair"
     ),
 ) -> None:
     """Check project against Invar architecture rules.
 
-    Smart Guard (DX-06): Automatically runs doctests after static analysis.
+    Smart Guard: Automatically runs doctests after static analysis.
     Use --quick for static-only, --prove for symbolic verification.
     """
     from invar.shell.prove_cache import ProveCache
@@ -383,7 +383,7 @@ def rules(
     """
     List all Guard rules with their metadata.
 
-    Phase 9.2 P3: Shows what each rule detects and its limitations.
+    Shows what each rule detects and its limitations.
     """
     import json as json_lib
 

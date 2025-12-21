@@ -23,7 +23,7 @@
 | **3. Context Economy** | Read map → signatures → implementation (only if needed) | Token efficiency |
 | **4. Decompose First** | Break complex tasks into sub-functions before implementing | Parsel: +75% pass rate |
 | **5. Verify Reflectively** | If fail: Reflect (why?) → Fix → Verify again | Reflexion: +11% success |
-| **6. Integrate Fully** | Verify all feature paths connect; local correctness ≠ global correctness | DX-07: --prove post-mortem |
+| **6. Integrate Fully** | Verify all feature paths connect; local correctness ≠ global correctness | Post-mortem driven |
 
 ## Core/Shell Architecture
 
@@ -205,19 +205,19 @@ invar guard --explain    # Detailed explanations
 
 **Agent JSON output includes `"verification_level"` for transparency.**
 
-**DX-14: `--prove` Now Automatic:**
-- Pre-commit runs `--prove` by default (fast after DX-13)
+**`--prove` runs automatically:**
+- Pre-commit runs `--prove` by default
 - CI runs `--prove` for full verification
-- Manual `--prove` rarely needed (already automatic)
+- Manual `--prove` rarely needed
 
-**DX-13 Performance:**
-- Incremental: Only verifies changed files
+**Incremental verification:**
+- Only verifies changed files
 - First commit: ~5s, subsequent: ~2s (cached)
 
 ### Other Commands
 ```bash
-invar test <file>        # Run doctests on specific file
-invar verify <file>      # CrossHair verification on specific file
+invar test <file>        # Property-based tests (Hypothesis)
+invar verify <file>      # Symbolic verification (CrossHair)
 invar rules              # List all rules with severity
 ```
 
@@ -299,7 +299,7 @@ shell_paths = ["src/myapp/shell"]
 max_file_lines = 500
 max_function_lines = 50
 
-# Exclude doctest lines from function size calculation (DX-03)
+# Exclude doctest lines from function size calculation
 # Useful when comprehensive doctests cause size violations
 exclude_doctest_lines = true
 

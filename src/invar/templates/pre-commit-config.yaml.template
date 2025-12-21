@@ -4,12 +4,12 @@
 # Smart Guard: Detects rule-affecting file changes and runs full guard when needed.
 # This prevents "works locally, fails in CI" issues when rule severity is upgraded.
 #
-# Structure Protection: Warns if INVAR.md is modified directly (DX-11).
+# Structure Protection: Warns if INVAR.md is modified directly.
 
 repos:
   - repo: local
     hooks:
-      # DX-11: Warn if INVAR.md is modified directly
+      # Warn if INVAR.md is modified directly (use --no-verify if intentional)
       - id: invar-md-protected
         name: INVAR.md Protection
         entry: bash -c 'if git diff --cached --name-only | grep -q "^INVAR.md$"; then echo "Warning - INVAR.md was modified directly. Use git commit --no-verify if intentional."; exit 1; fi'
