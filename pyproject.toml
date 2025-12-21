@@ -101,7 +101,7 @@ strict_pure = true          # Detect internal imports and impure calls in Core
 # - Both false (default): Counts all lines
 # WARNING: Don't enable both - doctests are inside docstrings, would double-exclude
 use_code_lines = false
-exclude_doctest_lines = false
+exclude_doctest_lines = true  # DX-15: Reward good doctests, don't penalize documentation
 
 [tool.invar]
 # Protocol governance

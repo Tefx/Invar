@@ -120,6 +120,68 @@ def _get_float(config: dict[str, Any], key: str) -> float | None:
     return None
 
 
+@pre(lambda config, key: isinstance(config, dict) and isinstance(key, str))
+@post(lambda result: result is None or isinstance(result, list))
+def _get_str_list(config: dict[str, Any], key: str) -> list[str] | None:
+    """
+    Safely extract a list of strings from config.
+
+    >>> _get_str_list({"a": ["x", "y"]}, "a")
+    ['x', 'y']
+    >>> _get_str_list({"a": "not list"}, "a") is None
+    True
+    """
+    val = config.get(key)
+    if isinstance(val, (list, tuple)):
+        return [str(x) for x in val if isinstance(x, str)]
+    return None
+
+
+@pre(lambda config: isinstance(config, dict))
+@post(lambda result: result is None or isinstance(result, list))
+def _parse_rule_exclusions(config: dict[str, Any]) -> list[RuleExclusion] | None:
+    """
+    Parse rule_exclusions from config.
+
+    >>> excl = _parse_rule_exclusions({"rule_exclusions": [{"pattern": "**/gen/**", "rules": ["*"]}]})
+    >>> excl[0].pattern
+    '**/gen/**'
+    >>> _parse_rule_exclusions({}) is None
+    True
+    """
+    raw = config.get("rule_exclusions")
+    if not isinstance(raw, list):
+        return None
+    exclusions = []
+    for excl in raw:
+        if isinstance(excl, dict) and "pattern" in excl and "rules" in excl:
+            pattern, rules = excl["pattern"], excl["rules"]
+            if isinstance(pattern, str) and isinstance(rules, list):
+                exclusions.append(RuleExclusion(pattern=str(pattern), rules=[str(r) for r in rules]))
+    return exclusions if exclusions else None
+
+
+@pre(lambda config: isinstance(config, dict))
+@post(lambda result: result is None or isinstance(result, dict))
+def _parse_severity_overrides(config: dict[str, Any]) -> dict[str, str] | None:
+    """
+    Parse severity_overrides from config (merge with defaults).
+
+    >>> _parse_severity_overrides({"severity_overrides": {"foo": "off"}})
+    {'redundant_type_contract': 'off', 'foo': 'off'}
+    >>> _parse_severity_overrides({}) is None
+    True
+    """
+    raw = config.get("severity_overrides")
+    if not isinstance(raw, dict):
+        return None
+    defaults: dict[str, str] = {"redundant_type_contract": "off"}
+    for k, v in raw.items():
+        if isinstance(k, str) and isinstance(v, str):
+            defaults[str(k)] = str(v)
+    return defaults
+
+
 @pre(lambda guard_config: isinstance(guard_config, dict))
 @post(lambda result: isinstance(result, RuleConfig))
 def parse_guard_config(guard_config: dict[str, Any]) -> RuleConfig:
@@ -144,84 +206,36 @@ def parse_guard_config(guard_config: dict[str, Any]) -> RuleConfig:
     """
     kwargs: dict[str, Any] = {}
 
-    val = _get_int(guard_config, "max_file_lines")
-    if val is not None:
-        kwargs["max_file_lines"] = val
+    # Int fields
+    for key in ("max_file_lines", "max_function_lines"):
+        if (val := _get_int(guard_config, key)) is not None:
+            kwargs[key] = val
 
-    val = _get_int(guard_config, "max_function_lines")
-    if val is not None:
-        kwargs["max_function_lines"] = val
+    # Bool fields
+    for key in ("require_contracts", "require_doctests", "strict_pure", "use_code_lines", "exclude_doctest_lines"):
+        if (val := _get_bool(guard_config, key)) is not None:
+            kwargs[key] = val
 
-    if "forbidden_imports" in guard_config:
-        v = guard_config["forbidden_imports"]
-        if isinstance(v, (list, tuple)):
-            kwargs["forbidden_imports"] = tuple(v)
+    # Float fields
+    if (val := _get_float(guard_config, "size_warning_threshold")) is not None:
+        kwargs["size_warning_threshold"] = val
 
-    bval = _get_bool(guard_config, "require_contracts")
-    if bval is not None:
-        kwargs["require_contracts"] = bval
+    # List fields (convert to tuple for forbidden_imports)
+    if (val := _get_str_list(guard_config, "forbidden_imports")) is not None:
+        kwargs["forbidden_imports"] = tuple(val)
+    for key in ("purity_pure", "purity_impure"):
+        if (val := _get_str_list(guard_config, key)) is not None:
+            kwargs[key] = val
 
-    bval = _get_bool(guard_config, "require_doctests")
-    if bval is not None:
-        kwargs["require_doctests"] = bval
-
-    bval = _get_bool(guard_config, "strict_pure")
-    if bval is not None:
-        kwargs["strict_pure"] = bval
-
-    bval = _get_bool(guard_config, "use_code_lines")
-    if bval is not None:
-        kwargs["use_code_lines"] = bval
-
-    bval = _get_bool(guard_config, "exclude_doctest_lines")
-    if bval is not None:
-        kwargs["exclude_doctest_lines"] = bval
-
-    # Phase 9 P1: Parse rule_exclusions
-    if "rule_exclusions" in guard_config:
-        raw_exclusions = guard_config["rule_exclusions"]
-        if isinstance(raw_exclusions, list):
-            exclusions = []
-            for excl in raw_exclusions:
-                if isinstance(excl, dict) and "pattern" in excl and "rules" in excl:
-                    pattern = excl["pattern"]
-                    rules = excl["rules"]
-                    if isinstance(pattern, str) and isinstance(rules, list):
-                        exclusions.append(
-                            RuleExclusion(pattern=str(pattern), rules=[str(r) for r in rules])
-                        )
-            if exclusions:
-                kwargs["rule_exclusions"] = exclusions
-
-    # Phase 9 P2: Parse severity_overrides (merge with defaults)
-    if "severity_overrides" in guard_config:
-        raw_overrides = guard_config["severity_overrides"]
-        if isinstance(raw_overrides, dict):
-            defaults: dict[str, str] = {"redundant_type_contract": "off"}
-            for k, v in raw_overrides.items():
-                if isinstance(k, str) and isinstance(v, str):
-                    defaults[str(k)] = str(v)  # Convert to real Python strings
-            kwargs["severity_overrides"] = defaults
-
-    # Phase 9 P8: Parse size_warning_threshold
-    fval = _get_float(guard_config, "size_warning_threshold")
-    if fval is not None:
-        kwargs["size_warning_threshold"] = fval
-
-    # B4: Parse purity declarations
-    if "purity_pure" in guard_config:
-        v = guard_config["purity_pure"]
-        if isinstance(v, (list, tuple)):
-            kwargs["purity_pure"] = [str(x) for x in v if isinstance(x, str)]
-    if "purity_impure" in guard_config:
-        v = guard_config["purity_impure"]
-        if isinstance(v, (list, tuple)):
-            kwargs["purity_impure"] = [str(x) for x in v if isinstance(x, str)]
+    # Complex fields
+    if (val := _parse_rule_exclusions(guard_config)) is not None:
+        kwargs["rule_exclusions"] = val
+    if (val := _parse_severity_overrides(guard_config)) is not None:
+        kwargs["severity_overrides"] = val
 
     try:
         return RuleConfig(**kwargs)
     except Exception:
-        # Invalid config values - return defaults
         return RuleConfig()
 
 

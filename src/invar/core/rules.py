@@ -40,6 +40,25 @@ FORBIDDEN_IMPORT_ALTERNATIVES: dict[str, str] = {
 RuleFunc = Callable[[FileInfo, RuleConfig], list[Violation]]
 
 
+@post(lambda result: isinstance(result, str))
+def _build_size_suggestion(base: str, extraction_hint: str, func_hint: str) -> str:
+    """Build suggestion message with extraction hints."""
+    if extraction_hint:
+        return f"{base}\nExtractable groups:\n{extraction_hint}"
+    return f"{base}{func_hint}" if func_hint else base
+
+
+@pre(lambda file_info: isinstance(file_info, FileInfo))
+@post(lambda result: isinstance(result, str))
+def _get_func_hint(file_info: FileInfo) -> str:
+    """Get top 5 largest functions as hint string."""
+    funcs = sorted(
+        [(s.name, s.end_line - s.line + 1) for s in file_info.symbols if s.kind in (SymbolKind.FUNCTION, SymbolKind.METHOD)],
+        key=lambda x: -x[1],
+    )[:5]
+    return f" Functions: {', '.join(f'{n}({sz}L)' for n, sz in funcs)}" if funcs else ""
+
+
 @pre(lambda file_info, config: isinstance(file_info, FileInfo))
 def check_file_size(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
     """
@@ -60,57 +79,24 @@ def check_file_size(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
         True
     """
     violations: list[Violation] = []
-    # P18: Show top 5 largest functions in size warnings
-    funcs = sorted(
-        [
-            (s.name, s.end_line - s.line + 1)
-            for s in file_info.symbols
-            if s.kind in (SymbolKind.FUNCTION, SymbolKind.METHOD)
-        ],
-        key=lambda x: -x[1],
-    )[:5]
-    func_hint = f" Functions: {', '.join(f'{n}({sz}L)' for n, sz in funcs)}" if funcs else ""
-
-    # P25: Get extractable groups with dependencies
+    func_hint = _get_func_hint(file_info)
     extraction_hint = format_extraction_hint(file_info)
 
     if file_info.lines > config.max_file_lines:
-        suggestion = "Split into smaller modules."
-        if extraction_hint:
-            suggestion += f"\nExtractable groups:\n{extraction_hint}"
-        elif func_hint:
-            suggestion += func_hint
-        violations.append(
-            Violation(
-                rule="file_size",
-                severity=Severity.ERROR,
-                file=file_info.path,
-                line=None,
-                message=f"File has {file_info.lines} lines (max: {config.max_file_lines})",
-                suggestion=suggestion,
-            )
-        )
-    # Phase 9 P8: Warning at configurable threshold (default 80%)
+        violations.append(Violation(
+            rule="file_size", severity=Severity.ERROR, file=file_info.path, line=None,
+            message=f"File has {file_info.lines} lines (max: {config.max_file_lines})",
+            suggestion=_build_size_suggestion("Split into smaller modules.", extraction_hint, func_hint),
+        ))
     elif config.size_warning_threshold > 0:
-        threshold_lines = int(config.max_file_lines * config.size_warning_threshold)
-        if file_info.lines >= threshold_lines:
+        threshold = int(config.max_file_lines * config.size_warning_threshold)
+        if file_info.lines >= threshold:
             pct = int(file_info.lines / config.max_file_lines * 100)
-            suggestion = "Consider splitting before reaching limit."
-            if extraction_hint:
-                suggestion += f"\nExtractable groups:\n{extraction_hint}"
-            elif func_hint:
-                suggestion += func_hint
-            violations.append(
-                Violation(
-                    rule="file_size_warning",
-                    severity=Severity.WARNING,
-                    file=file_info.path,
-                    line=None,
-                    message=f"File has {file_info.lines} lines ({pct}% of {config.max_file_lines} limit)",
-                    suggestion=suggestion,
-                )
-            )
-
+            violations.append(Violation(
+                rule="file_size_warning", severity=Severity.WARNING, file=file_info.path, line=None,
+                message=f"File has {file_info.lines} lines ({pct}% of {config.max_file_lines} limit)",
+                suggestion=_build_size_suggestion("Consider splitting before reaching limit.", extraction_hint, func_hint),
+            ))
     return violations
 
 

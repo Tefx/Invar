@@ -191,6 +191,50 @@ TYPE_STRATEGIES: dict[type, StrategySpec] = {
 }
 
 
+@post(lambda result: isinstance(result, StrategySpec))
+def _strategy_for_list(args: tuple, strategy_fn: Callable) -> StrategySpec:
+    """Generate strategy for list type."""
+    element_type = args[0] if args else int
+    element_strategy = strategy_fn(element_type)
+    type_name = element_type.__name__ if hasattr(element_type, "__name__") else element_type
+    return StrategySpec("lists", {"elements": element_strategy.to_code()}, f"Lists of {type_name}")
+
+
+@post(lambda result: isinstance(result, StrategySpec))
+def _strategy_for_dict(args: tuple, strategy_fn: Callable) -> StrategySpec:
+    """Generate strategy for dict type."""
+    key_type = args[0] if len(args) > 0 else str
+    val_type = args[1] if len(args) > 1 else int
+    return StrategySpec(
+        "dictionaries",
+        {"keys": strategy_fn(key_type).to_code(), "values": strategy_fn(val_type).to_code()},
+        f"Dict[{key_type}, {val_type}]",
+    )
+
+
+@post(lambda result: isinstance(result, StrategySpec))
+def _strategy_for_set(args: tuple, strategy_fn: Callable) -> StrategySpec:
+    """Generate strategy for set type."""
+    element_type = args[0] if args else int
+    return StrategySpec("frozensets", {"elements": strategy_fn(element_type).to_code()}, f"Sets of {element_type}")
+
+
+@post(lambda result: result is None or isinstance(result, StrategySpec))
+def _strategy_for_numpy(hint: type) -> StrategySpec | None:
+    """Generate strategy for numpy array type, or None if not numpy."""
+    if not _ensure_numpy():
+        return None
+    import numpy as np
+
+    if hint is np.ndarray or (hasattr(hint, "__name__") and "ndarray" in str(hint)):
+        return StrategySpec(
+            "arrays",
+            {"dtype": "np.float64", "shape": "st.integers(1, 100)", "elements": "st.floats(-1e6, 1e6, allow_nan=False)"},
+            "NumPy float64 array",
+        )
+    return None
+
+
 @pre(lambda hint: hint is not None)
 @post(lambda result: isinstance(result, StrategySpec))
 def strategy_from_type(hint: type) -> StrategySpec:
@@ -214,7 +258,7 @@ def strategy_from_type(hint: type) -> StrategySpec:
     origin = get_origin(hint)
     args = get_args(hint)
 
-    # Handle bare list/dict/tuple/set (without type args)
+    # Handle bare container types (without type args)
     if hint is list:
         return StrategySpec("lists", {"elements": "st.integers()"}, "Lists of int")
     if hint is dict:
@@ -224,56 +268,22 @@ def strategy_from_type(hint: type) -> StrategySpec:
     if hint is set:
         return StrategySpec("frozensets", {"elements": "st.integers()"}, "Set of int")
 
+    # Handle generic container types
     if origin is list:
-        element_type = args[0] if args else int
-        element_strategy = strategy_from_type(element_type)
-        return StrategySpec(
-            "lists",
-            {"elements": element_strategy.to_code()},
-            f"Lists of {element_type.__name__ if hasattr(element_type, '__name__') else element_type}",
-        )
-
+        return _strategy_for_list(args, strategy_from_type)
     if origin is dict:
-        key_type = args[0] if len(args) > 0 else str
-        val_type = args[1] if len(args) > 1 else int
-        return StrategySpec(
-            "dictionaries",
-            {
-                "keys": strategy_from_type(key_type).to_code(),
-                "values": strategy_from_type(val_type).to_code(),
-            },
-            f"Dict[{key_type}, {val_type}]",
-        )
-
+        return _strategy_for_dict(args, strategy_from_type)
+    if origin is set:
+        return _strategy_for_set(args, strategy_from_type)
     if origin is tuple:
         if args:
             element_specs = [strategy_from_type(a).to_code() for a in args]
             return StrategySpec("tuples", {"*args": element_specs}, f"Tuple{args}")
         return StrategySpec("tuples", {}, "Empty tuple")
 
-    if origin is set:
-        element_type = args[0] if args else int
-        element_strategy = strategy_from_type(element_type)
-        return StrategySpec(
-            "frozensets",
-            {"elements": element_strategy.to_code()},
-            f"Sets of {element_type}",
-        )
-
     # Check for numpy array
-    if _ensure_numpy():
-        import numpy as np
-
-        if hint is np.ndarray or (hasattr(hint, "__name__") and "ndarray" in str(hint)):
-            return StrategySpec(
-                "arrays",
-                {
-                    "dtype": "np.float64",
-                    "shape": "st.integers(1, 100)",
-                    "elements": "st.floats(-1e6, 1e6, allow_nan=False)",
-                },
-                "NumPy float64 array",
-            )
+    if (numpy_spec := _strategy_for_numpy(hint)) is not None:
+        return numpy_spec
 
     # Fallback to nothing for unknown types
     return StrategySpec("nothing", {}, f"Unknown type: {hint}")
