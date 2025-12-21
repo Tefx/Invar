@@ -1,9 +1,10 @@
 # Invar Pre-commit Hooks
 # Install: pre-commit install
 #
-# Smart Guard: Detects rule-affecting file changes and runs full guard when needed.
-# This prevents "works locally, fails in CI" issues when rule severity is upgraded.
+# Uses --prove by default for full verification (static + doctests + CrossHair).
+# Incremental mode makes this fast: ~5s first commit, ~2s subsequent (cached).
 #
+# Smart Guard: Detects rule-affecting file changes and runs full guard when needed.
 # Structure Protection: Warns if INVAR.md is modified directly.
 
 repos:
@@ -17,8 +18,8 @@ repos:
         pass_filenames: false
         stages: [pre-commit]
 
-      # Invar Guard - Architecture verification (REQUIRED)
-      # Checks: contracts, file size, imports, etc.
+      # Invar Guard with --prove (full verification)
+      # Uses incremental mode: only verifies changed files, caches results
       # Smart mode: runs full guard when rule files change, --changed otherwise
       - id: invar-guard
         name: Invar Guard
@@ -30,27 +31,14 @@ repos:
             if echo "$STAGED" | grep -q "$f"; then FULL=true; break; fi
           done
           if [ "$FULL" = true ]; then
-            echo "⚠️  Rule change detected - running FULL guard"
-            invar guard
+            echo "⚠️  Rule change detected - running FULL guard with --prove"
+            invar guard --prove
           else
-            invar guard --changed
+            invar guard --prove --changed
           fi
         '
         language: python
-        additional_dependencies: ['python-invar']
+        additional_dependencies: ['python-invar[prove]']
         pass_filenames: false
         stages: [pre-commit]
         types: [python]
-
-  # Optional: Uncomment to enable strict doctest verification
-  # Note: Will fail if Python files have no doctests (exit code 5)
-  # - repo: local
-  #   hooks:
-  #     - id: pytest-doctest
-  #       name: Pytest Doctests
-  #       entry: pytest --doctest-modules src/ -q --tb=short
-  #       language: python
-  #       additional_dependencies: ['pytest']
-  #       pass_filenames: false
-  #       stages: [pre-commit]
-  #       types: [python]

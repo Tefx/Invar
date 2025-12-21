@@ -140,14 +140,15 @@ During this session, I:
 1. **Renamed `--quick` to `--static`** - More intuitive naming for static-only verification
 2. **Added `--changed` to test/verify commands** - Now can run `invar test --changed` and `invar verify --changed`
 3. **Fixed `--json` vs `--agent` precedence** - Explicit `--json` now takes precedence over auto-detection
+4. **Pre-commit uses `--prove` by default** - Incremental mode makes full verification fast (~5s first, ~2s cached)
 
-### Verification Levels (updated flag names)
+### Verification Levels
 
 | Level | Flag | Content | Use When |
 |-------|------|---------|----------|
 | STATIC | `--static` | Rules only | Debugging static analysis |
 | STANDARD | (default) | Rules + doctests | Normal development |
-| PROVE | `--prove` | Rules + doctests + CrossHair | Contract changes, releases |
+| PROVE | `--prove` | Rules + doctests + CrossHair | Pre-commit, CI (automatic) |
 
 ---
 

@@ -148,10 +148,7 @@ invar rules              # List all rules
 
 **Why?** Default is only 0.4s slower. Bypassing doctests saves 0.4s but risks missing failures.
 
-**When to use `--prove`:**
-- Before releases or when modifying contracts
-- In CI pipelines (recommended)
-- After significant refactoring
+**`--prove` is automatic:** Pre-commit uses `--prove` by default. Incremental mode makes it fast (~5s first, ~2s cached). Manual `--prove` rarely needed.
 
 ### Test and Verify Commands
 
