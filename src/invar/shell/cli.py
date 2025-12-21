@@ -109,10 +109,12 @@ def guard(
     Smart Guard (DX-06): Automatically runs doctests after static analysis.
     Use --quick for static-only, --prove for symbolic verification.
     """
+    from invar.shell.prove_cache import ProveCache
     from invar.shell.testing import (
         VerificationLevel,
         detect_verification_context,
-        run_crosshair_on_files,
+        get_files_to_prove,
+        run_crosshair_parallel,
         run_doctests_on_files,
     )
 
@@ -220,19 +222,48 @@ def guard(
                 doctest_output = doctest_result.failure()
 
     # DX-06: Run CrossHair if --prove and doctests passed
+    # DX-13: Uses incremental mode, parallel execution, and caching
     if verification_level >= VerificationLevel.PROVE:
         if doctest_passed and static_exit_code == 0:
             if checked_files:
                 # Only verify Core files (pure logic)
                 core_files = [f for f in checked_files if "core" in str(f)]
                 if core_files:
-                    crosshair_result = run_crosshair_on_files(core_files)
-                    if isinstance(crosshair_result, Success):
-                        crosshair_output = crosshair_result.unwrap()
-                        crosshair_passed = crosshair_output.get("status") in ("verified", "skipped")
+                    # DX-13: Automatic incremental mode - only verify changed files
+                    files_to_prove = get_files_to_prove(
+                        path, core_files, changed_only=True
+                    )
+
+                    if not files_to_prove:
+                        crosshair_output = {
+                            "status": "verified",
+                            "reason": "no changes to verify",
+                            "files_verified": 0,
+                            "files_cached": len(core_files),
+                        }
                     else:
-                        crosshair_passed = False
-                        crosshair_output = {"status": "error", "error": crosshair_result.failure()}
+                        # DX-13: Create cache for verification results
+                        cache = ProveCache(path / ".invar" / "cache" / "prove")
+
+                        # DX-13: Run parallel verification with caching
+                        crosshair_result = run_crosshair_parallel(
+                            files_to_prove,
+                            max_iterations=5,  # Fast mode
+                            max_workers=None,  # Auto-detect
+                            cache=cache,
+                        )
+                        if isinstance(crosshair_result, Success):
+                            crosshair_output = crosshair_result.unwrap()
+                            crosshair_passed = crosshair_output.get("status") in (
+                                "verified",
+                                "skipped",
+                            )
+                        else:
+                            crosshair_passed = False
+                            crosshair_output = {
+                                "status": "error",
+                                "error": crosshair_result.failure(),
+                            }
                 else:
                     crosshair_output = {"status": "skipped", "reason": "no core files found"}
             else:
@@ -259,11 +290,34 @@ def guard(
             else:
                 console.print("[dim]⊘ Doctests skipped (static errors)[/dim]")
         # DX-06: Show CrossHair results
+        # DX-13: Enhanced output with stats (verified, cached, time, workers)
         if verification_level >= VerificationLevel.PROVE:
             if static_exit_code == 0 and doctest_passed:
                 status = crosshair_output.get("status", "unknown")
                 if status == "verified":
-                    console.print("[green]✓ CrossHair verified[/green]")
+                    # DX-13: Show detailed stats
+                    verified_count = crosshair_output.get("files_verified", 0)
+                    cached_count = crosshair_output.get("files_cached", 0)
+                    time_ms = crosshair_output.get("total_time_ms", 0)
+                    workers = crosshair_output.get("workers", 1)
+
+                    if verified_count == 0 and cached_count > 0:
+                        # All from cache/no changes
+                        reason = crosshair_output.get("reason", "cached")
+                        console.print(f"[green]✓ CrossHair verified ({reason})[/green]")
+                    elif time_ms > 0:
+                        time_sec = time_ms / 1000
+                        stats = f"{verified_count} verified"
+                        if cached_count > 0:
+                            stats += f", {cached_count} cached"
+                        if workers > 1:
+                            stats += f", {workers} workers"
+                        console.print(
+                            f"[green]✓ CrossHair verified[/green] "
+                            f"[dim]({stats}, {time_sec:.1f}s)[/dim]"
+                        )
+                    else:
+                        console.print("[green]✓ CrossHair verified[/green]")
                 elif status == "skipped":
                     reason = crosshair_output.get("reason", "no files")
                     console.print(f"[dim]⊘ CrossHair skipped ({reason})[/dim]")

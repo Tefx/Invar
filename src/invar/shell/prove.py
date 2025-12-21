@@ -1,23 +1,45 @@
 """
 Proof verification with Hypothesis fallback.
 
-Shell module: DX-12 implementation.
-Provides CrossHair verification with automatic Hypothesis fallback.
+Shell module: DX-12 + DX-13 implementation.
+- DX-12: CrossHair verification with automatic Hypothesis fallback
+- DX-13: Incremental verification, parallel execution, caching
 """
 
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path  # noqa: TC003 - used at runtime
+from typing import TYPE_CHECKING
 
 from returns.result import Failure, Result, Success
 from rich.console import Console
 
+# DX-13: Cache module extracted for file size compliance
+from invar.shell.prove_cache import ProveCache  # noqa: TC001 - runtime usage
+
+# DX-12: Hypothesis fallback (extracted to prove_fallback.py for file size compliance)
+from invar.shell.prove_fallback import (
+    run_hypothesis_fallback as run_hypothesis_fallback,
+)
+from invar.shell.prove_fallback import (
+    run_prove_with_fallback as run_prove_with_fallback,
+)
+
+if TYPE_CHECKING:
+    from typing import Any
+
 console = Console()
 
 
-# CrossHair result status
+# ============================================================
+# CrossHair Status Codes
+# ============================================================
+
+
 class CrossHairStatus:
     """Status codes for CrossHair verification."""
 
@@ -26,17 +48,159 @@ class CrossHairStatus:
     SKIPPED = "skipped"
     TIMEOUT = "timeout"
     ERROR = "error"
+    CACHED = "cached"
 
 
-def run_crosshair_on_files(
-    files: list[Path], timeout: int = 10
+# ============================================================
+# DX-13: Contract Detection
+# ============================================================
+
+
+def has_verifiable_contracts(source: str) -> bool:
+    """
+    Check if source has verifiable contracts.
+
+    DX-13: Hybrid detection - fast string check + AST validation.
+
+    Args:
+        source: Python source code
+
+    Returns:
+        True if file has @pre/@post contracts worth verifying
+    """
+    # Fast path: no contract keywords at all
+    if "@pre" not in source and "@post" not in source:
+        return False
+
+    # AST validation to avoid false positives from comments/strings
+    try:
+        import ast
+
+        tree = ast.parse(source)
+    except SyntaxError:
+        return True  # Conservative: assume has contracts
+
+    contract_decorators = {"pre", "post"}
+
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            for dec in node.decorator_list:
+                if isinstance(dec, ast.Call):
+                    func = dec.func
+                    # @pre(...) or @post(...)
+                    if isinstance(func, ast.Name) and func.id in contract_decorators:
+                        return True
+                    # @deal.pre(...) or @deal.post(...)
+                    if (
+                        isinstance(func, ast.Attribute)
+                        and func.attr in contract_decorators
+                    ):
+                        return True
+
+    return False
+
+
+# ============================================================
+# DX-13: Single File Verification (for parallel execution)
+# ============================================================
+
+
+def _verify_single_file(
+    file_path: str,
+    max_iterations: int = 5,
+) -> dict[str, Any]:
+    """
+    Verify a single file with CrossHair.
+
+    DX-13: Uses --max_uninteresting_iterations for adaptive timeout.
+
+    Args:
+        file_path: Path to Python file
+        max_iterations: Maximum uninteresting iterations (default: 5)
+
+    Returns:
+        Verification result dict
+    """
+    import time
+
+    start_time = time.time()
+
+    cmd = [
+        sys.executable,
+        "-m",
+        "crosshair",
+        "check",
+        file_path,
+        f"--max_uninteresting_iterations={max_iterations}",
+        "--analysis_kind=deal",
+    ]
+
+    try:
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=300,  # 5 minute max per file
+        )
+
+        elapsed_ms = int((time.time() - start_time) * 1000)
+
+        if result.returncode == 0:
+            return {
+                "file": file_path,
+                "status": CrossHairStatus.VERIFIED,
+                "time_ms": elapsed_ms,
+                "stdout": result.stdout,
+            }
+        else:
+            counterexamples = [
+                line.strip()
+                for line in result.stdout.split("\n")
+                if line.strip() and "error" not in line.lower()
+            ]
+            return {
+                "file": file_path,
+                "status": CrossHairStatus.COUNTEREXAMPLE,
+                "time_ms": elapsed_ms,
+                "counterexamples": counterexamples,
+                "stdout": result.stdout,
+            }
+
+    except subprocess.TimeoutExpired:
+        return {
+            "file": file_path,
+            "status": CrossHairStatus.TIMEOUT,
+            "time_ms": 300000,
+        }
+    except Exception as e:
+        return {
+            "file": file_path,
+            "status": CrossHairStatus.ERROR,
+            "error": str(e),
+        }
+
+
+# ============================================================
+# DX-13: Parallel CrossHair Execution
+# ============================================================
+
+
+def run_crosshair_parallel(
+    files: list[Path],
+    max_iterations: int = 5,
+    max_workers: int | None = None,
+    cache: ProveCache | None = None,
 ) -> Result[dict, str]:
     """
-    Run CrossHair symbolic verification on a list of Python files.
+    Run CrossHair on multiple files in parallel.
+
+    DX-13: Parallel execution with caching support.
 
     Args:
         files: List of Python file paths to verify
-        timeout: Timeout per condition in seconds
+        max_iterations: Maximum uninteresting iterations per condition
+        max_workers: Number of parallel workers (default: CPU count)
+        cache: Optional verification cache
 
     Returns:
         Success with verification results or Failure with error message
@@ -45,207 +209,252 @@ def run_crosshair_on_files(
     try:
         import crosshair  # noqa: F401
     except ImportError:
-        return Success({
-            "status": CrossHairStatus.SKIPPED,
-            "reason": "CrossHair not installed (pip install crosshair-tool)",
-            "files": []
-        })
+        return Success(
+            {
+                "status": CrossHairStatus.SKIPPED,
+                "reason": "CrossHair not installed (pip install crosshair-tool)",
+                "files": [],
+            }
+        )
 
     if not files:
-        return Success({
-            "status": CrossHairStatus.SKIPPED,
-            "reason": "no files",
-            "files": []
-        })
+        return Success(
+            {
+                "status": CrossHairStatus.SKIPPED,
+                "reason": "no files",
+                "files": [],
+            }
+        )
 
     # Filter to Python files only
     py_files = [f for f in files if f.suffix == ".py" and f.exists()]
     if not py_files:
-        return Success({
-            "status": CrossHairStatus.SKIPPED,
-            "reason": "no Python files",
-            "files": []
-        })
+        return Success(
+            {
+                "status": CrossHairStatus.SKIPPED,
+                "reason": "no Python files",
+                "files": [],
+            }
+        )
 
-    # Run crosshair on each file, collect results
-    all_counterexamples: list[str] = []
-    verified_files: list[str] = []
-    failed_files: list[str] = []
+    # DX-13: Filter files with contracts and check cache
+    files_to_verify: list[Path] = []
+    cached_results: list[dict] = []
 
     for py_file in py_files:
-        cmd = [
-            sys.executable, "-m", "crosshair", "check",
-            str(py_file), f"--per_condition_timeout={timeout}"
-        ]
+        # Check cache first
+        if cache and cache.is_valid(py_file):
+            entry = cache.get(py_file)
+            if entry:
+                cached_results.append(
+                    {
+                        "file": str(py_file),
+                        "status": CrossHairStatus.CACHED,
+                        "cached_result": entry.result,
+                    }
+                )
+                continue
+
+        # Check if file has contracts
         try:
-            result = subprocess.run(
-                cmd, capture_output=True, text=True, timeout=timeout * 20
+            source = py_file.read_text()
+            if not has_verifiable_contracts(source):
+                cached_results.append(
+                    {
+                        "file": str(py_file),
+                        "status": CrossHairStatus.SKIPPED,
+                        "reason": "no contracts",
+                    }
+                )
+                continue
+        except OSError:
+            pass  # Include file anyway
+
+        files_to_verify.append(py_file)
+
+    # If all files are cached/skipped, return early
+    if not files_to_verify:
+        return Success(
+            {
+                "status": CrossHairStatus.VERIFIED,
+                "verified": [],
+                "cached": [r["file"] for r in cached_results if r["status"] == "cached"],
+                "skipped": [r["file"] for r in cached_results if r["status"] == "skipped"],
+                "files": [str(f) for f in py_files],
+                "from_cache": True,
+            }
+        )
+
+    # Determine worker count
+    if max_workers is None:
+        max_workers = min(len(files_to_verify), os.cpu_count() or 4)
+
+    # Run verification in parallel
+    verified_files: list[str] = []
+    failed_files: list[str] = []
+    all_counterexamples: list[str] = []
+    total_time_ms = 0
+
+    if max_workers > 1 and len(files_to_verify) > 1:
+        # Parallel execution
+        with ProcessPoolExecutor(max_workers=max_workers) as executor:
+            futures = {
+                executor.submit(_verify_single_file, str(f), max_iterations): f
+                for f in files_to_verify
+            }
+
+            for future in as_completed(futures):
+                file_path = futures[future]
+                try:
+                    result = future.result()
+                    _process_verification_result(
+                        result,
+                        file_path,
+                        verified_files,
+                        failed_files,
+                        all_counterexamples,
+                        cache,
+                    )
+                    total_time_ms += result.get("time_ms", 0)
+                except Exception as e:
+                    failed_files.append(f"{file_path} ({e})")
+    else:
+        # Sequential execution (single file or max_workers=1)
+        for py_file in files_to_verify:
+            result = _verify_single_file(str(py_file), max_iterations)
+            _process_verification_result(
+                result,
+                py_file,
+                verified_files,
+                failed_files,
+                all_counterexamples,
+                cache,
             )
-            if result.returncode == 0:
-                verified_files.append(str(py_file))
-            else:
-                failed_files.append(str(py_file))
-                for line in result.stdout.split("\n"):
-                    if line.strip():
-                        all_counterexamples.append(f"{py_file.name}: {line.strip()}")
-        except subprocess.TimeoutExpired:
-            failed_files.append(f"{py_file} (timeout)")
-        except Exception as e:
-            failed_files.append(f"{py_file} ({e})")
+            total_time_ms += result.get("time_ms", 0)
 
-    status = CrossHairStatus.VERIFIED if not failed_files else CrossHairStatus.COUNTEREXAMPLE
-    return Success({
-        "status": status,
-        "verified": verified_files,
-        "failed": failed_files,
-        "counterexamples": all_counterexamples,
-        "files": [str(f) for f in py_files]
-    })
+    # Determine overall status
+    status = (
+        CrossHairStatus.VERIFIED if not failed_files else CrossHairStatus.COUNTEREXAMPLE
+    )
 
-
-def run_hypothesis_fallback(
-    files: list[Path],
-    max_examples: int = 100,
-) -> Result[dict, str]:
-    """
-    Run Hypothesis property tests as fallback when CrossHair skips/times out.
-
-    DX-12: Uses inferred strategies from type hints and @pre contracts.
-
-    Args:
-        files: List of Python file paths to test
-        max_examples: Maximum examples per test
-
-    Returns:
-        Success with test results or Failure with error message
-    """
-    # Check if hypothesis is available
-    try:
-        import hypothesis  # noqa: F401
-    except ImportError:
-        return Success({
-            "status": CrossHairStatus.SKIPPED,
-            "reason": "Hypothesis not installed (pip install hypothesis)",
-            "files": [],
-            "tool": "hypothesis",
-        })
-
-    if not files:
-        return Success({
-            "status": CrossHairStatus.SKIPPED,
-            "reason": "no files",
-            "files": [],
-            "tool": "hypothesis",
-        })
-
-    # Filter to Python files only
-    py_files = [f for f in files if f.suffix == ".py" and f.exists()]
-    if not py_files:
-        return Success({
-            "status": CrossHairStatus.SKIPPED,
-            "reason": "no Python files",
-            "files": [],
-            "tool": "hypothesis",
-        })
-
-    # Use pytest with hypothesis
-    cmd = [
-        sys.executable, "-m", "pytest",
-        "--hypothesis-show-statistics",
-        "--hypothesis-seed=0",  # Reproducible
-        "-x",  # Stop on first failure
-        "--tb=short",
-    ]
-    cmd.extend(str(f) for f in py_files)
-
-    try:
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
-        # Pytest exit codes: 0=passed, 5=no tests collected
-        is_passed = result.returncode in (0, 5)
-        return Success({
-            "status": "passed" if is_passed else "failed",
+    return Success(
+        {
+            "status": status,
+            "verified": verified_files,
+            "failed": failed_files,
+            "cached": [r["file"] for r in cached_results if r.get("status") == "cached"],
+            "skipped": [r["file"] for r in cached_results if r.get("status") == "skipped"],
+            "counterexamples": all_counterexamples,
             "files": [str(f) for f in py_files],
-            "exit_code": result.returncode,
-            "stdout": result.stdout,
-            "stderr": result.stderr,
-            "tool": "hypothesis",
-            "note": "Fallback from CrossHair",
-        })
-    except subprocess.TimeoutExpired:
-        return Failure("Hypothesis timeout (300s)")
-    except Exception as e:
-        return Failure(f"Hypothesis error: {e}")
+            "files_verified": len(files_to_verify),
+            "files_cached": len([r for r in cached_results if r.get("status") == "cached"]),
+            "total_time_ms": total_time_ms,
+            "workers": max_workers,
+        }
+    )
 
 
-def run_prove_with_fallback(
-    files: list[Path],
-    crosshair_timeout: int = 10,
-    hypothesis_max_examples: int = 100,
+def _process_verification_result(
+    result: dict,
+    file_path: Path,
+    verified_files: list[str],
+    failed_files: list[str],
+    all_counterexamples: list[str],
+    cache: ProveCache | None,
+) -> None:
+    """Process a single verification result."""
+    status = result.get("status", "")
+
+    if status == CrossHairStatus.VERIFIED:
+        verified_files.append(str(file_path))
+        if cache:
+            cache.set(
+                file_path,
+                result="verified",
+                time_taken_ms=result.get("time_ms", 0),
+            )
+    elif status == CrossHairStatus.COUNTEREXAMPLE:
+        failed_files.append(str(file_path))
+        for ce in result.get("counterexamples", []):
+            all_counterexamples.append(f"{file_path.name}: {ce}")
+    elif status == CrossHairStatus.TIMEOUT:
+        failed_files.append(f"{file_path} (timeout)")
+    elif status == CrossHairStatus.ERROR:
+        failed_files.append(f"{file_path} ({result.get('error', 'unknown error')})")
+
+
+# ============================================================
+# Original API (backwards compatible)
+# ============================================================
+
+
+def run_crosshair_on_files(
+    files: list[Path], timeout: int = 10
 ) -> Result[dict, str]:
     """
-    Run proof verification with automatic Hypothesis fallback.
+    Run CrossHair symbolic verification on a list of Python files.
 
-    DX-12: Tries CrossHair first, falls back to Hypothesis if:
-    - CrossHair is not installed
-    - CrossHair times out
-    - CrossHair skips the file (library-dependent code)
+    DX-13: Now uses parallel execution with adaptive iterations.
 
     Args:
         files: List of Python file paths to verify
-        crosshair_timeout: Timeout per condition in seconds
-        hypothesis_max_examples: Maximum Hypothesis examples
+        timeout: Ignored (kept for backwards compatibility)
 
     Returns:
         Success with verification results or Failure with error message
     """
-    # Try to infer timeout from first file
-    if files:
-        try:
-            first_file = files[0]
-            content = first_file.read_text()
-            # Simple check for numpy/pandas
-            if any(lib in content for lib in ["numpy", "pandas", "torch"]):
-                crosshair_timeout = 5  # Quick timeout for library code
-        except Exception:
-            pass
-
-    # Step 1: Try CrossHair
-    crosshair_result = run_crosshair_on_files(files, timeout=crosshair_timeout)
-
-    if isinstance(crosshair_result, Failure):
-        # CrossHair failed, try Hypothesis
-        return run_hypothesis_fallback(files, max_examples=hypothesis_max_examples)
-
-    result_data = crosshair_result.unwrap()
-    status = result_data.get("status", "")
-
-    # Step 2: Check if we need fallback
-    needs_fallback = (
-        status == CrossHairStatus.SKIPPED
-        or status == CrossHairStatus.TIMEOUT
-        or "not installed" in result_data.get("reason", "")
+    # DX-13: Use new parallel implementation with fast mode
+    return run_crosshair_parallel(
+        files,
+        max_iterations=5,  # Fast mode
+        max_workers=None,  # Auto-detect
+        cache=None,  # No cache for basic API
     )
 
-    if needs_fallback:
-        # Run Hypothesis as fallback
-        hypothesis_result = run_hypothesis_fallback(
-            files, max_examples=hypothesis_max_examples
-        )
 
-        if isinstance(hypothesis_result, Success):
-            hyp_data = hypothesis_result.unwrap()
-            # Merge results
-            return Success({
-                "status": hyp_data.get("status", "unknown"),
-                "primary_tool": "hypothesis",
-                "crosshair_status": status,
-                "crosshair_reason": result_data.get("reason", ""),
-                "hypothesis_result": hyp_data,
-                "files": [str(f) for f in files],
-                "note": "CrossHair skipped/unavailable, used Hypothesis fallback",
-            })
-        return hypothesis_result
+# ============================================================
+# DX-13: Incremental Verification API
+# ============================================================
 
-    # CrossHair succeeded (verified or found counterexample)
-    result_data["primary_tool"] = "crosshair"
-    return Success(result_data)
+
+def get_files_to_prove(
+    path: Path,
+    all_core_files: list[Path],
+    changed_only: bool = True,
+) -> list[Path]:
+    """
+    Get files that need proof verification.
+
+    DX-13: Automatically filters to changed files when in git repo.
+
+    Args:
+        path: Project root path
+        all_core_files: All core files in project
+        changed_only: If True, only return changed files
+
+    Returns:
+        List of files to verify
+    """
+    if not changed_only:
+        return all_core_files
+
+    # Check if git repo
+    try:
+        from invar.shell.git import get_changed_files, is_git_repo
+
+        if not is_git_repo(path):
+            return all_core_files  # Not a git repo, verify all
+
+        changed_result = get_changed_files(path)
+        if isinstance(changed_result, Failure):
+            return all_core_files  # Git error, verify all
+
+        changed = changed_result.unwrap()
+        if not changed:
+            return []  # No changes, nothing to verify
+
+        # Filter to core files that are changed
+        return [f for f in all_core_files if f in changed]
+
+    except ImportError:
+        return all_core_files  # Git module not available

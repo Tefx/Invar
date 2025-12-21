@@ -19,23 +19,32 @@ from returns.result import Failure, Result, Success
 from rich.console import Console
 
 # DX-12: Import from prove module
+# DX-13: Added get_files_to_prove, run_crosshair_parallel
+# DX-13: ProveCache extracted to prove_cache.py
 from invar.shell.prove import (
     CrossHairStatus,
+    get_files_to_prove,
     run_crosshair_on_files,
+    run_crosshair_parallel,
     run_hypothesis_fallback,
     run_prove_with_fallback,
 )
+from invar.shell.prove_cache import ProveCache
 
 console = Console()
 
 # Re-export for backwards compatibility
+# DX-13: Added get_files_to_prove, run_crosshair_parallel, ProveCache
 __all__ = [
     "CrossHairStatus",
+    "ProveCache",
     "VerificationLevel",
     "VerificationResult",
     "detect_verification_context",
     "get_available_verifiers",
+    "get_files_to_prove",
     "run_crosshair_on_files",
+    "run_crosshair_parallel",
     "run_doctests_on_files",
     "run_hypothesis_fallback",
     "run_prove_with_fallback",
