@@ -5,8 +5,9 @@
 ## Session Start
 
 ```
-□ Read INVAR.md (protocol)
-□ Read .invar/context.md (current state)
+□ Read INVAR.md (protocol - 90 lines)
+□ Read .invar/examples/ (Core/Shell patterns, contracts)
+□ Read .invar/context.md (project state, lessons)
 □ Run: invar guard --changed
 □ Run: invar map --top 10
 ```
@@ -15,9 +16,11 @@
 
 ```
 src/{project}/
-├── core/    # Pure logic (@pre/@post required)
-└── shell/   # I/O operations (Result[T, E] required)
+├── core/    # Pure logic (@pre/@post, doctests, no I/O)
+└── shell/   # I/O operations (Result[T, E] return type)
 ```
+
+**Key insight:** Core receives data (strings), Shell handles I/O (paths, files).
 
 ## Documentation Structure
 
@@ -26,7 +29,14 @@ src/{project}/
 | INVAR.md | Invar | No | Protocol (`invar update` to sync) |
 | CLAUDE.md | User | Yes | Project customization (this file) |
 | .invar/context.md | User | Yes | Project state, lessons learned |
-| .invar/examples/ | Invar | No | Reference examples |
+| .invar/examples/ | Invar | No | **Must read:** Core/Shell patterns |
+
+## Quick Reference
+
+| Zone | Requirements |
+|------|-------------|
+| Core | `@pre`/`@post` + doctests, pure (no I/O) |
+| Shell | Returns `Result[T, E]` from `returns` library |
 
 ## Project-Specific Rules
 

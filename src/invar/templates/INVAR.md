@@ -30,7 +30,7 @@
 
 **Forbidden in Core:** `os`, `sys`, `subprocess`, `pathlib`, `open`, `requests`, `datetime.now`
 
-## Contract Example
+## Core Example (Pure Logic)
 
 ```python
 from deal import pre, post
@@ -48,6 +48,25 @@ def discounted_price(price: float, discount: float) -> float:
 ```
 
 **Self-test:** Can someone else write the exact same function from just @pre/@post + doctests?
+
+## Shell Example (I/O Operations)
+
+```python
+from pathlib import Path
+from returns.result import Result, Success, Failure
+
+def read_config(path: Path) -> Result[dict, str]:
+    """Shell: handles I/O, returns Result for error handling."""
+    try:
+        import json
+        return Success(json.loads(path.read_text()))
+    except FileNotFoundError:
+        return Failure(f"File not found: {path}")
+    except json.JSONDecodeError as e:
+        return Failure(f"Invalid JSON: {e}")
+```
+
+**Pattern:** Shell reads file → passes content to Core → returns Result.
 
 More examples: `.invar/examples/`
 
