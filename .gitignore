@@ -47,3 +47,6 @@ htmlcov/
 # OS
 .DS_Store
 Thumbs.db
+
+# Claude Code local settings (not committed)
+.claude/settings.local.json
