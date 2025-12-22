@@ -70,16 +70,18 @@ def read_config(path: Path) -> Result[dict, str]:
 
 More examples: `.invar/examples/`
 
-## ICIDIV Workflow
+## ICIDIV Workflow (Required Order)
 
 ```
-□ Intent    — What? Core or Shell? Edge cases?
-□ Contract  — @pre/@post + doctests BEFORE code
-□ Inspect   — invar sig <file>, invar map --top 10
-□ Design    — Decompose: leaves first, then compose
-□ Implement — Write code to pass your doctests
-□ Verify    — invar guard. If fail: reflect → fix → verify
+1. Intent    — What? Core or Shell? Edge cases?
+2. Contract  — @pre/@post + doctests BEFORE code
+3. Inspect   — invar sig <file>, invar map --top 10
+4. Design    — Decompose: leaves first, then compose
+5. Implement — Write code to pass your doctests
+6. Verify    — invar guard. If fail: reflect → fix → verify
 ```
+
+**Contract before Implement. Verify after every change. No exceptions.**
 
 ## Commands
 
