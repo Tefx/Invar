@@ -236,35 +236,45 @@ invar map --top 20         # Most-referenced symbols (entry points)
 - `invar map --top` finds **entry points by reference count** (unique feature)
 - **Auto JSON**: All commands auto-detect agent mode (pipe/redirect → JSON, terminal → human-readable)
 
-## Workflow: ICIDIV
+## Session Start (Required)
+
+Before writing any code, execute:
+
+1. **invar_guard** (changed=true) — Check existing violations
+2. **invar_map** (top=10) — Understand code structure
+
+Then read:
+- `.invar/context.md` — Project state, lessons learned
+
+**Skipping these steps → Non-compliant code → Rework required.**
+
+Use MCP tools if available (`invar_guard`, `invar_map`), otherwise use CLI commands.
+
+## Workflow: ICIDIV (Required Order)
 
 **I**ntent → **C**ontract → **I**nspect → **D**esign → **I**mplement → **V**erify
 
 ```
-□ Intent    — What are we trying to achieve? List edge cases.
-
-□ Contract  — Write COMPLETE @pre/@post AND doctests BEFORE code.
-              Include: normal case, boundaries, edge conditions.
-              Self-test: Can this contract regenerate the function?
-
-□ Inspect   — Run: invar sig <file>, invar map --top 10
-
-□ Design    — Decompose into sub-functions:
-              1. List functions (name + description)
-              2. Identify dependencies
-              3. Order: leaves first, then compose
-              4. If file > 400 lines, plan extraction
-
-□ Implement — For each function (in dependency order):
-              Write code to pass the doctests you already wrote
-
-□ Verify    — Run: invar guard (Smart Guard: static + doctests)
-              If violations:
-              1. Reflect: Why did this fail? What was misunderstood?
-              2. Read: contract + doctest + error message
-              3. Fix based on understanding
-              4. Verify again
+1. Intent    — What? Core or Shell? Edge cases?
+2. Contract  — @pre/@post + doctests BEFORE code
+3. Inspect   — invar sig <file>, invar map --top 10
+4. Design    — Decompose: leaves first, then compose
+5. Implement — Write code to pass your doctests
+6. Verify    — invar guard. If fail: reflect → fix → verify
 ```
+
+**Contract before Implement. Verify after every change. No exceptions.**
+
+## Task Completion
+
+A task is complete only when ALL conditions are met:
+- Session Start executed (invar_guard + invar_map, context read)
+- Intent explicitly stated
+- Contract written before implementation
+- Final **invar_guard** passed
+- User requirement satisfied
+
+**Missing any = Task incomplete.**
 
 ## Installation
 

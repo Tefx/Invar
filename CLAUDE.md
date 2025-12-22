@@ -22,14 +22,22 @@ Human (Commander) ──directs──→ Agent (Executor) ──uses──→ In
 
 ---
 
-## Session Start
+## Claude-Specific: Entry Verification
+
+> **Protocol:** Follow [INVAR.md](./INVAR.md) — includes Session Start, ICIDIV workflow, and Task Completion requirements.
+
+Your **first message** for any implementation task MUST include actual output from:
 
 ```
-□ Read INVAR.md (88 lines, compressed protocol)
-□ Read .invar/context.md (current state, lessons learned)
-□ Run: invar guard --changed (verify before changes)
-□ Run: invar map --top 10 (understand project structure)
+invar_guard(changed=true)   # or: invar guard --changed
+invar_map(top=10)           # or: invar map --top 10
 ```
+
+**Use MCP tools if available**, otherwise use CLI commands.
+
+No output = Session not started correctly. Stop, execute tools, restart.
+
+Then read `.invar/context.md` for project state and lessons learned.
 
 ---
 
