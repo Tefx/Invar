@@ -200,6 +200,7 @@ def _extract_contracts(node: ast.FunctionDef | ast.AsyncFunctionDef) -> list[Con
     return contracts
 
 
+@pre(lambda decorator: not isinstance(decorator, ast.Call) or hasattr(decorator, "func"))
 @post(lambda result: result is None or result.kind in ("pre", "post"))
 def _parse_decorator_as_contract(decorator: ast.expr) -> Contract | None:
     """Try to parse a decorator as a contract (@pre or @post)."""
