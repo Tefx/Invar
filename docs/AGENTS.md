@@ -305,6 +305,56 @@ User Request
 
 ---
 
+## MCP Tools (Claude Code)
+
+Invar provides MCP (Model Context Protocol) tools for deeper integration with Claude Code:
+
+### Installation
+
+```bash
+pip install python-invar[mcp]    # Include MCP server
+invar init                        # Auto-configures .claude/settings.json
+```
+
+### Available Tools
+
+| Tool | Replaces | Purpose |
+|------|----------|---------|
+| `invar_guard` | `Bash("pytest ...")` | Smart Guard: static + doctests + optional CrossHair |
+| `invar_sig` | `Read` entire .py file | Show contracts and signatures only |
+| `invar_map` | `Grep` for "def " | Symbol map with reference counts |
+
+### Why MCP?
+
+**Without MCP:** Agent may use generic tools (pytest, Read) instead of Invar tools.
+
+**With MCP:** Agent has direct access to Invar tools with strong prompt guidance:
+
+```
+❌ NEVER: Bash("pytest src/core/parser.py")
+✅ ALWAYS: invar_guard(path="src/core/parser.py")
+
+❌ NEVER: Read entire .py file to understand structure
+✅ ALWAYS: invar_sig(path="src/core/parser.py")
+```
+
+### Manual Setup
+
+If `invar init` doesn't auto-configure, add to `.claude/settings.json`:
+
+```json
+{
+  "mcpServers": {
+    "invar": {
+      "command": "python",
+      "args": ["-m", "invar.mcp"]
+    }
+  }
+}
+```
+
+---
+
 ## Usage
 
 ### Invoking Roles

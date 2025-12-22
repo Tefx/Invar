@@ -42,10 +42,43 @@ invar guard         # Verify code quality
 
 | AI Tool | Configuration |
 |---------|---------------|
-| Claude Code | Creates CLAUDE.md |
+| Claude Code | Creates CLAUDE.md + MCP server |
 | Cursor | Adds to .cursorrules |
 | Aider | Adds to .aider.conf.yml |
 | Others | Add "Follow INVAR.md" to system prompt |
+
+---
+
+## MCP Integration (Claude Code)
+
+For deeper integration with Claude Code, install MCP support:
+
+```bash
+pip install python-invar[mcp]    # Include MCP server
+```
+
+`invar init` automatically configures `.claude/settings.json`:
+
+```json
+{
+  "mcpServers": {
+    "invar": {
+      "command": "python",
+      "args": ["-m", "invar.mcp"]
+    }
+  }
+}
+```
+
+**MCP Tools:**
+
+| Tool | Replaces | Purpose |
+|------|----------|---------|
+| `invar_guard` | `pytest`, `crosshair` | Smart Guard verification |
+| `invar_sig` | Reading entire file | Show contracts and signatures |
+| `invar_map` | `grep` for functions | Symbol map with reference counts |
+
+Manual setup: See `.invar/mcp-setup.md` after running `invar init`.
 
 ---
 
