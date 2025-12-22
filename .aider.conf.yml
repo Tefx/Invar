@@ -1,0 +1,29 @@
+# Invar Project Configuration for Aider
+# This is the Invar project itself
+
+# Auto-read protocol files at session start
+read:
+  - INVAR.md
+  - CLAUDE.md
+  - .invar/context.md
+
+# System prompt addition
+system-prompt: |
+  This is the Invar project itself. Follow INVAR.md and CLAUDE.md.
+
+  Before writing code, execute:
+  1. invar guard --changed
+  2. invar map --top 10
+
+  Workflow (ICIDIV):
+  - Intent: What? Core or Shell?
+  - Contract: @pre/@post + doctests BEFORE code
+  - Inspect: invar sig <file>
+  - Design: Decompose first
+  - Implement: Pass your doctests
+  - Verify: invar guard
+
+  Project-specific:
+  - INVAR.md here is the SOURCE, templates are in src/invar/templates/
+  - Do NOT run invar update on this project
+  - Task complete only when final invar guard passes.

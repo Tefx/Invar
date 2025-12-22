@@ -1,0 +1,26 @@
+# Invar Project Development
+
+This is the Invar project itself. Follow INVAR.md (the source, not a copy) and CLAUDE.md.
+
+## Entry Verification
+
+Before writing any code, execute:
+
+```
+invar_guard (changed=true)   # or: invar guard --changed
+invar_map (top=10)           # or: invar map --top 10
+```
+
+Use MCP tools if available, otherwise use CLI commands.
+
+## Quick Reference
+
+- Core (`src/invar/core/`): @pre/@post contracts, doctests, pure (no I/O)
+- Shell (`src/invar/shell/`): Result[T, E] return type
+- Workflow: Intent -> Contract -> Inspect -> Design -> Implement -> Verify
+- Task complete only when final invar_guard passes.
+
+## Project-Specific
+
+- INVAR.md here is the **source**, templates are in `src/invar/templates/`
+- Do NOT run `invar update` on this project
