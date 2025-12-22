@@ -62,7 +62,7 @@ def run_map(path: Path, top_n: int, json_output: bool) -> Result[None, str]:
 
     # Output
     if json_output:
-        output = format_map_json(perception_map)
+        output = format_map_json(perception_map, top_n)
         console.print(json.dumps(output, indent=2))
     else:
         output = format_map_text(perception_map, top_n)

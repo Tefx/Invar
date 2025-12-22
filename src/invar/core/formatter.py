@@ -94,10 +94,14 @@ def _format_symbol_detail(sr: SymbolRefs, level: str) -> list[str]:
     return lines
 
 
-@pre(lambda perception_map: isinstance(perception_map, PerceptionMap))
-def format_map_json(perception_map: PerceptionMap) -> dict:
+@pre(lambda perception_map, top_n=0: isinstance(perception_map, PerceptionMap) and top_n >= 0)
+def format_map_json(perception_map: PerceptionMap, top_n: int = 0) -> dict:
     """
     Format perception map as JSON-serializable dict.
+
+    Args:
+        perception_map: The perception map to format.
+        top_n: Limit to top N symbols by ref_count. 0 means all symbols.
 
     Examples:
         >>> from invar.core.models import PerceptionMap
@@ -106,11 +110,14 @@ def format_map_json(perception_map: PerceptionMap) -> dict:
         >>> d["project_root"]
         '/test'
     """
+    symbols = perception_map.symbols
+    if top_n > 0:
+        symbols = symbols[:top_n]
     return {
         "project_root": perception_map.project_root,
         "total_files": perception_map.total_files,
         "total_symbols": perception_map.total_symbols,
-        "symbols": [_symbol_refs_to_dict(sr) for sr in perception_map.symbols],
+        "symbols": [_symbol_refs_to_dict(sr) for sr in symbols],
     }
 
 
