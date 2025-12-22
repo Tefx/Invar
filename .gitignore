@@ -54,3 +54,4 @@ Thumbs.db
 # Claude Code local settings (not committed)
 .claude/settings.local.json
 .hypothesis/
+src/invar/core/.invar/
