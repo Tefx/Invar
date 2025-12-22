@@ -24,9 +24,10 @@ def average(items: list[float]) -> float:
 ## Installation
 
 ```bash
-pip install python-invar              # Basic (static + doctests)
-pip install python-invar[prove]       # + CrossHair symbolic verification
+pip install python-invar
 ```
+
+Includes: static analysis, doctests, Hypothesis, CrossHair, and MCP server.
 
 ---
 
@@ -50,12 +51,6 @@ invar guard         # Verify code quality
 ---
 
 ## MCP Integration (Claude Code)
-
-For deeper integration with Claude Code, install MCP support:
-
-```bash
-pip install python-invar[mcp]    # Include MCP server
-```
 
 `invar init` automatically creates `.mcp.json` at project root with the correct Python path:
 

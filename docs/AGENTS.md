@@ -309,11 +309,10 @@ User Request
 
 Invar provides MCP (Model Context Protocol) tools for deeper integration with Claude Code:
 
-### Installation
+### Setup
 
 ```bash
-pip install python-invar[mcp]    # Include MCP server
-invar init                        # Auto-configures .claude/settings.json
+invar init    # Auto-creates .mcp.json at project root
 ```
 
 ### Available Tools

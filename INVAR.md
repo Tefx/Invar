@@ -279,9 +279,10 @@ A task is complete only when ALL conditions are met:
 ## Installation
 
 ```bash
-pip install python-invar              # Basic (static + doctests)
-pip install python-invar[prove]       # + CrossHair symbolic verification
+pip install python-invar
 ```
+
+Includes: static analysis, doctests, Hypothesis, CrossHair, and MCP server.
 
 ## Doctest Best Practices
 
