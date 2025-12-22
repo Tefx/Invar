@@ -340,7 +340,7 @@ invar init                        # Auto-configures .claude/settings.json
 
 ### Manual Setup
 
-If `invar init` doesn't auto-configure, add to `.claude/settings.json`:
+If `invar init` doesn't auto-configure, create `.mcp.json` at project root:
 
 ```json
 {

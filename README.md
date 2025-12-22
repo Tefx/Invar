@@ -57,7 +57,7 @@ For deeper integration with Claude Code, install MCP support:
 pip install python-invar[mcp]    # Include MCP server
 ```
 
-`invar init` automatically configures `.claude/settings.json` with the correct Python path:
+`invar init` automatically creates `.mcp.json` at project root with the correct Python path:
 
 ```json
 {
