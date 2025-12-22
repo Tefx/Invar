@@ -12,16 +12,18 @@ read:
 system-prompt: |
   Follow the Invar Protocol in INVAR.md.
 
-  Before writing code:
-  1. Run: invar guard --changed
-  2. Run: invar map --top 10
+  Before writing code, execute:
+  1. invar_guard (changed=true) - or: invar guard --changed
+  2. invar_map (top=10) - or: invar map --top 10
+
+  Use MCP tools if available, otherwise use CLI commands.
 
   Workflow (ICIDIV):
   - Intent: What? Core or Shell?
   - Contract: @pre/@post + doctests BEFORE code
-  - Inspect: invar sig <file>
+  - Inspect: invar_sig (or: invar sig <file>)
   - Design: Decompose first
   - Implement: Pass your doctests
-  - Verify: invar guard
+  - Verify: invar_guard (or: invar guard)
 
-  Task complete only when invar guard passes.
+  Task complete only when final invar_guard passes.

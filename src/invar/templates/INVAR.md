@@ -72,20 +72,19 @@ More examples: `.invar/examples/`
 
 ## Session Start (Required)
 
-Before writing any code, execute these commands:
+Before writing any code, execute:
 
-```bash
-invar guard --changed    # Check existing violations
-invar map --top 10       # Understand code structure
-```
+1. **invar_guard** (changed=true) — Check existing violations
+2. **invar_map** (top=10) — Understand code structure
 
 Then read:
-1. `.invar/examples/` — Core/Shell patterns
-2. `.invar/context.md` — Project state, lessons learned
+- `.invar/examples/` — Core/Shell patterns
+- `.invar/context.md` — Project state, lessons learned
 
 **Skipping these steps → Non-compliant code → Rework required.**
 
-For agent-specific session format, see your configuration file (CLAUDE.md, .cursorrules, etc).
+Use MCP tools if available (`invar_guard`, `invar_map`), otherwise use CLI commands.
+For agent-specific entry format, see your configuration file (CLAUDE.md, .cursorrules, etc).
 
 ## ICIDIV Workflow (Required Order)
 
@@ -103,10 +102,10 @@ For agent-specific session format, see your configuration file (CLAUDE.md, .curs
 ## Task Completion
 
 A task is complete only when ALL conditions are met:
-- Session Start executed (commands run, context read)
+- Session Start executed (invar_guard + invar_map, context read)
 - Intent explicitly stated
 - Contract written before implementation
-- Final `invar guard` passed
+- Final **invar_guard** passed
 - User requirement satisfied
 
 **Missing any = Task incomplete.**

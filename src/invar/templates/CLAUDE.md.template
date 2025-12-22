@@ -6,14 +6,14 @@
 
 Your **first message** for any implementation task MUST include actual output from:
 
-```bash
-$ invar guard --changed
-[output here]
-$ invar map --top 10
-[output here]
+```
+invar_guard(changed=true)   # or: invar guard --changed
+invar_map(top=10)           # or: invar map --top 10
 ```
 
-No output = Session not started correctly. Stop, run commands, restart.
+**Use MCP tools if available**, otherwise use CLI commands.
+
+No output = Session not started correctly. Stop, execute tools, restart.
 
 This ensures you've followed the Session Start requirements in INVAR.md.
 

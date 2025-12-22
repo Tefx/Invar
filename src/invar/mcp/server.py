@@ -15,12 +15,23 @@ from typing import Any
 from mcp.server import Server
 from mcp.types import TextContent, Tool
 
-# Strong instructions for agent behavior
+# Strong instructions for agent behavior (DX-16 + DX-17)
 INVAR_INSTRUCTIONS = """
 ## Invar Tool Usage (MANDATORY)
 
 This project uses Invar for all code verification and analysis.
 The following rules are MANDATORY, not suggestions.
+
+### Session Start (REQUIRED)
+
+Before writing ANY code, you MUST execute:
+
+1. `invar_guard(changed=true)` — Check existing violations
+2. `invar_map(top=10)` — Understand code structure
+
+Then read `.invar/examples/` and `.invar/context.md` for project context.
+
+**Skipping Session Start → Non-compliant code → Task failure.**
 
 ### Tool Substitution Rules (ENFORCED)
 
@@ -38,6 +49,14 @@ The following rules are MANDATORY, not suggestions.
 ❌ `Bash("crosshair check ...")` - Use invar_guard with prove=true
 ❌ `Read("src/foo.py")` just to see signatures - Use invar_sig instead
 ❌ `Grep` for function definitions - Use invar_map instead
+❌ `Bash("invar guard ...")` - Use invar_guard MCP tool instead
+
+### Task Completion
+
+A task is complete ONLY when:
+- Session Start executed (invar_guard + invar_map)
+- Final `invar_guard` passed
+- User requirement satisfied
 
 ### Why This Matters
 
@@ -48,6 +67,10 @@ The following rules are MANDATORY, not suggestions.
 ### Correct Usage Examples
 
 ```
+# Session Start (REQUIRED before any code)
+invar_guard(changed=true)
+invar_map(top=10)
+
 # Verify code after changes
 invar_guard(changed=true)
 
@@ -56,13 +79,10 @@ invar_guard(changed=true, prove=true)
 
 # Understand a file's structure
 invar_sig(target="src/invar/core/parser.py")
-
-# Find important entry points
-invar_map(top=10)
 ```
 
-IMPORTANT: Using pytest or crosshair directly bypasses Invar's
-integrated verification pipeline and may miss issues.
+IMPORTANT: Using Bash commands for Invar operations bypasses
+the MCP tools and may not follow the correct workflow.
 """
 
 
