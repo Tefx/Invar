@@ -1,6 +1,6 @@
 # DX-17: Workflow Enforcement
 
-**Status:** Proposed
+**Status:** Phase 1 Complete
 **Priority:** High
 **Created:** 2025-12-22
 **Source:** Real-world feedback from invar-python-test-1 project
@@ -175,10 +175,14 @@ Then continue with your implementation.
 
 ## Timeline
 
-- [ ] Phase 1a: Update CLAUDE.md.template
-- [ ] Phase 1b: Update INVAR.md template (minimal)
+- [x] Phase 1a: Update CLAUDE.md.template
+- [x] Phase 1b: Update INVAR.md template (minimal)
 - [ ] Phase 1c: Test with real project
 - [ ] Phase 2: Workflow hook (if Phase 1 insufficient)
+
+## Commits
+
+- `52266ac` - feat(DX-17): Workflow enforcement via stronger templates
 
 ## References
 
