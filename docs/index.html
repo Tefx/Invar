@@ -789,6 +789,67 @@
         </div>
     </section>
 
+    <section class="why-works">
+        <div class="container">
+            <h2>What You Get</h2>
+            <p class="subtitle">Invar handles mechanical correctness. You focus on business logic.</p>
+            <div class="why-grid">
+                <div class="why-card">
+                    <h3><span class="icon">✓</span> Invar Verifies</h3>
+                    <p>
+                        • Contracts exist (boundaries were considered)<br>
+                        • Contracts aren't empty placeholders<br>
+                        • Doctests pass (behavior is proven)<br>
+                        • Pure logic has no I/O calls<br>
+                        • Code size limits respected
+                    </p>
+                </div>
+                <div class="why-card">
+                    <h3><span class="icon">👤</span> You Judge</h3>
+                    <p>
+                        • Whether contracts match business requirements<br>
+                        • Whether edge cases are covered<br>
+                        • Whether the architecture is correct<br>
+                        • Whether to ship
+                    </p>
+                    <div class="feedback-loop mono" style="margin-top: 16px;">
+                        AI writes <span class="arrow">→</span> Invar verifies <span class="arrow">→</span> You review <span class="arrow">→</span> Ship
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="demo" id="demo">
+        <div class="container">
+            <h2>Three Verification Levels</h2>
+            <p class="subtitle">Choose depth based on your needs</p>
+            <div class="terminal">
+                <div class="terminal-header">
+                    <div class="terminal-dot red"></div>
+                    <div class="terminal-dot yellow"></div>
+                    <div class="terminal-dot green"></div>
+                </div>
+                <div class="terminal-body mono">
+                    <div class="terminal-line"><span class="prompt">$</span> <span class="command">invar guard --static</span>  <span class="output"># STATIC: rules only</span></div>
+                    <div class="terminal-line"><span class="success">✓ Static analysis passed</span></div>
+                    <div class="terminal-line"></div>
+                    <div class="terminal-line"><span class="prompt">$</span> <span class="command">invar guard</span>  <span class="output"># STANDARD: rules + doctests (default)</span></div>
+                    <div class="terminal-line"><span class="success">✓ Static analysis passed</span></div>
+                    <div class="terminal-line"><span class="success">✓ Doctests passed</span></div>
+                    <div class="terminal-line"></div>
+                    <div class="terminal-line"><span class="prompt">$</span> <span class="command">invar guard --prove</span>  <span class="output"># PROVE: + CrossHair verification</span></div>
+                    <div class="terminal-line"><span class="success">✓ Static analysis passed</span></div>
+                    <div class="terminal-line"><span class="success">✓ Doctests passed</span></div>
+                    <div class="terminal-line"><span class="success">✓ CrossHair verified</span> <span class="output">(2 files, 4.5s)</span></div>
+                    <div class="terminal-line"></div>
+                    <div class="terminal-line"><span class="output"># --prove runs automatically in pre-commit</span></div>
+                    <div class="terminal-line"><span class="output"># Incremental verification: only changed files (~5s)</span></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <section class="laws" id="laws">
         <div class="container">
             <h2>The Six Laws</h2>
@@ -884,67 +945,6 @@
     80.0
     """</span>
     <span class="function">return</span> price * (1 - discount)
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="why-works">
-        <div class="container">
-            <h2>What You Get</h2>
-            <p class="subtitle">Invar handles mechanical correctness. You focus on business logic.</p>
-            <div class="why-grid">
-                <div class="why-card">
-                    <h3><span class="icon">✓</span> Invar Verifies</h3>
-                    <p>
-                        • Contracts exist (boundaries were considered)<br>
-                        • Contracts aren't empty placeholders<br>
-                        • Doctests pass (behavior is proven)<br>
-                        • Pure logic has no I/O calls<br>
-                        • Code size limits respected
-                    </p>
-                </div>
-                <div class="why-card">
-                    <h3><span class="icon">👤</span> You Judge</h3>
-                    <p>
-                        • Whether contracts match business requirements<br>
-                        • Whether edge cases are covered<br>
-                        • Whether the architecture is correct<br>
-                        • Whether to ship
-                    </p>
-                    <div class="feedback-loop mono" style="margin-top: 16px;">
-                        AI writes <span class="arrow">→</span> Invar verifies <span class="arrow">→</span> You review <span class="arrow">→</span> Ship
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="demo" id="demo">
-        <div class="container">
-            <h2>Three Verification Levels</h2>
-            <p class="subtitle">Choose depth based on your needs</p>
-            <div class="terminal">
-                <div class="terminal-header">
-                    <div class="terminal-dot red"></div>
-                    <div class="terminal-dot yellow"></div>
-                    <div class="terminal-dot green"></div>
-                </div>
-                <div class="terminal-body mono">
-                    <div class="terminal-line"><span class="prompt">$</span> <span class="command">invar guard --static</span>  <span class="output"># STATIC: rules only</span></div>
-                    <div class="terminal-line"><span class="success">✓ Static analysis passed</span></div>
-                    <div class="terminal-line"></div>
-                    <div class="terminal-line"><span class="prompt">$</span> <span class="command">invar guard</span>  <span class="output"># STANDARD: rules + doctests (default)</span></div>
-                    <div class="terminal-line"><span class="success">✓ Static analysis passed</span></div>
-                    <div class="terminal-line"><span class="success">✓ Doctests passed</span></div>
-                    <div class="terminal-line"></div>
-                    <div class="terminal-line"><span class="prompt">$</span> <span class="command">invar guard --prove</span>  <span class="output"># PROVE: + CrossHair verification</span></div>
-                    <div class="terminal-line"><span class="success">✓ Static analysis passed</span></div>
-                    <div class="terminal-line"><span class="success">✓ Doctests passed</span></div>
-                    <div class="terminal-line"><span class="success">✓ CrossHair verified</span> <span class="output">(2 files, 4.5s)</span></div>
-                    <div class="terminal-line"></div>
-                    <div class="terminal-line"><span class="output"># --prove runs automatically in pre-commit</span></div>
-                    <div class="terminal-line"><span class="output"># Incremental verification: only changed files (~5s)</span></div>
                 </div>
             </div>
         </div>

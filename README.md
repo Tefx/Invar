@@ -50,30 +50,25 @@ invar guard         # Verify code quality
 
 ---
 
-## MCP Integration (Claude Code)
+## Core/Shell Architecture
 
-`invar init` automatically creates `.mcp.json` at project root with the correct Python path:
+Invar enforces separation between pure logic and I/O:
 
-```json
-{
-  "mcpServers": {
-    "invar": {
-      "command": "/path/to/your/.venv/bin/python",
-      "args": ["-m", "invar.mcp"]
-    }
-  }
-}
+| Zone | Requirements | Forbidden |
+|------|--------------|-----------|
+| **Core** | `@pre`/`@post` contracts, doctests | I/O imports (os, pathlib, requests...) |
+| **Shell** | `Result[T, E]` returns | - |
+
+```python
+# Core: Pure logic, receives data
+def parse_config(content: str) -> Config:
+    return Config.parse(content)
+
+# Shell: Handles I/O, returns Result
+def load_config(path: Path) -> Result[Config, str]:
+    content = path.read_text()
+    return Success(parse_config(content))
 ```
-
-**MCP Tools:**
-
-| Tool | Replaces | Purpose |
-|------|----------|---------|
-| `invar_guard` | `pytest`, `crosshair` | Smart Guard verification |
-| `invar_sig` | Reading entire file | Show contracts and signatures |
-| `invar_map` | `grep` for functions | Symbol map with reference counts |
-
-Manual setup: See `.invar/mcp-setup.md` after running `invar init`.
 
 ---
 
@@ -109,6 +104,18 @@ invar verify <file>      # Symbolic verification (CrossHair)
 invar verify --changed   # Verify git-modified files
 invar update             # Update managed files
 ```
+
+---
+
+## Verification Levels
+
+| Level | Command | Checks | When to Use |
+|-------|---------|--------|-------------|
+| STATIC | `--static` | Rules only | Debugging static analysis |
+| STANDARD | (default) | Rules + doctests | Normal development |
+| PROVE | `--prove` | + CrossHair | Pre-commit, CI (automatic) |
+
+Pre-commit uses `--prove` by default. Incremental mode makes it fast (~5s first, ~2s cached).
 
 ---
 
@@ -153,50 +160,6 @@ redundant_type_contract = "off"
 
 ---
 
-## Verification Levels
-
-| Level | Command | Checks | When to Use |
-|-------|---------|--------|-------------|
-| STATIC | `--static` | Rules only | Debugging static analysis |
-| STANDARD | (default) | Rules + doctests | Normal development |
-| PROVE | `--prove` | + CrossHair | Pre-commit, CI (automatic) |
-
-Pre-commit uses `--prove` by default. Incremental mode makes it fast (~5s first, ~2s cached).
-
----
-
-## File Ownership
-
-| File | Owner | Edit? |
-|------|-------|-------|
-| `INVAR.md` | Invar | No (`invar update` manages) |
-| `CLAUDE.md` | You | Yes (project config) |
-| `.invar/examples/` | Invar | No (reference only) |
-
----
-
-## Core/Shell Architecture
-
-Invar enforces separation between pure logic and I/O:
-
-| Zone | Requirements | Forbidden |
-|------|--------------|-----------|
-| **Core** | `@pre`/`@post` contracts, doctests | I/O imports (os, pathlib, requests...) |
-| **Shell** | `Result[T, E]` returns | - |
-
-```python
-# Core: Pure logic, receives data
-def parse_config(content: str) -> Config:
-    return Config.parse(content)
-
-# Shell: Handles I/O, returns Result
-def load_config(path: Path) -> Result[Config, str]:
-    content = path.read_text()
-    return Success(parse_config(content))
-```
-
----
-
 ## Rules Reference
 
 | Rule | Severity | What It Checks |
@@ -211,6 +174,43 @@ def load_config(path: Path) -> Result[Config, str]:
 | `param_mismatch` | ERROR | Lambda params ≠ function params |
 
 Full list: `invar rules --explain`
+
+---
+
+## MCP Integration (Claude Code)
+
+`invar init` automatically creates `.mcp.json` at project root with the correct Python path:
+
+```json
+{
+  "mcpServers": {
+    "invar": {
+      "command": "/path/to/your/.venv/bin/python",
+      "args": ["-m", "invar.mcp"]
+    }
+  }
+}
+```
+
+**MCP Tools:**
+
+| Tool | Replaces | Purpose |
+|------|----------|---------|
+| `invar_guard` | `pytest`, `crosshair` | Smart Guard verification |
+| `invar_sig` | Reading entire file | Show contracts and signatures |
+| `invar_map` | `grep` for functions | Symbol map with reference counts |
+
+Manual setup: See `.invar/mcp-setup.md` after running `invar init`.
+
+---
+
+## File Ownership
+
+| File | Owner | Edit? |
+|------|-------|-------|
+| `INVAR.md` | Invar | No (`invar update` manages) |
+| `CLAUDE.md` | You | Yes (project config) |
+| `.invar/examples/` | Invar | No (reference only) |
 
 ---
 
