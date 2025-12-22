@@ -61,6 +61,7 @@ mcp = ["mcp>=1.0"]
 
 [project.scripts]
 invar = "invar.shell.cli:app"
+invar-mcp = "invar.mcp:run_server"
 
 [project.urls]
 Homepage = "https://github.com/tefx/invar"

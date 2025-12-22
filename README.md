@@ -53,22 +53,20 @@ invar guard         # Verify code quality
 
 For deeper integration with Claude Code, install MCP support:
 
-```bash
-pip install python-invar[mcp]    # Include MCP server
-```
-
 `invar init` automatically configures `.claude/settings.json`:
 
 ```json
 {
   "mcpServers": {
     "invar": {
-      "command": "python",
-      "args": ["-m", "invar.mcp"]
+      "command": "uvx",
+      "args": ["--from", "python-invar[mcp]", "invar-mcp"]
     }
   }
 }
 ```
+
+> **Note:** If `uv` is not installed, `invar init` will use the Python path instead.
 
 **MCP Tools:**
 
