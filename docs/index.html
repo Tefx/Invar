@@ -659,6 +659,73 @@
             padding: 2px 6px;
             border-radius: 4px;
         }
+
+        /* Foundations Section */
+        .foundations {
+            padding: 60px 0;
+            background: var(--bg);
+            border-top: 1px solid var(--border);
+        }
+
+        .foundations h2 {
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .foundations .subtitle {
+            text-align: center;
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+        }
+
+        .foundations-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+        }
+
+        .foundation-item {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .foundation-year {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--accent);
+            margin-bottom: 8px;
+        }
+
+        .foundation-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text);
+        }
+
+        .foundation-desc {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .foundation-source {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 8px;
+            font-style: italic;
+        }
+
+        @media (max-width: 900px) {
+            .foundations-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 500px) {
+            .foundations-grid {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body>
@@ -882,6 +949,39 @@
             <p class="mcp-note">
                 <code>invar init</code> creates <code>.mcp.json</code> automatically
             </p>
+        </div>
+    </section>
+
+    <section class="foundations" id="foundations">
+        <div class="container">
+            <h2>Built on Proven Foundations</h2>
+            <p class="subtitle">Invar combines decades of software engineering research</p>
+            <div class="foundations-grid">
+                <div class="foundation-item">
+                    <div class="foundation-year">1986</div>
+                    <div class="foundation-title">Design by Contract</div>
+                    <div class="foundation-desc">@pre/@post contracts from Bertrand Meyer's Eiffel language</div>
+                    <div class="foundation-source">→ deal library</div>
+                </div>
+                <div class="foundation-item">
+                    <div class="foundation-year">1990s</div>
+                    <div class="foundation-title">Functional Purity</div>
+                    <div class="foundation-desc">Core/Shell separation inspired by Haskell's IO monad and FP principles</div>
+                    <div class="foundation-source">→ Core = no I/O</div>
+                </div>
+                <div class="foundation-item">
+                    <div class="foundation-year">1999</div>
+                    <div class="foundation-title">Property Testing</div>
+                    <div class="foundation-desc">QuickCheck pioneered generating test cases from specifications</div>
+                    <div class="foundation-source">→ Hypothesis library</div>
+                </div>
+                <div class="foundation-item">
+                    <div class="foundation-year">2010s</div>
+                    <div class="foundation-title">Symbolic Execution</div>
+                    <div class="foundation-desc">Formal verification through constraint solving and path exploration</div>
+                    <div class="foundation-source">→ CrossHair library</div>
+                </div>
+            </div>
         </div>
     </section>
 
