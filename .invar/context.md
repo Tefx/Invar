@@ -4,7 +4,7 @@
 
 ## Current State
 
-- **PyPI:** `python-invar` v0.7.0
+- **PyPI:** `python-invar` v0.7.1
 - **Protocol:** v3.24 (--static flag, --changed for test/verify, improved flag precedence)
 - **GitHub Pages:** https://tefx.github.io/Invar/
 - **Status:** Feature complete, zero technical debt
@@ -26,6 +26,32 @@
 **Decision rule:** Is this Invar protocol or project-specific?
 - Protocol content → Already in INVAR.md, don't duplicate
 - Project-specific → Add to CLAUDE.md or here
+
+---
+
+## Session 2025-12-22: DX-13 Bug Fix & CrossHair Hardening
+
+### v0.7.1 Release
+
+| Item | Description | Commit |
+|------|-------------|--------|
+| DX-13 Bug Fix | `--prove` incorrectly used git-incremental mode | 2c8d9b9 |
+| CrossHair Hardening | 7 core files fixed for symbolic verification | 2c8d9b9 |
+
+**Bug Fixed:** `changed_only=True` was hardcoded in `guard_helpers.py:137`, causing `--prove` to skip all verification when git showed no changes. Now `--prove` verifies all files; git-incremental only applies when `--changed` flag is explicitly specified.
+
+**CrossHair Counterexamples Fixed (7 files):**
+
+| File | Issue | Fix |
+|------|-------|-----|
+| references.py | `compile('\x00')` TypeError, Pydantic validation | Catch TypeError/ValueError, wrap in try/except |
+| parser.py | `compile('\x00')` TypeError | Catch TypeError/ValueError |
+| tautology.py | `'lambda:'` malformed | Catch TypeError/ValueError |
+| must_use.py | Null bytes, missing func attr | Catch TypeError/ValueError, hasattr checks |
+| lambda_helpers.py | `'lambda'` without colon | Catch TypeError/ValueError |
+| contracts.py | Malformed lambda, missing attrs | Catch TypeError/ValueError, hasattr checks |
+
+**Result:** All 19 core files now pass CrossHair symbolic verification.
 
 ---
 
@@ -481,6 +507,7 @@ Human (Commander) ──directs──→ Agent (Executor) ──uses──→ In
 | 0.5.0 | 2025-12 | DX-11/DX-12, Protocol v3.23, `invar update`, Hypothesis fallback |
 | 0.6.0 | 2025-12 | DX-13/DX-14: Incremental --prove (50x faster), auto-prove in pre-commit/CI |
 | 0.7.0 | 2025-12 | Zero technical debt (75→0 warnings), improved templates |
+| 0.7.1 | 2025-12 | DX-13 bug fix (--prove verification), CrossHair hardening |
 
 ## Tool Priority
 
@@ -547,13 +574,13 @@ gh release create vX.Y.Z --title "vX.Y.Z - Title" --notes "..."
 
 *Run `invar guard` to check current status.*
 
-**Status: Zero warnings** (as of v0.7.0)
+**Status: Zero warnings, Zero counterexamples** (as of v0.7.1)
 
 All 75 warnings resolved through:
 - Configuration: `partial_contract = "off"`, shell size exemptions
 - Refactoring: Extracted helper functions to stay under limits
 - Doctests: Added missing examples
-- CrossHair: Fixed all counterexamples
+- CrossHair: Fixed all counterexamples (v0.7.0 + v0.7.1 hardening)
 
 ---
 
