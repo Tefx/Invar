@@ -19,12 +19,13 @@ from invar.core.formatter import (
     format_signatures_json,
     format_signatures_text,
 )
+from invar.core.models import FileInfo
 from invar.core.parser import parse_source
 from invar.core.references import build_perception_map
 from invar.shell.fs import discover_python_files
 
 if TYPE_CHECKING:
-    from invar.core.models import FileInfo, Symbol
+    from invar.core.models import Symbol
 
 console = Console()
 
@@ -46,6 +47,9 @@ def run_map(path: Path, top_n: int, json_output: bool) -> Result[None, str]:
         try:
             content = py_file.read_text(encoding="utf-8")
             rel_path = str(py_file.relative_to(path))
+            # Skip empty files (e.g., __init__.py)
+            if not content.strip():
+                continue
             file_info = parse_source(content, rel_path)
             if file_info:
                 file_infos.append(file_info)
@@ -95,9 +99,13 @@ def run_sig(target: str, json_output: bool) -> Result[None, str]:
     except (OSError, UnicodeDecodeError) as e:
         return Failure(f"Failed to read {file_path}: {e}")
 
-    file_info = parse_source(content, str(file_path))
-    if file_info is None:
-        return Failure(f"Syntax error in {file_path}")
+    # Handle empty files
+    if not content.strip():
+        file_info = FileInfo(path=str(file_path), lines=0, symbols=[], imports=[], source="")
+    else:
+        file_info = parse_source(content, str(file_path))
+        if file_info is None:
+            return Failure(f"Syntax error in {file_path}")
 
     # Filter symbols
     symbols: list[Symbol] = file_info.symbols

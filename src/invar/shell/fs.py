@@ -10,14 +10,13 @@ from typing import TYPE_CHECKING
 
 from returns.result import Failure, Result, Success
 
+from invar.core.models import FileInfo
 from invar.core.parser import parse_source
 from invar.shell.config import classify_file, get_exclude_paths
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
     from pathlib import Path
-
-    from invar.core.models import FileInfo
 
 
 def discover_python_files(
@@ -70,6 +69,11 @@ def read_and_parse_file(file_path: Path, project_root: Path) -> Result[FileInfo,
         return Failure(f"Failed to read {file_path}: {e}")
 
     relative_path = str(file_path.relative_to(project_root))
+
+    # Skip empty files (e.g., __init__.py) - return empty FileInfo
+    if not content.strip():
+        return Success(FileInfo(path=relative_path, lines=0, symbols=[], imports=[], source=""))
+
     file_info = parse_source(content, relative_path)
 
     if file_info is None:
