@@ -217,6 +217,160 @@ def add_invar_reference(path: Path, agent: str, console) -> Result[bool, str]:
         return Failure(f"Failed to update {config['file']}: {e}")
 
 
+def configure_mcp_server(path: Path, console) -> Result[list[str], str]:
+    """
+    Configure MCP server for AI agents (DX-16).
+
+    Creates:
+    - .invar/mcp-server.json (universal config)
+    - .invar/mcp-setup.md (manual setup instructions)
+    - Updates .claude/settings.json if .claude/ exists
+
+    Returns list of configured agents.
+    """
+    import json
+
+    configured: list[str] = []
+    invar_dir = path / ".invar"
+
+    # Ensure .invar exists
+    if not invar_dir.exists():
+        invar_dir.mkdir()
+
+    # Universal MCP config
+    mcp_config = {
+        "name": "invar",
+        "command": "python",
+        "args": ["-m", "invar.mcp"],
+    }
+
+    # 1. Create universal config
+    mcp_json = invar_dir / "mcp-server.json"
+    if not mcp_json.exists():
+        mcp_json.write_text(json.dumps(mcp_config, indent=2))
+        console.print("[green]Created[/green] .invar/mcp-server.json (MCP config)")
+
+    # 2. Create setup instructions
+    mcp_setup = invar_dir / "mcp-setup.md"
+    if not mcp_setup.exists():
+        mcp_setup.write_text(_MCP_SETUP_TEMPLATE)
+        console.print("[green]Created[/green] .invar/mcp-setup.md (setup guide)")
+
+    # 3. Configure Claude Code if .claude/ exists
+    claude_dir = path / ".claude"
+    if claude_dir.exists():
+        result = _configure_claude_mcp(claude_dir, mcp_config)
+        if isinstance(result, Success) and result.unwrap():
+            console.print("[green]Updated[/green] .claude/settings.json (MCP server)")
+            configured.append("Claude Code")
+        elif isinstance(result, Success):
+            console.print("[dim]Skipped[/dim] .claude/settings.json (already configured)")
+            configured.append("Claude Code")
+
+    return Success(configured)
+
+
+def _configure_claude_mcp(claude_dir: Path, mcp_config: dict) -> Result[bool, str]:
+    """Configure Claude Code MCP settings. Returns True if updated, False if skipped."""
+    import json
+
+    settings_path = claude_dir / "settings.json"
+
+    try:
+        # Load existing settings or create new
+        existing = json.loads(settings_path.read_text()) if settings_path.exists() else {}
+
+        # Check if already configured
+        if "mcpServers" in existing and "invar" in existing.get("mcpServers", {}):
+            return Success(False)
+
+        # Add MCP server config
+        if "mcpServers" not in existing:
+            existing["mcpServers"] = {}
+
+        existing["mcpServers"]["invar"] = {
+            "command": mcp_config["command"],
+            "args": mcp_config["args"],
+        }
+
+        # Write back
+        settings_path.write_text(json.dumps(existing, indent=2))
+        return Success(True)
+
+    except (OSError, json.JSONDecodeError) as e:
+        return Failure(f"Failed to configure Claude MCP: {e}")
+
+
+_MCP_SETUP_TEMPLATE = """\
+# Invar MCP Server Setup
+
+This project includes an MCP server that provides Invar tools to AI agents.
+
+## Available Tools
+
+| Tool | Replaces | Purpose |
+|------|----------|---------|
+| `invar_guard` | `pytest`, `crosshair` | Smart Guard verification |
+| `invar_sig` | `Read` entire file | Show contracts and signatures |
+| `invar_map` | `Grep` for functions | Symbol map with reference counts |
+
+## Configuration
+
+### Claude Code
+
+Add to `.claude/settings.json`:
+
+```json
+{
+  "mcpServers": {
+    "invar": {
+      "command": "python",
+      "args": ["-m", "invar.mcp"]
+    }
+  }
+}
+```
+
+### Cursor
+
+Add to `.cursor/mcp.json` (format may vary):
+
+```json
+{
+  "servers": {
+    "invar": {
+      "command": "python",
+      "args": ["-m", "invar.mcp"]
+    }
+  }
+}
+```
+
+### Other Agents
+
+Refer to your agent's MCP configuration documentation.
+Use the config from `.invar/mcp-server.json`.
+
+## Installation
+
+Ensure the `mcp` package is installed:
+
+```bash
+pip install python-invar[mcp]
+```
+
+## Testing
+
+Run the MCP server directly:
+
+```bash
+python -m invar.mcp
+```
+
+The server communicates via stdio and should be managed by your AI agent.
+"""
+
+
 def install_hooks(path: Path, console) -> Result[bool, str]:
     """Install pre-commit hooks configuration and activate them."""
     import subprocess

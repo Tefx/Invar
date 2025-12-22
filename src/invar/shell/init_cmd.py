@@ -15,6 +15,7 @@ from rich.console import Console
 from invar.shell.templates import (
     add_config,
     add_invar_reference,
+    configure_mcp_server,
     copy_examples_directory,
     copy_template,
     create_directories,
@@ -116,6 +117,18 @@ def init(
     if other_missing:
         console.print("\n[dim]For other agents, add to their config:[/dim]")
         console.print('[dim]  "Follow the Invar Protocol in INVAR.md"[/dim]')
+
+    # Configure MCP server (DX-16)
+    console.print("\n[bold]Configuring MCP server...[/bold]")
+    mcp_result = configure_mcp_server(path, console)
+    if isinstance(mcp_result, Success):
+        configured_agents = mcp_result.unwrap()
+        if configured_agents:
+            console.print(f"[green]MCP ready for:[/green] {', '.join(configured_agents)}")
+        else:
+            console.print("[dim]See .invar/mcp-setup.md for manual MCP configuration[/dim]")
+    else:
+        console.print(f"[yellow]Warning:[/yellow] {mcp_result.failure()}")
 
     # Handle directory creation based on --dirs flag
     if dirs is not False:
