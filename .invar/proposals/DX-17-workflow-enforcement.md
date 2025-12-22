@@ -176,13 +176,15 @@ Then continue with your implementation.
 ## Timeline
 
 - [x] Phase 1a: Update CLAUDE.md.template
-- [x] Phase 1b: Update INVAR.md template (minimal)
-- [ ] Phase 1c: Test with real project
+- [x] Phase 1b: Update INVAR.md template (universal Session Start, Task Completion)
+- [x] Phase 1c: Agent-agnostic templates (.cursorrules, .aider.conf.yml)
+- [ ] Phase 1d: Test with real project
 - [ ] Phase 2: Workflow hook (if Phase 1 insufficient)
 
 ## Commits
 
 - `52266ac` - feat(DX-17): Workflow enforcement via stronger templates
+- (pending) - feat(DX-17): Agent-agnostic workflow enforcement
 
 ## References
 

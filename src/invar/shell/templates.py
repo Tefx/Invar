@@ -139,20 +139,23 @@ def copy_examples_directory(dest: Path, console) -> Result[bool, str]:
         return Failure(f"Failed to copy examples: {e}")
 
 
-# Agent configuration for multi-agent support (DX-11)
+# Agent configuration for multi-agent support (DX-11, DX-17)
 AGENT_CONFIGS = {
     "claude": {
         "file": "CLAUDE.md",
+        "template": "CLAUDE.md.template",
         "reference": '> **Protocol:** Follow [INVAR.md](./INVAR.md) for the Invar development methodology.\n',
         "check_pattern": "INVAR.md",
     },
     "cursor": {
         "file": ".cursorrules",
+        "template": "cursorrules.template",
         "reference": "Follow the Invar Protocol in INVAR.md.\n\n",
         "check_pattern": "INVAR.md",
     },
     "aider": {
         "file": ".aider.conf.yml",
+        "template": "aider.conf.yml.template",
         "reference": "# Follow the Invar Protocol in INVAR.md\nread:\n  - INVAR.md\n",
         "check_pattern": "INVAR.md",
     },
@@ -215,6 +218,34 @@ def add_invar_reference(path: Path, agent: str, console) -> Result[bool, str]:
         return Success(True)
     except OSError as e:
         return Failure(f"Failed to update {config['file']}: {e}")
+
+
+def create_agent_config(path: Path, agent: str, console) -> Result[bool, str]:
+    """
+    Create agent config from template (DX-17).
+
+    Creates full template file for agents that don't have an existing config.
+    """
+    if agent not in AGENT_CONFIGS:
+        return Failure(f"Unknown agent: {agent}")
+
+    config = AGENT_CONFIGS[agent]
+    config_path = path / config["file"]
+
+    if config_path.exists():
+        return Success(False)  # Already exists
+
+    # Use template if available
+    template_name = config.get("template")
+    if template_name:
+        result = copy_template(template_name, path, config["file"])
+        if isinstance(result, Success) and result.unwrap():
+            console.print(f"[green]Created[/green] {config['file']} (Invar workflow enforcement)")
+            return Success(True)
+        elif isinstance(result, Failure):
+            return result
+
+    return Success(False)
 
 
 def configure_mcp_server(path: Path, console) -> Result[list[str], str]:

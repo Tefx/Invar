@@ -70,6 +70,23 @@ def read_config(path: Path) -> Result[dict, str]:
 
 More examples: `.invar/examples/`
 
+## Session Start (Required)
+
+Before writing any code, execute these commands:
+
+```bash
+invar guard --changed    # Check existing violations
+invar map --top 10       # Understand code structure
+```
+
+Then read:
+1. `.invar/examples/` — Core/Shell patterns
+2. `.invar/context.md` — Project state, lessons learned
+
+**Skipping these steps → Non-compliant code → Rework required.**
+
+For agent-specific session format, see your configuration file (CLAUDE.md, .cursorrules, etc).
+
 ## ICIDIV Workflow (Required Order)
 
 ```
@@ -82,6 +99,17 @@ More examples: `.invar/examples/`
 ```
 
 **Contract before Implement. Verify after every change. No exceptions.**
+
+## Task Completion
+
+A task is complete only when ALL conditions are met:
+- Session Start executed (commands run, context read)
+- Intent explicitly stated
+- Contract written before implementation
+- Final `invar guard` passed
+- User requirement satisfied
+
+**Missing any = Task incomplete.**
 
 ## Commands
 

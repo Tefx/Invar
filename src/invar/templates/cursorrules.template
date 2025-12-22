@@ -1,0 +1,23 @@
+# Invar Protocol
+
+Follow the Invar Protocol in INVAR.md — includes Session Start, ICIDIV workflow, and Task Completion requirements.
+
+## Cursor-Specific: Entry Verification
+
+Before writing any code, run and show output from:
+
+```
+invar guard --changed
+invar map --top 10
+```
+
+Then read .invar/examples/ and .invar/context.md.
+
+Skipping these steps leads to non-compliant code.
+
+## Quick Reference
+
+- Core (`**/core/**`): @pre/@post contracts, doctests, pure (no I/O)
+- Shell (`**/shell/**`): Result[T, E] return type
+- Workflow: Intent → Contract → Inspect → Design → Implement → Verify
+- Contract before Implement. No exceptions.

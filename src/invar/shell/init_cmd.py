@@ -18,6 +18,7 @@ from invar.shell.templates import (
     configure_mcp_server,
     copy_examples_directory,
     copy_template,
+    create_agent_config,
     create_directories,
     detect_agent_configs,
     install_hooks,
@@ -88,35 +89,19 @@ def init(
     else:
         agent_status = agent_result.unwrap()
 
-    # Handle existing configs
+    # Handle agent configs (DX-11, DX-17)
     for agent, status in agent_status.items():
         if status == "configured":
             console.print(f"  [green]✓[/green] {agent}: already configured")
         elif status == "found":
-            # Ask before modifying
+            # Existing file without Invar reference - ask before modifying
             if yes or typer.confirm(f"  Add Invar reference to {agent} config?", default=True):
                 add_invar_reference(path, agent, console)
             else:
                 console.print(f"  [yellow]○[/yellow] {agent}: skipped")
-
-    # Handle missing CLAUDE.md specifically
-    claude_status = agent_status.get("claude", "not_found")
-    if claude_status == "not_found":
-        # Create CLAUDE.md from template
-        result = copy_template("CLAUDE.md.template", path, "CLAUDE.md")
-        if isinstance(result, Success) and result.unwrap():
-            console.print("[green]Created[/green] CLAUDE.md (project guide)")
-        elif isinstance(result, Failure):
-            console.print(f"[yellow]Warning:[/yellow] {result.failure()}")
-
-    # Show guidance for other agents
-    other_missing = [
-        agent for agent, status in agent_status.items()
-        if status == "not_found" and agent != "claude"
-    ]
-    if other_missing:
-        console.print("\n[dim]For other agents, add to their config:[/dim]")
-        console.print('[dim]  "Follow the Invar Protocol in INVAR.md"[/dim]')
+        elif status == "not_found":
+            # Create full template with workflow enforcement (DX-17)
+            create_agent_config(path, agent, console)
 
     # Configure MCP server (DX-16)
     console.print("\n[bold]Configuring MCP server...[/bold]")
