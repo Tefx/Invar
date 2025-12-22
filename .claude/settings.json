@@ -1,8 +1,0 @@
-{
-  "mcpServers": {
-    "invar": {
-      "command": "/Users/tefx/Projects/Invar/.venv/bin/python",
-      "args": ["-m", "invar.mcp"]
-    }
-  }
-}
