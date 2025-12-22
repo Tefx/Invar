@@ -56,6 +56,8 @@ dev = [
 test = ["hypothesis>=6.0"]
 prove = ["crosshair-tool>=0.0.60", "hypothesis>=6.0"]
 full = ["hypothesis>=6.0", "crosshair-tool>=0.0.60"]
+# DX-16: MCP server for agent tool enforcement
+mcp = ["mcp>=1.0"]
 
 [project.scripts]
 invar = "invar.shell.cli:app"
