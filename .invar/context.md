@@ -29,6 +29,49 @@
 
 ---
 
+## Session 2025-12-22: DX-15 & DX-12-B Implementation
+
+### DX-15: Auto Verification Level Selection
+
+**Purpose:** Smart default verification level based on context.
+
+**Logic:**
+- CI environment → PROVE level (always)
+- `--changed` mode with ≤3 files → PROVE (fast enough)
+- Otherwise → STANDARD (static + doctests)
+
+**Files Modified:**
+- `cli.py:_determine_verification_level()` - Core auto-selection logic
+- `testing.py:detect_verification_context()` - Updated docs, remains as fallback
+
+### DX-12-B: @strategy Decorator
+
+**Purpose:** Escape hatch for custom Hypothesis strategies.
+
+**Usage:**
+```python
+from invar.decorators import strategy
+
+@strategy(x="floats(min_value=1e-10, max_value=1e10)")
+def sqrt(x: float) -> float:
+    return x ** 0.5
+```
+
+**Implementation:**
+- `decorators.py`: Added `@strategy` decorator storing `__invar_strategies__`
+- `hypothesis_strategies.py`:
+  - Added `raw_code` field to `StrategySpec`
+  - Added `_get_user_strategies()` to extract decorator strategies
+  - Modified `infer_strategies_for_function()` to prioritize user strategies
+
+**Refactoring:**
+- Extracted `timeout_inference.py` from `hypothesis_strategies.py` (file size reduction)
+- Split `infer_strategies_for_function` into `_refine_all_strategies` and `_get_param_type`
+
+**Commit:** 2630e3a
+
+---
+
 ## Session 2025-12-22: Proposal Status Update & CI Fix
 
 ### Proposal Documentation Sync
