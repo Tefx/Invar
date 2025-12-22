@@ -11,7 +11,7 @@ from invar.core.models import FileInfo, RuleConfig, Severity, SymbolKind, Violat
 from invar.core.suggestions import format_suggestion_for_violation
 
 
-@pre(lambda expression: "lambda" in expression or not expression.strip())
+@pre(lambda expression: ("lambda" in expression and ":" in expression) or not expression.strip())
 def is_semantic_tautology(expression: str) -> tuple[bool, str]:
     """Check if a contract expression is a semantic tautology.
 
@@ -44,7 +44,7 @@ def is_semantic_tautology(expression: str) -> tuple[bool, str]:
         if lambda_node is None:
             return (False, "")
         return _check_tautology_patterns(lambda_node.body)
-    except SyntaxError:
+    except (SyntaxError, TypeError, ValueError):
         return (False, "")
 
 

@@ -174,7 +174,8 @@ def guard(
 
     if verification_level >= VerificationLevel.PROVE:
         crosshair_passed, crosshair_output = run_crosshair_phase(
-            path, checked_files, doctest_passed, static_exit_code
+            path, checked_files, doctest_passed, static_exit_code,
+            changed_mode=changed,  # DX-13: Only git-incremental when --changed
         )
 
     # Output results

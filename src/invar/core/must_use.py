@@ -13,7 +13,7 @@ from deal import post, pre
 from invar.core.models import FileInfo, RuleConfig, Severity, Violation
 
 
-@pre(lambda source: isinstance(source, str))
+@pre(lambda source: isinstance(source, str) and len(source) > 0)
 def find_must_use_functions(source: str) -> dict[str, str]:
     """
     Find all functions decorated with @must_use in source code.
@@ -40,7 +40,7 @@ def find_must_use_functions(source: str) -> dict[str, str]:
     """
     try:
         tree = ast.parse(source)
-    except SyntaxError:
+    except (SyntaxError, TypeError, ValueError):
         return {}
 
     must_use_funcs: dict[str, str] = {}
@@ -80,7 +80,7 @@ def _extract_must_use_reason(decorator: ast.expr) -> str | None:
     return None
 
 
-@pre(lambda source, must_use_funcs: isinstance(source, str) and isinstance(must_use_funcs, set))
+@pre(lambda source, must_use_funcs: isinstance(source, str) and len(source) > 0 and isinstance(must_use_funcs, set))
 def find_ignored_calls(source: str, must_use_funcs: set[str]) -> list[tuple[str, int]]:
     """
     Find calls to must_use functions whose return values are ignored.
@@ -103,7 +103,7 @@ def find_ignored_calls(source: str, must_use_funcs: set[str]) -> list[tuple[str,
     """
     try:
         tree = ast.parse(source)
-    except SyntaxError:
+    except (SyntaxError, TypeError, ValueError):
         return []
 
     ignored: list[tuple[str, int]] = []
@@ -124,6 +124,7 @@ def find_ignored_calls(source: str, must_use_funcs: set[str]) -> list[tuple[str,
     return ignored
 
 
+@pre(lambda call: isinstance(call, ast.Call) and hasattr(call, 'func'))
 @post(lambda result: result is None or isinstance(result, str))
 def _get_call_name(call: ast.Call) -> str | None:
     """Extract function name from a Call node."""

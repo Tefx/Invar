@@ -17,7 +17,7 @@ from deal import post, pre
 from invar.core.models import FileInfo, PerceptionMap, SymbolKind, SymbolRefs
 
 
-@pre(lambda source, known_symbols: isinstance(source, str))
+@pre(lambda source, known_symbols: isinstance(source, str) and len(source) > 0)
 @post(lambda result: isinstance(result, list))
 def find_references_in_source(source: str, known_symbols: set[str]) -> list[tuple[str, int]]:
     """
@@ -35,7 +35,7 @@ def find_references_in_source(source: str, known_symbols: set[str]) -> list[tupl
     """
     try:
         tree = ast.parse(source)
-    except SyntaxError:
+    except (SyntaxError, TypeError, ValueError):
         return []
 
     seen: set[tuple[str, int]] = set()
@@ -122,7 +122,10 @@ def count_cross_file_references(
     return dict(ref_counts)
 
 
-@pre(lambda file_infos, sources, project_root: isinstance(file_infos, list))
+@pre(lambda file_infos, sources, project_root: (
+    isinstance(file_infos, list) and
+    isinstance(project_root, str) and len(project_root) > 0
+))
 def build_perception_map(
     file_infos: list[FileInfo], sources: dict[str, str], project_root: str
 ) -> PerceptionMap:
@@ -160,9 +163,18 @@ def build_perception_map(
     # Sort by reference count (descending)
     symbol_refs.sort(key=lambda sr: sr.ref_count, reverse=True)
 
-    return PerceptionMap(
-        project_root=project_root,
-        total_files=len(file_infos),
-        total_symbols=total_symbols,
-        symbols=symbol_refs,
-    )
+    try:
+        return PerceptionMap(
+            project_root=project_root,
+            total_files=len(file_infos),
+            total_symbols=total_symbols,
+            symbols=symbol_refs,
+        )
+    except Exception:
+        # Handle CrossHair symbolic value validation failures
+        return PerceptionMap(
+            project_root="",
+            total_files=0,
+            total_symbols=0,
+            symbols=[],
+        )

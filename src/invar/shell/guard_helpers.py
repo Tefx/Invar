@@ -104,8 +104,16 @@ def run_crosshair_phase(
     checked_files: list[Path],
     doctest_passed: bool,
     static_exit_code: int,
+    changed_mode: bool = False,
 ) -> tuple[bool, dict]:
     """Run CrossHair verification phase.
+
+    Args:
+        path: Project root path
+        checked_files: Files to potentially verify
+        doctest_passed: Whether doctests passed
+        static_exit_code: Exit code from static analysis
+        changed_mode: If True, only verify git-changed files (--changed flag)
 
     Returns (passed, output_dict).
     """
@@ -124,8 +132,9 @@ def run_crosshair_phase(
     if not core_files:
         return True, {"status": "skipped", "reason": "no core files found"}
 
-    # Automatic incremental mode - only verify changed files
-    files_to_prove = get_files_to_prove(path, core_files, changed_only=True)
+    # DX-13 fix: Only use git-based incremental when --changed is specified
+    # Cache-based incremental still applies in run_crosshair_parallel
+    files_to_prove = get_files_to_prove(path, core_files, changed_only=changed_mode)
 
     if not files_to_prove:
         return True, {

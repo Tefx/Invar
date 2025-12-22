@@ -5,7 +5,7 @@ from __future__ import annotations
 import ast
 import re
 
-from deal import post
+from deal import post, pre
 
 
 @post(lambda result: result is None or isinstance(result, ast.Lambda))
@@ -51,6 +51,7 @@ def extract_annotations(signature: str) -> dict[str, str]:
     return annotations
 
 
+@pre(lambda expression: isinstance(expression, str))
 @post(lambda result: result is None or isinstance(result, list))
 def extract_lambda_params(expression: str) -> list[str] | None:
     """Extract parameter names from a lambda expression.
@@ -69,7 +70,7 @@ def extract_lambda_params(expression: str) -> list[str] | None:
         tree = ast.parse(expression, mode="eval")
         lambda_node = find_lambda(tree)
         return [arg.arg for arg in lambda_node.args.args] if lambda_node else None
-    except SyntaxError:
+    except (SyntaxError, TypeError, ValueError):
         return None
 
 

@@ -23,7 +23,7 @@ from invar.core.tautology import check_semantic_tautology as check_semantic_taut
 from invar.core.tautology import is_semantic_tautology as is_semantic_tautology
 
 
-@pre(lambda expression: "lambda" in expression or not expression.strip())
+@pre(lambda expression: ("lambda" in expression and ":" in expression) or not expression.strip())
 def is_empty_contract(expression: str) -> bool:
     """Check if a contract expression is always True (tautological).
 
@@ -43,11 +43,11 @@ def is_empty_contract(expression: str) -> bool:
             and isinstance(lambda_node.body, ast.Constant)
             and lambda_node.body.value is True
         )
-    except SyntaxError:
+    except (SyntaxError, TypeError, ValueError):
         return False
 
 
-@pre(lambda expression, annotations: "lambda" in expression or not expression.strip())
+@pre(lambda expression, annotations: ("lambda" in expression and ":" in expression) or not expression.strip())
 def is_redundant_type_contract(expression: str, annotations: dict[str, str]) -> bool:
     """Check if a contract only checks types already in annotations.
 
@@ -68,22 +68,25 @@ def is_redundant_type_contract(expression: str, annotations: dict[str, str]) -> 
         if checks is None:
             return False
         return all(p in annotations and _types_match(annotations[p], t) for p, t in checks)
-    except SyntaxError:
+    except (SyntaxError, TypeError, ValueError):
         return False
 
 
+@pre(lambda node: isinstance(node, ast.expr))
 @post(lambda result: result is None or isinstance(result, list))
 def _extract_isinstance_checks(node: ast.expr) -> list[tuple[str, str]] | None:
     """Extract isinstance checks. Returns None if other logic present."""
-    if isinstance(node, ast.Call):
+    if isinstance(node, ast.Call) and hasattr(node, 'func'):
         check = _parse_isinstance_call(node)
         return [check] if check else None
-    if isinstance(node, ast.BoolOp) and isinstance(node.op, ast.And):
-        checks = [_parse_isinstance_call(v) for v in node.values if isinstance(v, ast.Call)]
+    if isinstance(node, ast.BoolOp) and hasattr(node, 'op') and isinstance(node.op, ast.And):
+        valid_calls = [v for v in node.values if isinstance(v, ast.Call) and hasattr(v, 'func') and hasattr(v, 'args')]
+        checks = [_parse_isinstance_call(v) for v in valid_calls]
         return checks if len(checks) == len(node.values) and all(checks) else None
     return None
 
 
+@pre(lambda node: isinstance(node, ast.Call) and hasattr(node, 'func') and hasattr(node, 'args'))
 @post(lambda result: result is None or (isinstance(result, tuple) and len(result) == 2))
 def _parse_isinstance_call(node: ast.Call) -> tuple[str, str] | None:
     """Parse isinstance(x, Type) call. Returns (param, type) or None."""
@@ -116,7 +119,7 @@ def _types_match(annotation: str, type_name: str) -> bool:
 # Phase 8.3: Parameter mismatch detection
 
 
-@pre(lambda expression, signature: "lambda" in expression or not expression.strip())
+@pre(lambda expression, signature: ("lambda" in expression and ":" in expression) or not expression.strip())
 def has_unused_params(expression: str, signature: str) -> tuple[bool, list[str], list[str]]:
     """
     Check if lambda has params it doesn't use (P28: Partial Contract Detection).
@@ -168,7 +171,7 @@ def has_unused_params(expression: str, signature: str) -> tuple[bool, list[str],
     return (len(unused_params) > 0, unused_params, used_params)
 
 
-@pre(lambda expression, signature: "lambda" in expression or not expression.strip())
+@pre(lambda expression, signature: ("lambda" in expression and ":" in expression) or not expression.strip())
 def has_param_mismatch(expression: str, signature: str) -> tuple[bool, str]:
     """
     Check if lambda params don't match function params.
