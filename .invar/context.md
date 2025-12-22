@@ -64,6 +64,16 @@ MANDATORY tool substitution rules:
 - Grep (for functions) → invar_map
 ```
 
+### Phase 1c: Init Integration
+
+`invar init` now automatically configures MCP:
+- Creates `.invar/mcp-server.json` (universal)
+- Creates `.invar/mcp-setup.md` (setup guide)
+- If `.claude/` exists, updates `.claude/settings.json`
+- Safe merge: preserves existing settings
+
+**Commit:** 71312ea
+
 ### Phase 2 Proposal: Smart Hook
 
 Proposed in DX-16 for future:
@@ -71,7 +81,7 @@ Proposed in DX-16 for future:
 - Allow advanced usage (--pdb, --cov, etc.)
 - Expected effect: ~95%
 
-**Commit:** 6337dce
+**MCP Server Commit:** 6337dce
 
 ---
 
