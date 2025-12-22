@@ -604,6 +604,60 @@
             nav ul {
                 display: none;
             }
+
+            .mcp-tools {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* MCP Section */
+        .mcp {
+            padding: 80px 0;
+            background: var(--bg-secondary);
+        }
+
+        .mcp-tools {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin-top: 40px;
+        }
+
+        .mcp-tool {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .mcp-tool-name {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.1rem;
+            color: var(--accent);
+            margin-bottom: 12px;
+        }
+
+        .mcp-tool-desc {
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+
+        .mcp-tool-replaces {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .mcp-note {
+            text-align: center;
+            margin-top: 24px;
+            color: var(--text-secondary);
+        }
+
+        .mcp-note code {
+            background: var(--code-bg);
+            padding: 2px 6px;
+            border-radius: 4px;
         }
     </style>
 </head>
@@ -801,6 +855,33 @@
                     <div class="terminal-line"><span class="output"># Incremental verification: only changed files (~5s)</span></div>
                 </div>
             </div>
+        </div>
+    </section>
+
+    <section class="mcp" id="mcp">
+        <div class="container">
+            <h2>MCP Integration</h2>
+            <p class="subtitle">First-class tools for AI agents</p>
+            <div class="mcp-tools">
+                <div class="mcp-tool">
+                    <div class="mcp-tool-name">invar_guard</div>
+                    <div class="mcp-tool-desc">Smart Guard verification (static + doctests)</div>
+                    <div class="mcp-tool-replaces">Replaces: pytest, crosshair</div>
+                </div>
+                <div class="mcp-tool">
+                    <div class="mcp-tool-name">invar_sig</div>
+                    <div class="mcp-tool-desc">Show function signatures with @pre/@post contracts</div>
+                    <div class="mcp-tool-replaces">Replaces: reading entire files</div>
+                </div>
+                <div class="mcp-tool">
+                    <div class="mcp-tool-name">invar_map</div>
+                    <div class="mcp-tool-desc">Symbol map with reference counts</div>
+                    <div class="mcp-tool-replaces">Replaces: grep for definitions</div>
+                </div>
+            </div>
+            <p class="mcp-note">
+                <code>invar init</code> creates <code>.mcp.json</code> automatically
+            </p>
         </div>
     </section>
 

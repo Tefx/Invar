@@ -577,6 +577,42 @@ invar version                 # Show version
 
 ---
 
+## MCP Server (DX-16)
+
+Invar provides an MCP (Model Context Protocol) server for AI agent integration.
+
+### Tools
+
+| Tool | Purpose | Replaces |
+|------|---------|----------|
+| `invar_guard` | Smart Guard verification (static + doctests) | `pytest`, `crosshair` |
+| `invar_sig` | Show function signatures with @pre/@post | Reading entire files |
+| `invar_map` | Symbol map with reference counts | `grep` for definitions |
+
+### Configuration
+
+`invar init` creates `.mcp.json` at project root:
+
+```json
+{
+  "mcpServers": {
+    "invar": {
+      "command": "/path/to/.venv/bin/python",
+      "args": ["-m", "invar.mcp"]
+    }
+  }
+}
+```
+
+### Agent Instructions
+
+The MCP server provides `instructions` to enforce tool usage:
+- Session Start requirement (invar_guard + invar_map before coding)
+- Tool substitution rules (use MCP tools instead of Bash commands)
+- Task completion definition
+
+---
+
 ## File Structure for Invar-enabled Projects
 
 ```

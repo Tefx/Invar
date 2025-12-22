@@ -67,12 +67,11 @@ MANDATORY tool substitution rules:
 ### Phase 1c: Init Integration
 
 `invar init` now automatically configures MCP:
-- Creates `.invar/mcp-server.json` (universal)
-- Creates `.invar/mcp-setup.md` (setup guide)
-- If `.claude/` exists, updates `.claude/settings.json`
-- Safe merge: preserves existing settings
+- Creates `.mcp.json` at project root (Claude Code standard location)
+- Uses `sys.executable` for Python path (works with any venv tool)
+- No manual configuration needed
 
-**Commit:** 71312ea
+**Commit:** 71312ea → c6ef103 (fixed to use `.mcp.json`)
 
 ### Phase 2 Proposal: Smart Hook
 
@@ -647,7 +646,7 @@ Human (Commander) ──directs──→ Agent (Executor) ──uses──→ In
 
 | File | Purpose |
 |------|---------|
-| INVAR.md | Protocol v3.23 |
+| INVAR.md | Protocol v3.24 |
 | docs/INVAR-GUIDE.md | Why & How |
 | docs/VISION.md | Design philosophy |
 | CLAUDE.md | Development guide |
