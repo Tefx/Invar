@@ -29,6 +29,52 @@
 
 ---
 
+## Session 2025-12-22: DX-16 Agent Tool Enforcement (Phase 1)
+
+### Problem Analysis
+
+Agents default to generic tools (pytest, Read) instead of Invar tools, even with documentation.
+
+**Agent-Native Analysis:**
+
+| Level | Type | Effect |
+|-------|------|--------|
+| Level 1: Documentation | Education | ~10% (Human-Native) |
+| Level 2: Skills | Shortcuts | ~20% (Human-Native) |
+| Level 3: Hooks | Constraints | ~95% (Agent-Native) |
+| Level 4: MCP Server | Environment | ~50-60% (Agent-Native) |
+
+**Key Insight:** Level 1-2 rely on "remembering" rules. Level 3-4 modify the environment.
+
+### Phase 1 Implementation: MCP Server
+
+Created `src/invar/mcp/` with:
+
+**Tools:**
+- `invar_guard` - Smart Guard (replaces pytest/crosshair)
+- `invar_sig` - Signatures with contracts (replaces Read for structure)
+- `invar_map` - Symbol map with ref counts (replaces Grep)
+
+**Strong Prompt Instructions:**
+```
+MANDATORY tool substitution rules:
+- pytest → invar_guard
+- crosshair → invar_guard --prove
+- Read .py (for structure) → invar_sig
+- Grep (for functions) → invar_map
+```
+
+### Phase 2 Proposal: Smart Hook
+
+Proposed in DX-16 for future:
+- PreToolUse hook to block basic pytest/crosshair
+- Allow advanced usage (--pdb, --cov, etc.)
+- Expected effect: ~95%
+
+**Commit:** 6337dce
+
+---
+
 ## Session 2025-12-22: DX-15 & DX-12-B Implementation
 
 ### DX-15: Auto Verification Level Selection
