@@ -146,9 +146,18 @@ Features:
 ## Timeline
 
 - [x] Phase 1a: Create proposal (this document)
-- [ ] Phase 1b: Implement MCP server
-- [ ] Phase 1c: Test and validate
+- [x] Phase 1b: Implement MCP server
+- [x] Phase 1c: Integrate with `invar init`
 - [ ] Phase 2: Implement smart hook (future)
+
+## Init Integration
+
+`invar init` now automatically:
+1. Creates `.invar/mcp-server.json` (universal config)
+2. Creates `.invar/mcp-setup.md` (setup instructions)
+3. If `.claude/` exists, updates `.claude/settings.json`
+
+Safe merge: preserves existing settings, only adds invar MCP server.
 
 ## References
 
