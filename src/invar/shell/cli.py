@@ -155,8 +155,10 @@ def guard(
         json_output, agent
     )
 
-    # Determine verification level
-    verification_level = _determine_verification_level(prove, static)
+    # Determine verification level (DX-15: auto-select based on context)
+    verification_level = _determine_verification_level(
+        prove, static, changed_mode=changed, changed_files_count=len(checked_files)
+    )
     level_name = _get_level_name(verification_level)
 
     # Show verification level (human mode)
@@ -205,15 +207,38 @@ def _determine_output_mode(json_output: bool, agent: bool) -> tuple[bool, bool]:
     return False, False
 
 
-def _determine_verification_level(prove: bool, static: bool):
-    """Determine verification level from flags."""
-    from invar.shell.testing import VerificationLevel, detect_verification_context
+def _determine_verification_level(
+    prove: bool, static: bool, changed_mode: bool = False, changed_files_count: int = 0
+):
+    """
+    Determine verification level from flags and context.
 
+    DX-15: Auto-select PROVE when appropriate:
+    - CI environment always uses PROVE
+    - Small changes (<=3 files) in --changed mode use PROVE
+    - Otherwise defaults to STANDARD
+    """
+    import os
+
+    from invar.shell.testing import VerificationLevel
+
+    # Explicit flags take precedence
     if prove:
         return VerificationLevel.PROVE
     if static:
         return VerificationLevel.STATIC
-    return detect_verification_context()
+
+    # DX-15: Auto-detect appropriate level
+    # CI environment always uses PROVE
+    if os.getenv("CI"):
+        return VerificationLevel.PROVE
+
+    # In --changed mode with few files, use PROVE (it's fast enough)
+    if changed_mode and 0 < changed_files_count <= 3:
+        return VerificationLevel.PROVE
+
+    # Otherwise use STANDARD level
+    return VerificationLevel.STANDARD
 
 
 def _get_level_name(verification_level) -> str:

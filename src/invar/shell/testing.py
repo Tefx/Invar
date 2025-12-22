@@ -115,13 +115,20 @@ def detect_verification_context() -> VerificationLevel:
     Auto-detect appropriate verification depth based on context.
 
     Agent-Native design: Only 3 levels exist (STATIC, STANDARD, PROVE).
-    All contexts default to STANDARD. Use --prove explicitly for deeper verification.
+
+    DX-15 Note: Primary auto-detection logic is now in cli._determine_verification_level()
+    which has access to changed_files_count. This function remains as fallback.
 
     >>> detect_verification_context() == VerificationLevel.STANDARD
     True
     """
-    # All contexts: STANDARD (static + doctests)
-    # Use --prove explicitly for CrossHair verification
+    import os
+
+    # DX-15: CI environment always uses PROVE
+    if os.getenv("CI"):
+        return VerificationLevel.PROVE
+
+    # Otherwise use STANDARD level
     return VerificationLevel.STANDARD
 
 

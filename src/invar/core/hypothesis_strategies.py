@@ -14,6 +14,8 @@ from typing import TYPE_CHECKING, Any, get_args, get_origin, get_type_hints
 
 from deal import post, pre
 
+# Note: inspect and re are still used by _extract_pre_sources
+
 if TYPE_CHECKING:
     from collections.abc import Callable
 
@@ -48,106 +50,13 @@ def _ensure_numpy() -> bool:
         return False
 
 
-# ============================================================
-# Timeout Inference
-# ============================================================
-
-
-@dataclass
-class TimeoutTier:
-    """Timeout tier for CrossHair based on code characteristics."""
-
-    name: str
-    timeout: int
-    description: str
-
-
-TIMEOUT_TIERS = {
-    "pure_python": TimeoutTier("pure_python", 10, "Pure Python, no external libs"),
-    "stdlib_only": TimeoutTier("stdlib_only", 15, "Uses collections, itertools"),
-    "numpy_pandas": TimeoutTier("numpy_pandas", 5, "Quick check, likely to skip"),
-    "complex_nested": TimeoutTier("complex_nested", 30, "Deep recursion, many branches"),
-}
-
-# Libraries that CrossHair cannot handle well
-LIBRARY_BLACKLIST = frozenset([
-    "numpy", "pandas", "torch", "tensorflow", "scipy",
-    "sklearn", "cv2", "PIL", "requests", "aiohttp",
-])
-
-
-@pre(lambda func: callable(func))
-@post(lambda result: isinstance(result, int) and result > 0)
-def infer_timeout(func: Callable) -> int:
-    """
-    Infer appropriate CrossHair timeout from function source.
-
-    Args:
-        func: The function to analyze
-
-    Returns:
-        Timeout in seconds
-
-    >>> def pure_func(x: int) -> int: return x * 2
-    >>> infer_timeout(pure_func)
-    10
-    """
-    try:
-        source = inspect.getsource(func)
-    except (OSError, TypeError):
-        return TIMEOUT_TIERS["pure_python"].timeout
-
-    # Check for blacklisted libraries
-    for lib in LIBRARY_BLACKLIST:
-        if re.search(rf"\b{lib}\b", source):
-            return TIMEOUT_TIERS["numpy_pandas"].timeout
-
-    # Count complexity indicators
-    nesting_depth = _estimate_nesting_depth(source)
-    branch_count = _count_branches(source)
-
-    if nesting_depth > 4 or branch_count > 10:
-        return TIMEOUT_TIERS["complex_nested"].timeout
-
-    if _uses_only_stdlib(source):
-        return TIMEOUT_TIERS["stdlib_only"].timeout
-
-    return TIMEOUT_TIERS["pure_python"].timeout
-
-
-@pre(lambda source: isinstance(source, str))
-@post(lambda result: isinstance(result, int) and result >= 0)
-def _estimate_nesting_depth(source: str) -> int:
-    """Estimate maximum nesting depth from indentation."""
-    max_indent = 0
-    for line in source.split("\n"):
-        stripped = line.lstrip()
-        if stripped and not stripped.startswith("#"):
-            indent = len(line) - len(stripped)
-            spaces = indent // 4  # Assuming 4-space indent
-            max_indent = max(max_indent, spaces)
-    return max_indent
-
-
-@pre(lambda source: isinstance(source, str))
-@post(lambda result: isinstance(result, int) and result >= 0)
-def _count_branches(source: str) -> int:
-    """Count branching statements (if, for, while, try)."""
-    return len(re.findall(r"\b(if|for|while|try|elif|except)\b", source))
-
-
-@pre(lambda source: isinstance(source, str))
-@post(lambda result: isinstance(result, bool))
-def _uses_only_stdlib(source: str) -> bool:
-    """Check if source only uses standard library."""
-    stdlib_patterns = ["collections", "itertools", "functools", "typing", "dataclasses"]
-    third_party_patterns = ["pandas", "numpy", "requests", "flask", "django"]
-
-    has_stdlib = any(pat in source for pat in stdlib_patterns)
-    has_third_party = any(pat in source for pat in third_party_patterns)
-
-    return has_stdlib and not has_third_party
-
+# Re-export timeout inference for backwards compatibility
+from invar.core.timeout_inference import (  # noqa: F401
+    LIBRARY_BLACKLIST,
+    TIMEOUT_TIERS,
+    TimeoutTier,
+    infer_timeout,
+)
 
 # ============================================================
 # Type-Based Strategy Generation
@@ -156,11 +65,15 @@ def _uses_only_stdlib(source: str) -> bool:
 
 @dataclass
 class StrategySpec:
-    """Specification for a Hypothesis strategy."""
+    """Specification for a Hypothesis strategy.
+
+    DX-12-B: Added raw_code field for user-defined strategies.
+    """
 
     strategy_name: str
     kwargs: dict[str, Any] = field(default_factory=dict)
     description: str = ""
+    raw_code: str | None = None  # DX-12-B: For custom @strategy decorator
 
     @post(lambda result: isinstance(result, str) and result.startswith("st."))
     def to_code(self) -> str:
@@ -170,7 +83,14 @@ class StrategySpec:
         >>> spec = StrategySpec("integers", {"min_value": 0, "max_value": 100})
         >>> spec.to_code()
         'st.integers(min_value=0, max_value=100)'
+
+        >>> custom = StrategySpec("custom", raw_code="st.floats(min_value=0)")
+        >>> custom.to_code()
+        'st.floats(min_value=0)'
         """
+        # DX-12-B: Return raw code if provided and valid (user-defined strategy)
+        if self.raw_code and self.raw_code.startswith("st."):
+            return self.raw_code
         if not self.kwargs:
             return f"st.{self.strategy_name}()"
         args = ", ".join(f"{k}={v!r}" for k, v in self.kwargs.items())
@@ -361,8 +281,9 @@ def infer_strategies_for_function(func: Callable) -> dict[str, StrategySpec]:
     Infer complete strategies for a function from types and @pre contracts.
 
     This combines:
-    1. Type-based strategy generation
-    2. @pre contract bound extraction (via strategies.infer_from_lambda)
+    1. User-defined @strategy decorator (DX-12-B) - highest priority
+    2. Type-based strategy generation
+    3. @pre contract bound extraction (via strategies.infer_from_lambda)
 
     >>> def constrained(x: float) -> float:
     ...     '''Requires x > 0.'''
@@ -371,41 +292,114 @@ def infer_strategies_for_function(func: Callable) -> dict[str, StrategySpec]:
     >>> specs['x'].strategy_name
     'floats'
     """
-    from invar.core.strategies import infer_from_lambda
-
-    # Start with type-based strategies
     type_specs = strategies_from_signature(func)
-
-    # Try to extract @pre contracts
+    user_strategies = _get_user_strategies(func)
     pre_sources = _extract_pre_sources(func)
 
-    if not pre_sources:
+    if not pre_sources and not user_strategies:
         return type_specs
 
-    # Refine strategies with @pre bounds
-    result = {}
+    # Refine each parameter strategy
+    result = _refine_all_strategies(func, type_specs, user_strategies, pre_sources)
+
+    # Add any user strategies for params not in type_specs
+    for param_name, spec in user_strategies.items():
+        if param_name not in result:
+            result[param_name] = spec
+
+    return result
+
+
+@pre(lambda func, type_specs, user_strategies, pre_sources: callable(func))
+@post(lambda result: isinstance(result, dict))
+def _refine_all_strategies(
+    func: Callable,
+    type_specs: dict[str, StrategySpec],
+    user_strategies: dict[str, StrategySpec],
+    pre_sources: list[str],
+) -> dict[str, StrategySpec]:
+    """Refine type-based strategies with @pre bounds and user overrides."""
+    from invar.core.strategies import infer_from_lambda
+
+    result: dict[str, StrategySpec] = {}
     for param_name, spec in type_specs.items():
-        # Get type for this param
-        try:
-            hints = get_type_hints(func)
-            param_type = hints.get(param_name)
-        except Exception:
-            param_type = None
+        # DX-12-B: User-defined strategy takes highest priority
+        if param_name in user_strategies:
+            result[param_name] = user_strategies[param_name]
+            continue
 
         # Infer bounds from @pre sources
+        param_type = _get_param_type(func, param_name)
         all_bounds: dict[str, Any] = {}
         for source in pre_sources:
             hint = infer_from_lambda(source, param_name, param_type)
             all_bounds.update(hint.constraints)
 
         if all_bounds:
-            # Convert to strategy kwargs
             strategy_kwargs = _bounds_to_strategy_kwargs(all_bounds, spec.strategy_name)
             result[param_name] = refine_strategy(spec, **strategy_kwargs)
         else:
             result[param_name] = spec
 
     return result
+
+
+@pre(lambda func, param_name: callable(func) and isinstance(param_name, str))
+@post(lambda result: result is None or isinstance(result, type))
+def _get_param_type(func: Callable, param_name: str) -> type | None:
+    """Get parameter type from function type hints."""
+    try:
+        hints = get_type_hints(func)
+        return hints.get(param_name)
+    except Exception:
+        return None
+
+
+@pre(lambda func: callable(func))
+@post(lambda result: isinstance(result, dict))
+def _get_user_strategies(func: Callable) -> dict[str, StrategySpec]:
+    """
+    Extract user-defined strategies from @strategy decorator.
+
+    DX-12-B: Supports both strategy objects and string representations.
+
+    >>> from invar.decorators import strategy
+    >>> @strategy(x="floats(min_value=0)")
+    ... def sqrt(x: float) -> float:
+    ...     return x ** 0.5
+    >>> specs = _get_user_strategies(sqrt)
+    >>> 'x' in specs
+    True
+    >>> specs['x'].to_code()
+    'st.floats(min_value=0)'
+    """
+    if not hasattr(func, "__invar_strategies__"):
+        return {}
+
+    user_specs: dict[str, StrategySpec] = {}
+    raw_strategies = func.__invar_strategies__  # type: ignore[attr-defined]
+
+    for param_name, strat in raw_strategies.items():
+        if isinstance(strat, str):
+            # String representation: "floats(min_value=0)"
+            raw_code = f"st.{strat}" if not strat.startswith("st.") else strat
+            user_specs[param_name] = StrategySpec(
+                strategy_name="custom",
+                description=f"User-defined: {strat}",
+                raw_code=raw_code,
+            )
+        else:
+            # Actual strategy object - convert to code representation
+            strat_repr = repr(strat)
+            # Ensure it starts with st. for the postcondition
+            raw_code = strat_repr if strat_repr.startswith("st.") else f"st.{strat_repr}"
+            user_specs[param_name] = StrategySpec(
+                strategy_name="custom",
+                description="User-defined strategy object",
+                raw_code=raw_code,
+            )
+
+    return user_specs
 
 
 @pre(lambda func: callable(func))
