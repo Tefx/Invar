@@ -1,0 +1,198 @@
+{
+  "version": "1.0",
+  "created": "2025-12-22T19:01:31.118191",
+  "crosshair_version": "0.0.101",
+  "invar_version": "0.7.1",
+  "entries": {
+    "src/invar/core/rule_meta.py": {
+      "file_path": "src/invar/core/rule_meta.py",
+      "file_hash": "9e189c54d85bc3f4",
+      "verified_at": "2025-12-22T19:00:20.000512",
+      "result": "verified",
+      "crosshair_version": "0.0.101",
+      "invar_version": "0.7.1",
+      "time_taken_ms": 933,
+      "functions_checked": 0
+    },
+    "src/invar/core/references.py": {
+      "file_path": "src/invar/core/references.py",
+      "file_hash": "88e222be643741ca",
+      "verified_at": "2025-12-22T19:00:21.943465",
+      "result": "verified",
+      "crosshair_version": "0.0.101",
+      "invar_version": "0.7.1",
+      "time_taken_ms": 2840,
+      "functions_checked": 0
+    },
+    "src/invar/core/hypothesis_strategies.py": {
+      "file_path": "src/invar/core/hypothesis_strategies.py",
+      "file_hash": "78e4005239b92428",
+      "verified_at": "2025-12-22T19:00:22.040501",
+      "result": "verified",
+      "crosshair_version": "0.0.101",
+      "invar_version": "0.7.1",
+      "time_taken_ms": 2936,
+      "functions_checked": 0
+    },
+    "src/invar/core/models.py": {
+      "file_path": "src/invar/core/models.py",
+      "file_hash": "da9c2ce3834de1e6",
+      "verified_at": "2025-12-22T19:00:22.641534",
+      "result": "verified",
+      "crosshair_version": "0.0.101",
+      "invar_version": "0.7.1",
+      "time_taken_ms": 3564,
+      "functions_checked": 0
+    },
+    "src/invar/core/inspect.py": {
+      "file_path": "src/invar/core/inspect.py",
+      "file_hash": "e4e5fe737049ec61",
+      "verified_at": "2025-12-22T19:00:23.635390",
+      "result": "verified",
+      "crosshair_version": "0.0.101",
+      "invar_version": "0.7.1",
+      "time_taken_ms": 1691,
+      "functions_checked": 0
+    },
+    "src/invar/core/tautology.py": {
+      "file_path": "src/invar/core/tautology.py",
+      "file_hash": "6edadc14c40494b3",
+      "verified_at": "2025-12-22T19:00:24.664104",
+      "result": "verified",
+      "crosshair_version": "0.0.101",
+      "invar_version": "0.7.1",
+      "time_taken_ms": 5577,
+      "functions_checked": 0
+    },
+    "src/invar/core/parser.py": {
+      "file_path": "src/invar/core/parser.py",
+      "file_hash": "d9e84f1d5c5781e7",
+      "verified_at": "2025-12-22T19:00:24.922590",
+      "result": "verified",
+      "crosshair_version": "0.0.101",
+      "invar_version": "0.7.1",
+      "time_taken_ms": 4921,
+      "functions_checked": 0
+    },
+    "src/invar/core/rules.py": {
+      "file_path": "src/invar/core/rules.py",
+      "file_hash": "ed663f3491743ccf",
+      "verified_at": "2025-12-22T19:00:25.242310",
+      "result": "verified",
+      "crosshair_version": "0.0.101",
+      "invar_version": "0.7.1",
+      "time_taken_ms": 6128,
+      "functions_checked": 0
+    },
+    "src/invar/core/formatter.py": {
+      "file_path": "src/invar/core/formatter.py",
+      "file_hash": "d04e573bcec122f3",
+      "verified_at": "2025-12-22T19:00:25.261875",
+      "result": "verified",
+      "crosshair_version": "0.0.101",
+      "invar_version": "0.7.1",
+      "time_taken_ms": 6191,
+      "functions_checked": 0
+    },
+    "src/invar/core/purity.py": {
+      "file_path": "src/invar/core/purity.py",
+      "file_hash": "82a852dd9bc914f4",
+      "verified_at": "2025-12-22T19:00:25.849999",
+      "result": "verified",
+      "crosshair_version": "0.0.101",
+      "invar_version": "0.7.1",
+      "time_taken_ms": 6760,
+      "functions_checked": 0
+    },
+    "src/invar/core/extraction.py": {
+      "file_path": "src/invar/core/extraction.py",
+      "file_hash": "3441ada663cb220d",
+      "verified_at": "2025-12-22T19:00:25.924820",
+      "result": "verified",
+      "crosshair_version": "0.0.101",
+      "invar_version": "0.7.1",
+      "time_taken_ms": 3884,
+      "functions_checked": 0
+    },
+    "src/invar/core/must_use.py": {
+      "file_path": "src/invar/core/must_use.py",
+      "file_hash": "47c56c2085aa2d7b",
+      "verified_at": "2025-12-22T19:00:26.539880",
+      "result": "verified",
+      "crosshair_version": "0.0.101",
+      "invar_version": "0.7.1",
+      "time_taken_ms": 1617,
+      "functions_checked": 0
+    },
+    "src/invar/core/suggestions.py": {
+      "file_path": "src/invar/core/suggestions.py",
+      "file_hash": "1f9fdcba9b961eed",
+      "verified_at": "2025-12-22T19:00:27.361066",
+      "result": "verified",
+      "crosshair_version": "0.0.101",
+      "invar_version": "0.7.1",
+      "time_taken_ms": 8290,
+      "functions_checked": 0
+    },
+    "src/invar/core/timeout_inference.py": {
+      "file_path": "src/invar/core/timeout_inference.py",
+      "file_hash": "34e2f036e69d2c02",
+      "verified_at": "2025-12-22T19:00:27.969648",
+      "result": "verified",
+      "crosshair_version": "0.0.101",
+      "invar_version": "0.7.1",
+      "time_taken_ms": 2707,
+      "functions_checked": 0
+    },
+    "src/invar/core/lambda_helpers.py": {
+      "file_path": "src/invar/core/lambda_helpers.py",
+      "file_hash": "738917e404ec0223",
+      "verified_at": "2025-12-22T19:00:28.506583",
+      "result": "verified",
+      "crosshair_version": "0.0.101",
+      "invar_version": "0.7.1",
+      "time_taken_ms": 4871,
+      "functions_checked": 0
+    },
+    "src/invar/core/contracts.py": {
+      "file_path": "src/invar/core/contracts.py",
+      "file_hash": "f6fd9f0f512835b5",
+      "verified_at": "2025-12-22T19:00:33.754467",
+      "result": "verified",
+      "crosshair_version": "0.0.101",
+      "invar_version": "0.7.1",
+      "time_taken_ms": 9090,
+      "functions_checked": 0
+    },
+    "src/invar/core/utils.py": {
+      "file_path": "src/invar/core/utils.py",
+      "file_hash": "c4cca73503d1b23b",
+      "verified_at": "2025-12-22T19:00:34.046476",
+      "result": "verified",
+      "crosshair_version": "0.0.101",
+      "invar_version": "0.7.1",
+      "time_taken_ms": 11404,
+      "functions_checked": 0
+    },
+    "src/invar/core/purity_heuristics.py": {
+      "file_path": "src/invar/core/purity_heuristics.py",
+      "file_hash": "75c758a89261f912",
+      "verified_at": "2025-12-22T19:00:39.162825",
+      "result": "verified",
+      "crosshair_version": "0.0.101",
+      "invar_version": "0.7.1",
+      "time_taken_ms": 13919,
+      "functions_checked": 0
+    },
+    "src/invar/core/strategies.py": {
+      "file_path": "src/invar/core/strategies.py",
+      "file_hash": "021884265fb94b15",
+      "verified_at": "2025-12-22T19:01:31.118076",
+      "result": "verified",
+      "crosshair_version": "0.0.101",
+      "invar_version": "0.7.1",
+      "time_taken_ms": 72023,
+      "functions_checked": 0
+    }
+  }
+}

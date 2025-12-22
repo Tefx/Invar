@@ -342,19 +342,6 @@ invar init                        # Auto-configures .claude/settings.json
 
 If `invar init` doesn't auto-configure, add to `.claude/settings.json`:
 
-**With uv (recommended):**
-```json
-{
-  "mcpServers": {
-    "invar": {
-      "command": "uvx",
-      "args": ["--from", "python-invar[mcp]", "invar-mcp"]
-    }
-  }
-}
-```
-
-**Without uv:**
 ```json
 {
   "mcpServers": {
@@ -365,6 +352,8 @@ If `invar init` doesn't auto-configure, add to `.claude/settings.json`:
   }
 }
 ```
+
+Find your Python path: `python -c "import sys; print(sys.executable)"`
 
 ---
 
