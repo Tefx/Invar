@@ -57,11 +57,13 @@ class VerificationLevel(IntEnum):
     """Verification depth levels for Smart Guard.
 
     Agent-Native design: Only levels with implemented verification.
+    DX-08: Added THOROUGH level for property testing.
     """
 
     STATIC = 0  # Static analysis only (--quick)
     STANDARD = 1  # Static + doctests (default)
     PROVE = 2  # Static + doctests + CrossHair (--prove)
+    THOROUGH = 3  # Static + doctests + property tests (--thorough, DX-08)
 
 
 @dataclass

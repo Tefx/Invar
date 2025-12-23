@@ -168,6 +168,7 @@ def output_verification_status(
     doctest_output: str,
     crosshair_output: dict,
     explain: bool,
+    property_output: dict | None = None,  # DX-08
 ) -> None:
     """Output verification status for human-readable mode."""
     from invar.shell.testing import VerificationLevel
@@ -189,6 +190,89 @@ def output_verification_status(
         _output_crosshair_status(
             static_exit_code, doctest_passed, crosshair_output
         )
+
+    # DX-08: Property tests results
+    if verification_level >= VerificationLevel.THOROUGH and property_output:
+        _output_property_tests_status(
+            static_exit_code, doctest_passed, property_output
+        )
+
+
+def run_property_tests_phase(
+    checked_files: list[Path],
+    doctest_passed: bool,
+    static_exit_code: int,
+    max_examples: int = 100,
+) -> tuple[bool, dict]:
+    """Run property tests phase (DX-08).
+
+    Args:
+        checked_files: Files to test
+        doctest_passed: Whether doctests passed
+        static_exit_code: Exit code from static analysis
+        max_examples: Maximum Hypothesis examples per function
+
+    Returns (passed, output_dict).
+    """
+    from invar.shell.property_tests import run_property_tests_on_files
+
+    # Skip if prior failures
+    if not doctest_passed or static_exit_code != 0:
+        return True, {"status": "skipped", "reason": "prior failures"}
+
+    if not checked_files:
+        return True, {"status": "skipped", "reason": "no files"}
+
+    # Only test Core files (with contracts)
+    core_files = [f for f in checked_files if "core" in str(f)]
+    if not core_files:
+        return True, {"status": "skipped", "reason": "no core files"}
+
+    result = run_property_tests_on_files(core_files, max_examples)
+
+    if isinstance(result, Success):
+        report = result.unwrap()
+        return report.all_passed(), {
+            "status": "passed" if report.all_passed() else "failed",
+            "functions_tested": report.functions_tested,
+            "functions_passed": report.functions_passed,
+            "functions_failed": report.functions_failed,
+            "total_examples": report.total_examples,
+            "errors": report.errors,
+        }
+
+    return False, {"status": "error", "error": result.failure()}
+
+
+def _output_property_tests_status(
+    static_exit_code: int,
+    doctest_passed: bool,
+    property_output: dict,
+) -> None:
+    """Output property tests status (DX-08)."""
+    if static_exit_code != 0 or not doctest_passed:
+        console.print("[dim]⊘ Property tests skipped (prior failures)[/dim]")
+        return
+
+    status = property_output.get("status", "unknown")
+
+    if status == "passed":
+        tested = property_output.get("functions_tested", 0)
+        examples = property_output.get("total_examples", 0)
+        console.print(
+            f"[green]✓ Property tests passed[/green] "
+            f"[dim]({tested} functions, {examples} examples)[/dim]"
+        )
+    elif status == "skipped":
+        reason = property_output.get("reason", "no contracted functions")
+        console.print(f"[dim]⊘ Property tests skipped ({reason})[/dim]")
+    elif status == "failed":
+        failed = property_output.get("functions_failed", 0)
+        console.print(f"[red]✗ Property tests failed ({failed} functions)[/red]")
+        for error in property_output.get("errors", [])[:5]:
+            console.print(f"  {error}")
+    else:
+        console.print(f"[yellow]! Property tests: {status}[/yellow]")
 
 
 def _output_crosshair_status(

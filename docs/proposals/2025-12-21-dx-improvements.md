@@ -648,10 +648,11 @@ Proposed Sixth Law:
 
 ---
 
-### DX-08: Contract-Driven Property Testing
+### DX-08: Contract-Driven Property Testing ✅ IMPLEMENTED
 
 **Priority:** ★★★★ (High value, builds on existing infrastructure)
 **Effort:** 2-3 days
+**Status:** ✅ Implemented (2025-12-23)
 **Source:** Analysis of Hypothesis integration opportunities
 
 #### Problem
@@ -1204,8 +1205,8 @@ DX-10 focuses on:
 |------|-----------|--------|
 | 1 | DX-01 ✅, DX-02 ✅, DX-03 ✅, DX-06 ✅, DX-07 ✅, DX-09 ✅ | 2 days |
 | 2 | DX-04, DX-05 | 2 days |
-| 3 | DX-08 Phases 1-2 | 1.5 days |
-| Future | DX-08 Phases 3-4, DX-10 (Hypothesis) | 3-4 days |
+| 3 | DX-08 ✅ | 1 day |
+| Future | DX-10 (Additional Hypothesis enhancements) | 1-2 days |
 
 **Completed (2025-12-21):**
 - DX-01: Lambda fix templates for param_mismatch
@@ -1215,7 +1216,11 @@ DX-10 focuses on:
 - DX-07: Integration tests for CLI flags
 - DX-09: Self-violation prevention (verification_level in JSON)
 
+**Completed (2025-12-23):**
+- DX-08: Contract-driven property testing (`invar guard --thorough`, `invar test`)
+
 **v3.23 Changes:** Simplified to 3 levels (removed unimplemented THOROUGH), added verification_level to Agent JSON.
+**v3.25 Changes:** Added THOROUGH level with property testing (DX-08 implementation).
 
 ## Success Metrics
 

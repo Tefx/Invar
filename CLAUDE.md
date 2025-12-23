@@ -4,7 +4,7 @@
 
 This project follows the Invar methodology. See [INVAR.md](./INVAR.md) for the protocol.
 
-**Protocol Version:** v3.24 | **PyPI:** `python-invar` | **Smart Guard:** `invar guard` = static + doctests
+**Protocol Version:** v3.25 | **PyPI:** `python-invar` | **Smart Guard:** `invar guard` = static + doctests
 
 ---
 
@@ -68,7 +68,8 @@ src/invar/
 │   ├── inspect.py     # File context for INSPECT section
 │   ├── references.py  # Cross-file reference counting
 │   ├── formatter.py   # Text/JSON output
-│   └── utils.py       # Pure utilities
+│   ├── utils.py       # Pure utilities
+│   └── property_gen.py # DX-08: Property test generation from contracts
 │
 ├── shell/             # I/O operations, returns Result[T, E]
 │   ├── cli.py         # Typer CLI: guard, map, sig, rules, version
@@ -79,7 +80,8 @@ src/invar/
 │   ├── templates.py   # Template operations
 │   ├── init_cmd.py    # init command
 │   ├── test_cmd.py    # test, verify commands
-│   └── testing.py     # Testing utilities
+│   ├── testing.py     # Testing utilities
+│   └── property_tests.py # DX-08: Property test runner
 │
 └── templates/         # Files for invar init
 ```
@@ -141,6 +143,7 @@ invar guard --changed      # Verify code quality (REQUIRED)
 ### Other Commands
 ```bash
 invar guard --prove      # Add CrossHair symbolic verification
+invar guard --thorough   # Add property tests from contracts (DX-08)
 invar guard --explain    # Detailed explanations
 invar rules              # List all rules
 ```
@@ -161,11 +164,14 @@ invar rules              # List all rules
 ### Test and Verify Commands
 
 ```bash
-invar test <file>        # Hypothesis property tests on single file
+invar test <file>        # Property tests from contracts (DX-08)
 invar test --changed     # Test all git-modified files
+invar test --max-examples 200  # More Hypothesis examples
 invar verify <file>      # CrossHair symbolic verification
 invar verify --changed   # Verify all git-modified files
 ```
+
+**DX-08:** `invar test` auto-generates Hypothesis tests from @pre/@post contracts.
 
 ---
 

@@ -6,7 +6,7 @@
   │ `invar update`. Add project content to CLAUDE.md instead.   │
   └─────────────────────────────────────────────────────────────┘
 -->
-# The Invar Protocol v3.24
+# The Invar Protocol v3.25
 
 > **"Trade structure for safety."** Separate what CAN fail (I/O) from what SHOULD NOT fail (logic).
 
@@ -192,16 +192,18 @@ invar guard              # Static + doctests (default)
 invar guard --changed    # Modified files only
 invar guard --static     # Static only (skip doctests)
 invar guard --prove      # Static + doctests + CrossHair
+invar guard --thorough   # Static + doctests + property tests (DX-08)
 invar guard --explain    # Detailed explanations
 ```
 
-### Three Verification Levels
+### Four Verification Levels
 
 | Level | Flag | Content | Use When |
 |-------|------|---------|----------|
 | **STATIC** | `--static` | Rules only | Debugging static analysis |
 | **STANDARD** | (default) | Rules + doctests | Normal development |
 | **PROVE** | `--prove` | Rules + doctests + CrossHair | Contract changes, releases |
+| **THOROUGH** | `--thorough` | Rules + doctests + property tests | Comprehensive verification (DX-08) |
 
 **Agent JSON output includes `"verification_level"` for transparency.**
 
@@ -216,12 +218,18 @@ invar guard --explain    # Detailed explanations
 
 ### Other Commands
 ```bash
-invar test <file>        # Property-based tests (Hypothesis)
+invar test <file>        # Property tests from contracts (DX-08)
 invar test --changed     # Test git-modified files
+invar test --max-examples 200  # More Hypothesis examples
 invar verify <file>      # Symbolic verification (CrossHair)
 invar verify --changed   # Verify git-modified files
 invar rules              # List all rules with severity
 ```
+
+**`invar test` auto-generates Hypothesis tests from @pre/@post contracts:**
+- No manual @given decorators needed
+- Strategies inferred from type hints and @pre constraints
+- @post verified at runtime by deal
 
 ### Perception (use BEFORE reading/modifying code)
 ```bash
@@ -331,4 +339,4 @@ purity_impure = ["mylib.cached_compute"]  # Has side effects
 
 ---
 
-*Protocol v3.24 — --static flag, --changed for test/verify, improved flag precedence.*
+*Protocol v3.25 — DX-08: --thorough flag for contract-driven property testing.*

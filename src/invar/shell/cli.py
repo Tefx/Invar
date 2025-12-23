@@ -103,11 +103,15 @@ def guard(
     prove: bool = typer.Option(
         False, "--prove", help="Add symbolic verification with CrossHair"
     ),
+    thorough: bool = typer.Option(
+        False, "--thorough", help="Add property-based testing with Hypothesis (DX-08)"
+    ),
 ) -> None:
     """Check project against Invar architecture rules.
 
     Smart Guard: Automatically runs doctests after static analysis.
-    Use --static for static-only, --prove for symbolic verification.
+    Use --static for static-only, --prove for symbolic verification,
+    --thorough for property-based testing (DX-08).
     """
     from invar.shell.guard_helpers import (
         collect_files_to_check,
@@ -115,6 +119,7 @@ def guard(
         output_verification_status,
         run_crosshair_phase,
         run_doctests_phase,
+        run_property_tests_phase,
     )
     from invar.shell.testing import VerificationLevel
 
@@ -156,8 +161,9 @@ def guard(
     )
 
     # Determine verification level (DX-15: auto-select based on context)
+    # DX-08: Added thorough parameter
     verification_level = _determine_verification_level(
-        prove, static, changed_mode=changed, changed_files_count=len(checked_files)
+        prove, static, thorough, changed_mode=changed, changed_files_count=len(checked_files)
     )
     level_name = _get_level_name(verification_level)
 
@@ -169,6 +175,7 @@ def guard(
     static_exit_code = get_exit_code(report, strict)
     doctest_passed, doctest_output = True, ""
     crosshair_passed, crosshair_output = True, {}
+    property_passed, property_output = True, {}  # DX-08
 
     if verification_level >= VerificationLevel.STANDARD and static_exit_code == 0:
         checked_files = collect_files_to_check(path, checked_files)
@@ -180,20 +187,30 @@ def guard(
             changed_mode=changed,  # DX-13: Only git-incremental when --changed
         )
 
+    # DX-08: Run property tests for --thorough
+    if verification_level >= VerificationLevel.THOROUGH:
+        property_passed, property_output = run_property_tests_phase(
+            checked_files, doctest_passed, static_exit_code
+        )
+
     # Output results
     if use_agent_output:
-        output_agent(report, doctest_passed, doctest_output, crosshair_output, level_name)
+        output_agent(
+            report, doctest_passed, doctest_output, crosshair_output, level_name,
+            property_output=property_output,  # DX-08
+        )
     elif use_json_output:
         output_json(report)
     else:
         output_rich(report, config.strict_pure, changed, pedantic, explain)
         output_verification_status(
             verification_level, static_exit_code, doctest_passed,
-            doctest_output, crosshair_output, explain
+            doctest_output, crosshair_output, explain,
+            property_output=property_output,  # DX-08
         )
 
     # Exit with combined status
-    all_passed = doctest_passed and crosshair_passed
+    all_passed = doctest_passed and crosshair_passed and property_passed  # DX-08
     final_exit = static_exit_code if all_passed else 1
     raise typer.Exit(final_exit)
 
@@ -208,7 +225,8 @@ def _determine_output_mode(json_output: bool, agent: bool) -> tuple[bool, bool]:
 
 
 def _determine_verification_level(
-    prove: bool, static: bool, changed_mode: bool = False, changed_files_count: int = 0
+    prove: bool, static: bool, thorough: bool = False,
+    changed_mode: bool = False, changed_files_count: int = 0
 ):
     """
     Determine verification level from flags and context.
@@ -217,12 +235,16 @@ def _determine_verification_level(
     - CI environment always uses PROVE
     - Small changes (<=3 files) in --changed mode use PROVE
     - Otherwise defaults to STANDARD
+
+    DX-08: Added --thorough flag for property-based testing.
     """
     import os
 
     from invar.shell.testing import VerificationLevel
 
-    # Explicit flags take precedence
+    # Explicit flags take precedence (highest to lowest)
+    if thorough:
+        return VerificationLevel.THOROUGH
     if prove:
         return VerificationLevel.PROVE
     if static:
@@ -249,6 +271,7 @@ def _get_level_name(verification_level) -> str:
         VerificationLevel.STATIC: "static",
         VerificationLevel.STANDARD: "standard",
         VerificationLevel.PROVE: "prove",
+        VerificationLevel.THOROUGH: "thorough",  # DX-08
     }[verification_level]
 
 
@@ -260,6 +283,7 @@ def _show_verification_level(verification_level) -> None:
         VerificationLevel.STATIC: "[yellow]--static[/yellow] (static only, doctests skipped)",
         VerificationLevel.STANDARD: "default (static + doctests)",
         VerificationLevel.PROVE: "--prove (static + doctests + CrossHair)",
+        VerificationLevel.THOROUGH: "--thorough (static + doctests + property tests)",  # DX-08
     }
     console.print(f"[dim]Verification: {labels[verification_level]}[/dim]")
 
