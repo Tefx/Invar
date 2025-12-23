@@ -6,7 +6,7 @@
   │ `invar update`. Add project content to CLAUDE.md instead.   │
   └─────────────────────────────────────────────────────────────┘
 -->
-# The Invar Protocol v3.24
+# The Invar Protocol v3.26
 
 > **"Trade structure for safety."**
 
@@ -131,4 +131,4 @@ exclude_doctest_lines = true  # Don't count doctests in function size
 
 ---
 
-*Protocol v3.24 | [Guide](docs/INVAR-GUIDE.md) | [Examples](.invar/examples/)*
+*Protocol v3.26 | [Guide](docs/INVAR-GUIDE.md) | [Examples](.invar/examples/)*

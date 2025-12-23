@@ -872,7 +872,7 @@ invar init --config-only # Only add config, no INVAR.md/CLAUDE.md
 **Goal:** Enable adoption by other projects.
 
 **Deliverables:**
-- [x] PyPI release (`pip install python-invar`)
+- [x] PyPI release (`pip install invar-tools` / `pip install invar-runtime`)
 - [x] Documentation (README, VISION, consolidated docs)
 - [x] CI templates (GitHub Actions)
 

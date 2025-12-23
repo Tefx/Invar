@@ -6,7 +6,7 @@
   │ `invar update`. Add project content to CLAUDE.md instead.   │
   └─────────────────────────────────────────────────────────────┘
 -->
-# The Invar Protocol v3.25
+# The Invar Protocol v3.26
 
 > **"Trade structure for safety."** Separate what CAN fail (I/O) from what SHOULD NOT fail (logic).
 
@@ -270,10 +270,20 @@ A task is complete only when ALL conditions are met:
 ## Installation
 
 ```bash
-pip install python-invar
+# Development tools (guard, map, sig, MCP)
+pip install invar-tools
+
+# Or use without installing
+uvx invar-tools guard
+
+# Runtime contracts for your project
+pip install invar-runtime
 ```
 
-Includes: static analysis, doctests, Hypothesis, CrossHair, and MCP server.
+| Package | Size | Purpose |
+|---------|------|---------|
+| `invar-runtime` | ~3MB | Runtime contracts (`@pre`, `@post`, etc.) |
+| `invar-tools` | ~100MB | Dev tools (static analysis, doctests, Hypothesis, CrossHair, MCP) |
 
 ## Doctest Best Practices
 

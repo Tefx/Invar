@@ -1,11 +1,11 @@
 # Invar Project Context
 
-*Last updated: 2025-12-22*
+*Last updated: 2025-12-23*
 
 ## Current State
 
-- **PyPI:** `python-invar` v0.7.1
-- **Protocol:** v3.24 (--static flag, --changed for test/verify, improved flag precedence)
+- **PyPI:** `invar-tools` + `invar-runtime` v1.0.0 (DX-21 package split)
+- **Protocol:** v3.26 (DX-19: 2 verification levels, DX-21: package split + Claude init)
 - **GitHub Pages:** https://tefx.github.io/Invar/
 - **Status:** Feature complete, zero technical debt
 - **Blockers:** None
@@ -26,6 +26,82 @@
 **Decision rule:** Is this Invar protocol or project-specific?
 - Protocol content → Already in INVAR.md, don't duplicate
 - Project-specific → Add to CLAUDE.md or here
+
+---
+
+## Session 2025-12-23: DX-21 Package Split & Claude Init (v1.0.0)
+
+### DX-21A: Package Split
+
+**Problem:** `python-invar` (~100MB) forced projects to install heavy verification tools just for runtime contracts.
+
+**Solution:** Split into two packages:
+
+| Package | Size | Purpose |
+|---------|------|---------|
+| `invar-runtime` | ~3MB | Runtime contracts (`@pre`, `@post`, `must_use`, `invariant`, `must_close`) |
+| `invar-tools` | ~100MB | Development tools (guard, map, sig, MCP server) |
+
+**Files Created:**
+- `runtime/pyproject.toml` - invar-runtime package config
+- `runtime/src/invar_runtime/` - Runtime modules (contracts.py, decorators.py, invariant.py, resource.py)
+
+**Files Updated:**
+- `pyproject.toml` - Now configures invar-tools, depends on invar-runtime
+- `src/invar/__init__.py` - Re-exports from invar_runtime for backwards compatibility
+- `.github/workflows/publish.yml` - Publishes both packages
+- `.github/workflows/ci.yml` - Updated install commands
+
+### DX-21B: Claude Init Integration
+
+**New Feature:** `invar init --claude` integrates with Claude Code's `/init` command.
+
+**MCP Smart Detection:** Auto-detects best execution method:
+1. `uvx` (recommended - isolated environment)
+2. `command` (if `invar` in PATH)
+3. `python` (fallback to current interpreter)
+
+**New Files:**
+- `src/invar/shell/mcp_config.py` - MCP detection and configuration logic
+
+**CLI Options:**
+```bash
+invar init --claude                    # Run claude /init + Invar setup
+invar init --claude --mcp-method uvx   # Force specific MCP method
+invar init --claude -y                 # Non-interactive mode
+```
+
+### Version Bump: 0.8.2 → 1.0.0
+
+Major version bump to reflect:
+- Stable API (package split is breaking change for imports)
+- Production-ready quality
+- Two-package architecture
+
+**Commit:** 6132ab8
+
+---
+
+## Session 2025-12-23: DX-19 Verification Simplification
+
+### Problem
+
+Four verification levels (STATIC, STANDARD, PROVE, THOROUGH) created decision paralysis.
+
+### Solution: Two Levels Only
+
+| Level | Flag | Content | Use When |
+|-------|------|---------|----------|
+| **STATIC** | `--static` | Rules only (~0.5s) | Debugging static analysis |
+| **STANDARD** | (default) | Rules + doctests + CrossHair + Hypothesis (~5s) | Everything else |
+
+**Key Changes:**
+- Removed PROVE level (merged into STANDARD)
+- Removed unimplemented THOROUGH level
+- Default runs full verification (zero decisions needed)
+- Incremental mode makes STANDARD fast
+
+**Protocol Update:** v3.25 → v3.26
 
 ---
 
@@ -630,6 +706,10 @@ Human (Commander) ──directs──→ Agent (Executor) ──uses──→ In
 | 0.6.0 | 2025-12 | DX-13/DX-14: Incremental --prove (50x faster), auto-prove in pre-commit/CI |
 | 0.7.0 | 2025-12 | Zero technical debt (75→0 warnings), improved templates |
 | 0.7.1 | 2025-12 | DX-13 bug fix (--prove verification), CrossHair hardening |
+| 0.8.0 | 2025-12 | DX-19: Simplified verification levels (4→2) |
+| 0.8.1 | 2025-12 | Fix --top limit for JSON output |
+| 0.8.2 | 2025-12 | Handle empty files gracefully |
+| 1.0.0 | 2025-12 | DX-21: Package split (invar-runtime + invar-tools), Claude init integration |
 
 ## Tool Priority
 
@@ -646,7 +726,7 @@ Human (Commander) ──directs──→ Agent (Executor) ──uses──→ In
 
 | File | Purpose |
 |------|---------|
-| INVAR.md | Protocol v3.24 |
+| INVAR.md | Protocol v3.26 |
 | docs/INVAR-GUIDE.md | Why & How |
 | docs/VISION.md | Design philosophy |
 | CLAUDE.md | Development guide |

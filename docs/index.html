@@ -782,7 +782,7 @@
                 <a href="https://github.com/tefx/invar" class="btn btn-secondary">
                     View on GitHub
                 </a>
-                <a href="https://pypi.org/project/python-invar/" class="btn btn-secondary">
+                <a href="https://pypi.org/project/invar-tools/" class="btn btn-secondary">
                     PyPI
                 </a>
             </div>
@@ -822,8 +822,8 @@
 
     <section class="demo" id="demo">
         <div class="container">
-            <h2>Three Verification Levels</h2>
-            <p class="subtitle">Choose depth based on your needs</p>
+            <h2>Two Verification Levels</h2>
+            <p class="subtitle">Zero decisions — default runs full verification</p>
             <div class="terminal">
                 <div class="terminal-header">
                     <div class="terminal-dot red"></div>
@@ -831,20 +831,17 @@
                     <div class="terminal-dot green"></div>
                 </div>
                 <div class="terminal-body mono">
-                    <div class="terminal-line"><span class="prompt">$</span> <span class="command">invar guard --static</span>  <span class="output"># STATIC: rules only</span></div>
+                    <div class="terminal-line"><span class="prompt">$</span> <span class="command">invar guard --static</span>  <span class="output"># STATIC: rules only (~0.5s, debugging)</span></div>
                     <div class="terminal-line"><span class="success">✓ Static analysis passed</span></div>
                     <div class="terminal-line"></div>
-                    <div class="terminal-line"><span class="prompt">$</span> <span class="command">invar guard</span>  <span class="output"># STANDARD: rules + doctests (default)</span></div>
-                    <div class="terminal-line"><span class="success">✓ Static analysis passed</span></div>
-                    <div class="terminal-line"><span class="success">✓ Doctests passed</span></div>
-                    <div class="terminal-line"></div>
-                    <div class="terminal-line"><span class="prompt">$</span> <span class="command">invar guard --prove</span>  <span class="output"># PROVE: + CrossHair verification</span></div>
+                    <div class="terminal-line"><span class="prompt">$</span> <span class="command">invar guard</span>  <span class="output"># STANDARD: rules + doctests + CrossHair + Hypothesis (default)</span></div>
                     <div class="terminal-line"><span class="success">✓ Static analysis passed</span></div>
                     <div class="terminal-line"><span class="success">✓ Doctests passed</span></div>
-                    <div class="terminal-line"><span class="success">✓ CrossHair verified</span> <span class="output">(2 files, 4.5s)</span></div>
+                    <div class="terminal-line"><span class="success">✓ CrossHair verified</span> <span class="output">(2 files)</span></div>
+                    <div class="terminal-line"><span class="success">✓ Hypothesis property tests passed</span></div>
                     <div class="terminal-line"></div>
-                    <div class="terminal-line"><span class="output"># --prove runs automatically in pre-commit</span></div>
-                    <div class="terminal-line"><span class="output"># Incremental verification: only changed files (~5s)</span></div>
+                    <div class="terminal-line"><span class="output"># Default runs full verification — no decisions needed</span></div>
+                    <div class="terminal-line"><span class="output"># Incremental mode: only changed files (~5s first, ~2s cached)</span></div>
                 </div>
             </div>
         </div>
@@ -1047,7 +1044,7 @@
                 <div class="step">
                     <div class="step-number">1</div>
                     <h3>Install</h3>
-                    <code>pip install python-invar</code>
+                    <code>pip install invar-tools</code>
                 </div>
                 <div class="step">
                     <div class="step-number">2</div>
@@ -1087,13 +1084,13 @@
         <div class="container">
             <div class="links">
                 <a href="https://github.com/tefx/invar">GitHub</a>
-                <a href="https://pypi.org/project/python-invar/">PyPI</a>
+                <a href="https://pypi.org/project/invar-tools/">PyPI</a>
                 <a href="https://github.com/tefx/invar/blob/main/INVAR.md">Protocol</a>
                 <a href="https://github.com/tefx/invar/blob/main/docs/VISION.md">Vision</a>
             </div>
             <p class="copyright">
-                Invar Protocol v3.24 — Open source under MIT License<br>
-                Three-Level Verification • Agent-Native JSON • Human-Directed Purpose
+                Invar Protocol v3.26 — Open source under MIT License<br>
+                Two-Level Verification • Agent-Native JSON • Human-Directed Purpose
             </p>
         </div>
     </footer>
