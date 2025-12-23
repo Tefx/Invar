@@ -1,43 +1,39 @@
 """
-Invar Tools: AI-native software engineering framework.
+Invar Runtime: Lightweight contracts for Python.
 
-Trade structure for safety. The goal is not to make AI simpler,
-but to make AI output more reliable.
+This package provides the runtime components needed for projects using Invar:
+- Contract class with composable &, |, ~ operators
+- @pre/@post decorators for preconditions and postconditions
+- @must_use for marking return values that must be used
+- @must_close for resources that require explicit cleanup
+- invariant() for loop invariants
 
-This package provides development tools (guard, map, sig).
-For runtime contracts only, use invar-runtime instead.
+For development tools (guard, map, sig), install invar-tools instead.
 """
 
 __version__ = "1.0.0"
 
-# Re-export from invar-runtime for backwards compatibility
-from invar_runtime import (
+from invar_runtime.contracts import (
     AllNonNegative,
     AllPositive,
     Contract,
     InRange,
-    InvariantViolation,
-    MustCloseViolation,
     Negative,
-    NoNone,
     NonBlank,
     NonEmpty,
     NonNegative,
+    NoNone,
     Percentage,
     Positive,
-    ResourceWarning,
     Sorted,
     SortedNonEmpty,
     Unique,
-    invariant,
-    is_must_close,
-    must_close,
-    must_use,
     post,
     pre,
-    skip_property_test,
-    strategy,
 )
+from invar_runtime.decorators import must_use, skip_property_test, strategy
+from invar_runtime.invariant import InvariantViolation, invariant
+from invar_runtime.resource import MustCloseViolation, ResourceWarning, is_must_close, must_close
 
 __all__ = [
     # Contracts

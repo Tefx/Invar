@@ -38,7 +38,7 @@ repos:
           fi
         '
         language: python
-        additional_dependencies: ['python-invar']
+        additional_dependencies: ['invar-tools']
         pass_filenames: false
         stages: [pre-commit]
         types: [python]

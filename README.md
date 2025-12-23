@@ -1,6 +1,6 @@
 # Invar
 
-[![PyPI version](https://badge.fury.io/py/python-invar.svg)](https://badge.fury.io/py/python-invar)
+[![PyPI version](https://badge.fury.io/py/invar-tools.svg)](https://badge.fury.io/py/invar-tools)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -9,6 +9,8 @@
 Invar is a framework that helps developers ensure AI-generated code is reliable through contracts, verification, and mechanical checks.
 
 ```python
+from invar_runtime import pre, post
+
 @pre(lambda items: len(items) > 0)
 @post(lambda result: result >= 0)
 def average(items: list[float]) -> float:
@@ -23,11 +25,28 @@ def average(items: list[float]) -> float:
 
 ## Installation
 
+### Development Tools
+
 ```bash
-pip install python-invar
+# Recommended: use without installing
+uvx invar-tools guard
+
+# Or install globally
+pip install invar-tools
 ```
 
-Includes: static analysis, doctests, Hypothesis, CrossHair, and MCP server.
+### Runtime Contracts (for your project)
+
+```bash
+pip install invar-runtime
+```
+
+**Packages:**
+
+| Package | Size | Purpose |
+|---------|------|---------|
+| `invar-runtime` | ~3MB | Runtime contracts (`@pre`, `@post`, etc.) |
+| `invar-tools` | ~100MB | Development tools (`guard`, `map`, `sig`, MCP) |
 
 ---
 
@@ -173,17 +192,29 @@ Full list: `invar rules --explain`
 
 ## MCP Integration (Claude Code)
 
-`invar init` automatically creates `.mcp.json` at project root with the correct Python path:
+`invar init` automatically creates `.mcp.json` with smart detection of available methods:
 
 ```json
 {
   "mcpServers": {
     "invar": {
-      "command": "/path/to/your/.venv/bin/python",
-      "args": ["-m", "invar.mcp"]
+      "command": "uvx",
+      "args": ["invar-tools", "mcp"]
     }
   }
 }
+```
+
+**Claude Code Integration:**
+
+```bash
+# Full integration (recommended)
+invar init --claude
+
+# Specify MCP method
+invar init --claude --mcp-method uvx      # Recommended
+invar init --claude --mcp-method command  # Use PATH invar
+invar init --claude --mcp-method python   # Use current Python
 ```
 
 **MCP Tools:**
