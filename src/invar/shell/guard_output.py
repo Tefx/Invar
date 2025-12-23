@@ -204,15 +204,17 @@ def output_agent(
     doctest_output: str = "",
     crosshair_output: dict | None = None,
     verification_level: str = "standard",
+    property_output: dict | None = None,  # DX-08
 ) -> None:
-    """Output report in Agent-optimized JSON format (Phase 8.2 + DX-06 + DX-09).
+    """Output report in Agent-optimized JSON format (Phase 8.2 + DX-06 + DX-08 + DX-09).
 
     Args:
         report: Guard analysis report
         doctest_passed: Whether doctests passed
         doctest_output: Doctest stdout (only if failed)
         crosshair_output: CrossHair results dict
-        verification_level: Current level (static/standard/prove)
+        verification_level: Current level (static/standard)
+        property_output: Property test results dict (DX-08)
     """
     import json
 
@@ -227,4 +229,7 @@ def output_agent(
     # DX-06: Add CrossHair results if available
     if crosshair_output:
         output["crosshair"] = crosshair_output
+    # DX-08: Add property test results if available
+    if property_output:
+        output["property_tests"] = property_output
     console.print(json.dumps(output, indent=2))

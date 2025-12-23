@@ -1,7 +1,7 @@
 #!/bin/bash
 # Smart Invar Guard - Detects rule changes and runs full guard when needed
 #
-# DX-14: Now uses --prove by default (fast after DX-13 optimizations).
+# DX-19: Default runs full verification (static + doctests + CrossHair + Hypothesis).
 # When rule-affecting files are modified, runs full guard instead of --changed.
 # This prevents the situation where a rule severity upgrade passes locally
 # (because only changed files are checked) but fails in CI (full check).
@@ -32,13 +32,12 @@ for rule_file in "${RULE_FILES[@]}"; do
     fi
 done
 
-# DX-14: Use --prove for symbolic verification (fast after DX-13)
-# DX-13: Incremental mode makes --prove practical for pre-commit
+# DX-19: Default is full verification, no need for --prove flag
 if [ "$FULL_GUARD" = true ]; then
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo "Rule change detected - verifying entire codebase with --prove"
+    echo "Rule change detected - verifying entire codebase"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    invar guard --prove
+    invar guard
 else
-    invar guard --prove --changed
+    invar guard --changed
 fi

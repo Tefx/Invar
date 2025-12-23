@@ -4,7 +4,7 @@
 
 This project follows the Invar methodology. See [INVAR.md](./INVAR.md) for the protocol.
 
-**Protocol Version:** v3.24 | **PyPI:** `python-invar` | **Smart Guard:** `invar guard` = static + doctests
+**Protocol Version:** v3.26 | **PyPI:** `python-invar` | **Smart Guard:** `invar guard` = full verification
 
 ---
 
@@ -68,7 +68,8 @@ src/invar/
 │   ├── inspect.py     # File context for INSPECT section
 │   ├── references.py  # Cross-file reference counting
 │   ├── formatter.py   # Text/JSON output
-│   └── utils.py       # Pure utilities
+│   ├── utils.py       # Pure utilities
+│   └── property_gen.py # DX-08: Property test generation from contracts
 │
 ├── shell/             # I/O operations, returns Result[T, E]
 │   ├── cli.py         # Typer CLI: guard, map, sig, rules, version
@@ -79,7 +80,8 @@ src/invar/
 │   ├── templates.py   # Template operations
 │   ├── init_cmd.py    # init command
 │   ├── test_cmd.py    # test, verify commands
-│   └── testing.py     # Testing utilities
+│   ├── testing.py     # Testing utilities
+│   └── property_tests.py # DX-08: Property test runner
 │
 └── templates/         # Files for invar init
 ```
@@ -136,36 +138,23 @@ invar guard --changed      # Verify code quality (REQUIRED)
 | Find references | Serena `find_referencing_symbols` | Cross-file analysis |
 | Edit function body | Serena `replace_symbol_body` | Semantic editing |
 | Rename across project | Serena `rename_symbol` | Automatic refactoring |
-| Verify after changes | `invar guard --changed` | Smart Guard (static + doctests) |
+| Verify after changes | `invar guard --changed` | Smart Guard (full verification) |
 
 ### Other Commands
 ```bash
-invar guard --prove      # Add CrossHair symbolic verification
 invar guard --explain    # Detailed explanations
 invar rules              # List all rules
 ```
 
-### Guard Usage
+### Guard Usage (DX-19)
 
-**Default:** `invar guard` runs STANDARD = static + doctests. **Trust this.**
+**Default:** `invar guard` runs STANDARD = full verification (static + doctests + CrossHair + Hypothesis). **Trust this.**
 
 **Do NOT use --static unless:**
 - Debugging a specific static analysis issue
 - Performance profiling the guard itself
-- Explicitly testing --static behavior
 
-**Why?** Default is only 0.4s slower. Bypassing doctests saves 0.4s but risks missing failures.
-
-**`--prove` is automatic:** Pre-commit uses `--prove` by default. Incremental mode makes it fast (~5s first, ~2s cached). Manual `--prove` rarely needed.
-
-### Test and Verify Commands
-
-```bash
-invar test <file>        # Hypothesis property tests on single file
-invar test --changed     # Test all git-modified files
-invar verify <file>      # CrossHair symbolic verification
-invar verify --changed   # Verify all git-modified files
-```
+**Why?** Default is only ~5s. This includes everything. No decisions needed.
 
 ---
 

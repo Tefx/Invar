@@ -25,19 +25,18 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
-          pip install crosshair-tool  # DX-14: Required for --prove
+          pip install crosshair-tool  # Required for full verification
 
       - name: Run tests with pytest
         run: |
           pytest --doctest-modules src/invar/ -v
 
-      # DX-14: CI uses --prove for symbolic verification
-      # DX-13: Incremental mode makes this fast (~8s instead of 6+ min)
-      # Note: continue-on-error because CrossHair finds different edge cases
-      # across Python versions (3.11 vs 3.14). Failures are informational.
-      - name: Run Invar Guard with Proof
+      # DX-19: Default runs full verification (static + doctests + CrossHair + Hypothesis)
+      # continue-on-error because CrossHair finds different edge cases
+      # across Python versions. Failures are informational.
+      - name: Run Invar Guard
         run: |
-          invar guard --prove
+          invar guard
         continue-on-error: true
 
       - name: Check types with mypy

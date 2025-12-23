@@ -98,16 +98,15 @@ def guard(
         False, "--json", help="Output as JSON (simple format, no fix instructions)"
     ),
     static: bool = typer.Option(
-        False, "--static", help="Static analysis only, skip doctests"
-    ),
-    prove: bool = typer.Option(
-        False, "--prove", help="Add symbolic verification with CrossHair"
+        False, "--static", help="Static analysis only, skip all runtime tests"
     ),
 ) -> None:
     """Check project against Invar architecture rules.
 
-    Smart Guard: Automatically runs doctests after static analysis.
-    Use --static for static-only, --prove for symbolic verification.
+    Smart Guard: Runs static analysis + doctests + CrossHair + Hypothesis by default.
+    Use --static for quick static-only checks (~0.5s vs ~5s full).
+
+    DX-19: Simplified to 2 levels (Zero decisions).
     """
     from invar.shell.guard_helpers import (
         collect_files_to_check,
@@ -115,6 +114,7 @@ def guard(
         output_verification_status,
         run_crosshair_phase,
         run_doctests_phase,
+        run_property_tests_phase,
     )
     from invar.shell.testing import VerificationLevel
 
@@ -155,11 +155,9 @@ def guard(
         json_output, agent
     )
 
-    # Determine verification level (DX-15: auto-select based on context)
-    verification_level = _determine_verification_level(
-        prove, static, changed_mode=changed, changed_files_count=len(checked_files)
-    )
-    level_name = _get_level_name(verification_level)
+    # DX-19: Simplified to 2 levels (STATIC or STANDARD)
+    verification_level = VerificationLevel.STATIC if static else VerificationLevel.STANDARD
+    level_name = "STATIC" if static else "STANDARD"
 
     # Show verification level (human mode)
     if not use_agent_output and not use_json_output:
@@ -169,31 +167,44 @@ def guard(
     static_exit_code = get_exit_code(report, strict)
     doctest_passed, doctest_output = True, ""
     crosshair_passed, crosshair_output = True, {}
+    property_passed, property_output = True, {}
 
-    if verification_level >= VerificationLevel.STANDARD and static_exit_code == 0:
+    # DX-19: STANDARD runs all verification phases
+    if verification_level == VerificationLevel.STANDARD and static_exit_code == 0:
         checked_files = collect_files_to_check(path, checked_files)
+
+        # Phase 1: Doctests
         doctest_passed, doctest_output = run_doctests_phase(checked_files, explain)
 
-    if verification_level >= VerificationLevel.PROVE:
+        # Phase 2: CrossHair symbolic verification
         crosshair_passed, crosshair_output = run_crosshair_phase(
             path, checked_files, doctest_passed, static_exit_code,
-            changed_mode=changed,  # DX-13: Only git-incremental when --changed
+            changed_mode=changed,
+        )
+
+        # Phase 3: Hypothesis property tests
+        property_passed, property_output = run_property_tests_phase(
+            checked_files, doctest_passed, static_exit_code
         )
 
     # Output results
     if use_agent_output:
-        output_agent(report, doctest_passed, doctest_output, crosshair_output, level_name)
+        output_agent(
+            report, doctest_passed, doctest_output, crosshair_output, level_name,
+            property_output=property_output,
+        )
     elif use_json_output:
         output_json(report)
     else:
         output_rich(report, config.strict_pure, changed, pedantic, explain)
         output_verification_status(
             verification_level, static_exit_code, doctest_passed,
-            doctest_output, crosshair_output, explain
+            doctest_output, crosshair_output, explain,
+            property_output=property_output,
         )
 
     # Exit with combined status
-    all_passed = doctest_passed and crosshair_passed
+    all_passed = doctest_passed and crosshair_passed and property_passed
     final_exit = static_exit_code if all_passed else 1
     raise typer.Exit(final_exit)
 
@@ -207,59 +218,16 @@ def _determine_output_mode(json_output: bool, agent: bool) -> tuple[bool, bool]:
     return False, False
 
 
-def _determine_verification_level(
-    prove: bool, static: bool, changed_mode: bool = False, changed_files_count: int = 0
-):
-    """
-    Determine verification level from flags and context.
-
-    DX-15: Auto-select PROVE when appropriate:
-    - CI environment always uses PROVE
-    - Small changes (<=3 files) in --changed mode use PROVE
-    - Otherwise defaults to STANDARD
-    """
-    import os
-
-    from invar.shell.testing import VerificationLevel
-
-    # Explicit flags take precedence
-    if prove:
-        return VerificationLevel.PROVE
-    if static:
-        return VerificationLevel.STATIC
-
-    # DX-15: Auto-detect appropriate level
-    # CI environment always uses PROVE
-    if os.getenv("CI"):
-        return VerificationLevel.PROVE
-
-    # In --changed mode with few files, use PROVE (it's fast enough)
-    if changed_mode and 0 < changed_files_count <= 3:
-        return VerificationLevel.PROVE
-
-    # Otherwise use STANDARD level
-    return VerificationLevel.STANDARD
-
-
-def _get_level_name(verification_level) -> str:
-    """Get string name for verification level."""
-    from invar.shell.testing import VerificationLevel
-
-    return {
-        VerificationLevel.STATIC: "static",
-        VerificationLevel.STANDARD: "standard",
-        VerificationLevel.PROVE: "prove",
-    }[verification_level]
-
-
 def _show_verification_level(verification_level) -> None:
-    """Show verification level in human-readable format."""
+    """Show verification level in human-readable format.
+
+    DX-19: Simplified to 2 levels.
+    """
     from invar.shell.testing import VerificationLevel
 
     labels = {
-        VerificationLevel.STATIC: "[yellow]--static[/yellow] (static only, doctests skipped)",
-        VerificationLevel.STANDARD: "default (static + doctests)",
-        VerificationLevel.PROVE: "--prove (static + doctests + CrossHair)",
+        VerificationLevel.STATIC: "[yellow]--static[/yellow] (static only)",
+        VerificationLevel.STANDARD: "default (static + doctests + CrossHair + Hypothesis)",
     }
     console.print(f"[dim]Verification: {labels[verification_level]}[/dim]")
 

@@ -77,10 +77,9 @@ def load_config(path: Path) -> Result[Config, str]:
 ### Guard (Primary)
 
 ```bash
-invar guard              # Static + doctests (default)
+invar guard              # Full verification (default)
 invar guard --changed    # Only git-modified files
-invar guard --static     # Static only (skip doctests)
-invar guard --prove      # + CrossHair verification
+invar guard --static     # Static only (~0.5s)
 ```
 
 **Flags:**
@@ -98,24 +97,19 @@ invar guard --prove      # + CrossHair verification
 invar sig <file>         # Show signatures + contracts
 invar map --top 10       # Most-referenced symbols
 invar rules              # List all rules
-invar test <file>        # Property-based testing (Hypothesis)
-invar test --changed     # Test git-modified files
-invar verify <file>      # Symbolic verification (CrossHair)
-invar verify --changed   # Verify git-modified files
 invar update             # Update managed files
 ```
 
 ---
 
-## Verification Levels
+## Verification Levels (DX-19)
 
 | Level | Command | Checks | When to Use |
 |-------|---------|--------|-------------|
-| STATIC | `--static` | Rules only | Debugging static analysis |
-| STANDARD | (default) | Rules + doctests | Normal development |
-| PROVE | `--prove` | + CrossHair | Pre-commit, CI (automatic) |
+| STATIC | `--static` | Rules only (~0.5s) | Debugging static analysis |
+| STANDARD | (default) | Rules + doctests + CrossHair + Hypothesis (~5s) | Everything else |
 
-Pre-commit uses `--prove` by default. Incremental mode makes it fast (~5s first, ~2s cached).
+**Zero decisions:** Default runs full verification. Incremental mode makes it fast (~5s first, ~2s cached).
 
 ---
 

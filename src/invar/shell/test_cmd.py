@@ -2,6 +2,7 @@
 Test and verify CLI commands.
 
 Extracted from cli.py to manage file size.
+DX-08: Updated to use contract-driven property testing.
 """
 
 from __future__ import annotations
@@ -30,9 +31,13 @@ def test(
     verbose: bool = typer.Option(False, "-v", "--verbose", help="Verbose output"),
     json_output: bool = typer.Option(False, "--json", help="Output as JSON"),
     changed: bool = typer.Option(False, "--changed", help="Test git-modified files only"),
+    max_examples: int = typer.Option(100, "--max-examples", help="Maximum Hypothesis examples per function"),
 ) -> None:
-    """Run property-based tests using Hypothesis via deal.cases."""
-    from invar.shell.testing import run_test
+    """Run property-based tests using Hypothesis on contracted functions (DX-08)."""
+    from invar.shell.property_tests import (
+        format_property_test_report,
+        run_property_tests_on_files,
+    )
 
     use_json = json_output or _detect_agent_mode()
 
@@ -55,15 +60,18 @@ def test(
         console.print("[red]Error:[/red] Either provide a file or use --changed")
         raise typer.Exit(1)
 
-    # Run tests on all files
-    all_passed = True
-    for file_path in files:
-        result = run_test(str(file_path), use_json, verbose)
-        if isinstance(result, Failure):
-            console.print(f"[red]Error:[/red] {result.failure()}")
-            all_passed = False
+    # DX-08: Run property tests on files
+    result = run_property_tests_on_files(files, max_examples, verbose)
 
-    if not all_passed:
+    if isinstance(result, Failure):
+        console.print(f"[red]Error:[/red] {result.failure()}")
+        raise typer.Exit(1)
+
+    report = result.unwrap()
+    output = format_property_test_report(report, use_json)
+    console.print(output)
+
+    if not report.all_passed():
         raise typer.Exit(1)
 
 

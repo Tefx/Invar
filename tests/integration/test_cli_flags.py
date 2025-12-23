@@ -2,10 +2,11 @@
 Integration tests for CLI flags.
 
 DX-07: Verify all feature paths connect correctly.
+DX-19: Simplified to 2 verification levels (STATIC, STANDARD).
 Law 6: Local correctness ≠ global correctness.
 
 These tests ensure that CLI flags actually trigger the expected behavior,
-preventing "flag exists but does nothing" bugs like the --prove incident.
+preventing "flag exists but does nothing" bugs.
 """
 
 from __future__ import annotations
@@ -55,12 +56,12 @@ def run_invar_guard(*args: str, env: dict | None = None) -> dict:
         return {"raw_output": output, "stderr": result.stderr, "returncode": result.returncode}
 
 
-class TestQuickFlag:
-    """DX-07: Verify --quick flag skips doctests."""
+class TestStaticFlag:
+    """DX-19: Verify --static flag skips runtime tests."""
 
-    def test_quick_flag_skips_doctests(self):
-        """--quick should only run static analysis, no doctests."""
-        result = run_invar_guard("--quick", "src/invar/core")
+    def test_static_flag_skips_doctests(self):
+        """--static should only run static analysis, no doctests."""
+        result = run_invar_guard("--static", "src/invar/core")
 
         # Should have status
         assert "status" in result, f"Missing status in output: {result}"
@@ -70,45 +71,15 @@ class TestQuickFlag:
             # If doctest key exists, it should indicate skipped
             assert result["doctest"].get("passed") is True or "skipped" in str(
                 result.get("doctest", {})
-            ).lower(), "Doctest should be skipped in --quick mode"
+            ).lower(), "Doctest should be skipped in --static mode"
 
-    def test_quick_flag_runs_static_analysis(self):
-        """--quick should still run static analysis."""
-        result = run_invar_guard("--quick", "src/invar/core")
+    def test_static_flag_runs_static_analysis(self):
+        """--static should still run static analysis."""
+        result = run_invar_guard("--static", "src/invar/core")
 
         assert "summary" in result, f"Missing summary in output: {result}"
         assert "files_checked" in result["summary"], "Should report files checked"
         assert result["summary"]["files_checked"] > 0, "Should check at least one file"
-
-
-class TestProveFlag:
-    """DX-07: Verify --prove flag produces CrossHair output section.
-
-    Note: These tests verify the flag wiring, not full CrossHair execution.
-    CrossHair tests may be slow due to symbolic execution.
-    """
-
-    def test_prove_flag_produces_crosshair_output(self):
-        """--prove should produce crosshair section in output."""
-        # Test on project root with quick path to verify wiring
-        result = run_invar_guard("--prove", "src/invar/core")
-
-        # Should have crosshair section (even if skipped/error due to timeout)
-        assert "crosshair" in result, f"--prove must produce crosshair section: {result}"
-
-        # CrossHair status should be valid
-        crosshair = result["crosshair"]
-        valid_statuses = {"verified", "counterexample_found", "skipped", "error"}
-        assert crosshair.get("status") in valid_statuses, (
-            f"Invalid crosshair status: {crosshair.get('status')}"
-        )
-
-    def test_prove_flag_includes_doctest_section(self):
-        """--prove should include doctest section (higher tier includes lower)."""
-        result = run_invar_guard("--prove", "src/invar/core")
-
-        # --prove implies PROVE level which includes doctests
-        assert "doctest" in result, "--prove should have doctest section"
 
 
 class TestChangedFlag:
@@ -135,7 +106,7 @@ class TestChangedFlag:
 
 
 class TestDefaultBehavior:
-    """DX-07: Verify default behavior runs static + doctests."""
+    """DX-19: Verify default behavior runs full verification (STANDARD level)."""
 
     def test_default_runs_doctests(self):
         """Default guard should run doctests."""
@@ -152,13 +123,27 @@ class TestDefaultBehavior:
         assert "summary" in result, "Should have summary"
         assert result["summary"]["files_checked"] > 0, "Should check files"
 
+    def test_default_runs_crosshair(self):
+        """Default guard should include CrossHair verification."""
+        result = run_invar_guard("src/invar/core")
+
+        # Should have crosshair section (even if skipped/error due to timeout)
+        assert "crosshair" in result, "Default guard should include crosshair section"
+
+        # CrossHair status should be valid
+        crosshair = result["crosshair"]
+        valid_statuses = {"verified", "counterexample_found", "skipped", "error"}
+        assert crosshair.get("status") in valid_statuses, (
+            f"Invalid crosshair status: {crosshair.get('status')}"
+        )
+
 
 class TestAgentModeDetection:
     """DX-07: Verify agent mode is auto-detected."""
 
     def test_pipe_mode_produces_json(self):
         """When piped (non-TTY), output should be JSON."""
-        result = run_invar_guard("--quick", "src/invar/core")
+        result = run_invar_guard("--static", "src/invar/core")
 
         # If we got a dict back, JSON parsing succeeded
         assert isinstance(result, dict), "Piped output should be valid JSON"
@@ -172,7 +157,7 @@ class TestExplainFlag:
         """--explain should provide detailed violation info."""
         # This test may pass or fail depending on code state
         # Just verify it doesn't crash
-        result = run_invar_guard("--explain", "--quick", "src/invar")
+        result = run_invar_guard("--explain", "--static", "src/invar")
 
         assert "status" in result, f"--explain should work: {result}"
 

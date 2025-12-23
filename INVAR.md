@@ -6,7 +6,7 @@
   │ `invar update`. Add project content to CLAUDE.md instead.   │
   └─────────────────────────────────────────────────────────────┘
 -->
-# The Invar Protocol v3.24
+# The Invar Protocol v3.25
 
 > **"Trade structure for safety."** Separate what CAN fail (I/O) from what SHOULD NOT fail (logic).
 
@@ -188,38 +188,29 @@ Guard shows **Code Health** percentage based on warnings. Fix warnings in files 
 
 ### Smart Guard (Primary Command)
 ```bash
-invar guard              # Static + doctests (default)
+invar guard              # Full verification (default)
 invar guard --changed    # Modified files only
-invar guard --static     # Static only (skip doctests)
-invar guard --prove      # Static + doctests + CrossHair
+invar guard --static     # Static only (~0.5s, for debugging)
 invar guard --explain    # Detailed explanations
 ```
 
-### Three Verification Levels
+### Two Verification Levels (DX-19)
 
 | Level | Flag | Content | Use When |
 |-------|------|---------|----------|
-| **STATIC** | `--static` | Rules only | Debugging static analysis |
-| **STANDARD** | (default) | Rules + doctests | Normal development |
-| **PROVE** | `--prove` | Rules + doctests + CrossHair | Contract changes, releases |
+| **STATIC** | `--static` | Rules only (~0.5s) | Debugging static analysis |
+| **STANDARD** | (default) | Rules + doctests + CrossHair + Hypothesis (~5s) | Everything else |
+
+**DX-19: Zero decisions.** Default = full verification. No need to choose modes.
 
 **Agent JSON output includes `"verification_level"` for transparency.**
 
-**`--prove` runs automatically:**
-- Pre-commit uses `--prove` by default (full verification)
-- CI should also use `--prove`
-- Manual `--prove` rarely needed
-
-**Incremental verification makes `--prove` fast:**
-- Only verifies changed files
-- First commit: ~5s, subsequent: ~2s (cached)
+**Incremental verification makes STANDARD fast:**
+- Only verifies changed files with `--changed`
+- First run: ~5s, subsequent: ~2s (CrossHair cache)
 
 ### Other Commands
 ```bash
-invar test <file>        # Property-based tests (Hypothesis)
-invar test --changed     # Test git-modified files
-invar verify <file>      # Symbolic verification (CrossHair)
-invar verify --changed   # Verify git-modified files
 invar rules              # List all rules with severity
 ```
 
@@ -331,4 +322,4 @@ purity_impure = ["mylib.cached_compute"]  # Has side effects
 
 ---
 
-*Protocol v3.24 — --static flag, --changed for test/verify, improved flag precedence.*
+*Protocol v3.26 — DX-19: Simplified to 2 verification levels (Zero decisions).*
