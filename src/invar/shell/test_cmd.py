@@ -10,7 +10,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import typer
-from returns.result import Failure, Success
+from returns.result import Failure
 from rich.console import Console
 
 from invar.shell.git import get_changed_files, is_git_repo

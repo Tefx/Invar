@@ -8,7 +8,6 @@ Core module: pure logic, no I/O.
 from __future__ import annotations
 
 import ast
-import inspect
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
@@ -76,7 +75,7 @@ def _infer_strategy_strings(func: Callable) -> dict[str, str] | None:
     >>> result is None or isinstance(result, dict)
     True
     """
-    # Lazy import to avoid circular dependency  # noqa: internal_import
+    # Lazy import to avoid circular dependency
     from invar.core.hypothesis_strategies import infer_strategies_for_function
 
     try:
@@ -166,7 +165,7 @@ def test_{func_name}_property({param_list}):
 '''
 
 
-@pre(lambda dec: isinstance(dec, ast.Call))
+@pre(lambda dec: isinstance(dec, ast.Call) and hasattr(dec, "func"))
 @post(lambda result: isinstance(result, tuple) and len(result) == 2)
 def _check_decorator_contracts(dec: ast.Call) -> tuple[bool, bool]:
     """Check if decorator is @pre or @post, return (has_pre, has_post).
@@ -214,7 +213,7 @@ def _get_function_contracts(node: ast.FunctionDef | ast.AsyncFunctionDef) -> tup
     return has_pre, has_post
 
 
-@pre(lambda source: isinstance(source, str))
+@pre(lambda source: isinstance(source, str) and len(source) > 0)
 @post(lambda result: isinstance(result, list))
 def find_contracted_functions(source: str) -> list[dict[str, Any]]:
     """
@@ -232,7 +231,7 @@ def find_contracted_functions(source: str) -> list[dict[str, Any]]:
     """
     try:
         tree = ast.parse(source)
-    except SyntaxError:
+    except (SyntaxError, ValueError, TypeError):
         return []
 
     functions: list[dict[str, Any]] = []
@@ -251,7 +250,7 @@ def find_contracted_functions(source: str) -> list[dict[str, Any]]:
     return functions
 
 
-@pre(lambda node: isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)))
+@pre(lambda node: isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and hasattr(node, "args"))
 @post(lambda result: isinstance(result, list))
 def _extract_params(node: ast.FunctionDef | ast.AsyncFunctionDef) -> list[dict[str, str]]:
     """Extract parameter names and type annotations from function node."""
@@ -291,7 +290,7 @@ def build_test_function(
     >>> test_fn is None or callable(test_fn)
     True
     """
-    # Lazy import: hypothesis is optional dependency  # noqa: internal_import
+    # Lazy import: hypothesis is optional dependency
     try:
         from hypothesis import given, settings
         from hypothesis import strategies as st

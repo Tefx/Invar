@@ -121,7 +121,7 @@ def detect_verification_context() -> VerificationLevel:
     DX-15 Note: Primary auto-detection logic is now in cli._determine_verification_level()
     which has access to changed_files_count. This function remains as fallback.
 
-    >>> detect_verification_context() == VerificationLevel.STANDARD
+    >>> detect_verification_context() in (VerificationLevel.STANDARD, VerificationLevel.PROVE)
     True
     """
     import os

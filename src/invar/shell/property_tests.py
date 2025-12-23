@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import importlib.util
 import sys
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 from returns.result import Failure, Result, Success
@@ -17,13 +16,12 @@ from rich.console import Console
 
 from invar.core.property_gen import (
     PropertyTestReport,
-    PropertyTestResult,
     find_contracted_functions,
     run_property_test,
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from pathlib import Path
 
 console = Console()
 
