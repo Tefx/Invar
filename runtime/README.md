@@ -84,4 +84,4 @@ uvx invar-tools guard
 
 ## License
 
-MIT
+Apache-2.0

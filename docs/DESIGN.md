@@ -357,10 +357,12 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - run: pip install invar
+      - run: pip install invar-tools
       - run: invar guard --strict
         # --strict: treat warnings as errors
 ```
+
+> **Tip:** Use `uvx invar-tools guard` locally to run without installing.
 
 ---
 
@@ -591,18 +593,23 @@ Invar provides an MCP (Model Context Protocol) server for AI agent integration.
 
 ### Configuration
 
-`invar init` creates `.mcp.json` at project root:
+`invar init` creates `.mcp.json` at project root with auto-detected execution method:
 
 ```json
 {
   "mcpServers": {
     "invar": {
-      "command": "/path/to/.venv/bin/python",
-      "args": ["-m", "invar.mcp"]
+      "command": "uvx",
+      "args": ["invar-tools", "mcp"]
     }
   }
 }
 ```
+
+**MCP method priority:**
+1. `uvx` (recommended - isolated environment, always latest)
+2. `command` (if `invar` is in PATH)
+3. `python` (fallback to current interpreter)
 
 ### Agent Instructions
 
@@ -898,19 +905,25 @@ invar init --config-only # Only add config, no INVAR.md/CLAUDE.md
 
 ## Dependencies
 
-**Runtime:**
+**invar-runtime (lightweight):**
+```
+deal >= 4.0           # Contracts engine
+returns >= 0.20       # Result type
+```
+
+**invar-tools (includes invar-runtime):**
 ```
 typer >= 0.9          # CLI framework
 rich >= 13.0          # Pretty output
 pydantic >= 2.0       # Validation
-deal >= 4.0           # Contracts
-returns >= 0.20       # Result type
+hypothesis >= 6.0     # Property testing
+crosshair-tool        # Symbolic verification
+mcp                   # Model Context Protocol
 ```
 
 **Development:**
 ```
 pytest >= 7.0
-hypothesis >= 6.0
 mypy >= 1.0
 ruff >= 0.1
 ```
@@ -971,32 +984,59 @@ When Invar was used to check itself, several issues were discovered:
 
 ## Distribution
 
-### Package Structure
+### Package Structure (v1.0+)
+
+Invar uses a two-package architecture:
+
+| Package | Size | Purpose |
+|---------|------|---------|
+| `invar-runtime` | ~3MB | Runtime contracts (`@pre`, `@post`, `must_use`, `invariant`) |
+| `invar-tools` | ~100MB | Development tools (guard, map, sig, MCP server) |
 
 ```
-invar (PyPI package)
+invar-runtime (PyPI)
+└── src/invar_runtime/
+    ├── contracts.py      # @pre/@post, Contract class
+    ├── decorators.py     # @must_use, @strategy, @skip_property_test
+    ├── invariant.py      # Loop invariants
+    └── resource.py       # @must_close
+
+invar-tools (PyPI)
 ├── src/invar/
 │   ├── core/             # Parser, rules, models
 │   ├── shell/            # CLI, file system
+│   ├── mcp/              # MCP server
 │   └── templates/        # Files copied on init
-│       ├── INVAR.md
-│       ├── CLAUDE.md.template
-│       └── context.md.template
-└── (metadata)
+└── (depends on invar-runtime)
 ```
 
 ### Distribution Channels
 
 | Channel | Content | Target Users |
 |---------|---------|--------------|
-| **PyPI** | CLI tool + templates | Primary distribution |
+| **PyPI invar-tools** | CLI tool + templates | Developers using AI |
+| **PyPI invar-runtime** | Runtime contracts | Projects using contracts |
+| **uvx** | No-install execution | Quick usage |
 | **GitHub** | Source + dev docs | Contributors |
-| **GitHub Raw** | INVAR.md direct link | AI agents |
+
+### Installation Options
+
+```bash
+# Recommended: use without installing (always latest)
+uvx invar-tools guard
+uvx invar-tools init --claude
+
+# Or install globally
+pip install invar-tools
+
+# For projects using contracts at runtime
+pip install invar-runtime
+```
 
 ### `invar init` Behavior
 
 ```bash
-$ invar init
+$ uvx invar-tools init --claude
 
 ✓ Added [tool.invar.guard] to pyproject.toml
 ✓ Created INVAR.md (Invar Protocol)
@@ -1004,6 +1044,8 @@ $ invar init
 ✓ Created src/core/
 ✓ Created src/shell/
 ✓ Created .invar/context.md (context management)
+✓ Created .mcp.json (MCP server config)
+✓ Ran claude /init
 ```
 
 ### Version Strategy
@@ -1011,15 +1053,10 @@ $ invar init
 Protocol and tool versions are separate:
 
 ```
-INVAR.md v3.9        # Protocol version (MAJOR.MINOR)
-invar 0.1.0          # Tool version (semver)
+INVAR.md v3.26       # Protocol version (MAJOR.MINOR)
+invar-tools 1.0.2    # Tool version (semver)
+invar-runtime 1.0.2  # Runtime version (semver)
 ```
-
-**Protocol Versioning (MAJOR.MINOR):**
-- MAJOR = Protocol generation (Layer 0 defines this)
-- MINOR = Protocol revision (Layer 1 changes)
-- Layer 2 changes don't bump version
-- See INVAR.md Section 12.6 for full rules
 
 ### File Roles
 

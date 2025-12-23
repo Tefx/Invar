@@ -143,6 +143,7 @@ test_style = "inline"
 testpaths = ["tests", "src"]
 python_files = ["test_*.py", "*.py"]
 python_functions = ["test_*"]
+norecursedirs = ["templates"]  # Avoid module name collision with .invar/examples/
 addopts = [
     "--doctest-modules",
     "-v",

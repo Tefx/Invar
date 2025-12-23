@@ -5,7 +5,9 @@ Reference patterns for @pre/@post contracts and doctests.
 Managed by Invar - do not edit directly.
 """
 
-from deal import post, pre
+# Use invar_runtime for lightweight runtime contracts
+# (or 'from deal import pre, post' works too - deal is the underlying library)
+from invar_runtime import post, pre
 
 # =============================================================================
 # GOOD: Complete Contract

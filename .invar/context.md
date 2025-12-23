@@ -1,12 +1,13 @@
 # Invar Project Context
 
-*Last updated: 2025-12-23*
+*Last updated: 2025-12-24*
 
 ## Current State
 
-- **PyPI:** `invar-tools` + `invar-runtime` v1.0.0 (DX-21 package split)
+- **PyPI:** `invar-tools` + `invar-runtime` v1.0.2 (DX-21 package split + dual licensing)
 - **Protocol:** v3.26 (DX-19: 2 verification levels, DX-21: package split + Claude init)
 - **GitHub Pages:** https://tefx.github.io/Invar/
+- **Licenses:** Apache-2.0 (runtime) + GPL-3.0 (tools) + CC-BY-4.0 (docs)
 - **Status:** Feature complete, zero technical debt
 - **Blockers:** None
 
@@ -710,6 +711,8 @@ Human (Commander) ──directs──→ Agent (Executor) ──uses──→ In
 | 0.8.1 | 2025-12 | Fix --top limit for JSON output |
 | 0.8.2 | 2025-12 | Handle empty files gracefully |
 | 1.0.0 | 2025-12 | DX-21: Package split (invar-runtime + invar-tools), Claude init integration |
+| 1.0.1 | 2025-12 | Deprecated python-invar package with migration warning |
+| 1.0.2 | 2025-12 | Dual licensing: Apache-2.0 (runtime) + GPL-3.0 (tools) + CC-BY-4.0 (docs) |
 
 ## Tool Priority
 
