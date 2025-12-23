@@ -402,6 +402,51 @@ def _get_user_strategies(func: Callable) -> dict[str, StrategySpec]:
     return user_specs
 
 
+@pre(lambda source: isinstance(source, str))
+@post(lambda result: isinstance(result, list))
+def _extract_pre_lambdas_from_source(source: str) -> list[str]:
+    """
+    Extract lambda expressions from @pre decorators with balanced parenthesis.
+
+    >>> _extract_pre_lambdas_from_source("@pre(lambda x: x > 0)")
+    ['lambda x: x > 0']
+    >>> _extract_pre_lambdas_from_source("@pre(lambda x: len(x) > 0)")
+    ['lambda x: len(x) > 0']
+    >>> _extract_pre_lambdas_from_source("@pre(lambda x, y: isinstance(x, str))")
+    ['lambda x, y: isinstance(x, str)']
+    >>> _extract_pre_lambdas_from_source("")
+    []
+    """
+    results = []
+    i = 0
+    while i < len(source):
+        # Find @pre(
+        pre_match = re.search(r"@pre\s*\(", source[i:])
+        if not pre_match:
+            break
+        start = i + pre_match.end()
+
+        # Find matching closing paren with balance counting
+        paren_depth = 1
+        j = start
+        while j < len(source) and paren_depth > 0:
+            if source[j] == "(":
+                paren_depth += 1
+            elif source[j] == ")":
+                paren_depth -= 1
+            j += 1
+
+        if paren_depth == 0:
+            # Extract content between @pre( and matching )
+            content = source[start : j - 1].strip()
+            if content.startswith("lambda"):
+                results.append(content)
+
+        i = j
+
+    return results
+
+
 @pre(lambda func: callable(func))
 @post(lambda result: isinstance(result, list))
 def _extract_pre_sources(func: Callable) -> list[str]:
@@ -413,13 +458,10 @@ def _extract_pre_sources(func: Callable) -> list[str]:
         # deal stores contracts in _deal attribute
         pass
 
-    # Try to extract from source
+    # Try to extract from source using balanced parenthesis matching
     try:
         source = inspect.getsource(func)
-        # Find @pre decorators
-        pre_pattern = r"@pre\s*\(\s*(lambda[^)]+)\s*\)"
-        matches = re.findall(pre_pattern, source)
-        pre_sources.extend(matches)
+        pre_sources.extend(_extract_pre_lambdas_from_source(source))
     except (OSError, TypeError):
         pass
 

@@ -300,6 +300,10 @@ def build_test_function(
     # Build strategy dict
     strategy_dict = {}
     for param_name, strat_code in strategies.items():
+        # Skip functions with nothing() strategy (untestable types)
+        if "nothing()" in strat_code:
+            return None
+
         # Evaluate the strategy code
         try:
             # strat_code is like "st.integers(min_value=0)"
@@ -322,16 +326,18 @@ def build_test_function(
     return property_test
 
 
+@pre(lambda name, reason: isinstance(name, str) and isinstance(reason, str))
+@post(lambda result: isinstance(result, PropertyTestResult) and result.passed)
+def _skip_result(name: str, reason: str) -> PropertyTestResult:
+    """Create a skip result (passed=True, 0 examples)."""
+    return PropertyTestResult(function_name=name, passed=True, examples_run=0, error=reason)
+
+
 @pre(lambda func, max_examples: callable(func) and max_examples > 0)
 @post(lambda result: isinstance(result, PropertyTestResult))
-def run_property_test(
-    func: Callable,
-    max_examples: int = 100,
-) -> PropertyTestResult:
+def run_property_test(func: Callable, max_examples: int = 100) -> PropertyTestResult:
     """
     Run a property test on a single function.
-
-    Generates strategies from contracts and runs Hypothesis.
 
     >>> from deal import pre, post
     >>> @pre(lambda x: x >= 0)
@@ -347,37 +353,20 @@ def run_property_test(
     # Generate test
     generated = generate_property_test(func)
     if generated is None:
-        return PropertyTestResult(
-            function_name=func_name,
-            passed=True,  # No test generated = skip, not fail
-            examples_run=0,
-            error="Could not generate test (no contracts or unparseable)",
-        )
+        return _skip_result(func_name, "Could not generate test (no contracts or unparseable)")
+
+    # Check for untestable parameters (AST nodes, custom classes)
+    if any("nothing()" in s for s in generated.strategies.values()):
+        return _skip_result(func_name, "Skipped: untestable types (AST nodes, custom classes)")
 
     # Build executable test
     test_fn = build_test_function(func, generated.strategies, max_examples)
     if test_fn is None:
-        return PropertyTestResult(
-            function_name=func_name,
-            passed=True,
-            examples_run=0,
-            error="Could not build test (hypothesis not available or strategy error)",
-        )
+        return _skip_result(func_name, "Could not build test (hypothesis unavailable)")
 
     # Run the test
     try:
         test_fn()
-        return PropertyTestResult(
-            function_name=func_name,
-            passed=True,
-            examples_run=max_examples,
-        )
+        return PropertyTestResult(func_name, passed=True, examples_run=max_examples)
     except Exception as e:
-        # Extract counterexample if available
-        error_str = str(e)
-        return PropertyTestResult(
-            function_name=func_name,
-            passed=False,
-            examples_run=max_examples,
-            error=error_str,
-        )
+        return PropertyTestResult(func_name, passed=False, examples_run=max_examples, error=str(e))
