@@ -17,7 +17,7 @@ name = "invar-tools"
 version = "1.0.0"
 description = "AI-native software engineering tools with design-by-contract verification"
 readme = "README.md"
-license = "MIT"
+license = "GPL-3.0-or-later"
 requires-python = ">=3.11"
 authors = [
     { name = "Invar Team" }
@@ -26,7 +26,7 @@ keywords = ["ai", "contracts", "design-by-contract", "code-quality", "static-ana
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",

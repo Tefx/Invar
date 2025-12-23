@@ -10,7 +10,7 @@ name = "invar-runtime"
 version = "1.0.0"
 description = "Lightweight runtime contracts for Invar projects"
 readme = "README.md"
-license = "MIT"
+license = "Apache-2.0"
 requires-python = ">=3.11"
 authors = [
     { name = "Invar Team" }
@@ -19,7 +19,7 @@ keywords = ["contracts", "design-by-contract", "runtime", "validation"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",

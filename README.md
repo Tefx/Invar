@@ -281,4 +281,14 @@ DEAL_DISABLE=1 python app.py
 
 ## License
 
-MIT
+This project uses a dual-license structure:
+
+| Component | License | Purpose |
+|-----------|---------|---------|
+| **invar-runtime** | [Apache-2.0](LICENSE) | Runtime contracts - use freely in your projects |
+| **invar-tools** | [GPL-3.0](LICENSE-GPL) | CLI tools - ensures improvements are shared |
+| **Documentation** | [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/) | Protocol docs - share with attribution |
+
+**For users:** You can use `invar-runtime` in any project (including proprietary). The `invar-tools` CLI is for development only and doesn't affect your project's license.
+
+See [NOTICE](NOTICE) for third-party licenses.

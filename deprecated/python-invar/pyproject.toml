@@ -7,14 +7,14 @@ name = "python-invar"
 version = "1.0.0"
 description = "DEPRECATED: Use invar-tools (CLI) or invar-runtime (contracts) instead"
 readme = "README.md"
-license = "MIT"
+license = "GPL-3.0-or-later"
 requires-python = ">=3.10"
 authors = [{ name = "February Shi", email = "peterb2004@gmail.com" }]
 keywords = ["deprecated", "invar", "contracts", "verification"]
 classifiers = [
     "Development Status :: 7 - Inactive",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
