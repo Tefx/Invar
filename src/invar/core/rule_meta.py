@@ -148,6 +148,30 @@ RULE_META: dict[str, RuleMeta] = {
         cannot_detect=("Result usage correctness", "Error handling quality"),
         hint="Wrap return value with Success() or return Failure()",
     ),
+    "entry_point_too_thick": RuleMeta(
+        name="entry_point_too_thick",
+        severity=Severity.WARNING,
+        category=RuleCategory.SHELL,
+        detects="Entry point (Flask route, Typer command, etc.) exceeds max lines",
+        cannot_detect=("Whether complexity is unavoidable", "Framework constraints"),
+        hint="Move business logic to Shell function returning Result[T, E]",
+    ),
+    "shell_pure_logic": RuleMeta(
+        name="shell_pure_logic",
+        severity=Severity.WARNING,
+        category=RuleCategory.SHELL,
+        detects="Shell function with no I/O operations (pure logic belongs in Core)",
+        cannot_detect=("Indirect I/O via method calls", "Framework-specific patterns"),
+        hint="Move to Core layer and add @pre/@post contracts, or add: # @shell_orchestration: <reason>",
+    ),
+    "shell_too_complex": RuleMeta(
+        name="shell_too_complex",
+        severity=Severity.INFO,
+        category=RuleCategory.SHELL,
+        detects="Shell function with excessive branching complexity",
+        cannot_detect=("Whether complexity is justified", "Domain-specific patterns"),
+        hint="Extract logic to Core, or add: # @shell_complexity: <reason>",
+    ),
     # Documentation rules
     "missing_doctest": RuleMeta(
         name="missing_doctest",

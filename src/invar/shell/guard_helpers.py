@@ -42,6 +42,7 @@ def handle_changed_mode(
     return Success((only_files, list(only_files)))
 
 
+# @shell_orchestration: Coordinates path classification and file collection
 def collect_files_to_check(
     path: Path, checked_files: list[Path]
 ) -> list[Path]:
@@ -77,6 +78,7 @@ def collect_files_to_check(
     return result_files
 
 
+# @shell_orchestration: Coordinates doctest execution via testing module
 def run_doctests_phase(
     checked_files: list[Path], explain: bool
 ) -> tuple[bool, str]:
@@ -99,6 +101,7 @@ def run_doctests_phase(
     return False, doctest_result.failure()
 
 
+# @shell_orchestration: Coordinates CrossHair verification via prove module
 def run_crosshair_phase(
     path: Path,
     checked_files: list[Path],
@@ -204,6 +207,7 @@ def output_verification_status(
         console.print("[dim]⊘ Runtime tests skipped (static errors)[/dim]")
 
 
+# @shell_orchestration: Coordinates shell module calls for property testing
 def run_property_tests_phase(
     checked_files: list[Path],
     doctest_passed: bool,

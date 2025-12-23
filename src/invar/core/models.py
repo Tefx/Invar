@@ -222,6 +222,8 @@ class RuleConfig(BaseModel):
 
     max_file_lines: int = 500  # Phase 9 P1: Raised from 300 for less friction
     max_function_lines: int = 50
+    entry_max_lines: int = 15  # DX-23: Entry point max lines
+    shell_max_branches: int = 3  # DX-22: Shell function max branches
     forbidden_imports: tuple[str, ...] = (
         "os",
         "sys",

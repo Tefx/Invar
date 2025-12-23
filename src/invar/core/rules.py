@@ -13,10 +13,15 @@ from invar.core.contracts import (
     check_redundant_type_contracts,
     check_semantic_tautology,
 )
+from invar.core.entry_points import get_symbol_lines, is_entry_point
 from invar.core.extraction import format_extraction_hint
 from invar.core.models import FileInfo, RuleConfig, Severity, SymbolKind, Violation
 from invar.core.must_use import check_must_use
 from invar.core.purity import check_impure_calls, check_internal_imports
+from invar.core.shell_architecture import (
+    check_shell_pure_logic,
+    check_shell_too_complex,
+)
 from invar.core.suggestions import format_suggestion_for_violation
 from invar.core.utils import get_excluded_rules
 
@@ -294,7 +299,10 @@ def check_shell_result(file_info: FileInfo, config: RuleConfig) -> list[Violatio
     """
     Check that Shell functions with return values use Result[T, E].
 
-    Skips: functions returning None (CLI entry points).
+    Skips:
+    - Functions returning None (CLI entry points)
+    - Generators (Iterator/Generator)
+    - Entry points (DX-23: framework callbacks like Flask routes, Typer commands)
 
     Examples:
         >>> from invar.core.models import FileInfo, Symbol, SymbolKind, RuleConfig
@@ -317,6 +325,9 @@ def check_shell_result(file_info: FileInfo, config: RuleConfig) -> list[Violatio
         # Skip generators (Iterator/Generator) - acceptable exception per protocol
         if "Iterator[" in symbol.signature or "Generator[" in symbol.signature:
             continue
+        # DX-23: Skip entry points (framework callbacks)
+        if is_entry_point(symbol, file_info.source):
+            continue
         if "Result[" not in symbol.signature:
             violations.append(
                 Violation(
@@ -328,6 +339,51 @@ def check_shell_result(file_info: FileInfo, config: RuleConfig) -> list[Violatio
                     suggestion="Use Result[T, E] from returns library",
                 )
             )
+    return violations
+
+
+@pre(lambda file_info, config: isinstance(file_info, FileInfo))
+def check_entry_point_thin(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
+    """
+    Check that entry points are thin (DX-23).
+
+    Entry points should delegate to Shell functions and not contain
+    business logic. They serve as "monad runners" at framework boundaries.
+
+    Examples:
+        >>> from invar.core.models import FileInfo, Symbol, SymbolKind, RuleConfig
+        >>> sym = Symbol(name="index", kind=SymbolKind.FUNCTION, line=1, end_line=5)
+        >>> source = '@app.route("/")\\ndef index(): pass'
+        >>> info = FileInfo(path="shell/web.py", lines=10, symbols=[sym], is_shell=True, source=source)
+        >>> check_entry_point_thin(info, RuleConfig())
+        []
+    """
+    violations: list[Violation] = []
+    if not file_info.is_shell:
+        return violations
+
+    max_lines = config.entry_max_lines
+
+    for symbol in file_info.symbols:
+        if symbol.kind != SymbolKind.FUNCTION:
+            continue
+
+        if not is_entry_point(symbol, file_info.source):
+            continue
+
+        lines = get_symbol_lines(symbol)
+        if lines > max_lines:
+            violations.append(
+                Violation(
+                    rule="entry_point_too_thick",
+                    severity=Severity.WARNING,
+                    file=file_info.path,
+                    line=symbol.line,
+                    message=f"Entry point '{symbol.name}' has {lines} lines (max: {max_lines})",
+                    suggestion="Move business logic to Shell function returning Result[T, E]",
+                )
+            )
+
     return violations
 
 
@@ -347,6 +403,9 @@ def get_all_rules() -> list[RuleFunc]:
         check_contracts,
         check_doctests,
         check_shell_result,
+        check_entry_point_thin,  # DX-23
+        check_shell_pure_logic,  # DX-22
+        check_shell_too_complex,  # DX-22
         check_internal_imports,
         check_impure_calls,
         check_empty_contracts,
