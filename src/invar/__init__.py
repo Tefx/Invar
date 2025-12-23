@@ -19,10 +19,10 @@ from invar_runtime import (
     InvariantViolation,
     MustCloseViolation,
     Negative,
-    NoNone,
     NonBlank,
     NonEmpty,
     NonNegative,
+    NoNone,
     Percentage,
     Positive,
     ResourceWarning,
@@ -40,11 +40,12 @@ from invar_runtime import (
 )
 
 __all__ = [
-    # Contracts
     "AllNonNegative",
     "AllPositive",
     "Contract",
     "InRange",
+    "InvariantViolation",
+    "MustCloseViolation",
     "Negative",
     "NoNone",
     "NonBlank",
@@ -52,21 +53,16 @@ __all__ = [
     "NonNegative",
     "Percentage",
     "Positive",
+    "ResourceWarning",
     "Sorted",
     "SortedNonEmpty",
     "Unique",
-    "post",
-    "pre",
-    # Decorators
-    "must_use",
-    "skip_property_test",
-    "strategy",
-    # Invariants
-    "InvariantViolation",
     "invariant",
-    # Resources
-    "MustCloseViolation",
-    "ResourceWarning",
     "is_must_close",
     "must_close",
+    "must_use",
+    "post",
+    "pre",
+    "skip_property_test",
+    "strategy",
 ]

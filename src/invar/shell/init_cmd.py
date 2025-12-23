@@ -16,7 +16,6 @@ from returns.result import Failure, Success
 from rich.console import Console
 
 from invar.shell.mcp_config import (
-    McpMethod,
     detect_available_methods,
     generate_mcp_json,
     get_method_by_name,
@@ -129,7 +128,7 @@ def configure_mcp_with_method(
     else:
         config = get_recommended_method()
 
-    console.print(f"\n[bold]Configuring MCP server...[/bold]")
+    console.print("\n[bold]Configuring MCP server...[/bold]")
     console.print(f"  Method: {config.description}")
 
     # Generate and write .mcp.json
