@@ -4,8 +4,8 @@
 # Auto-read protocol files at session start
 read:
   - INVAR.md
-  - .invar/examples/core_example.py
-  - .invar/examples/shell_example.py
+  - .invar/examples/contracts.py
+  - .invar/examples/core_shell.py
   - .invar/context.md
 
 # System prompt addition

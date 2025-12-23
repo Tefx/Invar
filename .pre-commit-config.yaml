@@ -26,20 +26,12 @@ repos:
         stages: [pre-commit]
         types: [python]
 
-      # Smart Invar Guard - Architecture verification
+      # Smart Invar Guard - Full verification (static + doctests)
       # Runs full guard when rule files are modified, --changed otherwise
+      # Note: invar guard already includes doctests, no separate pytest needed
       - id: invar-guard
         name: Invar Guard
         entry: bash scripts/smart-guard.sh
-        language: system
-        pass_filenames: false
-        stages: [pre-commit]
-        types: [python]
-
-      # Pytest with doctests - Logic verification
-      - id: pytest-doctest
-        name: Pytest Doctests
-        entry: bash -c 'source .venv/bin/activate && pytest --doctest-modules src/ -q --tb=short'
         language: system
         pass_filenames: false
         stages: [pre-commit]
