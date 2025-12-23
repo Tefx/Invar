@@ -1101,14 +1101,30 @@ Before DX-09:                    After DX-09:
 
 ---
 
-### DX-10: Hypothesis Property Testing Integration (Future)
+### DX-10: Hypothesis Property Testing Integration
 
 **Priority:** ★★★☆☆ (Medium, enables deeper testing)
 **Effort:** 2-3 days
-**Status:** Proposed (extracted from removed THOROUGH level)
+**Status:** ✅ Partially Complete (core absorbed by DX-19)
 **Depends on:** DX-08 (Contract-Driven Property Testing)
 
-#### Background
+#### Completion Status (2025-12-23)
+
+**What was implemented (via DX-08 + DX-19):**
+- ✅ Contract → Hypothesis strategy extraction
+- ✅ Auto-generated property tests from @pre/@post
+- ✅ Integration into default STANDARD level
+- ✅ No separate --property flag needed (Agent-Native: zero decisions)
+
+**What remains (moved to DX-20):**
+- ⏳ Strategy caching (avoid repeated parsing)
+- ⏳ Complex pattern support (x < y, all(), Union)
+- ⏳ Performance profiling (--profile flag)
+- ⏳ Selective skip (@skip_property_test decorator)
+
+**See:** [DX-20: Property Testing Enhancements](./2025-12-23-dx-20-property-testing-enhancements.md)
+
+#### Original Background
 
 The original DX-06 design included a THOROUGH level with Hypothesis property testing:
 
@@ -1126,16 +1142,16 @@ This was removed because:
 2. CI defaulted to THOROUGH, creating false confidence
 3. Agent-Native principle: Don't promise what you can't deliver
 
-#### Proposal
+#### Original Proposal (Superseded)
 
-Add Hypothesis property testing as an optional fourth level:
+~~Add Hypothesis property testing as an optional fourth level:~~
 
 ```python
+# SUPERSEDED by DX-19: simplified to 2 levels
+# Property testing now included in STANDARD by default
 class VerificationLevel(IntEnum):
-    STATIC = 0    # --quick
-    STANDARD = 1  # default
-    PROPERTY = 2  # --property (NEW)
-    PROVE = 3     # --prove
+    STATIC = 0    # --static
+    STANDARD = 1  # default (includes property tests)
 ```
 
 #### Implementation Strategy
