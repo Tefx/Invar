@@ -56,14 +56,13 @@ __all__ = [
 class VerificationLevel(IntEnum):
     """Verification depth levels for Smart Guard.
 
-    Agent-Native design: Only levels with implemented verification.
-    DX-08: Added THOROUGH level for property testing.
+    DX-19: Simplified to 2 levels (Agent-Native: Zero decisions).
+    - STATIC: Quick debug mode (~0.5s)
+    - STANDARD: Full verification including CrossHair + Hypothesis (~5s)
     """
 
-    STATIC = 0  # Static analysis only (--quick)
-    STANDARD = 1  # Static + doctests (default)
-    PROVE = 2  # Static + doctests + CrossHair (--prove)
-    THOROUGH = 3  # Static + doctests + property tests (--thorough, DX-08)
+    STATIC = 0  # Static analysis only (--static, quick debug)
+    STANDARD = 1  # Full: static + doctests + CrossHair + Hypothesis (default)  # Static + doctests + property tests (--thorough, DX-08)
 
 
 @dataclass
@@ -116,21 +115,14 @@ def detect_verification_context() -> VerificationLevel:
     """
     Auto-detect appropriate verification depth based on context.
 
-    Agent-Native design: Only 3 levels exist (STATIC, STANDARD, PROVE).
+    DX-19: Simplified to 2 levels. Always returns STANDARD (full verification).
+    STATIC is only used when explicitly requested via --static flag.
 
-    DX-15 Note: Primary auto-detection logic is now in cli._determine_verification_level()
-    which has access to changed_files_count. This function remains as fallback.
-
-    >>> detect_verification_context() in (VerificationLevel.STANDARD, VerificationLevel.PROVE)
+    >>> detect_verification_context() == VerificationLevel.STANDARD
     True
     """
-    import os
-
-    # DX-15: CI environment always uses PROVE
-    if os.getenv("CI"):
-        return VerificationLevel.PROVE
-
-    # Otherwise use STANDARD level
+    # DX-19: Always use STANDARD (full verification) by default
+    # STATIC is only for explicit --static flag
     return VerificationLevel.STANDARD
 
 

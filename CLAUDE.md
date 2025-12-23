@@ -4,7 +4,7 @@
 
 This project follows the Invar methodology. See [INVAR.md](./INVAR.md) for the protocol.
 
-**Protocol Version:** v3.25 | **PyPI:** `python-invar` | **Smart Guard:** `invar guard` = static + doctests
+**Protocol Version:** v3.26 | **PyPI:** `python-invar` | **Smart Guard:** `invar guard` = full verification
 
 ---
 
@@ -138,40 +138,23 @@ invar guard --changed      # Verify code quality (REQUIRED)
 | Find references | Serena `find_referencing_symbols` | Cross-file analysis |
 | Edit function body | Serena `replace_symbol_body` | Semantic editing |
 | Rename across project | Serena `rename_symbol` | Automatic refactoring |
-| Verify after changes | `invar guard --changed` | Smart Guard (static + doctests) |
+| Verify after changes | `invar guard --changed` | Smart Guard (full verification) |
 
 ### Other Commands
 ```bash
-invar guard --prove      # Add CrossHair symbolic verification
-invar guard --thorough   # Add property tests from contracts (DX-08)
 invar guard --explain    # Detailed explanations
 invar rules              # List all rules
 ```
 
-### Guard Usage
+### Guard Usage (DX-19)
 
-**Default:** `invar guard` runs STANDARD = static + doctests. **Trust this.**
+**Default:** `invar guard` runs STANDARD = full verification (static + doctests + CrossHair + Hypothesis). **Trust this.**
 
 **Do NOT use --static unless:**
 - Debugging a specific static analysis issue
 - Performance profiling the guard itself
-- Explicitly testing --static behavior
 
-**Why?** Default is only 0.4s slower. Bypassing doctests saves 0.4s but risks missing failures.
-
-**`--prove` is automatic:** Pre-commit uses `--prove` by default. Incremental mode makes it fast (~5s first, ~2s cached). Manual `--prove` rarely needed.
-
-### Test and Verify Commands
-
-```bash
-invar test <file>        # Property tests from contracts (DX-08)
-invar test --changed     # Test all git-modified files
-invar test --max-examples 200  # More Hypothesis examples
-invar verify <file>      # CrossHair symbolic verification
-invar verify --changed   # Verify all git-modified files
-```
-
-**DX-08:** `invar test` auto-generates Hypothesis tests from @pre/@post contracts.
+**Why?** Default is only ~5s. This includes everything. No decisions needed.
 
 ---
 

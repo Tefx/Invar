@@ -188,48 +188,31 @@ Guard shows **Code Health** percentage based on warnings. Fix warnings in files 
 
 ### Smart Guard (Primary Command)
 ```bash
-invar guard              # Static + doctests (default)
+invar guard              # Full verification (default)
 invar guard --changed    # Modified files only
-invar guard --static     # Static only (skip doctests)
-invar guard --prove      # Static + doctests + CrossHair
-invar guard --thorough   # Static + doctests + property tests (DX-08)
+invar guard --static     # Static only (~0.5s, for debugging)
 invar guard --explain    # Detailed explanations
 ```
 
-### Four Verification Levels
+### Two Verification Levels (DX-19)
 
 | Level | Flag | Content | Use When |
 |-------|------|---------|----------|
-| **STATIC** | `--static` | Rules only | Debugging static analysis |
-| **STANDARD** | (default) | Rules + doctests | Normal development |
-| **PROVE** | `--prove` | Rules + doctests + CrossHair | Contract changes, releases |
-| **THOROUGH** | `--thorough` | Rules + doctests + property tests | Comprehensive verification (DX-08) |
+| **STATIC** | `--static` | Rules only (~0.5s) | Debugging static analysis |
+| **STANDARD** | (default) | Rules + doctests + CrossHair + Hypothesis (~5s) | Everything else |
+
+**DX-19: Zero decisions.** Default = full verification. No need to choose modes.
 
 **Agent JSON output includes `"verification_level"` for transparency.**
 
-**`--prove` runs automatically:**
-- Pre-commit uses `--prove` by default (full verification)
-- CI should also use `--prove`
-- Manual `--prove` rarely needed
-
-**Incremental verification makes `--prove` fast:**
-- Only verifies changed files
-- First commit: ~5s, subsequent: ~2s (cached)
+**Incremental verification makes STANDARD fast:**
+- Only verifies changed files with `--changed`
+- First run: ~5s, subsequent: ~2s (CrossHair cache)
 
 ### Other Commands
 ```bash
-invar test <file>        # Property tests from contracts (DX-08)
-invar test --changed     # Test git-modified files
-invar test --max-examples 200  # More Hypothesis examples
-invar verify <file>      # Symbolic verification (CrossHair)
-invar verify --changed   # Verify git-modified files
 invar rules              # List all rules with severity
 ```
-
-**`invar test` auto-generates Hypothesis tests from @pre/@post contracts:**
-- No manual @given decorators needed
-- Strategies inferred from type hints and @pre constraints
-- @post verified at runtime by deal
 
 ### Perception (use BEFORE reading/modifying code)
 ```bash
@@ -339,4 +322,4 @@ purity_impure = ["mylib.cached_compute"]  # Has side effects
 
 ---
 
-*Protocol v3.25 — DX-08: --thorough flag for contract-driven property testing.*
+*Protocol v3.26 — DX-19: Simplified to 2 verification levels (Zero decisions).*

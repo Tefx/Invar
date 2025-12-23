@@ -113,12 +113,9 @@ A task is complete only when ALL conditions are met:
 ## Commands
 
 ```bash
-invar guard              # Static + doctests (default)
-invar guard --static     # Static only (skip doctests)
-invar guard --prove      # + CrossHair symbolic verification
+invar guard              # Full: static + doctests + CrossHair + Hypothesis (default)
+invar guard --static     # Static only (quick debug, ~0.5s)
 invar guard --changed    # Modified files only
-invar test --changed     # Test git-modified files
-invar verify --changed   # Verify git-modified files
 invar sig <file>         # Show contracts + signatures
 invar map --top 10       # Most-referenced symbols
 ```

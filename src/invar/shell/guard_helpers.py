@@ -168,34 +168,40 @@ def output_verification_status(
     doctest_output: str,
     crosshair_output: dict,
     explain: bool,
-    property_output: dict | None = None,  # DX-08
+    property_output: dict | None = None,
 ) -> None:
-    """Output verification status for human-readable mode."""
+    """Output verification status for human-readable mode.
+
+    DX-19: Simplified - STANDARD runs all phases (doctests + CrossHair + Hypothesis).
+    """
     from invar.shell.testing import VerificationLevel
 
-    # Doctest results
-    if verification_level >= VerificationLevel.STANDARD:
-        if static_exit_code == 0:
-            if doctest_passed:
-                console.print("[green]✓ Doctests passed[/green]")
-            else:
-                console.print("[red]✗ Doctests failed[/red]")
-                if doctest_output and explain:
-                    console.print(doctest_output)
-        else:
-            console.print("[dim]⊘ Doctests skipped (static errors)[/dim]")
+    # STATIC mode: no runtime tests to report
+    if verification_level == VerificationLevel.STATIC:
+        return
 
-    # CrossHair results
-    if verification_level >= VerificationLevel.PROVE:
+    # STANDARD mode: report all test results
+    if static_exit_code == 0:
+        # Doctest results
+        if doctest_passed:
+            console.print("[green]✓ Doctests passed[/green]")
+        else:
+            console.print("[red]✗ Doctests failed[/red]")
+            if doctest_output and explain:
+                console.print(doctest_output)
+
+        # CrossHair results
         _output_crosshair_status(
             static_exit_code, doctest_passed, crosshair_output
         )
 
-    # DX-08: Property tests results
-    if verification_level >= VerificationLevel.THOROUGH and property_output:
-        _output_property_tests_status(
-            static_exit_code, doctest_passed, property_output
-        )
+        # Property tests results
+        if property_output:
+            _output_property_tests_status(
+                static_exit_code, doctest_passed, property_output
+            )
+    else:
+        console.print("[dim]⊘ Runtime tests skipped (static errors)[/dim]")
 
 
 def run_property_tests_phase(

@@ -38,7 +38,7 @@ Then read `.invar/examples/` and `.invar/context.md` for project context.
 | Task | ❌ NEVER Use | ✅ ALWAYS Use |
 |------|-------------|---------------|
 | Verify code quality | `Bash("pytest ...")` | `invar_guard` |
-| Symbolic verification | `Bash("crosshair ...")` | `invar_guard` with prove=true |
+| Symbolic verification | `Bash("crosshair ...")` | `invar_guard` (included by default) |
 | Understand file structure | `Read` entire .py file | `invar_sig` |
 | Find entry points | `Grep` for "def " | `invar_map` |
 
@@ -46,7 +46,7 @@ Then read `.invar/examples/` and `.invar/context.md` for project context.
 
 ❌ `Bash("python -m pytest file.py")` - Use invar_guard instead
 ❌ `Bash("pytest --doctest-modules ...")` - invar_guard includes doctests
-❌ `Bash("crosshair check ...")` - Use invar_guard with prove=true
+❌ `Bash("crosshair check ...")` - invar_guard includes CrossHair by default
 ❌ `Read("src/foo.py")` just to see signatures - Use invar_sig instead
 ❌ `Grep` for function definitions - Use invar_map instead
 ❌ `Bash("invar guard ...")` - Use invar_guard MCP tool instead
@@ -60,7 +60,7 @@ A task is complete ONLY when:
 
 ### Why This Matters
 
-1. **invar_guard** = Smart Guard (static analysis + doctests + optional symbolic)
+1. **invar_guard** = Smart Guard (static + doctests + CrossHair + Hypothesis)
 2. **invar_sig** shows @pre/@post contracts that Read misses
 3. **invar_map** includes reference counts for importance ranking
 
@@ -71,11 +71,8 @@ A task is complete ONLY when:
 invar_guard(changed=true)
 invar_map(top=10)
 
-# Verify code after changes
+# Verify code after changes (full verification by default)
 invar_guard(changed=true)
-
-# Add symbolic verification
-invar_guard(changed=true, prove=true)
 
 # Understand a file's structure
 invar_sig(target="src/invar/core/parser.py")
@@ -93,14 +90,13 @@ def _get_guard_tool() -> Tool:
         description=(
             "Smart Guard: Verify code quality with static analysis + doctests. "
             "Use this INSTEAD of Bash('pytest ...') or Bash('crosshair ...'). "
-            "Default runs static + doctests. Add prove=true for symbolic verification."
+            "Default runs static + doctests + CrossHair + Hypothesis."
         ),
         inputSchema={
             "type": "object",
             "properties": {
                 "path": {"type": "string", "description": "Project path (default: .)", "default": "."},
                 "changed": {"type": "boolean", "description": "Only verify git-changed files", "default": True},
-                "prove": {"type": "boolean", "description": "Add symbolic verification", "default": False},
                 "strict": {"type": "boolean", "description": "Treat warnings as errors", "default": False},
             },
         },
@@ -171,8 +167,6 @@ async def _run_guard(args: dict[str, Any]) -> list[TextContent]:
 
     if args.get("changed", True):
         cmd.append("--changed")
-    if args.get("prove", False):
-        cmd.append("--prove")
     if args.get("strict", False):
         cmd.append("--strict")
 

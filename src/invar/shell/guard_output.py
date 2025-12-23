@@ -213,7 +213,7 @@ def output_agent(
         doctest_passed: Whether doctests passed
         doctest_output: Doctest stdout (only if failed)
         crosshair_output: CrossHair results dict
-        verification_level: Current level (static/standard/prove/thorough)
+        verification_level: Current level (static/standard)
         property_output: Property test results dict (DX-08)
     """
     import json

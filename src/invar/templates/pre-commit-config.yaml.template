@@ -1,7 +1,7 @@
 # Invar Pre-commit Hooks
 # Install: pre-commit install
 #
-# Uses --prove by default for full verification (static + doctests + CrossHair).
+# Default runs full verification (static + doctests + CrossHair + Hypothesis).
 # Incremental mode makes this fast: ~5s first commit, ~2s subsequent (cached).
 #
 # Smart Guard: Detects rule-affecting file changes and runs full guard when needed.
@@ -18,7 +18,7 @@ repos:
         pass_filenames: false
         stages: [pre-commit]
 
-      # Invar Guard with --prove (full verification)
+      # Invar Guard (full verification by default)
       # Uses incremental mode: only verifies changed files, caches results
       # Smart mode: runs full guard when rule files change, --changed otherwise
       - id: invar-guard
@@ -31,14 +31,14 @@ repos:
             if echo "$STAGED" | grep -q "$f"; then FULL=true; break; fi
           done
           if [ "$FULL" = true ]; then
-            echo "⚠️  Rule change detected - running FULL guard with --prove"
-            invar guard --prove
+            echo "⚠️  Rule change detected - running FULL guard"
+            invar guard
           else
-            invar guard --prove --changed
+            invar guard --changed
           fi
         '
         language: python
-        additional_dependencies: ['python-invar[prove]']
+        additional_dependencies: ['python-invar']
         pass_filenames: false
         stages: [pre-commit]
         types: [python]
