@@ -115,6 +115,10 @@ pattern = "**/hypothesis_strategies.py"
 rules = ["internal_import"]  # Intentional lazy imports for optional hypothesis/numpy deps
 
 [[tool.invar.guard.rule_exclusions]]
+pattern = "**/property_gen.py"
+rules = ["internal_import"]  # Lazy imports: circular dep avoidance + optional hypothesis
+
+[[tool.invar.guard.rule_exclusions]]
 pattern = "**/shell/**"
 rules = ["shell_result", "function_size", "file_size_warning"]  # Shell: relaxed size limits
 
