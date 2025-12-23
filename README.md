@@ -2,7 +2,7 @@
 
 [![PyPI version](https://badge.fury.io/py/invar-tools.svg)](https://badge.fury.io/py/invar-tools)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License](https://img.shields.io/badge/License-Apache%202.0%20%2B%20GPL--3.0-blue.svg)](#license)
 
 **Don't hope AI code is correct. Know it.**
 
@@ -25,38 +25,73 @@ def average(items: list[float]) -> float:
 
 ## Installation
 
-### Development Tools
+### Two Packages, Different Purposes
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Your Project                                                   │
+│  ├── src/                                                       │
+│  │   └── from invar_runtime import pre, post  ← Runtime        │
+│  │                                                              │
+│  └── Development (not shipped with your code)                   │
+│      └── uvx invar-tools guard  ← Tools                         │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+| Package | Install | When to Use |
+|---------|---------|-------------|
+| **invar-tools** | `uvx invar-tools <cmd>` | Development: verification, init, MCP server |
+| **invar-runtime** | `pip install invar-runtime` | Production: add to your project's dependencies |
+
+### Development Tools (invar-tools)
 
 ```bash
-# Recommended: use without installing
+# Recommended: use without installing (always latest, isolated)
 uvx invar-tools guard
+uvx invar-tools init --claude
+uvx invar-tools map --top 10
 
 # Or install globally
 pip install invar-tools
+invar guard
 ```
 
-### Runtime Contracts (for your project)
+### Runtime Contracts (invar-runtime)
+
+Add to your project's `requirements.txt` or `pyproject.toml`:
 
 ```bash
 pip install invar-runtime
 ```
 
-**Packages:**
+```python
+# In your code
+from invar_runtime import pre, post
 
-| Package | Size | Purpose |
-|---------|------|---------|
-| `invar-runtime` | ~3MB | Runtime contracts (`@pre`, `@post`, etc.) |
-| `invar-tools` | ~100MB | Development tools (`guard`, `map`, `sig`, MCP) |
+@pre(lambda x: x > 0)
+@post(lambda result: result >= 0)
+def calculate(x: float) -> float:
+    ...
+```
 
 ---
 
 ## Quick Start
 
 ```bash
+# 1. Initialize your project (no install required!)
 cd your-project
-invar init          # Creates INVAR.md, CLAUDE.md, .invar/
-invar guard         # Verify code quality
+uvx invar-tools init --claude    # Creates INVAR.md, CLAUDE.md, configures MCP
+
+# 2. Write code with AI (AI follows INVAR.md protocol)
+
+# 3. Verify code quality
+uvx invar-tools guard            # Runs static analysis + doctests
 ```
+
+> **Why uvx?** No global install needed. Always uses latest version. Isolated environment.
+>
+> Alternative: `pip install invar-tools` then use `invar` instead of `uvx invar-tools`
 
 **Multi-Agent Support:** `invar init` auto-detects and configures:
 
