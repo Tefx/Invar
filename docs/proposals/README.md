@@ -32,6 +32,10 @@ This directory contains design proposals for Invar development.
 
 | ID | Name | Description |
 |----|------|-------------|
+| DX-22 | verification-strategy | Smart verification routing, Shell architecture rules, Fix-or-Explain enforcement |
+| DX-23 | entry-point-detection | Entry point detection and monad runner pattern for framework callbacks |
+| DX-24 | mechanism-documentation | English documentation for all Invar mechanisms (verification, architecture, rules, workflow) |
+| DX-25 | functional-patterns | Haskell-inspired patterns: Validation, NewType, NonEmpty, Monoid |
 | - | AGENT-IMPROVEMENTS | Agent role and workflow improvements |
 
 ## Archived
