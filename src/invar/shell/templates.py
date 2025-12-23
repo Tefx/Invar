@@ -335,14 +335,35 @@ This project includes an MCP server that provides Invar tools to AI agents.
 
 ## Configuration
 
-`invar init` automatically creates `.mcp.json` at project root with the correct Python path.
+`invar init` automatically creates `.mcp.json` with smart detection of available methods.
 
-### Claude Code
+### Recommended: uvx (isolated environment)
 
-The `.mcp.json` file is the standard MCP configuration for Claude Code.
-`invar init` creates/updates this file automatically.
+```json
+{
+  "mcpServers": {
+    "invar": {
+      "command": "uvx",
+      "args": ["invar-tools", "mcp"]
+    }
+  }
+}
+```
 
-Manual setup (use your project's Python path):
+### Alternative: invar command
+
+```json
+{
+  "mcpServers": {
+    "invar": {
+      "command": "invar",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+
+### Fallback: Python path
 
 ```json
 {
@@ -359,10 +380,15 @@ Find your Python path: `python -c "import sys; print(sys.executable)"`
 
 ## Installation
 
-Ensure the `mcp` package is installed:
-
 ```bash
-pip install python-invar[mcp]
+# Recommended: use uvx (no installation needed)
+uvx invar-tools guard
+
+# Or install globally
+pip install invar-tools
+
+# Or install in project
+pip install invar-tools
 ```
 
 ## Testing
@@ -370,7 +396,11 @@ pip install python-invar[mcp]
 Run the MCP server directly:
 
 ```bash
-python -m invar.mcp
+# Using uvx
+uvx invar-tools mcp
+
+# Or if installed
+invar mcp
 ```
 
 The server communicates via stdio and should be managed by your AI agent.

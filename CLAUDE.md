@@ -4,7 +4,7 @@
 
 This project follows the Invar methodology. See [INVAR.md](./INVAR.md) for the protocol.
 
-**Protocol Version:** v3.26 | **PyPI:** `python-invar` | **Smart Guard:** `invar guard` = full verification
+**Protocol Version:** v3.26 | **PyPI:** `invar-tools` + `invar-runtime` | **Smart Guard:** `invar guard` = full verification
 
 ---
 
@@ -56,34 +56,40 @@ Then read `.invar/context.md` for project state and lessons learned.
 ## Project Structure
 
 ```
-src/invar/
-├── core/              # Pure logic, no I/O, requires @pre/@post
-│   ├── models.py      # Pydantic: Symbol, Violation, RuleConfig
-│   ├── parser.py      # AST: source string → symbols
-│   ├── rules.py       # Rule checking: file info → violations
-│   ├── purity.py      # Internal imports, impure calls
-│   ├── contracts.py   # Contract quality detection
-│   ├── suggestions.py # Fix suggestions + lambda skeletons
-│   ├── rule_meta.py   # Centralized RULE_META
-│   ├── inspect.py     # File context for INSPECT section
-│   ├── references.py  # Cross-file reference counting
-│   ├── formatter.py   # Text/JSON output
-│   ├── utils.py       # Pure utilities
-│   └── property_gen.py # DX-08: Property test generation from contracts
+invar/
+├── runtime/                  # invar-runtime package (DX-21)
+│   ├── pyproject.toml        # Lightweight: deal only
+│   └── src/invar_runtime/    # Runtime contracts
+│       ├── contracts.py      # Contract class + pre/post
+│       ├── decorators.py     # must_use, strategy, skip_property_test
+│       ├── invariant.py      # Loop invariants
+│       └── resource.py       # must_close decorator
 │
-├── shell/             # I/O operations, returns Result[T, E]
-│   ├── cli.py         # Typer CLI: guard, map, sig, rules, version
-│   ├── fs.py          # File system operations
-│   ├── config.py      # Config loading
-│   ├── git.py         # Git operations (--changed mode)
-│   ├── perception.py  # map, sig commands
-│   ├── templates.py   # Template operations
-│   ├── init_cmd.py    # init command
-│   ├── test_cmd.py    # test, verify commands
-│   ├── testing.py     # Testing utilities
-│   └── property_tests.py # DX-08: Property test runner
+├── src/invar/                # invar-tools package
+│   ├── core/                 # Pure logic, no I/O, requires @pre/@post
+│   │   ├── models.py         # Pydantic: Symbol, Violation, RuleConfig
+│   │   ├── parser.py         # AST: source string → symbols
+│   │   ├── rules.py          # Rule checking: file info → violations
+│   │   ├── purity.py         # Internal imports, impure calls
+│   │   ├── contracts.py      # Contract quality detection
+│   │   ├── suggestions.py    # Fix suggestions + lambda skeletons
+│   │   ├── rule_meta.py      # Centralized RULE_META
+│   │   ├── inspect.py        # File context for INSPECT section
+│   │   ├── references.py     # Cross-file reference counting
+│   │   ├── formatter.py      # Text/JSON output
+│   │   ├── utils.py          # Pure utilities
+│   │   └── property_gen.py   # DX-08: Property test generation
+│   │
+│   ├── shell/                # I/O operations, returns Result[T, E]
+│   │   ├── cli.py            # Typer CLI: guard, map, sig, rules, version
+│   │   ├── init_cmd.py       # init command (DX-21B: --claude flag)
+│   │   ├── mcp_config.py     # MCP smart detection (DX-21B)
+│   │   └── ...
+│   │
+│   ├── mcp/                  # MCP server
+│   └── templates/            # Files for invar init
 │
-└── templates/         # Files for invar init
+└── pyproject.toml            # invar-tools config
 ```
 
 **Key insight:** Core receives string content, Shell handles I/O.
@@ -214,6 +220,14 @@ Feature complete. See `.invar/context.md` for current state.
 ## Dependencies
 
 ```bash
-pip install python-invar        # Install from PyPI
-pip install -e ".[dev]"         # Development mode
+# Development tools
+pip install invar-tools         # Install tools from PyPI
+uvx invar-tools guard           # Or use without installing
+
+# Runtime contracts (for projects)
+pip install invar-runtime       # Lightweight runtime
+
+# Development mode
+pip install -e ".[dev]"         # Install with dev dependencies
+pip install -e runtime/         # Install runtime in dev mode
 ```

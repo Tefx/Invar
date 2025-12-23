@@ -1,0 +1,51 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/invar_runtime"]
+
+[project]
+name = "invar-runtime"
+version = "1.0.0"
+description = "Lightweight runtime contracts for Invar projects"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+authors = [
+    { name = "Invar Team" }
+]
+keywords = ["contracts", "design-by-contract", "runtime", "validation"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Quality Assurance",
+    "Typing :: Typed",
+]
+
+dependencies = [
+    "deal>=4.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/tefx/invar"
+Documentation = "https://github.com/tefx/invar#readme"
+Repository = "https://github.com/tefx/invar"
+Issues = "https://github.com/tefx/invar/issues"
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_return_any = true
+warn_unused_ignores = true
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "UP"]

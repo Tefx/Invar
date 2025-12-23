@@ -1,17 +1,23 @@
 """
-Invar: AI-native software engineering framework.
+Invar Tools: AI-native software engineering framework.
 
 Trade structure for safety. The goal is not to make AI simpler,
 but to make AI output more reliable.
+
+This package provides development tools (guard, map, sig).
+For runtime contracts only, use invar-runtime instead.
 """
 
-__version__ = "0.7.1"
+__version__ = "1.0.0"
 
-from invar.contracts import (
+# Re-export from invar-runtime for backwards compatibility
+from invar_runtime import (
     AllNonNegative,
     AllPositive,
     Contract,
     InRange,
+    InvariantViolation,
+    MustCloseViolation,
     Negative,
     NonBlank,
     NonEmpty,
@@ -19,15 +25,19 @@ from invar.contracts import (
     NoNone,
     Percentage,
     Positive,
+    ResourceWarning,
     Sorted,
     SortedNonEmpty,
     Unique,
+    invariant,
+    is_must_close,
+    must_close,
+    must_use,
     post,
     pre,
+    skip_property_test,
+    strategy,
 )
-from invar.decorators import must_use
-from invar.invariant import InvariantViolation, invariant
-from invar.resource import MustCloseViolation, ResourceWarning, is_must_close, must_close
 
 __all__ = [
     "AllNonNegative",
@@ -53,4 +63,6 @@ __all__ = [
     "must_use",
     "post",
     "pre",
+    "skip_property_test",
+    "strategy",
 ]
