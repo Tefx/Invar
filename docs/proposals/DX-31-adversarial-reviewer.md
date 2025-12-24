@@ -232,16 +232,139 @@ The reviewer assumes code has problems and must be proven correct.
 """
 ```
 
-## Workflow Integration
+## Agent-Native Triggering
 
-### When to Trigger
+### Design Principle: Review Should Be Automatic
 
-| Trigger | Mechanism | Rationale |
-|---------|-----------|-----------|
-| User request | `/review` command | Explicit request |
-| After major feature | Automatic suggestion | High-value changes |
-| Before PR | Pre-PR hook | Quality gate |
-| After many escapes | Guard detection | Risk indicator |
+> **"Agent-Native means the review process is NOT user-triggered."**
+
+Traditional approach (rejected):
+```
+User: "/review"
+Agent: Performs review
+```
+
+Agent-Native approach:
+```
+Agent: Completes implementation
+Agent: Detects trigger condition → Automatically spawns review sub-agent
+Agent: Incorporates findings → Reports to user
+```
+
+### Trigger Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    REVIEW TRIGGER LAYERS                         │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  Layer 3: Task Completion Gate (Agent Protocol)                  │
+│  ├─ Before marking task "complete", evaluate: need review?       │
+│  ├─ If Guard suggested review → spawn sub-agent                  │
+│  └─ Incorporate findings into completion report                  │
+│                                                                  │
+│  Layer 2: Guard Suggestions (INFO/WARNING)                       │
+│  ├─ review_suggested: "New Core file, consider review"           │
+│  ├─ review_suggested: "3+ escape hatches, review recommended"    │
+│  └─ review_suggested: "100+ LOC changed, review recommended"     │
+│                                                                  │
+│  Layer 1: ICIDIV Workflow Integration                            │
+│  ├─ VERIFY phase: Guard check + conditional review               │
+│  └─ Complex tasks: review is mandatory part of VERIFY            │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Trigger Conditions
+
+| Condition | Level | Rationale |
+|-----------|-------|-----------|
+| New Core file created | INFO (suggest) | Core logic is critical |
+| escape hatch count ≥ 3 | WARNING (strong suggest) | May be bypassing rules |
+| Changes ≥ 100 LOC | INFO (suggest) | Large changes error-prone |
+| Security-sensitive files | WARNING (strong suggest) | auth, crypto, secrets |
+| New public API | INFO (suggest) | Interface design matters |
+
+### Guard Integration
+
+```python
+# New rule in rules.py
+def check_review_suggested(file_info: FileInfo) -> list[Violation]:
+    """
+    Suggest independent review when conditions warrant.
+
+    INFO when:
+    - New Core file with public functions
+    - High escape hatch count (≥3)
+    - Large file changes
+    """
+    suggestions = []
+
+    if file_info.is_new and file_info.is_core:
+        suggestions.append(Violation(
+            rule="review_suggested",
+            severity=Severity.INFO,
+            message="New Core file - consider independent review",
+            suggestion="Spawn review sub-agent before task completion"
+        ))
+
+    if file_info.escape_count >= 3:
+        suggestions.append(Violation(
+            rule="review_suggested",
+            severity=Severity.WARNING,
+            message=f"{file_info.escape_count} escape hatches - review recommended",
+            suggestion="High escape count may indicate rule circumvention"
+        ))
+
+    return suggestions
+```
+
+### Agent Protocol (INVAR.md Addition)
+
+```markdown
+## Independent Review (DX-31)
+
+When Guard outputs `review_suggested`:
+1. Evaluate if review is appropriate for this task
+2. If yes, spawn independent review sub-agent via Task tool
+3. Pass ONLY the code to reviewer (no conversation history)
+4. Incorporate review findings before marking task complete
+5. Report both implementation and review results to user
+
+The reviewer operates with adversarial mindset and isolated context.
+```
+
+### Workflow Example
+
+```
+Agent: Implementation complete. Running Guard...
+
+$ invar guard --changed
+src/core/new_auth.py
+  ✓ All checks passed
+  ℹ review_suggested: New Core file with 5 public functions
+    → Consider independent review before completion
+
+Agent: Guard suggests review for new Core file. Spawning independent reviewer...
+
+[Task tool creates sub-agent with isolated context]
+[Sub-agent reviews code adversarially]
+[Sub-agent returns findings]
+
+Agent: Review complete. Found 2 issues:
+  1. MAJOR: Contract on validate_token lacks boundary check
+  2. MINOR: Magic number 3600 should be named constant
+
+Fixing issues before completion...
+[Agent fixes issues]
+[Re-runs Guard]
+
+Agent: All issues addressed. Task complete.
+```
+
+## Legacy: User-Triggered Review
+
+The `/review` command remains available for explicit user requests, but is now secondary to automatic triggering.
 
 ### Review Report Format
 
@@ -294,40 +417,50 @@ def validate_token(token: str) -> dict:
 
 ## Implementation Plan
 
-### Phase 1: Skill Enhancement (Immediate)
+### Phase 1: Guard Trigger Rule (Immediate)
 
-- [ ] Update /review skill with adversarial prompt
-- [ ] Add structured checklist
-- [ ] Add context isolation instructions
-- [ ] Document in CLAUDE.md
+- [ ] Add `review_suggested` rule to rules.py
+- [ ] Trigger on: new Core file, high escape count, large changes
+- [ ] Output as INFO (suggest) or WARNING (strong suggest)
+- [ ] Add to rule_meta.py
 
 **Effort:** 2-3 hours
 
-### Phase 2: Sub-Agent Implementation (Short-term)
+### Phase 2: Agent Protocol Documentation (Immediate)
 
-- [ ] Create review sub-agent configuration
-- [ ] Implement context isolation
-- [ ] Add report formatting
-- [ ] Add trigger detection
+- [ ] Add "Independent Review" section to INVAR.md
+- [ ] Document trigger conditions and response protocol
+- [ ] Add workflow example to .invar/examples/
+- [ ] Update CLAUDE.md with review guidance
 
-**Effort:** 4-6 hours
+**Effort:** 1-2 hours
 
-### Phase 3: Guard Integration (Medium-term)
+### Phase 3: Review Sub-Agent Configuration (Short-term)
 
-- [ ] Add `review_suggested` INFO when escape count high
-- [ ] Track review status in session
-- [ ] Integration with PR workflow
+- [ ] Create adversarial reviewer prompt template
+- [ ] Define structured review checklist format
+- [ ] Document Task tool usage pattern for review
+- [ ] Add report format specification
 
-**Effort:** 1 day
+**Effort:** 2-3 hours
+
+### Phase 4: Legacy Skill Update (Optional)
+
+- [ ] Update /review skill with adversarial prompt
+- [ ] Note: This is secondary to automatic triggering
+- [ ] Kept for explicit user requests only
+
+**Effort:** 1 hour
 
 ## Success Metrics
 
 | Metric | Before | Target |
 |--------|--------|--------|
+| Automatic review triggers | 0% | 80%+ of qualifying tasks |
 | Bugs found in review | ~20% of PRs | 50%+ |
 | Contract quality issues caught | Unknown | Track |
 | False positive rate | N/A | <20% |
-| Review adoption | Manual | Automatic suggestion |
+| User-triggered vs auto-triggered | 100% manual | <20% manual |
 
 ## Appendix: Adversarial vs Collaborative Review
 
@@ -348,7 +481,27 @@ The difference is mindset: **verify vs falsify**.
 
 ## Related Work
 
-- DX-30: Visible workflow (complements with verification)
-- Existing /review skill (to be enhanced)
-- Existing /attack skill (security-focused adversary)
-- Guard rules (mechanical checks)
+- **DX-30**: Visible workflow - complementary; DX-30 shows ICIDIV phases, DX-31 adds review to VERIFY
+- **Existing /review skill**: Legacy manual trigger, retained for explicit user requests
+- **Existing /attack skill**: Security-focused adversary, narrower scope than DX-31
+- **Guard rules**: Mechanical checks; DX-31 adds semantic review via LLM
+- **Task tool**: Claude Code's sub-agent capability, enables context isolation
+
+## Appendix: Agent-Native vs User-Triggered
+
+```
+User-Triggered (Traditional):
+  - User remembers to invoke review
+  - Review is optional extra step
+  - Easy to skip when "in a hurry"
+  - Knowledge of when to review required
+
+Agent-Native (DX-31):
+  - Guard detects conditions automatically
+  - Agent evaluates and triggers review
+  - Integrated into task completion flow
+  - No user action required
+  - Consistent quality without user vigilance
+```
+
+**Key insight:** The best review is one the user doesn't have to remember to request.
