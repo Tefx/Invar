@@ -188,21 +188,6 @@ def output_rich(
         )
 
 
-def output_json(report: GuardReport) -> None:
-    """Output report as JSON."""
-    import json
-
-    output = {
-        "files_checked": report.files_checked,
-        "errors": report.errors,
-        "warnings": report.warnings,
-        "infos": report.infos,
-        "passed": report.passed,
-        "violations": [v.model_dump() for v in report.violations],
-    }
-    console.print(json.dumps(output, indent=2))
-
-
 def output_agent(
     report: GuardReport,
     strict: bool = False,

@@ -40,7 +40,6 @@ __all__ = [
     "ProveCache",
     "VerificationLevel",
     "VerificationResult",
-    "detect_verification_context",
     "get_available_verifiers",
     "get_files_to_prove",
     "run_crosshair_on_files",
@@ -110,22 +109,6 @@ def get_available_verifiers() -> list[str]:
         pass
 
     return available
-
-
-# @shell_orchestration: Verification context detection
-def detect_verification_context() -> VerificationLevel:
-    """
-    Auto-detect appropriate verification depth based on context.
-
-    DX-19: Simplified to 2 levels. Always returns STANDARD (full verification).
-    STATIC is only used when explicitly requested via --static flag.
-
-    >>> detect_verification_context() == VerificationLevel.STANDARD
-    True
-    """
-    # DX-19: Always use STANDARD (full verification) by default
-    # STATIC is only for explicit --static flag
-    return VerificationLevel.STANDARD
 
 
 def run_doctests_on_files(
