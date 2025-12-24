@@ -189,7 +189,7 @@ def guard(
     # Output results
     if use_agent_output:
         output_agent(
-            report, doctest_passed, doctest_output, crosshair_output, level_name,
+            report, strict, doctest_passed, doctest_output, crosshair_output, level_name,
             property_output=property_output,
         )
     elif use_json_output:
@@ -200,6 +200,7 @@ def guard(
             verification_level, static_exit_code, doctest_passed,
             doctest_output, crosshair_output, explain,
             property_output=property_output,
+            strict=strict,
         )
 
     # Exit with combined status

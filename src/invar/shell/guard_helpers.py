@@ -172,16 +172,29 @@ def output_verification_status(
     crosshair_output: dict,
     explain: bool,
     property_output: dict | None = None,
+    strict: bool = False,
 ) -> None:
     """Output verification status for human-readable mode.
 
     DX-19: Simplified - STANDARD runs all phases (doctests + CrossHair + Hypothesis).
+    DX-26: Shows combined conclusion after all phase results.
     """
     from invar.shell.testing import VerificationLevel
 
-    # STATIC mode: no runtime tests to report
+    # STATIC mode: no runtime tests to report (conclusion shown by output_rich)
     if verification_level == VerificationLevel.STATIC:
         return
+
+    # DX-26: Extract passed status from phase outputs
+    crosshair_passed = True
+    if crosshair_output:
+        crosshair_status = crosshair_output.get("status", "verified")
+        crosshair_passed = crosshair_status in ("verified", "skipped")
+
+    property_passed = True
+    if property_output:
+        property_status = property_output.get("status", "passed")
+        property_passed = property_status in ("passed", "skipped")
 
     # STANDARD mode: report all test results
     if static_exit_code == 0:
@@ -205,6 +218,19 @@ def output_verification_status(
             )
     else:
         console.print("[dim]⊘ Runtime tests skipped (static errors)[/dim]")
+
+    # DX-26: Combined conclusion after all phases
+    console.print("-" * 40)
+    all_passed = (
+        static_exit_code == 0
+        and doctest_passed
+        and crosshair_passed
+        and property_passed
+    )
+    # In strict mode, warnings also cause failure (but exit code already reflects this)
+    status = "passed" if all_passed else "failed"
+    color = "green" if all_passed else "red"
+    console.print(f"[{color}]Guard {status}.[/{color}]")
 
 
 # @shell_orchestration: Coordinates shell module calls for property testing

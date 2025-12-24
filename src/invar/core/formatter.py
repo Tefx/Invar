@@ -200,12 +200,18 @@ def format_signatures_json(symbols: list[Symbol], file_path: str) -> dict:
 # Phase 8.2: Agent-mode formatting
 
 
-@pre(lambda report: isinstance(report, GuardReport))
-def format_guard_agent(report: GuardReport) -> dict:
+@pre(lambda report, combined_status=None: isinstance(report, GuardReport))
+def format_guard_agent(report: GuardReport, combined_status: str | None = None) -> dict:
     """
-    Format Guard report for Agent consumption (Phase 8.2).
+    Format Guard report for Agent consumption (Phase 8.2 + DX-26).
 
     Provides structured output with actionable fix instructions.
+    DX-26: status now reflects ALL test phases when combined_status is provided.
+
+    Args:
+        report: Guard analysis report
+        combined_status: True guard status including all test phases (DX-26).
+                        If None, uses report.passed (static-only, deprecated).
 
     Examples:
         >>> from invar.core.models import GuardReport, Violation, Severity
@@ -219,9 +225,26 @@ def format_guard_agent(report: GuardReport) -> dict:
         'passed'
         >>> len(d["fixes"])
         1
+        >>> # DX-26: combined_status overrides report.passed
+        >>> d2 = format_guard_agent(report, combined_status="failed")
+        >>> d2["status"]
+        'failed'
+        >>> d2["static"]["passed"]  # Static still shows passed
+        True
     """
+    # DX-26: Use combined status if provided, else fall back to static-only
+    status = combined_status if combined_status else ("passed" if report.passed else "failed")
+    static_passed = report.errors == 0
+
     return {
-        "status": "passed" if report.passed else "failed",
+        "status": status,
+        # DX-26: Separate static results from combined status
+        "static": {
+            "passed": static_passed,
+            "errors": report.errors,
+            "warnings": report.warnings,
+            "infos": report.infos,
+        },
         "summary": {
             "files_checked": report.files_checked,
             "errors": report.errors,

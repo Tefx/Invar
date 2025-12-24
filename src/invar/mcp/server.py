@@ -170,8 +170,9 @@ async def _run_guard(args: dict[str, Any]) -> list[TextContent]:
     if args.get("strict", False):
         cmd.append("--strict")
 
-    # Always use JSON output for agent consumption
-    cmd.append("--json")
+    # DX-26: Use --agent for full verification details (status reflects all phases)
+    # In Phase 2, this will be replaced by TTY auto-detection
+    cmd.append("--agent")
 
     return await _execute_command(cmd)
 

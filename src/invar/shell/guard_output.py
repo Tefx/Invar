@@ -11,6 +11,7 @@ from rich.console import Console
 
 from invar.core.formatter import format_guard_agent
 from invar.core.models import GuardReport, Severity
+from invar.core.utils import get_combined_status
 
 console = Console()
 
@@ -176,11 +177,12 @@ def output_rich(
                 "[dim]💡 Fix warnings in files you modified to improve code health.[/dim]"
             )
 
-    console.print(
-        f"\n[{'green' if report.passed else 'red'}]Guard {'passed' if report.passed else 'failed'}.[/]"
-    )
-    # Only show static-only note in --static mode
+    # DX-26: Show static-only conclusion for --static mode
+    # Full mode shows conclusion after all phases in output_verification_status()
     if static_mode:
+        console.print(
+            f"\n[{'green' if report.passed else 'red'}]Guard {'passed' if report.passed else 'failed'}.[/]"
+        )
         console.print(
             "\n[dim]Note: --static mode skips runtime tests (doctests, CrossHair, Hypothesis).[/dim]"
         )
@@ -203,25 +205,45 @@ def output_json(report: GuardReport) -> None:
 
 def output_agent(
     report: GuardReport,
+    strict: bool = False,
     doctest_passed: bool = True,
     doctest_output: str = "",
     crosshair_output: dict | None = None,
     verification_level: str = "standard",
     property_output: dict | None = None,  # DX-08
 ) -> None:
-    """Output report in Agent-optimized JSON format (Phase 8.2 + DX-06 + DX-08 + DX-09).
+    """Output report in Agent-optimized JSON format (Phase 8.2 + DX-06 + DX-08 + DX-09 + DX-26).
 
     Args:
         report: Guard analysis report
+        strict: Whether warnings are treated as errors
         doctest_passed: Whether doctests passed
         doctest_output: Doctest stdout (only if failed)
         crosshair_output: CrossHair results dict
         verification_level: Current level (static/standard)
         property_output: Property test results dict (DX-08)
+
+    DX-26: status now reflects ALL test phases, not just static analysis.
     """
     import json
 
-    output = format_guard_agent(report)
+    # DX-26: Extract passed status from phase outputs
+    crosshair_passed = True
+    if crosshair_output:
+        crosshair_status = crosshair_output.get("status", "verified")
+        crosshair_passed = crosshair_status in ("verified", "skipped")
+
+    property_passed = True
+    if property_output:
+        property_status = property_output.get("status", "passed")
+        property_passed = property_status in ("passed", "skipped")
+
+    # DX-26: Calculate combined status including all test phases
+    combined_status = get_combined_status(
+        report, strict, doctest_passed, crosshair_passed, property_passed
+    )
+
+    output = format_guard_agent(report, combined_status=combined_status)
     # DX-09: Add verification level for Agent transparency
     output["verification_level"] = verification_level
     # DX-06: Add doctest results to agent output

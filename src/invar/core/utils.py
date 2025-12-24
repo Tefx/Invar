@@ -37,6 +37,52 @@ def get_exit_code(report: GuardReport, strict: bool) -> int:
     return 0
 
 
+@pre(lambda report, strict, doctest_passed=True, crosshair_passed=True, property_passed=True: isinstance(report, GuardReport))
+@post(lambda result: result in ("passed", "failed"))
+def get_combined_status(
+    report: GuardReport,
+    strict: bool,
+    doctest_passed: bool = True,
+    crosshair_passed: bool = True,
+    property_passed: bool = True,
+) -> str:
+    """
+    Calculate true guard status including all test phases (DX-26).
+
+    Unlike GuardReport.passed which only checks static errors,
+    this function combines static analysis with runtime test results.
+
+    Examples:
+        >>> from invar.core.models import GuardReport
+        >>> report = GuardReport(files_checked=1)
+        >>> get_combined_status(report, strict=False)
+        'passed'
+        >>> get_combined_status(report, strict=False, doctest_passed=False)
+        'failed'
+        >>> report.errors = 1
+        >>> get_combined_status(report, strict=False)
+        'failed'
+        >>> report2 = GuardReport(files_checked=1, warnings=1)
+        >>> get_combined_status(report2, strict=True)
+        'failed'
+        >>> get_combined_status(report2, strict=False)
+        'passed'
+    """
+    # Static analysis failures
+    if report.errors > 0:
+        return "failed"
+    if strict and report.warnings > 0:
+        return "failed"
+    # Runtime test failures
+    if not doctest_passed:
+        return "failed"
+    if not crosshair_passed:
+        return "failed"
+    if not property_passed:
+        return "failed"
+    return "passed"
+
+
 @pre(lambda data, source: isinstance(data, dict) and isinstance(source, str))
 @post(lambda result: isinstance(result, dict))
 def extract_guard_section(data: dict[str, Any], source: str) -> dict[str, Any]:
