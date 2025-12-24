@@ -12,6 +12,7 @@ The `invar guard` command has accumulated complexity:
 - Redundant commands (`invar test`, `invar verify`)
 - Dead code from removed features (`--prove`, `--thorough`)
 - MCP uses wrong output mode (missing verification details)
+- **`status` field inconsistent with exit code** (critical bug)
 
 ## Current State
 
@@ -37,20 +38,91 @@ strict   # default: False
 
 ### Issues Found
 
-| Issue | Impact |
-|-------|--------|
-| MCP uses `--json` instead of `--agent` | Missing verification_level, test results, fix instructions |
-| `--json` vs `--agent` confusion | When would agent want simple JSON? |
-| `--no-strict-pure` double negative | Confusing semantics |
-| `--pedantic` rarely used | Agents don't need off-by-default rules |
-| `--explain` human-only | Not useful for JSON output |
-| `invar test` / `invar verify` redundant | `guard` already runs both |
-| `detect_verification_context()` dead code | Always returns STANDARD |
-| Docs still reference `--prove` | Removed in DX-19 |
+| Issue | Impact | Severity |
+|-------|--------|----------|
+| `status` doesn't reflect runtime test results | Agent sees "passed" but exit code is 1 | **Critical** |
+| MCP uses `--json` instead of `--agent` | Missing verification_level, test results, fix instructions | **High** |
+| `output_json()` missing runtime test results | Agent can't see doctest/crosshair/hypothesis results | **High** |
+| Rich output shows "Guard passed" then "Doctests failed" | Confusing mixed signals | Medium |
+| `--json` vs `--agent` confusion | When would agent want simple JSON? | Medium |
+| `--no-strict-pure` double negative | Confusing semantics | Low |
+| `--pedantic` rarely used | Agents don't need off-by-default rules | Low |
+| `invar test` / `invar verify` redundant | `guard` already runs both | Low |
+| `detect_verification_context()` dead code | Always returns STANDARD | Low |
+
+### Critical Bug: `status` vs Exit Code Mismatch
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                   Current Failure Logic                         │
+├─────────────────────────────────────────────────────────────────┤
+│  GuardReport.passed = (errors == 0)     # Static only!          │
+│                                                                  │
+│  Exit Code Logic:                                                │
+│    static_exit_code = 1 if errors > 0 else 0                    │
+│    all_passed = doctest AND crosshair AND property              │
+│    final_exit = static_exit_code if all_passed else 1           │
+└─────────────────────────────────────────────────────────────────┘
+
+Scenario: Static passes, Doctests fail
+  - report.passed = True       ← Wrong!
+  - output["status"] = "passed" ← Wrong!
+  - Exit code = 1              ← Correct
+```
+
+**Agent sees:** `{"status": "passed", "doctest": {"passed": false}}`
+**Exit code:** 1
+
+This forces agents to manually combine fields to determine true status.
 
 ## Proposal
 
-### 1. Unified Output Mode
+### 1. Fix Status/Exit Code Consistency
+
+**Add combined status calculation:**
+
+```python
+def get_combined_status(
+    report: GuardReport,
+    strict: bool,
+    doctest_passed: bool,
+    crosshair_passed: bool,
+    property_passed: bool,
+) -> str:
+    """Calculate true guard status including all test phases."""
+    if report.errors > 0:
+        return "failed"
+    if strict and report.warnings > 0:
+        return "failed"
+    if not doctest_passed:
+        return "failed"
+    if not crosshair_passed:
+        return "failed"
+    if not property_passed:
+        return "failed"
+    return "passed"
+```
+
+**Update all output functions:**
+
+```python
+# Before
+output = {
+    "status": "passed" if report.passed else "failed",  # Static only
+    ...
+}
+
+# After
+output = {
+    "status": combined_status,  # All tests combined
+    "static": {"passed": report.errors == 0, "errors": report.errors, "warnings": report.warnings},
+    "doctest": {"passed": doctest_passed, ...},
+    "crosshair": {...},
+    "property_tests": {...},
+}
+```
+
+### 2. Unified Output Mode
 
 **Remove:** `--json`, `--agent`
 
@@ -63,15 +135,12 @@ Non-TTY detected → Full JSON (agent-optimized)
 --human flag     → Force human-readable (for testing/debugging)
 ```
 
-**Rationale:**
-- Agents run in non-TTY → auto JSON
-- Humans run in terminal → auto Rich
-- When developing Invar itself, agent can use `--human` to test human output
+**Delete `output_json()`** - always use full agent format for JSON.
 
 ```python
 # Before (confusing)
 if json_output:
-    output_json(report)           # Simple JSON
+    output_json(report)           # Simple JSON, missing runtime results
 elif agent or _detect_agent_mode():
     output_agent(report, ...)     # Full JSON
 else:
@@ -84,7 +153,25 @@ else:
     output_agent(report, ...)     # Full JSON (always complete)
 ```
 
-### 2. Remove Redundant Commands
+### 3. Fix Rich Output Order
+
+**Before (confusing):**
+```
+Guard passed.          ← Static result first (misleading)
+✗ Doctests failed      ← Runtime result after
+```
+
+**After (clear):**
+```
+Static analysis: ✓ 0 errors, 3 warnings
+Doctests: ✗ failed
+CrossHair: ✓ verified (42 files)
+Property tests: ✓ passed (151/151)
+────────────────────────────────────
+Guard failed.          ← Combined conclusion last
+```
+
+### 4. Remove Redundant Commands
 
 **Delete:** `invar test`, `invar verify`
 
@@ -95,7 +182,7 @@ else:
 - Separate commands violate Agent-Native (zero decisions)
 - Usage data: `invar guard` ~100%, `invar test/verify` ~0%
 
-### 3. Simplify Flags
+### 5. Simplify Flags
 
 **Before (9):**
 ```
@@ -121,7 +208,7 @@ path        # Project path (positional)
 | `--agent` | Replaced by auto-detect |
 | `--json` | Replaced by auto-detect |
 
-### 4. Fix MCP
+### 6. Fix MCP
 
 **Before:**
 ```python
@@ -133,16 +220,10 @@ cmd.append("--json")  # Wrong: simple JSON, missing info
 # No output flag needed - non-TTY auto-detects to full JSON
 ```
 
-MCP output will include:
-- `verification_level`
-- `doctest` results
-- `crosshair` results
-- `property_tests` results
-- Fix instructions
-
-### 5. Clean Dead Code
+### 7. Clean Dead Code
 
 **Remove:**
+- `output_json()` function (merge into `output_agent()`)
 - `detect_verification_context()` - always returns STANDARD
 - `VerificationLevel` comments about `--thorough`
 - `invar test` command and `test_cmd.py`
@@ -183,40 +264,87 @@ invar_guard(
 | Pipe/redirect (non-TTY) | Full agent JSON |
 | `--human` flag | Rich human-readable |
 
-### Agent JSON Schema
+### Agent JSON Schema (Updated)
+
 ```json
 {
   "status": "passed",
   "verification_level": "standard",
-  "files_checked": 42,
-  "errors": 0,
-  "warnings": 3,
+  "static": {
+    "passed": true,
+    "errors": 0,
+    "warnings": 3,
+    "infos": 0
+  },
+  "doctest": {
+    "passed": true,
+    "output": ""
+  },
+  "crosshair": {
+    "status": "verified",
+    "verified": ["file1.py", "file2.py"],
+    "skipped": ["file3.py"],
+    "failed": []
+  },
+  "property_tests": {
+    "status": "passed",
+    "functions_tested": 151,
+    "functions_passed": 151,
+    "functions_failed": 0,
+    "total_examples": 7000
+  },
   "violations": [...],
-  "doctest": {"passed": true, "output": ""},
-  "crosshair": {"status": "verified", "verified": [...]},
-  "property_tests": {"functions_tested": 151, "passed": 151},
-  "fix_instructions": [...]
+  "fixes": [...]
 }
+```
+
+**Key change:** Top-level `status` now reflects ALL test phases, not just static.
+
+### Human Output (Updated)
+
+```
+Invar Guard Report
+========================================
+(changed-only mode)
+
+src/invar/core/parser.py
+  WARN :25 Function 'parse_source' has no @post contract
+    → Add: @post(lambda result: result is None or isinstance(result, FileInfo))
+
+────────────────────────────────────────
+Static: ✓ 0 errors, 1 warning
+Doctests: ✓ passed
+CrossHair: ✓ verified (19 files)
+Property tests: ✓ passed (151/151)
+────────────────────────────────────────
+Guard passed.
 ```
 
 ## Implementation
 
-### Phase 1: Fix MCP Bug (Immediate)
-1. Remove `--json` from MCP server
-2. Verify non-TTY auto-detection works
+### Phase 1: Fix Critical Bug (Immediate)
+1. Add `get_combined_status()` function
+2. Update `output_agent()` to use combined status
+3. Update `output_rich()` to show phases then conclusion
+4. Remove `--json` from MCP server
 
-### Phase 2: Simplify CLI
-1. Add `--human` flag
-2. Remove `--json`, `--agent`, `--pedantic`, `--explain`, `--no-strict-pure`
-3. Update help text
+### Phase 2: Simplify Output
+1. Delete `output_json()` function
+2. Merge into `output_agent()` with full details
+3. Add `--human` flag
+4. Remove `--json`, `--agent` flags
 
-### Phase 3: Remove Dead Code
+### Phase 3: Simplify Flags
+1. Remove `--pedantic`, `--explain`, `--no-strict-pure`
+2. Update help text
+
+### Phase 4: Remove Dead Code
 1. Delete `invar test`, `invar verify` commands
 2. Delete `detect_verification_context()`
 3. Delete `_detect_agent_mode()` (inline TTY check)
 4. Clean up `VerificationLevel` comments
 
-### Phase 4: Documentation
+### Phase 5: Documentation
 1. Update CLAUDE.md
 2. Update context.md (remove `--prove` references)
 3. Update MCP instructions
@@ -235,12 +363,26 @@ For projects that might use old flags:
 
 ## Metrics
 
-| Before | After |
-|--------|-------|
-| 9 CLI flags | 5 CLI flags |
-| 3 output modes | 2 output modes (auto) |
-| 5 commands | 3 commands |
-| ~50 lines output logic | ~20 lines |
+| Metric | Before | After |
+|--------|--------|-------|
+| CLI flags | 9 | 5 |
+| Output modes | 3 | 2 (auto) |
+| Commands | 5 | 3 |
+| Output logic lines | ~50 | ~20 |
+| Status/exit consistency | No | Yes |
+
+## Files to Modify
+
+| File | Changes |
+|------|---------|
+| `core/models.py` | Keep `passed` property for backward compat |
+| `core/formatter.py` | Update `format_guard_agent()` to accept combined status |
+| `shell/cli.py` | Calculate combined status, pass to output functions |
+| `shell/guard_output.py` | Delete `output_json()`, update `output_rich()` order |
+| `shell/guard_helpers.py` | No change needed |
+| `shell/test_cmd.py` | Delete entire file |
+| `shell/testing.py` | Remove `detect_verification_context()` |
+| `mcp/server.py` | Remove `--json` flag |
 
 ## Decision
 
