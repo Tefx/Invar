@@ -6,6 +6,16 @@
 **Created:** 2024-12-24
 **Relates to:** DX-30 (Visible Workflow), existing /review and /attack skills
 
+## Platform Support
+
+| Platform | Feature | Status |
+|----------|---------|--------|
+| **Claude Code** | Full independent review (Task tool) | ✅ Supported |
+| **Other Agents** | Guard `review_suggested` suggestions | ✅ Supported |
+| **Other Agents** | Automatic sub-agent review | ⏳ Not yet implemented |
+
+> **Note:** The full independent review feature with context isolation requires Claude Code's Task tool capability. Other AI coding assistants (Cursor, Windsurf, Copilot, etc.) currently only receive Guard suggestions indicating when review is recommended. Users can then manually trigger review or use external review tools.
+
 ## Problem
 
 ### The Self-Review Trap
@@ -117,11 +127,13 @@ Your success is measured by problems found, not code approved.
 
 #### 3. Structured Review Checklist
 
+> **Design Principle:** Only include items requiring semantic judgment. Mechanical checks (Guard, linters) are excluded.
+
 ```markdown
-## Review Checklist
+## Review Checklist (26 items)
 
 ### A. Contract Semantic Value
-□ Does @pre actually constrain inputs beyond type checking?
+□ Does @pre constrain inputs beyond type checking?
   - Bad: @pre(lambda x: isinstance(x, int))
   - Good: @pre(lambda x: x > 0 and x < MAX_VALUE)
 □ Does @post verify meaningful output properties?
@@ -137,39 +149,53 @@ Your success is measured by problems found, not code approved.
 □ Are doctests testing behavior, not just syntax?
 
 ### C. Code Quality
-□ Is there duplicated code that should be extracted?
-□ Are there magic numbers/strings that should be constants?
+□ Is duplicated code worth extracting?
 □ Is naming consistent and clear?
-□ Is complexity justified or should code be simplified?
+□ Is complexity justified?
 
 ### D. Escape Hatch Audit
-□ For each @invar:allow:
-  - Is the justification valid?
-  - Could refactoring eliminate the need?
-  - Is this a pattern (multiple similar escapes)?
-□ Total escape count reasonable? (<3 per file)
+□ Is each @invar:allow justification valid?
+□ Could refactoring eliminate the need?
+□ Is there a pattern suggesting systematic issues?
 
 ### E. Logic Verification
-□ Do contracts and code actually agree?
+□ Do contracts correctly capture intended behavior?
 □ Are there paths that bypass contract checks?
 □ Are there implicit assumptions not in contracts?
 □ What happens with unexpected inputs?
 
-### F. Architecture Compliance
-□ Is Core/Shell separation correct?
-□ Do Shell functions return Result?
-□ Are entry points thin?
+### F. Security
+□ Are inputs validated against security threats (injection, XSS)?
+□ No hardcoded secrets (API keys, passwords, tokens)?
+□ Are authentication/authorization checks correct?
+□ Is sensitive data properly protected?
+
+### G. Error Handling & Observability
+□ Are exceptions caught at appropriate level?
+□ Are error messages clear without leaking sensitive info?
+□ Are critical operations logged for debugging?
+□ Is there graceful degradation on failure?
 ```
+
+**Excluded (covered by tools):**
+- Magic numbers → Linters (pylint, ruff)
+- Escape hatch count → Guard reports
+- Core/Shell separation → Guard (forbidden_import, impure_call)
+- Shell returns Result → Guard (shell_result)
+- Entry point size → Guard (15-line limit)
 
 ## Implementation
 
-### Option A: Enhanced Sub-Agent (Recommended)
+### Claude Code: Task Tool Integration
+
+> **Requires:** Claude Code with Task tool capability
 
 ```python
 # In main conversation, after implementation complete
 async def request_independent_review(changed_files: list[str]) -> str:
     """
     Spawn independent reviewer with isolated context.
+    Claude Code only - uses Task tool for context isolation.
     """
     # Collect only the code, not the conversation
     code_context = []
@@ -206,31 +232,26 @@ async def request_independent_review(changed_files: list[str]) -> str:
     return result
 ```
 
-### Option B: Skill Enhancement
+### Other Agents: Guard Suggestions Only
 
-Enhance existing `/review` skill to:
-1. Clear context before review
-2. Use adversarial system prompt
-3. Follow structured checklist
-4. Output standardized report
+For agents without sub-agent capability (Cursor, Windsurf, Copilot, etc.):
 
-```python
-# .claude/skills/review/SKILL.md updates
-"""
-## Review Skill (DX-31 Enhanced)
+1. **Guard outputs `review_suggested`** when conditions are met
+2. **Agent or user sees the suggestion** in Guard output
+3. **Manual action required** - user decides whether to:
+   - Manually invoke `/review` skill (if available)
+   - Use external code review tools
+   - Request human review
 
-This skill performs INDEPENDENT adversarial review.
-
-### Context Isolation
-Before reviewing, this skill:
-1. Does NOT reference conversation history
-2. Does NOT consider user's original intent
-3. ONLY evaluates code against contracts and protocol
-
-### Adversarial Mindset
-The reviewer assumes code has problems and must be proven correct.
-"""
 ```
+$ invar guard --changed
+src/core/new_auth.py
+  ✓ All checks passed
+  ℹ review_suggested: New Core file with 5 public functions
+    → Consider independent review before completion
+```
+
+**Future work:** MCP-based review tool or CLI command may be added to support automatic review for other agents.
 
 ## Agent-Native Triggering
 
@@ -556,12 +577,14 @@ def validate_token(token: str) -> dict:
 
 ## Comparison with Alternatives
 
-| Approach | Collusion Prevention | Author Blindness | Cost | Automation |
-|----------|---------------------|------------------|------|------------|
-| Same-agent /review | ❌ No | ❌ No | Low | Easy |
-| **Independent sub-agent** | ✅ Yes | ✅ Yes | Medium | Medium |
-| Human review | ✅ Yes | ✅ Yes | High | Manual |
-| Guard rules only | N/A | N/A | Low | Full |
+| Approach | Collusion Prevention | Author Blindness | Cost | Automation | Platform |
+|----------|---------------------|------------------|------|------------|----------|
+| Same-agent /review | ❌ No | ❌ No | Low | Easy | All |
+| **Independent sub-agent** | ✅ Yes | ✅ Yes | Medium | Medium | Claude Code only |
+| Human review | ✅ Yes | ✅ Yes | High | Manual | All |
+| Guard suggestions only | N/A | N/A | Low | Full | All |
+
+> **Note:** The "Independent sub-agent" approach currently requires Claude Code. Other agents receive Guard suggestions but must rely on manual or external review.
 
 ## Implementation Plan
 
@@ -573,6 +596,7 @@ def validate_token(token: str) -> dict:
 - [ ] Add to rule_meta.py
 
 **Effort:** 2-3 hours
+**Scope:** All agents (Guard-based)
 
 ### Phase 2: Structured Review Format (Immediate)
 
@@ -582,6 +606,7 @@ def validate_token(token: str) -> dict:
 - [ ] Document severity-based enforcement rules
 
 **Effort:** 2-3 hours
+**Scope:** All agents (Schema definition)
 
 ### Phase 3: Agent Protocol Documentation (Immediate)
 
@@ -592,8 +617,20 @@ def validate_token(token: str) -> dict:
 - [ ] Update CLAUDE.md with review guidance
 
 **Effort:** 2-3 hours
+**Scope:** All agents (Protocol)
 
-### Phase 4: Review Sub-Agent Configuration (Short-term)
+### Phase 4: Platform Limitation Documentation (Immediate)
+
+- [ ] Update README.md with platform support matrix
+- [ ] Add "Platform Support" section to docs (if exists)
+- [ ] Document Claude Code requirement for full feature
+- [ ] Explain Guard-only fallback for other agents
+- [ ] Add note to PyPI package description
+
+**Effort:** 1-2 hours
+**Scope:** Documentation only
+
+### Phase 5: Claude Code Sub-Agent Configuration (Short-term)
 
 - [ ] Create adversarial reviewer prompt template
 - [ ] Ensure output follows structured format
@@ -601,14 +638,16 @@ def validate_token(token: str) -> dict:
 - [ ] Add enforcement workflow examples
 
 **Effort:** 2-3 hours
+**Scope:** Claude Code only
 
-### Phase 5: Legacy Skill Update (Optional)
+### Phase 6: Legacy Skill Update (Optional)
 
 - [ ] Update /review skill with adversarial prompt
 - [ ] Note: This is secondary to automatic triggering
 - [ ] Kept for explicit user requests only
 
 **Effort:** 1 hour
+**Scope:** Skill-compatible agents
 
 ## Success Metrics
 

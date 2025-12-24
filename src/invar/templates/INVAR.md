@@ -12,7 +12,7 @@
   You are free to share and adapt this document, provided you give
   appropriate credit to the Invar project.
 -->
-# The Invar Protocol v3.27
+# The Invar Protocol v3.28
 
 > **"Trade structure for safety."**
 
@@ -104,6 +104,33 @@ Then read `.invar/context.md` for project state and lessons learned.
 
 **Contract before Implement. Verify after every change. No exceptions.**
 
+## Visible Workflow (DX-30)
+
+For complex tasks (3+ functions), show ICIDIV phases in TodoList:
+
+```
+□ [Intent] Task description, Core/Shell classification
+□ [Contract] Function signatures with @pre/@post
+□ [Inspect] Files and symbols to review
+□ [Design] Decomposition plan
+□ [Implement] Write code
+□ [Verify] Guard results
+```
+
+**Show contracts before code.** Example:
+
+```python
+[Contract] calculate_discount:
+@pre(lambda price, rate: price > 0 and 0 <= rate <= 1)
+@post(lambda result: result >= 0)
+def calculate_discount(price: float, rate: float) -> float: ...
+
+[Implement] Now coding...
+```
+
+**When to use:** New features (3+ functions), architectural changes, Core modifications.
+**Skip for:** Single-line fixes, documentation, trivial refactoring.
+
 ## Task Completion
 
 A task is complete only when ALL conditions are met:
@@ -176,4 +203,4 @@ shell_paths = ["src/myapp/shell"]
 
 ---
 
-*Protocol v3.27 | [Guide](docs/INVAR-GUIDE.md) | [Examples](.invar/examples/)*
+*Protocol v3.28 — Added Visible Workflow (DX-30) | [Guide](docs/INVAR-GUIDE.md) | [Examples](.invar/examples/)*
