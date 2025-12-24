@@ -14,6 +14,7 @@ DX-22: Added content-based auto-detection for Core/Shell classification.
 
 from __future__ import annotations
 
+import ast
 import tomllib
 from enum import Enum
 from typing import TYPE_CHECKING, Any, Literal
@@ -37,54 +38,160 @@ class ModuleType(Enum):
     UNKNOWN = "unknown"
 
 
-# I/O indicators that suggest Shell module
-_IO_INDICATORS = frozenset(
+# I/O libraries that indicate Shell module (for AST import checking)
+_IO_LIBRARIES = frozenset(
     [
-        # File operations
-        ".read(",
-        ".write(",
-        ".read_text(",
-        ".write_text(",
-        "open(",
-        "Path(",
-        # Subprocess
-        "subprocess.",
-        "os.system(",
-        # Network
-        "requests.",
-        "aiohttp.",
-        "httpx.",
-        # Console output
-        "print(",
-        "console.",
-        "typer.",
-        # Result monad (Shell pattern)
-        "Success(",
-        "Failure(",
-        "Result[",
+        "os",
+        "sys",
+        "subprocess",
+        "pathlib",
+        "shutil",
+        "io",
+        "socket",
+        "requests",
+        "aiohttp",
+        "httpx",
+        "urllib",
+        "sqlite3",
+        "psycopg2",
+        "pymongo",
+        "sqlalchemy",
+        "typer",
+        "click",
     ]
 )
 
-# Contract indicators that suggest Core module
-_CONTRACT_INDICATORS = frozenset(
-    [
-        "@pre(",
-        "@post(",
-        "@invariant(",
-    ]
-)
+# Contract decorator names
+_CONTRACT_DECORATORS = frozenset(["pre", "post", "invariant"])
+
+# Result monad types
+_RESULT_TYPES = frozenset(["Result", "Success", "Failure"])
+
+
+# @shell_orchestration: AST analysis helpers for module classification
+def _has_contract_decorators(tree: ast.Module) -> bool:
+    """
+    Check if AST contains @pre/@post contract decorators.
+
+    Uses AST to only detect real decorators, not strings in docstrings.
+
+    Examples:
+        >>> import ast
+        >>> tree = ast.parse("@pre(lambda x: x > 0)\\ndef foo(x): pass")
+        >>> _has_contract_decorators(tree)
+        True
+        >>> tree = ast.parse("def foo():\\n    '''>>> @pre(x)'''\\n    pass")
+        >>> _has_contract_decorators(tree)
+        False
+    """
+    for node in ast.walk(tree):
+        if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
+            for decorator in node.decorator_list:
+                # @pre(...) or @post(...)
+                if isinstance(decorator, ast.Call):
+                    func = decorator.func
+                    if isinstance(func, ast.Name) and func.id in _CONTRACT_DECORATORS:
+                        return True
+                    if isinstance(func, ast.Attribute) and func.attr in _CONTRACT_DECORATORS:
+                        return True
+                # @pre (without call - rare but possible)
+                elif isinstance(decorator, ast.Name) and decorator.id in _CONTRACT_DECORATORS:
+                    return True
+    return False
+
+
+# @shell_orchestration: AST analysis helper for module classification
+def _has_io_imports(tree: ast.Module) -> bool:
+    """
+    Check if AST contains imports of I/O libraries.
+
+    Examples:
+        >>> import ast
+        >>> tree = ast.parse("import os")
+        >>> _has_io_imports(tree)
+        True
+        >>> tree = ast.parse("from pathlib import Path")
+        >>> _has_io_imports(tree)
+        True
+        >>> tree = ast.parse("import json")
+        >>> _has_io_imports(tree)
+        False
+        >>> tree = ast.parse("def foo():\\n    '''import os'''\\n    pass")
+        >>> _has_io_imports(tree)
+        False
+    """
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                lib = alias.name.split(".")[0]
+                if lib in _IO_LIBRARIES:
+                    return True
+        elif isinstance(node, ast.ImportFrom) and node.module:
+            lib = node.module.split(".")[0]
+            if lib in _IO_LIBRARIES:
+                return True
+    return False
+
+
+# @shell_orchestration: AST analysis helper for module classification
+def _has_result_types(tree: ast.Module) -> bool:
+    """
+    Check if AST contains Result/Success/Failure usage.
+
+    Checks:
+    - Return type annotations: -> Result[T, E]
+    - Imports: from returns.result import Success
+    - Function calls: Success(...), Failure(...)
+
+    Examples:
+        >>> import ast
+        >>> tree = ast.parse("from returns.result import Success")
+        >>> _has_result_types(tree)
+        True
+        >>> tree = ast.parse("def foo() -> Result[int, str]: pass")
+        >>> _has_result_types(tree)
+        True
+        >>> tree = ast.parse("return Success(42)")
+        >>> _has_result_types(tree)
+        True
+        >>> tree = ast.parse("def foo():\\n    '''Success'''\\n    pass")
+        >>> _has_result_types(tree)
+        False
+    """
+    for node in ast.walk(tree):
+        # Check imports: from returns.result import Success
+        if isinstance(node, ast.ImportFrom):
+            if node.module and "returns" in node.module:
+                for alias in node.names:
+                    if alias.name in _RESULT_TYPES:
+                        return True
+        # Check function calls: Success(...), Failure(...)
+        elif isinstance(node, ast.Call):
+            if isinstance(node.func, ast.Name) and node.func.id in _RESULT_TYPES:
+                return True
+        # Check type annotations: -> Result[T, E]
+        elif isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
+            if node.returns:
+                ann = node.returns
+                if isinstance(ann, ast.Subscript):
+                    if isinstance(ann.value, ast.Name) and ann.value.id == "Result":
+                        return True
+                elif isinstance(ann, ast.Name) and ann.id in _RESULT_TYPES:
+                    return True
+    return False
 
 
 # @shell_complexity: Classification decision tree requires multiple conditions
 def auto_detect_module_type(source: str, file_path: str = "") -> ModuleType:
     """
-    Automatically detect module type from source content.
+    Automatically detect module type from source content using AST.
 
     DX-22: Content-based classification when path-based is inconclusive.
+    Uses AST parsing to avoid false positives from docstrings/comments.
 
     Priority:
     1. Path convention (**/core/** or **/shell/**)
-    2. Content features (contracts, Result types, I/O operations)
+    2. Content features via AST (contracts, Result types, I/O imports)
 
     Args:
         source: Python source code as string
@@ -96,9 +203,11 @@ def auto_detect_module_type(source: str, file_path: str = "") -> ModuleType:
     Examples:
         >>> auto_detect_module_type("@pre(lambda x: x > 0)\\ndef foo(x): pass")
         <ModuleType.CORE: 'core'>
-        >>> auto_detect_module_type("def load() -> Result[str, str]: return Success('ok')")
+        >>> auto_detect_module_type("from returns.result import Success\\ndef load(): return Success('ok')")
         <ModuleType.SHELL: 'shell'>
         >>> auto_detect_module_type("def helper(): pass")
+        <ModuleType.UNKNOWN: 'unknown'>
+        >>> auto_detect_module_type("def foo():\\n    '''>>> @pre(x)'''\\n    pass")
         <ModuleType.UNKNOWN: 'unknown'>
     """
     # Priority 1: Path convention
@@ -109,10 +218,15 @@ def auto_detect_module_type(source: str, file_path: str = "") -> ModuleType:
         if "/shell/" in path_lower or path_lower.endswith("/shell"):
             return ModuleType.SHELL
 
-    # Priority 2: Content features
-    has_contracts = any(indicator in source for indicator in _CONTRACT_INDICATORS)
-    has_io = any(indicator in source for indicator in _IO_INDICATORS)
-    has_result = "Result[" in source or "Success(" in source or "Failure(" in source
+    # Priority 2: Content features via AST
+    try:
+        tree = ast.parse(source)
+    except SyntaxError:
+        return ModuleType.UNKNOWN
+
+    has_contracts = _has_contract_decorators(tree)
+    has_io = _has_io_imports(tree)
+    has_result = _has_result_types(tree)
 
     # Core: has contracts AND no I/O
     if has_contracts and not has_io:
