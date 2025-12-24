@@ -100,7 +100,7 @@ def guard(
         False, "--explain", hidden=True, help="[Deprecated] Show detailed explanations"
     ),
     agent: bool = typer.Option(
-        False, "--agent", hidden=True, help="[Deprecated] Use TTY auto-detection instead"
+        False, "--agent", help="Force JSON output (for inspecting agent format)"
     ),
     json_output: bool = typer.Option(
         False, "--json", hidden=True, help="[Deprecated] Use TTY auto-detection instead"
