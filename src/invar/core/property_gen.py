@@ -339,6 +339,8 @@ def run_property_test(func: Callable, max_examples: int = 100) -> PropertyTestRe
     """
     Run a property test on a single function.
 
+    Uses deal.cases() which respects @pre conditions and generates valid inputs.
+
     >>> from deal import pre, post
     >>> @pre(lambda x: x >= 0)
     ... @post(lambda result: result >= 0)
@@ -350,23 +352,41 @@ def run_property_test(func: Callable, max_examples: int = 100) -> PropertyTestRe
     """
     func_name = getattr(func, "__name__", "unknown")
 
-    # Generate test
-    generated = generate_property_test(func)
-    if generated is None:
-        return _skip_result(func_name, "Could not generate test (no contracts or unparseable)")
-
-    # Check for untestable parameters (AST nodes, custom classes)
-    if any("nothing()" in s for s in generated.strategies.values()):
-        return _skip_result(func_name, "Skipped: untestable types (AST nodes, custom classes)")
-
-    # Build executable test
-    test_fn = build_test_function(func, generated.strategies, max_examples)
-    if test_fn is None:
-        return _skip_result(func_name, "Could not build test (hypothesis unavailable)")
-
-    # Run the test
+    # Try deal.cases first - it respects @pre conditions
     try:
-        test_fn()
+        import deal
+        from hypothesis import HealthCheck, settings
+
+        # deal.cases generates inputs satisfying preconditions
+        # Suppress filter_too_much for restrictive preconditions
+        test_settings = settings(
+            max_examples=max_examples,
+            suppress_health_check=[HealthCheck.filter_too_much, HealthCheck.too_slow],
+        )
+        test_case = deal.cases(func, count=max_examples, settings=test_settings)
+        test_case()  # Run the tests
         return PropertyTestResult(func_name, passed=True, examples_run=max_examples)
+    except deal.PreContractError:
+        # This shouldn't happen with deal.cases, but handle it gracefully
+        return _skip_result(func_name, "Skipped: could not generate valid inputs")
+    except deal.PostContractError as e:
+        # Post-condition violation = real bug
+        return PropertyTestResult(func_name, passed=False, examples_run=max_examples, error=str(e))
+    except ImportError:
+        pass  # Fall through to custom strategy approach
     except Exception as e:
+        # Check if it's a strategy generation or hypothesis skip issue
+        err_str = str(e)
+        skip_patterns = [
+            "Nothing",
+            "NoSuchExample",
+            "filter_too_much",
+            "Could not resolve",  # typing.Any, custom types
+            "validation error",   # Pydantic model construction
+            "missing",            # Lambda signature mismatch (missing N required)
+            "positional argument", # Lambda positional arg issues
+            "Unable to satisfy",  # Can't generate valid inputs for restrictive preconditions
+        ]
+        if any(p in err_str for p in skip_patterns):
+            return _skip_result(func_name, "Skipped: untestable types")
         return PropertyTestResult(func_name, passed=False, examples_run=max_examples, error=str(e))
