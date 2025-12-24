@@ -309,11 +309,18 @@ def get_exclude_paths(project_root: Path) -> Result[list[str], str]:
 
 
 # @invar:allow entry_point_too_thick: False positive - .get() matches router.get pattern
-def classify_file(file_path: str, project_root: Path) -> Result[tuple[bool, bool], str]:
+def classify_file(
+    file_path: str, project_root: Path, source: str = ""
+) -> Result[tuple[bool, bool], str]:
     """
     Classify a file as Core, Shell, or neither.
 
-    Priority: patterns > paths > uncategorized.
+    DX-22 Part 5: Priority order is patterns > paths > content > uncategorized.
+
+    Args:
+        file_path: Relative path to the file
+        project_root: Project root directory
+        source: Optional source content for content-based detection
 
     Examples:
         >>> import tempfile
@@ -323,6 +330,10 @@ def classify_file(file_path: str, project_root: Path) -> Result[tuple[bool, bool
         ...     result = classify_file("src/core/logic.py", root)
         ...     result.unwrap()[0]
         True
+        >>> classify_file("lib/utils.py", Path("."), "@pre(lambda x: x > 0)\\ndef foo(x): pass").unwrap()
+        (True, False)
+        >>> classify_file("lib/io.py", Path("."), "def read() -> Result[str, str]: return Success('ok')").unwrap()
+        (False, True)
     """
     pattern_result = get_pattern_classification(project_root)
     core_patterns, shell_patterns = (
@@ -347,5 +358,13 @@ def classify_file(file_path: str, project_root: Path) -> Result[tuple[bool, bool
         return Success((True, False))
     if matches_path_prefix(file_path, shell_paths):
         return Success((False, True))
+
+    # Priority 3: Content-based auto-detection (DX-22 Part 5)
+    if source:
+        module_type = auto_detect_module_type(source, file_path)
+        if module_type == ModuleType.CORE:
+            return Success((True, False))
+        if module_type == ModuleType.SHELL:
+            return Success((False, True))
 
     return Success((False, False))

@@ -17,6 +17,7 @@ This directory contains design proposals for Invar development.
 | DX-13 | incremental-prove | Incremental CrossHair verification with caching |
 | DX-14 | expanded-prove-usage | Full verification in pre-commit/CI (merged into default via DX-19) |
 | DX-21 | package-and-init | Two-package architecture (invar-tools + invar-runtime) |
+| DX-22 | verification-strategy | Smart routing, Shell rules, Fix-or-Explain, de-duplication, config simplification |
 | DX-23 | entry-point-detection | Auto-detect entry points, exemptions from Result requirement |
 | DX-26 | guard-simplification | Simplify guard CLI: 9→5 flags, TTY auto-detect, property test output |
 
@@ -28,28 +29,18 @@ This directory contains design proposals for Invar development.
 | DX-16 | agent-tool-enforcement | MCP tool enforcement for AI agents |
 | DX-17 | workflow-enforcement | Session start and ICIDIV workflow enforcement |
 | DX-20 | property-testing-enhancements | Property testing UX improvements |
-| DX-22 | verification-strategy | **90%** - Shell rules, Fix-or-Explain complete; smart routing partial |
-| DX-24 | mechanism-documentation | **40%** - Core READMEs done, detailed docs pending |
+| DX-24 | mechanism-documentation | **60%** - Architecture (core-shell, entry-points, fix-or-explain), verification (smart-routing), rules (severity-design) complete; contracts/ and workflow/ pending |
 | DX-28 | semantic-verification | **65%** - @relates, format specs, mutation testing, skip abuse prevention done; contract quality rules pending |
 | - | dx-improvements | Collection of DX-01 to DX-10 proposals |
 
-**DX-22 Remaining:**
-- Smart verification routing (CrossHair/Hypothesis auto-detect)
-- De-duplication statistics for coverage reporting
-
 **DX-24 Remaining:**
-- `contracts/` directory (pre-post, doctests)
-- `workflow/` directory (icidiv, session-start)
-- Detailed mechanism docs (entry-points.md, fix-or-explain.md, etc.)
+- `contracts/` directory (pre-post.md, doctests.md, contract-complete.md)
+- `workflow/` directory (icidiv.md, session-start.md)
 
 **DX-28 Remaining:**
 - Contract quality rules (filter_dual_coverage, parser_format_test, etc.)
 - Bidirectional testing framework
 - CrossHair symbolic verification of @relates
-
-**DX-28 Completed This Session:**
-- `skip_without_reason` rule - Guard warns when @skip_property_test lacks justification
-- `@skip_property_test(reason)` - Enhanced decorator requiring reason string
 
 ### Backlog
 

@@ -81,8 +81,8 @@ def read_and_parse_file(file_path: Path, project_root: Path) -> Result[FileInfo,
     if file_info is None:
         return Failure(f"Syntax error in {file_path}")
 
-    # Classify as Core or Shell based on patterns and paths
-    classify_result = classify_file(relative_path, project_root)
+    # Classify as Core or Shell based on patterns, paths, and content (DX-22 Part 5)
+    classify_result = classify_file(relative_path, project_root, file_info.source)
     file_info.is_core, file_info.is_shell = (
         classify_result.unwrap() if isinstance(classify_result, Success) else (False, False)
     )

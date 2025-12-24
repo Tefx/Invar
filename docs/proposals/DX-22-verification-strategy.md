@@ -5,9 +5,19 @@
 ## 状态
 
 - **ID**: DX-22
-- **状态**: Draft
+- **状态**: Implemented (100%)
 - **依赖**: DX-12 (Hypothesis fallback), DX-13 (Incremental prove)
 - **关联**: DX-23 (Entry point detection)
+
+### 实现进度
+
+| Part | 描述 | 状态 | 实现 |
+|------|------|------|------|
+| Part 1 | 智能验证分流 | ✅ | `verification_routing.py` |
+| Part 2 | Shell 架构规则 | ✅ | `shell_architecture.py`, `rule_meta.py` |
+| Part 3 | Fix-or-Explain 强制 | ✅ | `@shell_complexity`, `@invar:allow` markers |
+| Part 4 | 去重统计 | ✅ | `crosshair_proven`, `hypothesis_tested` in output |
+| Part 5 | 配置简化 | ✅ | `auto_detect_module_type()` in `config.py` |
 
 ## 问题陈述
 
