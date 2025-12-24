@@ -1,9 +1,10 @@
-# DX-32: ICIDIV Workflow Iteration
+# DX-32: USBV Workflow (ICIDIV Iteration)
 
 > **"Process should match cognition, not fight it."**
 
 **Status:** Proposed
 **Created:** 2024-12-25
+**Updated:** 2024-12-25
 **Relates to:** DX-30 (Visible Workflow), DX-31 (Adversarial Reviewer)
 
 ## Problem
@@ -14,7 +15,7 @@
 I(ntent) → C(ontract) → I(nspect) → D(esign) → I(mplement) → V(erify)
 ```
 
-### The Core Issue: Contract Before Inspect
+### Core Issue: Contract Before Inspect
 
 The current workflow places Contract **before** Inspect:
 
@@ -25,243 +26,297 @@ Intent → Contract → Inspect → ...
     without understanding existing code?
 ```
 
-**Problems with Contract-before-Inspect:**
+**Evidence from DX-31 implementation:** The developer naturally inspected existing code before writing contracts. This suggests **Inspect-before-Contract is cognitively natural**.
 
-| Scenario | Problem |
-|----------|---------|
-| Adding function | Don't know if similar functionality already exists |
-| Modifying function | Don't know existing signature and callers |
-| Integration | Don't know existing patterns and conventions |
+### What We Learned
 
-### Evidence from DX-31 Implementation
+1. **Contract-before-Inspect is unnatural** for brownfield development
+2. **Different tasks need different depths**, not different workflows
+3. **Explicit task classification adds friction** without clear benefit
+4. **Iteration should be explicit**, not hidden
 
-During DX-31 implementation, the actual workflow was:
+## Solution: USBV Unified Framework
 
-```
-Intent → Inspect (invar sig) → [Contract + Implement mixed] → Verify
-```
-
-The developer **naturally** inspected existing code before writing contracts. This suggests **Inspect-before-Contract is cognitively natural**.
-
-### Two Conflicting Goals
-
-| Goal | Optimal Order | Reason |
-|------|---------------|--------|
-| Human Checkpoints | Contract visible early | User can correct direction |
-| Code Quality | Inspect before Contract | Contracts must fit context |
-
-Current ICIDIV optimizes for neither clearly.
-
-## Analysis
-
-### Linear vs Iterative
-
-ICIDIV attempts to **linearize an iterative process**:
+### The Four Phases
 
 ```
-Actual cognitive process (iterative):
-
-     ┌─────────────────────────────────┐
-     ↓                                 │
-[Rough Contract] → [Implement] → [Test] → [Discover Issue] → [Refine]
-                                       │                        │
-                                       └────────────────────────┘
-
-Protocol expectation (linear):
-
-Intent → Contract → Inspect → Design → Implement → Verify
+UNDERSTAND → SPECIFY → BUILD → VALIDATE
+     │           │        │        │
+  [depth]    [depth]  [depth]  [depth]
+     │           │        │        │
+     └───────────┴────────┴────────┘
+              Depth varies naturally
+              based on resistance encountered
 ```
 
-High-quality code comes from **iteration**, not one-pass correctness.
+### Phase Definitions
 
-### Task-Type Variation
+| Phase | Purpose | Core Activities |
+|-------|---------|-----------------|
+| **UNDERSTAND** | Know what and why | Intent, Inspect, Constraints |
+| **SPECIFY** | Define boundaries | Contract, Design, Test Cases |
+| **BUILD** | Write code | Implement leaves, Compose |
+| **VALIDATE** | Confirm correctness | Verify, Integrate, Reflect |
 
-Different tasks need different workflows:
+### Key Design Decisions
 
-| Task Type | Optimal Order | Reason |
-|-----------|---------------|--------|
-| Pure algorithm | Contract → Design → Implement → Verify | Spec is clear, no integration |
-| Feature addition | Inspect → Contract → Design → Implement → Verify | Must understand context first |
-| Bug fix | Inspect → Contract → Implement → Verify | Must understand failure first |
-| Refactoring | Inspect → Design → Implement → Verify | Contract unchanged |
-| Exploratory | Inspect → Prototype → Verify → Contract | Don't know solution yet |
+#### 1. Unified Framework, Variable Depth
 
-**No single order is optimal for all tasks.**
+**Not** different workflows for different tasks. Same 4 phases, but depth adjusts naturally:
 
-### Core vs Shell Difference
+| Task Type | U | S | B | V |
+|-----------|---|---|---|---|
+| Pure algorithm | Shallow | **Deep** | Normal | **Deep** |
+| Feature addition | **Deep** | Normal | Normal | Normal |
+| Bug fix | **Deep** | Shallow | Shallow | **Deep** |
+| Refactoring | Normal | Shallow | **Deep** | Normal |
 
-| Code Type | Priority | Why |
-|-----------|----------|-----|
-| **Core** | Contract completeness | Pure functions can be fully specified |
-| **Shell** | Error handling coverage | I/O is inherently impure, contracts less useful |
+**No explicit classification needed.** Depth emerges from resistance encountered.
 
-**Core optimal:**
-```
-Intent → Inspect → Contract (complete!) → Design → Implement → Verify
-```
+#### 2. Spike as Implicit Activity
 
-**Shell optimal:**
-```
-Intent → Inspect → Design (error paths!) → Implement → Integration Test → Verify
-```
-
-### Missing Phases in ICIDIV
-
-| Missing Phase | Purpose |
-|---------------|---------|
-| **Spike/Prototype** | Quick validation when uncertain, before committing to design |
-| **Integration** | Unit correct ≠ Integration correct |
-| **Reflect** | Guard catches errors, doesn't catch design smells |
-| **Iteration** | Allow backtracking from Verify to Contract |
-
-## Proposed Solution
-
-### Option A: Reorder ICIDIV
-
-Move Inspect before Contract:
+Exploration is **not** a formal phase. It happens within UNDERSTAND when needed:
 
 ```
-Current:  I(ntent) → C(ontract) → I(nspect) → D(esign) → I(mplement) → V(erify)
-Proposed: I(ntent) → I(nspect) → C(ontract) → D(esign) → I(mplement) → V(erify)
+UNDERSTAND
+├── Intent: What is the task?
+├── Inspect: What exists?
+│     └── (explore if uncertain) ← Implicit, not listed
+└── Constraints: Edge cases, limits?
 ```
 
-**Mnemonic change:** ICIDIV → IICDIV
+**Trigger:** High uncertainty about approach
+**Exit:** Enough clarity to write Contract
 
-### Option B: Merge Intent and Inspect
+#### 3. Core vs Shell: Same Workflow, Different Emphasis
 
-Combine into single "Understand" phase:
+Not different workflows. Different focus within same phases:
+
+| Phase | Core Emphasis | Shell Emphasis |
+|-------|---------------|----------------|
+| SPECIFY | @pre/@post completeness | Error path coverage |
+| SPECIFY | Boundary doctests | Result[T,E] patterns |
+| BUILD | Pure function implementation | I/O + error handling |
+| VALIDATE | Property testing | Integration testing |
+
+#### 4. Explicit Iteration
+
+When VALIDATE fails, explicit backtracking:
 
 ```
-U(nderstand) → C(ontract) → D(esign) → I(mplement) → V(erify)
-    ↓
- Intent + Inspect + Constraints
+VALIDATE failure
+    │
+    ├── Logic error in code → Return to BUILD
+    ├── Missing edge case → Return to SPECIFY (add doctest)
+    └── Misunderstood requirement → Return to UNDERSTAND
 ```
 
-**Mnemonic:** UCDIV (5 phases instead of 6)
+## Detailed Specification
 
-### Option C: Phase-Based with Iteration (Recommended)
+### Phase 1: UNDERSTAND
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  Phase 1: UNDERSTAND                                             │
-│  ├── Intent: What is the task?                                   │
-│  ├── Inspect: What exists in codebase?                           │
-│  └── Constraints: Edge cases, performance, security?             │
-├─────────────────────────────────────────────────────────────────┤
-│  Phase 2: SPECIFY                                                │
-│  ├── Contract: Interface with @pre/@post                         │
-│  ├── Design: Decomposition into sub-functions                    │
-│  └── Test Cases: Doctests including edge cases                   │
-├─────────────────────────────────────────────────────────────────┤
-│  Phase 3: BUILD                                                  │
-│  ├── Implement Leaves: Smallest units first                      │
-│  └── Compose: Combine into complete feature                      │
-├─────────────────────────────────────────────────────────────────┤
-│  Phase 4: VALIDATE                                               │
-│  ├── Verify: Run invar guard                                     │
-│  ├── Integrate: Test with rest of system                         │
-│  └── Reflect: Check for design smells                            │
-│         ↓                                                        │
-│    If Reflect finds issues → Return to SPECIFY                   │
-└─────────────────────────────────────────────────────────────────┘
-```
+**Goal:** Sufficient clarity to write contracts.
 
-**Mnemonic:** USBV (Understand → Specify → Build → Validate)
+**Activities:**
+1. **Intent** - What is the task? What problem does it solve?
+2. **Inspect** - What exists in codebase? Similar code? Patterns?
+3. **Constraints** - Edge cases? Performance? Security? Compatibility?
 
-**Key improvements:**
-1. Inspect merged into Understand (before Contract)
-2. Explicit iteration path from Validate back to Specify
-3. Reflect phase for design quality review
-4. Separate Integration testing
+**Exploration (when needed):**
+- If multiple approaches possible, briefly evaluate
+- If technical feasibility unclear, quick prototype
+- Document findings, then proceed
 
-### Option D: Task-Type Dispatch
+**Exit Criteria:**
+- Can articulate what the function should do
+- Know where it fits in codebase
+- Identified main edge cases
 
-Different workflows for different task types:
+**Depth Signals:**
+- Greenfield (new feature): Focus on Intent + Constraints
+- Brownfield (modification): Focus on Inspect
 
+### Phase 2: SPECIFY
+
+**Goal:** Complete specification before implementation.
+
+**Activities:**
+1. **Contract** - @pre/@post that uniquely determine behavior
+2. **Design** - Decomposition into sub-functions (leaves first)
+3. **Test Cases** - Doctests covering normal, boundary, error cases
+
+**Core Code:**
 ```python
-def get_workflow(task_type: TaskType) -> Workflow:
-    match task_type:
-        case TaskType.ALGORITHM:
-            return ["Contract", "Design", "Implement", "Verify"]
-        case TaskType.FEATURE:
-            return ["Inspect", "Contract", "Design", "Implement", "Verify"]
-        case TaskType.BUGFIX:
-            return ["Inspect", "Contract", "Implement", "Verify"]
-        case TaskType.REFACTOR:
-            return ["Inspect", "Design", "Implement", "Verify"]
-        case TaskType.EXPLORATORY:
-            return ["Inspect", "Spike", "Contract", "Implement", "Verify"]
+@pre(lambda x: x > 0)  # What inputs are valid?
+@post(lambda result: result >= 0)  # What outputs are guaranteed?
+def calculate(x: int) -> int:
+    """
+    >>> calculate(1)  # Normal
+    1
+    >>> calculate(0)  # Boundary (rejected by @pre)
+    Traceback...
+    """
 ```
 
-**Intent phase** determines task type, then dispatches to appropriate workflow.
-
-## Visibility vs Quality Trade-off
-
-### The Dual Purpose of Workflow
-
-| Purpose | Optimizes For | Key Requirement |
-|---------|---------------|-----------------|
-| **Human Oversight** | User can correct direction | Checkpoints visible early |
-| **Code Quality** | Correct, maintainable code | Informed by context |
-
-### Proposal: Separate Cognitive Order from Display Order
-
-**Cognitive order** (what agent does):
-```
-Understand → Specify → Build → Validate
-     ↑____________________________|  (iterate)
+**Shell Code:**
+```python
+def load_config(path: Path) -> Result[Config, str]:
+    """
+    Returns:
+        Success(config) - Valid config loaded
+        Failure("not found") - File doesn't exist
+        Failure("parse error: ...") - Invalid format
+    """
 ```
 
-**Display order** (what user sees):
+**Exit Criteria:**
+- Contract is complete (could someone else implement from it?)
+- Sub-function decomposition clear
+- Doctests cover key cases
+
+**Depth Signals:**
+- Algorithm: Deep (contract IS the solution)
+- Integration: Normal (focus on interfaces)
+- Bug fix: Shallow (contract usually unchanged)
+
+### Phase 3: BUILD
+
+**Goal:** Code that passes all doctests.
+
+**Activities:**
+1. **Implement Leaves** - Smallest units first (no dependencies)
+2. **Compose** - Combine into complete feature
+3. **Incremental Verify** - Run doctests after each function
+
+**Order:**
 ```
-[Understand Summary] → User confirms
-[Specification] → User reviews ← KEY CHECKPOINT
-[Implementation] → User can see
-[Validation Results] → User approves
+Leaf functions (no deps) → Helper functions → Main function → Integration
 ```
 
-The agent may internally iterate, but **displays stable checkpoints** to user.
+**Exit Criteria:**
+- All doctests pass
+- No obvious code smells
+- Follows existing patterns
+
+**Depth Signals:**
+- New algorithm: Deep (core logic)
+- Glue code: Shallow (mostly wiring)
+- Refactoring: Deep (restructuring)
+
+### Phase 4: VALIDATE
+
+**Goal:** Confirm correctness and quality.
+
+**Activities:**
+1. **Verify** - `invar guard` (static + doctests + property tests)
+2. **Integrate** - Test with rest of system (if applicable)
+3. **Reflect** - Design smell check, review suggestion evaluation
+
+**Iteration Triggers:**
+
+| Guard Result | Action |
+|--------------|--------|
+| Errors | Fix in BUILD, re-validate |
+| Warnings in modified files | Fix (you touched it, you own it) |
+| `review_suggested` | Consider independent /review |
+
+**Backtracking:**
+
+| Issue Found | Return To |
+|-------------|-----------|
+| Code bug | BUILD |
+| Missing edge case | SPECIFY (add doctest) |
+| Contract incomplete | SPECIFY (strengthen @pre/@post) |
+| Misunderstood requirement | UNDERSTAND |
+
+**Exit Criteria:**
+- Guard passes (0 errors)
+- Warnings addressed in touched files
+- Integration works (if applicable)
+
+## Depth Adjustment Signals
+
+The framework is self-balancing. These signals indicate where to focus:
+
+| Signal | Meaning | Action |
+|--------|---------|--------|
+| Contract hard to write | UNDERSTAND incomplete | Go deeper in Inspect |
+| Don't know where code goes | UNDERSTAND incomplete | More Inspect |
+| Doctests keep failing | SPECIFY incomplete | Refine contract |
+| Guard finds contract issues | SPECIFY incomplete | Strengthen @pre/@post |
+| Implementation unclear | SPECIFY incomplete | Better decomposition |
+| Integration fails | BUILD incomplete | Check interfaces |
+
+**Key Insight:** Don't classify tasks. Notice where resistance is and adjust.
+
+## Comparison: ICIDIV vs USBV
+
+| Aspect | ICIDIV | USBV |
+|--------|--------|------|
+| Phases | 6 | 4 (with sub-activities) |
+| Inspect timing | After Contract | Before Contract (in UNDERSTAND) |
+| Task-type handling | Same for all | Same framework, variable depth |
+| Iteration | Not explicit | Explicit backtracking paths |
+| Spike/Explore | Not addressed | Implicit in UNDERSTAND |
+| Core/Shell | Same | Same workflow, different emphasis |
+
+## Visible Workflow Integration (DX-30)
+
+For complex tasks, show phases in TodoList:
+
+```
+□ [UNDERSTAND] Task: Add caching to API
+  - Intent: Reduce response time for repeated queries
+  - Inspect: Found existing cache in utils/cache.py
+  - Constraints: Must be thread-safe, max 1GB memory
+
+□ [SPECIFY] Contracts and design
+  - cache_get: @pre(key is str), @post(result is T | None)
+  - cache_set: @pre(key, value, ttl > 0)
+  - Decomposition: get, set, evict, stats
+
+□ [BUILD] Implementation
+  - Implement LRU eviction
+  - Implement thread-safe access
+  - Wire into API layer
+
+□ [VALIDATE] Verification
+  - Guard: PASS
+  - Integration: API tests pass
+```
 
 ## Implementation Plan
 
-### Phase 1: Documentation Update
-- Update INVAR.md workflow section
-- Update CLAUDE.md template
-- Add task-type guidance
+### Phase 1: Documentation
+- [ ] Update INVAR.md workflow section (ICIDIV → USBV)
+- [ ] Update CLAUDE.md template
+- [ ] Update .invar/context.md with decision
 
-### Phase 2: Visible Workflow Enhancement
-- Modify TodoList conventions for new phases
-- Add iteration indicators in output
+### Phase 2: Examples
+- [ ] Add USBV examples to .invar/examples/
+- [ ] Show depth variation for different task types
 
-### Phase 3: Tooling Support (Optional)
-- Guard rule to detect workflow violations
-- Suggest workflow based on detected task type
-
-## Comparison
-
-| Aspect | Current ICIDIV | Proposed USBV |
-|--------|----------------|---------------|
-| Phases | 6 | 4 (with sub-phases) |
-| Inspect timing | After Contract | Before Contract (in Understand) |
-| Iteration | Not explicit | Explicit Validate → Specify loop |
-| Task-type variance | None | Acknowledged |
-| Core/Shell difference | None | Recommended different emphasis |
+### Phase 3: Tooling (Optional)
+- [ ] Guard hint for incomplete UNDERSTAND (can't write contract)
+- [ ] Backtracking suggestions in validation output
 
 ## Success Criteria
 
-1. Agent naturally follows workflow without fighting it
-2. Contracts are informed by codebase context
-3. User has clear checkpoints for oversight
+1. Agent naturally follows USBV without fighting it
+2. Contracts are informed by codebase context (Inspect before Contract)
+3. Depth varies appropriately without explicit classification
 4. Iteration is allowed without "breaking protocol"
-5. Different task types can follow appropriate sub-workflows
+5. User can track progress via 4-phase structure
 
-## Open Questions
+## Open Questions (Resolved)
 
-1. Should Spike/Prototype be a formal phase or optional sub-phase?
-2. How to indicate task type without adding friction?
-3. Should Core and Shell have formally different workflows?
-4. How to balance iteration allowance with visible progress?
+| Original Question | Resolution |
+|-------------------|------------|
+| Spike as formal phase? | No, implicit in UNDERSTAND |
+| How to indicate task type? | Don't. Depth adapts naturally |
+| Core/Shell different workflows? | No. Same workflow, different emphasis |
+| Iteration vs visible progress? | 4 stable phases, internal iteration allowed |
 
 ---
 
-*Proposal originated from reflection on DX-31 implementation experience.*
+*Proposal refined through discussion on 2024-12-25.*
