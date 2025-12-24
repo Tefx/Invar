@@ -10,7 +10,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import Literal
 
-from deal import pre
+from deal import post, pre
 from pydantic import BaseModel, Field
 
 
@@ -133,7 +133,7 @@ class GuardReport(BaseModel):
         self.core_functions_with_contracts += with_contracts
 
     @property
-    @pre(lambda self: isinstance(self, GuardReport))
+    @post(lambda result: 0 <= result <= 100)
     def contract_coverage_pct(self) -> int:
         """
         Get contract coverage percentage (P24).
@@ -150,7 +150,7 @@ class GuardReport(BaseModel):
         return int(self.core_functions_with_contracts / self.core_functions_total * 100)
 
     @property
-    @pre(lambda self: isinstance(self, GuardReport))
+    @post(lambda result: all(k in result for k in ("tautology", "empty", "partial", "type_only")))
     def contract_issue_counts(self) -> dict[str, int]:
         """
         Count contract quality issues by type (P24).
@@ -178,7 +178,7 @@ class GuardReport(BaseModel):
         return counts
 
     @property
-    @pre(lambda self: isinstance(self, GuardReport))
+    @post(lambda result: isinstance(result, bool))
     def passed(self) -> bool:
         """
         Check if guard passed (no errors).

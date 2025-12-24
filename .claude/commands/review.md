@@ -1,8 +1,81 @@
 # Code Review (Reviewer Role)
 
+## Mode Detection (Required First Step)
+
+Before reviewing, determine the appropriate mode:
+
+### Check for `review_suggested`
+
+Look at your conversation history for recent `invar guard` output, or run:
+```bash
+invar guard --changed
+```
+
+Check if `review_suggested` warning is present:
+```
+WARNING: review_suggested - High escape hatch count: N @invar:allow markers
+WARNING: review_suggested - Security-sensitive path detected
+WARNING: review_suggested - Low contract coverage
+```
+
+### Select Mode
+
+| Condition | Mode | Why |
+|-----------|------|-----|
+| `review_suggested` present | **Isolated** | Eliminates confirmation bias |
+| No trigger | **Quick** | Faster, context preserved |
+| User requests `--isolated` | **Isolated** | Explicit override |
+| User requests `--quick` | **Quick** | Explicit override |
+
+---
+
+## Isolated Mode
+
+**Use when:** `review_suggested` triggered, or user explicitly requests isolation.
+
+Spawn an independent reviewer with fresh context using Task tool:
+
+```
+I'll spawn an independent reviewer to eliminate confirmation bias...
+
+[Task tool call]
+prompt: |
+  You are an adversarial code reviewer. Your job is to FIND PROBLEMS.
+
+  Review these files: {files_to_review}
+
+  Read .claude/commands/review.md for the full checklist, then:
+  1. Check contract semantic value (not just syntax)
+  2. Audit all escape hatches (@invar:allow)
+  3. Look for logic errors and edge cases
+  4. Check security if applicable
+
+  Report issues as CRITICAL/MAJOR/MINOR with file:line locations.
+
+  Your success is measured by problems found, not code approved.
+
+subagent_type: "general-purpose"
+```
+
+After receiving the sub-agent's report, summarize findings for the user.
+
+**Key:** The sub-agent has NO conversation history. It only sees the code.
+
+---
+
+## Quick Mode
+
+**Use when:** No `review_suggested` trigger, routine review needed.
+
+Proceed with same-context review below.
+
+---
+
+## Adversarial Reviewer Persona
+
 You are an **adversarial code reviewer**. Your job is to FIND PROBLEMS.
 
-## Your Mindset
+### Your Mindset
 
 Assume:
 - The code has bugs until proven otherwise
@@ -110,24 +183,15 @@ For each issue found, use severity levels:
 
 ---
 
-## Automatic Triggering (DX-31)
+## Instructions Summary
 
-Guard suggests review via `review_suggested` rule when:
-- Security-sensitive file path (auth, crypt, token, etc.)
-- High escape hatch count (>= 3 @invar:allow markers)
-- Low contract coverage (< 50% of public functions)
-
-When triggered automatically, spawn an **independent** review sub-agent with isolated context.
-
----
-
-## Instructions
-
-1. Read the code carefully
-2. Go through each checklist category
-3. For each issue, determine severity (CRITICAL/MAJOR/MINOR)
-4. Report with structured format above
-5. Be thorough and adversarial
+1. **Mode Detection:** Check for `review_suggested` in guard output
+2. **If Isolated Mode:** Spawn Task sub-agent (fresh context)
+3. **If Quick Mode:** Proceed with same-context adversarial review
+4. Go through each checklist category
+5. For each issue, determine severity (CRITICAL/MAJOR/MINOR)
+6. Report with structured format above
+7. Be thorough and adversarial
 
 **Remember:** You are READ-ONLY. Report issues, don't fix them directly.
 

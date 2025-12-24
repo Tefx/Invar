@@ -305,7 +305,7 @@ UNDERSTAND → SPECIFY → BUILD → VALIDATE
 | **UNDERSTAND** | Know what and why | Intent, Inspect, Constraints |
 | **SPECIFY** | Define boundaries | Contract, Design, Test Cases |
 | **BUILD** | Write code | Implement leaves, Compose |
-| **VALIDATE** | Confirm correctness | Verify, Integrate, Reflect |
+| **VALIDATE** | Confirm correctness | Verify, Review Gate, Reflect |
 
 **Key Principles:**
 - **Inspect before Contract** — Understand existing code before writing interfaces
@@ -316,6 +316,7 @@ UNDERSTAND → SPECIFY → BUILD → VALIDATE
 - Logic error → Return to BUILD
 - Missing edge case → Return to SPECIFY (add doctest)
 - Misunderstood requirement → Return to UNDERSTAND
+- Review Gate triggered → Invoke `/review` sub-agent (DX-31)
 
 ## Visible Workflow (DX-30)
 
@@ -335,7 +336,7 @@ For complex tasks (3+ functions, architectural changes), show 3 checkpoints in T
 |------------|--------------|
 | UNDERSTAND | Task intent, files to modify, edge cases identified |
 | SPECIFY | Function contracts before implementation |
-| VALIDATE | `invar guard` results, integration test status |
+| VALIDATE | `invar guard` results, Review Gate if triggered, integration status |
 
 **Example:**
 ```
@@ -351,6 +352,7 @@ For complex tasks (3+ functions, architectural changes), show 3 checkpoints in T
 
 □ [VALIDATE] Verification
   - Guard: PASS (0 errors, 2 warnings)
+  - Review Gate: Not triggered (or: /review completed)
   - Integration: API tests pass
 ```
 

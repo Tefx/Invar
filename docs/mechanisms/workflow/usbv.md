@@ -8,7 +8,7 @@
 U - Understand : Intent, Inspect (invar sig/map), Constraints
 S - Specify    : @pre/@post contracts, Design decomposition, Doctests
 B - Build      : Implement leaves first, Compose
-V - Validate   : invar guard. If fail: reflect → iterate → validate
+V - Validate   : invar guard. Review Gate if triggered. Reflect → iterate
 ```
 
 **Key insight:** Inspect comes BEFORE Contract. Depth varies based on resistance encountered.
@@ -173,6 +173,30 @@ invar guard
 └─ Hypothesis (property testing)
 ```
 
+### Review Gate (DX-31)
+
+If guard outputs `review_suggested` warning, invoke independent review:
+
+```bash
+# Guard detected conditions requiring review
+WARNING: review_suggested - Consider independent /review sub-agent
+
+# Invoke independent reviewer
+/review
+```
+
+**Trigger conditions:**
+- Escape hatches >= 3 (`@invar:allow` markers)
+- Contract coverage < 50% in Core files
+- Security-sensitive paths detected
+
+**Why?** Independent review catches issues that automated verification cannot:
+- Architectural concerns
+- Escape hatch justification validity
+- Security implications
+
+After review, address findings and re-run guard.
+
 ### Iteration Triggers
 
 When validation fails, return to the appropriate phase:
@@ -183,6 +207,8 @@ When validation fails, return to the appropriate phase:
 | Missing edge case | SPECIFY (add doctest) |
 | Contract incomplete | SPECIFY (strengthen @pre/@post) |
 | Misunderstood requirement | UNDERSTAND |
+| Review finds architectural issue | UNDERSTAND (re-examine design) |
+| Review finds unjustified escape | SPECIFY (remove or justify) |
 
 ### Reflective Process
 
@@ -205,6 +231,7 @@ When validation fails, return to the appropriate phase:
 
 - Guard passes (0 errors)
 - Warnings addressed in touched files
+- Review Gate satisfied (if triggered)
 - Integration works (if applicable)
 
 ## Depth Adjustment Signals
@@ -219,6 +246,7 @@ The framework is self-balancing. These signals indicate where to focus:
 | Guard finds contract issues | SPECIFY incomplete | Strengthen @pre/@post |
 | Implementation unclear | SPECIFY incomplete | Better decomposition |
 | Integration fails | BUILD incomplete | Check interfaces |
+| Review Gate triggered | Quality risk detected | Invoke /review |
 
 **Key Insight:** Don't classify tasks. Notice where resistance is and adjust.
 

@@ -100,7 +100,7 @@ Then read `.invar/context.md` for project state and lessons learned.
 | UNDERSTAND | Know what and why | Intent, Inspect (invar sig/map), Constraints |
 | SPECIFY | Define boundaries | @pre/@post, Design decomposition, Doctests |
 | BUILD | Write code | Implement leaves, Compose |
-| VALIDATE | Confirm correctness | invar guard, Integrate, Reflect |
+| VALIDATE | Confirm correctness | invar guard, Review Gate, Reflect |
 
 **Key:** Inspect before Contract. Depth varies naturally. Iterate when needed.
 
@@ -111,7 +111,7 @@ For complex tasks (3+ functions), show 3 checkpoints in TodoList:
 ```
 □ [UNDERSTAND] Task description, codebase context, constraints
 □ [SPECIFY] Contracts (@pre/@post) and design decomposition
-□ [VALIDATE] Guard results, integration status
+□ [VALIDATE] Guard results, Review Gate if triggered, integration status
 ```
 
 **BUILD is internal work** — not shown in TodoList.

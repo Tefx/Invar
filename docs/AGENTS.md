@@ -146,6 +146,17 @@ REMEMBER:
 - **Write**: Only to .invar/review.md
 - **Execute**: No
 
+### Review Modes (DX-31)
+
+The `/review` command auto-selects mode based on Guard's `review_suggested` output:
+
+| Mode | When | Context |
+|------|------|---------|
+| **Isolated** | `review_suggested` triggered | Fresh (Task tool sub-agent) |
+| **Quick** | No trigger | Same conversation |
+
+**Why Isolation?** When `review_suggested` fires (escape hatches >= 3, security paths, low coverage), the reviewer needs fresh context to avoid confirmation bias from the implementer's reasoning.
+
 ---
 
 ## Role 3: Adversary
@@ -266,6 +277,29 @@ Implementer                    Reviewer                     Adversary
 ---
 
 ## Workflow
+
+### USBV Integration (DX-31)
+
+The Reviewer role integrates with USBV's VALIDATE phase via **Review Gate**:
+
+```
+VALIDATE Phase
+    │
+    ├─ invar guard
+    │      │
+    │      └─ review_suggested triggered?
+    │              │
+    │         Yes ─┼─ No
+    │              │
+    │              ▼
+    │         /review (Reviewer Role)
+    │              │
+    └──────────────┴─ Continue
+```
+
+**Triggers:** escape hatches ≥3, contract coverage <50%, security-sensitive paths.
+
+### Full Workflow
 
 ```
 User Request

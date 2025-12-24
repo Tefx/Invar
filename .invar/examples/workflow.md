@@ -121,6 +121,9 @@ src/myapp/core/pricing.py
 
 Summary: 0 errors, 0 warnings
 Code Health: 100%
+
+# Review Gate: Not triggered (no escape hatches, good coverage)
+# If triggered: invoke /review sub-agent before completion
 ```
 
 ## When to Use Visible Workflow
@@ -142,3 +145,5 @@ Skip for:
 2. **BUILD is internal** — No user decision needed during implementation. Show UNDERSTAND, SPECIFY, VALIDATE only.
 
 3. **Inspect before Contract** — UNDERSTAND phase includes examining existing code before writing contracts.
+
+4. **Review Gate (DX-31)** — When Guard triggers `review_suggested` (escape hatches ≥3, coverage <50%, security paths), invoke `/review` sub-agent before task completion.

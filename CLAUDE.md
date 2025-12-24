@@ -186,7 +186,18 @@ invar rules              # List all rules
 |---------|------|---------|
 | `/review` | Reviewer | Adversarial code review (DX-31) |
 
-Use `/review` for critical review. Guard triggers `review_suggested` automatically for security-sensitive files, high escape counts, or low contract coverage.
+### Review Modes (Auto-Selected)
+
+`/review` automatically selects mode based on Guard output:
+
+| Condition | Mode | Behavior |
+|-----------|------|----------|
+| `review_suggested` triggered | **Isolated** | Task tool sub-agent (fresh context) |
+| No trigger | **Quick** | Same-context adversarial review |
+| `--isolated` flag | **Isolated** | Force isolation |
+| `--quick` flag | **Quick** | Force same-context |
+
+Guard triggers `review_suggested` for: security-sensitive files, escape hatches >= 3, contract coverage < 50%.
 
 ---
 

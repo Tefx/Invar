@@ -95,7 +95,7 @@ def count_escape_hatches(source: str) -> int:
     return len(INVAR_ALLOW_PATTERN.findall(source))
 
 
-@pre(lambda symbol, source: symbol is not None)
+@pre(lambda symbol, source: symbol is not None and isinstance(source, str))
 @post(lambda result: isinstance(result, bool))
 def is_entry_point(symbol: Symbol, source: str) -> bool:
     """
