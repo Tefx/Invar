@@ -142,6 +142,32 @@ def copy_examples_directory(dest: Path, console) -> Result[bool, str]:
         return Failure(f"Failed to copy examples: {e}")
 
 
+# @shell_complexity: Directory copy for Claude commands (DX-32)
+def copy_commands_directory(dest: Path, console) -> Result[bool, str]:
+    """Copy commands directory to .claude/commands/. Returns Success(True) if copied."""
+    import shutil
+
+    commands_dest = dest / ".claude" / "commands"
+    if commands_dest.exists():
+        return Success(False)
+
+    try:
+        commands_src = Path(str(resources.files("invar.templates").joinpath("commands")))
+        if not commands_src.exists():
+            return Failure("Commands template directory not found")
+
+        # Create .claude if needed
+        claude_dir = dest / ".claude"
+        if not claude_dir.exists():
+            claude_dir.mkdir()
+
+        shutil.copytree(commands_src, commands_dest)
+        console.print("[green]Created[/green] .claude/commands/ (Claude Code skills)")
+        return Success(True)
+    except OSError as e:
+        return Failure(f"Failed to copy commands: {e}")
+
+
 # Agent configuration for multi-agent support (DX-11, DX-17)
 AGENT_CONFIGS = {
     "claude": {

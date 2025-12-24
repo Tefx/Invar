@@ -24,6 +24,7 @@ from invar.shell.mcp_config import (
 from invar.shell.templates import (
     add_config,
     add_invar_reference,
+    copy_commands_directory,
     copy_examples_directory,
     copy_template,
     create_agent_config,
@@ -271,6 +272,9 @@ def init(
         elif status == "not_found":
             # Create full template with workflow enforcement (DX-17)
             create_agent_config(path, agent, console)
+
+    # Copy Claude commands (DX-32: /review skill with Mode Detection)
+    copy_commands_directory(path, console)
 
     # Configure MCP server (DX-16, DX-21B)
     configure_mcp_with_method(path, mcp_method)

@@ -104,6 +104,8 @@ Then read `.invar/context.md` for project state and lessons learned.
 
 **Key:** Inspect before Contract. Depth varies naturally. Iterate when needed.
 
+**Review Gate:** When Guard triggers `review_suggested` (escape hatches ≥3, security paths, low coverage), invoke `/review` before completion.
+
 ## Visible Workflow (DX-30)
 
 For complex tasks (3+ functions), show 3 checkpoints in TodoList:
