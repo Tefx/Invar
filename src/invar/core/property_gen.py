@@ -401,11 +401,13 @@ def run_property_test(func: Callable, max_examples: int = 100) -> PropertyTestRe
 
     try:
         import deal
-        from hypothesis import HealthCheck, settings
+        from hypothesis import HealthCheck, Verbosity, settings
 
+        # DX-26: Suppress Hypothesis output (seed messages) for clean JSON
         test_settings = settings(
             max_examples=max_examples,
             suppress_health_check=[HealthCheck.filter_too_much, HealthCheck.too_slow],
+            verbosity=Verbosity.quiet,
         )
         test_case = deal.cases(func, count=max_examples, settings=test_settings)
         test_case()
