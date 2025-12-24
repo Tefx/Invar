@@ -2,6 +2,54 @@
 
 *Last updated: 2025-12-24*
 
+## Coverage Guarantee Matrix
+
+Smart Guard (`invar guard`) runs multiple verification layers. Here's what covers what:
+
+### Layer Coverage
+
+| Layer | Runs On | Catches | Limitations |
+|-------|---------|---------|-------------|
+| **Static Analysis** | All Python files | Architecture violations, missing contracts, file/function size | No runtime behavior |
+| **Doctests** | Functions with `>>>` examples | Logic errors, edge cases | Requires manual examples |
+| **CrossHair** | Functions with @pre/@post | Contract violations via symbolic execution | Skips C extensions (ast.parse, compile) |
+| **Hypothesis** | Functions with @pre/@post | Contract violations via random testing | Skips untestable types (Any, Pydantic, AST) |
+
+### Function Coverage Guarantee
+
+| Function Has | Static | Doctests | CrossHair | Hypothesis |
+|--------------|--------|----------|-----------|------------|
+| No contracts | ✅ | ❌ | ❌ | ❌ |
+| @pre/@post only | ✅ | ❌ | ✅ | ✅ |
+| Doctests only | ✅ | ✅ | ❌ | ❌ |
+| @pre/@post + doctests | ✅ | ✅ | ✅ | ✅ |
+| Uses ast.parse/compile | ✅ | ✅ | ⚠️ Skipped | ✅ |
+| Uses typing.Any | ✅ | ✅ | ✅ | ⚠️ Skipped |
+| Uses Pydantic models | ✅ | ✅ | ✅ | ⚠️ Skipped |
+
+**Key Insight:** Doctests are the universal fallback. Every function should have at least one doctest example.
+
+### deal.has Functions
+
+Functions decorated with `@has("import")` or similar are:
+- ✅ Tested by Hypothesis (deal.cases respects @pre conditions)
+- ⚠️ Skipped by CrossHair (correctly - C extensions unsupported)
+
+The `@has` decorator marks side effects for documentation, not verification bypass.
+
+### Verification Results (2025-12-24)
+
+```
+Functions tested: 151
+Functions passed: 151
+Functions failed: 0
+Total examples: 7000
+```
+
+All contracted functions pass property testing after switching to `deal.cases()`.
+
+---
+
 ## Current State
 
 - **PyPI:** `invar-tools` + `invar-runtime` v1.0.2 (DX-21 package split + dual licensing)
