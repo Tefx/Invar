@@ -2,7 +2,7 @@
 
 > **"Make ICIDIV compliance visible and verifiable, not assumed."**
 
-**Status:** Implemented (Phase 1-2 complete, Phase 3 merged into DX-31)
+**Status:** Implemented (Phase 1-2 complete, Phase 3 pending DX-31)
 **Created:** 2024-12-24
 **Updated:** 2024-12-24
 **Relates to:** DX-17 (Workflow Enforcement), DX-27 (System Prompt Protocol), DX-31 (Adversarial Reviewer)
