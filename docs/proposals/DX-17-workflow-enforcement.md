@@ -1,9 +1,14 @@
 # DX-17: Workflow Enforcement
 
-**Status:** Phase 1 Complete
+**Status:** Phase 1 Complete → Evolved to Check-In format
 **Priority:** High
 **Created:** 2025-12-22
+**Updated:** 2025-12-24
 **Source:** Real-world feedback from invar-python-test-1 project
+
+> **Note:** "Session Start" has evolved into "Check-In" — a single-line sign-in format:
+> `✓ Check-In: guard PASS | top: entry1, entry2`
+> See INVAR.md for current specification.
 
 ## Problem
 

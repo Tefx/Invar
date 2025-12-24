@@ -614,7 +614,7 @@ Invar provides an MCP (Model Context Protocol) server for AI agent integration.
 ### Agent Instructions
 
 The MCP server provides `instructions` to enforce tool usage:
-- Session Start requirement (invar_guard + invar_map before coding)
+- Check-In requirement (display guard status + top entry points in first message)
 - Tool substitution rules (use MCP tools instead of Bash commands)
 - Task completion definition
 

@@ -12,7 +12,7 @@
   You are free to share and adapt this document, provided you give
   appropriate credit to the Invar project.
 -->
-# The Invar Protocol v3.26
+# The Invar Protocol v3.27
 
 > **"Trade structure for safety."**
 
@@ -76,21 +76,20 @@ def read_config(path: Path) -> Result[dict, str]:
 
 More examples: `.invar/examples/`
 
-## Session Start (Required)
+## Check-In (Required)
 
-Before writing any code, execute:
+Your first message MUST display:
 
-1. **invar_guard** (changed=true) — Check existing violations
-2. **invar_map** (top=10) — Understand code structure
+```
+✓ Check-In: guard PASS | top: <entry1>, <entry2>
+```
 
-Then read:
-- `.invar/examples/` — Core/Shell patterns
-- `.invar/context.md` — Project state, lessons learned
+Execute `invar_guard(changed=true)` and `invar_map(top=10)`, then show this one-line summary.
 
-**Skipping these steps → Non-compliant code → Rework required.**
+This is your sign-in. The user sees it immediately.
+No visible check-in = Session not started.
 
-Use MCP tools if available (`invar_guard`, `invar_map`), otherwise use CLI commands.
-For agent-specific entry format, see your configuration file (CLAUDE.md, .cursorrules, etc).
+Then read `.invar/context.md` for project state and lessons learned.
 
 ## ICIDIV Workflow (Required Order)
 
@@ -108,13 +107,53 @@ For agent-specific entry format, see your configuration file (CLAUDE.md, .cursor
 ## Task Completion
 
 A task is complete only when ALL conditions are met:
-- Session Start executed (invar_guard + invar_map, context read)
+- Check-In displayed: `✓ Check-In: guard PASS | top: <entry1>, <entry2>`
 - Intent explicitly stated
 - Contract written before implementation
-- Final **invar_guard** passed
+- Final displayed: `✓ Final: guard PASS | <errors>, <warnings>`
 - User requirement satisfied
 
 **Missing any = Task incomplete.**
+
+## Markers
+
+### Entry Points
+
+Entry points are framework callbacks (`@app.route`, `@app.command`) at Shell boundary.
+- **Exempt** from `Result[T, E]` — must match framework signature
+- **Keep thin** (max 15 lines) — delegate to Shell functions that return Result
+
+Auto-detected by decorators. For custom callbacks:
+
+```python
+# @shell:entry
+def on_custom_event(data: dict) -> dict:
+    result = handle_event(data)
+    return result.unwrap_or({"error": "failed"})
+```
+
+### Shell Complexity
+
+When shell function complexity is justified:
+
+```python
+# @shell_complexity: Subprocess with error classification
+def run_external_tool(...): ...
+
+# @shell_orchestration: Multi-step pipeline coordination
+def process_batch(...): ...
+```
+
+### Architecture Escape Hatch
+
+When rule violation has valid architectural justification:
+
+```python
+# @invar:allow shell_result: Framework callback signature fixed
+def flask_handler(): ...
+```
+
+See `invar rules` for all rule names.
 
 ## Commands
 
@@ -137,4 +176,4 @@ exclude_doctest_lines = true  # Don't count doctests in function size
 
 ---
 
-*Protocol v3.26 | [Guide](docs/INVAR-GUIDE.md) | [Examples](.invar/examples/)*
+*Protocol v3.27 | [Guide](docs/INVAR-GUIDE.md) | [Examples](.invar/examples/)*

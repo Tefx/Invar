@@ -47,6 +47,7 @@ This directory contains design proposals for Invar development.
 | ID | Name | Description |
 |----|------|-------------|
 | DX-25 | functional-patterns | Haskell-inspired patterns: Validation, NewType, NonEmpty, Monoid |
+| DX-27 | system-prompt-protocol | System Prompt injection for Check-In/Final enforcement |
 | - | AGENT-IMPROVEMENTS | Agent role and workflow improvements |
 
 ## Archived

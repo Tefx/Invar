@@ -22,22 +22,39 @@ Human (Commander) ──directs──→ Agent (Executor) ──uses──→ In
 
 ---
 
-## Claude-Specific: Entry Verification
+## Check-In
 
-> **Protocol:** Follow [INVAR.md](./INVAR.md) — includes Session Start, ICIDIV workflow, and Task Completion requirements.
-
-Your **first message** for any implementation task MUST include actual output from:
+Your first message MUST display:
 
 ```
-invar_guard(changed=true)   # or: invar guard --changed
-invar_map(top=10)           # or: invar map --top 10
+✓ Check-In: guard PASS | top: <entry1>, <entry2>
 ```
 
-**Use MCP tools if available**, otherwise use CLI commands.
+Execute `invar_guard(changed=true)` and `invar_map(top=10)`, then show this one-line summary.
 
-No output = Session not started correctly. Stop, execute tools, restart.
+Example:
+```
+✓ Check-In: guard PASS | top: parse_file, check_rules
+```
+
+This is your sign-in. The user sees it immediately.
+No visible check-in = Session not started.
 
 Then read `.invar/context.md` for project state and lessons learned.
+
+---
+
+## Final
+
+Your last message for an implementation task MUST display:
+
+```
+✓ Final: guard PASS | 0 errors, 2 warnings
+```
+
+Execute `invar_guard()` and show this one-line summary.
+
+This is your sign-out. Completes the Check-In/Final pair.
 
 ---
 

@@ -1,23 +1,33 @@
 # Invar Protocol
 
-Follow the Invar Protocol in INVAR.md — includes Session Start, ICIDIV workflow, and Task Completion requirements.
+Follow the Invar Protocol in INVAR.md — includes Check-In, ICIDIV workflow, and Task Completion requirements.
 
-## Cursor-Specific: Entry Verification
+## Check-In
 
-Before writing any code, execute and show output from:
+Your first message MUST display:
 
 ```
-invar_guard (changed=true)   # Check existing violations
-invar_map (top=10)           # Understand code structure
+✓ Check-In: guard PASS | top: <entry1>, <entry2>
 ```
 
-Use MCP tools if available, otherwise use CLI commands:
-- `invar guard --changed`
-- `invar map --top 10`
+Execute `invar guard --changed` and `invar map --top 10`, then show this one-line summary.
 
-Then read .invar/examples/ and .invar/context.md.
+This is your sign-in. The user sees it immediately.
+No visible check-in = Session not started.
 
-Skipping these steps leads to non-compliant code.
+Then read `.invar/context.md` for project state and lessons learned.
+
+## Final
+
+Your last message for an implementation task MUST display:
+
+```
+✓ Final: guard PASS | 0 errors, 2 warnings
+```
+
+Execute `invar guard` and show this one-line summary.
+
+This is your sign-out. Completes the Check-In/Final pair.
 
 ## Quick Reference
 
@@ -25,4 +35,3 @@ Skipping these steps leads to non-compliant code.
 - Shell (`**/shell/**`): Result[T, E] return type
 - Workflow: Intent → Contract → Inspect → Design → Implement → Verify
 - Contract before Implement. No exceptions.
-- Task complete only when final invar_guard passes.

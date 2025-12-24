@@ -96,16 +96,27 @@ def append_invar_reference_to_claude_md(path: Path) -> bool:
 
 ## Invar Protocol
 
-> **Protocol:** Follow [INVAR.md](./INVAR.md) for the Invar development methodology.
+> **Protocol:** Follow [INVAR.md](./INVAR.md) — includes Check-In, ICIDIV workflow, and Task Completion.
 
-Your **first message** for any implementation task MUST include actual output from:
+### Check-In
 
-```bash
-invar guard --changed   # or: invar_guard(changed=true)
-invar map --top 10      # or: invar_map(top=10)
+Your first message MUST display:
+
+```
+✓ Check-In: guard PASS | top: <entry1>, <entry2>
 ```
 
-**Use MCP tools if available**, otherwise use CLI commands.
+Execute `invar guard --changed` and `invar map --top 10`, then show this one-line summary.
+
+### Final
+
+Your last message MUST display:
+
+```
+✓ Final: guard PASS | 0 errors, 2 warnings
+```
+
+Execute `invar guard` and show this one-line summary.
 """
 
     claude_md.write_text(content + invar_reference)
