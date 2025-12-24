@@ -268,12 +268,24 @@ def run_property_tests_phase(
 
     if isinstance(result, Success):
         report = result.unwrap()
+        # DX-26: Build structured failures array for actionable output
+        failures = [
+            {
+                "function": r.function_name,
+                "file_path": r.file_path,
+                "error": r.error,
+                "seed": r.seed,
+            }
+            for r in report.results
+            if not r.passed
+        ]
         return report.all_passed(), {
             "status": "passed" if report.all_passed() else "failed",
             "functions_tested": report.functions_tested,
             "functions_passed": report.functions_passed,
             "functions_failed": report.functions_failed,
             "total_examples": report.total_examples,
+            "failures": failures,  # DX-26: Structured failure info
             "errors": report.errors,
         }
 
@@ -285,7 +297,10 @@ def _output_property_tests_status(
     doctest_passed: bool,
     property_output: dict,
 ) -> None:
-    """Output property tests status (DX-08)."""
+    """Output property tests status (DX-08, DX-26).
+
+    DX-26: Show file::function format and reproduction command for failures.
+    """
     if static_exit_code != 0 or not doctest_passed:
         console.print("[dim]⊘ Property tests skipped (prior failures)[/dim]")
         return
@@ -305,8 +320,31 @@ def _output_property_tests_status(
     elif status == "failed":
         failed = property_output.get("functions_failed", 0)
         console.print(f"[red]✗ Property tests failed ({failed} functions)[/red]")
+        # DX-26: Show actionable failure info
+        for failure in property_output.get("failures", [])[:5]:
+            file_path = failure.get("file_path", "")
+            func_name = failure.get("function", "unknown")
+            seed = failure.get("seed")
+            error = failure.get("error", "")
+
+            # Show file::function format
+            location = f"{file_path}::{func_name}" if file_path else func_name
+            console.print(f"  [red]✗[/red] {location}")
+
+            # Show truncated error
+            if error:
+                short_error = error[:100] + "..." if len(error) > 100 else error
+                console.print(f"    {short_error}")
+
+            # Show reproduction command with seed
+            if seed:
+                console.print(
+                    f"    [dim]Reproduce: python -c \"from hypothesis import reproduce_failure; "
+                    f"import {func_name}\" --seed={seed}[/dim]"
+                )
+        # Fallback for errors without structured failures
         for error in property_output.get("errors", [])[:5]:
-            console.print(f"  {error}")
+            console.print(f"  [yellow]![/yellow] {error}")
     else:
         console.print(f"[yellow]! Property tests: {status}[/yellow]")
 

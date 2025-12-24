@@ -19,13 +19,18 @@ if TYPE_CHECKING:
 
 @dataclass
 class PropertyTestResult:
-    """Result of running a property test."""
+    """Result of running a property test.
+
+    DX-26: Added file_path and seed for actionable failure output.
+    """
 
     function_name: str
     passed: bool
     examples_run: int = 0
     counterexample: dict[str, Any] | None = None
     error: str | None = None
+    file_path: str | None = None  # DX-26: For file::function format
+    seed: int | None = None  # DX-26: Hypothesis seed for reproduction
 
 
 @dataclass
@@ -326,11 +331,53 @@ def build_test_function(
     return property_test
 
 
+@pre(lambda error_str: isinstance(error_str, str))
+@post(lambda result: result is None or isinstance(result, int))
+def _extract_hypothesis_seed(error_str: str) -> int | None:
+    """Extract Hypothesis seed from error message (DX-26).
+
+    Hypothesis includes seed in output like: @seed(336048909179393285647920446708996038674)
+
+    >>> _extract_hypothesis_seed("@seed(123456)")
+    123456
+    >>> _extract_hypothesis_seed("no seed here") is None
+    True
+    """
+    import re
+
+    match = re.search(r"@seed\((\d+)\)", error_str)
+    if match:
+        try:
+            return int(match.group(1))
+        except ValueError:
+            pass
+    return None
+
+
 @pre(lambda name, reason: isinstance(name, str) and isinstance(reason, str))
 @post(lambda result: isinstance(result, PropertyTestResult) and result.passed)
 def _skip_result(name: str, reason: str) -> PropertyTestResult:
     """Create a skip result (passed=True, 0 examples)."""
     return PropertyTestResult(function_name=name, passed=True, examples_run=0, error=reason)
+
+
+# Skip patterns for untestable error detection
+_SKIP_PATTERNS = (
+    "Nothing", "NoSuchExample", "filter_too_much", "Could not resolve",
+    "validation error", "missing", "positional argument", "Unable to satisfy",
+)
+
+
+@pre(lambda err_str, func_name, max_examples: isinstance(err_str, str))
+@post(lambda result: isinstance(result, PropertyTestResult))
+def _handle_test_exception(
+    err_str: str, func_name: str, max_examples: int
+) -> PropertyTestResult:
+    """Handle exception from property test, returning skip or failure result."""
+    if any(p in err_str for p in _SKIP_PATTERNS):
+        return _skip_result(func_name, "Skipped: untestable types")
+    seed = _extract_hypothesis_seed(err_str)
+    return PropertyTestResult(func_name, passed=False, examples_run=max_examples, error=err_str, seed=seed)
 
 
 @pre(lambda func, max_examples: callable(func) and max_examples > 0)
@@ -352,41 +399,24 @@ def run_property_test(func: Callable, max_examples: int = 100) -> PropertyTestRe
     """
     func_name = getattr(func, "__name__", "unknown")
 
-    # Try deal.cases first - it respects @pre conditions
     try:
         import deal
         from hypothesis import HealthCheck, settings
 
-        # deal.cases generates inputs satisfying preconditions
-        # Suppress filter_too_much for restrictive preconditions
         test_settings = settings(
             max_examples=max_examples,
             suppress_health_check=[HealthCheck.filter_too_much, HealthCheck.too_slow],
         )
         test_case = deal.cases(func, count=max_examples, settings=test_settings)
-        test_case()  # Run the tests
+        test_case()
         return PropertyTestResult(func_name, passed=True, examples_run=max_examples)
     except deal.PreContractError:
-        # This shouldn't happen with deal.cases, but handle it gracefully
         return _skip_result(func_name, "Skipped: could not generate valid inputs")
     except deal.PostContractError as e:
-        # Post-condition violation = real bug
-        return PropertyTestResult(func_name, passed=False, examples_run=max_examples, error=str(e))
+        err_str = str(e)
+        seed = _extract_hypothesis_seed(err_str)
+        return PropertyTestResult(func_name, passed=False, examples_run=max_examples, error=err_str, seed=seed)
     except ImportError:
         pass  # Fall through to custom strategy approach
     except Exception as e:
-        # Check if it's a strategy generation or hypothesis skip issue
-        err_str = str(e)
-        skip_patterns = [
-            "Nothing",
-            "NoSuchExample",
-            "filter_too_much",
-            "Could not resolve",  # typing.Any, custom types
-            "validation error",   # Pydantic model construction
-            "missing",            # Lambda signature mismatch (missing N required)
-            "positional argument", # Lambda positional arg issues
-            "Unable to satisfy",  # Can't generate valid inputs for restrictive preconditions
-        ]
-        if any(p in err_str for p in skip_patterns):
-            return _skip_result(func_name, "Skipped: untestable types")
-        return PropertyTestResult(func_name, passed=False, examples_run=max_examples, error=str(e))
+        return _handle_test_exception(str(e), func_name, max_examples)

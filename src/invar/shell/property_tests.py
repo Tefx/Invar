@@ -72,6 +72,7 @@ def run_property_tests_on_file(
 
     # Run tests on each contracted function
     report = PropertyTestReport()
+    file_path_str = str(file_path)  # DX-26: For actionable output
 
     for func_info in contracted:
         func_name = func_info["name"]
@@ -83,6 +84,8 @@ def run_property_tests_on_file(
 
         # Run property test
         result = run_property_test(func, max_examples)
+        # DX-26: Set file_path for actionable failure output
+        result.file_path = file_path_str
         report.results.append(result)
         report.functions_tested += 1
         report.total_examples += result.examples_run
@@ -194,6 +197,8 @@ def format_property_test_report(
                     "passed": r.passed,
                     "examples": r.examples_run,
                     "error": r.error,
+                    "file_path": r.file_path,  # DX-26
+                    "seed": r.seed,  # DX-26
                 }
                 for r in report.results
             ],
@@ -216,10 +221,17 @@ def format_property_test_report(
         f"{report.total_examples} examples"
     )
 
-    # Show failures
+    # Show failures (DX-26: actionable format)
     for result in report.results:
         if not result.passed:
-            lines.append(f"  [red]✗[/red] {result.function_name}: {result.error}")
+            # DX-26: file::function format
+            location = f"{result.file_path}::{result.function_name}" if result.file_path else result.function_name
+            lines.append(f"  [red]✗[/red] {location}")
+            if result.error:
+                short_error = result.error[:100] + "..." if len(result.error) > 100 else result.error
+                lines.append(f"      {short_error}")
+            if result.seed:
+                lines.append(f"      [dim]Seed: {result.seed}[/dim]")
 
     # Show errors
     for error in report.errors:
