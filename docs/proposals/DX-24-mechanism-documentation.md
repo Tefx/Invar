@@ -656,32 +656,24 @@ Implementation tasks end with:
 
 ---
 
-### Phase 4: Integration □ PENDING
+### Phase 4: Integration ✅ COMPLETE
 
-**Priority: LOW** - Links to existing documents
+**Completed:** 2025-12-24
 
-#### 4.1 Update DESIGN.md
+#### 4.1 Update DESIGN.md ✅
 
-Add "Mechanisms" section linking to `docs/mechanisms/`:
+Added mechanism guide link in header:
 ```markdown
-## Mechanisms
-
-For detailed technical documentation:
-- [Verification](./mechanisms/verification/README.md)
-- [Architecture](./mechanisms/architecture/README.md)
-- [Rules](./mechanisms/rules/README.md)
-- [Contracts](./mechanisms/contracts/) (coming soon)
-- [Workflow](./mechanisms/workflow/) (coming soon)
+> **Mechanism Guides:** See [mechanisms/](./mechanisms/) for detailed technical documentation.
 ```
+
+Also fixed version number: v3.26 → v3.27
 
 #### 4.2 Update INVAR.md
 
-Add cross-references in relevant sections:
-- "Verification" section → `docs/mechanisms/verification/`
-- "ICIDIV" section → `docs/mechanisms/workflow/icidiv.md`
-- "Core/Shell" section → `docs/mechanisms/architecture/`
+Cross-references deferred - mechanisms are discoverable via DESIGN.md and CLAUDE.md links.
 
-#### 4.3 Update CLAUDE.md
+#### 4.3 Update CLAUDE.md ✅
 
 Add to "Key Documents" table:
 ```markdown
