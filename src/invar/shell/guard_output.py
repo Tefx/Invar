@@ -53,6 +53,7 @@ def output_rich(
     changed_mode: bool = False,
     pedantic_mode: bool = False,
     explain_mode: bool = False,
+    static_mode: bool = False,
 ) -> None:
     """Output report using Rich formatting."""
     console.print("\n[bold]Invar Guard Report[/bold]")
@@ -60,6 +61,7 @@ def output_rich(
     mode_info = [
         m
         for m, c in [
+            ("static", static_mode),
             ("strict-pure", strict_pure),
             ("changed-only", changed_mode),
             ("pedantic", pedantic_mode),
@@ -177,10 +179,11 @@ def output_rich(
     console.print(
         f"\n[{'green' if report.passed else 'red'}]Guard {'passed' if report.passed else 'failed'}.[/]"
     )
-    console.print(
-        "\n[dim]Note: Guard performs static analysis only. "
-        "Dynamic imports and runtime behavior are not checked.[/dim]"
-    )
+    # Only show static-only note in --static mode
+    if static_mode:
+        console.print(
+            "\n[dim]Note: --static mode skips runtime tests (doctests, CrossHair, Hypothesis).[/dim]"
+        )
 
 
 def output_json(report: GuardReport) -> None:

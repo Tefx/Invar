@@ -197,7 +197,7 @@ def guard(
     elif use_json_output:
         output_json(report)
     else:
-        output_rich(report, config.strict_pure, changed, pedantic, explain)
+        output_rich(report, config.strict_pure, changed, pedantic, explain, static)
         output_verification_status(
             verification_level, static_exit_code, doctest_passed,
             doctest_output, crosshair_output, explain,
