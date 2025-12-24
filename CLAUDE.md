@@ -4,7 +4,7 @@
 
 This project follows the Invar methodology. See [INVAR.md](./INVAR.md) for the protocol.
 
-**Protocol Version:** v3.27 | **PyPI:** `invar-tools` + `invar-runtime` | **Smart Guard:** `invar guard` = full verification
+**Protocol Version:** v3.28 | **PyPI:** `invar-tools` + `invar-runtime` | **Smart Guard:** `invar guard` = full verification
 
 ---
 
@@ -89,6 +89,7 @@ invar/
 │   │   ├── rules.py          # Rule checking: file info → violations
 │   │   ├── purity.py         # Internal imports, impure calls
 │   │   ├── contracts.py      # Contract quality detection
+│   │   ├── review_trigger.py # DX-30/31: Review triggers (contract ratio, security)
 │   │   ├── suggestions.py    # Fix suggestions + lambda skeletons
 │   │   ├── rule_meta.py      # Centralized RULE_META
 │   │   ├── inspect.py        # File context for INSPECT section
@@ -185,10 +186,9 @@ invar rules              # List all rules
 
 | Command | Role | Purpose |
 |---------|------|---------|
-| `/review` | Reviewer | Critical code review |
-| `/attack` | Adversary | Try to break the code |
+| `/review` | Reviewer | Adversarial code review (DX-31) |
 
-Use Reviewer for architecture decisions. Use Adversary for security-critical code.
+Use `/review` for critical review. Guard triggers `review_suggested` automatically for security-sensitive files, high escape counts, or low contract coverage.
 
 ---
 
