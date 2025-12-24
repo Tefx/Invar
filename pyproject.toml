@@ -92,7 +92,7 @@ forbidden_imports = [
 ]
 
 # Paths to exclude from checking
-exclude_paths = ["tests", "scripts", ".venv", "__pycache__"]
+exclude_paths = ["tests", "scripts", ".venv", "__pycache__", "templates", ".invar/examples"]
 
 # Phase 3: Guard Enhancement
 strict_pure = true          # Detect internal imports and impure calls in Core

@@ -83,6 +83,8 @@ the MCP tools and may not follow the correct workflow.
 """
 
 
+# @shell_orchestration: MCP tool factory - creates Tool objects
+# @invar:allow shell_result: MCP framework API returns Tool
 def _get_guard_tool() -> Tool:
     """Define the invar_guard tool."""
     return Tool(
@@ -103,6 +105,8 @@ def _get_guard_tool() -> Tool:
     )
 
 
+# @shell_orchestration: MCP tool factory - creates Tool objects
+# @invar:allow shell_result: MCP framework API returns Tool
 def _get_sig_tool() -> Tool:
     """Define the invar_sig tool."""
     return Tool(
@@ -121,6 +125,8 @@ def _get_sig_tool() -> Tool:
     )
 
 
+# @shell_orchestration: MCP tool factory - creates Tool objects
+# @invar:allow shell_result: MCP framework API returns Tool
 def _get_map_tool() -> Tool:
     """Define the invar_map tool."""
     return Tool(
@@ -139,6 +145,8 @@ def _get_map_tool() -> Tool:
     )
 
 
+# @shell_orchestration: MCP server setup - registers handlers with framework
+# @invar:allow shell_result: MCP framework API returns Server
 def create_server() -> Server:
     """Create and configure the Invar MCP server."""
     server = Server(name="invar", version="0.1.0", instructions=INVAR_INSTRUCTIONS)
@@ -158,6 +166,8 @@ def create_server() -> Server:
     return server
 
 
+# @shell_orchestration: MCP handler - subprocess is called inside
+# @invar:allow shell_result: MCP framework API returns list[TextContent]
 async def _run_guard(args: dict[str, Any]) -> list[TextContent]:
     """Run invar guard command."""
     cmd = [sys.executable, "-m", "invar.shell.cli", "guard"]
@@ -176,6 +186,8 @@ async def _run_guard(args: dict[str, Any]) -> list[TextContent]:
     return await _execute_command(cmd)
 
 
+# @shell_orchestration: MCP handler - subprocess is called inside
+# @invar:allow shell_result: MCP framework API returns list[TextContent]
 async def _run_sig(args: dict[str, Any]) -> list[TextContent]:
     """Run invar sig command."""
     target = args.get("target", "")
@@ -186,6 +198,8 @@ async def _run_sig(args: dict[str, Any]) -> list[TextContent]:
     return await _execute_command(cmd)
 
 
+# @shell_orchestration: MCP handler - subprocess is called inside
+# @invar:allow shell_result: MCP framework API returns list[TextContent]
 async def _run_map(args: dict[str, Any]) -> list[TextContent]:
     """Run invar map command."""
     cmd = [sys.executable, "-m", "invar.shell.cli", "map"]
@@ -200,6 +214,8 @@ async def _run_map(args: dict[str, Any]) -> list[TextContent]:
     return await _execute_command(cmd)
 
 
+# @shell_complexity: Command execution with error handling branches
+# @invar:allow shell_result: MCP framework API returns list[TextContent]
 async def _execute_command(cmd: list[str]) -> list[TextContent]:
     """Execute a command and return the result."""
     try:
@@ -229,6 +245,7 @@ async def _execute_command(cmd: list[str]) -> list[TextContent]:
         return [TextContent(type="text", text=f"Error: {e}")]
 
 
+# @shell_orchestration: MCP server entry point - runs async server
 def run_server() -> None:
     """Run the Invar MCP server."""
     import asyncio

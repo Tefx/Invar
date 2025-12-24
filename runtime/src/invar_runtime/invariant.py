@@ -20,6 +20,7 @@ class InvariantViolation(Exception):
 _INVAR_CHECK = os.environ.get("INVAR_CHECK", "1") == "1"
 
 
+# @invar:allow entry_point_too_thick: False positive - .get() matches router.get pattern
 def invariant(condition: bool, message: str = "") -> None:
     """
     Assert loop invariant. Checked at runtime when INVAR_CHECK=1.

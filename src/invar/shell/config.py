@@ -355,6 +355,9 @@ _DEFAULT_EXCLUDE_PATHS = [
     "dist",
     "build",
     ".tox",
+    # Templates and examples are documentation, not enforced code
+    "templates",
+    ".invar/examples",
 ]
 
 
