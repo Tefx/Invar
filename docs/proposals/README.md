@@ -56,6 +56,7 @@ This directory contains design proposals for Invar development.
 | DX-25 | functional-patterns | Haskell-inspired patterns: Validation, NewType, NonEmpty, Monoid |
 | DX-27 | system-prompt-protocol | System Prompt injection for Check-In/Final enforcement |
 | DX-29 | pure-content-detection | Explicit @invar:module markers (pending review) |
+| DX-30 | visible-workflow | Phase TodoList + Contract Gate for ICIDIV compliance visibility |
 
 ### Archived / Merged
 
