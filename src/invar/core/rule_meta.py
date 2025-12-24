@@ -142,19 +142,19 @@ RULE_META: dict[str, RuleMeta] = {
     # Shell rules
     "shell_result": RuleMeta(
         name="shell_result",
-        severity=Severity.WARNING,
+        severity=Severity.ERROR,  # DX-22: Architecture rule, must fix or explain
         category=RuleCategory.SHELL,
         detects="Shell function not returning Result[T, E]",
         cannot_detect=("Result usage correctness", "Error handling quality"),
-        hint="Wrap return value with Success() or return Failure()",
+        hint="Wrap with Success()/Failure(), or add: # @invar:allow shell_result: <reason>",
     ),
     "entry_point_too_thick": RuleMeta(
         name="entry_point_too_thick",
-        severity=Severity.WARNING,
+        severity=Severity.ERROR,  # DX-22: Architecture rule, must fix or explain
         category=RuleCategory.SHELL,
         detects="Entry point (Flask route, Typer command, etc.) exceeds max lines",
         cannot_detect=("Whether complexity is unavoidable", "Framework constraints"),
-        hint="Move business logic to Shell function returning Result[T, E]",
+        hint="Move logic to Shell function, or add: # @invar:allow entry_point_too_thick: <reason>",
     ),
     "shell_pure_logic": RuleMeta(
         name="shell_pure_logic",
@@ -171,6 +171,14 @@ RULE_META: dict[str, RuleMeta] = {
         detects="Shell function with excessive branching complexity",
         cannot_detect=("Whether complexity is justified", "Domain-specific patterns"),
         hint="Extract logic to Core, or add: # @shell_complexity: <reason>",
+    ),
+    "shell_complexity_debt": RuleMeta(
+        name="shell_complexity_debt",
+        severity=Severity.ERROR,
+        category=RuleCategory.SHELL,
+        detects="Project accumulated too many unaddressed complexity warnings (DX-22 Fix-or-Explain)",
+        cannot_detect=("Individual function justifications",),
+        hint="Address shell_too_complex warnings: refactor OR add @shell_complexity: markers",
     ),
     # Documentation rules
     "missing_doctest": RuleMeta(

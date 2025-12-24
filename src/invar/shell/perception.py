@@ -30,6 +30,7 @@ if TYPE_CHECKING:
 console = Console()
 
 
+# @shell_complexity: Symbol map generation with sorting and output modes
 def run_map(path: Path, top_n: int, json_output: bool) -> Result[None, str]:
     """
     Run the map command.
@@ -75,6 +76,7 @@ def run_map(path: Path, top_n: int, json_output: bool) -> Result[None, str]:
     return Success(None)
 
 
+# @shell_complexity: Signature extraction with symbol filtering
 def run_sig(target: str, json_output: bool) -> Result[None, str]:
     """
     Run the sig command.

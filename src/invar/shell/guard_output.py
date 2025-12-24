@@ -16,6 +16,7 @@ from invar.core.utils import get_combined_status
 console = Console()
 
 
+# @shell_complexity: Context display with line range extraction
 def show_file_context(file_path: str) -> None:
     """
     Show INSPECT section for a file (Phase 9.2 P14).
@@ -48,6 +49,7 @@ def show_file_context(file_path: str) -> None:
         pass  # Silently ignore errors in context display
 
 
+# @shell_complexity: Rich formatting with conditional sections
 def output_rich(
     report: GuardReport,
     strict_pure: bool = False,
@@ -188,6 +190,7 @@ def output_rich(
         )
 
 
+# @shell_complexity: JSON output assembly with multiple sections
 def output_agent(
     report: GuardReport,
     strict: bool = False,

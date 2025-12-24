@@ -26,6 +26,7 @@ if TYPE_CHECKING:
 console = Console()
 
 
+# @shell_complexity: Property test orchestration with module import
 def run_property_tests_on_file(
     file_path: Path,
     max_examples: int = 100,
@@ -167,6 +168,7 @@ def _import_module_from_path(file_path: Path) -> object | None:
 
 
 # @shell_orchestration: Formatting helper tightly coupled to CLI output
+# @shell_complexity: Report formatting with JSON/rich output modes
 def format_property_test_report(
     report: PropertyTestReport,
     json_output: bool = False,

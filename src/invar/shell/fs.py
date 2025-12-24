@@ -19,6 +19,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 
+# @shell_complexity: Recursive file discovery with gitignore and exclusions
 def discover_python_files(
     project_root: Path,
     exclude_patterns: list[str] | None = None,
@@ -52,6 +53,7 @@ def discover_python_files(
             yield py_file
 
 
+# @shell_complexity: File reading with AST parsing and error handling
 def read_and_parse_file(file_path: Path, project_root: Path) -> Result[FileInfo, str]:
     """
     Read a Python file and parse it into FileInfo.
@@ -88,6 +90,7 @@ def read_and_parse_file(file_path: Path, project_root: Path) -> Result[FileInfo,
     return Success(file_info)
 
 
+# @shell_complexity: Project scanning with exclusions and error handling
 def scan_project(
     project_root: Path,
     only_files: set[Path] | None = None,

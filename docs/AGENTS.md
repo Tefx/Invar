@@ -389,4 +389,69 @@ Include role marker at the start of prompts:
 
 ---
 
+## Agent Quality Practices
+
+### Severity Handling
+
+| Level | Agent Behavior |
+|-------|----------------|
+| **ERROR** | Must fix before completing task |
+| **WARNING** | Fix in files you modify |
+| **INFO** | Note for consideration, no action required |
+
+### The "Touched File" Principle
+
+When modifying a file with pre-existing warnings:
+
+```
+1. Fix ERRORs (always)
+2. Fix WARNINGs in that file (best practice)
+3. Don't fix WARNINGs in untouched files (out of scope)
+```
+
+**Rationale:** Agent should complete the task, not fix the entire codebase.
+
+### Escape Hatch Usage
+
+When encountering architecture ERRORs that cannot be fixed:
+
+```python
+# @invar:allow shell_result: Legacy API compatibility required
+def legacy_endpoint():
+    return {"ok": True}  # Cannot return Result
+```
+
+**Rules:**
+1. Only use for `shell_result` and `entry_point_too_thick`
+2. Always provide a clear reason
+3. Never escape correctness errors (`param_mismatch`, `empty_contract`, etc.)
+
+### Recommended Workflow
+
+```bash
+# 1. Start session
+invar guard --changed
+invar map --top 10
+
+# 2. After making changes
+invar guard --changed    # Check only modified files
+
+# 3. Fix violations in order:
+#    a) All ERRORs (blocking)
+#    b) WARNINGs in touched files (best practice)
+#    c) Ignore WARNINGs in untouched files
+```
+
+### Why Not Default --strict?
+
+`--strict` makes WARNINGs block. This is inappropriate for agents because:
+
+1. Legacy codebases have accumulated warnings
+2. Agent would be blocked by untouched file warnings
+3. Task completion would require fixing unrelated issues
+
+**Use `--strict` in CI, not agent workflows.**
+
+---
+
 *"The best code survives review by its harshest critics."*

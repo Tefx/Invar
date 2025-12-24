@@ -13,7 +13,7 @@ from invar.core.contracts import (
     check_redundant_type_contracts,
     check_semantic_tautology,
 )
-from invar.core.entry_points import get_symbol_lines, is_entry_point
+from invar.core.entry_points import get_symbol_lines, has_allow_marker, is_entry_point
 from invar.core.extraction import format_extraction_hint
 from invar.core.models import FileInfo, RuleConfig, Severity, SymbolKind, Violation
 from invar.core.must_use import check_must_use
@@ -325,18 +325,18 @@ def check_shell_result(file_info: FileInfo, config: RuleConfig) -> list[Violatio
         # Skip generators (Iterator/Generator) - acceptable exception per protocol
         if "Iterator[" in symbol.signature or "Generator[" in symbol.signature:
             continue
-        # DX-23: Skip entry points (framework callbacks)
-        if is_entry_point(symbol, file_info.source):
+        # DX-23: Skip entry points; DX-22: Skip if @invar:allow marker
+        if is_entry_point(symbol, file_info.source) or has_allow_marker(symbol, file_info.source, "shell_result"):
             continue
         if "Result[" not in symbol.signature:
             violations.append(
                 Violation(
                     rule="shell_result",
-                    severity=Severity.WARNING,
+                    severity=Severity.ERROR,  # DX-22: Architecture rule
                     file=file_info.path,
                     line=symbol.line,
                     message=f"Shell function '{symbol.name}' should return Result[T, E]",
-                    suggestion="Use Result[T, E] from returns library",
+                    suggestion="Use Result[T, E], or add: # @invar:allow shell_result: <reason>",
                 )
             )
     return violations
@@ -368,19 +368,19 @@ def check_entry_point_thin(file_info: FileInfo, config: RuleConfig) -> list[Viol
         if symbol.kind != SymbolKind.FUNCTION:
             continue
 
-        if not is_entry_point(symbol, file_info.source):
+        # Only check entry points; DX-22: Skip if @invar:allow marker
+        if not is_entry_point(symbol, file_info.source) or has_allow_marker(symbol, file_info.source, "entry_point_too_thick"):
             continue
-
         lines = get_symbol_lines(symbol)
         if lines > max_lines:
             violations.append(
                 Violation(
                     rule="entry_point_too_thick",
-                    severity=Severity.WARNING,
+                    severity=Severity.ERROR,  # DX-22: Architecture rule
                     file=file_info.path,
                     line=symbol.line,
                     message=f"Entry point '{symbol.name}' has {lines} lines (max: {max_lines})",
-                    suggestion="Move business logic to Shell function returning Result[T, E]",
+                    suggestion="Move logic to Shell function, or add: # @invar:allow entry_point_too_thick: <reason>",
                 )
             )
 

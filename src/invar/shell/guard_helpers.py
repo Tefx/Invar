@@ -19,6 +19,7 @@ if TYPE_CHECKING:
 console = Console()
 
 
+# @shell_complexity: Git changed mode with file collection
 def handle_changed_mode(
     path: Path,
 ) -> Result[tuple[set[Path], list[Path]], str]:
@@ -43,6 +44,7 @@ def handle_changed_mode(
 
 
 # @shell_orchestration: Coordinates path classification and file collection
+# @shell_complexity: File collection with path normalization
 def collect_files_to_check(
     path: Path, checked_files: list[Path]
 ) -> list[Path]:
@@ -102,6 +104,7 @@ def run_doctests_phase(
 
 
 # @shell_orchestration: Coordinates CrossHair verification via prove module
+# @shell_complexity: CrossHair phase with conditional execution
 def run_crosshair_phase(
     path: Path,
     checked_files: list[Path],
@@ -164,6 +167,7 @@ def run_crosshair_phase(
     return False, {"status": "error", "error": crosshair_result.failure()}
 
 
+# @shell_complexity: Status output with multiple phases
 def output_verification_status(
     verification_level: VerificationLevel,
     static_exit_code: int,
@@ -234,6 +238,7 @@ def output_verification_status(
 
 
 # @shell_orchestration: Coordinates shell module calls for property testing
+# @shell_complexity: Property tests with result aggregation
 def run_property_tests_phase(
     checked_files: list[Path],
     doctest_passed: bool,
@@ -292,6 +297,7 @@ def run_property_tests_phase(
     return False, {"status": "error", "error": result.failure()}
 
 
+# @shell_complexity: Property test status formatting
 def _output_property_tests_status(
     static_exit_code: int,
     doctest_passed: bool,
@@ -349,6 +355,7 @@ def _output_property_tests_status(
         console.print(f"[yellow]! Property tests: {status}[/yellow]")
 
 
+# @shell_complexity: CrossHair status formatting
 def _output_crosshair_status(
     static_exit_code: int,
     doctest_passed: bool,

@@ -27,15 +27,25 @@ This directory contains design proposals for Invar development.
 | DX-16 | agent-tool-enforcement | MCP tool enforcement for AI agents |
 | DX-17 | workflow-enforcement | Session start and ICIDIV workflow enforcement |
 | DX-20 | property-testing-enhancements | Property testing UX improvements |
+| DX-22 | verification-strategy | **90%** - Shell rules, Fix-or-Explain, `@invar:allow` escape hatches |
+| DX-23 | entry-point-detection | **100%** - Auto-detect + exemptions (can move to Implemented) |
+| DX-24 | mechanism-documentation | **80%** - severity-design.md added, agent practices documented |
 | - | dx-improvements | Collection of DX-01 to DX-10 proposals |
+
+**DX-22 Recent Progress:**
+- `shell_result`, `entry_point_too_thick` → ERROR severity
+- Unified escape hatch: `# @invar:allow <rule>: <reason>`
+- Severity design principles documented
+
+**DX-24 Recent Progress:**
+- Created `docs/mechanisms/rules/severity-design.md`
+- Updated rules README with escape mechanisms
+- Added agent quality practices to AGENTS.md
 
 ### Backlog
 
 | ID | Name | Description |
 |----|------|-------------|
-| DX-22 | verification-strategy | Smart verification routing, Shell architecture rules, Fix-or-Explain enforcement |
-| DX-23 | entry-point-detection | Entry point detection and monad runner pattern for framework callbacks |
-| DX-24 | mechanism-documentation | English documentation for all Invar mechanisms (verification, architecture, rules, workflow) |
 | DX-25 | functional-patterns | Haskell-inspired patterns: Validation, NewType, NonEmpty, Monoid |
 | - | AGENT-IMPROVEMENTS | Agent role and workflow improvements |
 

@@ -37,7 +37,8 @@ app = typer.Typer(
 console = Console()
 
 
-# @shell_orchestration: Statistics helper for guard report
+# @shell_orchestration: Statistics helper for CLI guard output
+# @shell_complexity: Iterates symbols checking kind and contracts (4 branches minimal)
 def _count_core_functions(file_info) -> tuple[int, int]:
     """Count functions and functions with contracts in a Core file (P24)."""
     from invar.core.models import SymbolKind
@@ -55,10 +56,13 @@ def _count_core_functions(file_info) -> tuple[int, int]:
     return (total, with_contracts)
 
 
+# @shell_complexity: Core orchestration - iterates files, handles failures, aggregates results
 def _scan_and_check(
     path: Path, config: RuleConfig, only_files: set[Path] | None = None
 ) -> Result[GuardReport, str]:
     """Scan project files and check against rules."""
+    from invar.core.shell_architecture import check_complexity_debt
+
     report = GuardReport(files_checked=0)
     for file_result in scan_project(path, only_files):
         if isinstance(file_result, Failure):
@@ -71,9 +75,17 @@ def _scan_and_check(
         report.update_coverage(total, with_contracts)
         for violation in check_all_rules(file_info, config):
             report.add_violation(violation)
+
+    # DX-22: Check project-level complexity debt (Fix-or-Explain enforcement)
+    for debt_violation in check_complexity_debt(
+        report.violations, config.shell_complexity_debt_limit
+    ):
+        report.add_violation(debt_violation)
+
     return Success(report)
 
 
+# @invar:allow entry_point_too_thick: Main CLI entry point, orchestrates all verification phases
 @app.command()
 def guard(
     path: Path = typer.Argument(
@@ -284,6 +296,7 @@ def sig_command(
         raise typer.Exit(1)
 
 
+# @invar:allow entry_point_too_thick: Rules display with filtering and dual output modes
 @app.command()
 def rules(
     json_output: bool = typer.Option(False, "--json", help="Output as JSON"),

@@ -111,6 +111,7 @@ def get_available_verifiers() -> list[str]:
     return available
 
 
+# @shell_complexity: Doctest execution with subprocess and result parsing
 def run_doctests_on_files(
     files: list[Path], verbose: bool = False
 ) -> Result[dict, str]:
@@ -158,6 +159,7 @@ def run_doctests_on_files(
         return Failure(f"Doctest error: {e}")
 
 
+# @shell_complexity: Property test orchestration with subprocess
 def run_test(
     target: str, json_output: bool = False, verbose: bool = False
 ) -> Result[dict, str]:
@@ -215,6 +217,7 @@ def run_test(
         return Failure(f"Test error: {e}")
 
 
+# @shell_complexity: CrossHair verification with subprocess
 def run_verify(
     target: str, json_output: bool = False, timeout: int = 30
 ) -> Result[dict, str]:

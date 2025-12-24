@@ -10,6 +10,7 @@ from __future__ import annotations
 
 
 # @shell_orchestration: Contract analysis helper for CrossHair prove module
+# @shell_complexity: AST traversal for contract detection
 def has_verifiable_contracts(source: str) -> bool:
     """
     Check if source has verifiable contracts.
@@ -55,6 +56,7 @@ def has_verifiable_contracts(source: str) -> bool:
 
 
 # @shell_orchestration: Acceptance criteria analysis for CrossHair prove
+# @shell_complexity: AST traversal for decorator extraction
 def get_crosshair_accept_reasons(source: str) -> dict[str, str]:
     """
     Extract @crosshair_accept reasons from source.

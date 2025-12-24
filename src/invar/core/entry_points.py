@@ -64,6 +64,9 @@ ENTRY_POINT_DECORATORS: frozenset[str] = frozenset([
 # Explicit marker comment for edge cases
 ENTRY_MARKER_PATTERN = re.compile(r"#\s*@shell:entry\b")
 
+# DX-22: Unified escape hatch pattern: # @invar:allow <rule>: <reason>
+INVAR_ALLOW_PATTERN = re.compile(r"#\s*@invar:allow\s+(\w+)\s*:\s*(.+)")
+
 
 @pre(lambda symbol, source: symbol is not None)
 @post(lambda result: isinstance(result, bool))
@@ -211,3 +214,52 @@ def get_symbol_lines(symbol: Symbol) -> int:
         1
     """
     return max(1, symbol.end_line - symbol.line + 1)
+
+
+@pre(lambda symbol, source, rule: symbol is not None and isinstance(rule, str))
+@post(lambda result: isinstance(result, bool))
+def has_allow_marker(symbol: Symbol, source: str, rule: str) -> bool:
+    """
+    Check if symbol has an @invar:allow marker for a specific rule.
+
+    DX-22: Unified escape hatch mechanism. Format:
+        # @invar:allow <rule>: <reason>
+
+    Examples:
+        >>> from invar.core.models import Symbol, SymbolKind
+        >>> sym = Symbol(name="handler", kind=SymbolKind.FUNCTION, line=3, end_line=20)
+        >>> source = '''
+        ... # @invar:allow entry_point_too_thick: Complex CLI parsing
+        ... def handler():
+        ...     pass
+        ... '''
+        >>> has_allow_marker(sym, source, "entry_point_too_thick")
+        True
+        >>> has_allow_marker(sym, source, "shell_result")
+        False
+
+        >>> sym2 = Symbol(name="api", kind=SymbolKind.FUNCTION, line=3, end_line=10)
+        >>> source2 = '''
+        ... # @invar:allow shell_result: Returns raw JSON for legacy API
+        ... def api():
+        ...     pass
+        ... '''
+        >>> has_allow_marker(sym2, source2, "shell_result")
+        True
+    """
+    lines = source.splitlines()
+    if not lines:
+        return False
+
+    # Look at lines before the function definition (up to 4 lines)
+    start_line = max(0, symbol.line - 5)
+    end_line = symbol.line
+
+    context_lines = lines[start_line:end_line]
+
+    for line in context_lines:
+        match = INVAR_ALLOW_PATTERN.search(line)
+        if match and match.group(1) == rule:
+            return True
+
+    return False

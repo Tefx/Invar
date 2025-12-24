@@ -53,6 +53,7 @@ def get_template_path(name: str) -> Result[Path, str]:
         return Failure(f"Failed to get template path: {e}")
 
 
+# @shell_complexity: Template copy with path resolution
 def copy_template(
     template_name: str, dest: Path, dest_name: str | None = None
 ) -> Result[bool, str]:
@@ -73,6 +74,7 @@ def copy_template(
         return Failure(f"Failed to copy template: {e}")
 
 
+# @shell_complexity: Config addition with existing file detection
 def add_config(path: Path, console) -> Result[bool, str]:
     """Add configuration to project. Returns Success(True) if added, Success(False) if skipped."""
     pyproject = path / "pyproject.toml"
@@ -114,6 +116,7 @@ def create_directories(path: Path, console) -> None:
         console.print("[green]Created[/green] src/shell/")
 
 
+# @shell_complexity: Directory copy with file filtering
 def copy_examples_directory(dest: Path, console) -> Result[bool, str]:
     """Copy examples directory to .invar/examples/. Returns Success(True) if copied."""
     import shutil
@@ -162,6 +165,7 @@ AGENT_CONFIGS = {
 }
 
 
+# @shell_complexity: Agent config detection across multiple locations
 def detect_agent_configs(path: Path) -> Result[dict[str, str], str]:
     """
     Detect existing agent configuration files.
@@ -195,6 +199,7 @@ def detect_agent_configs(path: Path) -> Result[dict[str, str], str]:
         return Failure(f"Failed to detect agent configs: {e}")
 
 
+# @shell_complexity: Reference addition with existing check
 def add_invar_reference(path: Path, agent: str, console) -> Result[bool, str]:
     """Add Invar reference to an existing agent config file."""
     if agent not in AGENT_CONFIGS:
@@ -220,6 +225,7 @@ def add_invar_reference(path: Path, agent: str, console) -> Result[bool, str]:
         return Failure(f"Failed to update {config['file']}: {e}")
 
 
+# @shell_complexity: Config creation with template selection
 def create_agent_config(path: Path, agent: str, console) -> Result[bool, str]:
     """
     Create agent config from template (DX-17).
@@ -248,6 +254,7 @@ def create_agent_config(path: Path, agent: str, console) -> Result[bool, str]:
     return Success(False)
 
 
+# @shell_complexity: MCP server config with JSON manipulation
 def configure_mcp_server(path: Path, console) -> Result[list[str], str]:
     """
     Configure MCP server for AI agents (DX-16).
@@ -407,6 +414,7 @@ The server communicates via stdio and should be managed by your AI agent.
 """
 
 
+# @shell_complexity: Git hooks installation with backup
 def install_hooks(path: Path, console) -> Result[bool, str]:
     """Install pre-commit hooks configuration and activate them."""
     import subprocess

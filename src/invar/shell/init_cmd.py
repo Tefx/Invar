@@ -35,6 +35,7 @@ from invar.shell.templates import (
 console = Console()
 
 
+# @shell_complexity: Claude init with config file detection
 def run_claude_init(path: Path) -> bool:
     """
     Run 'claude /init' to generate intelligent CLAUDE.md.
@@ -112,6 +113,7 @@ invar map --top 10      # or: invar_map(top=10)
     return True
 
 
+# @shell_complexity: MCP config with method selection and validation
 def configure_mcp_with_method(
     path: Path, mcp_method: str | None
 ) -> None:
@@ -163,6 +165,7 @@ def show_available_mcp_methods() -> None:
         console.print(f"  {marker} {method.method.value}: {method.description}")
 
 
+# @shell_complexity: Project init with config detection and template setup
 def init(
     path: Path = typer.Argument(Path(), help="Project root directory"),
     claude: bool = typer.Option(

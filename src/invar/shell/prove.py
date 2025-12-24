@@ -57,6 +57,7 @@ class CrossHairStatus:
 
 
 # @shell_orchestration: Contract detection for CrossHair prove module
+# @shell_complexity: AST traversal for contract detection
 def has_verifiable_contracts(source: str) -> bool:
     """
     Check if source has verifiable contracts.
@@ -106,6 +107,7 @@ def has_verifiable_contracts(source: str) -> bool:
 # ============================================================
 
 
+# @shell_complexity: CrossHair subprocess with error classification
 def _verify_single_file(
     file_path: str,
     max_iterations: int = 5,
@@ -208,6 +210,7 @@ def _verify_single_file(
 # ============================================================
 
 
+# @shell_complexity: Parallel verification with caching and filtering
 def run_crosshair_parallel(
     files: list[Path],
     max_iterations: int = 5,
@@ -378,6 +381,7 @@ def run_crosshair_parallel(
 
 
 # @shell_orchestration: Result aggregation helper for parallel verification
+# @shell_complexity: Result classification with cache update
 def _process_verification_result(
     result: dict,
     file_path: Path,
@@ -442,6 +446,7 @@ def run_crosshair_on_files(
 
 
 # @shell_orchestration: File selection for incremental verification
+# @shell_complexity: Git integration for incremental verification
 def get_files_to_prove(
     path: Path,
     all_core_files: list[Path],

@@ -26,6 +26,7 @@ def _detect_agent_mode() -> bool:
     return os.getenv("INVAR_MODE") == "agent" or not sys.stdout.isatty()
 
 
+# @shell_complexity: Test command with file collection and output
 def test(
     target: str = typer.Argument(None, help="File to test (optional with --changed)"),
     verbose: bool = typer.Option(False, "-v", "--verbose", help="Verbose output"),
@@ -75,6 +76,7 @@ def test(
         raise typer.Exit(1)
 
 
+# @shell_complexity: Verify command with CrossHair integration
 def verify(
     target: str = typer.Argument(None, help="File to verify (optional with --changed)"),
     timeout: int = typer.Option(30, "--timeout", help="Timeout per function (seconds)"),

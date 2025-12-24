@@ -14,6 +14,7 @@ from pathlib import Path
 from returns.result import Failure, Result, Success
 
 
+# @shell_complexity: Fallback verification with hypothesis availability check
 def run_hypothesis_fallback(
     files: list[Path],
     max_examples: int = 100,
@@ -101,6 +102,7 @@ def run_hypothesis_fallback(
         return Failure(f"Hypothesis error: {e}")
 
 
+# @shell_complexity: Orchestrates CrossHair → Hypothesis fallback chain
 def run_prove_with_fallback(
     files: list[Path],
     crosshair_timeout: int = 10,

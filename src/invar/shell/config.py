@@ -31,6 +31,7 @@ if TYPE_CHECKING:
 ConfigSource = Literal["pyproject", "invar", "invar_dir", "default"]
 
 
+# @shell_complexity: Config cascade checks multiple sources with fallback
 def _find_config_source(project_root: Path) -> Result[tuple[Path | None, ConfigSource], str]:
     """
     Find the first available config file.
@@ -76,6 +77,7 @@ def _read_toml(path: Path) -> Result[dict[str, Any], str]:
         return Failure(f"Failed to read {path.name}: {e}")
 
 
+# @shell_complexity: Config loading with multiple sources and parse error handling
 def load_config(project_root: Path) -> Result[RuleConfig, str]:
     """
     Load Invar configuration from available sources.
@@ -206,6 +208,7 @@ def get_exclude_paths(project_root: Path) -> Result[list[str], str]:
     return Success(guard_config.get("exclude_paths", _DEFAULT_EXCLUDE_PATHS.copy()))
 
 
+# @invar:allow entry_point_too_thick: False positive - .get() matches router.get pattern
 def classify_file(file_path: str, project_root: Path) -> Result[tuple[bool, bool], str]:
     """
     Classify a file as Core, Shell, or neither.

@@ -224,6 +224,7 @@ class RuleConfig(BaseModel):
     max_function_lines: int = 50
     entry_max_lines: int = 15  # DX-23: Entry point max lines
     shell_max_branches: int = 3  # DX-22: Shell function max branches
+    shell_complexity_debt_limit: int = 5  # DX-22: Max unaddressed complexity warnings
     forbidden_imports: tuple[str, ...] = (
         "os",
         "sys",

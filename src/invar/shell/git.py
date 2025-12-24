@@ -38,6 +38,7 @@ def _parse_py_files(output: str, project_root: Path) -> set[Path]:
     return files
 
 
+# @shell_complexity: Git operations require multiple subprocess calls with error handling
 def get_changed_files(project_root: Path) -> Result[set[Path], str]:
     """
     Get Python files modified according to git (staged, unstaged, untracked).

@@ -114,6 +114,7 @@ def update_examples(path: Path, console: Console) -> Result[bool, str]:
     return copy_examples_directory(path, console)
 
 
+# @shell_complexity: Update command with template comparison
 def update(
     path: Path = typer.Argument(Path(), help="Project root directory"),
     force: bool = typer.Option(
