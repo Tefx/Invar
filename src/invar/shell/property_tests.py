@@ -163,6 +163,7 @@ def _import_module_from_path(file_path: Path) -> object | None:
         return None
 
 
+# @shell_orchestration: Formatting helper tightly coupled to CLI output
 def format_property_test_report(
     report: PropertyTestReport,
     json_output: bool = False,

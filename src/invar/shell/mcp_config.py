@@ -100,6 +100,7 @@ def detect_available_methods() -> list[McpExecConfig]:
     return methods
 
 
+# @shell_orchestration: MCP method selection helper
 def get_recommended_method() -> McpExecConfig:
     """
     Get the recommended MCP execution method.
@@ -115,6 +116,7 @@ def get_recommended_method() -> McpExecConfig:
     return methods[0]
 
 
+# @shell_orchestration: MCP method lookup helper
 def get_method_by_name(name: str) -> McpExecConfig | None:
     """
     Get a specific MCP method by name.
@@ -139,6 +141,7 @@ def get_method_by_name(name: str) -> McpExecConfig | None:
     return None
 
 
+# @shell_orchestration: MCP configuration generator
 def generate_mcp_json(config: McpExecConfig | None = None) -> dict[str, Any]:
     """
     Generate .mcp.json content for the given configuration.

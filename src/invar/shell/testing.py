@@ -80,6 +80,7 @@ class VerificationResult:
     errors: list[str] = field(default_factory=list)
 
 
+# @shell_orchestration: Verifier discovery helper
 def get_available_verifiers() -> list[str]:
     """
     Detect installed verification tools.
@@ -111,6 +112,7 @@ def get_available_verifiers() -> list[str]:
     return available
 
 
+# @shell_orchestration: Verification context detection
 def detect_verification_context() -> VerificationLevel:
     """
     Auto-detect appropriate verification depth based on context.

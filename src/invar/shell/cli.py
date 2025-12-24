@@ -37,6 +37,7 @@ app = typer.Typer(
 console = Console()
 
 
+# @shell_orchestration: Statistics helper for guard report
 def _count_core_functions(file_info) -> tuple[int, int]:
     """Count functions and functions with contracts in a Core file (P24)."""
     from invar.core.models import SymbolKind
@@ -209,6 +210,7 @@ def guard(
     raise typer.Exit(final_exit)
 
 
+# @shell_orchestration: Output mode decision helper for CLI
 def _determine_output_mode(json_output: bool, agent: bool) -> tuple[bool, bool]:
     """Determine output mode based on flags and context."""
     if json_output:

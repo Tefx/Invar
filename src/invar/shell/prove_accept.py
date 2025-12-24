@@ -9,6 +9,7 @@ Shell module: Extracted for file size compliance.
 from __future__ import annotations
 
 
+# @shell_orchestration: Contract analysis helper for CrossHair prove module
 def has_verifiable_contracts(source: str) -> bool:
     """
     Check if source has verifiable contracts.
@@ -53,6 +54,7 @@ def has_verifiable_contracts(source: str) -> bool:
     return False
 
 
+# @shell_orchestration: Acceptance criteria analysis for CrossHair prove
 def get_crosshair_accept_reasons(source: str) -> dict[str, str]:
     """
     Extract @crosshair_accept reasons from source.
@@ -96,6 +98,7 @@ def get_crosshair_accept_reasons(source: str) -> dict[str, str]:
     return reasons
 
 
+# @shell_orchestration: Counterexample parsing helper for CrossHair output
 def extract_function_from_counterexample(ce: str) -> str | None:
     """
     Extract function name from CrossHair counterexample.

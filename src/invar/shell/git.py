@@ -28,6 +28,7 @@ def _run_git(args: list[str], cwd: Path) -> Result[str, str]:
         return Failure(f"Git error: {e}")
 
 
+# @shell_orchestration: Helper for git output parsing, tightly coupled to Shell
 def _parse_py_files(output: str, project_root: Path) -> set[Path]:
     """Parse git output and return Python file paths."""
     files: set[Path] = set()

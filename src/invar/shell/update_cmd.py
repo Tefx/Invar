@@ -21,6 +21,7 @@ console = Console()
 VERSION_PATTERN = re.compile(r"v(\d+)\.(\d+)(?:\.(\d+))?")
 
 
+# @shell_orchestration: Version parsing helper for update command
 def parse_version(text: str) -> tuple[int, int, int] | None:
     """
     Parse version string from text.

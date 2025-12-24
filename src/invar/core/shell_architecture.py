@@ -33,10 +33,30 @@ IO_INDICATORS: frozenset[str] = frozenset([
     ".write_bytes(",
     "open(",
     "Path(",
+    ".exists()",
+    ".is_file()",
+    ".is_dir()",
+    ".rglob(",
+    ".glob(",
+    ".iterdir(",
+    ".mkdir(",
+    ".unlink(",
+    "shutil.",
+    "tempfile.",
     # Process operations
     "subprocess.",
     "os.system(",
     "os.popen(",
+    "os.getenv(",
+    "os.environ",
+    # Terminal/System
+    "sys.stdout",
+    "sys.stderr",
+    "sys.stdin",
+    ".isatty()",
+    # Module loading
+    "importlib.",
+    "exec_module(",
     # Network operations
     "requests.",
     "aiohttp.",
@@ -45,8 +65,10 @@ IO_INDICATORS: frozenset[str] = frozenset([
     # Console output
     "print(",
     "console.",
+    "Console(",
     "typer.",
     "click.",
+    "rich.",
     # Result wrapping (Shell's primary job)
     "Success(",
     "Failure(",
@@ -58,6 +80,11 @@ IO_INDICATORS: frozenset[str] = frozenset([
     # Logging
     "logger.",
     "logging.",
+    # Serialization (often to files)
+    "json.dump(",
+    "json.load(",
+    "toml.load(",
+    "yaml.load(",
 ])
 
 # Marker pattern to exempt functions from complexity check
@@ -173,6 +200,8 @@ def count_branches(source: str) -> int:
         >>> count_branches("x = a if b else c")
         1
         >>> count_branches("pass")
+        0
+        >>> count_branches("")
         0
     """
     try:

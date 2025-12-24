@@ -56,6 +56,7 @@ class CrossHairStatus:
 # ============================================================
 
 
+# @shell_orchestration: Contract detection for CrossHair prove module
 def has_verifiable_contracts(source: str) -> bool:
     """
     Check if source has verifiable contracts.
@@ -354,6 +355,7 @@ def run_crosshair_parallel(
     )
 
 
+# @shell_orchestration: Result aggregation helper for parallel verification
 def _process_verification_result(
     result: dict,
     file_path: Path,
@@ -417,6 +419,7 @@ def run_crosshair_on_files(
 # ============================================================
 
 
+# @shell_orchestration: File selection for incremental verification
 def get_files_to_prove(
     path: Path,
     all_core_files: list[Path],
