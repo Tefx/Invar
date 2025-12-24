@@ -346,16 +346,17 @@ Conclusion: WARNING is sufficient - visible but not blocking
 **Total:** ~3 hours
 **Difficulty:** ⭐⭐
 
-### Phase 3: DX-31 Integration (Optional)
+### Phase 3: DX-31 Integration ✅ Merged
 
-| Task | File | Effort |
-|------|------|--------|
-| Add `review_suggested` trigger | src/invar/core/rules.py | 1 hour |
-| Connect to low coverage | rules.py | 30 min |
-| Document integration | INVAR.md | 30 min |
+> **Merged into DX-31:** The low contract coverage trigger has been incorporated into DX-31's `review_suggested` rule. See DX-31 "Trigger Conditions" table.
 
-**Total:** ~2 hours
-**Difficulty:** ⭐⭐
+| Task | Status |
+|------|--------|
+| Add `review_suggested` trigger | ✅ Merged into DX-31 |
+| Connect to low coverage (<50%) | ✅ Merged into DX-31 |
+| Document integration | Pending with DX-31 |
+
+**No separate implementation needed.** DX-31 Phase 1 will implement all trigger conditions including low contract coverage.
 
 ---
 

@@ -284,6 +284,7 @@ Agent: Incorporates findings → Reports to user
 | Changes ≥ 100 LOC | INFO (suggest) | Large changes error-prone |
 | Security-sensitive files | WARNING (strong suggest) | auth, crypto, secrets |
 | New public API | INFO (suggest) | Interface design matters |
+| Contract coverage < 50% | WARNING (strong suggest) | Very low coverage needs review (from DX-30) |
 
 ### Guard Integration
 
@@ -295,8 +296,11 @@ def check_review_suggested(file_info: FileInfo) -> list[Violation]:
 
     INFO when:
     - New Core file with public functions
-    - High escape hatch count (≥3)
     - Large file changes
+
+    WARNING when:
+    - High escape hatch count (≥3)
+    - Very low contract coverage (<50%) - from DX-30 Phase 3
     """
     suggestions = []
 
@@ -314,6 +318,16 @@ def check_review_suggested(file_info: FileInfo) -> list[Violation]:
             severity=Severity.WARNING,
             message=f"{file_info.escape_count} escape hatches - review recommended",
             suggestion="High escape count may indicate rule circumvention"
+        ))
+
+    # DX-30 Phase 3: Low contract coverage triggers review
+    if file_info.is_core and file_info.contract_ratio < 0.5:
+        pct = int(file_info.contract_ratio * 100)
+        suggestions.append(Violation(
+            rule="review_suggested",
+            severity=Severity.WARNING,
+            message=f"Contract coverage {pct}% - review recommended",
+            suggestion="Very low coverage may indicate incomplete contracts"
         ))
 
     return suggestions
