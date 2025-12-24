@@ -64,4 +64,15 @@ For each issue found:
 
 ---
 
+## Automatic Triggering (DX-31)
+
+Guard may suggest review via `review_suggested` rule when:
+- Security-sensitive file path (auth, crypt, token, etc.)
+- High escape hatch count (>= 3 @invar:allow markers)
+- Low contract coverage (< 50% of public functions)
+
+When Guard suggests review, consider spawning an independent review sub-agent.
+
+---
+
 Now review the recent changes or the files specified by the user.

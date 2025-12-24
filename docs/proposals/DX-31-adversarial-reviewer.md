@@ -2,8 +2,9 @@
 
 > **"Fresh eyes find what invested minds miss."**
 
-**Status:** Proposed
+**Status:** Phase 1 Implemented
 **Created:** 2024-12-24
+**Updated:** 2025-12-25
 **Relates to:** DX-30 (Visible Workflow), existing /review and /attack skills
 
 ## Platform Support
@@ -588,15 +589,16 @@ def validate_token(token: str) -> dict:
 
 ## Implementation Plan
 
-### Phase 1: Guard Trigger Rule (Immediate)
+### Phase 1: Guard Trigger Rule (Immediate) ✅
 
-- [ ] Add `review_suggested` rule to rules.py
-- [ ] Trigger on: new Core file, high escape count, large changes
-- [ ] Output as INFO (suggest) or WARNING (strong suggest)
-- [ ] Add to rule_meta.py
+- [x] Add `review_suggested` rule to rules.py
+- [x] Trigger on: escape count >= 3, contract ratio < 50%, security-sensitive path
+- [x] Output as WARNING (strong suggest)
+- [x] Add to rule_meta.py
 
 **Effort:** 2-3 hours
 **Scope:** All agents (Guard-based)
+**Implemented:** 2025-12-25 (see `src/invar/core/review_trigger.py`)
 
 ### Phase 2: Structured Review Format (Immediate)
 

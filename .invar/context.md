@@ -1,6 +1,6 @@
 # Invar Project Context
 
-*Last updated: 2025-12-24*
+*Last updated: 2025-12-25*
 
 ## Coverage Guarantee Matrix
 
@@ -47,6 +47,46 @@ Total examples: 7000
 ```
 
 All contracted functions pass property testing after switching to `deal.cases()`.
+
+---
+
+## Session 2025-12-25: DX-31 Review Trigger & DX-32 Workflow Proposal
+
+### DX-31 Phase 1: Guard Trigger Rule
+
+Implemented `review_suggested` rule that triggers independent review suggestion when:
+- **Security-sensitive path**: Files containing auth, crypt, secret, password, token, etc.
+- **High escape hatch count**: >= 3 `@invar:allow` markers
+- **Low contract coverage**: < 50% of public functions have contracts
+
+**Files Created:**
+- `src/invar/core/review_trigger.py` (252 lines) - Central module for DX-30/31 triggers
+
+**Files Modified:**
+- `src/invar/core/entry_points.py` - Added `count_escape_hatches()` helper
+- `src/invar/core/rules.py` - Registered `check_review_suggested`
+- `src/invar/core/rule_meta.py` - Added `review_suggested` metadata
+
+**Refactoring:**
+- Moved `calculate_contract_ratio` and `check_contract_quality_ratio` from `contracts.py` to `review_trigger.py` to keep file sizes under 500 lines
+
+### DX-32 Proposal: Workflow Iteration
+
+Created `docs/proposals/DX-32-workflow-iteration.md` analyzing ICIDIV workflow order.
+
+**Key Insight:** Contract-before-Inspect is problematic for brownfield development. Proposed USBV (Understand → Specify → Build → Validate) as alternative with iteration loops.
+
+### Lesson #26: Contract Before Inspect Problem
+
+**发现:** ICIDIV的Contract-before-Inspect顺序在修改现有代码时造成摩擦 - 无法为未检查的代码写合约。
+**机制:** Brownfield需要先理解再规范；Greenfield可以先规范。
+**类别:** Workflow order should be context-sensitive (greenfield vs brownfield).
+
+### Lesson #27: Process Visibility vs Task Completion
+
+**发现:** 在实现DX-31时违反了DX-30 Visible Workflow原则 - 优先完成任务而非展示过程。
+**机制:** Agent倾向于"直接做完"而非"展示正在做什么"。需要显式检查点。
+**类别:** Agent-Native workflows need explicit visibility checkpoints, not just documentation.
 
 ---
 
@@ -143,6 +183,7 @@ During DX-28 implementation, I batch-added `@skip_property_test` to 4 functions 
 - **GitHub Pages:** https://tefx.github.io/Invar/
 - **Licenses:** Apache-2.0 (runtime) + GPL-3.0 (tools) + CC-BY-4.0 (docs)
 - **Status:** Feature complete, zero technical debt
+- **Recent:** DX-31 Phase 1 (review_suggested rule), DX-32 proposal (workflow iteration)
 - **Blockers:** None
 
 ## Documentation Structure (DX-11)
