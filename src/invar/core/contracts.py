@@ -419,3 +419,65 @@ def check_skip_without_reason(file_info: FileInfo, config: RuleConfig) -> list[V
             )
 
     return violations
+
+
+@pre(lambda file_info, config: isinstance(file_info, FileInfo))
+def check_contract_quality_ratio(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
+    """
+    Check contract coverage ratio in Core files (DX-30).
+
+    WARNING if less than 80% of public functions have @pre or @post.
+    This encourages "Contract before Implement" workflow.
+
+    Examples:
+        >>> # Shell file - no check
+        >>> shell_info = FileInfo(path="shell/cli.py", lines=50, is_shell=True)
+        >>> check_contract_quality_ratio(shell_info, RuleConfig())
+        []
+        >>> # Core file with 100% coverage - pass
+        >>> from invar.core.models import Contract, Symbol
+        >>> c = Contract(kind="pre", expression="x > 0", line=1)
+        >>> sym = Symbol(name="calc", kind=SymbolKind.FUNCTION, line=1, end_line=5, contracts=[c])
+        >>> core_ok = FileInfo(path="core/calc.py", lines=50, symbols=[sym], is_core=True)
+        >>> check_contract_quality_ratio(core_ok, RuleConfig())
+        []
+        >>> # Core file with 0% coverage - warning
+        >>> sym_no = Symbol(name="calc", kind=SymbolKind.FUNCTION, line=1, end_line=5)
+        >>> core_bad = FileInfo(path="core/calc.py", lines=50, symbols=[sym_no], is_core=True)
+        >>> vs = check_contract_quality_ratio(core_bad, RuleConfig())
+        >>> len(vs) == 1 and vs[0].rule == "contract_quality_ratio"
+        True
+    """
+    violations: list[Violation] = []
+
+    if not file_info.is_core:
+        return violations
+
+    # Only check public functions (not starting with _)
+    functions = [
+        s for s in file_info.symbols
+        if s.kind in (SymbolKind.FUNCTION, SymbolKind.METHOD) and not s.name.startswith("_")
+    ]
+
+    if not functions:
+        return violations
+
+    total = len(functions)
+    with_contracts = sum(1 for f in functions if f.contracts)
+
+    ratio = with_contracts / total if total > 0 else 1.0
+
+    if ratio < 0.8:
+        pct = int(ratio * 100)
+        violations.append(
+            Violation(
+                rule="contract_quality_ratio",
+                severity=Severity.WARNING,
+                file=file_info.path,
+                line=None,
+                message=f"Contract coverage: {pct}% ({with_contracts}/{total}). Target: 80%+",
+                suggestion="Add @pre/@post to public functions. See INVAR.md 'Visible Workflow'",
+            )
+        )
+
+    return violations
