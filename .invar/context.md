@@ -50,6 +50,53 @@ All contracted functions pass property testing after switching to `deal.cases()`
 
 ---
 
+## Session 2025-12-24: DX-22 AST Detection & Tech Debt Resolution
+
+### The Problem
+
+Full `invar guard` scan revealed 36 errors that previous `--changed` checks missed:
+- Content-based detection used string matching (`"@pre(" in source`)
+- This matched patterns in docstrings, causing false positives
+- Example: `>>> @pre(NonEmpty)` in a docstring was detected as a Core module
+
+### The Solution
+
+1. **AST-Based Detection** (`src/invar/shell/config.py`):
+   - Replaced string matching with AST parsing
+   - `_has_contract_decorators()` - walks AST to find real decorators
+   - `_has_io_imports()` - checks actual import nodes
+   - `_has_result_types()` - detects Result/Success/Failure usage
+   - Errors reduced: 36 → 14 (-61%)
+
+2. **Tech Debt Resolution** (14 → 0 errors):
+   - `invariant.py`: Added `@invar:allow` for false positive (`.get()` matched `router.get`)
+   - `mcp/server.py`: Added `@shell_orchestration` and `@invar:allow` for MCP framework API
+   - `pyproject.toml`: Added `templates` and `.invar/examples` to exclude paths
+
+3. **DX-29 Proposal Created**:
+   - Pure content detection with explicit `@invar:module` markers
+   - Pending review - may need splitting into separate proposals
+
+### Files Changed
+
+| File | Change |
+|------|--------|
+| `src/invar/shell/config.py` | AST-based detection functions |
+| `src/invar/invariant.py` | False positive escape marker |
+| `runtime/src/invar_runtime/invariant.py` | Same |
+| `src/invar/mcp/server.py` | MCP framework escape markers |
+| `pyproject.toml` | Exclude templates from checking |
+| `docs/proposals/DX-29-pure-content-detection.md` | New proposal |
+| `docs/proposals/README.md` | Updated status for all proposals |
+
+### Lesson #26: String Matching vs AST
+
+**发现:** 字符串匹配检测代码特征会产生误报（docstring中的示例代码）。
+**机制:** AST解析只匹配真正的语法结构，不会被注释或字符串内容误导。
+**类别:** Detection logic should use AST for code patterns, string matching for comments/markers.
+
+---
+
 ## Session 2025-12-24: DX-28 Skip Abuse Prevention
 
 ### The Problem
@@ -92,7 +139,7 @@ During DX-28 implementation, I batch-added `@skip_property_test` to 4 functions 
 ## Current State
 
 - **PyPI:** `invar-tools` + `invar-runtime` v1.0.2 (DX-21 package split + dual licensing)
-- **Protocol:** v3.26 (DX-19: 2 verification levels, DX-21: package split + Claude init)
+- **Protocol:** v3.27 (DX-22: content-based detection, DX-26: guard simplification)
 - **GitHub Pages:** https://tefx.github.io/Invar/
 - **Licenses:** Apache-2.0 (runtime) + GPL-3.0 (tools) + CC-BY-4.0 (docs)
 - **Status:** Feature complete, zero technical debt
@@ -816,7 +863,7 @@ Human (Commander) ──directs──→ Agent (Executor) ──uses──→ In
 
 | File | Purpose |
 |------|---------|
-| INVAR.md | Protocol v3.26 |
+| INVAR.md | Protocol v3.27 |
 | docs/INVAR-GUIDE.md | Why & How |
 | docs/VISION.md | Design philosophy |
 | CLAUDE.md | Development guide |

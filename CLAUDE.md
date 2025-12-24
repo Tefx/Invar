@@ -4,7 +4,7 @@
 
 This project follows the Invar methodology. See [INVAR.md](./INVAR.md) for the protocol.
 
-**Protocol Version:** v3.26 | **PyPI:** `invar-tools` + `invar-runtime` | **Smart Guard:** `invar guard` = full verification
+**Protocol Version:** v3.27 | **PyPI:** `invar-tools` + `invar-runtime` | **Smart Guard:** `invar guard` = full verification
 
 ---
 
