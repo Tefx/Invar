@@ -366,6 +366,140 @@ Agent: All issues addressed. Task complete.
 
 The `/review` command remains available for explicit user requests, but is now secondary to automatic triggering.
 
+## Review Enforcement
+
+> **"A review without enforcement is just ceremony."**
+
+### Design Principle: Findings Must Be Addressed
+
+Generating a review report is meaningless if Agent can ignore it. DX-31 requires:
+1. Structured output (not prose) for tracking
+2. Severity-based enforcement rules
+3. Explicit resolution for each finding
+4. Task completion blocked by unresolved CRITICAL issues
+
+### Structured Output Format
+
+```python
+class ReviewFinding:
+    id: int
+    severity: Literal["CRITICAL", "MAJOR", "MINOR"]
+    location: str  # file:line
+    category: str  # contract_quality, code_smell, logic_error, etc.
+    description: str
+    suggestion: str | None
+
+class ReviewReport:
+    findings: list[ReviewFinding]
+    files_reviewed: int
+    critical_count: int
+    major_count: int
+    minor_count: int
+```
+
+### Severity-Based Enforcement
+
+| Severity | Enforcement | Rule |
+|----------|-------------|------|
+| **CRITICAL** | Blocking | MUST fix before task completion |
+| **MAJOR** | Strong | Fix OR provide written justification |
+| **MINOR** | Advisory | Optional, can defer to follow-up |
+
+### Resolution Tracking
+
+Each finding must have explicit resolution:
+
+```python
+class IssueResolution:
+    finding_id: int
+    status: Literal["fixed", "deferred", "disputed"]
+    justification: str | None  # Required for deferred/disputed
+
+# Resolution rules:
+# - CRITICAL: Cannot be "deferred", only "fixed" or "disputed" (with strong justification)
+# - MAJOR: Can be "deferred" with justification
+# - MINOR: Can be "deferred" without justification
+```
+
+### Task Completion Gate
+
+```python
+def can_complete_task(report: ReviewReport, resolutions: list[IssueResolution]) -> bool:
+    """Task cannot complete with unresolved CRITICAL issues."""
+    for finding in report.findings:
+        if finding.severity == "CRITICAL":
+            resolution = find_resolution(finding.id, resolutions)
+            if not resolution:
+                return False  # Unresolved CRITICAL
+            if resolution.status == "deferred":
+                return False  # CRITICAL cannot be deferred
+            if resolution.status == "disputed" and not resolution.justification:
+                return False  # Disputed needs justification
+    return True
+```
+
+### Enforcement Workflow
+
+```
+Agent: Review complete. Findings:
+  #1 CRITICAL: Contract lacks boundary check (auth.py:45)
+  #2 MAJOR: Magic number 3600 (auth.py:78)
+  #3 MINOR: Variable naming (auth.py:92)
+
+Agent: Addressing findings...
+
+[Fixes #1 - adds boundary check]
+[Fixes #2 - extracts TOKEN_EXPIRY_SECONDS constant]
+
+Agent: Resolution status:
+  #1 CRITICAL: ✅ Fixed - boundary check added
+  #2 MAJOR: ✅ Fixed - constant extracted
+  #3 MINOR: ⏸ Deferred - will address in style cleanup PR
+
+Agent: Checking completion gate...
+  - CRITICAL issues: 1 fixed, 0 unresolved ✓
+  - Can complete: YES
+
+[Re-runs Guard to verify fixes]
+
+Agent: Task complete.
+  - Implementation: ✓
+  - Review: ✓ (3 findings, 2 fixed, 1 deferred)
+  - Guard: ✓
+```
+
+### What If Agent Disputes a Finding?
+
+```
+Agent: Resolution status:
+  #1 CRITICAL: ❓ Disputed
+
+  Justification: The reviewer flagged missing boundary check for token length,
+  but the @pre contract delegates to jwt.decode() which handles this internally.
+  Adding redundant check would violate DRY. The contract correctly documents
+  the delegation: "@pre: token is valid JWT format (delegated to jwt library)"
+
+Agent: Disputed finding submitted for user review.
+User: [Reviews justification, accepts or requires fix]
+```
+
+### Why This Matters
+
+Without enforcement:
+```
+Review: Found 5 issues
+Agent: "Noted." [ignores] → Task "complete"
+```
+
+With enforcement:
+```
+Review: Found 5 issues (2 CRITICAL)
+Agent: Cannot complete until CRITICAL resolved
+Agent: [Fixes issues] → Resolution tracked → Task complete
+```
+
+**The review becomes a real quality gate, not a checkbox.**
+
 ### Review Report Format
 
 ```markdown
@@ -426,25 +560,35 @@ def validate_token(token: str) -> dict:
 
 **Effort:** 2-3 hours
 
-### Phase 2: Agent Protocol Documentation (Immediate)
+### Phase 2: Structured Review Format (Immediate)
 
-- [ ] Add "Independent Review" section to INVAR.md
-- [ ] Document trigger conditions and response protocol
-- [ ] Add workflow example to .invar/examples/
-- [ ] Update CLAUDE.md with review guidance
-
-**Effort:** 1-2 hours
-
-### Phase 3: Review Sub-Agent Configuration (Short-term)
-
-- [ ] Create adversarial reviewer prompt template
-- [ ] Define structured review checklist format
-- [ ] Document Task tool usage pattern for review
-- [ ] Add report format specification
+- [ ] Define ReviewFinding and ReviewReport schema
+- [ ] Define IssueResolution schema with status tracking
+- [ ] Create reviewer prompt that outputs structured format
+- [ ] Document severity-based enforcement rules
 
 **Effort:** 2-3 hours
 
-### Phase 4: Legacy Skill Update (Optional)
+### Phase 3: Agent Protocol Documentation (Immediate)
+
+- [ ] Add "Independent Review" section to INVAR.md
+- [ ] Document trigger conditions and response protocol
+- [ ] Document enforcement rules (CRITICAL = blocking)
+- [ ] Add resolution tracking requirements
+- [ ] Update CLAUDE.md with review guidance
+
+**Effort:** 2-3 hours
+
+### Phase 4: Review Sub-Agent Configuration (Short-term)
+
+- [ ] Create adversarial reviewer prompt template
+- [ ] Ensure output follows structured format
+- [ ] Document Task tool usage pattern for review
+- [ ] Add enforcement workflow examples
+
+**Effort:** 2-3 hours
+
+### Phase 5: Legacy Skill Update (Optional)
 
 - [ ] Update /review skill with adversarial prompt
 - [ ] Note: This is secondary to automatic triggering
@@ -461,6 +605,9 @@ def validate_token(token: str) -> dict:
 | Contract quality issues caught | Unknown | Track |
 | False positive rate | N/A | <20% |
 | User-triggered vs auto-triggered | 100% manual | <20% manual |
+| **CRITICAL issues fixed** | N/A | 100% (enforced) |
+| **MAJOR issues addressed** | N/A | 90%+ (fixed or justified) |
+| Review findings ignored | Unknown | 0% for CRITICAL |
 
 ## Appendix: Adversarial vs Collaborative Review
 
