@@ -21,6 +21,7 @@ This directory contains design proposals for Invar development.
 | DX-21 | package-and-init | Two-package architecture (invar-tools + invar-runtime) |
 | DX-22 | verification-strategy | Smart routing, Shell rules, Fix-or-Explain, content-based detection |
 | DX-23 | entry-point-detection | Auto-detect entry points, exemptions from Result requirement |
+| DX-24 | mechanism-documentation | 13 docs: architecture/, contracts/, rules/, verification/, workflow/ |
 | DX-26 | guard-simplification | Simplify guard CLI: 9→5 flags, TTY auto-detect, property test output |
 
 ### In Progress / Partial
@@ -28,19 +29,7 @@ This directory contains design proposals for Invar development.
 | ID | Name | Description |
 |----|------|-------------|
 | DX-20 | property-testing-enhancements | Property testing UX improvements |
-| DX-24 | mechanism-documentation | **40%** (6/15 docs) - Framework ✅; contracts/ workflow/ pending |
 | DX-28 | semantic-verification | **65%** - @relates, format specs, mutation testing, skip abuse prevention done |
-
-**DX-24 Progress:**
-
-| Phase | Status | Documents |
-|-------|--------|-----------|
-| Framework | ✅ 100% | README, architecture/, rules/, verification/ (6 docs) |
-| Contracts | □ 0% | pre-post.md, doctests.md, contract-complete.md |
-| Workflow | □ 0% | icidiv.md, session-start.md |
-| Integration | □ 0% | DESIGN.md, INVAR.md, CLAUDE.md, index.html |
-
-**Next:** `contracts/pre-post.md` → `doctests.md` → `contract-complete.md` → `workflow/`
 
 **DX-28 Remaining:**
 - Contract quality rules (filter_dual_coverage, parser_format_test, etc.)

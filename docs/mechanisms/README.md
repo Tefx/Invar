@@ -8,8 +8,9 @@ Technical documentation for Invar's verification and architecture mechanisms.
 |-----------|---------|-----------|
 | [Verification](verification/README.md) | Smart Guard = static + doctests + CrossHair + Hypothesis | `invar guard` |
 | [Architecture](architecture/README.md) | Core/Shell separation, Result monads, Entry points | Code design |
+| [Contracts](contracts/README.md) | `@pre`/`@post` contracts, doctests, completeness | Writing functions |
 | [Rules](rules/README.md) | Static analysis checks and Fix-or-Explain | Continuous |
-| [Severity Design](rules/severity-design.md) | ERROR/WARNING/INFO principles and escape hatches | Rule design |
+| [Workflow](workflow/README.md) | ICIDIV methodology, Check-In/Final protocols | Every session |
 
 ## Key Concepts
 
