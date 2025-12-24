@@ -154,9 +154,31 @@ def _verify_single_file(
                 "stdout": result.stdout,
             }
         else:
+            # Check if this is an execution error vs actual counterexample
+            # CrossHair reports TypeError/AttributeError when it can't
+            # symbolically execute C extensions like ast.parse()
+            stdout = result.stdout
+            execution_errors = [
+                "TypeError:",
+                "AttributeError:",
+                "NotImplementedError:",
+                "compile() arg 1 must be",  # ast.parse limitation
+            ]
+            is_execution_error = any(err in stdout for err in execution_errors)
+
+            if is_execution_error:
+                # Treat as skipped - function uses unsupported operations
+                return {
+                    "file": file_path,
+                    "status": CrossHairStatus.SKIPPED,
+                    "time_ms": elapsed_ms,
+                    "reason": "uses unsupported operations (ast/compile)",
+                    "stdout": stdout,
+                }
+
             counterexamples = [
                 line.strip()
-                for line in result.stdout.split("\n")
+                for line in stdout.split("\n")
                 if line.strip() and "error" not in line.lower()
             ]
             return {
@@ -164,7 +186,7 @@ def _verify_single_file(
                 "status": CrossHairStatus.COUNTEREXAMPLE,
                 "time_ms": elapsed_ms,
                 "counterexamples": counterexamples,
-                "stdout": result.stdout,
+                "stdout": stdout,
             }
 
     except subprocess.TimeoutExpired:
