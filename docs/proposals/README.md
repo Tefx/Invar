@@ -17,6 +17,7 @@ This directory contains design proposals for Invar development.
 | DX-13 | incremental-prove | Incremental CrossHair verification with caching |
 | DX-14 | expanded-prove-usage | Full verification in pre-commit/CI (merged into default via DX-19) |
 | DX-21 | package-and-init | Two-package architecture (invar-tools + invar-runtime) |
+| DX-26 | guard-simplification | Simplify guard CLI: 9→5 flags, TTY auto-detect, property test output |
 
 ### In Progress / Partial
 
@@ -32,7 +33,6 @@ This directory contains design proposals for Invar development.
 
 | ID | Name | Description |
 |----|------|-------------|
-| DX-26 | guard-simplification | Simplify guard CLI: 9→5 flags, unified output mode, remove redundant commands |
 | DX-22 | verification-strategy | Smart verification routing, Shell architecture rules, Fix-or-Explain enforcement |
 | DX-23 | entry-point-detection | Entry point detection and monad runner pattern for framework callbacks |
 | DX-24 | mechanism-documentation | English documentation for all Invar mechanisms (verification, architecture, rules, workflow) |

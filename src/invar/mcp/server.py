@@ -15,7 +15,7 @@ from typing import Any
 from mcp.server import Server
 from mcp.types import TextContent, Tool
 
-# Strong instructions for agent behavior (DX-16 + DX-17)
+# Strong instructions for agent behavior (DX-16 + DX-17 + DX-26)
 INVAR_INSTRUCTIONS = """
 ## Invar Tool Usage (MANDATORY)
 
