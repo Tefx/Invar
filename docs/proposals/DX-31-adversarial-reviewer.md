@@ -2,7 +2,7 @@
 
 > **"Fresh eyes find what invested minds miss."**
 
-**Status:** Phase 1, 5, 6 ✅ | Phase 2 Deferred | Phase 3 Revised | Phase 4 Pending
+**Status:** Phase 1, 3, 4, 5, 6 ✅ | Phase 2 Deferred
 **Created:** 2024-12-24
 **Updated:** 2025-12-25
 **Relates to:** DX-30 (Visible Workflow), existing /review and /attack skills
@@ -613,11 +613,11 @@ def validate_token(token: str) -> dict:
 **Effort:** 2-3 hours
 **Scope:** All agents (Schema definition)
 
-### Phase 3: Agent Protocol Documentation ⚠️ Revised
+### Phase 3: Agent Protocol Documentation ✅
 
 **Original scope reduced.** Enforcement rules and resolution tracking deferred with Phase 2.
 
-- [ ] Add Review Gate trigger conditions to INVAR.md (source)
+- [x] Add Review Gate trigger conditions to INVAR.md (source)
 - [x] Document trigger conditions and response protocol (in templates/INVAR.md, AGENTS.md)
 - [x] Update CLAUDE.md with review guidance (Agent Roles, Review Modes)
 - [x] Update templates/CLAUDE.md.template with Agent Roles section
@@ -629,18 +629,19 @@ def validate_token(token: str) -> dict:
 
 **Effort:** 1 hour (reduced)
 **Scope:** All agents (Protocol)
-**Partial:** 2025-12-25
+**Implemented:** 2025-12-25
 
-### Phase 4: Platform Limitation Documentation (Immediate)
+### Phase 4: Platform Limitation Documentation ✅
 
-- [ ] Update README.md with platform support matrix
-- [ ] Add "Platform Support" section to docs (if exists)
-- [ ] Document Claude Code requirement for full feature
-- [ ] Explain Guard-only fallback for other agents
-- [ ] Add note to PyPI package description
+- [x] Update README.md with platform support matrix
+- [x] Add "Platform Support" section to docs (README.md serves as main doc)
+- [x] Document Claude Code requirement for full feature
+- [x] Explain Guard-only fallback for other agents
+- [x] Add note to PyPI package description (README.md is PyPI long description)
 
 **Effort:** 1-2 hours
 **Scope:** Documentation only
+**Implemented:** 2025-12-25
 
 ### Phase 5: Claude Code Sub-Agent Configuration (Short-term) ✅
 

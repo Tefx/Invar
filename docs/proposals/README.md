@@ -32,17 +32,15 @@ This directory contains design proposals for Invar development.
 |----|------|-------------|
 | DX-20 | property-testing-enhancements | Property testing UX improvements |
 | DX-28 | semantic-verification | **65%** - @relates, format specs, mutation testing, skip abuse prevention done |
-| DX-31 | adversarial-reviewer | **Phase 1,5,6 ✅** - Guard trigger + /review Mode Detection. Phase 2 deferred, 3-4 pending |
+| DX-31 | adversarial-reviewer | **Phase 1,3,4,5,6 ✅** - Guard trigger + /review + platform docs. Phase 2 deferred |
 
 **DX-28 Remaining:**
 - Contract quality rules (filter_dual_coverage, parser_format_test, etc.)
 - Bidirectional testing framework
 - CrossHair symbolic verification of @relates
 
-**DX-31 Remaining:**
+**DX-31 Status:**
 - Phase 2: 📋 **Deferred** - Structured schema (current Prompt Guidance sufficient)
-- Phase 3: Add Review Gate trigger conditions to INVAR.md source
-- Phase 4: Platform support docs in README.md
 
 ### Backlog
 

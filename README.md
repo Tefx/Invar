@@ -264,6 +264,25 @@ Manual setup: See `.invar/mcp-setup.md` after running `invar init`.
 
 ---
 
+## Platform Support (DX-31)
+
+The Independent Adversarial Reviewer (DX-31) has different capabilities depending on your AI coding assistant:
+
+| Feature | Claude Code | Other Agents |
+|---------|-------------|--------------|
+| Guard `review_suggested` | ✅ | ✅ |
+| Automatic sub-agent review | ✅ Task tool | ❌ Manual action |
+| Context isolation | ✅ Fresh context | N/A |
+| Adversarial mindset | ✅ Prompt-based | User responsibility |
+
+**Claude Code:** Full independent review with context isolation. When Guard outputs `review_suggested`, the agent automatically spawns a sub-agent reviewer that sees only the code (not the implementation history).
+
+**Cursor, Windsurf, Copilot, etc.:** Guard outputs `review_suggested` as a warning. Users must manually invoke review or use external code review tools.
+
+**Why context isolation matters:** The same agent that wrote code has "author blindness" — it remembers its rationale and unconsciously validates its own decisions. An isolated reviewer sees only the code.
+
+---
+
 ## File Ownership
 
 | File | Owner | Edit? |

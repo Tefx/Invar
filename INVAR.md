@@ -363,6 +363,28 @@ For complex tasks (3+ functions, architectural changes), show 3 checkpoints in T
 
 **Skip for:** Single-line fixes, documentation changes, trivial refactoring.
 
+## Review Gate (DX-31)
+
+Guard outputs `review_suggested` when conditions warrant independent review:
+
+| Trigger | Level | Rationale |
+|---------|-------|-----------|
+| Security-sensitive path | WARNING | Files with auth, crypt, secret, password, token |
+| Escape hatches ≥ 3 | WARNING | High `@invar:allow` count may indicate rule circumvention |
+| Contract coverage < 50% | WARNING | Core files need adequate contracts |
+
+**When triggered:**
+1. Guard outputs `review_suggested` in results
+2. Agent spawns `/review` sub-agent (isolated context, adversarial mindset)
+3. Sub-agent reviews code without implementation history
+4. Findings are addressed before task completion
+
+**Why isolation matters:** The same agent that wrote code has "author blindness" — it remembers rationale and unconsciously validates its own decisions. An isolated reviewer sees only the code.
+
+**Platform support:**
+- **Claude Code:** Full independent review via Task tool (context isolation)
+- **Other agents:** Guard suggestions only; user decides follow-up action
+
 ## Task Completion
 
 A task is complete only when ALL conditions are met:
