@@ -7,6 +7,7 @@ from collections.abc import Callable
 from deal import post, pre
 
 from invar.core.contracts import (
+    check_contract_quality_ratio,  # DX-30
     check_empty_contracts,
     check_param_mismatch,
     check_partial_contract,
@@ -409,6 +410,7 @@ def get_all_rules() -> list[RuleFunc]:
         check_partial_contract,
         check_must_use,
         check_skip_without_reason,  # DX-28
+        check_contract_quality_ratio,  # DX-30
     ]
 
 

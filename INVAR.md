@@ -12,7 +12,7 @@
   You are free to share and adapt this document, provided you give
   appropriate credit to the Invar project.
 -->
-# The Invar Protocol v3.27
+# The Invar Protocol v3.28
 
 > **"Trade structure for safety."** Separate what CAN fail (I/O) from what SHOULD NOT fail (logic).
 
@@ -303,6 +303,45 @@ Then read `.invar/context.md` for project state and lessons learned.
 
 **Contract before Implement. Verify after every change. No exceptions.**
 
+## Visible Workflow (DX-30)
+
+For complex tasks (3+ functions, architectural changes), show ICIDIV phases in your TodoList:
+
+```
+□ [Intent] Task description, Core/Shell classification
+□ [Contract] Function signatures with @pre/@post
+□ [Inspect] Files and symbols to review
+□ [Design] Decomposition plan
+□ [Implement] Write code
+□ [Verify] Guard results
+```
+
+**Contract before Implement:** Show contracts in your message before writing code.
+
+```python
+[Contract] calculate_discount:
+@pre(lambda price, rate: price > 0 and 0 <= rate <= 1)
+@post(lambda result: result >= 0)
+def calculate_discount(price: float, rate: float) -> float:
+    ...
+
+Edge cases:
+- price = 0 → Invalid (rejected by @pre)
+- rate = 0 → Full price
+- rate = 1 → Zero (free)
+
+[Implement] Now coding...
+```
+
+**When to use Phase TodoList:**
+- New features (3+ functions)
+- Architectural changes
+- Core module modifications
+
+**Skip for:** Single-line fixes, documentation changes, trivial refactoring.
+
+This makes compliance visible and catches mistakes early.
+
 ## Task Completion
 
 A task is complete only when ALL conditions are met:
@@ -379,4 +418,4 @@ purity_impure = ["mylib.cached_compute"]  # Has side effects
 
 ---
 
-*Protocol v3.27 — Added Check-In format, Markers section (entry points, shell complexity, escape hatch).*
+*Protocol v3.28 — Added Visible Workflow (DX-30): Phase TodoList and Contract Declaration conventions.*

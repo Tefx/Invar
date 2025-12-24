@@ -198,6 +198,15 @@ RULE_META: dict[str, RuleMeta] = {
         cannot_detect=("Whether the reason is valid", "Skip abuse patterns"),
         hint='Add reason: @skip_property_test("category: explanation")',
     ),
+    # DX-30: Contract coverage ratio
+    "contract_quality_ratio": RuleMeta(
+        name="contract_quality_ratio",
+        severity=Severity.WARNING,
+        category=RuleCategory.CONTRACTS,
+        detects="Core file with less than 80% contract coverage on public functions",
+        cannot_detect=("Contract quality", "Whether contracts are meaningful"),
+        hint="Add @pre/@post to public functions. Use Phase TodoList for complex tasks",
+    ),
 }
 
 

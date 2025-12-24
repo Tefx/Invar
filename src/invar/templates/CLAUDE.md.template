@@ -62,7 +62,22 @@ src/{project}/
 | INVAR.md | Invar | No | Protocol (`invar update` to sync) |
 | CLAUDE.md | User | Yes | Project customization (this file) |
 | .invar/context.md | User | Yes | Project state, lessons learned |
-| .invar/examples/ | Invar | No | **Must read:** Core/Shell patterns |
+| .invar/examples/ | Invar | No | **Must read:** Core/Shell patterns, workflow |
+
+## Visible Workflow (DX-30)
+
+For complex tasks (3+ functions), use Phase TodoList:
+
+```
+□ [Intent] Task description, Core/Shell classification
+□ [Contract] Function signatures with @pre/@post
+□ [Inspect] Files and symbols to review
+□ [Design] Decomposition plan
+□ [Implement] Write code
+□ [Verify] Guard results
+```
+
+**Show contracts before code.** See `.invar/examples/workflow.md` for full example.
 
 ## Project-Specific Rules
 
