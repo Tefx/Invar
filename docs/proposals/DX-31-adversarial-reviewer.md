@@ -2,7 +2,7 @@
 
 > **"Fresh eyes find what invested minds miss."**
 
-**Status:** Phase 1, 3 (partial), 5, 6 Implemented
+**Status:** Phase 1, 5, 6 ✅ | Phase 2 Deferred | Phase 3 Revised | Phase 4 Pending
 **Created:** 2024-12-24
 **Updated:** 2025-12-25
 **Relates to:** DX-30 (Visible Workflow), existing /review and /attack skills
@@ -600,27 +600,34 @@ def validate_token(token: str) -> dict:
 **Scope:** All agents (Guard-based)
 **Implemented:** 2025-12-25 (see `src/invar/core/review_trigger.py`)
 
-### Phase 2: Structured Review Format (Immediate)
+### Phase 2: Structured Review Format — 📋 Deferred
 
 - [ ] Define ReviewFinding and ReviewReport schema
 - [ ] Define IssueResolution schema with status tracking
 - [ ] Create reviewer prompt that outputs structured format
-- [ ] Document severity-based enforcement rules
+- [ ] Programmatic task completion gate
+
+**Status:** Deferred
+**Rationale:** Current Prompt-Based Guidance (like Guard) is sufficient. Programmatic enforcement adds complexity without proven need. Revisit if agents frequently ignore CRITICAL findings.
 
 **Effort:** 2-3 hours
 **Scope:** All agents (Schema definition)
 
-### Phase 3: Agent Protocol Documentation (Immediate) ⚠️ Partial
+### Phase 3: Agent Protocol Documentation ⚠️ Revised
 
-- [ ] Add "Independent Review" section to INVAR.md (source)
+**Original scope reduced.** Enforcement rules and resolution tracking deferred with Phase 2.
+
+- [ ] Add Review Gate trigger conditions to INVAR.md (source)
 - [x] Document trigger conditions and response protocol (in templates/INVAR.md, AGENTS.md)
-- [ ] Document enforcement rules (CRITICAL = blocking)
-- [ ] Add resolution tracking requirements
 - [x] Update CLAUDE.md with review guidance (Agent Roles, Review Modes)
 - [x] Update templates/CLAUDE.md.template with Agent Roles section
 - [x] Create docs/mechanisms/documentation.md (INVAR vs CLAUDE attribution)
 
-**Effort:** 2-3 hours
+**Deferred to Phase 2:**
+- Document enforcement rules (CRITICAL = blocking)
+- Add resolution tracking requirements
+
+**Effort:** 1 hour (reduced)
 **Scope:** All agents (Protocol)
 **Partial:** 2025-12-25
 
