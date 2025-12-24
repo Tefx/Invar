@@ -28,21 +28,19 @@ This directory contains design proposals for Invar development.
 | ID | Name | Description |
 |----|------|-------------|
 | DX-20 | property-testing-enhancements | Property testing UX improvements |
-| DX-24 | mechanism-documentation | **40%** - architecture/, rules/, verification/ partial; contracts/ and workflow/ pending |
+| DX-24 | mechanism-documentation | **40%** (6/15 docs) - Framework ✅; contracts/ workflow/ pending |
 | DX-28 | semantic-verification | **65%** - @relates, format specs, mutation testing, skip abuse prevention done |
 
-**DX-24 Completed:**
-- `mechanisms/README.md` - Index and overview
-- `mechanisms/architecture/README.md` - Core/Shell overview
-- `mechanisms/rules/README.md` - Rule system overview
-- `mechanisms/rules/severity-design.md` - ERROR/WARNING/INFO design
-- `mechanisms/verification/README.md` - Verification pipeline
-- `mechanisms/verification/smart-routing.md` - CrossHair/Hypothesis routing
+**DX-24 Progress:**
 
-**DX-24 Remaining:**
-- `architecture/` detailed docs (core-shell.md, entry-points.md, result-monad.md)
-- `contracts/` directory (pre-post.md, doctests.md, contract-complete.md)
-- `workflow/` directory (icidiv.md, session-start.md)
+| Phase | Status | Documents |
+|-------|--------|-----------|
+| Framework | ✅ 100% | README, architecture/, rules/, verification/ (6 docs) |
+| Contracts | □ 0% | pre-post.md, doctests.md, contract-complete.md |
+| Workflow | □ 0% | icidiv.md, session-start.md |
+| Integration | □ 0% | DESIGN.md, INVAR.md, CLAUDE.md, index.html |
+
+**Next:** `contracts/pre-post.md` → `doctests.md` → `contract-complete.md` → `workflow/`
 
 **DX-28 Remaining:**
 - Contract quality rules (filter_dual_coverage, parser_format_test, etc.)
