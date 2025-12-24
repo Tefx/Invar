@@ -27,7 +27,7 @@ from invar.core.rules import check_all_rules
 from invar.core.utils import get_exit_code
 from invar.shell.config import load_config
 from invar.shell.fs import scan_project
-from invar.shell.guard_output import output_agent, output_json, output_rich
+from invar.shell.guard_output import output_agent, output_rich
 
 app = typer.Typer(
     name="invar",
@@ -80,26 +80,30 @@ def guard(
         Path(), help="Project root directory", exists=True, file_okay=False, dir_okay=True
     ),
     strict: bool = typer.Option(False, "--strict", help="Treat warnings as errors"),
-    no_strict_pure: bool = typer.Option(
-        False, "--no-strict-pure", help="Disable purity checks (internal imports, impure calls)"
-    ),
-    pedantic: bool = typer.Option(
-        False, "--pedantic", help="Show all violations including off-by-default rules"
-    ),
-    explain: bool = typer.Option(
-        False, "--explain", help="Show detailed explanations and limitations"
-    ),
     changed: bool = typer.Option(
         False, "--changed", help="Only check git-modified files"
     ),
-    agent: bool = typer.Option(
-        False, "--agent", help="Output JSON with fix instructions for agents"
-    ),
-    json_output: bool = typer.Option(
-        False, "--json", help="Output as JSON (simple format, no fix instructions)"
-    ),
     static: bool = typer.Option(
         False, "--static", help="Static analysis only, skip all runtime tests"
+    ),
+    human: bool = typer.Option(
+        False, "--human", help="Force human-readable output (for testing/debugging)"
+    ),
+    # DX-26: Deprecated flags kept for backward compatibility
+    no_strict_pure: bool = typer.Option(
+        False, "--no-strict-pure", hidden=True, help="[Deprecated] Disable purity checks"
+    ),
+    pedantic: bool = typer.Option(
+        False, "--pedantic", hidden=True, help="[Deprecated] Show off-by-default rules"
+    ),
+    explain: bool = typer.Option(
+        False, "--explain", hidden=True, help="[Deprecated] Show detailed explanations"
+    ),
+    agent: bool = typer.Option(
+        False, "--agent", hidden=True, help="[Deprecated] Use TTY auto-detection instead"
+    ),
+    json_output: bool = typer.Option(
+        False, "--json", hidden=True, help="[Deprecated] Use TTY auto-detection instead"
     ),
 ) -> None:
     """Check project against Invar architecture rules.
@@ -149,17 +153,15 @@ def guard(
         raise typer.Exit(1)
     report = scan_result.unwrap()
 
-    # Determine output mode
-    use_agent_output, use_json_output = _determine_output_mode(
-        json_output, agent
-    )
+    # DX-26: Simplified output mode (TTY auto-detect + --human override)
+    use_agent_output = _determine_output_mode(human, agent, json_output)
 
     # DX-19: Simplified to 2 levels (STATIC or STANDARD)
     verification_level = VerificationLevel.STATIC if static else VerificationLevel.STANDARD
     level_name = "STATIC" if static else "STANDARD"
 
     # Show verification level (human mode)
-    if not use_agent_output and not use_json_output:
+    if not use_agent_output:
         _show_verification_level(verification_level)
 
     # Run verification phases
@@ -186,14 +188,12 @@ def guard(
             checked_files, doctest_passed, static_exit_code
         )
 
-    # Output results
+    # DX-26: Unified output (agent JSON or human Rich)
     if use_agent_output:
         output_agent(
             report, strict, doctest_passed, doctest_output, crosshair_output, level_name,
             property_output=property_output,
         )
-    elif use_json_output:
-        output_json(report)
     else:
         output_rich(report, config.strict_pure, changed, pedantic, explain, static)
         output_verification_status(
@@ -210,13 +210,25 @@ def guard(
 
 
 # @shell_orchestration: Output mode decision helper for CLI
-def _determine_output_mode(json_output: bool, agent: bool) -> tuple[bool, bool]:
-    """Determine output mode based on flags and context."""
-    if json_output:
-        return False, True
-    if agent or _detect_agent_mode():
-        return True, False
-    return False, False
+def _determine_output_mode(human: bool, agent: bool = False, json_output: bool = False) -> bool:
+    """Determine if agent JSON output should be used (DX-26).
+
+    DX-26: TTY auto-detection with --human override.
+    - --human flag → human output (for testing/debugging)
+    - TTY (terminal) → human output
+    - Non-TTY (pipe/redirect) → agent JSON output
+    - Deprecated --agent/--json flags → still work for backward compat
+    """
+    # --human flag always forces human output
+    if human:
+        return False  # use_agent = False
+
+    # Deprecated flags (backward compat)
+    if json_output or agent:
+        return True  # use_agent = True
+
+    # TTY auto-detection
+    return _detect_agent_mode()  # Returns True if non-TTY
 
 
 def _show_verification_level(verification_level) -> None:

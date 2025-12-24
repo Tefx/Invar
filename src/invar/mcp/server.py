@@ -170,9 +170,8 @@ async def _run_guard(args: dict[str, Any]) -> list[TextContent]:
     if args.get("strict", False):
         cmd.append("--strict")
 
-    # DX-26: Use --agent for full verification details (status reflects all phases)
-    # In Phase 2, this will be replaced by TTY auto-detection
-    cmd.append("--agent")
+    # DX-26: TTY auto-detection - MCP runs in non-TTY, so agent JSON output is automatic
+    # No explicit flag needed
 
     return await _execute_command(cmd)
 
