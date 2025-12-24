@@ -9,23 +9,32 @@ Core module: pure logic, no I/O.
 
 from __future__ import annotations
 
+import re
+
 from deal import post, pre
 
 from invar.core.entry_points import count_escape_hatches
 from invar.core.models import FileInfo, RuleConfig, Severity, SymbolKind, Violation
 
 # DX-31: Security-sensitive path patterns that trigger review suggestion
-SECURITY_SENSITIVE_PATTERNS: tuple[str, ...] = (
-    "auth",
-    "crypt",
+# Split into two groups to reduce false positives:
+
+# Patterns safe to match as substrings (authentication, cryptography are valid matches)
+SECURITY_SUBSTRING_PATTERNS: tuple[str, ...] = (
+    "auth",       # authentication, authorize, authority
+    "crypt",      # cryptography, encrypt, decrypt
     "secret",
     "password",
-    "token",
     "credential",
-    "key",
-    "session",
     "permission",
-    "access",
+)
+
+# Patterns that must be exact word matches (to avoid keyboard, tokenizer, accessory)
+SECURITY_WORD_PATTERNS: tuple[str, ...] = (
+    "token",      # not tokenizer
+    "key",        # not keyboard, monkey
+    "session",    # not obsession
+    "access",     # not accessory
 )
 
 
@@ -136,22 +145,57 @@ def is_security_sensitive(path: str) -> bool:
     """
     Check if path indicates security-sensitive code (DX-31).
 
-    Matches against SECURITY_SENSITIVE_PATTERNS in path components.
+    Uses two-tier matching to reduce false positives:
+    - Substring matching for unambiguous patterns (auth, crypt, secret, etc.)
+    - Word-exact matching for ambiguous patterns (key, token, access, session)
 
     Examples:
+        >>> # Substring patterns (auth, crypt, secret, password, credential, permission)
         >>> is_security_sensitive("src/auth/login.py")
+        True
+        >>> is_security_sensitive("src/authentication.py")
         True
         >>> is_security_sensitive("src/core/crypto.py")
         True
         >>> is_security_sensitive("src/utils/helpers.py")
         False
+
+        >>> # Word-exact patterns (token, key, session, access)
         >>> is_security_sensitive("src/token_handler.py")
         True
+        >>> is_security_sensitive("src/api_key.py")
+        True
+        >>> is_security_sensitive("src/access_control.py")
+        True
+
+        >>> # False positive prevention
+        >>> is_security_sensitive("src/tokenizer.py")
+        False
+        >>> is_security_sensitive("src/keyboard.py")
+        False
+        >>> is_security_sensitive("src/monkey.py")
+        False
+        >>> is_security_sensitive("src/accessory.py")
+        False
+        >>> is_security_sensitive("src/hockey.py")
+        False
+
+        >>> # Edge cases
         >>> is_security_sensitive("")
         False
     """
+    if not path:
+        return False
+
     path_lower = path.lower()
-    return any(pattern in path_lower for pattern in SECURITY_SENSITIVE_PATTERNS)
+
+    # Check substring patterns (safe, low false positive rate)
+    if any(pattern in path_lower for pattern in SECURITY_SUBSTRING_PATTERNS):
+        return True
+
+    # Check word-exact patterns (split path into words first)
+    words = re.split(r"[/_.\-\\]", path_lower)
+    return any(word in SECURITY_WORD_PATTERNS for word in words)
 
 
 @pre(lambda file_info, config: isinstance(file_info, FileInfo))
