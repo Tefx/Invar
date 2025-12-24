@@ -67,63 +67,50 @@ The Protocol is a document that defines how agents should work. It provides sign
 └────────────────────────────────────────────────────────────────┘
 ```
 
-### The ICIDIV Workflow
+### The USBV Workflow (DX-32)
 
 ```
-  ┌─────┐   ┌─────┐   ┌─────┐   ┌─────┐   ┌─────┐   ┌─────┐
-  │  I  │ ▶ │  C  │ ▶ │  I  │ ▶ │  D  │ ▶ │  I  │ ▶ │  V  │
-  │ntent│   │ontr.│   │nsp. │   │sign │   │mpl. │   │erify│
-  └─────┘   └─────┘   └─────┘   └─────┘   └─────┘   └─────┘
-     │         │         │         │         │         │
-     ▼         ▼         ▼         ▼         ▼         ▼
-  Classify  Define    Check     Plan     Write     Unit+
-  Core/Shell bounds   sizes    extract   code     Integ.
+  ┌──────────┐   ┌──────────┐   ┌──────────┐   ┌──────────┐
+  │UNDERSTAND│ ▶ │ SPECIFY  │ ▶ │  BUILD   │ ▶ │ VALIDATE │
+  └──────────┘   └──────────┘   └──────────┘   └──────────┘
+       │              │              │              │
+       ▼              ▼              ▼              ▼
+    Intent         Contract       Implement      Verify
+    Inspect        Design         Compose        Integrate
+    Constraints    Test Cases                    Reflect
 ```
 
-### Checkpoints
+**Key insight:** Inspect before Contract — understand existing code before writing interfaces.
 
-Each step has a checkpoint the agent must pass:
+### Visible Checkpoints (3)
 
-**After Intent:**
+For complex tasks, show 3 checkpoints in TodoList:
+
+**[UNDERSTAND]** — User verifies intent and context
 ```
-□ Read map or project structure
-□ Identified affected symbols
+□ Task intent clearly stated
+□ Codebase context examined (invar sig, invar map)
+□ Edge cases and constraints identified
 □ Classified as Core or Shell
-□ Listed potential edge cases
 ```
 
-**After Contract:**
+**[SPECIFY]** — User approves contracts before implementation
 ```
-□ All parameters have type hints
 □ @pre AND @post decorators defined (complete contract)
 □ Docstring has Examples (>>> normal, boundary, edge)
 □ Self-test: Can this contract regenerate the function?
+□ Complex task decomposed into sub-functions
 □ Three-way consistency: Code ↔ Contract ↔ Doctests
 ```
 
-**After Design:**
+**[VALIDATE]** — User confirms correctness
 ```
-□ Complex task decomposed into sub-functions
-□ Dependencies identified (which calls which)
-□ Implementation order determined (leaves first)
-□ File size checked (< 400 lines or plan extraction)
-```
-
-**After Implementation:**
-```
-□ Code is explicit (no **kwargs, no eval)
-□ Function < 50 lines, File < 500 lines
-□ Full type annotations
-□ Code passes the doctests already written
-```
-
-**After Verify:**
-```
-□ pytest passes (including doctests)
 □ invar guard passes
 □ If violations: reflected on WHY before fixing
-□ Property tests found no counterexamples (if applicable)
+□ Integration tested (if applicable)
 ```
+
+**BUILD is internal work** — not shown in TodoList (no user decision needed).
 
 ---
 
@@ -892,7 +879,7 @@ invar init --config-only # Only add config, no INVAR.md/CLAUDE.md
 **Rule Engine:**
 - Rules YAML化 - Machine-readable with priorities
 - Rule conflict resolution
-- ICIDV precheck command
+- USBV phase precheck command
 
 **Config & Profiles:**
 - Config profiles ("strict", "standard", "relaxed" presets)
@@ -1055,7 +1042,7 @@ $ uvx invar-tools init --claude
 Protocol and tool versions are separate:
 
 ```
-INVAR.md v3.27       # Protocol version (MAJOR.MINOR)
+INVAR.md v4.0        # Protocol version (MAJOR.MINOR)
 invar-tools 1.0.2    # Tool version (semver)
 invar-runtime 1.0.2  # Runtime version (semver)
 ```

@@ -1,6 +1,6 @@
 # Invar Protocol
 
-Follow the Invar Protocol in INVAR.md — includes Check-In, ICIDIV workflow, and Task Completion requirements.
+Follow the Invar Protocol in INVAR.md — includes Check-In, USBV workflow, and Task Completion requirements.
 
 ## Check-In
 
@@ -33,5 +33,5 @@ This is your sign-out. Completes the Check-In/Final pair.
 
 - Core (`**/core/**`): @pre/@post contracts, doctests, pure (no I/O)
 - Shell (`**/shell/**`): Result[T, E] return type
-- Workflow: Intent → Contract → Inspect → Design → Implement → Verify
-- Contract before Implement. No exceptions.
+- Workflow: Understand → Specify → Build → Validate (USBV)
+- Inspect before Contract. Depth varies naturally.

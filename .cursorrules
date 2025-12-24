@@ -17,7 +17,7 @@ Use MCP tools if available, otherwise use CLI commands.
 
 - Core (`src/invar/core/`): @pre/@post contracts, doctests, pure (no I/O)
 - Shell (`src/invar/shell/`): Result[T, E] return type
-- Workflow: Intent -> Contract -> Inspect -> Design -> Implement -> Verify
+- Workflow: Understand -> Specify -> Build -> Validate (USBV)
 - Task complete only when final invar_guard passes.
 
 ## Project-Specific

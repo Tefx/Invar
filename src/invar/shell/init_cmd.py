@@ -96,7 +96,7 @@ def append_invar_reference_to_claude_md(path: Path) -> bool:
 
 ## Invar Protocol
 
-> **Protocol:** Follow [INVAR.md](./INVAR.md) — includes Check-In, ICIDIV workflow, and Task Completion.
+> **Protocol:** Follow [INVAR.md](./INVAR.md) — includes Check-In, USBV workflow, and Task Completion.
 
 ### Check-In
 

@@ -55,7 +55,7 @@
 
 **What agents do:**
 - Read and internalize INVAR.md
-- Follow ICIDIV workflow
+- Follow USBV workflow (Understand → Specify → Build → Validate)
 - Write contracts, separate Core/Shell
 - Run `invar guard` to verify compliance
 - Fix violations before presenting to human
@@ -275,15 +275,16 @@ This introduces **contract completeness**: A complete contract uniquely determin
 
 The research converges on a single principle:
 
-**Structure before code. Completeness in contracts. Reflection before fix.**
+**Understand before specify. Structure before code. Reflection before fix.**
 
-1. **Design** - Decompose task into sub-functions
-2. **Contract** - Write COMPLETE tests for each function (eliminates ambiguity)
-3. **Implement** - Write code to pass the tests (leaves first)
-4. **Verify** - If failure, reflect first, then fix
+1. **UNDERSTAND** - Inspect context, grasp intent, identify constraints
+2. **SPECIFY** - Write COMPLETE contracts and decompose into sub-functions
+3. **BUILD** - Write code to pass the tests (leaves first)
+4. **VALIDATE** - If failure, reflect → return to appropriate phase → fix
 
-Time spent on structure pays dividends at every stage:
+Time spent on understanding and structure pays dividends at every stage:
+- During specification → Better contracts from context awareness
 - During implementation → Clearer targets (complete contracts = one valid solution)
 - During verification → Catch bugs early (three-way consistency)
-- During recovery → Reflection + contracts guide fixes
+- During recovery → Explicit iteration to SPECIFY or UNDERSTAND
 - For solvability → Clear, complete specs make problems tractable

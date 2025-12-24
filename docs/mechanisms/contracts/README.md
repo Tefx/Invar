@@ -49,5 +49,5 @@ invar guard
 
 ## See Also
 
-- [ICIDIV Workflow](../workflow/icidiv.md) - Contract-first development
+- [USBV Workflow](../workflow/usbv.md) - Contract-first development
 - [Verification Overview](../verification/README.md) - How contracts are verified

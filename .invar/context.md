@@ -179,7 +179,7 @@ During DX-28 implementation, I batch-added `@skip_property_test` to 4 functions 
 ## Current State
 
 - **PyPI:** `invar-tools` + `invar-runtime` v1.0.2 (DX-21 package split + dual licensing)
-- **Protocol:** v3.27 (DX-22: content-based detection, DX-26: guard simplification)
+- **Protocol:** v4.0 (DX-32: USBV workflow, DX-31: review triggers)
 - **GitHub Pages:** https://tefx.github.io/Invar/
 - **Licenses:** Apache-2.0 (runtime) + GPL-3.0 (tools) + CC-BY-4.0 (docs)
 - **Status:** Feature complete, zero technical debt
@@ -904,7 +904,7 @@ Human (Commander) ──directs──→ Agent (Executor) ──uses──→ In
 
 | File | Purpose |
 |------|---------|
-| INVAR.md | Protocol v3.27 |
+| INVAR.md | Protocol v4.0 |
 | docs/INVAR-GUIDE.md | Why & How |
 | docs/VISION.md | Design philosophy |
 | CLAUDE.md | Development guide |

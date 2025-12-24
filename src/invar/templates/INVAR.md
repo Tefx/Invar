@@ -12,7 +12,7 @@
   You are free to share and adapt this document, provided you give
   appropriate credit to the Invar project.
 -->
-# The Invar Protocol v3.28
+# The Invar Protocol v4.0
 
 > **"Trade structure for safety."**
 
@@ -91,41 +91,40 @@ No visible check-in = Session not started.
 
 Then read `.invar/context.md` for project state and lessons learned.
 
-## ICIDIV Workflow (Required Order)
+## USBV Workflow (DX-32)
 
-```
-1. Intent    — What? Core or Shell? Edge cases?
-2. Contract  — @pre/@post + doctests BEFORE code
-3. Inspect   — invar sig <file>, invar map --top 10
-4. Design    — Decompose: leaves first, then compose
-5. Implement — Write code to pass your doctests
-6. Verify    — invar guard. If fail: reflect → fix → verify
-```
+**U**nderstand → **S**pecify → **B**uild → **V**alidate
 
-**Contract before Implement. Verify after every change. No exceptions.**
+| Phase | Purpose | Activities |
+|-------|---------|------------|
+| UNDERSTAND | Know what and why | Intent, Inspect (invar sig/map), Constraints |
+| SPECIFY | Define boundaries | @pre/@post, Design decomposition, Doctests |
+| BUILD | Write code | Implement leaves, Compose |
+| VALIDATE | Confirm correctness | invar guard, Integrate, Reflect |
+
+**Key:** Inspect before Contract. Depth varies naturally. Iterate when needed.
 
 ## Visible Workflow (DX-30)
 
-For complex tasks (3+ functions), show ICIDIV phases in TodoList:
+For complex tasks (3+ functions), show 3 checkpoints in TodoList:
 
 ```
-□ [Intent] Task description, Core/Shell classification
-□ [Contract] Function signatures with @pre/@post
-□ [Inspect] Files and symbols to review
-□ [Design] Decomposition plan
-□ [Implement] Write code
-□ [Verify] Guard results
+□ [UNDERSTAND] Task description, codebase context, constraints
+□ [SPECIFY] Contracts (@pre/@post) and design decomposition
+□ [VALIDATE] Guard results, integration status
 ```
+
+**BUILD is internal work** — not shown in TodoList.
 
 **Show contracts before code.** Example:
 
 ```python
-[Contract] calculate_discount:
+[SPECIFY] calculate_discount:
 @pre(lambda price, rate: price > 0 and 0 <= rate <= 1)
 @post(lambda result: result >= 0)
 def calculate_discount(price: float, rate: float) -> float: ...
 
-[Implement] Now coding...
+[BUILD] Now coding...
 ```
 
 **When to use:** New features (3+ functions), architectural changes, Core modifications.
@@ -203,4 +202,4 @@ shell_paths = ["src/myapp/shell"]
 
 ---
 
-*Protocol v3.28 — Added Visible Workflow (DX-30) | [Guide](docs/INVAR-GUIDE.md) | [Examples](.invar/examples/)*
+*Protocol v4.0 — USBV workflow (DX-32) | [Guide](docs/INVAR-GUIDE.md) | [Examples](.invar/examples/)*

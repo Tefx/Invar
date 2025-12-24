@@ -238,7 +238,7 @@
             font-size: 0.9rem;
         }
 
-        /* ICIDIV Workflow */
+        /* USBV Workflow */
         .workflow {
             overflow: hidden;
         }
@@ -888,50 +888,38 @@
 
     <section class="workflow" id="workflow">
         <div class="container">
-            <h2>The Workflow: ICIDIV</h2>
-            <p class="subtitle">AI follows this workflow for every task</p>
+            <h2>The Workflow: USBV</h2>
+            <p class="subtitle">AI follows this workflow for every task — depth varies naturally</p>
 
             <div class="workflow-diagram">
                 <div class="workflow-step">
-                    <div class="workflow-letter">I</div>
-                    <div class="workflow-label">Intent</div>
+                    <div class="workflow-letter">U</div>
+                    <div class="workflow-label">Understand</div>
                 </div>
                 <div class="workflow-arrow">→</div>
                 <div class="workflow-step">
-                    <div class="workflow-letter">C</div>
-                    <div class="workflow-label">Contract</div>
+                    <div class="workflow-letter">S</div>
+                    <div class="workflow-label">Specify</div>
                 </div>
                 <div class="workflow-arrow">→</div>
                 <div class="workflow-step">
-                    <div class="workflow-letter">I</div>
-                    <div class="workflow-label">Inspect</div>
-                </div>
-                <div class="workflow-arrow">→</div>
-                <div class="workflow-step">
-                    <div class="workflow-letter">D</div>
-                    <div class="workflow-label">Design</div>
-                </div>
-                <div class="workflow-arrow">→</div>
-                <div class="workflow-step">
-                    <div class="workflow-letter">I</div>
-                    <div class="workflow-label">Implement</div>
+                    <div class="workflow-letter">B</div>
+                    <div class="workflow-label">Build</div>
                 </div>
                 <div class="workflow-arrow">→</div>
                 <div class="workflow-step">
                     <div class="workflow-letter">V</div>
-                    <div class="workflow-label">Verify</div>
+                    <div class="workflow-label">Validate</div>
                 </div>
             </div>
 
             <div class="workflow-example">
                 <h3>Example <span>— You: "Add a function to calculate discounted price"</span></h3>
                 <table class="workflow-steps-table">
-                    <tr><td>Intent</td><td>Core function (pure logic, no I/O)</td></tr>
-                    <tr><td>Contract</td><td>@pre: price > 0, discount ∈ [0,1]. @post: result ≥ 0</td></tr>
-                    <tr><td>Inspect</td><td>invar sig — check existing patterns</td></tr>
-                    <tr><td>Design</td><td>File size OK, no extraction needed</td></tr>
-                    <tr><td>Implement</td><td>Write code with contracts and doctest</td></tr>
-                    <tr><td>Verify</td><td>invar guard — Smart Guard runs static + doctests</td></tr>
+                    <tr><td>Understand</td><td>Core function (pure logic), check existing patterns with invar sig</td></tr>
+                    <tr><td>Specify</td><td>@pre: price > 0, discount ∈ [0,1]. @post: result ≥ 0. Decompose if needed.</td></tr>
+                    <tr><td>Build</td><td>Write code with contracts and doctests</td></tr>
+                    <tr><td>Validate</td><td>invar guard — Smart Guard runs static + doctests. Iterate if needed.</td></tr>
                 </table>
                 <div class="workflow-code mono">
 <span class="decorator">@pre</span>(<span class="function">lambda</span> price, discount: price > 0 <span class="function">and</span> 0 <= discount <= 1)
@@ -1092,8 +1080,8 @@
                 <a href="https://github.com/tefx/invar/blob/main/docs/VISION.md">Vision</a>
             </div>
             <p class="copyright">
-                Invar Protocol v3.26 — Apache-2.0 (runtime) + GPL-3.0 (tools) + CC-BY-4.0 (docs)<br>
-                Two-Level Verification • Agent-Native JSON • Human-Directed Purpose
+                Invar Protocol v4.0 — Apache-2.0 (runtime) + GPL-3.0 (tools) + CC-BY-4.0 (docs)<br>
+                USBV Workflow • Agent-Native JSON • Human-Directed Purpose
             </p>
         </div>
     </footer>
