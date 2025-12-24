@@ -106,8 +106,6 @@ def guard(
 
     Smart Guard: Runs static analysis + doctests + CrossHair + Hypothesis by default.
     Use --static for quick static-only checks (~0.5s vs ~5s full).
-
-    DX-19: Simplified to 2 levels (Zero decisions).
     """
     from invar.shell.guard_helpers import (
         collect_files_to_check,

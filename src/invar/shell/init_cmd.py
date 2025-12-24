@@ -187,7 +187,9 @@ def init(
     Initialize Invar configuration in a project.
 
     Works with or without pyproject.toml:
-    - If pyproject.toml exists: adds [tool.invar.guard] section
+
+    \b
+    - If pyproject.toml exists: adds tool.invar section
     - Otherwise: creates invar.toml
 
     Use --claude to run 'claude /init' first (recommended for Claude Code users).

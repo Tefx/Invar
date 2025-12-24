@@ -33,7 +33,7 @@ def test(
     changed: bool = typer.Option(False, "--changed", help="Test git-modified files only"),
     max_examples: int = typer.Option(100, "--max-examples", help="Maximum Hypothesis examples per function"),
 ) -> None:
-    """Run property-based tests using Hypothesis on contracted functions (DX-08)."""
+    """Run property-based tests using Hypothesis on contracted functions."""
     from invar.shell.property_tests import (
         format_property_test_report,
         run_property_tests_on_files,
