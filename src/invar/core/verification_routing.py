@@ -49,7 +49,7 @@ CROSSHAIR_INCOMPATIBLE_LIBS = frozenset(
         # System calls (side effects)
         "subprocess",
         "multiprocessing",
-        # Database (I/O)
+        # Database I/O
         "sqlalchemy",
         "psycopg2",
         "pymongo",

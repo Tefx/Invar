@@ -12,7 +12,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from deal import post, pre
-
 from invar_runtime import skip_property_test
 
 if TYPE_CHECKING:
@@ -28,7 +27,7 @@ except ImportError:
 
 @skip_property_test("no_params: Zero-parameter function, property testing cannot vary inputs")
 @post(lambda result: result is not None)
-def crosshair_line() -> "SearchStrategy[str]":
+def crosshair_line() -> SearchStrategy[str]:
     """
     Generate a CrossHair counterexample line.
 
@@ -58,7 +57,7 @@ def crosshair_line() -> "SearchStrategy[str]":
     args = st.from_regex(r"[a-z]=-?\d{1,5}", fullmatch=True)
 
     return st.builds(
-        lambda f, l, e, fn, a: f"{f}:{l}: error: {e} when calling {fn}({a})",
+        lambda f, ln, e, fn, a: f"{f}:{ln}: error: {e} when calling {fn}({a})",
         filenames,
         line_nums,
         error_types,
@@ -72,7 +71,7 @@ def crosshair_line() -> "SearchStrategy[str]":
 def crosshair_output(
     min_errors: int = 0,
     max_errors: int = 5,
-) -> "SearchStrategy[str]":
+) -> SearchStrategy[str]:
     """
     Generate complete CrossHair output with multiple lines.
 
@@ -106,7 +105,7 @@ def crosshair_output(
     )
 
     return st.builds(
-        lambda h, errors, f: "\n".join([h] + errors + [f]),
+        lambda h, errors, f: "\n".join([h, *errors, f]),
         headers,
         error_lines,
         footers,
@@ -119,7 +118,7 @@ def text_with_pattern(
     pattern: str,
     min_occurrences: int = 1,
     max_occurrences: int = 5,
-) -> "SearchStrategy[str]":
+) -> SearchStrategy[str]:
     """
     Generate text that contains a specific pattern.
 
@@ -171,7 +170,7 @@ def text_with_pattern(
 @post(lambda result: result is not None)
 def extraction_test_case(
     pattern: str,
-) -> "SearchStrategy[tuple[str, int]]":
+) -> SearchStrategy[tuple[str, int]]:
     """
     Generate (text, expected_count) pairs for testing extraction functions.
 

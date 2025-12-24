@@ -28,7 +28,7 @@ console = Console()
 # @invar:allow entry_point_too_thick: CLI orchestration with multiple output modes
 def mutate(
     target: Path = typer.Argument(
-        Path("."),
+        Path(),
         help="File or directory to mutate",
         exists=True,
     ),

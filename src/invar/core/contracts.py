@@ -405,20 +405,7 @@ def check_skip_without_reason(file_info: FileInfo, config: RuleConfig) -> list[V
 
     for line_num, line in enumerate(source.split("\n"), 1):
         # Check for bare @skip_property_test (no parentheses)
-        if bare_pattern.match(line):
-            violations.append(
-                Violation(
-                    rule="skip_without_reason",
-                    severity=Severity.WARNING,
-                    file=file_info.path,
-                    line=line_num,
-                    message="@skip_property_test used without reason",
-                    suggestion='Add reason: @skip_property_test("category: explanation")\n'
-                    "Valid categories: no_params, strategy_factory, external_io, non_deterministic",
-                )
-            )
-        # Check for @skip_property_test() with no argument
-        elif no_reason_pattern.match(line):
+        if bare_pattern.match(line) or no_reason_pattern.match(line):
             violations.append(
                 Violation(
                     rule="skip_without_reason",

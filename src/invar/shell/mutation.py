@@ -9,16 +9,16 @@ Shell module: handles subprocess execution and result parsing.
 
 from __future__ import annotations
 
+import contextlib
 import subprocess
 import sys
 from dataclasses import dataclass, field
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 from returns.result import Failure, Result, Success
 
 if TYPE_CHECKING:
-    pass
+    from pathlib import Path
 
 
 @dataclass
@@ -118,6 +118,7 @@ def run_mutation_test(
 
     Examples:
         >>> # This is a shell function - actual behavior depends on mutmut
+        >>> from pathlib import Path
         >>> result = run_mutation_test(Path("nonexistent.py"))
         >>> isinstance(result, Failure)
         True
@@ -206,7 +207,7 @@ def parse_mutmut_output(
 
         if "mutants" in line and "total" in line:
             parts = line.split()
-            for i, part in enumerate(parts):
+            for _, part in enumerate(parts):
                 if part.isdigit():
                     result.total = int(part)
                     break
@@ -216,17 +217,13 @@ def parse_mutmut_output(
         # mutmut results show format: "Killed: X, Survived: Y"
         for line in stdout.split("\n"):
             if "Killed:" in line:
-                try:
+                with contextlib.suppress(ValueError, IndexError):
                     result.killed = int(line.split("Killed:")[1].split(",")[0].strip())
-                except (ValueError, IndexError):
-                    pass
             if "Survived:" in line:
-                try:
+                with contextlib.suppress(ValueError, IndexError):
                     result.survived = int(
                         line.split("Survived:")[1].split(",")[0].strip()
                     )
-                except (ValueError, IndexError):
-                    pass
 
         result.total = result.killed + result.survived + result.timeout
 
@@ -249,6 +246,7 @@ def get_surviving_mutants(target: Path) -> Result[list[str], str]:
         Success with list of survivor descriptions or Failure
 
     Examples:
+        >>> from pathlib import Path
         >>> result = get_surviving_mutants(Path("."))
         >>> isinstance(result, (Success, Failure))
         True
