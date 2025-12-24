@@ -68,6 +68,33 @@ ENTRY_MARKER_PATTERN = re.compile(r"#\s*@shell:entry\b")
 INVAR_ALLOW_PATTERN = re.compile(r"#\s*@invar:allow\s+(\w+)\s*:\s*(.+)")
 
 
+@pre(lambda source: isinstance(source, str))
+@post(lambda result: isinstance(result, int) and result >= 0)
+def count_escape_hatches(source: str) -> int:
+    """
+    Count @invar:allow markers in source code (DX-31).
+
+    Used by check_review_suggested to trigger review when escape count >= 3.
+
+    Examples:
+        >>> count_escape_hatches("")
+        0
+        >>> count_escape_hatches("# @invar:allow rule: reason")
+        1
+        >>> source = '''
+        ... # @invar:allow rule1: reason1
+        ... def foo(): pass
+        ... # @invar:allow rule2: reason2
+        ... def bar(): pass
+        ... '''
+        >>> count_escape_hatches(source)
+        2
+        >>> count_escape_hatches("regular comment # no marker")
+        0
+    """
+    return len(INVAR_ALLOW_PATTERN.findall(source))
+
+
 @pre(lambda symbol, source: symbol is not None)
 @post(lambda result: isinstance(result, bool))
 def is_entry_point(symbol: Symbol, source: str) -> bool:

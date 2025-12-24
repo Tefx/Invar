@@ -7,7 +7,6 @@ from collections.abc import Callable
 from deal import post, pre
 
 from invar.core.contracts import (
-    check_contract_quality_ratio,  # DX-30
     check_empty_contracts,
     check_param_mismatch,
     check_partial_contract,
@@ -20,6 +19,10 @@ from invar.core.extraction import format_extraction_hint
 from invar.core.models import FileInfo, RuleConfig, Severity, SymbolKind, Violation
 from invar.core.must_use import check_must_use
 from invar.core.purity import check_impure_calls, check_internal_imports
+from invar.core.review_trigger import (
+    check_contract_quality_ratio,  # DX-30
+    check_review_suggested,  # DX-31
+)
 from invar.core.shell_architecture import (
     check_shell_pure_logic,
     check_shell_too_complex,
@@ -411,6 +414,7 @@ def get_all_rules() -> list[RuleFunc]:
         check_must_use,
         check_skip_without_reason,  # DX-28
         check_contract_quality_ratio,  # DX-30
+        check_review_suggested,  # DX-31
     ]
 
 

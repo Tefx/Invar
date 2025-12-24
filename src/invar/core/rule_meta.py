@@ -207,6 +207,15 @@ RULE_META: dict[str, RuleMeta] = {
         cannot_detect=("Contract quality", "Whether contracts are meaningful"),
         hint="Add @pre/@post to public functions. Use Phase TodoList for complex tasks",
     ),
+    # DX-31: Review suggestion trigger
+    "review_suggested": RuleMeta(
+        name="review_suggested",
+        severity=Severity.WARNING,
+        category=RuleCategory.DOCS,
+        detects="Conditions warranting independent code review (escape count, coverage, security)",
+        cannot_detect=("Whether review was performed", "Review quality"),
+        hint="Consider independent /review sub-agent before task completion",
+    ),
 }
 
 
