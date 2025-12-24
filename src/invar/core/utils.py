@@ -234,6 +234,9 @@ def parse_guard_config(guard_config: dict[str, Any]) -> RuleConfig:
     """
     Parse configuration from guard section.
 
+    DX-22: Removed deprecated options (use_code_lines, exclude_doctest_lines).
+    These are now always enabled by default.
+
     Examples:
         >>> cfg = parse_guard_config({"max_file_lines": 400})
         >>> cfg.max_file_lines
@@ -246,9 +249,6 @@ def parse_guard_config(guard_config: dict[str, Any]) -> RuleConfig:
         1
         >>> cfg.rule_exclusions[0].pattern
         '**/gen/**'
-        >>> cfg = parse_guard_config({"use_code_lines": "invalid"})  # Invalid type ignored
-        >>> cfg.use_code_lines  # Falls back to model default (False)
-        False
     """
     kwargs: dict[str, Any] = {}
 
@@ -258,7 +258,8 @@ def parse_guard_config(guard_config: dict[str, Any]) -> RuleConfig:
             kwargs[key] = val
 
     # Bool fields
-    for key in ("require_contracts", "require_doctests", "strict_pure", "use_code_lines", "exclude_doctest_lines"):
+    # DX-22: Removed use_code_lines, exclude_doctest_lines (deprecated)
+    for key in ("require_contracts", "require_doctests", "strict_pure"):
         if (val := _get_bool(guard_config, key)) is not None:
             kwargs[key] = val
 

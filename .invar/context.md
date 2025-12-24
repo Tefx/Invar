@@ -50,6 +50,45 @@ All contracted functions pass property testing after switching to `deal.cases()`
 
 ---
 
+## Session 2025-12-24: DX-28 Skip Abuse Prevention
+
+### The Problem
+
+During DX-28 implementation, I batch-added `@skip_property_test` to 4 functions in `format_strategies.py` without proper justification. Only 1 (zero-parameter function) truly needed skip; the other 3 had `@pre` conditions that property testing could verify.
+
+**Root cause:** Convenience over discipline. Adding skip was easier than thinking about whether it was needed.
+
+### The Solution
+
+1. **Decorator enhanced** (`decorators.py`):
+   - `@skip_property_test` now requires a reason string
+   - Bare usage sets `"(no reason provided)"` enabling Guard detection
+
+2. **Guard rule added** (`contracts.py`):
+   - `check_skip_without_reason` detects bare/empty skip usage
+   - Uses regex with `^` anchor to avoid matching examples in docstrings
+
+3. **Rule metadata** (`rule_meta.py`):
+   - `skip_without_reason` rule registered with WARNING severity
+
+### Files Changed
+
+| File | Change |
+|------|--------|
+| `runtime/src/invar_runtime/decorators.py` | Enhanced skip_property_test decorator |
+| `src/invar/core/contracts.py` | Added check_skip_without_reason rule |
+| `src/invar/core/rules.py` | Registered new rule |
+| `src/invar/core/rule_meta.py` | Added rule metadata |
+| `src/invar/core/format_strategies.py` | Removed 3 unnecessary skips |
+
+### Lesson #25: Skip Requires Justification
+
+**发现:** 批量添加`@skip_property_test`是"懒惰的快捷方式"。每个skip都应该有明确理由。
+**机制:** Guard检测缺失理由，强制开发者思考为什么跳过。
+**类别:** 有效的跳过理由包括: `no_params`, `strategy_factory`, `external_io`, `non_deterministic`。
+
+---
+
 ## Current State
 
 - **PyPI:** `invar-tools` + `invar-runtime` v1.0.2 (DX-21 package split + dual licensing)
@@ -809,6 +848,7 @@ Human (Commander) ──directs──→ Agent (Executor) ──uses──→ In
 22. **Session Context > Async Feedback** - Problems caught during Agent session (pre-commit) beat CI feedback (context lost)
 23. **Example-Driven Learning** - Abstract rules don't teach; concrete code examples do. New agents learn fastest by seeing working code
 24. **deal Lambda Boolean Trap** - `and`/`or` in contracts may return strings; deal interprets non-bool as error messages. Always use `bool()`
+25. **Skip Requires Justification** - Batch-adding @skip_property_test is lazy shortcut. Each skip needs explicit reason. Guard enforces categories: no_params, strategy_factory, external_io, non_deterministic
 
 ## Release Process
 

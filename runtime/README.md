@@ -59,7 +59,28 @@ def get_items() -> list:
 - `@must_use(reason)` - Mark return value as must-use
 - `@must_close` - Mark class as requiring explicit cleanup
 - `@strategy(**params)` - Specify Hypothesis strategies
-- `@skip_property_test(reason)` - Skip property-based testing
+- `@skip_property_test(reason)` - Skip property-based testing (**reason required**)
+
+### Skip Property Test Usage
+
+The `@skip_property_test` decorator requires a reason explaining why the function cannot be property-tested. Guard warns if used without justification.
+
+```python
+# ✅ Good - with reason
+@skip_property_test("no_params: Zero-parameter function, no inputs to vary")
+def get_version() -> str:
+    return "1.0.0"
+
+# ❌ Bad - Guard warns about missing reason
+@skip_property_test
+def my_func(): ...
+```
+
+**Valid reason categories:**
+- `no_params:` - Function has no parameters to test
+- `strategy_factory:` - Returns Hypothesis strategy, not testable data
+- `external_io:` - Requires database/network/filesystem
+- `non_deterministic:` - Output depends on time/random state
 
 ## Loop Invariants
 

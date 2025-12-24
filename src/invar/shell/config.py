@@ -8,11 +8,14 @@ Configuration sources (priority order):
 2. invar.toml [guard]
 3. .invar/config.toml [guard]
 4. Built-in defaults
+
+DX-22: Added content-based auto-detection for Core/Shell classification.
 """
 
 from __future__ import annotations
 
 import tomllib
+from enum import Enum
 from typing import TYPE_CHECKING, Any, Literal
 
 from returns.result import Failure, Result, Success
@@ -24,6 +27,103 @@ from invar.core.utils import (
     matches_pattern,
     parse_guard_config,
 )
+
+
+class ModuleType(Enum):
+    """DX-22: Module type for auto-detection."""
+
+    CORE = "core"
+    SHELL = "shell"
+    UNKNOWN = "unknown"
+
+
+# I/O indicators that suggest Shell module
+_IO_INDICATORS = frozenset(
+    [
+        # File operations
+        ".read(",
+        ".write(",
+        ".read_text(",
+        ".write_text(",
+        "open(",
+        "Path(",
+        # Subprocess
+        "subprocess.",
+        "os.system(",
+        # Network
+        "requests.",
+        "aiohttp.",
+        "httpx.",
+        # Console output
+        "print(",
+        "console.",
+        "typer.",
+        # Result monad (Shell pattern)
+        "Success(",
+        "Failure(",
+        "Result[",
+    ]
+)
+
+# Contract indicators that suggest Core module
+_CONTRACT_INDICATORS = frozenset(
+    [
+        "@pre(",
+        "@post(",
+        "@invariant(",
+    ]
+)
+
+
+# @shell_complexity: Classification decision tree requires multiple conditions
+def auto_detect_module_type(source: str, file_path: str = "") -> ModuleType:
+    """
+    Automatically detect module type from source content.
+
+    DX-22: Content-based classification when path-based is inconclusive.
+
+    Priority:
+    1. Path convention (**/core/** or **/shell/**)
+    2. Content features (contracts, Result types, I/O operations)
+
+    Args:
+        source: Python source code as string
+        file_path: Optional file path for path-based hints
+
+    Returns:
+        ModuleType indicating Core, Shell, or Unknown
+
+    Examples:
+        >>> auto_detect_module_type("@pre(lambda x: x > 0)\\ndef foo(x): pass")
+        <ModuleType.CORE: 'core'>
+        >>> auto_detect_module_type("def load() -> Result[str, str]: return Success('ok')")
+        <ModuleType.SHELL: 'shell'>
+        >>> auto_detect_module_type("def helper(): pass")
+        <ModuleType.UNKNOWN: 'unknown'>
+    """
+    # Priority 1: Path convention
+    if file_path:
+        path_lower = file_path.lower()
+        if "/core/" in path_lower or path_lower.endswith("/core"):
+            return ModuleType.CORE
+        if "/shell/" in path_lower or path_lower.endswith("/shell"):
+            return ModuleType.SHELL
+
+    # Priority 2: Content features
+    has_contracts = any(indicator in source for indicator in _CONTRACT_INDICATORS)
+    has_io = any(indicator in source for indicator in _IO_INDICATORS)
+    has_result = "Result[" in source or "Success(" in source or "Failure(" in source
+
+    # Core: has contracts AND no I/O
+    if has_contracts and not has_io:
+        return ModuleType.CORE
+
+    # Shell: has I/O or Result types
+    if has_io or has_result:
+        return ModuleType.SHELL
+
+    # Unknown: neither clear pattern
+    return ModuleType.UNKNOWN
 
 if TYPE_CHECKING:
     from pathlib import Path

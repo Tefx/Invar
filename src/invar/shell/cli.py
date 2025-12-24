@@ -371,6 +371,7 @@ def rules(
 
 # Import commands from separate modules to reduce file size
 from invar.shell.init_cmd import init
+from invar.shell.mutate_cmd import mutate  # DX-28
 from invar.shell.test_cmd import test, verify
 from invar.shell.update_cmd import update
 
@@ -378,6 +379,7 @@ app.command()(init)
 app.command()(update)
 app.command()(test)
 app.command()(verify)
+app.command()(mutate)  # DX-28: Mutation testing
 
 
 if __name__ == "__main__":

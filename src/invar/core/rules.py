@@ -12,6 +12,7 @@ from invar.core.contracts import (
     check_partial_contract,
     check_redundant_type_contracts,
     check_semantic_tautology,
+    check_skip_without_reason,  # DX-28
 )
 from invar.core.entry_points import get_symbol_lines, has_allow_marker, is_entry_point
 from invar.core.extraction import format_extraction_hint
@@ -110,8 +111,8 @@ def check_function_size(file_info: FileInfo, config: RuleConfig) -> list[Violati
     """
     Check if any function exceeds maximum line count.
 
-    When use_code_lines is True, uses code_lines (excluding docstring).
-    When exclude_doctest_lines is True, subtracts doctest lines from count.
+    DX-22: Always uses code_lines (excluding docstring) and excludes doctest lines.
+    These behaviors were previously optional but are now the default.
 
     Examples:
         >>> from invar.core.models import FileInfo, Symbol, SymbolKind
@@ -126,26 +127,19 @@ def check_function_size(file_info: FileInfo, config: RuleConfig) -> list[Violati
     for symbol in file_info.symbols:
         if symbol.kind in (SymbolKind.FUNCTION, SymbolKind.METHOD):
             total_lines = symbol.end_line - symbol.line + 1
-            # Calculate effective line count based on config
-            if config.use_code_lines and symbol.code_lines is not None:
+            # DX-22: Always use code_lines when available (excluding docstring)
+            if symbol.code_lines is not None:
                 func_lines = symbol.code_lines
                 line_type = "code lines"
             else:
                 func_lines = total_lines
                 line_type = "lines"
-            # Optionally exclude doctest lines
-            if config.exclude_doctest_lines and symbol.doctest_lines > 0:
+            # DX-22: Always exclude doctest lines from size calculation
+            if symbol.doctest_lines > 0:
                 func_lines -= symbol.doctest_lines
                 line_type = f"{line_type} (excl. doctest)"
 
             if func_lines > config.max_function_lines:
-                # P19: Show breakdown if doctest lines exist
-                if symbol.doctest_lines > 0 and not config.exclude_doctest_lines:
-                    code_only = total_lines - symbol.doctest_lines
-                    breakdown = f" ({code_only} code + {symbol.doctest_lines} doctest)"
-                    suggestion = f"Extract helper or set exclude_doctest_lines=true{breakdown}"
-                else:
-                    suggestion = "Extract helper functions"
                 violations.append(
                     Violation(
                         rule="function_size",
@@ -153,7 +147,7 @@ def check_function_size(file_info: FileInfo, config: RuleConfig) -> list[Violati
                         file=file_info.path,
                         line=symbol.line,
                         message=f"Function '{symbol.name}' has {func_lines} {line_type} (max: {config.max_function_lines})",
-                        suggestion=suggestion,
+                        suggestion="Extract helper functions",
                     )
                 )
 
@@ -414,6 +408,7 @@ def get_all_rules() -> list[RuleFunc]:
         check_param_mismatch,
         check_partial_contract,
         check_must_use,
+        check_skip_without_reason,  # DX-28
     ]
 
 

@@ -239,16 +239,13 @@ class RuleConfig(BaseModel):
     require_contracts: bool = True
     require_doctests: bool = True
     strict_pure: bool = True  # Phase 9 P12: Default ON for agent-native
-    use_code_lines: bool = False
-    exclude_doctest_lines: bool = False
+    # DX-22: Removed use_code_lines and exclude_doctest_lines
+    # (merged into default behavior - always exclude doctest lines from size calc)
     # Phase 9 P1: Rule exclusions for specific file patterns
     rule_exclusions: list[RuleExclusion] = Field(default_factory=list)
     # Phase 9 P2: Per-rule severity overrides (off, info, warning, error)
-    severity_overrides: dict[str, str] = Field(
-        default_factory=lambda: {
-            "redundant_type_contract": "off",  # Expected behavior when forcing contracts
-        }
-    )
+    # DX-22: Simplified defaults - most rules have correct severity now
+    severity_overrides: dict[str, str] = Field(default_factory=dict)
     # Phase 9 P8: File size warning threshold (0 to disable, 0.8 = warn at 80%)
     size_warning_threshold: float = 0.8
     # B4: User-declared purity (override heuristics)

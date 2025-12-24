@@ -254,9 +254,10 @@ def run_verify(
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout * 10)
 
+        # CrossHair format: "file:line: error: Err when calling func(...)"
         counterexamples = [
             line.strip() for line in result.stdout.split("\n")
-            if "error" in line.lower() or "counterexample" in line.lower()
+            if ": error:" in line.lower() or "counterexample" in line.lower()
         ]
 
         verify_result = {

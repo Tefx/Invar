@@ -3,9 +3,13 @@ Guard output formatters.
 
 Shell module: handles output formatting for guard command.
 Extracted from cli.py to reduce file size.
+
+DX-22: Added verification routing statistics for de-duplication.
 """
 
 from __future__ import annotations
+
+from dataclasses import dataclass
 
 from rich.console import Console
 
@@ -14,6 +18,59 @@ from invar.core.models import GuardReport, Severity
 from invar.core.utils import get_combined_status
 
 console = Console()
+
+
+@dataclass
+class VerificationStats:
+    """
+    DX-22: De-duplicated verification statistics.
+
+    Tracks separate counts for CrossHair (proof) vs Hypothesis (testing)
+    to avoid misleading double-counting.
+    """
+
+    crosshair_proven: int = 0
+    hypothesis_tested: int = 0
+    doctests_passed: int = 0
+    routed_to_hypothesis: int = 0  # Files routed due to C extensions
+
+    @property
+    def total_verified(self) -> int:
+        """Total unique functions verified (no double-counting)."""
+        return self.crosshair_proven + self.hypothesis_tested
+
+    @property
+    def proof_coverage_pct(self) -> float:
+        """Percentage of verifiable code proven by CrossHair."""
+        total = self.crosshair_proven + self.hypothesis_tested
+        if total == 0:
+            return 0.0
+        return (self.crosshair_proven / total) * 100
+
+
+# @shell_orchestration: Rich markup formatting tightly coupled to shell output
+# @shell_complexity: Conditional formatting for each stat category
+def format_verification_stats(stats: VerificationStats) -> str:
+    """
+    Format verification statistics for display.
+
+    DX-22: Shows de-duplicated counts distinguishing proof from testing.
+    """
+    lines = []
+    lines.append("Verification breakdown:")
+    if stats.crosshair_proven > 0:
+        lines.append(f"  ✓ Proven (CrossHair): {stats.crosshair_proven} functions")
+    if stats.hypothesis_tested > 0:
+        lines.append(f"  ✓ Tested (Hypothesis): {stats.hypothesis_tested} functions")
+    if stats.routed_to_hypothesis > 0:
+        lines.append(
+            f"    [dim](C-extension routing: {stats.routed_to_hypothesis} files)[/dim]"
+        )
+    if stats.doctests_passed > 0:
+        lines.append(f"  ✓ Doctests: {stats.doctests_passed} passed")
+    if stats.total_verified > 0:
+        lines.append(f"  Proof coverage: {stats.proof_coverage_pct:.0f}%")
+    return "\n".join(lines)
 
 
 # @shell_complexity: Context display with line range extraction
@@ -199,8 +256,9 @@ def output_agent(
     crosshair_output: dict | None = None,
     verification_level: str = "standard",
     property_output: dict | None = None,  # DX-08
+    routing_stats: dict | None = None,  # DX-22
 ) -> None:
-    """Output report in Agent-optimized JSON format (Phase 8.2 + DX-06 + DX-08 + DX-09 + DX-26).
+    """Output report in Agent-optimized JSON format (Phase 8.2 + DX-06 + DX-08 + DX-09 + DX-22 + DX-26).
 
     Args:
         report: Guard analysis report
@@ -210,7 +268,9 @@ def output_agent(
         crosshair_output: CrossHair results dict
         verification_level: Current level (static/standard)
         property_output: Property test results dict (DX-08)
+        routing_stats: Smart routing statistics (DX-22)
 
+    DX-22: Adds routing stats showing CrossHair vs Hypothesis distribution.
     DX-26: status now reflects ALL test phases, not just static analysis.
     """
     import json
@@ -245,4 +305,7 @@ def output_agent(
     # DX-08: Add property test results if available
     if property_output:
         output["property_tests"] = property_output
+    # DX-22: Add smart routing statistics if available
+    if routing_stats:
+        output["routing"] = routing_stats
     console.print(json.dumps(output, indent=2))

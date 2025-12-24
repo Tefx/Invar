@@ -171,7 +171,7 @@ invar map --top 10       # Most-referenced symbols
 [tool.invar.guard]
 core_paths = ["src/myapp/core"]
 shell_paths = ["src/myapp/shell"]
-exclude_doctest_lines = true  # Don't count doctests in function size
+# DX-22: Doctest lines are always excluded from size calculations by default
 ```
 
 ---

@@ -189,6 +189,15 @@ RULE_META: dict[str, RuleMeta] = {
         cannot_detect=("Doctest quality", "Edge case coverage"),
         hint="Add >>> examples showing typical usage and edge cases",
     ),
+    # DX-28: Skip abuse prevention
+    "skip_without_reason": RuleMeta(
+        name="skip_without_reason",
+        severity=Severity.WARNING,
+        category=RuleCategory.CONTRACTS,
+        detects="@skip_property_test used without justification reason",
+        cannot_detect=("Whether the reason is valid", "Skip abuse patterns"),
+        hint='Add reason: @skip_property_test("category: explanation")',
+    ),
 }
 
 

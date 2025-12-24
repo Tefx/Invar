@@ -373,3 +373,62 @@ def check_partial_contract(file_info: FileInfo, config: RuleConfig) -> list[Viol
                     )
                 )
     return violations
+
+
+@pre(lambda file_info, config: isinstance(file_info, FileInfo))
+def check_skip_without_reason(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
+    """
+    Check that @skip_property_test decorators have a reason.
+
+    DX-28: Prevent abuse of skip by requiring justification.
+
+    Examples:
+        >>> from invar.core.models import FileInfo, Symbol, SymbolKind, RuleConfig
+        >>> sym = Symbol(name="f", kind=SymbolKind.FUNCTION, line=2, end_line=5)
+        >>> info = FileInfo(path="test.py", lines=10, symbols=[sym], source="@skip_property_test\\ndef f(): pass")
+        >>> vs = check_skip_without_reason(info, RuleConfig())
+        >>> len(vs) > 0
+        True
+        >>> vs[0].rule
+        'skip_without_reason'
+    """
+    violations: list[Violation] = []
+
+    source = file_info.source or ""
+    if "@skip_property_test" not in source:
+        return violations
+
+    # Pattern matches @skip_property_test at start of line (not in strings)
+    # Uses ^ to ensure we're matching decorator position, not string literals
+    bare_pattern = re.compile(r"^\s*@skip_property_test\s*$")
+    no_reason_pattern = re.compile(r"^\s*@skip_property_test\s*\(\s*\)\s*$")
+
+    for line_num, line in enumerate(source.split("\n"), 1):
+        # Check for bare @skip_property_test (no parentheses)
+        if bare_pattern.match(line):
+            violations.append(
+                Violation(
+                    rule="skip_without_reason",
+                    severity=Severity.WARNING,
+                    file=file_info.path,
+                    line=line_num,
+                    message="@skip_property_test used without reason",
+                    suggestion='Add reason: @skip_property_test("category: explanation")\n'
+                    "Valid categories: no_params, strategy_factory, external_io, non_deterministic",
+                )
+            )
+        # Check for @skip_property_test() with no argument
+        elif no_reason_pattern.match(line):
+            violations.append(
+                Violation(
+                    rule="skip_without_reason",
+                    severity=Severity.WARNING,
+                    file=file_info.path,
+                    line=line_num,
+                    message="@skip_property_test used without reason",
+                    suggestion='Add reason: @skip_property_test("category: explanation")\n'
+                    "Valid categories: no_params, strategy_factory, external_io, non_deterministic",
+                )
+            )
+
+    return violations

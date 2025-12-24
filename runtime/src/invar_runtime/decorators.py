@@ -94,7 +94,7 @@ def strategy(**param_strategies: Any) -> Callable[[F], F]:
     return decorator
 
 
-def skip_property_test(reason: str | None = None) -> Callable[[F], F]:
+def skip_property_test(reason_or_func: str | Callable | None = None) -> Callable[[F], F] | F:
     """
     Mark a function to skip property-based testing.
 
@@ -102,28 +102,51 @@ def skip_property_test(reason: str | None = None) -> Callable[[F], F]:
     automatically generated inputs (e.g., functions with complex
     preconditions that are hard to satisfy randomly).
 
+    IMPORTANT: Always provide a reason explaining why the skip is needed.
+    Guard will warn if no reason is provided.
+
+    Valid skip reasons include:
+    - "no_params: Function has no parameters to test"
+    - "strategy_factory: Returns Hypothesis strategy, not testable data"
+    - "external_io: Requires database/network/filesystem"
+    - "non_deterministic: Output depends on time/random state"
+
     Args:
-        reason: Explanation of why property testing is skipped.
+        reason_or_func: Either the reason string, or the function when used
+            without parentheses (for backwards compatibility).
 
     Returns:
         A decorator that marks the function.
 
     Examples:
-        >>> @skip_property_test("Requires specific database state")
-        ... def update_user(user_id: int, name: str) -> bool:
-        ...     return True
-        >>> update_user.__invar_skip_property_test__
-        'Requires specific database state'
+        >>> @skip_property_test("strategy_factory: Returns Hypothesis strategy")
+        ... def make_strategy():
+        ...     return None
+        >>> make_strategy.__invar_skip_property_test__
+        'strategy_factory: Returns Hypothesis strategy'
 
-        >>> @skip_property_test()
-        ... def complex_operation() -> None:
+        >>> # Bare usage (deprecated - Guard will warn)
+        >>> @skip_property_test
+        ... def legacy_func() -> None:
         ...     pass
-        >>> complex_operation.__invar_skip_property_test__
-        'Property testing skipped'
+        >>> legacy_func.__invar_skip_property_test__
+        '(no reason provided)'
     """
 
     def decorator(func: F) -> F:
-        func.__invar_skip_property_test__ = reason or "Property testing skipped"  # type: ignore[attr-defined]
+        if isinstance(reason_or_func, str):
+            reason = reason_or_func
+        else:
+            reason = "(no reason provided)"
+        func.__invar_skip_property_test__ = reason  # type: ignore[attr-defined]
         return func
 
-    return decorator
+    # Support both @skip_property_test and @skip_property_test("reason")
+    if callable(reason_or_func):
+        # Called as @skip_property_test (without parentheses)
+        func = reason_or_func
+        func.__invar_skip_property_test__ = "(no reason provided)"  # type: ignore[attr-defined]
+        return func  # type: ignore[return-value]
+    else:
+        # Called as @skip_property_test() or @skip_property_test("reason")
+        return decorator

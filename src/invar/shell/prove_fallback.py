@@ -3,15 +3,67 @@ Hypothesis fallback for proof verification.
 
 DX-12: Provides Hypothesis as automatic fallback when CrossHair
 is unavailable, times out, or skips files.
+
+DX-22: Smart routing - detects C extension imports and routes
+directly to Hypothesis without wasting time on CrossHair.
 """
 
 from __future__ import annotations
 
 import subprocess
 import sys
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from returns.result import Failure, Result, Success
+
+from invar.core.verification_routing import get_incompatible_imports
+
+
+@dataclass
+class FileRouting:
+    """DX-22: Classification of files for smart verification routing."""
+
+    crosshair_files: list[Path] = field(default_factory=list)
+    hypothesis_files: list[Path] = field(default_factory=list)
+    skip_files: list[Path] = field(default_factory=list)
+    incompatible_reasons: dict[str, set[str]] = field(default_factory=dict)
+
+
+# @shell_complexity: File I/O with error handling for import detection
+def classify_files_for_verification(files: list[Path]) -> FileRouting:
+    """
+    Classify files for smart verification routing.
+
+    DX-22: Detects C extension imports and routes files appropriately:
+    - Pure Python with contracts -> CrossHair (can prove)
+    - C extensions (numpy, pandas, etc.) -> Hypothesis (cannot prove)
+    - No contracts -> Skip
+
+    Returns FileRouting with classified files.
+    """
+    routing = FileRouting()
+
+    for file_path in files:
+        if not file_path.exists() or file_path.suffix != ".py":
+            routing.skip_files.append(file_path)
+            continue
+
+        try:
+            source = file_path.read_text()
+        except Exception:
+            routing.skip_files.append(file_path)
+            continue
+
+        # Check for incompatible imports
+        incompatible = get_incompatible_imports(source)
+        if incompatible:
+            routing.hypothesis_files.append(file_path)
+            routing.incompatible_reasons[str(file_path)] = incompatible
+        else:
+            routing.crosshair_files.append(file_path)
+
+    return routing
 
 
 # @shell_complexity: Fallback verification with hypothesis availability check
@@ -102,7 +154,8 @@ def run_hypothesis_fallback(
         return Failure(f"Hypothesis error: {e}")
 
 
-# @shell_complexity: Orchestrates CrossHair → Hypothesis fallback chain
+# @shell_orchestration: DX-22 smart routing + DX-12/13 fallback chain
+# @shell_complexity: Multiple verification phases with error handling paths
 def run_prove_with_fallback(
     files: list[Path],
     crosshair_timeout: int = 10,
@@ -111,9 +164,16 @@ def run_prove_with_fallback(
     cache_dir: Path | None = None,
 ) -> Result[dict, str]:
     """
-    Run proof verification with automatic Hypothesis fallback.
+    Run proof verification with smart routing and automatic fallback.
 
-    DX-12 + DX-13: Tries CrossHair first with optimizations, falls back to Hypothesis.
+    DX-22: Smart routing - routes C extension code directly to Hypothesis.
+    DX-12 + DX-13: CrossHair with caching, falls back to Hypothesis on failure.
+
+    Flow:
+        1. Classify files (CrossHair-compatible vs C-extension)
+        2. Run CrossHair on compatible files only
+        3. Run Hypothesis on incompatible files (no wasted CrossHair attempt)
+        4. Merge results with de-duplicated statistics
 
     Args:
         files: List of Python file paths to verify
@@ -123,63 +183,103 @@ def run_prove_with_fallback(
         cache_dir: Cache directory (default: .invar/cache/prove)
 
     Returns:
-        Success with verification results or Failure with error message
+        Success with verification results including routing statistics
     """
     # Import here to avoid circular import
     from invar.shell.prove import CrossHairStatus, run_crosshair_parallel
     from invar.shell.prove_cache import ProveCache
 
-    # DX-13: Initialize cache
+    # DX-22: Smart routing - classify files before verification
+    routing = classify_files_for_verification(files)
+
+    # Initialize result structure with DX-22 routing stats
+    result = {
+        "status": "passed",
+        "routing": {
+            "crosshair_files": len(routing.crosshair_files),
+            "hypothesis_files": len(routing.hypothesis_files),
+            "skip_files": len(routing.skip_files),
+            "incompatible_reasons": {
+                k: list(v) for k, v in routing.incompatible_reasons.items()
+            },
+        },
+        "crosshair": None,
+        "hypothesis": None,
+        "files": [str(f) for f in files],
+    }
+
+    # DX-13: Initialize cache for CrossHair
     cache = None
     if use_cache:
         if cache_dir is None:
             cache_dir = Path(".invar/cache/prove")
         cache = ProveCache(cache_dir=cache_dir)
 
-    # DX-13: Use parallel CrossHair with caching
-    crosshair_result = run_crosshair_parallel(
-        files,
-        max_iterations=5,  # Fast mode
-        max_workers=None,  # Auto-detect
-        cache=cache,
-    )
+    # Phase 1: Run CrossHair on compatible files
+    if routing.crosshair_files:
+        crosshair_result = run_crosshair_parallel(
+            routing.crosshair_files,
+            max_iterations=5,  # Fast mode
+            max_workers=None,  # Auto-detect
+            cache=cache,
+        )
 
-    if isinstance(crosshair_result, Failure):
-        # CrossHair failed, try Hypothesis
-        return run_hypothesis_fallback(files, max_examples=hypothesis_max_examples)
+        if isinstance(crosshair_result, Success):
+            xh_data = crosshair_result.unwrap()
+            result["crosshair"] = xh_data
 
-    result_data = crosshair_result.unwrap()
-    status = result_data.get("status", "")
+            # Check if CrossHair needs fallback for any files
+            xh_status = xh_data.get("status", "")
+            needs_fallback = (
+                xh_status == CrossHairStatus.SKIPPED
+                or xh_status == CrossHairStatus.TIMEOUT
+                or "not installed" in xh_data.get("reason", "")
+            )
 
-    # Check if we need fallback
-    needs_fallback = (
-        status == CrossHairStatus.SKIPPED
-        or status == CrossHairStatus.TIMEOUT
-        or "not installed" in result_data.get("reason", "")
-    )
+            if needs_fallback:
+                # CrossHair failed, add these files to Hypothesis batch
+                routing.hypothesis_files.extend(routing.crosshair_files)
+                result["crosshair"]["fallback_triggered"] = True
+        else:
+            # CrossHair error, fallback all to Hypothesis
+            routing.hypothesis_files.extend(routing.crosshair_files)
+            result["crosshair"] = {
+                "status": "error",
+                "error": str(crosshair_result.failure()),
+                "fallback_triggered": True,
+            }
 
-    if needs_fallback:
-        # Run Hypothesis as fallback
+    # Phase 2: Run Hypothesis on incompatible files + fallback files
+    if routing.hypothesis_files:
         hypothesis_result = run_hypothesis_fallback(
-            files, max_examples=hypothesis_max_examples
+            routing.hypothesis_files, max_examples=hypothesis_max_examples
         )
 
         if isinstance(hypothesis_result, Success):
-            hyp_data = hypothesis_result.unwrap()
-            # Merge results
-            return Success(
-                {
-                    "status": hyp_data.get("status", "unknown"),
-                    "primary_tool": "hypothesis",
-                    "crosshair_status": status,
-                    "crosshair_reason": result_data.get("reason", ""),
-                    "hypothesis_result": hyp_data,
-                    "files": [str(f) for f in files],
-                    "note": "CrossHair skipped/unavailable, used Hypothesis fallback",
-                }
-            )
-        return hypothesis_result
+            result["hypothesis"] = hypothesis_result.unwrap()
+        else:
+            result["hypothesis"] = {
+                "status": "error",
+                "error": str(hypothesis_result.failure()),
+            }
+            result["status"] = "failed"
 
-    # CrossHair succeeded (verified or found counterexample)
-    result_data["primary_tool"] = "crosshair"
-    return Success(result_data)
+    # Determine overall status
+    xh_status = result.get("crosshair", {}).get("status", "passed")
+    hyp_status = result.get("hypothesis", {}).get("status", "passed")
+
+    if xh_status == "counterexample_found" or hyp_status == "failed":
+        result["status"] = "failed"
+    elif xh_status in ("error",) or hyp_status in ("error",):
+        result["status"] = "error"
+
+    # DX-22: Add de-duplicated statistics
+    result["stats"] = {
+        "crosshair_proven": len(
+            result.get("crosshair", {}).get("verified", [])
+        ),
+        "hypothesis_tested": len(routing.hypothesis_files),
+        "total_verified": len(files) - len(routing.skip_files),
+    }
+
+    return Success(result)

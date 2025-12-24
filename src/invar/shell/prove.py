@@ -178,10 +178,12 @@ def _verify_single_file(
                     "stdout": stdout,
                 }
 
+            # Extract counterexample lines - CrossHair format: "file:line: error: Err when calling func(...)"
+            # Include lines with "error:" as they contain the actual counterexamples
             counterexamples = [
                 line.strip()
                 for line in stdout.split("\n")
-                if line.strip() and "error" not in line.lower()
+                if line.strip() and ": error:" in line.lower()
             ]
             return {
                 "file": file_path,
