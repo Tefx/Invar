@@ -43,6 +43,7 @@ strict   # default: False
 | `status` doesn't reflect runtime test results | Agent sees "passed" but exit code is 1 | **Critical** |
 | MCP uses `--json` instead of `--agent` | Missing verification_level, test results, fix instructions | **High** |
 | `output_json()` missing runtime test results | Agent can't see doctest/crosshair/hypothesis results | **High** |
+| Property test failures not actionable | Seed message without file/function context, no reproduction command | **High** |
 | Rich output shows "Guard passed" then "Doctests failed" | Confusing mixed signals | Medium |
 | `--json` vs `--agent` confusion | When would agent want simple JSON? | Medium |
 | `--no-strict-pure` double negative | Confusing semantics | Low |
@@ -74,6 +75,32 @@ Scenario: Static passes, Doctests fail
 **Exit code:** 1
 
 This forces agents to manually combine fields to determine true status.
+
+### Issue: Property Test Failure Output Not Actionable
+
+Current property test failure output:
+```
+✗ Property tests failed (1 functions)
+  deal.PostContractError: expected post(-1 is None or isinstance(-1, float)) ...
+  You can add @seed(336048909179393285647920446708996038674) to this test to reproduce this failure.
+```
+
+**Problems:**
+
+| Issue | Impact |
+|-------|--------|
+| "this test" undefined | Which file? Which function? |
+| No file path context | Agent can't locate the failure |
+| Seed not parsed | Not a structured field for reproduction |
+| Counterexample values not extracted | `PropertyTestResult.counterexample` always None |
+| No reproduction command | Agent must guess how to use seed |
+
+**Root cause:** `run_property_test()` returns `PropertyTestResult(error=str(e))` - raw exception string.
+
+**Code locations:**
+- `property_gen.py:27` - `counterexample` field defined but never populated
+- `property_gen.py:374,392` - Error captured as `str(e)`
+- `guard_helpers.py:282-283` - Raw error printed without parsing
 
 ## Proposal
 
@@ -235,6 +262,83 @@ cmd.append("--json")  # Wrong: simple JSON, missing info
 - Documentation references to `--prove` (removed in DX-19)
 - MCP instructions to reflect simplified interface
 
+### 8. Fix Property Test Failure Output
+
+**Goal:** Make property test failures actionable with structured reproduction info.
+
+**Changes to `PropertyTestResult`:**
+
+```python
+@dataclass
+class PropertyTestResult:
+    function_name: str
+    file_path: str | None = None      # NEW: Where the function lives
+    passed: bool = True
+    examples_run: int = 0
+    counterexample: dict[str, Any] | None = None  # POPULATE: Actual values
+    seed: int | None = None           # NEW: Extracted from Hypothesis
+    error: str | None = None
+```
+
+**Parse Hypothesis output in `run_property_test()`:**
+
+```python
+def _parse_hypothesis_error(e: Exception, func: Callable) -> tuple[dict, int | None]:
+    """Extract counterexample and seed from Hypothesis failure."""
+    error_str = str(e)
+
+    # Extract seed: @seed(12345...)
+    seed_match = re.search(r"@seed\((\d+)\)", error_str)
+    seed = int(seed_match.group(1)) if seed_match else None
+
+    # Extract counterexample from deal.PostContractError
+    # Format: "where x=1, y='foo'" or function call args
+    counterexample = _extract_counterexample(error_str)
+
+    return counterexample, seed
+```
+
+**Human-readable output (Rich):**
+
+```
+✗ Property tests failed (1 function)
+  src/invar/core/parser.py::parse_contract
+    Counterexample: x=-1, y=None
+    Seed: 336048909179393285647920446708996038674
+    Reproduce: invar test src/invar/core/parser.py --function parse_contract --seed 336048909179393285647920446708996038674
+```
+
+**Agent JSON output:**
+
+```json
+{
+  "property_tests": {
+    "status": "failed",
+    "functions_tested": 151,
+    "functions_passed": 150,
+    "functions_failed": 1,
+    "failures": [
+      {
+        "file": "src/invar/core/parser.py",
+        "function": "parse_contract",
+        "counterexample": {"x": -1, "y": null},
+        "seed": 336048909179393285647920446708996038674,
+        "error": "PostContractError: expected post(...)",
+        "reproduction": "invar test src/invar/core/parser.py --function parse_contract --seed 336048909179393285647920446708996038674"
+      }
+    ]
+  }
+}
+```
+
+**Add `--function` and `--seed` to `invar test`:**
+
+```bash
+invar test <file>                    # Test all contracted functions
+invar test <file> --function <name>  # Test specific function
+invar test <file> --seed <value>     # Reproduce with seed
+```
+
 ## Resulting Interface
 
 ### CLI
@@ -344,7 +448,15 @@ Guard passed.
 3. Delete `_detect_agent_mode()` (inline TTY check)
 4. Clean up `VerificationLevel` comments
 
-### Phase 5: Documentation
+### Phase 5: Property Test Output
+1. Add `file_path`, `seed` fields to `PropertyTestResult`
+2. Parse Hypothesis error to extract counterexample and seed
+3. Update `run_property_test()` to populate structured fields
+4. Update human output to show `file::function` format with reproduction command
+5. Update agent JSON with `failures` array containing structured info
+6. Add `--function` and `--seed` flags to `invar test`
+
+### Phase 6: Documentation
 1. Update CLAUDE.md
 2. Update context.md (remove `--prove` references)
 3. Update MCP instructions
@@ -377,10 +489,12 @@ For projects that might use old flags:
 |------|---------|
 | `core/models.py` | Keep `passed` property for backward compat |
 | `core/formatter.py` | Update `format_guard_agent()` to accept combined status |
+| `core/property_gen.py` | Add `file_path`, `seed` to `PropertyTestResult`; parse error for counterexample |
 | `shell/cli.py` | Calculate combined status, pass to output functions |
 | `shell/guard_output.py` | Delete `output_json()`, update `output_rich()` order |
-| `shell/guard_helpers.py` | No change needed |
-| `shell/test_cmd.py` | Delete entire file |
+| `shell/guard_helpers.py` | Update property test output format with structured failures |
+| `shell/property_tests.py` | Pass file path to `run_property_test()`; format reproduction commands |
+| `shell/test_cmd.py` | Add `--function`, `--seed` flags (keep for reproduction); or delete if guard handles all |
 | `shell/testing.py` | Remove `detect_verification_context()` |
 | `mcp/server.py` | Remove `--json` flag |
 
