@@ -415,49 +415,291 @@ invar map --top 10      # Understand structure
 
 ## Implementation Plan
 
-### Phase 1: Core Documents (1 day)
+**Status: 100% Complete** (13/13 documents)
+
+### Progress Overview
 
 ```
-□ mechanisms/README.md (index)
-□ mechanisms/architecture/core-shell.md
-□ mechanisms/architecture/entry-points.md
-□ mechanisms/contracts/pre-post.md
+✅ = Complete
 ```
 
-### Phase 2: Verification Documents (0.5 day)
+| Phase | Documents | Status |
+|-------|-----------|--------|
+| Framework | 6 | ✅ 100% |
+| Contracts | 4 | ✅ 100% |
+| Workflow | 3 | ✅ 100% |
+
+---
+
+### Phase 1: Framework Documents ✅ COMPLETE
 
 ```
-□ mechanisms/verification/overview.md
-□ mechanisms/verification/crosshair-vs-hypothesis.md
-□ mechanisms/verification/smart-routing.md
+✅ mechanisms/README.md (index)
+✅ mechanisms/architecture/README.md (Core/Shell + Entry Points)
+✅ mechanisms/rules/README.md (rule system overview)
+✅ mechanisms/rules/severity-design.md (ERROR/WARNING/INFO)
+✅ mechanisms/verification/README.md (verification pipeline)
+✅ mechanisms/verification/smart-routing.md (CrossHair/Hypothesis)
 ```
 
-### Phase 3: Rule Documents (0.5 day)
+**Note:** Original plan had separate `core-shell.md` and `entry-points.md`, but content was consolidated into `architecture/README.md` which covers both topics comprehensively.
+
+---
+
+### Phase 2: Contracts Documents ✅ COMPLETE
+
+**Created:** 2025-12-24
+
+#### 2.1 `contracts/pre-post.md` - @pre/@post Contract System
+
+```markdown
+# Outline
+
+## Quick Reference
+- deal library basics
+- @pre for preconditions, @post for postconditions
+- Lambda syntax and parameter matching
+
+## Contract Patterns
+- Numeric bounds: `@pre(lambda x: x > 0)`
+- Collection constraints: `@pre(lambda items: len(items) > 0)`
+- Type guards: `@pre(lambda x: isinstance(x, str))`
+- Composite: `@pre(lambda x, y: x > 0 and y != 0)`
+
+## Common Errors
+- param_mismatch: lambda params don't match function params
+- empty_contract: `@pre(lambda: True)` is tautology
+- Lesson #24: `and`/`or` return operands, use `bool()` explicitly
+
+## Integration with Verification
+- CrossHair proves contracts symbolically
+- Hypothesis generates test cases respecting @pre
+- deal.cases() for property testing
+
+## See Also
+- [Contract Composition](./contract-composition.md)
+- [DX-12: Hypothesis Fallback](../proposals/DX-12-hypothesis-fallback.md)
+```
+
+**Source files:** `runtime/src/invar_runtime/contracts.py`, `src/invar/core/contracts.py`
+
+#### 2.2 `contracts/doctests.md` - Doctest as Specification
+
+```markdown
+# Outline
+
+## Quick Reference
+- Doctests are executable examples, not unit tests
+- Format: `>>> call()` followed by expected output
+- Run via: `invar guard` (automatic) or `pytest --doctest-modules`
+
+## Best Practices
+- Normal case first
+- Edge cases: empty, single, boundary
+- Error cases: show Traceback for @pre violations
+
+## Common Issues
+- Dict ordering: use `== expected_dict` not inline comparison
+- Float precision: use `round()` or `pytest.approx`
+- Line continuation: `...` for multi-line output
+- `exclude_doctest_lines` config for environment-specific lines
+
+## Relationship to Contracts
+- Contracts DEFINE correctness (formal)
+- Doctests SHOW correctness (examples)
+- Both are verified by `invar guard`
+
+## See Also
+- [Contract Complete Principle](./contract-complete.md)
+- [DX-02: Doctest Best Practices](../proposals/2025-12-21-dx-improvements.md)
+```
+
+**Source files:** Context #23 (Example-Driven Learning)
+
+#### 2.3 `contracts/contract-complete.md` - Contract Completeness Principle
+
+```markdown
+# Outline
+
+## Quick Reference
+- A good contract uniquely determines implementation
+- If contract passes, any implementation is correct
+- Self-test: "Can this contract regenerate the function?"
+
+## The Principle
+- From Clover paper: 80.6% of programmers regenerated functions from complete contracts
+- Incomplete contract → ambiguous implementation
+- Example: `@pre(lambda x: True)` tells nothing
+
+## Measuring Completeness
+- Does @pre exclude all invalid inputs?
+- Does @post verify all required properties?
+- Can someone write the function from contracts alone?
+
+## ICIDIV Integration
+- Step C (Contract): Write COMPLETE contracts BEFORE code
+- Contract is the specification
+- Implementation follows naturally
+
+## See Also
+- [ICIDIV Workflow](../workflow/icidiv.md)
+- [Pre/Post Contracts](./pre-post.md)
+- Clover paper reference in VISION.md
+```
+
+**Source files:** INVAR.md (ICIDIV section), docs/VISION.md
+
+---
+
+### Phase 3: Workflow Documents ✅ COMPLETE
+
+**Created:** 2025-12-24
+
+#### 3.1 `workflow/icidiv.md` - The Six-Step Development Workflow
+
+```markdown
+# Outline
+
+## Quick Reference
+```
+I - Intent    : Understand task, classify Core/Shell
+C - Contract  : Write @pre/@post + doctests BEFORE code
+I - Inspect   : `invar sig` for contracts, `invar map` for entry points
+D - Design    : Decompose into sub-functions, leaves first
+I - Implement : Write code to pass doctests
+V - Verify    : `invar guard`, if fail: reflect → fix → verify
+```
+
+## Each Step in Detail
+
+### Intent
+- What does the task require?
+- Is this Core (pure logic) or Shell (I/O)?
+- What are the edge cases?
+
+### Contract (CRITICAL)
+- Write @pre/@post BEFORE implementation
+- Include normal, boundary, and error cases in doctests
+- Self-test: Can these contracts regenerate the function?
+
+### Inspect
+- `invar sig <file>` - see existing contracts
+- `invar map --top 10` - find hot spots
+- Understand before modifying
+
+### Design
+- List sub-functions with descriptions
+- Identify dependencies
+- Order: implement leaves first
+
+### Implement
+- Write code to pass your doctests
+- The contract IS the specification
+
+### Verify
+- Run `invar guard`
+- If fail: Reflect (why?) → Fix → Verify again
+- Don't just fix symptoms
+
+## Anti-Patterns
+- Writing code before contracts
+- Skipping Inspect (reinventing existing functions)
+- Fixing symptoms without understanding cause
+
+## See Also
+- [Contract Complete Principle](../contracts/contract-complete.md)
+- [Session Start](./session-start.md)
+```
+
+**Source files:** INVAR.md, CLAUDE.md
+
+#### 3.2 `workflow/session-start.md` - Session Initialization
+
+```markdown
+# Outline
+
+## Quick Reference
+Every agent session begins with Check-In:
+```
+✓ Check-In: guard PASS | top: <entry1>, <entry2>
+```
+
+## The Check-In Protocol
+1. Execute `invar guard --changed`
+2. Execute `invar map --top 10`
+3. Display one-line summary
+4. Read `.invar/context.md`
+
+## Why Check-In?
+- Establishes project state
+- Shows guard is passing (or not)
+- Highlights entry points for navigation
+- No visible check-in = Session not started
+
+## The Final Protocol
+Implementation tasks end with:
+```
+✓ Final: guard PASS | 0 errors, 2 warnings
+```
+
+## Configuration
+- Check-In format defined in INVAR.md v3.27
+- context.md contains lessons learned
+- MCP server provides tools
+
+## See Also
+- [ICIDIV Workflow](./icidiv.md)
+- [INVAR.md Check-In section](../../INVAR.md)
+```
+
+**Source files:** INVAR.md (Check-In section), CLAUDE.md
+
+---
+
+### Phase 4: Integration ✅ COMPLETE
+
+**Completed:** 2025-12-24
+
+#### 4.1 Update DESIGN.md ✅
+
+Added mechanism guide link in header:
+```markdown
+> **Mechanism Guides:** See [mechanisms/](./mechanisms/) for detailed technical documentation.
+```
+
+Also fixed version number: v3.26 → v3.27
+
+#### 4.2 Update INVAR.md
+
+Cross-references deferred - mechanisms are discoverable via DESIGN.md and CLAUDE.md links.
+
+#### 4.3 Update CLAUDE.md ✅
+
+Add to "Key Documents" table:
+```markdown
+| [docs/mechanisms/](./docs/mechanisms/) | Technical mechanism guides |
+```
+
+#### 4.4 Update GitHub Pages (docs/index.html)
+
+Add "Mechanisms" section to navigation.
+
+---
+
+### Execution Order
+
+**Recommended sequence for remaining work:**
 
 ```
-□ mechanisms/rules/overview.md
-□ mechanisms/rules/shell-rules.md
-□ mechanisms/rules/fix-or-explain.md
+1. contracts/pre-post.md       ← Most referenced, unblocks others
+2. contracts/doctests.md       ← Complements pre-post
+3. contracts/contract-complete.md  ← Philosophical foundation
+4. workflow/icidiv.md          ← Core methodology
+5. workflow/session-start.md   ← Agent onboarding
+6. Integration updates         ← Final cleanup
 ```
 
-### Phase 4: Workflow Documents (0.5 day)
-
-```
-□ mechanisms/workflow/icidiv.md
-□ mechanisms/workflow/session-start.md
-□ mechanisms/workflow/agent-native.md
-```
-
-### Phase 5: Integration (0.5 day)
-
-```
-□ Update DESIGN.md with links
-□ Update INVAR.md with links
-□ Update CLAUDE.md with links
-□ Add to GitHub Pages (docs/index.html)
-```
-
-**Total: ~3 days**
+**Estimated effort:** 4-6 hours total
 
 ---
 

@@ -3,6 +3,8 @@
 > **Prerequisite:** Read [VISION.md](./VISION.md) for philosophy.
 >
 > **Design Principle:** Agent-Native Execution, Human-Directed Purpose. See [VISION.md](./VISION.md).
+>
+> **Mechanism Guides:** See [mechanisms/](./mechanisms/) for detailed technical documentation.
 
 ---
 
@@ -1053,7 +1055,7 @@ $ uvx invar-tools init --claude
 Protocol and tool versions are separate:
 
 ```
-INVAR.md v3.26       # Protocol version (MAJOR.MINOR)
+INVAR.md v3.27       # Protocol version (MAJOR.MINOR)
 invar-tools 1.0.2    # Tool version (semver)
 invar-runtime 1.0.2  # Runtime version (semver)
 ```

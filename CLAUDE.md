@@ -199,6 +199,7 @@ Use Reviewer for architecture decisions. Use Adversary for security-critical cod
 | [INVAR.md](./INVAR.md) | Protocol reference |
 | [docs/VISION.md](./docs/VISION.md) | Design philosophy |
 | [docs/DESIGN.md](./docs/DESIGN.md) | Technical architecture |
+| [docs/mechanisms/](./docs/mechanisms/) | Technical mechanism guides |
 | [.invar/context.md](./.invar/context.md) | Current state, lessons |
 
 ---
