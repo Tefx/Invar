@@ -2,7 +2,7 @@
 
 > **"Fresh eyes find what invested minds miss."**
 
-**Status:** Phase 1 Implemented
+**Status:** Phase 1, 3 (partial), 5, 6 Implemented
 **Created:** 2024-12-24
 **Updated:** 2025-12-25
 **Relates to:** DX-30 (Visible Workflow), existing /review and /attack skills
@@ -610,16 +610,19 @@ def validate_token(token: str) -> dict:
 **Effort:** 2-3 hours
 **Scope:** All agents (Schema definition)
 
-### Phase 3: Agent Protocol Documentation (Immediate)
+### Phase 3: Agent Protocol Documentation (Immediate) ⚠️ Partial
 
-- [ ] Add "Independent Review" section to INVAR.md
-- [ ] Document trigger conditions and response protocol
+- [ ] Add "Independent Review" section to INVAR.md (source)
+- [x] Document trigger conditions and response protocol (in templates/INVAR.md, AGENTS.md)
 - [ ] Document enforcement rules (CRITICAL = blocking)
 - [ ] Add resolution tracking requirements
-- [ ] Update CLAUDE.md with review guidance
+- [x] Update CLAUDE.md with review guidance (Agent Roles, Review Modes)
+- [x] Update templates/CLAUDE.md.template with Agent Roles section
+- [x] Create docs/mechanisms/documentation.md (INVAR vs CLAUDE attribution)
 
 **Effort:** 2-3 hours
 **Scope:** All agents (Protocol)
+**Partial:** 2025-12-25
 
 ### Phase 4: Platform Limitation Documentation (Immediate)
 
@@ -632,24 +635,27 @@ def validate_token(token: str) -> dict:
 **Effort:** 1-2 hours
 **Scope:** Documentation only
 
-### Phase 5: Claude Code Sub-Agent Configuration (Short-term)
+### Phase 5: Claude Code Sub-Agent Configuration (Short-term) ✅
 
-- [ ] Create adversarial reviewer prompt template
-- [ ] Ensure output follows structured format
-- [ ] Document Task tool usage pattern for review
-- [ ] Add enforcement workflow examples
+- [x] Create adversarial reviewer prompt template (`.claude/commands/review.md`)
+- [x] Ensure output follows structured format (CRITICAL/MAJOR/MINOR with location)
+- [x] Document Task tool usage pattern for review (Isolated Mode section)
+- [x] Add enforcement workflow examples (Mode Detection flow)
 
 **Effort:** 2-3 hours
 **Scope:** Claude Code only
+**Implemented:** 2025-12-25
 
-### Phase 6: Legacy Skill Update (Optional)
+### Phase 6: Legacy Skill Update (Optional) ✅
 
-- [ ] Update /review skill with adversarial prompt
-- [ ] Note: This is secondary to automatic triggering
-- [ ] Kept for explicit user requests only
+- [x] Update /review skill with adversarial prompt
+- [x] Add Mode Detection (Isolated vs Quick based on `review_suggested`)
+- [x] Create template for new projects (`src/invar/templates/commands/review.md`)
+- [x] Integrate into `invar init` (copies to `.claude/commands/`)
 
 **Effort:** 1 hour
 **Scope:** Skill-compatible agents
+**Implemented:** 2025-12-25
 
 ## Success Metrics
 
