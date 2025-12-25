@@ -5,7 +5,7 @@
 **Status:** Draft
 **Created:** 2025-12-25
 **Updated:** 2025-12-26
-**Effort:** Low-Medium
+**Effort:** Medium
 **Risk:** Low
 
 ## Scope Change
@@ -23,6 +23,8 @@
 
 ## Problem Statement
 
+### Problem 1: Stale Content
+
 With protocol updates (USBV, workflow skills, v5.0), docs/ may contain outdated content:
 
 | Document | Lines | Concern |
@@ -31,6 +33,23 @@ With protocol updates (USBV, workflow skills, v5.0), docs/ may contain outdated 
 | docs/design.md | ~300 | Architecture diagrams may be stale |
 | docs/vision.md | ~200 | Should still be valid |
 | docs/guide.md | ? | May have outdated examples |
+
+### Problem 2: Completeness Gaps
+
+Documentation may be missing critical design rationale:
+
+| Gap Type | Risk | Example |
+|----------|------|---------|
+| **Undocumented decisions** | Future devs repeat mistakes | Why Core forbids I/O? |
+| **Missing rationale** | Changes break invariants | Why @pre before @post? |
+| **Implicit knowledge** | Knowledge loss on team change | Why two packages? |
+| **Code-doc drift** | Features exist without docs | New rules undocumented |
+
+**Key questions for completeness audit:**
+1. Can a new developer understand WHY, not just WHAT?
+2. Are all design decisions traceable to rationale?
+3. Do lessons learned flow back into docs?
+4. Is `.invar/context.md` the only place for decisions?
 
 ## Audit Scope
 
@@ -106,10 +125,11 @@ Skipped: docs/history/ (preserved), docs/proposals/completed/ (archived)
 | Phase | Action | Effort |
 |-------|--------|--------|
 | 1 | Implement `invar check-docs` command | Low |
-| 2 | Run audit on docs/reference/ | Low |
-| 3 | Fix critical issues | Low |
-| 4 | Add TODO markers to non-critical | Low |
-| 5 | Integrate into CI (optional) | Low |
+| 2 | Run stale content audit on docs/reference/ | Low |
+| 3 | Fix critical staleness issues | Low |
+| 4 | **Completeness audit** (deep review) | Medium |
+| 5 | Fill documentation gaps | Medium |
+| 6 | Integrate into CI (optional) | Low |
 
 ### Phase 1: check-docs Command
 
@@ -147,7 +167,51 @@ Priority order:
 3. **docs/reference/verification/** — Guard behavior changes
 4. **docs/guide.md** — User-facing examples
 
-### Phase 5: CI Integration (Optional)
+### Phase 4: Completeness Audit (Deep Review)
+
+Systematic review to identify undocumented designs and rationale:
+
+**Audit Checklist:**
+
+| Area | Questions | Source of Truth |
+|------|-----------|-----------------|
+| **Architecture** | Why Core/Shell? Why no I/O in Core? | docs/design.md |
+| **Verification** | Why 4 layers? Why CrossHair + Hypothesis? | docs/reference/verification/ |
+| **Contracts** | Why @pre before @post? Contract completeness? | docs/reference/contracts/ |
+| **Workflow** | Why USBV? Why Check-In/Final? | docs/reference/workflow/ |
+| **Package Split** | Why two packages? Why Apache + GPL? | README, context.md |
+| **Rules** | Why each rule exists? Severity rationale? | docs/reference/rules/ |
+| **Lessons** | Are context.md lessons in permanent docs? | .invar/context.md → docs/ |
+
+**Audit Process:**
+
+1. **Inventory:** List all design decisions in code (comments, markers, structure)
+2. **Cross-reference:** Check if each decision has documentation
+3. **Gap analysis:** Identify missing rationale
+4. **Priority:** Rank gaps by impact (onboarding friction, mistake risk)
+
+**Expected Gaps (Hypotheses):**
+
+- DX proposal rationale not in permanent docs (only in proposals/)
+- Lesson learned (#1-#28) not consolidated into reference docs
+- Rule severity choices undocumented
+- Package split rationale only in context.md
+
+### Phase 5: Fill Documentation Gaps
+
+Create or update documentation for identified gaps:
+
+| Gap | Action | Target |
+|-----|--------|--------|
+| Architecture rationale | Expand docs/design.md | "Why Core/Shell" section |
+| Verification layers | Add rationale to docs/reference/verification/ | "Why 4 layers" section |
+| Lessons consolidation | Extract permanent lessons to docs/ | docs/reference/lessons.md |
+| Package split | Add to README or docs/guide.md | "Package Architecture" section |
+| Rule rationale | Add to docs/reference/rules/ | Per-rule "Why" sections |
+
+**Principle:** Each design decision should be findable by searching docs/, not require reading context.md or proposals/.
+
+### Phase 6: CI Integration (Optional)
 
 ```yaml
 # .github/workflows/docs-check.yml
@@ -172,11 +236,20 @@ docs/history/
 
 ## Success Criteria
 
+### Staleness Audit
 - [ ] `invar check-docs` command implemented
 - [ ] docs/reference/ audited for USBV consistency
 - [ ] Version numbers updated to v5.0
 - [ ] No ICIDIV references in active docs (excluding history/)
 - [ ] CLI examples match current commands
+
+### Completeness Audit
+- [ ] All architecture decisions documented with rationale
+- [ ] Verification layer choices explained (why 4 layers)
+- [ ] Rule severity rationale documented
+- [ ] Package split rationale in permanent docs (not just context.md)
+- [ ] Lessons #1-#28 consolidated into reference docs
+- [ ] New developer can understand "why" without reading context.md
 
 ## Related Proposals
 
