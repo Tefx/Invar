@@ -2,251 +2,49 @@
 
 > **"Agent-Native Execution, Human-Directed Purpose"**
 
-This project follows the Invar methodology. See [INVAR.md](./INVAR.md) for the protocol.
+This project follows the Invar methodology. See [INVAR.md](./INVAR.md) for protocol, [sections/](./sections/) for workflow details.
 
-**Protocol Version:** v4.0 | **PyPI:** `invar-tools` + `invar-runtime` | **Smart Guard:** `invar guard` = full verification
-
----
-
-## Core Principle
-
-Invar enables humans to effectively direct AI agents in producing high-quality code.
-
-```
-Human (Commander) ──directs──→ Agent (Executor) ──uses──→ Invar (Protocol + Tools)
-```
-
-- **Human**: Directs goals, reviews output, makes decisions
-- **Agent**: Follows Protocol, uses Tools, produces code
-- **Invar**: Agent-Native toolkit (Agent is primary user)
+**Protocol:** v5.0 | **PyPI:** `invar-tools` + `invar-runtime`
 
 ---
 
-## Check-In
+## Check-In / Final
 
-Your first message MUST display:
+**First message:** `✓ Check-In: guard PASS | top: <entry1>, <entry2>`
+**Last message:** `✓ Final: guard PASS | 0 errors, N warnings`
 
-```
-✓ Check-In: guard PASS | top: <entry1>, <entry2>
-```
-
-Execute `invar_guard(changed=true)` and `invar_map(top=10)`, then show this one-line summary.
-
-Example:
-```
-✓ Check-In: guard PASS | top: parse_file, check_rules
-```
-
-This is your sign-in. The user sees it immediately.
-No visible check-in = Session not started.
-
-Then read `.invar/context.md` for project state and lessons learned.
-
----
-
-## Final
-
-Your last message for an implementation task MUST display:
-
-```
-✓ Final: guard PASS | 0 errors, 2 warnings
-```
-
-Execute `invar_guard()` and show this one-line summary.
-
-This is your sign-out. Completes the Check-In/Final pair.
-
----
-
-## Project Rules
-
-1. **Language:** Documentation and code in English. Conversations in user's language.
-
-2. **Agent-Native:** Design for Agent consumption. Automatic > Opt-in. Default ON > OFF.
-
-3. **Verify Always:** Run `invar guard` after changes (Smart Guard runs static + doctests).
-
-4. **Warning Policy:** Fix warnings in files you modify (you touched it, you own it).
+Then read `.invar/context.md` for project state.
 
 ---
 
 ## Project Structure
 
 ```
-invar/
-├── runtime/                  # invar-runtime package (DX-21)
-│   ├── pyproject.toml        # Lightweight: deal only
-│   └── src/invar_runtime/    # Runtime contracts
-│       ├── contracts.py      # Contract class + pre/post
-│       ├── decorators.py     # must_use, strategy, skip_property_test
-│       ├── invariant.py      # Loop invariants
-│       └── resource.py       # must_close decorator
-│
-├── src/invar/                # invar-tools package
-│   ├── core/                 # Pure logic, no I/O, requires @pre/@post
-│   │   ├── models.py         # Pydantic: Symbol, Violation, RuleConfig
-│   │   ├── parser.py         # AST: source string → symbols
-│   │   ├── rules.py          # Rule checking: file info → violations
-│   │   ├── purity.py         # Internal imports, impure calls
-│   │   ├── contracts.py      # Contract quality detection
-│   │   ├── review_trigger.py # DX-30/31: Review triggers (contract ratio, security)
-│   │   ├── suggestions.py    # Fix suggestions + lambda skeletons
-│   │   ├── rule_meta.py      # Centralized RULE_META
-│   │   ├── inspect.py        # File context for INSPECT section
-│   │   ├── references.py     # Cross-file reference counting
-│   │   ├── formatter.py      # Text/JSON output
-│   │   ├── utils.py          # Pure utilities
-│   │   └── property_gen.py   # DX-08: Property test generation
-│   │
-│   ├── shell/                # I/O operations, returns Result[T, E]
-│   │   ├── cli.py            # Typer CLI: guard, map, sig, rules, version
-│   │   ├── init_cmd.py       # init command (DX-21B: --claude flag)
-│   │   ├── mcp_config.py     # MCP smart detection (DX-21B)
-│   │   └── ...
-│   │
-│   ├── mcp/                  # MCP server
-│   └── templates/            # Files for invar init
-│
-└── pyproject.toml            # invar-tools config
+src/invar/
+├── core/    # Pure logic, @pre/@post required, no I/O
+└── shell/   # I/O operations, Result[T, E] required
 ```
-
-**Key insight:** Core receives string content, Shell handles I/O.
 
 ---
 
-## Quick Rules
+## Workflows (DX-35)
 
-| Rule | Requirement |
-|------|-------------|
-| Core | No I/O, `@pre`/`@post` contracts |
-| Shell | Returns `Result[T, E]` |
-| Files | < 500 lines |
-| Functions | < 50 lines |
-| Types | Full annotations, Pydantic models |
+| Workflow | Triggers | Details |
+|----------|----------|---------|
+| `/investigate` | "why", "explain", vague tasks | [sections/investigate.md](sections/investigate.md) |
+| `/propose` | "should we", "compare" | [sections/propose.md](sections/propose.md) |
+| `/develop` | "add", "fix", "implement" | [sections/develop.md](sections/develop.md) |
+| `/review` | After /develop, `review_suggested` | [sections/review.md](sections/review.md) |
 
----
-
-## Development Workflow (USBV)
-
-**U**nderstand → **S**pecify → **B**uild → **V**alidate
-
-| Phase | Purpose | Activities |
-|-------|---------|------------|
-| **UNDERSTAND** | Know what and why | Intent, Inspect (`invar sig/map`), Constraints |
-| **SPECIFY** | Define boundaries | @pre/@post, Design decomposition, Doctests |
-| **BUILD** | Write code | Implement leaves first, Compose |
-| **VALIDATE** | Confirm correctness | `invar guard`, Integrate, Reflect |
-
-**Key:** Inspect before Contract. Depth varies naturally based on resistance. Iterate when needed.
+**Override:** `/develop!` forces workflow, skips routing.
 
 ---
 
-## Tool Selection
+## Project Rules
 
-### Always Use Invar For:
-```bash
-invar sig <file>           # See contracts (UNIQUE: shows @pre/@post)
-invar map --top 10         # Find entry points (UNIQUE: reference count ranking)
-invar guard --changed      # Verify code quality (REQUIRED)
-```
-
-### Task-Based Selection:
-
-| I want to... | Tool | Why |
-|--------------|------|-----|
-| See contracts/patterns | `invar sig <file>` | Only Invar shows @pre/@post |
-| Find hot spots | `invar map --top 10` | Only Invar has ref counts |
-| Find specific symbol | Serena `find_symbol` | More precise, pattern matching |
-| Find references | Serena `find_referencing_symbols` | Cross-file analysis |
-| Edit function body | Serena `replace_symbol_body` | Semantic editing |
-| Rename across project | Serena `rename_symbol` | Automatic refactoring |
-| Verify after changes | `invar guard --changed` | Smart Guard (full verification) |
-
-### Other Commands
-```bash
-invar guard --explain    # Detailed explanations
-invar rules              # List all rules
-```
-
-### Guard Usage (DX-19)
-
-**Default:** `invar guard` runs STANDARD = full verification (static + doctests + CrossHair + Hypothesis). **Trust this.**
-
-**Do NOT use --static unless:**
-- Debugging a specific static analysis issue
-- Performance profiling the guard itself
-
-**Why?** Default is only ~5s. This includes everything. No decisions needed.
-
----
-
-## Agent Roles
-
-| Command | Role | Purpose |
-|---------|------|---------|
-| `/review` | Reviewer | Adversarial code review (DX-31) |
-
-### Review Modes (Auto-Selected)
-
-`/review` automatically selects mode based on Guard output:
-
-| Condition | Mode | Behavior |
-|-----------|------|----------|
-| `review_suggested` triggered | **Isolated** | Task tool sub-agent (fresh context) |
-| No trigger | **Quick** | Same-context adversarial review |
-| `--isolated` flag | **Isolated** | Force isolation |
-| `--quick` flag | **Quick** | Force same-context |
-
-Guard triggers `review_suggested` for: security-sensitive files, escape hatches >= 3, contract coverage < 50%.
-
----
-
-## Workflow Routing (DX-35)
-
-Four workflows with automatic routing based on user input:
-
-| Workflow | Purpose | Triggers |
-|----------|---------|----------|
-| `/investigate` | Understand before acting | "why", "what is", "explain", vague tasks |
-| `/propose` | Facilitate decisions | "should we", "compare", "which" |
-| `/develop` | Implement solutions | "add", "implement", "fix" (clear target) |
-| `/review` | Quality verification | After /develop, or `review_suggested` |
-
-### Automatic Routing
-
-| User Input Pattern | Route To | Reason |
-|--------------------|----------|--------|
-| Specific symbol + action verb | /develop | Clear, actionable |
-| "Add/implement/fix X" (X is clear) | /develop | Actionable task |
-| "Why...?" "What is...?" "How does...?" | /investigate | Understanding needed |
-| "Improve/optimize" (vague target) | /investigate | Needs analysis first |
-| "Should we...?" "Compare A vs B" | /propose | Decision needed |
-| After /develop completes | /review | Quality gate |
-
-### Workflow Override
-
-| Syntax | Behavior |
-|--------|----------|
-| `/develop` | Normal routing (may redirect if vague) |
-| `/develop!` | Force /develop, skip routing analysis |
-| `develop: [task]` | Explicit workflow prefix |
-
-### Natural Flow
-
-```
-/investigate → findings → /propose (if decision needed) → /develop → /review
-                       → /develop (if ready to implement)
-```
-
-Workflows suggest transitions naturally. Human approves at each boundary.
-
-### Mid-Workflow Switch
-
-When user switches mid-workflow:
-1. **Save state** — Current todos, uncommitted changes noted
-2. **Announce** — Explicit switch message
-3. **Resume** — "continue /develop" restores context
-4. **Discard** — "cancel /develop" with confirmation
+1. **Language:** English for docs/code. User's language for conversation.
+2. **Verify Always:** Run `invar guard` after changes.
+3. **Warning Policy:** Fix warnings in files you modify.
 
 ---
 
@@ -254,56 +52,15 @@ When user switches mid-workflow:
 
 | Document | Purpose |
 |----------|---------|
-| [INVAR.md](./INVAR.md) | Protocol reference |
-| [docs/VISION.md](./docs/VISION.md) | Design philosophy |
-| [docs/DESIGN.md](./docs/DESIGN.md) | Technical architecture |
-| [docs/mechanisms/](./docs/mechanisms/) | Technical mechanism guides |
-| [.invar/context.md](./.invar/context.md) | Current state, lessons |
-
----
-
-## Documentation Structure
-
-| File | Owner | Edit? | Purpose |
-|------|-------|-------|---------|
-| INVAR.md | **Source** | Yes | Full protocol (this IS the source) |
-| CLAUDE.md | User | Yes | Project customization (this file) |
-| .invar/context.md | User | Yes | Project state, lessons learned |
-| .invar/examples/ | Sync | `invar update` | Reference examples (from templates) |
-
-**Note:** This is the Invar project itself. INVAR.md here is the **source**, not a copy.
-- Template at `src/invar/templates/INVAR.md` is a compact version for other projects.
-- Do NOT run `invar update` on INVAR.md - it would replace the full version!
-
-**Decision rule:** Is this Invar protocol or project-specific?
-- Protocol content → Already in INVAR.md, don't duplicate
-- Project-specific → Add to CLAUDE.md or context.md
-
----
-
-## Project Status
-
-| Phase | Status | Description |
-|-------|--------|-------------|
-| 1-8 | Complete | Guard, Perception, Agent-Native |
-| 9 | Complete | PyPI release (python-invar v0.1.0) |
-| 10-11 | Complete | Agent decision support (P7, P24-P28) |
-
-Feature complete. See `.invar/context.md` for current state.
+| [INVAR.md](./INVAR.md) | Protocol core |
+| [sections/](./sections/) | Workflow details |
+| [.invar/context.md](./.invar/context.md) | Project state |
 
 ---
 
 ## Dependencies
 
 ```bash
-# Development tools
-pip install invar-tools         # Install tools from PyPI
-uvx invar-tools guard           # Or use without installing
-
-# Runtime contracts (for projects)
-pip install invar-runtime       # Lightweight runtime
-
-# Development mode
-pip install -e ".[dev]"         # Install with dev dependencies
-pip install -e runtime/         # Install runtime in dev mode
+pip install -e ".[dev]"    # Development mode
+pip install -e runtime/    # Runtime in dev mode
 ```

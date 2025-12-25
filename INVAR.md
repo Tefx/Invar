@@ -12,453 +12,81 @@
   You are free to share and adapt this document, provided you give
   appropriate credit to the Invar project.
 -->
-# The Invar Protocol v4.0
+# The Invar Protocol v5.0
 
 > **"Trade structure for safety."** Separate what CAN fail (I/O) from what SHOULD NOT fail (logic).
 
-**Design:** Agent-Native. Protocol optimized for AI agent consumption. See [docs/VISION.md](docs/VISION.md).
+**Design:** Agent-Native. Protocol optimized for AI agent consumption.
 
-**Smart Guard:** `invar guard` runs static analysis + doctests automatically. Zero decisions needed.
+**Smart Guard:** `invar guard` runs static analysis + doctests + property tests automatically.
 
 ## The Six Laws
 
-| Law | Principle | Research Basis |
-|-----|-----------|----------------|
-| **1. Separation** | Pure logic (Core) and I/O (Shell) must be physically separate | Determinism enables testing |
-| **2. Contract Complete** | Define COMPLETE, RECOVERABLE boundaries before implementation | Clover: 87% accept, 0% false positive |
-| **3. Context Economy** | Read map → signatures → implementation (only if needed) | Token efficiency |
-| **4. Decompose First** | Break complex tasks into sub-functions before implementing | Parsel: +75% pass rate |
-| **5. Verify Reflectively** | If fail: Reflect (why?) → Fix → Verify again | Reflexion: +11% success |
-| **6. Integrate Fully** | Verify all feature paths connect; local correctness ≠ global correctness | Post-mortem driven |
+| Law | Principle |
+|-----|-----------|
+| **1. Separation** | Pure logic (Core) and I/O (Shell) must be physically separate |
+| **2. Contract Complete** | Define COMPLETE boundaries before implementation |
+| **3. Context Economy** | Read map → signatures → implementation (only if needed) |
+| **4. Decompose First** | Break complex tasks into sub-functions before implementing |
+| **5. Verify Reflectively** | If fail: Reflect (why?) → Fix → Verify again |
+| **6. Integrate Fully** | Verify all feature paths connect; local ≠ global correctness |
 
 ## Core/Shell Architecture
 
 | Zone | Location | Must Have | Example |
 |------|----------|-----------|---------|
-| **Core** | `src/*/core/` | `@pre`/`@post` contracts, doctests | Pure calculations, transformations |
-| **Shell** | `src/*/shell/` | `Result[T, E]` return type | File I/O, network, CLI |
+| **Core** | `src/*/core/` | `@pre`/`@post` contracts | Pure calculations |
+| **Shell** | `src/*/shell/` | `Result[T, E]` return type | File I/O, network |
 
-**Forbidden in Core:** `os`, `sys`, `subprocess`, `pathlib`, `open`, `requests`, `datetime.now`, `random.*`
-
-**Core receives data, not paths** — Shell reads files, passes content to Core.
-
-## Contracts (Test-First)
-
-Before implementation, define COMPLETE contracts:
-
-```python
-from deal import pre, post
-
-@pre(lambda price, discount: price > 0 and 0 <= discount <= 1)
-@post(lambda result: result >= 0)
-def discounted_price(price: float, discount: float) -> float:
-    """
-    Apply discount to price.
-
-    >>> discounted_price(100, 0.2)    # Normal case
-    80.0
-    >>> discounted_price(100, 0)      # Edge: no discount
-    100.0
-    >>> discounted_price(100, 1)      # Edge: full discount
-    0.0
-    """
-    return price * (1 - discount)
-```
-
-**Complete Contract = uniquely determines implementation.**
-
-Self-test: "Given only @pre/@post and doctests, could someone else write the exact same function?"
-
-**Three-Way Consistency:**
-
-```
-        Code
-       /    \
-@pre/@post ↔ Doctests
-```
-
-All three must align. Any conflict is a bug.
-
-## Must-Use Return Values
-
-Mark functions whose return values should not be ignored:
-
-```python
-from invar import must_use
-
-@must_use("Error must be handled")
-def validate(data: dict) -> Result[Valid, Error]:
-    ...
-
-validate(user_input)  # Guard warns: return value ignored!
-```
-
-## Loop Invariants
-
-Document what must remain true throughout loop execution:
-
-```python
-from invar import invariant
-
-def binary_search(arr: list[int], target: int) -> int:
-    lo, hi = 0, len(arr)
-    while lo < hi:
-        invariant(0 <= lo <= hi <= len(arr))  # Bounds check
-        invariant(target not in arr[:lo])      # Already searched left
-        mid = (lo + hi) // 2
-        if arr[mid] < target:
-            lo = mid + 1
-        else:
-            hi = mid
-    return lo if lo < len(arr) and arr[lo] == target else -1
-```
-
-- **Checked at runtime** when `INVAR_CHECK=1` (default ON)
-- **Disabled in production** with `INVAR_CHECK=0`
-- **Raises `InvariantViolation`** when condition fails
-
-## Contract Composition
-
-Compose reusable contracts with `&`, `|`, `~` operators:
-
-```python
-from invar import Contract, pre, NonEmpty, Sorted
-
-# Built-in contracts
-SortedNonEmpty = NonEmpty & Sorted  # AND
-FlexibleInput = NonEmpty | Sorted   # OR
-AcceptsEmpty = ~NonEmpty            # NOT
-
-# Custom contracts
-InRange = lambda lo, hi: Contract(lambda x: lo <= x <= hi, f"[{lo},{hi}]")
-Age = InRange(0, 120)
-
-# Use with decorators
-@pre(SortedNonEmpty)
-def binary_search(arr, target): ...
-```
-
-**Standard library:** `NonEmpty`, `Sorted`, `Unique`, `Positive`, `NonNegative`, `Percentage`, `NonBlank`, `AllPositive`, `NoNone`
-
-## Resource Management
-
-Mark classes that require explicit cleanup:
-
-```python
-from invar import must_close
-
-@must_close
-class TempFile:
-    def __init__(self, path: str): ...
-    def write(self, data: bytes): ...
-    def close(self) -> None: ...
-
-# Preferred: context manager (auto-close)
-with TempFile("data.tmp") as f:
-    f.write(data)
-# File automatically closed
-```
-
-- **Adds context manager protocol** automatically
-- **Use `is_must_close(obj)`** to check if resource requires cleanup
-
-## Why Contracts Matter
-
-Contracts serve **dual purpose**:
-
-1. **Verification** — Catch violations before they become bugs
-2. **Recovery** — When violations occur, contracts guide the fix
-
-Research shows:
-- Underspecified problems are unsolvable (SWE-bench: 1.96% solve rate)
-- Clear contracts make problems tractable (Clover: 87% acceptance)
-- Good contracts enable auto-recovery (Pel: self-healing agents)
-
-## Rule Severity
-
-| Level | Blocks Commit | Examples |
-|-------|---------------|----------|
-| **ERROR** | Yes | missing_contract, impure_call, empty_contract, forbidden_import |
-| **WARNING** | No | function_size, internal_import, shell_result, missing_doctest |
-
-Guard shows **Code Health** percentage based on warnings. Fix warnings in files you modify.
-
-## Markers
-
-### Entry Points
-
-Entry points are framework callbacks (`@app.route`, `@app.command`) at Shell boundary.
-- **Exempt** from `Result[T, E]` — must match framework signature
-- **Keep thin** (max 15 lines) — delegate to Shell functions that return Result
-
-Auto-detected by decorators. For custom callbacks:
-
-```python
-# @shell:entry
-def on_custom_event(data: dict) -> dict:
-    result = handle_event(data)
-    return result.unwrap_or({"error": "failed"})
-```
-
-### Shell Complexity
-
-When shell function complexity is justified:
-
-```python
-# @shell_complexity: Subprocess with error classification
-def run_external_tool(...): ...
-
-# @shell_orchestration: Multi-step pipeline coordination
-def process_batch(...): ...
-```
-
-### Architecture Escape Hatch
-
-When rule violation has valid architectural justification:
-
-```python
-# @invar:allow shell_result: Framework callback signature fixed
-def flask_handler(): ...
-```
-
-See `invar rules` for all rule names.
-
-## Size Limits
-
-| Limit | Value | Warning |
-|-------|-------|---------|
-| File | 500 lines | 80% (400) |
-| Function | 50 lines | — |
+**Forbidden in Core:** `os`, `sys`, `subprocess`, `pathlib`, `open`, `requests`, `datetime.now`
 
 ## Commands
 
-### Smart Guard (Primary Command)
 ```bash
 invar guard              # Full verification (default)
 invar guard --changed    # Modified files only
-invar guard --static     # Static only (~0.5s, for debugging)
-invar guard --explain    # Detailed explanations
+invar sig <file>         # Function signatures + contracts
+invar map --top 10       # Entry points by reference count
 ```
 
-### Two Verification Levels (DX-19)
+## Check-In / Final
 
-| Level | Flag | Content | Use When |
-|-------|------|---------|----------|
-| **STATIC** | `--static` | Rules only (~0.5s) | Debugging static analysis |
-| **STANDARD** | (default) | Rules + doctests + CrossHair + Hypothesis (~5s) | Everything else |
-
-**DX-19: Zero decisions.** Default = full verification. No need to choose modes.
-
-**Agent JSON output includes `"verification_level"` for transparency.**
-
-**Incremental verification makes STANDARD fast:**
-- Only verifies changed files with `--changed`
-- First run: ~5s, subsequent: ~2s (CrossHair cache)
-
-### Other Commands
-```bash
-invar rules              # List all rules with severity
-```
-
-### Perception (use BEFORE reading/modifying code)
-```bash
-invar sig <file>           # Function signatures + contracts (no body)
-invar sig <file>::<symbol> # Specific function with contracts
-invar map                  # Symbol locations + reference counts
-invar map --top 20         # Most-referenced symbols (entry points)
-```
-
-**Why use Invar perception tools?**
-- `invar sig` shows **@pre/@post contracts** (generic tools don't)
-- `invar map --top` finds **entry points by reference count** (unique feature)
-- **Auto JSON**: All commands auto-detect agent mode (pipe/redirect → JSON, terminal → human-readable)
-
-## Check-In (Required)
-
-Your first message MUST display:
-
+**First message:**
 ```
 ✓ Check-In: guard PASS | top: <entry1>, <entry2>
 ```
 
-Execute `invar_guard(changed=true)` and `invar_map(top=10)`, then show this one-line summary.
-
-This is your sign-in. The user sees it immediately.
-No visible check-in = Session not started.
-
-Then read `.invar/context.md` for project state and lessons learned.
-
-## Workflow: USBV (DX-32)
-
-**U**nderstand → **S**pecify → **B**uild → **V**alidate
-
+**Last message (implementation tasks):**
 ```
-UNDERSTAND → SPECIFY → BUILD → VALIDATE
-     │           │        │        │
-  [depth]    [depth]  [depth]  [depth]
-     └───────────┴────────┴────────┘
-           Depth varies naturally
+✓ Final: guard PASS | 0 errors, 2 warnings
 ```
 
-| Phase | Purpose | Core Activities |
-|-------|---------|-----------------|
-| **UNDERSTAND** | Know what and why | Intent, Inspect, Constraints |
-| **SPECIFY** | Define boundaries | Contract, Design, Test Cases |
-| **BUILD** | Write code | Implement leaves, Compose |
-| **VALIDATE** | Confirm correctness | Verify, Review Gate, Reflect |
+## Size Limits
 
-**Key Principles:**
-- **Inspect before Contract** — Understand existing code before writing interfaces
-- **Variable Depth** — Same 4 phases, depth adjusts based on resistance encountered
-- **Explicit Iteration** — VALIDATE failure returns to earlier phase (not "retry")
+| Limit | Value |
+|-------|-------|
+| File | 500 lines |
+| Function | 50 lines |
 
-**Iteration Paths:**
-- Logic error → Return to BUILD
-- Missing edge case → Return to SPECIFY (add doctest)
-- Misunderstood requirement → Return to UNDERSTAND
-- Review Gate triggered → Invoke `/review` sub-agent (DX-31)
+## Workflow Sections
 
-## Visible Workflow (DX-30)
+Detailed instructions for each phase:
 
-For complex tasks (3+ functions, architectural changes), show 3 checkpoints in TodoList:
-
-```
-□ [UNDERSTAND] Task description, codebase context, constraints
-□ [SPECIFY] Contracts (@pre/@post) and design decomposition
-□ [VALIDATE] Guard results, integration status
-```
-
-**BUILD is internal work** — not shown in TodoList (no user decision needed).
-
-**Checkpoint Content:**
-
-| Checkpoint | What to Show |
-|------------|--------------|
-| UNDERSTAND | Task intent, files to modify, edge cases identified |
-| SPECIFY | Function contracts before implementation |
-| VALIDATE | `invar guard` results, Review Gate if triggered, integration status |
-
-**Example:**
-```
-□ [UNDERSTAND] Add caching to API
-  - Intent: Reduce response time for repeated queries
-  - Context: Found existing cache in utils/cache.py
-  - Constraints: Must be thread-safe, max 1GB memory
-
-□ [SPECIFY] Cache interface
-  @pre(lambda key: isinstance(key, str))
-  @post(lambda result: result is None or isinstance(result, T))
-  def cache_get(key: str) -> T | None: ...
-
-□ [VALIDATE] Verification
-  - Guard: PASS (0 errors, 2 warnings)
-  - Review Gate: Not triggered (or: /review completed)
-  - Integration: API tests pass
-```
-
-**When to use Visible Workflow:**
-- New features (3+ functions)
-- Architectural changes
-- Core module modifications
-
-**Skip for:** Single-line fixes, documentation changes, trivial refactoring.
-
-## Review Gate (DX-31)
-
-Guard outputs `review_suggested` when conditions warrant independent review:
-
-| Trigger | Level | Rationale |
-|---------|-------|-----------|
-| Security-sensitive path | WARNING | Files with auth, crypt, secret, password, token |
-| Escape hatches ≥ 3 | WARNING | High `@invar:allow` count may indicate rule circumvention |
-| Contract coverage < 50% | WARNING | Core files need adequate contracts |
-
-**When triggered:**
-1. Guard outputs `review_suggested` in results
-2. Agent spawns `/review` sub-agent (isolated context, adversarial mindset)
-3. Sub-agent reviews code without implementation history
-4. Findings are addressed before task completion
-
-**Why isolation matters:** The same agent that wrote code has "author blindness" — it remembers rationale and unconsciously validates its own decisions. An isolated reviewer sees only the code.
-
-**Platform support:**
-- **Claude Code:** Full independent review via Task tool (context isolation)
-- **Other agents:** Guard suggestions only; user decides follow-up action
-
-## Task Completion
-
-A task is complete only when ALL conditions are met:
-- Check-In displayed: `✓ Check-In: guard PASS | top: <entry1>, <entry2>`
-- Intent explicitly stated
-- Contract written before implementation
-- Final displayed: `✓ Final: guard PASS | <errors>, <warnings>`
-- User requirement satisfied
-
-**Missing any = Task incomplete.**
+| Section | Purpose |
+|---------|---------|
+| [sections/investigate.md](sections/investigate.md) | Exploration, no code changes |
+| [sections/propose.md](sections/propose.md) | Decision facilitation |
+| [sections/develop.md](sections/develop.md) | USBV implementation workflow |
+| [sections/review.md](sections/review.md) | Adversarial review, fix loop |
+| [sections/reference.md](sections/reference.md) | Contracts, markers, config |
 
 ## Installation
 
 ```bash
-# Development tools (guard, map, sig, MCP)
-pip install invar-tools
-
-# Or use without installing
-uvx invar-tools guard
-
-# Runtime contracts for your project
-pip install invar-runtime
+pip install invar-tools     # Dev tools (guard, sig, map)
+pip install invar-runtime   # Runtime contracts (@pre, @post)
 ```
-
-| Package | Size | Purpose |
-|---------|------|---------|
-| `invar-runtime` | ~3MB | Runtime contracts (`@pre`, `@post`, etc.) |
-| `invar-tools` | ~100MB | Dev tools (static analysis, doctests, Hypothesis, CrossHair, MCP) |
-
-## Doctest Best Practices
-
-**Dict/Set comparison:** Use deterministic comparison to avoid ordering issues:
-
-```python
-# BAD: Dict ordering may vary
->>> result.constraints
-{'min_value': 1, 'max_value': 99}  # May fail!
-
-# GOOD: Use sorted() for deterministic output
->>> sorted(result.items())
-[('max_value', 99), ('min_value', 1)]
-
-# GOOD: Use equality comparison
->>> result == {'min_value': 1, 'max_value': 99}
-True
-```
-
-## Configuration
-
-```toml
-# pyproject.toml or invar.toml
-[tool.invar.guard]
-core_paths = ["src/myapp/core"]
-shell_paths = ["src/myapp/shell"]
-max_file_lines = 500
-max_function_lines = 50
-
-# Exclude doctest lines from function size calculation
-# Useful when comprehensive doctests cause size violations
-exclude_doctest_lines = true
-
-# Override purity detection for specific functions
-purity_pure = ["pandas.DataFrame.groupby", "numpy.sum"]
-purity_impure = ["mylib.cached_compute"]  # Has side effects
-```
-
-## More Information
-
-| Topic | Location |
-|-------|----------|
-| Why & How (essential) | [docs/INVAR-GUIDE.md](docs/INVAR-GUIDE.md) |
-| Design philosophy | [docs/VISION.md](docs/VISION.md) |
-| Rule details | `invar rules` or `invar guard --explain` |
 
 ---
 
-*Protocol v4.0 — USBV workflow (DX-32): Understand → Specify → Build → Validate. Simplified visible checkpoints.*
+*Protocol v5.0 — Modular sections for workflow-based phase separation (DX-35/36).*
