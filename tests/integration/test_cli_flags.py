@@ -166,7 +166,8 @@ class TestExplainFlag:
 # Smoke test to ensure the module is importable
 def test_cli_module_imports():
     """Verify CLI module can be imported without errors."""
-    from invar.shell import cli
+    # DX-48b: CLI moved to shell/commands/guard.py
+    from invar.shell.commands import guard
 
-    assert hasattr(cli, "app"), "CLI should have typer app"
-    assert hasattr(cli, "guard"), "CLI should have guard command"
+    assert hasattr(guard, "app"), "CLI should have typer app"
+    assert hasattr(guard, "guard"), "CLI should have guard command"

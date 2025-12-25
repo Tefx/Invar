@@ -192,8 +192,10 @@ def guard(
     # Run verification phases
     static_exit_code = get_exit_code(report, strict)
     doctest_passed, doctest_output = True, ""
-    crosshair_passed, crosshair_output = True, {}
-    property_passed, property_output = True, {}
+    crosshair_passed: bool = True
+    crosshair_output: dict = {}
+    property_passed: bool = True
+    property_output: dict = {}
 
     # DX-19: STANDARD runs all verification phases
     if verification_level == VerificationLevel.STANDARD and static_exit_code == 0:
@@ -212,6 +214,14 @@ def guard(
         property_passed, property_output = run_property_tests_phase(
             checked_files, doctest_passed, static_exit_code
         )
+    elif verification_level == VerificationLevel.STATIC:
+        # Static-only mode: explicitly mark verification as skipped
+        crosshair_output = {"status": "skipped", "reason": "static mode"}
+        property_output = {"status": "skipped", "reason": "static mode"}
+    elif static_exit_code != 0:
+        # Static failures: explicitly mark verification as skipped
+        crosshair_output = {"status": "skipped", "reason": "prior failures"}
+        property_output = {"status": "skipped", "reason": "prior failures"}
 
     # DX-26: Unified output (agent JSON or human Rich)
     if use_agent_output:
