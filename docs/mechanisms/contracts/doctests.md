@@ -337,5 +337,5 @@ def read_config(path: Path) -> Result[Config, str]:
 
 - [Pre/Post Contracts](./pre-post.md) - Formal contract definitions
 - [Contract Completeness](./contract-complete.md) - When contracts are "complete"
-- [ICIDIV Workflow](../workflow/icidiv.md) - Contract-first development
+- [USBV Workflow](../workflow/usbv.md) - Contract-first development
 - [DX-02: Doctest Best Practices](../../proposals/2025-12-21-dx-improvements.md) - Design history

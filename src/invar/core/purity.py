@@ -18,11 +18,13 @@ from deal import pre
 from invar.core.models import FileInfo, RuleConfig, Severity, SymbolKind, Violation
 
 # Known impure functions and method patterns
+# MINOR-3: "time" matches `from time import time; time()` which IS impure.
+# May false positive on local functions named `time`, but this is rare.
 IMPURE_FUNCTIONS: set[str] = {
     "now",
     "today",
     "utcnow",
-    "time",
+    "time",  # from time import time
     "random",
     "randint",
     "randrange",
@@ -155,7 +157,12 @@ def extract_function_calls(node: ast.FunctionDef | ast.AsyncFunctionDef) -> list
 
 @pre(lambda call: isinstance(call, ast.Call) and hasattr(call, "func"))
 def _get_call_name(call: ast.Call) -> str | None:
-    """Get the name of a function call as a string."""
+    """Get the name of a function call as a string.
+
+    MINOR-4 Limitation: Only handles one level of attribute access (obj.method).
+    Chained access like a.b.method() returns None. This is acceptable since
+    IMPURE_PATTERNS only contains two-level patterns like ("datetime", "now").
+    """
     func = call.func
 
     # Simple name: print(), open()
@@ -268,8 +275,7 @@ def count_doctest_lines(node: ast.FunctionDef | ast.AsyncFunctionDef) -> int:
             count += 1  # Continuation line
         elif in_doctest and stripped and not stripped.startswith(">>>"):
             count += 1  # Expected output line
-            if not stripped:  # Empty line ends output
-                in_doctest = False
+            # Note: Empty line ends doctest, handled by else branch below
         else:
             in_doctest = False
     return count

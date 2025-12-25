@@ -65,6 +65,8 @@ def generate_contract_suggestion(signature: str) -> str:
     for name, type_hint in params:
         if not name:  # Skip empty names from malformed signatures
             continue
+        if name in ("self", "cls"):  # Skip method receiver parameters
+            continue
         param_names.append(name)
         if not type_hint:
             continue
@@ -85,6 +87,10 @@ def generate_contract_suggestion(signature: str) -> str:
 def _extract_params(signature: str) -> list[tuple[str, str | None]]:
     """
     Extract parameters and their types from a signature.
+
+    MINOR-2 Limitation: Uses naive comma splitting which breaks for complex types
+    like Callable[[int, str], bool] where commas appear inside nested brackets.
+    This is acceptable since suggestions are advisory, not strict validation.
 
     Examples:
         >>> _extract_params("(x: int, y: str) -> bool")

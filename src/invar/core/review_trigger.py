@@ -71,6 +71,8 @@ def calculate_contract_ratio(file_info: FileInfo) -> tuple[float, int, int]:
         (1.0, 0, 0)
     """
     # Only check public functions (not starting with _)
+    # MINOR-9: This excludes dunder methods (__init__, __str__, etc.) which is intentional.
+    # Dunder methods are boilerplate; public API methods are the focus of contract coverage.
     functions = [
         s for s in file_info.symbols
         if s.kind in (SymbolKind.FUNCTION, SymbolKind.METHOD) and not s.name.startswith("_")

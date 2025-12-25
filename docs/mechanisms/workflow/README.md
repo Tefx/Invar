@@ -6,20 +6,18 @@ Invar's development workflow for agent sessions.
 
 | Document | Purpose |
 |----------|---------|
-| [ICIDIV](./icidiv.md) | The six-step development workflow |
+| [USBV](./usbv.md) | The four-phase development workflow |
 | [Session Start](./session-start.md) | Check-In and Final protocols |
 
 ## Core Concept
 
-Every task follows ICIDIV:
+Every task follows USBV:
 
 ```
-I - Intent    : What? Core or Shell? Edge cases?
-C - Contract  : @pre/@post + doctests BEFORE code
-I - Inspect   : invar sig, invar map --top 10
-D - Design    : Decompose, leaves first
-I - Implement : Write code to pass doctests
-V - Verify    : invar guard, reflect → fix → verify
+U - Understand : Intent, Inspect (invar sig/map), Constraints
+S - Specify    : @pre/@post, Design decomposition, Doctests
+B - Build      : Implement leaves first, Compose
+V - Validate   : invar guard, reflect → iterate → validate
 ```
 
 ## Session Bookends
@@ -28,7 +26,7 @@ V - Verify    : invar guard, reflect → fix → verify
 Session Start:
   ✓ Check-In: guard PASS | top: main, cli
 
-... ICIDIV workflow ...
+... USBV workflow ...
 
 Session End:
   ✓ Final: guard PASS | 0 errors, 0 warnings
@@ -38,7 +36,7 @@ Session End:
 
 ## Key Principle
 
-> **"Contract before Implement. Verify after every change. No exceptions."**
+> **"Inspect before Contract. Depth varies naturally. Iterate when needed."**
 
 ## See Also
 

@@ -1,20 +1,19 @@
 # Visible Workflow Example (DX-30)
 
-This example shows how to use Phase TodoList and Contract Declaration for complex tasks.
+This example shows how to use the 3-checkpoint TodoList for complex tasks.
 
-## Phase TodoList Format
+## USBV Workflow
 
-For complex tasks, create a TodoList with ICIDIV phase markers:
+**U**nderstand → **S**pecify → **B**uild → **V**alidate
+
+For complex tasks, show 3 checkpoints (BUILD is internal work):
 
 ```python
-# TodoList with phase markers
+# TodoList with USBV checkpoints
 todos = [
-    {"content": "[Intent] Add user authentication, Shell layer", "status": "completed"},
-    {"content": "[Contract] Define authenticate() → Result[User, AuthError]", "status": "in_progress"},
-    {"content": "[Inspect] Review existing auth code in shell/auth.py", "status": "pending"},
-    {"content": "[Design] Split into validate_token() + fetch_user()", "status": "pending"},
-    {"content": "[Implement] Write code for each function", "status": "pending"},
-    {"content": "[Verify] Run invar guard, fix violations", "status": "pending"},
+    {"content": "[UNDERSTAND] Add user authentication, Shell layer", "status": "completed"},
+    {"content": "[SPECIFY] Define authenticate() → Result[User, AuthError]", "status": "in_progress"},
+    {"content": "[VALIDATE] Run invar guard, fix violations", "status": "pending"},
 ]
 ```
 
@@ -23,7 +22,7 @@ todos = [
 Show contracts in your message BEFORE writing code:
 
 ```python
-# [Contract] validate_token function:
+# [SPECIFY] validate_token function:
 
 @pre(lambda token: isinstance(token, str) and len(token) > 0)
 @post(lambda result: isinstance(result, dict) and 'sub' in result)
@@ -37,10 +36,10 @@ def validate_token(token: str) -> dict:
 # - Expired token → TokenExpired
 ```
 
-Then implement:
+Then implement (BUILD phase is internal, not shown in TodoList):
 
 ```python
-# [Implement] Now writing the code...
+# [BUILD] Now writing the code...
 
 import jwt
 from deal import pre, post
@@ -62,19 +61,24 @@ def validate_token(token: str) -> dict:
 ### Task: Add discount calculation to Core
 
 ```
-[TodoList]
-□ [Intent] Add calculate_discount to core/pricing.py
-□ [Contract] Define @pre/@post for price > 0, rate in [0,1]
-□ [Inspect] Check existing pricing functions
-□ [Design] Single function, no decomposition needed
-□ [Implement] Write function
-□ [Verify] Run guard
+[TodoList - 3 Checkpoints]
+□ [UNDERSTAND] Add calculate_discount to core/pricing.py
+  - Intent: Pure calculation, Core module
+  - Context: Existing pricing functions in pricing.py
+  - Constraints: price > 0, rate in [0,1]
+
+□ [SPECIFY] Define @pre/@post for calculate_discount
+  - Contract: @pre price > 0, rate in [0,1]; @post result >= 0
+  - Design: Single function, no decomposition needed
+  - Doctests: normal, zero discount, full discount
+
+□ [VALIDATE] Run guard, confirm correctness
 ```
 
-### [Contract] Phase
+### [SPECIFY] Checkpoint
 
 ```python
-[Contract] calculate_discount:
+[SPECIFY] calculate_discount:
 @pre(lambda price, rate: price > 0 and 0 <= rate <= 1)
 @post(lambda result: result >= 0)
 def calculate_discount(price: float, rate: float) -> float:
@@ -87,7 +91,7 @@ Edge cases:
 - rate > 1 → Rejected by @pre
 ```
 
-### [Implement] Phase
+### BUILD (Internal - Not Shown in TodoList)
 
 ```python
 from deal import pre, post
@@ -108,7 +112,7 @@ def calculate_discount(price: float, rate: float) -> float:
     return price * (1 - rate)
 ```
 
-### [Verify] Phase
+### [VALIDATE] Checkpoint
 
 ```bash
 $ invar guard --changed
@@ -117,9 +121,12 @@ src/myapp/core/pricing.py
 
 Summary: 0 errors, 0 warnings
 Code Health: 100%
+
+# Review Gate: Not triggered (no escape hatches, good coverage)
+# If triggered: invoke /review sub-agent before completion
 ```
 
-## When to Use Phase TodoList
+## When to Use Visible Workflow
 
 Use for:
 - New features (3+ functions)
@@ -131,6 +138,12 @@ Skip for:
 - Documentation changes
 - Trivial refactoring
 
-## Key Principle
+## Key Principles
 
-**Visibility enables accountability.** When the workflow is visible, both agents and users can verify compliance.
+1. **Visibility enables accountability** — When the workflow is visible, both agents and users can verify compliance.
+
+2. **BUILD is internal** — No user decision needed during implementation. Show UNDERSTAND, SPECIFY, VALIDATE only.
+
+3. **Inspect before Contract** — UNDERSTAND phase includes examining existing code before writing contracts.
+
+4. **Review Gate (DX-31)** — When Guard triggers `review_suggested` (escape hatches ≥3, coverage <50%, security paths), invoke `/review` sub-agent before task completion.

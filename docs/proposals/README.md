@@ -23,7 +23,8 @@ This directory contains design proposals for Invar development.
 | DX-23 | entry-point-detection | Auto-detect entry points, exemptions from Result requirement |
 | DX-24 | mechanism-documentation | 13 docs: architecture/, contracts/, rules/, verification/, workflow/ |
 | DX-26 | guard-simplification | Simplify guard CLI: 9→5 flags, TTY auto-detect, property test output |
-| DX-30 | visible-workflow | Phase TodoList convention + `contract_quality_ratio` Guard rule (Phase 3 pending DX-31) |
+| DX-30 | visible-workflow | ✅ Phase TodoList convention + `contract_quality_ratio` Guard rule |
+| DX-32 | workflow-iteration | ✅ USBV workflow replacing ICIDIV, Review Gate integration |
 
 ### In Progress / Partial
 
@@ -31,11 +32,22 @@ This directory contains design proposals for Invar development.
 |----|------|-------------|
 | DX-20 | property-testing-enhancements | Property testing UX improvements |
 | DX-28 | semantic-verification | **65%** - @relates, format specs, mutation testing, skip abuse prevention done |
+| DX-31 | adversarial-reviewer | **Phase 1,3,4,5,6 ✅** - Guard trigger + /review + platform docs. Phase 2 deferred |
 
 **DX-28 Remaining:**
 - Contract quality rules (filter_dual_coverage, parser_format_test, etc.)
 - Bidirectional testing framework
 - CrossHair symbolic verification of @relates
+
+**DX-31 Status:**
+- Phase 2: 📋 **Deferred** - Structured schema (current Prompt Guidance sufficient)
+
+### Draft / Discussion
+
+| ID | Name | Description |
+|----|------|-------------|
+| DX-33 | verification-blind-spots | Analysis: why automated verification misses issues |
+| DX-34 | review-cycle | Multi-round review cycle with convergence criteria |
 
 ### Backlog
 
@@ -44,7 +56,6 @@ This directory contains design proposals for Invar development.
 | DX-25 | functional-patterns | Haskell-inspired patterns: Validation, NewType, NonEmpty, Monoid |
 | DX-27 | system-prompt-protocol | System Prompt injection for Check-In/Final enforcement |
 | DX-29 | pure-content-detection | Explicit @invar:module markers (pending review) |
-| DX-31 | adversarial-reviewer | Independent reviewer with context isolation to prevent collusion |
 
 ### Archived / Merged
 

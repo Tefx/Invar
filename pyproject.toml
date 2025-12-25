@@ -11,6 +11,8 @@ packages = ["src/invar"]
 "src/invar/templates/context.md.template" = "invar/templates/context.md.template"
 "src/invar/templates/proposal.md.template" = "invar/templates/proposal.md.template"
 "src/invar/templates/pre-commit-config.yaml.template" = "invar/templates/pre-commit-config.yaml.template"
+"src/invar/templates/commands" = "invar/templates/commands"
+"src/invar/templates/examples" = "invar/templates/examples"
 
 [project]
 name = "invar-tools"

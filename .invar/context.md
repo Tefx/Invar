@@ -50,7 +50,47 @@ All contracted functions pass property testing after switching to `deal.cases()`
 
 ---
 
-## Session 2025-12-25: DX-31 Review Trigger & DX-32 Workflow Proposal
+## Session 2025-12-25: DX-32 USBV Implementation & Review Gate Integration
+
+### DX-32: USBV Workflow Implementation
+
+Replaced ICIDIV with USBV (Understand → Specify → Build → Validate):
+- **Key insight:** Inspect before Contract. Depth varies naturally.
+- **Iteration:** VALIDATE failure returns to appropriate phase
+
+### Review Gate Integration (DX-31 Phase 2)
+
+Integrated independent reviewer subagent into USBV's VALIDATE phase:
+
+```
+VALIDATE Phase
+├─ invar guard              # Smart Guard
+├─ Review Gate (条件)       # If review_suggested triggered
+│  └─ /review               # Invoke independent reviewer
+└─ Reflect & Iterate
+```
+
+**Trigger conditions:**
+- Escape hatches >= 3 (`@invar:allow` markers)
+- Contract coverage < 50% in Core files
+- Security-sensitive paths detected
+
+**Documentation Updated:**
+- `docs/mechanisms/workflow/usbv.md` - Added Review Gate section
+- `INVAR.md` - Updated VALIDATE phase, added iteration path
+- `src/invar/templates/INVAR.md` - Synced changes
+- `.invar/examples/workflow.md` - Added Review Gate principle
+- `docs/AGENTS.md` - Added USBV Integration section
+
+### Lesson #28: Review Gate as Conditional Step
+
+**发现:** Review should be automatic trigger, not manual decision.
+**机制:** Guard detects conditions → suggests review → Agent invokes /review → addresses findings.
+**类别:** Integration at workflow phase boundary (VALIDATE) is more effective than separate tool.
+
+---
+
+## Session 2025-12-25: DX-31 Review Trigger
 
 ### DX-31 Phase 1: Guard Trigger Rule
 
@@ -179,7 +219,7 @@ During DX-28 implementation, I batch-added `@skip_property_test` to 4 functions 
 ## Current State
 
 - **PyPI:** `invar-tools` + `invar-runtime` v1.0.2 (DX-21 package split + dual licensing)
-- **Protocol:** v3.27 (DX-22: content-based detection, DX-26: guard simplification)
+- **Protocol:** v4.0 (DX-32: USBV workflow, DX-31: review triggers)
 - **GitHub Pages:** https://tefx.github.io/Invar/
 - **Licenses:** Apache-2.0 (runtime) + GPL-3.0 (tools) + CC-BY-4.0 (docs)
 - **Status:** Feature complete, zero technical debt
@@ -904,7 +944,7 @@ Human (Commander) ──directs──→ Agent (Executor) ──uses──→ In
 
 | File | Purpose |
 |------|---------|
-| INVAR.md | Protocol v3.27 |
+| INVAR.md | Protocol v4.0 |
 | docs/INVAR-GUIDE.md | Why & How |
 | docs/VISION.md | Design philosophy |
 | CLAUDE.md | Development guide |
@@ -937,6 +977,9 @@ Human (Commander) ──directs──→ Agent (Executor) ──uses──→ In
 23. **Example-Driven Learning** - Abstract rules don't teach; concrete code examples do. New agents learn fastest by seeing working code
 24. **deal Lambda Boolean Trap** - `and`/`or` in contracts may return strings; deal interprets non-bool as error messages. Always use `bool()`
 25. **Skip Requires Justification** - Batch-adding @skip_property_test is lazy shortcut. Each skip needs explicit reason. Guard enforces categories: no_params, strategy_factory, external_io, non_deterministic
+26. **Contract Before Inspect Problem** - ICIDIV's Contract-before-Inspect order causes friction in brownfield development. USBV (Understand → Specify → Build → Validate) with Inspect-before-Contract is more natural
+27. **Process Visibility vs Task Completion** - Agents tend to "just do it" rather than "show what they're doing". Need explicit visibility checkpoints
+28. **Review Gate as Conditional Step** - Review should be automatic trigger at workflow phase boundary (VALIDATE), not separate manual step
 
 ## Release Process
 

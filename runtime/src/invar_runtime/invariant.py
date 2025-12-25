@@ -3,6 +3,9 @@ Loop invariant support for Invar.
 
 Provides runtime-checked loop invariants inspired by Dafny.
 Checking controlled by INVAR_CHECK environment variable (default: ON).
+
+MINOR-10: Environment variable is read at import time for performance.
+To change behavior, restart the Python process or manually set _INVAR_CHECK.
 """
 
 from __future__ import annotations

@@ -12,7 +12,7 @@
   You are free to share and adapt this document, provided you give
   appropriate credit to the Invar project.
 -->
-# The Invar Protocol v3.28
+# The Invar Protocol v4.0
 
 > **"Trade structure for safety."** Separate what CAN fail (I/O) from what SHOULD NOT fail (logic).
 
@@ -288,59 +288,102 @@ No visible check-in = Session not started.
 
 Then read `.invar/context.md` for project state and lessons learned.
 
-## Workflow: ICIDIV (Required Order)
+## Workflow: USBV (DX-32)
 
-**I**ntent → **C**ontract → **I**nspect → **D**esign → **I**mplement → **V**erify
+**U**nderstand → **S**pecify → **B**uild → **V**alidate
 
 ```
-1. Intent    — What? Core or Shell? Edge cases?
-2. Contract  — @pre/@post + doctests BEFORE code
-3. Inspect   — invar sig <file>, invar map --top 10
-4. Design    — Decompose: leaves first, then compose
-5. Implement — Write code to pass your doctests
-6. Verify    — invar guard. If fail: reflect → fix → verify
+UNDERSTAND → SPECIFY → BUILD → VALIDATE
+     │           │        │        │
+  [depth]    [depth]  [depth]  [depth]
+     └───────────┴────────┴────────┘
+           Depth varies naturally
 ```
 
-**Contract before Implement. Verify after every change. No exceptions.**
+| Phase | Purpose | Core Activities |
+|-------|---------|-----------------|
+| **UNDERSTAND** | Know what and why | Intent, Inspect, Constraints |
+| **SPECIFY** | Define boundaries | Contract, Design, Test Cases |
+| **BUILD** | Write code | Implement leaves, Compose |
+| **VALIDATE** | Confirm correctness | Verify, Review Gate, Reflect |
+
+**Key Principles:**
+- **Inspect before Contract** — Understand existing code before writing interfaces
+- **Variable Depth** — Same 4 phases, depth adjusts based on resistance encountered
+- **Explicit Iteration** — VALIDATE failure returns to earlier phase (not "retry")
+
+**Iteration Paths:**
+- Logic error → Return to BUILD
+- Missing edge case → Return to SPECIFY (add doctest)
+- Misunderstood requirement → Return to UNDERSTAND
+- Review Gate triggered → Invoke `/review` sub-agent (DX-31)
 
 ## Visible Workflow (DX-30)
 
-For complex tasks (3+ functions, architectural changes), show ICIDIV phases in your TodoList:
+For complex tasks (3+ functions, architectural changes), show 3 checkpoints in TodoList:
 
 ```
-□ [Intent] Task description, Core/Shell classification
-□ [Contract] Function signatures with @pre/@post
-□ [Inspect] Files and symbols to review
-□ [Design] Decomposition plan
-□ [Implement] Write code
-□ [Verify] Guard results
+□ [UNDERSTAND] Task description, codebase context, constraints
+□ [SPECIFY] Contracts (@pre/@post) and design decomposition
+□ [VALIDATE] Guard results, integration status
 ```
 
-**Contract before Implement:** Show contracts in your message before writing code.
+**BUILD is internal work** — not shown in TodoList (no user decision needed).
 
-```python
-[Contract] calculate_discount:
-@pre(lambda price, rate: price > 0 and 0 <= rate <= 1)
-@post(lambda result: result >= 0)
-def calculate_discount(price: float, rate: float) -> float:
-    ...
+**Checkpoint Content:**
 
-Edge cases:
-- price = 0 → Invalid (rejected by @pre)
-- rate = 0 → Full price
-- rate = 1 → Zero (free)
+| Checkpoint | What to Show |
+|------------|--------------|
+| UNDERSTAND | Task intent, files to modify, edge cases identified |
+| SPECIFY | Function contracts before implementation |
+| VALIDATE | `invar guard` results, Review Gate if triggered, integration status |
 
-[Implement] Now coding...
+**Example:**
+```
+□ [UNDERSTAND] Add caching to API
+  - Intent: Reduce response time for repeated queries
+  - Context: Found existing cache in utils/cache.py
+  - Constraints: Must be thread-safe, max 1GB memory
+
+□ [SPECIFY] Cache interface
+  @pre(lambda key: isinstance(key, str))
+  @post(lambda result: result is None or isinstance(result, T))
+  def cache_get(key: str) -> T | None: ...
+
+□ [VALIDATE] Verification
+  - Guard: PASS (0 errors, 2 warnings)
+  - Review Gate: Not triggered (or: /review completed)
+  - Integration: API tests pass
 ```
 
-**When to use Phase TodoList:**
+**When to use Visible Workflow:**
 - New features (3+ functions)
 - Architectural changes
 - Core module modifications
 
 **Skip for:** Single-line fixes, documentation changes, trivial refactoring.
 
-This makes compliance visible and catches mistakes early.
+## Review Gate (DX-31)
+
+Guard outputs `review_suggested` when conditions warrant independent review:
+
+| Trigger | Level | Rationale |
+|---------|-------|-----------|
+| Security-sensitive path | WARNING | Files with auth, crypt, secret, password, token |
+| Escape hatches ≥ 3 | WARNING | High `@invar:allow` count may indicate rule circumvention |
+| Contract coverage < 50% | WARNING | Core files need adequate contracts |
+
+**When triggered:**
+1. Guard outputs `review_suggested` in results
+2. Agent spawns `/review` sub-agent (isolated context, adversarial mindset)
+3. Sub-agent reviews code without implementation history
+4. Findings are addressed before task completion
+
+**Why isolation matters:** The same agent that wrote code has "author blindness" — it remembers rationale and unconsciously validates its own decisions. An isolated reviewer sees only the code.
+
+**Platform support:**
+- **Claude Code:** Full independent review via Task tool (context isolation)
+- **Other agents:** Guard suggestions only; user decides follow-up action
 
 ## Task Completion
 
@@ -418,4 +461,4 @@ purity_impure = ["mylib.cached_compute"]  # Has side effects
 
 ---
 
-*Protocol v3.28 — Added Visible Workflow (DX-30): Phase TodoList and Contract Declaration conventions.*
+*Protocol v4.0 — USBV workflow (DX-32): Understand → Specify → Build → Validate. Simplified visible checkpoints.*

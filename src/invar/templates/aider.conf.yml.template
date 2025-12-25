@@ -26,6 +26,6 @@ system-prompt: |
   Execute: invar guard
   This is your sign-out. Completes the Check-In/Final pair.
 
-  ## Workflow (ICIDIV)
-  Intent → Contract → Inspect → Design → Implement → Verify
-  Contract before Implement. No exceptions.
+  ## Workflow (USBV)
+  Understand → Specify → Build → Validate
+  Inspect before Contract. Depth varies naturally.

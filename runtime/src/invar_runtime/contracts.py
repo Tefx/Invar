@@ -26,6 +26,12 @@ class Contract:
     Contracts encapsulate predicates that can be combined and reused.
     Works with deal.pre for runtime checking.
 
+    Security Warning:
+        Predicates are executed when contracts are checked. Only use predicates
+        from trusted sources. A malicious predicate could execute arbitrary code
+        when check() is called. Predicates should be pure functions with no
+        side effects.
+
     Examples:
         >>> NonEmpty = Contract(lambda x: len(x) > 0, "non-empty")
         >>> Sorted = Contract(lambda x: list(x) == sorted(x), "sorted")
@@ -71,7 +77,28 @@ class Contract:
         )
 
     def __call__(self, *args: Any, **kwargs: Any) -> bool:
-        """Allow using as deal.pre predicate directly."""
+        """
+        Allow using as deal.pre predicate directly.
+
+        Examples:
+            >>> c = Contract(lambda x: x > 0, "positive")
+            >>> c(5)
+            True
+            >>> c(-1)
+            False
+            >>> c(x=10)
+            True
+            >>> c()
+            Traceback (most recent call last):
+                ...
+            ValueError: Contract requires at least one argument
+            >>> c(*[], **{})  # Explicit empty args and kwargs
+            Traceback (most recent call last):
+                ...
+            ValueError: Contract requires at least one argument
+        """
+        if not args and not kwargs:
+            raise ValueError("Contract requires at least one argument")
         value = args[0] if args else next(iter(kwargs.values()))
         return self.check(value)
 
@@ -94,6 +121,8 @@ def pre(*contracts: Contract) -> Callable[[Callable], Callable]:
     """
 
     def combined(*args: Any, **kwargs: Any) -> bool:
+        if not args and not kwargs:
+            raise ValueError("Precondition requires at least one argument")
         value = args[0] if args else next(iter(kwargs.values()))
         return all(c.check(value) for c in contracts)
 

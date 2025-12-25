@@ -15,13 +15,11 @@ system-prompt: |
   1. invar guard --changed
   2. invar map --top 10
 
-  Workflow (ICIDIV):
-  - Intent: What? Core or Shell?
-  - Contract: @pre/@post + doctests BEFORE code
-  - Inspect: invar sig <file>
-  - Design: Decompose first
-  - Implement: Pass your doctests
-  - Verify: invar guard
+  Workflow (USBV):
+  - Understand: Intent, Inspect (invar sig), Constraints
+  - Specify: @pre/@post + doctests, Design decomposition
+  - Build: Implement leaves first, Compose
+  - Validate: invar guard, Integrate, Reflect
 
   Project-specific:
   - INVAR.md here is the SOURCE, templates are in src/invar/templates/

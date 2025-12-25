@@ -23,15 +23,19 @@ from invar.core.tautology import check_semantic_tautology as check_semantic_taut
 from invar.core.tautology import is_semantic_tautology as is_semantic_tautology
 
 
-@pre(lambda expression: ("lambda" in expression and ":" in expression) or not expression.strip())
+@pre(lambda expression: isinstance(expression, str))
 def is_empty_contract(expression: str) -> bool:
     """Check if a contract expression is always True (tautological).
+
+    Handles any string input - non-lambda expressions return False.
 
     Examples:
         >>> is_empty_contract("lambda: True"), is_empty_contract("lambda x: True")
         (True, True)
         >>> is_empty_contract("lambda x: x > 0"), is_empty_contract("")
         (False, False)
+        >>> is_empty_contract("not a lambda")  # Non-lambda returns False
+        False
     """
     if not expression.strip():
         return False
@@ -47,7 +51,7 @@ def is_empty_contract(expression: str) -> bool:
         return False
 
 
-@pre(lambda expression, annotations: ("lambda" in expression and ":" in expression) or not expression.strip())
+@pre(lambda expression, annotations: isinstance(expression, str))
 def is_redundant_type_contract(expression: str, annotations: dict[str, str]) -> bool:
     """Check if a contract only checks types already in annotations.
 
@@ -75,7 +79,11 @@ def is_redundant_type_contract(expression: str, annotations: dict[str, str]) -> 
 @pre(lambda node: isinstance(node, ast.expr))
 @post(lambda result: result is None or isinstance(result, list))
 def _extract_isinstance_checks(node: ast.expr) -> list[tuple[str, str]] | None:
-    """Extract isinstance checks. Returns None if other logic present."""
+    """Extract isinstance checks. Returns None if other logic present.
+
+    Conservative: returns None for complex expressions (nested BoolOp, etc.)
+    to avoid false positives when detecting redundant type contracts.
+    """
     if isinstance(node, ast.Call) and hasattr(node, 'func'):
         check = _parse_isinstance_call(node)
         return [check] if check else None
@@ -106,9 +114,19 @@ def _parse_isinstance_call(node: ast.Call) -> tuple[str, str] | None:
 def _types_match(annotation: str, type_name: str) -> bool:
     """Check if type annotation matches isinstance check.
 
+    Handles simple cases like 'int' matching 'int' and 'list[int]' matching 'list'.
+
+    MINOR-1 Limitation: Does not handle complex generics:
+    - Optional[T] / Union[T, None] → doesn't match 'T' or 'NoneType'
+    - Union[A, B] → doesn't match 'A' or 'B'
+    - Capitalized builtins → 'List[int]' won't match 'list'
+    This is acceptable for detecting obvious redundant type checks.
+
     Examples:
         >>> _types_match("int", "int"), _types_match("list[int]", "list")
         (True, True)
+        >>> _types_match("Optional[int]", "int")  # Limitation: returns False
+        False
     """
     if annotation == type_name:
         return True
@@ -119,7 +137,7 @@ def _types_match(annotation: str, type_name: str) -> bool:
 # Phase 8.3: Parameter mismatch detection
 
 
-@pre(lambda expression, signature: ("lambda" in expression and ":" in expression) or not expression.strip())
+@pre(lambda expression, signature: isinstance(expression, str) and isinstance(signature, str))
 def has_unused_params(expression: str, signature: str) -> tuple[bool, list[str], list[str]]:
     """
     Check if lambda has params it doesn't use (P28: Partial Contract Detection).
@@ -171,7 +189,7 @@ def has_unused_params(expression: str, signature: str) -> tuple[bool, list[str],
     return (len(unused_params) > 0, unused_params, used_params)
 
 
-@pre(lambda expression, signature: ("lambda" in expression and ":" in expression) or not expression.strip())
+@pre(lambda expression, signature: isinstance(expression, str) and isinstance(signature, str))
 def has_param_mismatch(expression: str, signature: str) -> tuple[bool, str]:
     """
     Check if lambda params don't match function params.
@@ -391,6 +409,10 @@ def check_skip_without_reason(file_info: FileInfo, config: RuleConfig) -> list[V
         True
         >>> vs[0].rule
         'skip_without_reason'
+        >>> # MAJOR-10: Also detects empty string reasons
+        >>> info2 = FileInfo(path="t.py", lines=5, symbols=[sym], source='@skip_property_test("")\\ndef f(): pass')
+        >>> len(check_skip_without_reason(info2, RuleConfig())) > 0
+        True
     """
     violations: list[Violation] = []
 
@@ -402,10 +424,12 @@ def check_skip_without_reason(file_info: FileInfo, config: RuleConfig) -> list[V
     # Uses ^ to ensure we're matching decorator position, not string literals
     bare_pattern = re.compile(r"^\s*@skip_property_test\s*$")
     no_reason_pattern = re.compile(r"^\s*@skip_property_test\s*\(\s*\)\s*$")
+    # MAJOR-10: Also detect empty/whitespace-only string reasons
+    empty_string_pattern = re.compile(r"^\s*@skip_property_test\s*\(\s*['\"][\s]*['\"]\s*\)\s*$")
 
     for line_num, line in enumerate(source.split("\n"), 1):
-        # Check for bare @skip_property_test (no parentheses)
-        if bare_pattern.match(line) or no_reason_pattern.match(line):
+        # Check for bare @skip_property_test, empty parens, or empty string reason
+        if bare_pattern.match(line) or no_reason_pattern.match(line) or empty_string_pattern.match(line):
             violations.append(
                 Violation(
                     rule="skip_without_reason",

@@ -95,7 +95,7 @@ def count_escape_hatches(source: str) -> int:
     return len(INVAR_ALLOW_PATTERN.findall(source))
 
 
-@pre(lambda symbol, source: symbol is not None)
+@pre(lambda symbol, source: symbol is not None and isinstance(source, str))
 @post(lambda result: isinstance(result, bool))
 def is_entry_point(symbol: Symbol, source: str) -> bool:
     """
@@ -174,6 +174,8 @@ def _has_entry_decorator(symbol: Symbol, source: str) -> bool:
     context = "\n".join(context_lines)
 
     # Check each known decorator pattern
+    # Note: String matching may match decorators in string literals (rare edge case).
+    # AST-based detection would be more robust but adds complexity for a heuristic check.
     for pattern in ENTRY_POINT_DECORATORS:
         # Match @pattern or @something.pattern
         if f"@{pattern}" in context:

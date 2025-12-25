@@ -48,6 +48,7 @@ def is_semantic_tautology(expression: str) -> tuple[bool, str]:
         return (False, "")
 
 
+@pre(lambda node: isinstance(node, ast.expr))
 @post(lambda result: isinstance(result, tuple) and len(result) == 2)
 def _check_tautology_patterns(node: ast.expr) -> tuple[bool, str]:
     """Check for common tautology patterns in AST node."""

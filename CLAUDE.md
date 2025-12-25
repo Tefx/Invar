@@ -4,7 +4,7 @@
 
 This project follows the Invar methodology. See [INVAR.md](./INVAR.md) for the protocol.
 
-**Protocol Version:** v3.28 | **PyPI:** `invar-tools` + `invar-runtime` | **Smart Guard:** `invar guard` = full verification
+**Protocol Version:** v4.0 | **PyPI:** `invar-tools` + `invar-runtime` | **Smart Guard:** `invar guard` = full verification
 
 ---
 
@@ -126,20 +126,18 @@ invar/
 
 ---
 
-## Development Workflow (ICIDIV)
+## Development Workflow (USBV)
 
-1. **Intent** - Understand task, classify Core/Shell, list edge cases
-2. **Contract** - Write COMPLETE @pre/@post AND doctests BEFORE code
-   - Include: normal case, boundaries, edge conditions
-   - Self-test: Can this contract regenerate the function?
-3. **Inspect** - `invar sig <file>` for contracts, `invar map --top 10` for entry points
-4. **Design** - Decompose into sub-functions:
-   - List functions (name + description)
-   - Identify dependencies, order: leaves first
-   - If file > 400 lines, plan extraction
-5. **Implement** - Write code to pass the doctests you already wrote
-6. **Verify** - `invar guard` (Smart Guard: static + doctests, zero decisions)
-   - If violations: Reflect (why?) → Fix → Verify again
+**U**nderstand → **S**pecify → **B**uild → **V**alidate
+
+| Phase | Purpose | Activities |
+|-------|---------|------------|
+| **UNDERSTAND** | Know what and why | Intent, Inspect (`invar sig/map`), Constraints |
+| **SPECIFY** | Define boundaries | @pre/@post, Design decomposition, Doctests |
+| **BUILD** | Write code | Implement leaves first, Compose |
+| **VALIDATE** | Confirm correctness | `invar guard`, Integrate, Reflect |
+
+**Key:** Inspect before Contract. Depth varies naturally based on resistance. Iterate when needed.
 
 ---
 
@@ -188,7 +186,18 @@ invar rules              # List all rules
 |---------|------|---------|
 | `/review` | Reviewer | Adversarial code review (DX-31) |
 
-Use `/review` for critical review. Guard triggers `review_suggested` automatically for security-sensitive files, high escape counts, or low contract coverage.
+### Review Modes (Auto-Selected)
+
+`/review` automatically selects mode based on Guard output:
+
+| Condition | Mode | Behavior |
+|-----------|------|----------|
+| `review_suggested` triggered | **Isolated** | Task tool sub-agent (fresh context) |
+| No trigger | **Quick** | Same-context adversarial review |
+| `--isolated` flag | **Isolated** | Force isolation |
+| `--quick` flag | **Quick** | Force same-context |
+
+Guard triggers `review_suggested` for: security-sensitive files, escape hatches >= 3, contract coverage < 50%.
 
 ---
 

@@ -263,5 +263,5 @@ def average(items: list[float]) -> float:
 
 - [Pre/Post Contracts](./pre-post.md) - Contract syntax and patterns
 - [Doctests](./doctests.md) - Examples as specification
-- [ICIDIV Workflow](../workflow/icidiv.md) - Contract-first development
+- [USBV Workflow](../workflow/usbv.md) - Contract-first development
 - [Clover Paper](https://arxiv.org/abs/2310.04625) - Research on contract completeness

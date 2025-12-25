@@ -115,7 +115,7 @@ A task is complete only when **ALL** conditions are met:
 |-----------|---------------|
 | Check-In displayed | First message shows `✓ Check-In:` |
 | Intent stated | Task goal explicitly documented |
-| Contract before implementation | ICIDIV followed |
+| Contract before implementation | USBV followed |
 | Final displayed | Last message shows `✓ Final:` |
 | User requirement satisfied | Actual goal achieved |
 
@@ -260,6 +260,6 @@ If `.invar/context.md` doesn't exist:
 
 ## See Also
 
-- [ICIDIV Workflow](./icidiv.md) - Full development workflow
+- [USBV Workflow](./usbv.md) - Full development workflow
 - [INVAR.md Check-In section](../../INVAR.md) - Protocol definition
 - [Verification Overview](../verification/README.md) - What guard checks
