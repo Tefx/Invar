@@ -2,7 +2,7 @@
 
 > **"Same name, different behavior = confusion."**
 
-**Status:** Draft
+**Status:** ✅ Implemented
 **Created:** 2025-12-25
 **Updated:** 2025-12-26
 **Effort:** Low
@@ -195,11 +195,11 @@ Do NOT fix issues - just report verification results.
 
 ## Success Criteria
 
-- [ ] `/review` command renamed to `/audit`
-- [ ] `/guard` command created
-- [ ] No user confusion about command vs skill behavior
-- [ ] CLAUDE.md updated with command table
-- [ ] All docs updated to reference `/audit` instead of `/review` command
+- [x] `/review` command renamed to `/audit`
+- [x] `/guard` command created
+- [x] No user confusion about command vs skill behavior
+- [x] CLAUDE.md updated with command table
+- [x] All docs updated to reference `/audit` instead of `/review` command
 
 ## Related
 

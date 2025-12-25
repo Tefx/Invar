@@ -7,7 +7,7 @@ This directory contains design proposals for Invar development.
 - `DX-XX-name.md` — Developer Experience improvements
 - Completed/archived proposals in `completed/` subdirectory
 
-## Active Proposals (14)
+## Active Proposals (13)
 
 | ID | Name | Status | Description |
 |----|------|--------|-------------|
@@ -22,16 +22,16 @@ This directory contains design proposals for Invar development.
 | DX-42 | workflow-auto-routing | Draft | Auto-routing + autonomous orchestration |
 | DX-43 | cross-platform-distribution | Draft | Cross-platform distribution (from DX-35+36+11) |
 | DX-46 | documentation-audit | Draft | docs/ directory audit + `invar check-docs` |
-| DX-47 | command-skill-naming | Draft | Review command vs skill naming |
 | DX-48 | code-structure-reorganization | Draft | Code structure reorganization |
 | DX-49 | protocol-distribution-unification | Draft | SSOT for INVAR.md, CLAUDE.md, skills/ |
 
-## Archived Proposals (23)
+## Archived Proposals (24)
 
 | ID | Name | Status | Description |
 |----|------|--------|-------------|
 | DX-11 | documentation-restructure | ✅ Mostly Implemented | Multi-agent support (remnants → DX-43) |
 | DX-45 | template-consistency | Superseded | → DX-49 (SSOT) |
+| DX-47 | command-skill-naming | ✅ Implemented | /audit, /guard commands; /review skill |
 | DX-12 | hypothesis-fallback | ✅ Implemented | Hypothesis as CrossHair fallback |
 | DX-13 | incremental-prove | ✅ Implemented | Incremental CrossHair verification |
 | DX-14 | expanded-prove-usage | ✅ Implemented | Expanded --prove usage |
@@ -55,10 +55,6 @@ This directory contains design proposals for Invar development.
 ## Dependency Graph
 
 ```
-                         DX-47 (Naming)
-                              │
-              ┌───────────────┴───────────────┐
-              ▼                               ▼
       DX-49 (SSOT)                    DX-42 (Auto-routing)
               │                               │
               ▼                       ┌───────┴───────┐
@@ -70,16 +66,15 @@ This directory contains design proposals for Invar development.
 
 Independent: DX-48 (Code cleanup), DX-37 (Coverage), DX-46 (docs/ audit)
 Deferred: DX-38, DX-23, DX-25, DX-29
-Archived: DX-45 → DX-49
+Completed: DX-47 (unblocked DX-49 and DX-42)
 ```
 
 ## Priority Recommendations
 
 | Priority | Proposal | Description | Rationale | Deps |
 |----------|----------|-------------|-----------|------|
-| **Critical** | DX-47 | Rename `/review` command to resolve command/skill confusion | Blocks DX-49 and DX-42 | — |
-| **High** | DX-49 | SSOT: Unify INVAR.md/CLAUDE.md/skills, delete sections/ | Eliminate version divergence | DX-47 |
-| **High** | DX-42 | Agent auto-identifies task intent and routes to correct workflow | Users cannot invoke skills directly | DX-47 |
+| **High** | DX-49 | SSOT: Unify INVAR.md/CLAUDE.md/skills, delete sections/ | Eliminate version divergence | ✅ DX-47 |
+| **High** | DX-42 | Agent auto-identifies task intent and routes to correct workflow | Users cannot invoke skills directly | ✅ DX-47 |
 | **High** | DX-41 | Auto-trigger /review skill when Guard outputs `review_suggested` | Close VALIDATE phase loop | DX-42 |
 | **High** | DX-39 | Skill session cache, USBV SPECIFY enforcement, workflow transition | Reduce token waste | DX-42 |
 | **Medium** | DX-43 | `invar init --cursor` generates .cursorrules | Cross-platform expansion | DX-49 |
@@ -96,18 +91,18 @@ Archived: DX-45 → DX-49
 
 | Wave | Proposals | Parallel? | Effort | Goal |
 |------|-----------|-----------|--------|------|
-| **0** | DX-48 | ✅ Can parallel with Wave 1-2 | 0.5 day | Code cleanup |
-| **1** | DX-47 | — | 0.5 day | Unblock (critical path start) |
-| **2** | DX-49 ∥ DX-42 | ✅ Both parallel | 2-3 days | Core infrastructure |
-| **3** | DX-43 ∥ DX-41 | ✅ Both parallel | 1-2 days | Feature completion |
-| **4** | DX-39 | — | 1-2 days | Efficiency optimization |
-| **5** | DX-46 ∥ DX-37 | ✅ Both parallel | 1 day | Quality enhancement |
-| **6** | DX-40 | — | 0.5 day | Tool enforcement (optional) |
+| ~~1~~ | ~~DX-47~~ | — | — | ✅ Complete |
+| **0** | DX-48 | ✅ Can parallel | 0.5 day | Code cleanup |
+| **1** | DX-49 ∥ DX-42 | ✅ Both parallel | 2-3 days | Core infrastructure |
+| **2** | DX-43 ∥ DX-41 | ✅ Both parallel | 1-2 days | Feature completion |
+| **3** | DX-39 | — | 1-2 days | Efficiency optimization |
+| **4** | DX-46 ∥ DX-37 | ✅ Both parallel | 1 day | Quality enhancement |
+| **5** | DX-40 | — | 0.5 day | Tool enforcement (optional) |
 | **∞** | DX-38, DX-23, DX-25, DX-29 | — | — | Deferred |
 
-**Time estimate:** Serial ~10 days, optimized parallel ~6-8 days
+**Time estimate:** Serial ~9 days, optimized parallel ~5-7 days
 
-**Critical path:** DX-47 → DX-42 → DX-41 → DX-39 → DX-40
+**Critical path:** ~~DX-47~~ → DX-42 → DX-41 → DX-39 → DX-40
 
 ## Recent Changes (2025-12-26)
 
