@@ -57,13 +57,18 @@ def _count_core_functions(file_info) -> tuple[int, int]:
 
 
 # @shell_complexity: Core orchestration - iterates files, handles failures, aggregates results
+# @shell_complexity: Core orchestration - iterates files, handles failures, aggregates results
 def _scan_and_check(
     path: Path, config: RuleConfig, only_files: set[Path] | None = None
 ) -> Result[GuardReport, str]:
     """Scan project files and check against rules."""
+    from invar.core.entry_points import extract_escape_hatches
+    from invar.core.review_trigger import check_duplicate_escape_reasons
     from invar.core.shell_architecture import check_complexity_debt
 
     report = GuardReport(files_checked=0)
+    all_escapes: list[tuple[str, str, str]] = []  # DX-33: (file, rule, reason)
+
     for file_result in scan_project(path, only_files):
         if isinstance(file_result, Failure):
             console.print(f"[yellow]Warning:[/yellow] {file_result.failure()}")
@@ -75,12 +80,20 @@ def _scan_and_check(
         report.update_coverage(total, with_contracts)
         for violation in check_all_rules(file_info, config):
             report.add_violation(violation)
+        # DX-33: Collect escape hatches for cross-file analysis
+        if file_info.source:
+            for rule, reason in extract_escape_hatches(file_info.source):
+                all_escapes.append((file_info.path, rule, reason))
 
     # DX-22: Check project-level complexity debt (Fix-or-Explain enforcement)
     for debt_violation in check_complexity_debt(
         report.violations, config.shell_complexity_debt_limit
     ):
         report.add_violation(debt_violation)
+
+    # DX-33: Check for duplicate escape reasons across files
+    for escape_violation in check_duplicate_escape_reasons(all_escapes):
+        report.add_violation(escape_violation)
 
     return Success(report)
 

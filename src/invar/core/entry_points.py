@@ -95,6 +95,29 @@ def count_escape_hatches(source: str) -> int:
     return len(INVAR_ALLOW_PATTERN.findall(source))
 
 
+@pre(lambda source: isinstance(source, str))
+@post(lambda result: isinstance(result, list))
+def extract_escape_hatches(source: str) -> list[tuple[str, str]]:
+    """
+    Extract @invar:allow markers with their reasons (DX-33 Option E).
+
+    Returns list of (rule, reason) tuples for cross-file analysis.
+
+    Examples:
+        >>> extract_escape_hatches("")
+        []
+        >>> extract_escape_hatches("# @invar:allow shell_result: API boundary")
+        [('shell_result', 'API boundary')]
+        >>> source = '''
+        ... # @invar:allow rule1: same reason
+        ... # @invar:allow rule2: different reason
+        ... '''
+        >>> extract_escape_hatches(source)
+        [('rule1', 'same reason'), ('rule2', 'different reason')]
+    """
+    return INVAR_ALLOW_PATTERN.findall(source)
+
+
 @pre(lambda symbol, source: symbol is not None and isinstance(source, str))
 @post(lambda result: isinstance(result, bool))
 def is_entry_point(symbol: Symbol, source: str) -> bool:

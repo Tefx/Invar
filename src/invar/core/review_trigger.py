@@ -296,3 +296,77 @@ def check_review_suggested(file_info: FileInfo, config: RuleConfig) -> list[Viol
         )
 
     return violations
+
+
+@pre(lambda escapes: isinstance(escapes, list))
+@post(lambda result: isinstance(result, list))
+def check_duplicate_escape_reasons(
+    escapes: list[tuple[str, str, str]],
+) -> list[Violation]:
+    """
+    Detect duplicate escape hatch reasons across files (DX-33 Option E).
+
+    Warns when 3+ files share identical escape reason text,
+    suggesting a systematic issue that should be fixed at the root.
+
+    Args:
+        escapes: List of (file_path, rule, reason) tuples
+
+    Returns:
+        List of violations for duplicate reasons
+
+    Examples:
+        >>> check_duplicate_escape_reasons([])
+        []
+        >>> # 2 files with same reason - no warning (threshold is 3)
+        >>> escapes = [
+        ...     ("a.py", "rule", "same reason"),
+        ...     ("b.py", "rule", "same reason"),
+        ... ]
+        >>> check_duplicate_escape_reasons(escapes)
+        []
+        >>> # 3+ files with same reason - warning
+        >>> escapes = [
+        ...     ("a.py", "rule", "False positive - .get()"),
+        ...     ("b.py", "rule", "False positive - .get()"),
+        ...     ("c.py", "rule", "False positive - .get()"),
+        ... ]
+        >>> vs = check_duplicate_escape_reasons(escapes)
+        >>> len(vs) == 1
+        True
+        >>> "3 files" in vs[0].message
+        True
+        >>> "False positive" in vs[0].message
+        True
+    """
+    violations: list[Violation] = []
+
+    # Group by (reason) - normalize whitespace for comparison
+    reason_files: dict[str, list[str]] = {}
+    for file_path, _rule, reason in escapes:
+        normalized = reason.strip().lower()
+        if normalized not in reason_files:
+            reason_files[normalized] = []
+        reason_files[normalized].append(file_path)
+
+    # Check for duplicates (threshold: 3+ files)
+    for reason, files in reason_files.items():
+        if len(files) >= 3:
+            # Get original reason text from first occurrence
+            original_reason = next(
+                r for f, _, r in escapes if r.strip().lower() == reason
+            )
+            violations.append(
+                Violation(
+                    rule="duplicate_escape_reason",
+                    severity=Severity.WARNING,
+                    file="<project>",
+                    line=None,
+                    message=f'{len(files)} files share escape reason: "{original_reason}"',
+                    suggestion="Consider fixing the detection rule instead of adding escapes. "
+                    f"Files: {', '.join(sorted(set(files))[:5])}"
+                    + (f" (+{len(files) - 5} more)" if len(files) > 5 else ""),
+                )
+            )
+
+    return violations
