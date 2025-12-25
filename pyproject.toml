@@ -45,6 +45,8 @@ dependencies = [
     "crosshair-tool>=0.0.60",
     # MCP server (DX-16: Agent tool enforcement)
     "mcp>=1.0",
+    # Template engine (DX-49: Protocol Distribution Unification)
+    "jinja2>=3.0",
 ]
 
 [project.optional-dependencies]

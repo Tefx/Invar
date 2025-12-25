@@ -93,7 +93,7 @@ Completed: DX-47 (unblocked DX-49 and DX-42)
 |------|-----------|-----------|--------|------|
 | ~~1~~ | ~~DX-47~~ | — | — | ✅ Complete |
 | **0** | DX-48 | ✅ Can parallel | 0.5 day | Code cleanup |
-| **1** | DX-49 ∥ DX-42 | ✅ Both parallel | 2-3 days | Core infrastructure |
+| **1** | DX-49 ∥ DX-42 | ✅ Both parallel | 8.5 days / 3 days | Core infrastructure |
 | **2** | DX-43 ∥ DX-41 | ✅ Both parallel | 1-2 days | Feature completion |
 | **3** | DX-39 | — | 1-2 days | Efficiency optimization |
 | **4** | DX-46 ∥ DX-37 | ✅ Both parallel | 1 day | Quality enhancement |
@@ -118,6 +118,12 @@ Completed: DX-47 (unblocked DX-49 and DX-42)
   - templates/ = single source, all project files generated
   - Delete sections/, merge into skills/
   - Jinja2 templates support MCP/CLI syntax switching
+  - **Refined (2025-12-26):**
+    - Three-region architecture (managed/project/user)
+    - Content ownership model with never_touch files
+    - sync-self with project-additions.md injection
+    - Phase 9: Documentation deep review from Agent perspective
+    - Effort: 8.5 days
 
 ### Archived
 - **DX-45** → Superseded by DX-49

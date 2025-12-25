@@ -4,9 +4,12 @@
 
 **Status:** Draft
 **Created:** 2025-12-26
-**Effort:** Medium-High
+**Updated:** 2025-12-26
+**Effort:** 8.5 days
 **Risk:** Medium
-**Dependencies:** DX-47 (command/skill naming)
+**Dependencies:** DX-47 (command/skill naming) - Complete
+
+---
 
 ## Problem Statement
 
@@ -15,150 +18,358 @@ Current state violates Single Source of Truth (SSOT):
 | File Type | Project Version | Template Version | Problem |
 |-----------|-----------------|------------------|---------|
 | INVAR.md | 93 lines | 208 lines | Different content |
-| CLAUDE.md | 67 lines | 115 lines | Different structure |
+| CLAUDE.md | 97 lines | 133 lines | Different structure |
 | skills/*.md | MCP syntax | CLI syntax | Syntax differs, no sync |
 | sections/*.md | Exists | N/A | Duplicates skills/ |
-| commands/*.md | Exists | Exists | Overlaps with skills (DX-47) |
 
 **Root cause:** Multiple sources, inconsistent flow direction.
+
+---
 
 ## Design Principles
 
 | Priority | Principle | Requirement |
 |----------|-----------|-------------|
-| 1 | **Single Source** | templates/ is the ONLY source for all managed files |
-| 2 | **Derived Everywhere** | Project files are generated, not manually written |
+| 1 | **Single Source** | templates/ is the ONLY source for managed content |
+| 2 | **Preserve User Content** | Never overwrite user-owned regions or files |
 | 3 | **No Choice** | `invar init` has one mode, no decisions needed |
+
+---
+
+## Content Ownership Model
+
+### Ownership Classification
+
+```
++---------------------------------------------------------------------+
+|                    Content Ownership Classification                   |
++---------------------------------------------------------------------+
+|  Invar 100% Managed    |  Invar Partial        |  Never Touch        |
+|  -------------------   |  -----------------    |  ----------------   |
+|  INVAR.md              |  CLAUDE.md            |  settings*.json     |
+|  .invar/examples/      |  .claude/skills/      |  .mcp.json          |
+|                        |  .claude/commands/    |  Other tool files   |
++---------------------------------------------------------------------+
+```
+
+### Three-Region Architecture for Partial Files
+
+Files with partial Invar ownership use region markers:
+
+```markdown
+<!--invar:managed version="5.0"-->
+[Invar-generated content - overwritten on update]
+<!--/invar:managed-->
+
+<!--invar:project-->
+[Project-specific content - injected from .invar/project-additions.md]
+[Only used by sync-self for Invar project]
+<!--/invar:project-->
+
+<!--invar:user-->
+[User-defined content - NEVER overwritten]
+<!--/invar:user-->
+
+[Unmarked content below - preserved as-is, may be from other tools]
+```
+
+### manifest.toml Ownership Rules
+
+```toml
+# templates/manifest.toml
+
+[meta]
+version = "5.0"
+workflow = "USBV"
+
+[ownership]
+# Fully managed - safe to overwrite completely
+fully_managed = [
+    "INVAR.md",
+    ".invar/examples/**",
+]
+
+# Partially managed - only update marked regions
+partially_managed = [
+    "CLAUDE.md",
+    ".claude/skills/*/SKILL.md",
+    ".claude/commands/*.md",
+]
+
+# Never touch - other tools or user private files
+never_touch = [
+    ".claude/settings*.json",
+    ".mcp.json",
+    ".cursorrules",           # Unless --cursor flag used
+    ".aider*",                # Unless --aider flag used
+]
+
+[regions]
+# Region behavior for partially managed files
+"CLAUDE.md" = [
+    { name = "managed", action = "overwrite" },
+    { name = "project", action = "inject", source = ".invar/project-additions.md" },
+    { name = "user", action = "preserve" },
+]
+
+".claude/skills/*/SKILL.md" = [
+    { name = "skill", action = "overwrite" },
+    { name = "extensions", action = "preserve" },
+]
+```
+
+---
 
 ## Solution: Unified Source in templates/
 
 ### Core Principle
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                 templates/ = Single Source of Truth              │
-│                                                                  │
-│  Everything flows FROM templates, never TO templates             │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-         ┌────────────────────┼────────────────────┐
-         ▼                    ▼                    ▼
-  ┌─────────────┐     ┌─────────────┐      ┌─────────────┐
-  │ invar       │     │ invar init  │      │ invar       │
-  │ sync-self   │     │ (new proj)  │      │ update      │
-  └─────────────┘     └─────────────┘      └─────────────┘
-         │                    │                    │
-         ▼                    ▼                    ▼
-  ┌─────────────┐     ┌─────────────┐      ┌─────────────┐
-  │ Invar proj  │     │ New project │      │ Existing    │
-  │ + MCP syntax│     │ + CLI syntax│      │ project     │
-  │ + additions │     │ + defaults  │      │ + preserve  │
-  └─────────────┘     └─────────────┘      └─────────────┘
++---------------------------------------------------------------------+
+|                 templates/ = Single Source of Truth                  |
+|                                                                      |
+|  Everything flows FROM templates, never TO templates                 |
++---------------------------------------------------------------------+
+                              |
+         +--------------------+--------------------+
+         v                    v                    v
+  +--------------+     +--------------+      +--------------+
+  | invar        |     | invar init   |      | invar        |
+  | sync-self    |     | (new proj)   |      | update       |
+  +--------------+     +--------------+      +--------------+
+         |                    |                    |
+         v                    v                    v
+  +--------------+     +--------------+      +--------------+
+  | Invar proj   |     | New project  |      | Existing     |
+  | + MCP syntax |     | + CLI syntax |      | project      |
+  | + additions  |     | + defaults   |      | + preserve   |
+  +--------------+     +--------------+      +--------------+
 ```
 
 ### Templates Directory Structure
 
 ```
 src/invar/templates/
-├── manifest.toml           # Defines all template behaviors
-│
-├── protocol/               # Protocol files (direct copy)
-│   └── INVAR.md            # ~130 lines, self-contained
-│
-├── config/                 # Configuration templates (with variables)
-│   ├── CLAUDE.md.jinja     # Project guide with user regions
-│   ├── context.md.jinja    # Project state template
-│   └── pre-commit.yaml.jinja
-│
-├── skills/                 # Agent instructions (MCP/CLI variants)
-│   ├── develop.md.jinja
-│   ├── investigate.md.jinja
-│   ├── propose.md.jinja
-│   └── review.md.jinja
-│
-├── examples/               # Example code (direct copy)
-│   ├── contracts.py
-│   ├── core_shell.py
-│   └── README.md
-│
-└── integrations/           # Optional tool integrations
-    ├── cursor.rules.jinja  # --cursor flag
-    └── aider.conf.jinja    # --aider flag
++-- manifest.toml              # Ownership and behavior definitions
+|
++-- protocol/
+|   +-- INVAR.md               # Protocol (~200 lines, self-contained)
+|
++-- config/
+|   +-- CLAUDE.md.jinja        # Only managed region content
+|   +-- context.md.jinja       # .invar/context.md template
+|   +-- pre-commit.yaml.jinja
+|
++-- skills/                    # MCP/CLI syntax switching
+|   +-- develop.md.jinja
+|   +-- investigate.md.jinja
+|   +-- propose.md.jinja
+|   +-- review.md.jinja
+|
++-- commands/                  # User-invokable commands
+|   +-- audit.md
+|   +-- guard.md
+|
++-- examples/                  # Direct copy
+|   +-- README.md
+|   +-- contracts.py
+|   +-- core_shell.py
+|
++-- integrations/              # Optional (--cursor, --aider)
+    +-- cursorrules.jinja
+    +-- aider.conf.yml.jinja
 ```
 
-**Note:** `commands/` directory removed. Per DX-47:
-- `/review` command → renamed to `/audit` (or eliminated)
-- Command functionality merged into skill with mode selection
+---
 
-### manifest.toml
+## Region Update Algorithm
 
-```toml
-# Template manifest - defines all generation behaviors
+```python
+def update_file_with_regions(path: Path, new_content: dict[str, str]) -> str:
+    """
+    Update file preserving non-Invar content.
 
-[meta]
-version = "5.0"
-workflow = "USBV"
+    Args:
+        path: Target file path
+        new_content: {"managed": "...", "project": "..."}
 
-[variables]
-# Available variables for templates
-syntax = ["cli", "mcp"]  # Command syntax variant
-project_name = "string"  # Project name placeholder
+    Returns:
+        Updated file content
+    """
+    if not path.exists():
+        return render_new_file(new_content)
 
-# =============================================================================
-# Direct Copy (no variables)
-# =============================================================================
+    content = path.read_text()
 
-[copy]
-# Files copied without modification
-files = [
-    { src = "protocol/INVAR.md", dest = "INVAR.md" },
-    { src = "examples/", dest = ".invar/examples/" },
-]
+    # Parse existing regions
+    regions = parse_invar_regions(content)
+    # regions = {
+    #     "managed": {"start": 0, "end": 100, "content": "..."},
+    #     "project": {"start": 102, "end": 150, "content": "..."},
+    #     "user": {"start": 152, "end": 200, "content": "..."},
+    #     "unmanaged": ["...before first marker...", "...after last marker..."]
+    # }
 
-# =============================================================================
-# Template Generation (with variables)
-# =============================================================================
+    # Replace managed region only
+    if "managed" in regions:
+        regions["managed"]["content"] = new_content["managed"]
+    else:
+        # No managed region = first-time adoption, insert at top
+        return insert_at_top(content, new_content["managed"])
 
-[generate.config]
-# Configuration files with user-editable regions
-files = [
-    { src = "config/CLAUDE.md.jinja", dest = "CLAUDE.md" },
-    { src = "config/context.md.jinja", dest = ".invar/context.md" },
-    { src = "config/pre-commit.yaml.jinja", dest = ".pre-commit-config.yaml" },
-]
+    # Replace project region (sync-self only)
+    if "project" in new_content and "project" in regions:
+        regions["project"]["content"] = new_content["project"]
 
-[generate.skills]
-# Skills with syntax variants
-files = [
-    { src = "skills/develop.md.jinja", dest = ".claude/skills/develop/SKILL.md" },
-    { src = "skills/investigate.md.jinja", dest = ".claude/skills/investigate/SKILL.md" },
-    { src = "skills/propose.md.jinja", dest = ".claude/skills/propose/SKILL.md" },
-    { src = "skills/review.md.jinja", dest = ".claude/skills/review/SKILL.md" },
-]
+    # user region and unmanaged content: ALWAYS preserved
 
-# =============================================================================
-# Optional Generation (flag-triggered)
-# =============================================================================
+    return reconstruct_file(regions)
 
-[optional]
-"--cursor" = { src = "integrations/cursor.rules.jinja", dest = ".cursorrules" }
-"--aider" = { src = "integrations/aider.conf.jinja", dest = ".aider.conf.yml" }
-"--mcp" = { syntax = "mcp" }  # Use MCP syntax for skills
 
-# =============================================================================
-# Update Behavior
-# =============================================================================
+def validate_before_update(path: Path) -> Result[None, str]:
+    """Validate before update to prevent accidental overwrites."""
+    if not path.exists():
+        return Success(None)
 
-[update]
-# How invar update handles existing files
-overwrite = ["INVAR.md", ".invar/examples/"]
-merge = ["CLAUDE.md", ".claude/skills/"]  # Preserve user regions
-skip = [".invar/context.md"]  # Never overwrite user content
+    content = path.read_text()
+
+    if "<!--invar:" not in content and path.name == "CLAUDE.md":
+        return Failure(
+            f"{path} has no Invar markers. "
+            "Run 'invar init --adopt' to add markers."
+        )
+
+    return Success(None)
 ```
 
-### Template Syntax (Jinja2)
+---
 
-#### Skills Template Example
+## Command Behaviors
+
+### Command Comparison
+
+| Operation | INVAR.md | CLAUDE.md managed | CLAUDE.md project | CLAUDE.md user | Skills | .mcp.json |
+|-----------|----------|-------------------|-------------------|----------------|--------|-----------|
+| `invar init` | Create | Create | -- | Create empty | Create (CLI) | Never |
+| `invar update` | Overwrite | Overwrite | -- | **Preserve** | Overwrite skill region | Never |
+| `invar sync-self` | Overwrite | Overwrite | Inject from additions | **Preserve** | Overwrite (MCP) | Never |
+
+### invar init
+
+```bash
+$ invar init
+
+Created:
+  INVAR.md                    <- copied from templates/protocol/
+  CLAUDE.md                   <- generated from templates/config/
+  .invar/context.md           <- generated
+  .invar/examples/            <- copied
+  .claude/skills/             <- generated (CLI syntax)
+  .claude/commands/           <- copied
+  .pre-commit-config.yaml     <- generated
+
+Preserved (not touched):
+  .mcp.json                   <- existing file preserved
+  .claude/settings.local.json <- existing file preserved
+```
+
+### invar update
+
+```bash
+$ invar update
+
+Checking versions...
+  Current: v5.0
+  Latest:  v5.1
+
+Updating:
+  * INVAR.md overwritten
+  * .invar/examples/ overwritten
+  * CLAUDE.md merged (user region preserved)
+  * .claude/skills/ merged (extensions preserved)
+  o .invar/context.md skipped (user-owned)
+  o .mcp.json skipped (never-touch)
+
+Run 'invar guard' to verify.
+```
+
+### invar sync-self (Invar Project Only)
+
+```bash
+$ invar sync-self
+
+Syncing Invar project from templates...
+  * INVAR.md <- templates/protocol/INVAR.md
+  * CLAUDE.md <- templates/config/ + .invar/project-additions.md
+  * .claude/skills/ <- templates/skills/ (MCP syntax)
+
+Preserved:
+  o .claude/settings.local.json (never-touch)
+  o .mcp.json (never-touch)
+  o CLAUDE.md user region (preserved)
+
+Invar project synced.
+```
+
+---
+
+## Invar Project Specifics
+
+### .invar/project-additions.md
+
+For Invar project-specific content not in templates:
+
+```markdown
+## Invar Project Specifics
+
+### Key Documents
+
+| Document | Purpose |
+|----------|---------|
+| [docs/proposals/](./docs/proposals/) | Development proposals |
+| [.invar/context.md](./.invar/context.md) | Project state |
+
+### Project Structure
+
+\`\`\`
+src/invar/
++-- core/           # Pure logic, @pre/@post required, no I/O
++-- shell/          # I/O operations, Result[T, E] required
+    +-- commands/   # CLI commands (guard, init)
+    +-- prove/      # Verification (crosshair, hypothesis)
+\`\`\`
+
+### Dependencies
+
+\`\`\`bash
+pip install -e ".[dev]"    # Development mode
+pip install -e runtime/    # Runtime in dev mode
+\`\`\`
+
+### PyPI Packages
+
+| Package | Purpose |
+|---------|---------|
+| `invar-tools` | Dev tools (guard, sig, map) |
+| `invar-runtime` | Runtime contracts (@pre, @post) |
+```
+
+### sync-self Flow
+
+```
+1. Generate CLAUDE.md managed region from template
+2. Read .invar/project-additions.md
+3. Inject into project region
+4. Preserve user region
+5. Preserve unmarked content (e.g., from claude init)
+6. Write result
+```
+
+---
+
+## Template Syntax (Jinja2)
+
+### Skills Template Example
 
 ```jinja
 {# skills/develop.md.jinja #}
@@ -167,104 +378,103 @@ name: develop
 description: Implementation phase following USBV workflow.
 ---
 
+<!--invar:skill-->
 # Development Mode
 
 ## Entry Actions (REQUIRED)
 
 {% if syntax == "mcp" %}
-```python
+\`\`\`python
 invar_guard(changed=true)
 invar_map(top=10)
-```
+\`\`\`
 {% else %}
-```bash
+\`\`\`bash
 invar guard --changed
 invar map --top 10
-```
+\`\`\`
 {% endif %}
 
 **Display:**
-```
-✓ Check-In: guard [PASS/FAIL] | top: [entry1], [entry2], [entry3]
-```
+\`\`\`
+Check-In: guard [PASS/FAIL] | top: [entry1], [entry2], [entry3]
+\`\`\`
 
 Then read `.invar/context.md` for project state.
 
 ## USBV Workflow
 
-### 1. UNDERSTAND
-- **Intent:** What exactly needs to be done?
-- **Inspect:** Use `{{ commands.sig }}` to see existing contracts
-- **Context:** Read relevant code, understand patterns
+[... rest of skill content ...]
+<!--/invar:skill-->
 
-### 2. SPECIFY
-- **Contracts FIRST:** Write `@pre`/`@post` before implementation
+<!--invar:extensions-->
+## Custom Extensions
 
-### 3. BUILD
-- Follow contracts
-- Run `{{ commands.guard_changed }}` frequently
-
-### 4. VALIDATE
-- Run `{{ commands.guard }}` (full verification)
-
-{% if syntax == "mcp" %}
-## Claude Code Extensions
-
-### Plan Mode Integration
-**For complex tasks:** Enter Plan Mode first, get user approval.
-
-### Commit Format
-```bash
-git add . && git commit -m "feat: [description]
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>"
+<!-- Users can add project-specific extensions here -->
+<!--/invar:extensions-->
 ```
 
-### Timeout Handling
-| Threshold | Duration | Action |
-|-----------|----------|--------|
-| Warning | 3 hours | Soft warning with options |
-| Hard stop | 4 hours | Save state, exit |
-{% endif %}
-```
-
-#### CLAUDE.md Template Example
+### CLAUDE.md Template Example
 
 ```jinja
 {# config/CLAUDE.md.jinja #}
+<!--invar:managed version="{{ version }}"-->
 # Project Development Guide
 
-<!--invar:managed:start-->
-> **Protocol:** Follow [INVAR.md](./INVAR.md) — Check-In, USBV workflow, Task Completion.
+> **Protocol:** Follow [INVAR.md](./INVAR.md) for Check-In, USBV workflow, Task Completion.
 
 ## Check-In / Final
 
 **First message:**
-```
-✓ Check-In: guard PASS | top: <entry1>, <entry2>
-```
+\`\`\`
+Check-In: guard PASS | top: <entry1>, <entry2>
+\`\`\`
 
 **Last message:**
-```
-✓ Final: guard PASS | 0 errors, N warnings
-```
+\`\`\`
+Final: guard PASS | 0 errors, N warnings
+\`\`\`
 
 Then read `.invar/context.md` for project state.
 
 ## Project Structure
 
-```
+\`\`\`
 src/{project}/
-├── core/    # Pure logic (@pre/@post, doctests, no I/O)
-└── shell/   # I/O operations (Result[T, E] return type)
-```
-<!--invar:managed:end-->
++-- core/    # Pure logic (@pre/@post, doctests, no I/O)
++-- shell/   # I/O operations (Result[T, E] return type)
+\`\`\`
 
----
+## Commands & Skills
 
-<!--invar:user:start-->
+| Type | Name | Purpose |
+|------|------|---------|
+| Command | `/audit` | Read-only code review |
+| Command | `/guard` | Run Invar verification |
+| Skill | `/investigate` | Research mode, no code changes |
+| Skill | `/propose` | Decision facilitation |
+| Skill | `/develop` | USBV implementation workflow |
+| Skill | `/review` | Adversarial review with fix loop |
+
+## Workflow Routing (MANDATORY)
+
+| Trigger Words | Skill | Notes |
+|---------------|-------|-------|
+| "review", "review and fix" | `/review` | Adversarial review with fix loop |
+| "implement", "add", "fix", "update" | `/develop` | Unless in review context |
+| "why", "explain", "investigate" | `/investigate` | Research mode, no code changes |
+| "compare", "should we", "design" | `/propose` | Decision facilitation |
+
+**Violation check (before writing ANY code):**
+- "Am I in a workflow?"
+- "Did I invoke the correct skill?"
+<!--/invar:managed-->
+
+<!--invar:project-->
+<!-- Injected from .invar/project-additions.md by sync-self -->
+<!--/invar:project-->
+
+<!--invar:user-->
 ## Project-Specific Rules
 
 <!-- Add your team conventions below -->
@@ -272,120 +482,31 @@ src/{project}/
 ## Overrides
 
 <!-- Document any exceptions to INVAR.md rules -->
-<!--invar:user:end-->
+<!--/invar:user-->
 
 ---
 
 *Generated by Invar v{{ version }}. Edit user sections freely.*
 ```
 
-### Unified INVAR.md (~130 lines)
-
-```markdown
-<!--invar:version=5.0-->
-# The Invar Protocol v5.0
-
-> **"Trade structure for safety."**
-
-## Six Laws
-
-| Law | Principle |
-|-----|-----------|
-| 1. Separation | Core (pure logic) / Shell (I/O) physically separate |
-| 2. Contract Complete | @pre/@post + doctests uniquely determine implementation |
-| 3. Context Economy | map → sig → code (only read what's needed) |
-| 4. Decompose First | Break into sub-functions before implementing |
-| 5. Verify Reflectively | Fail → Reflect (why?) → Fix → Verify |
-| 6. Integrate Fully | Local correct ≠ Global correct; verify all paths |
-
-## Core/Shell Architecture
-
-| Zone | Location | Requirements |
-|------|----------|--------------|
-| Core | `**/core/**` | @pre/@post, pure (no I/O), doctests |
-| Shell | `**/shell/**` | `Result[T, E]` return type |
-
-**Forbidden in Core:** `os`, `sys`, `subprocess`, `pathlib`, `open`, `requests`
-
-## Core Example
-
-```python
-from deal import pre, post
-
-@pre(lambda price, discount: price > 0 and 0 <= discount <= 1)
-@post(lambda result: result >= 0)
-def discounted_price(price: float, discount: float) -> float:
-    """
-    >>> discounted_price(100, 0.2)
-    80.0
-    """
-    return price * (1 - discount)
-```
-
-## Shell Example
-
-```python
-from returns.result import Result, Success, Failure
-
-def read_config(path: Path) -> Result[dict, str]:
-    try:
-        return Success(json.loads(path.read_text()))
-    except FileNotFoundError:
-        return Failure(f"Not found: {path}")
-```
-
-## Check-In / Final
-
-**First message:**
-```
-✓ Check-In: guard PASS | top: <entry1>, <entry2>
-```
-
-**Last message:**
-```
-✓ Final: guard PASS | 0 errors, 2 warnings
-```
-
-## USBV Workflow
-
-**U**nderstand → **S**pecify → **B**uild → **V**alidate
-
-| Phase | Purpose | Key Actions |
-|-------|---------|-------------|
-| Understand | Know context | Intent, Inspect (sig/map), Constraints |
-| Specify | Define boundaries | @pre/@post FIRST, Doctests, Design |
-| Build | Implement | Follow contracts, Compose |
-| Validate | Confirm | invar guard, Review if triggered |
-
-## Commands
-
-```bash
-invar guard              # Full verification (default)
-invar guard --changed    # Modified files only
-invar guard --static     # Quick static check (~0.5s)
-invar sig <file>         # Show contracts + signatures
-invar map --top 10       # Most-referenced symbols
-```
-
-## Markers
-
-```python
-# @shell:entry              — Framework callback (exempt from Result)
-# @shell_complexity: reason — Justified shell complexity
-# @invar:allow rule: reason — Rule exemption with justification
-```
-
-## Size Limits
-
-| Limit | Value |
-|-------|-------|
-| File | 500 lines |
-| Function | 50 lines |
-
 ---
 
-*Protocol v5.0 | [Guide](https://tefx.github.io/invar) | Examples: `.invar/examples/`*
-```
+## Unified INVAR.md (~200 lines)
+
+Target: Self-contained protocol document, no external references.
+
+Key sections:
+- Six Laws
+- Core/Shell Architecture with examples
+- Check-In / Final format
+- USBV Workflow
+- Commands reference
+- Markers reference
+- Size limits
+
+See `templates/protocol/INVAR.md` for full content.
+
+---
 
 ## Delete sections/
 
@@ -393,23 +514,15 @@ Per unified source principle, sections/ content merges into skills/:
 
 | Current | Action |
 |---------|--------|
-| sections/develop.md | → skills/develop.md.jinja |
-| sections/investigate.md | → skills/investigate.md.jinja |
-| sections/propose.md | → skills/propose.md.jinja |
-| sections/review.md | → skills/review.md.jinja |
-| sections/reference.md | → INVAR.md (Markers section) |
+| sections/develop.md | -> skills/develop.md.jinja |
+| sections/investigate.md | -> skills/investigate.md.jinja |
+| sections/propose.md | -> skills/propose.md.jinja |
+| sections/review.md | -> skills/review.md.jinja |
+| sections/reference.md | -> INVAR.md (Markers section) |
 
 **Delete sections/ directory after merge.**
 
-## Delete commands/
-
-Per DX-47 resolution:
-
-| Current | Action |
-|---------|--------|
-| commands/review.md | Delete (functionality in skill with mode flag) |
-
-**Note:** If DX-47 chooses Option B (rename command to /audit), create skills/audit.md.jinja instead.
+---
 
 ## Protocol Constants
 
@@ -426,7 +539,6 @@ WORKFLOW_PHASES = ["Understand", "Specify", "Build", "Validate"]
 CLI_COMMANDS = {
     "guard": "invar guard",
     "guard_changed": "invar guard --changed",
-    "guard_static": "invar guard --static",
     "sig": "invar sig <file>",
     "map": "invar map --top 10",
 }
@@ -434,154 +546,128 @@ CLI_COMMANDS = {
 MCP_COMMANDS = {
     "guard": "invar_guard()",
     "guard_changed": "invar_guard(changed=true)",
-    "guard_static": "invar_guard(static=true)",
     "sig": 'invar_sig(target="<file>")',
     "map": "invar_map(top=10)",
 }
 
 # Formats
-CHECKIN_FORMAT = "✓ Check-In: guard {status} | top: {entries}"
-FINAL_FORMAT = "✓ Final: guard {status} | {errors} errors, {warnings} warnings"
+CHECKIN_FORMAT = "Check-In: guard {status} | top: {entries}"
+FINAL_FORMAT = "Final: guard {status} | {errors} errors, {warnings} warnings"
 
 # Limits
 FILE_MAX_LINES = 500
 FUNCTION_MAX_LINES = 50
 ```
 
-## Command Interface
-
-### invar init
-
-```bash
-$ invar init
-
-Created:
-  INVAR.md                    ← copied from templates/protocol/
-  CLAUDE.md                   ← generated from templates/config/
-  .invar/context.md           ← generated
-  .invar/examples/            ← copied
-  .claude/skills/             ← generated (CLI syntax)
-  .pre-commit-config.yaml     ← generated
-
-$ invar init --mcp
-
-Created:
-  ...
-  .claude/skills/             ← generated (MCP syntax)
-
-$ invar init --cursor
-
-Created:
-  ...
-  .cursorrules                ← generated
-```
-
-### invar update
-
-```bash
-$ invar update
-
-Checking versions...
-  Current: v5.0
-  Latest:  v5.1
-
-Updating:
-  ✓ INVAR.md overwritten
-  ✓ .invar/examples/ overwritten
-  ✓ CLAUDE.md merged (user regions preserved)
-  ✓ .claude/skills/ merged
-  ⊘ .invar/context.md skipped (user-owned)
-
-Run 'invar guard' to verify.
-```
-
-### invar sync-self (Invar developers only)
-
-```bash
-$ invar sync-self
-
-Syncing Invar project from templates...
-  ✓ INVAR.md ← templates/protocol/INVAR.md
-  ✓ CLAUDE.md ← templates/config/ + .invar/invar-additions.md
-  ✓ .claude/skills/ ← templates/skills/ (MCP syntax)
-
-Invar project synced.
-```
-
-## Invar Project Additions
-
-For Invar-specific content not in templates:
-
-```
-.invar/
-├── context.md              # Project state (user-owned)
-├── invar-additions.md      # Invar-specific CLAUDE.md content
-└── examples/               # Copied from templates
-```
-
-`.invar/invar-additions.md`:
-```markdown
-## Invar Project Specifics
-
-### Key Documents
-| Document | Purpose |
-|----------|---------|
-| [docs/proposals/](./docs/proposals/) | Development proposals |
-| [.invar/context.md](./.invar/context.md) | Project state |
-
-### Dependencies
-```bash
-pip install -e ".[dev]"
-pip install -e runtime/
-```
-```
-
-When `invar sync-self` runs:
-1. Generate CLAUDE.md from template
-2. Inject invar-additions.md into user region
-3. Result: complete Invar CLAUDE.md
+---
 
 ## Implementation Plan
 
-### Phase 1: Restructure templates/ (Day 1)
+### Phase 1: Create manifest.toml + Region Parser (Day 1)
 
-1. Create new directory structure
-2. Create manifest.toml
-3. Convert existing templates to Jinja2 format
-4. Add syntax variant support
+1. Create `templates/manifest.toml` with ownership rules
+2. Implement region parser for `<!--invar:...-->` markers
+3. Implement region reconstruction logic
+4. Add tests for region parsing
 
-### Phase 2: Unified INVAR.md (Day 1)
+### Phase 2: Jinja2 Template Engine (Day 1)
 
-1. Merge project INVAR.md (93 lines) with template (208 lines)
-2. Target: ~130 lines, self-contained
-3. Move to templates/protocol/INVAR.md
-4. Delete project root INVAR.md (will be regenerated)
+1. Add Jinja2 dependency
+2. Implement template renderer with manifest.toml
+3. Add CLI/MCP syntax variable support
+4. Add version variable injection
 
-### Phase 3: Template Engine (Day 2)
+### Phase 3: Update `invar init` (Day 1)
 
-1. Implement Jinja2 renderer with manifest.toml
-2. Implement merge logic for user regions
-3. Add CLI/MCP syntax switching
+1. Use new template system
+2. Generate files with region markers
+3. Respect never_touch list
+4. Test on clean directory
 
-### Phase 4: Commands (Day 2)
+### Phase 4: Implement `invar update` (Day 1)
 
-1. Implement `invar init` with new templates
-2. Implement `invar update` with merge logic
-3. Implement `invar sync-self` for Invar developers
+1. Implement region-preserving update logic
+2. Validate before update (check for markers)
+3. Report what was updated/preserved
+4. Test on existing project
 
-### Phase 5: Cleanup (Day 3)
+### Phase 5: Implement `invar sync-self` (Day 1)
 
-1. Delete sections/ (after merging to skills/)
-2. Delete commands/ (per DX-47)
-3. Update CLAUDE.md links
-4. Run `invar sync-self` to regenerate project files
+1. Detect Invar project (check for specific markers)
+2. Read .invar/project-additions.md
+3. Inject into project region
+4. Use MCP syntax for skills
+5. Test on Invar project
 
-### Phase 6: Validation (Day 3)
+### Phase 6: Merge sections/ to skills/ (Day 0.5)
 
-1. Run `invar guard` on all generated files
-2. Test `invar init` on clean directory
-3. Test `invar update` on existing project
-4. Verify MCP/CLI syntax variants
+1. Merge content from each section to corresponding skill
+2. Update INVAR.md to include reference.md content
+3. Delete sections/ directory
+4. Update all links
+
+### Phase 7: Unify INVAR.md (Day 0.5)
+
+1. Create unified ~200 line INVAR.md
+2. Self-contained, no external references
+3. Move to templates/protocol/
+4. Run sync-self to update project
+
+### Phase 8: Template System Testing (Day 1)
+
+1. Test `invar init` on clean directory
+2. Test `invar update` on existing project
+3. Test `invar sync-self` on Invar project
+4. Verify MCP/CLI syntax switching
+5. Run `invar guard` on all generated files
+
+### Phase 9: Documentation Deep Review (Day 1)
+
+From Agent perspective, review all protocol documents:
+
+#### 9.1 Collect Review Materials
+- Export design decisions from proposals/
+- Collect Lessons Learned from context.md
+- List known documentation issues
+
+#### 9.2 INVAR.md Review
+- [ ] Content completeness check
+- [ ] Agent usability evaluation
+- [ ] Structure optimization
+- [ ] Example code verification
+
+#### 9.3 CLAUDE.md Review
+- [ ] Region division rationality
+- [ ] Project-specific info completeness
+- [ ] Consistency with INVAR.md
+
+#### 9.4 Skills Review
+- [ ] Unify 4 skills structure
+- [ ] Entry/Exit Actions consistency
+- [ ] Tool selection table accuracy
+
+#### 9.5 Optimization Execution
+Apply patterns:
+- **Redundancy elimination**: Cross-reference instead of duplicate
+- **Structurization**: Tables > paragraphs
+- **Executability**: "Run X after Y" instead of "Consider running X"
+- **Layering**: Quick Reference (5 lines) + Full Details (expandable)
+
+#### 9.6 Agent Simulation Verification
+- [ ] Simulate new session Check-In
+- [ ] Simulate /develop workflow
+- [ ] Simulate error handling path
+
+### Phase 10: Final Validation (Day 0.5)
+
+1. Full `invar guard` pass
+2. Verify no broken links
+3. Verify example code runs
+4. Document any remaining issues
+
+**Total: 8.5 days**
+
+---
 
 ## File Changes Summary
 
@@ -589,55 +675,65 @@ When `invar sync-self` runs:
 
 | File | Purpose |
 |------|---------|
-| `src/invar/templates/manifest.toml` | Template behavior definitions |
-| `src/invar/templates/protocol/INVAR.md` | Unified protocol (~130 lines) |
+| `src/invar/templates/manifest.toml` | Ownership and behavior definitions |
+| `src/invar/templates/protocol/INVAR.md` | Unified protocol (~200 lines) |
 | `src/invar/templates/config/*.jinja` | Config templates |
-| `src/invar/templates/skills/*.jinja` | Skill templates |
-| `src/invar/templates/integrations/*.jinja` | Optional integrations |
+| `src/invar/templates/skills/*.jinja` | Skill templates with syntax switching |
 | `src/invar/core/protocol.py` | Protocol constants |
-| `src/invar/shell/template_engine.py` | Jinja2 renderer |
-| `.invar/invar-additions.md` | Invar-specific content |
+| `src/invar/shell/template_engine.py` | Jinja2 renderer + region parser |
+| `.invar/project-additions.md` | Invar project-specific content |
 
 ### Modified Files
 
 | File | Change |
 |------|--------|
-| `src/invar/shell/init_cmd.py` | Use new template system |
+| `src/invar/shell/commands/init_cmd.py` | Use new template system |
 | `src/invar/shell/cli.py` | Add `sync-self`, update `init` |
+| `pyproject.toml` | Add Jinja2 dependency |
 
 ### Deleted Files
 
 | File | Reason |
 |------|--------|
-| `/INVAR.md` | Regenerated from templates |
-| `/CLAUDE.md` | Regenerated from templates |
-| `/.claude/skills/*.md` | Regenerated from templates |
 | `/sections/*.md` | Merged into templates/skills/ |
-| `templates/commands/` | Per DX-47 |
 | `templates/INVAR.md` | Moved to templates/protocol/ |
-| `templates/CLAUDE.md.template` | Moved to templates/config/ |
+| `templates/CLAUDE.md.template` | Converted to templates/config/*.jinja |
 | `templates/skills/*.md` | Converted to .jinja |
+
+---
 
 ## Success Criteria
 
-- [ ] templates/ is the only source for all managed files
-- [ ] Invar project files generated via `invar sync-self`
-- [ ] New projects work with `invar init`
-- [ ] Existing projects update with `invar update` (user content preserved)
+### Core Requirements
+- [ ] templates/ + .invar/project-additions.md are the only sources
+- [ ] `sync-self` never overwrites user region or never_touch files
+- [ ] `sync-self` correctly injects project-additions.md
+- [ ] .claude/settings.local.json etc. are never touched
 - [ ] MCP/CLI syntax switching works correctly
-- [ ] No sections/ directory
-- [ ] No commands/ directory (per DX-47)
+- [ ] sections/ directory deleted
+
+### Agent Usability (Phase 9)
+- [ ] Agent can execute Check-In correctly after reading INVAR.md
+- [ ] All trigger word -> Skill mappings are unambiguous
+- [ ] 0 dead links in documentation
+- [ ] 100% example code is runnable
+- [ ] Total documentation reduced 20%+ (Context Economy)
+
+---
 
 ## Dependencies
 
-- **DX-47:** Must resolve command/skill naming before deleting commands/
+- **DX-47:** Complete - command/skill naming resolved
 - **Jinja2:** New dependency for template rendering
+
+---
 
 ## Related Proposals
 
 | Proposal | Relationship |
 |----------|--------------|
 | DX-45 | **Superseded** - template consistency now built-in |
-| DX-46 | **Scope reduced** - now covers docs/ only; INVAR.md/CLAUDE.md/sections handled here |
-| DX-47 | **Dependency** - determines commands/ handling |
-| DX-48 | **Independent** - can proceed in parallel |
+| DX-46 | **Scope reduced** - now covers docs/ only |
+| DX-47 | **Complete** - commands/ handling determined |
+| DX-48 | **Complete** - code structure reorganized |
+| DX-50 | **Related** - workflow enforcement in CLAUDE.md |
