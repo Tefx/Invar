@@ -12,7 +12,7 @@
   You are free to share and adapt this document, provided you give
   appropriate credit to the Invar project.
 -->
-# The Invar Protocol v4.0
+# The Invar Protocol v5.0
 
 > **"Trade structure for safety."**
 
@@ -204,4 +204,4 @@ shell_paths = ["src/myapp/shell"]
 
 ---
 
-*Protocol v4.0 — USBV workflow (DX-32) | [Guide](docs/INVAR-GUIDE.md) | [Examples](.invar/examples/)*
+*Protocol v5.0 — USBV workflow (DX-32) | [Guide](docs/INVAR-GUIDE.md) | [Examples](.invar/examples/)*

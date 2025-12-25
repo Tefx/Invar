@@ -1,5 +1,7 @@
 # Invar Protocol Improvement Memo
 
+> **Historical Note:** This memo was written during Protocol v3.x era. The issues described have been addressed in v5.0 with the USBV workflow and modular sections (DX-35/36). Kept for historical reference.
+
 **From:** Claude Code User Session
 **To:** Invar Upstream Maintainers
 **Date:** 2025-12-23

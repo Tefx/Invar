@@ -1,5 +1,7 @@
 # Invar 工作流合规性技术分析报告
 
+> **历史文档说明:** 本报告撰写于 Protocol v3.x 时期，引用的 ICIDIV 工作流已在 v5.0 中被 USBV 工作流取代 (DX-32)。报告中提出的问题已通过 DX-35/36 的模块化技能系统解决。保留作为历史参考。
+
 **报告日期**: 2024-12-22
 **案例项目**: invar-python-test-1 (Digital Twin Data Center Website)
 **问题发现者**: Claude Opus 4.5 (执行 Agent)

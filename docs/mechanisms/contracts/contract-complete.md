@@ -169,21 +169,19 @@ def rot13(s: str) -> str:
     """
 ```
 
-## ICIDIV Integration
+## USBV Integration
 
-Contract completeness is central to ICIDIV workflow:
+Contract completeness is central to USBV workflow:
 
 ```
-I - Intent    : What does the function do?
-C - Contract  : Write COMPLETE @pre/@post + doctests
-                ↳ Self-test: Can these regenerate the function?
-I - Inspect   : Check existing code for patterns
-D - Design    : Decompose into sub-functions
-I - Implement : Write code to pass your contracts
-V - Verify    : invar guard confirms compliance
+U - Understand : Intent, Inspect (invar sig/map), Constraints
+S - Specify    : Write COMPLETE @pre/@post + doctests
+                 ↳ Self-test: Can these regenerate the function?
+B - Build      : Implement leaves first, Compose
+V - Validate   : invar guard confirms compliance
 ```
 
-**Step C is critical.** Incomplete contracts lead to:
+**SPECIFY phase is critical.** Incomplete contracts lead to:
 - Ambiguous implementations
 - Difficult debugging
 - Failed verification
