@@ -36,6 +36,41 @@ Restructure documentation to support DX-35's workflow-based phase separation:
 
 ---
 
+## Two Contexts: Invar vs Other Projects
+
+**Critical distinction:** This proposal affects TWO different contexts:
+
+### Context 1: Invar Project Itself
+
+| File | Current | After DX-36 |
+|------|---------|-------------|
+| `/INVAR.md` | 464 lines (SOURCE) | Modular: core + sections/ |
+| `/CLAUDE.md` | 260 lines | Simplified ~30 lines |
+| `/.claude/skills/` | None | 4 workflow skills |
+
+**Note:** `/INVAR.md` at root is the **authoritative source**. It's NOT from templates.
+
+### Context 2: Other Projects (via `invar init`)
+
+| File | Current | After DX-36 |
+|------|---------|-------------|
+| `templates/INVAR.md` | 207 lines (compact) | Self-contained, no sections/ |
+| `templates/skills/` | Only review.md | 4 workflow skill templates |
+| `templates/cursorrules.template` | None | Tier 2 baseline |
+
+**Note:** Templates are **self-contained**. No external sections/ dependency.
+
+### Why Different?
+
+| Aspect | Invar Project | Other Projects |
+|--------|---------------|----------------|
+| Complexity | Full protocol, all details | Compact, essentials only |
+| Maintenance | Actively developed | Stable templates |
+| Sections | Separate files (modular) | Inline (simpler) |
+| Skills | Project-specific | Generic templates |
+
+---
+
 ## Proposed Structure
 
 ### Overview
@@ -445,30 +480,86 @@ src/invar/templates/
 └── context.md.template   # Project state
 ```
 
-### `invar init` Updates
+### `invar init` Behavior
+
+#### Default: `invar init`
 
 ```bash
-# Current behavior
 invar init
-  → Creates: INVAR.md, .invar/context.md, .invar/examples/
-
-# Updated behavior
-invar init
-  → Creates:
-    - INVAR.md (core)
-    - sections/ (workflow docs)
-    - .invar/context.md
-    - .invar/examples/
-
-invar init --claude
-  → Also creates:
-    - .claude/skills/ (4 workflows)
-    - Updates CLAUDE.md if exists
-
-invar init --cursor
-  → Creates:
-    - .cursorrules (Tier 2 baseline)
 ```
+
+**Creates:**
+```
+project/
+├── INVAR.md              # Self-contained protocol (~200 lines)
+├── .invar/
+│   ├── context.md        # Project state (user fills in)
+│   └── examples/
+│       ├── README.md
+│       ├── core_example.py
+│       └── shell_example.py
+└── [Does NOT touch CLAUDE.md - user content]
+```
+
+**Note:** Template INVAR.md is SELF-CONTAINED. No sections/ directory needed.
+
+#### Claude Code: `invar init --claude`
+
+```bash
+invar init --claude
+```
+
+**Creates (in addition to default):**
+```
+project/
+├── .claude/
+│   └── skills/
+│       ├── investigate/
+│       │   └── SKILL.md    # Investigation workflow
+│       ├── propose/
+│       │   └── SKILL.md    # Proposal workflow
+│       ├── develop/
+│       │   └── SKILL.md    # Development workflow (USBV)
+│       └── review/
+│           └── SKILL.md    # Review workflow
+└── [Suggests CLAUDE.md template if not exists]
+```
+
+**Skill files include workflow instructions INLINE** (no external sections/ dependency).
+
+#### Cursor/Windsurf: `invar init --cursor`
+
+```bash
+invar init --cursor
+```
+
+**Creates (in addition to default):**
+```
+project/
+└── .cursorrules            # Baseline protocol (~50 lines)
+```
+
+#### Combined Flags
+
+```bash
+# Full setup for Claude Code user who also uses Cursor
+invar init --claude --cursor
+```
+
+### Template File Details
+
+| Template | Lines | Content |
+|----------|-------|---------|
+| `INVAR.md` | ~200 | Self-contained protocol |
+| `skills/investigate/SKILL.md` | ~50 | Investigation instructions |
+| `skills/propose/SKILL.md` | ~40 | Proposal format |
+| `skills/develop/SKILL.md` | ~100 | USBV + Check-In/Final |
+| `skills/review/SKILL.md` | ~80 | Review-fix loop |
+| `.cursorrules` | ~50 | Tier 2 baseline |
+
+**Total for Claude Code setup:** ~470 lines across 6 files (vs current 207 lines in 1 file)
+
+**But:** Each workflow only loads ~100-150 lines relevant to current phase.
 
 ---
 
@@ -629,42 +720,60 @@ invar update --restructure
 
 ## Implementation Checklist
 
-### Phase 1: Section Files (Week 1)
-- [ ] Create sections/investigate.md
-- [ ] Create sections/propose.md
-- [ ] Create sections/develop.md
-- [ ] Create sections/review.md
-- [ ] Create sections/reference.md
-- [ ] Reduce INVAR.md to core (~80 lines)
+### Phase 1: Invar Project — Section Files
+
+**For Invar itself (not templates):**
+- [ ] Create `/sections/investigate.md`
+- [ ] Create `/sections/propose.md`
+- [ ] Create `/sections/develop.md`
+- [ ] Create `/sections/review.md`
+- [ ] Create `/sections/reference.md`
+- [ ] Refactor `/INVAR.md` to core (~80 lines) + links to sections
 - [ ] Validate all content preserved
 
-### Phase 2: Skill Files (Week 1-2)
-- [ ] Create .claude/skills/investigate/SKILL.md
-- [ ] Create .claude/skills/propose/SKILL.md
-- [ ] Create .claude/skills/develop/SKILL.md
-- [ ] Create .claude/skills/review/SKILL.md
+### Phase 2: Invar Project — Skill Files
+
+**For Invar itself:**
+- [ ] Create `/.claude/skills/investigate/SKILL.md`
+- [ ] Create `/.claude/skills/propose/SKILL.md`
+- [ ] Create `/.claude/skills/develop/SKILL.md`
+- [ ] Create `/.claude/skills/review/SKILL.md`
+- [ ] Skills reference `/sections/` content
 - [ ] Test workflow triggers
 - [ ] Verify instruction re-injection
 
-### Phase 3: CLAUDE.md (Week 2)
-- [ ] Reduce CLAUDE.md to ~30 lines
+### Phase 3: Invar Project — CLAUDE.md
+
+- [ ] Reduce `/CLAUDE.md` to ~30 lines
 - [ ] Move detailed content to sections/skills
 - [ ] Test with fresh conversation
 - [ ] Validate Check-In still works
 
-### Phase 4: Templates (Week 2-3)
-- [ ] Update src/invar/templates/INVAR.md
-- [ ] Create src/invar/templates/sections/
-- [ ] Create src/invar/templates/skills/
-- [ ] Create src/invar/templates/cursorrules.template
-- [ ] Update invar init command
-- [ ] Add --claude and --cursor flags
+### Phase 4: Templates for Distribution
 
-### Phase 5: Migration (Week 3)
-- [ ] Implement invar update --restructure
+**For `invar init` on other projects:**
+- [ ] Update `src/invar/templates/INVAR.md` (self-contained, no sections/)
+- [ ] Create `src/invar/templates/skills/investigate/SKILL.md` (inline instructions)
+- [ ] Create `src/invar/templates/skills/propose/SKILL.md`
+- [ ] Create `src/invar/templates/skills/develop/SKILL.md`
+- [ ] Create `src/invar/templates/skills/review/SKILL.md`
+- [ ] Create `src/invar/templates/cursorrules.template`
+- [ ] Create `src/invar/templates/CLAUDE.md.template`
+
+### Phase 5: CLI Updates
+
+- [ ] Add `invar init --claude` flag
+- [ ] Add `invar init --cursor` flag
+- [ ] Update default `invar init` behavior
+- [ ] Implement `invar update --restructure` for existing projects
+- [ ] Test all flag combinations
+
+### Phase 6: Documentation & Migration
+
+- [ ] Update README.md with new init options
+- [ ] Document migration path for existing projects
 - [ ] Test migration on sample projects
-- [ ] Document migration process
-- [ ] Update README/docs
+- [ ] Update docs/INVAR-GUIDE.md if needed
 
 ---
 
