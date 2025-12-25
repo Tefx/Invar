@@ -4,75 +4,56 @@ This directory contains design proposals for Invar development.
 
 ## Naming Convention
 
-- `DX-XX-name.md` - Developer Experience improvements
+- `DX-XX-name.md` — Developer Experience improvements
 - Archived proposals in `archive/` subdirectory
 
-## Proposal Status
+## Active Proposals (14)
 
-### Implemented
+| ID | Name | Status | Description |
+|----|------|--------|-------------|
+| DX-11 | documentation-restructure | Draft | Documentation restructure for multi-agent support |
+| DX-23 | entry-point-detection | Draft | Entry point 检测与 Monad Runner 模式 |
+| DX-24 | mechanism-documentation | Draft | Mechanism documentation |
+| DX-25 | functional-patterns | Draft | Functional patterns enhancement |
+| DX-27 | system-prompt-protocol | Proposed | System prompt protocol entry |
+| DX-29 | pure-content-detection | Proposed | Pure content detection |
+| DX-32 | workflow-iteration | Proposed | USBV workflow (ICIDIV iteration) |
+| DX-37 | coverage-integration | Draft | Coverage integration for Guard |
+| DX-38 | contract-quality-rules | Draft | Contract quality rules (Tier 1-4) |
+| DX-39 | workflow-efficiency | Draft | Workflow efficiency improvements |
+| DX-40 | smart-tool-redirect-hook | Draft | Smart tool redirect hook (from DX-16) |
+| DX-41 | automatic-review-orchestration | Draft | Automatic review orchestration (from DX-31+35) |
+| DX-42 | workflow-auto-routing | Draft | Workflow auto-routing (from DX-35) |
+| DX-43 | cross-platform-distribution | Draft | Cross-platform distribution (from DX-35+36) |
 
-| ID | Name | Description |
-|----|------|-------------|
-| DX-12 | hypothesis-fallback | Hypothesis as CrossHair fallback for library-dependent code |
-| DX-13 | incremental-prove | Incremental CrossHair verification with caching |
-| DX-14 | expanded-prove-usage | Full verification in pre-commit/CI (merged into default via DX-19) |
-| DX-16 | agent-tool-enforcement | **Phase 1 Complete** - MCP server with invar_guard/sig/map tools |
-| DX-17 | workflow-enforcement | **Evolved** - Check-In format in INVAR.md v3.27 |
-| DX-21 | package-and-init | Two-package architecture (invar-tools + invar-runtime) |
-| DX-22 | verification-strategy | Smart routing, Shell rules, Fix-or-Explain, content-based detection |
-| DX-23 | entry-point-detection | Auto-detect entry points, exemptions from Result requirement |
-| DX-24 | mechanism-documentation | 13 docs: architecture/, contracts/, rules/, verification/, workflow/ |
-| DX-26 | guard-simplification | Simplify guard CLI: 9→5 flags, TTY auto-detect, property test output |
-| DX-30 | visible-workflow | ✅ Phase TodoList convention + `contract_quality_ratio` Guard rule |
-| DX-32 | workflow-iteration | ✅ USBV workflow replacing ICIDIV, Review Gate integration |
+## Archived Proposals (18)
 
-### In Progress / Partial
+| ID | Name | Status | Description |
+|----|------|--------|-------------|
+| DX-12 | hypothesis-fallback | ✅ Implemented | Hypothesis as CrossHair fallback |
+| DX-13 | incremental-prove | ✅ Implemented | Incremental CrossHair verification |
+| DX-14 | expanded-prove-usage | ✅ Implemented | Expanded --prove usage |
+| DX-16 | agent-tool-enforcement | ✅ Complete | MCP server (Phase 2 → DX-40) |
+| DX-17 | workflow-enforcement | ✅ Evolved | Check-In format |
+| DX-20 | property-testing-enhancements | Draft | Property testing UX |
+| DX-21 | package-and-init | ✅ Implemented | Two-package architecture |
+| DX-22 | verification-strategy | ✅ Implemented | Smart routing, Shell rules |
+| DX-26 | guard-simplification | ✅ Implemented | Guard CLI simplification |
+| DX-28 | semantic-verification | ✅ Complete | @relates, format specs (P2 → DX-38) |
+| DX-30 | visible-workflow | ✅ Complete | TodoList convention |
+| DX-31 | adversarial-reviewer | ✅ Complete | /review skill (Phase 2 → DX-41) |
+| DX-33 | verification-blind-spots | ✅ Complete | Analysis (→ DX-37, DX-38) |
+| DX-34 | review-cycle | Superseded | → DX-35 |
+| DX-35 | workflow-phase-separation | ✅ Complete | Workflow skills (Phase 3-5 → DX-41/42/43) |
+| DX-36 | documentation-restructuring | ✅ Complete | Sections (Phase 5-6 → DX-43) |
 
-| ID | Name | Description |
-|----|------|-------------|
-| DX-20 | property-testing-enhancements | Property testing UX improvements |
-| DX-28 | semantic-verification | **65%** - @relates, format specs, mutation testing, skip abuse prevention done |
-| DX-31 | adversarial-reviewer | **Phase 1,3,4,5,6 ✅** - Guard trigger + /review + platform docs. Phase 2 deferred |
+## Priority Recommendations
 
-**DX-28 Remaining:**
-- Contract quality rules (filter_dual_coverage, parser_format_test, etc.)
-- Bidirectional testing framework
-- CrossHair symbolic verification of @relates
-
-**DX-31 Status:**
-- Phase 2: 📋 **Deferred** - Structured schema (current Prompt Guidance sufficient)
-
-### Draft / Discussion
-
-| ID | Name | Description |
-|----|------|-------------|
-| DX-33 | verification-blind-spots | Analysis: why automated verification misses issues |
-| DX-34 | review-cycle | Multi-round review cycle with convergence criteria |
-
-### Backlog
-
-| ID | Name | Description |
-|----|------|-------------|
-| DX-25 | functional-patterns | Haskell-inspired patterns: Validation, NewType, NonEmpty, Monoid |
-| DX-27 | system-prompt-protocol | System Prompt injection for Check-In/Final enforcement |
-| DX-29 | pure-content-detection | Explicit @invar:module markers (pending review) |
-
-### Archived / Merged
-
-| ID | Name | Status |
-|----|------|--------|
-| DX-11 | documentation-restructure | Merged into DX-24 |
-| DX-15, 18, 19 | - | Merged into other proposals or never created |
-| dx-improvements | DX-01 to DX-10 | Historical collection, see `2025-12-21-dx-improvements.md` |
-
-## Archived
-
-Older research-based proposals moved to `archive/`:
-
-- 2024-12-21-guard-enhancements.md
-- 2024-12-21-language-inspired-enhancements.md
-- 2024-12-21-test-first-enhancement.md
-
-## Template
-
-See `.invar/proposals/TEMPLATE.md` for proposal template.
+| Priority | Proposal | Rationale |
+|----------|----------|-----------|
+| **High** | DX-41 | Automatic review orchestration — core workflow enhancement |
+| **High** | DX-43 | Cross-platform distribution — expand Invar reach |
+| **Medium** | DX-42 | Workflow auto-routing — UX improvement |
+| **Medium** | DX-37 | Coverage integration — verification enhancement |
+| **Low** | DX-38 | Contract quality rules — high risk, needs careful design |
+| **Low** | DX-40 | Smart tool redirect — incremental optimization |
