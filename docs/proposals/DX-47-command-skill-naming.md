@@ -4,10 +4,13 @@
 
 **Status:** Draft
 **Created:** 2025-12-25
+**Updated:** 2025-12-26
 **Effort:** Low
 **Risk:** Low
 
 ## Problem Statement
+
+### Problem 1: `/review` Name Collision
 
 Currently, `/review` exists in two forms with different behaviors:
 
@@ -25,6 +28,10 @@ When user types `/review`:
 When agent runs `/review`:
 - Agent uses the **skill** version (with fix loop)
 - User may not realize the difference
+
+### Problem 2: Missing `/guard` Command
+
+Users have no quick way to trigger verification. They must ask the agent in natural language ("run invar guard"). A `/guard` command would provide consistency with `/audit`.
 
 ## Current Distinction
 
@@ -48,35 +55,17 @@ When agent runs `/review`:
 - Only agent can invoke
 ```
 
-## Proposed Solutions
+## Options Considered
 
 ### Option A: Rename Skill
 
-Keep command as `/review`, rename skill:
+Keep command as `/review`, rename skill to `/review-fix`.
 
-| Old | New |
-|-----|-----|
-| skill: `/review` | skill: `/review-fix` |
+**Rejected:** Awkward naming, skill references need updating everywhere.
 
-```
-User: /review          → Command: read-only audit
-Agent invokes: /review-fix → Skill: audit + fix loop
-```
+### Option B: Rename Command to `/audit` ✅ Selected
 
-**Pros:**
-- User-invokable command keeps intuitive name
-- Skill name indicates additional behavior
-
-**Cons:**
-- Skill descriptions in other proposals need updating
-
-### Option B: Rename Command
-
-Keep skill as `/review`, rename command:
-
-| Old | New |
-|-----|-----|
-| command: `/review` | command: `/audit` |
+Keep skill as `/review`, rename command to `/audit`.
 
 ```
 User: /audit           → Command: read-only audit
@@ -84,97 +73,138 @@ Agent invokes: /review → Skill: audit + fix loop
 ```
 
 **Pros:**
-- Skill keeps established name
-- "Audit" is accurate for read-only inspection
+- "Audit" accurately describes read-only inspection
+- Follows Claude Code design (commands for users, skills for agents)
+- No detection logic needed - behavior is 100% predictable
+- Minimal change (rename one file)
 
 **Cons:**
-- Users already know `/review`
+- Users must learn new command name (but `/audit` is intuitive)
 
 ### Option C: Merge Into One
 
-Remove the command, only have the skill:
+Remove the command, only have the skill.
 
-```
-User: "Please review my code"
-Agent: [invokes /review skill with fix loop]
-```
+**Rejected:** Users lose direct invocation capability.
 
-**Pros:**
-- No naming confusion
-- Single behavior
+### Option D: Mode Detection
 
-**Cons:**
-- Users lose direct invocation capability
-- May not always want fix loop
+Single `/review` with automatic mode detection.
 
-### Option D: Add Mode Parameter (Recommended)
-
-Keep single `/review` skill, add mode detection:
-
-```markdown
-# Skill can detect if user explicitly invoked vs agent chose
-
-If user said "/review" or "review my code":
-  → Quick mode (read-only)
-
-If agent determines review needed:
-  → Isolated mode with fix loop
-```
-
-**Implementation:**
-
-```markdown
-# .claude/skills/review/SKILL.md (updated)
-
-## Mode Selection
-
-### User-Initiated Review
-If user explicitly requested review ("review this", "/review"):
-- Use Quick mode
-- Read-only, no fixes
-- Report and stop
-
-### Agent-Initiated Review
-If agent invoked (after /develop, review_suggested):
-- Use Isolated mode
-- Include fix loop
-- Multi-round convergence
-```
-
-**Pros:**
-- Single name, context-aware behavior
-- No renaming needed
-
-**Cons:**
-- Mode detection may be imperfect
+**Rejected:**
+- Mode detection relies on guessing user intent from context
+- Skill files are static markdown - no runtime detection capability
+- Boundary between "user initiated" and "agent initiated" is fuzzy
+- Adds complexity without reliability
 
 ## Recommendation
 
-**Option D (Mode Parameter)** is cleanest because:
-1. No breaking changes
-2. Context-appropriate behavior
-3. User gets what they expect
+**Option B: Rename Command to `/audit`**
 
-Fallback: **Option B (Rename Command to /audit)** if mode detection proves unreliable.
+Rationale:
+1. **Follows Claude Code design** - Commands for users, Skills for agents
+2. **Semantic accuracy** - "Audit" means read-only inspection in software engineering
+3. **No detection logic** - Behavior is deterministic
+4. **Minimal change** - Just rename one file
 
 ## Implementation Plan
 
 | Phase | Action | Effort |
 |-------|--------|--------|
-| 1 | Update skill with mode detection | Low |
-| 2 | Remove command (superseded by skill) | Low |
-| 3 | Update skill descriptions | Low |
+| 1 | Rename `.claude/commands/review.md` → `audit.md` | 5 min |
+| 2 | Update audit.md content (title, description) | 5 min |
+| 3 | Create `.claude/commands/guard.md` | 10 min |
+| 4 | Update CLAUDE.md command table | 5 min |
+| 5 | Update any docs referencing `/review` command | 10 min |
+
+**Total:** ~35 minutes
+
+### Phase 1-2: Rename Command
+
+```bash
+mv .claude/commands/review.md .claude/commands/audit.md
+```
+
+Update content:
+```markdown
+# Audit
+
+Read-only code review. Reports issues without fixing them.
+
+## Behavior
+
+1. Analyze code for issues (style, bugs, security, architecture)
+2. Report findings with file:line references
+3. Do NOT make any changes - report only
+
+## Output Format
+
+For each issue found:
+- Severity (Error/Warning/Info)
+- Location (file:line)
+- Description
+- Suggestion (but don't implement)
+```
+
+### Phase 3: Create `/guard` Command
+
+```markdown
+# Guard
+
+Run Invar verification on the project.
+
+## Behavior
+
+Execute `invar_guard()` and report:
+- Pass/fail status
+- Error count with details
+- Warning count with details
+
+Do NOT fix issues - just report verification results.
+
+## When to Use
+
+- Quick verification check
+- Before committing
+- After pulling changes
+```
+
+### Phase 4: Update Command Table
+
+```markdown
+# CLAUDE.md
+
+## Commands
+
+| Command | Purpose |
+|---------|---------|
+| `/audit` | Read-only code review (reports issues) |
+| `/guard` | Run Invar verification (reports results) |
+```
+
+## Final State
+
+| Type | Name | Purpose | User Invoke? |
+|------|------|---------|--------------|
+| Command | `/audit` | Read-only code review | ✅ Yes |
+| Command | `/guard` | Run verification | ✅ Yes |
+| Skill | `review` | Review + fix loop | ❌ Agent only |
+| Skill | `develop` | Implementation workflow | ❌ Agent only |
+| Skill | `investigate` | Exploration workflow | ❌ Agent only |
+| Skill | `propose` | Design decisions | ❌ Agent only |
 
 ## Success Criteria
 
-- [ ] No user confusion about `/review` behavior
-- [ ] User-initiated reviews are read-only
-- [ ] Agent-initiated reviews have fix loop
-- [ ] Clear documentation of modes
+- [ ] `/review` command renamed to `/audit`
+- [ ] `/guard` command created
+- [ ] No user confusion about command vs skill behavior
+- [ ] CLAUDE.md updated with command table
+- [ ] All docs updated to reference `/audit` instead of `/review` command
 
 ## Related
 
-- DX-41: Automatic Review Orchestration (uses /review skill)
+- DX-41: Automatic Review Orchestration (uses `/review` skill)
 - DX-42: Workflow Auto-Routing (routing to appropriate workflow)
-- `.claude/commands/review.md`: Current command
-- `.claude/skills/review/SKILL.md`: Current skill
+- `.claude/commands/audit.md`: New command (was review.md)
+- `.claude/commands/guard.md`: New command
+- `.claude/skills/review/SKILL.md`: Unchanged skill
