@@ -97,7 +97,7 @@ def check_workflow_compliance(user_message, agent_response):
 
 ## Success Criteria
 
-- [ ] CLAUDE.md 包含明确的 workflow routing 表
+- [x] CLAUDE.md 包含明确的 workflow routing 表 ✓ (2025-12-26)
 - [ ] Agent 在 "review" 触发词出现时自动调用 `/review` skill
 - [ ] 任务切换时 Agent 主动重新 Check-In
 - [ ] 0 次 workflow 跳过事件（在正常使用中）

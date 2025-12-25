@@ -21,8 +21,10 @@ Then read `.invar/context.md` for project state.
 
 ```
 src/invar/
-├── core/    # Pure logic, @pre/@post required, no I/O
-└── shell/   # I/O operations, Result[T, E] required
+├── core/           # Pure logic, @pre/@post required, no I/O
+└── shell/          # I/O operations, Result[T, E] required
+    ├── commands/   # CLI commands (guard, init)
+    └── prove/      # Verification (crosshair, hypothesis)
 ```
 
 ---
@@ -48,6 +50,23 @@ src/invar/
 **Note:** Skills are invoked by agent based on context. Use `/audit` for user-initiated review.
 
 **Override:** `/develop!` forces workflow, skips routing.
+
+---
+
+## Workflow Routing (MANDATORY)
+
+When user message contains these triggers, you MUST invoke the corresponding skill:
+
+| Trigger Words | Skill | Notes |
+|---------------|-------|-------|
+| "review", "review and fix" | `/review` | Adversarial review with fix loop |
+| "implement", "add", "fix", "update" | `/develop` | Unless in review context |
+| "why", "explain", "investigate" | `/investigate` | Research mode, no code changes |
+| "compare", "should we", "design" | `/propose` | Decision facilitation |
+
+**Violation check (before writing ANY code):**
+- "Am I in a workflow?"
+- "Did I invoke the correct skill?"
 
 ---
 
