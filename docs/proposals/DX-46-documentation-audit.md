@@ -15,9 +15,9 @@ With the new framework (USBV, workflow skills, etc.), existing documentation may
 |----------|---------|
 | INVAR.md | May still reference ICIDIV instead of USBV |
 | CLAUDE.md | May have outdated workflow instructions |
-| docs/mechanisms/ | DX-24 said 100% complete, but may not reflect USBV |
-| docs/DESIGN.md | May reference old architecture |
-| docs/VISION.md | Philosophy should still be valid |
+| docs/reference/ | DX-24 said 100% complete, but may not reflect USBV |
+| docs/design.md | May reference old architecture |
+| docs/vision.md | Philosophy should still be valid |
 | GitHub Pages | May not reflect current structure |
 
 **Symptom:** Agent and user confusion when docs contradict actual behavior.
@@ -34,10 +34,10 @@ With the new framework (USBV, workflow skills, etc.), existing documentation may
 | sections/investigate.md | ~50 | 2025-12-25 | ✅ Recent |
 | sections/propose.md | ~50 | 2025-12-25 | ✅ Recent |
 | sections/review.md | ~50 | 2025-12-25 | ✅ Recent |
-| docs/mechanisms/*.md | ~1500 | 2025-12-24 | ⚠️ Pre-USBV |
-| docs/DESIGN.md | ~300 | ? | ❓ Unknown |
-| docs/VISION.md | ~200 | ? | ❓ Unknown |
-| docs/AGENTS.md | ~150 | ? | ❓ Unknown |
+| docs/reference/*.md | ~1500 | 2025-12-24 | ⚠️ Pre-USBV |
+| docs/design.md | ~300 | ? | ❓ Unknown |
+| docs/vision.md | ~200 | ? | ❓ Unknown |
+| docs/agents.md | ~150 | ? | ❓ Unknown |
 | README.md | ~100 | ? | ❓ Unknown |
 
 ### Phase 2: Specific Checks
@@ -48,19 +48,19 @@ With the new framework (USBV, workflow skills, etc.), existing documentation may
 - [ ] Workflow skill references accurate
 - [ ] No ICIDIV references remain
 
-#### docs/mechanisms/
-- [ ] workflow/icidiv.md → rename to usbv.md or update content
+#### docs/reference/
+- [ ] workflow/usbv.md → USBV content current
 - [ ] workflow/session-start.md → Check-In format current
-- [ ] architecture/README.md → Core/Shell still accurate
-- [ ] verification/README.md → Guard behavior current
+- [ ] architecture/index.md → Core/Shell still accurate
+- [ ] verification/index.md → Guard behavior current
 - [ ] contracts/pre-post.md → Contract system current
 
-#### docs/DESIGN.md
+#### docs/design.md
 - [ ] Architecture diagrams current
 - [ ] Version number updated
 - [ ] No stale section references
 
-#### docs/VISION.md
+#### docs/vision.md
 - [ ] Philosophy still applies
 - [ ] No contradictions with current implementation
 
@@ -135,8 +135,8 @@ Systematically rewrite all documentation:
 |-------|--------|--------|----------|
 | 1 | Run stale content check | Low | **High** |
 | 2 | Fix critical issues in INVAR.md, CLAUDE.md | Low | **High** |
-| 3 | Update docs/mechanisms/workflow/ | Medium | Medium |
-| 4 | Review docs/DESIGN.md | Low | Low |
+| 3 | Update docs/reference/workflow/ | Medium | Medium |
+| 4 | Review docs/design.md | Low | Low |
 | 5 | Add `invar check-docs` command | Medium | Low |
 
 ### Quick Win: Stale Content Check
@@ -148,17 +148,17 @@ Scanning documentation for stale content...
 
 ⚠️ Potentially stale content found:
 
-docs/mechanisms/workflow/icidiv.md:1
-  "# ICIDIV: The Six-Step Development Workflow"
-  → Consider: Rename to usbv.md or update content
+docs/reference/workflow/usbv.md:1
+  "# USBV: The Four-Phase Development Workflow"
+  → ✅ Already updated
 
-docs/DESIGN.md:15
-  "Version: v3.26"
-  → Consider: Update to current version
+docs/design.md:15
+  "Version: v5.0"
+  → ✅ Already updated
 
-docs/mechanisms/verification/overview.md:42
-  "Run `invar prove`"
-  → Consider: Update to `invar guard --prove`
+docs/reference/verification/index.md:42
+  "Run `invar guard`"
+  → ✅ Already updated
 
 Found 3 potential issues in 3 files.
 ```
@@ -180,4 +180,4 @@ Found 3 potential issues in 3 files.
 
 - DX-24: Mechanism Documentation (created the mechanism docs)
 - DX-45: Template Consistency (related sync problem)
-- docs/mechanisms/: Primary audit target
+- docs/reference/: Primary audit target

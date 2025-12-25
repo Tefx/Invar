@@ -76,11 +76,11 @@ VALIDATE Phase
 - Security-sensitive paths detected
 
 **Documentation Updated:**
-- `docs/mechanisms/workflow/usbv.md` - Added Review Gate section
+- `docs/reference/workflow/usbv.md` - Added Review Gate section
 - `INVAR.md` - Updated VALIDATE phase, added iteration path
 - `src/invar/templates/INVAR.md` - Synced changes
 - `.invar/examples/workflow.md` - Added Review Gate principle
-- `docs/AGENTS.md` - Added USBV Integration section
+- `docs/agents.md` - Added USBV Integration section
 
 ### Lesson #28: Review Gate as Conditional Step
 
@@ -944,9 +944,9 @@ Human (Commander) ──directs──→ Agent (Executor) ──uses──→ In
 
 | File | Purpose |
 |------|---------|
-| INVAR.md | Protocol v4.0 |
-| docs/INVAR-GUIDE.md | Why & How |
-| docs/VISION.md | Design philosophy |
+| INVAR.md | Protocol v5.0 |
+| docs/guide.md | Why & How |
+| docs/vision.md | Design philosophy |
 | CLAUDE.md | Development guide |
 | docs/index.html | GitHub Pages |
 

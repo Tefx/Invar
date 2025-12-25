@@ -6,7 +6,7 @@
 
 - **ID**: DX-23
 - **状态**: Draft
-- **来源**: [INVAR_FEEDBACK_MEMO.md](../feedback/INVAR_FEEDBACK_MEMO.md)
+- **来源**: [feedback-memo.md](../history/feedback/feedback-memo.md)
 - **关联**: DX-22 Part 2 (Shell 架构规则)
 
 ---
@@ -473,7 +473,7 @@ def test_entry_point_too_thick():
 
 ## 参考
 
-- [INVAR_FEEDBACK_MEMO.md](../feedback/INVAR_FEEDBACK_MEMO.md) - 问题来源
+- [feedback-memo.md](../history/feedback/feedback-memo.md) - 问题来源
 - DX-22 - 智能验证策略 (关联提案)
 - Haskell `ExceptT` monad - 设计灵感
 - `returns` library - Python Result 实现

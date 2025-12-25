@@ -187,4 +187,4 @@ Guard's `empty_contract` and `redundant_type_contract` rules help catch these.
 
 ---
 
-*This guide complements INVAR.md. For full philosophy, see [VISION.md](./VISION.md). For technical details, see [DESIGN.md](./DESIGN.md).*
+*This guide complements INVAR.md. For full philosophy, see [vision.md](./vision.md). For technical details, see [design.md](./design.md).*

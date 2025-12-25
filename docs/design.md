@@ -1,10 +1,10 @@
 # Invar: Technical Design
 
-> **Prerequisite:** Read [VISION.md](./VISION.md) for philosophy.
+> **Prerequisite:** Read [vision.md](./vision.md) for philosophy.
 >
-> **Design Principle:** Agent-Native Execution, Human-Directed Purpose. See [VISION.md](./VISION.md).
+> **Design Principle:** Agent-Native Execution, Human-Directed Purpose. See [vision.md](./vision.md).
 >
-> **Mechanism Guides:** See [mechanisms/](./mechanisms/) for detailed technical documentation.
+> **Mechanism Guides:** See [reference/](./reference/) for detailed technical documentation.
 
 ---
 

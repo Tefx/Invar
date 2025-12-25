@@ -227,7 +227,7 @@ Project-specific additions:
 
 After standard Check-In, also read:
 - `.invar/context.md` for lessons
-- `docs/DESIGN.md` for architecture
+- `docs/design.md` for architecture
 ```
 
 ## Troubleshooting

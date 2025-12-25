@@ -204,4 +204,4 @@ shell_paths = ["src/myapp/shell"]
 
 ---
 
-*Protocol v5.0 — USBV workflow (DX-32) | [Guide](docs/INVAR-GUIDE.md) | [Examples](.invar/examples/)*
+*Protocol v5.0 — USBV workflow (DX-32) | [Guide](docs/guide.md) | [Examples](.invar/examples/)*

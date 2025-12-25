@@ -5,7 +5,7 @@ This directory contains design proposals for Invar development.
 ## Naming Convention
 
 - `DX-XX-name.md` — Developer Experience improvements
-- Archived proposals in `archive/` subdirectory
+- Completed/archived proposals in `completed/` subdirectory
 
 ## Active Proposals (13)
 

@@ -307,8 +307,8 @@ DEAL_DISABLE=1 python app.py
 - `.invar/examples/` — Reference patterns
 
 **Documentation:**
-- [docs/VISION.md](./docs/VISION.md) — Design philosophy
-- [docs/DESIGN.md](./docs/DESIGN.md) — Technical architecture
+- [docs/vision.md](./docs/vision.md) — Design philosophy
+- [docs/design.md](./docs/design.md) — Technical architecture
 - [GitHub Pages](https://tefx.github.io/Invar/) — Visual overview
 
 ---
