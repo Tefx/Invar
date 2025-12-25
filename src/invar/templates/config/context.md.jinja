@@ -1,0 +1,55 @@
+# Project Context
+
+*Last updated: [DATE]*
+
+## Current State
+
+- Phase: [current development phase]
+- Working on: [current task or feature]
+- Blockers: None
+
+## Recent Decisions
+
+1. [Decision summary] - [Brief rationale]
+
+## Lessons Learned
+
+1. [Pitfall or issue] → [Solution or workaround]
+
+## Documentation Structure
+
+| File | Owner | Edit? |
+|------|-------|-------|
+| INVAR.md | Invar | No — use `invar update` |
+| CLAUDE.md | User | Yes |
+| .invar/context.md | User | Yes (this file) |
+| .invar/examples/ | Invar | No |
+
+**Decision rule:** Is this Invar protocol or project-specific?
+- Protocol content → Already in INVAR.md, don't duplicate
+- Project-specific → Add to CLAUDE.md or here
+
+## Technical Debt
+
+{% if syntax == "mcp" -%}
+*Run `invar_guard()` to check current status.*
+{% else -%}
+*Run `invar guard` to check current status.*
+{% endif %}
+
+| File | Warning | Priority |
+|------|---------|----------|
+| (none) | — | — |
+
+## Key Files
+
+| File | Purpose |
+|------|---------|
+| INVAR.md | Protocol reference (Invar-managed) |
+| CLAUDE.md | Project guide (customize freely) |
+| src/core/ | Pure business logic |
+| src/shell/ | I/O adapters |
+
+---
+
+*Update this file when: completing major tasks, making design decisions, discovering pitfalls.*

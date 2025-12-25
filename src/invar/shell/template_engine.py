@@ -28,7 +28,9 @@ from invar.core.template_parser import (
 __all__ = [
     "ParsedFile",
     "Region",
+    "generate_from_manifest",
     "get_syntax_for_command",
+    "get_templates_dir",
     "is_invar_project",
     "load_manifest",
     "parse_invar_regions",
@@ -219,6 +221,101 @@ def load_manifest(templates_dir: Path) -> Result[dict, str]:
             return Failure("tomllib/tomli not available")
     except Exception as e:
         return Failure(f"Failed to parse manifest: {e}")
+
+
+# =============================================================================
+# Template Generation
+# =============================================================================
+
+
+def get_templates_dir() -> Path:
+    """Get the templates directory path."""
+    return Path(__file__).parent.parent / "templates"
+
+
+# @shell_complexity: Template generation has multiple paths for copy/jinja/copy_dir types
+def generate_from_manifest(
+    dest_root: Path,
+    syntax: str = "cli",
+    files_to_generate: list[str] | None = None,
+) -> Result[list[str], str]:
+    """Generate files from manifest.toml templates.
+
+    Args:
+        dest_root: Destination project root
+        syntax: "cli" or "mcp" for command syntax
+        files_to_generate: Optional list of files to generate (None = all from manifest)
+
+    Returns:
+        Success with list of generated files, or Failure with error
+    """
+    templates_dir = get_templates_dir()
+    manifest_result = load_manifest(templates_dir)
+    if isinstance(manifest_result, Failure):
+        return manifest_result
+
+    manifest = manifest_result.unwrap()
+    templates = manifest.get("templates", {})
+    variables = manifest.get("variables", {})
+    variables["syntax"] = syntax
+
+    generated: list[str] = []
+
+    for dest_path, config in templates.items():
+        # Skip if not in files_to_generate list
+        if files_to_generate is not None and dest_path not in files_to_generate:
+            continue
+
+        src = config.get("src", "")
+        template_type = config.get("type", "copy")
+        src_path = templates_dir / src
+
+        # Resolve destination
+        full_dest = dest_root / dest_path
+
+        # Ensure parent directories exist
+        full_dest.parent.mkdir(parents=True, exist_ok=True)
+
+        if template_type == "copy":
+            # Direct file copy
+            if not src_path.exists():
+                continue
+            if full_dest.exists():
+                continue  # Don't overwrite existing
+            try:
+                full_dest.write_text(src_path.read_text())
+                generated.append(dest_path)
+            except OSError:
+                continue
+
+        elif template_type == "jinja":
+            # Jinja2 template rendering
+            if not src_path.exists():
+                continue
+            if full_dest.exists():
+                continue  # Don't overwrite existing
+            result = render_template_file(src_path, variables)
+            if isinstance(result, Success):
+                try:
+                    full_dest.write_text(result.unwrap())
+                    generated.append(dest_path)
+                except OSError:
+                    continue
+
+        elif template_type == "copy_dir":
+            # Directory copy
+            if not src_path.exists() or not src_path.is_dir():
+                continue
+            if full_dest.exists():
+                continue  # Don't overwrite existing directory
+            try:
+                import shutil
+                shutil.copytree(src_path, full_dest)
+                generated.append(dest_path)
+            except OSError:
+                continue
+
+    return Success(generated)
 
 
 # =============================================================================

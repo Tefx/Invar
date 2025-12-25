@@ -58,10 +58,10 @@ extensions = { action = "preserve" }
 ".pre-commit-config.yaml" = { src = "config/pre-commit.yaml.jinja", type = "jinja" }
 
 # Skills (Jinja2 with syntax variable)
-".claude/skills/develop/SKILL.md" = { src = "skills/develop.md.jinja", type = "jinja" }
-".claude/skills/investigate/SKILL.md" = { src = "skills/investigate.md.jinja", type = "jinja" }
-".claude/skills/propose/SKILL.md" = { src = "skills/propose.md.jinja", type = "jinja" }
-".claude/skills/review/SKILL.md" = { src = "skills/review.md.jinja", type = "jinja" }
+".claude/skills/develop/SKILL.md" = { src = "skills/develop/SKILL.md.jinja", type = "jinja" }
+".claude/skills/investigate/SKILL.md" = { src = "skills/investigate/SKILL.md.jinja", type = "jinja" }
+".claude/skills/propose/SKILL.md" = { src = "skills/propose/SKILL.md.jinja", type = "jinja" }
+".claude/skills/review/SKILL.md" = { src = "skills/review/SKILL.md.jinja", type = "jinja" }
 
 # Commands (direct copy)
 ".claude/commands/audit.md" = { src = "commands/audit.md", type = "copy" }
