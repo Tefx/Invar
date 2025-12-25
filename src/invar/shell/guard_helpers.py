@@ -123,7 +123,7 @@ def run_crosshair_phase(
 
     Returns (passed, output_dict).
     """
-    from invar.shell.prove_cache import ProveCache
+    from invar.shell.prove.cache import ProveCache
     from invar.shell.testing import get_files_to_prove, run_crosshair_parallel
 
     # Skip if prior failures

@@ -18,10 +18,12 @@ from pathlib import Path
 from returns.result import Failure, Result, Success
 from rich.console import Console
 
+from invar.shell.prove.cache import ProveCache
+
 # DX-12: Import from prove module
 # DX-13: Added get_files_to_prove, run_crosshair_parallel
-# DX-13: ProveCache extracted to prove_cache.py
-from invar.shell.prove import (
+# DX-48b: Relocated to shell/prove/
+from invar.shell.prove.crosshair import (
     CrossHairStatus,
     get_files_to_prove,
     run_crosshair_on_files,
@@ -29,7 +31,6 @@ from invar.shell.prove import (
     run_hypothesis_fallback,
     run_prove_with_fallback,
 )
-from invar.shell.prove_cache import ProveCache
 
 console = Console()
 

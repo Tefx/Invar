@@ -56,7 +56,7 @@ dev = [
 ]
 
 [project.scripts]
-invar = "invar.shell.cli:app"
+invar = "invar.shell.commands.guard:app"
 
 [project.urls]
 Homepage = "https://github.com/tefx/invar"

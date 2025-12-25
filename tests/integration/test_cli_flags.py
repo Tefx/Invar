@@ -22,6 +22,7 @@ import pytest
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 
 
+# @invar:allow shell_result: Test helper, returns dict for assertion convenience
 def run_invar_guard(*args: str, env: dict | None = None) -> dict:
     """
     Run invar guard with given arguments and return parsed JSON output.
@@ -30,7 +31,7 @@ def run_invar_guard(*args: str, env: dict | None = None) -> dict:
     """
     import os
 
-    cmd = [sys.executable, "-m", "invar.shell.cli", "guard", *args]
+    cmd = [sys.executable, "-m", "invar.shell.commands.guard", "guard", *args]
     full_env = os.environ.copy()
     full_env["INVAR_MODE"] = "agent"  # Force JSON output
     if env:

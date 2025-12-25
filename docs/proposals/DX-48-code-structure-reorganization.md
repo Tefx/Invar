@@ -2,24 +2,29 @@
 
 > **"Related code should live together."**
 
-**Status:** Phase 1 Complete (Dead Code Deletion)
+**Status:** Complete (Phase 1 + DX-48b-lite)
 **Created:** 2025-12-26
-**Effort:** Phase 1: Low | Phases 2-6: Medium
-**Risk:** Phase 1: Very Low | Phases 2-6: Medium
-**Breaking:** Phase 1: No | Phases 2-6: Yes (internal imports)
+**Effort:** Phase 1: Low | DX-48b-lite: Low
+**Risk:** Phase 1: Very Low | DX-48b-lite: Low
+**Breaking:** No (internal imports only, public API unchanged)
 
 ---
 
 ## Scope Split Decision (2025-12-26)
 
-After review, this proposal was split into two independent work items:
+After review, this proposal was split and partially executed:
 
 | Phase | Scope | Status | Rationale |
 |-------|-------|--------|-----------|
 | **DX-48a** | Delete dead code (~664 lines) | ✅ Complete | Low risk, high value |
-| **DX-48b** | Module restructuring (subdirs) | Deferred | High risk, moderate value |
+| **DX-48b-lite** | shell/commands/ + shell/prove/ only | ✅ Complete | Low risk, clear benefit |
+| **DX-48b-full** | Full core/ restructuring | Deferred | High risk, moderate value |
 
-**Why defer restructuring?** The flat structure (27 files in core/, 21 in shell/) is manageable. Restructuring changes all internal imports with high churn for moderate organizational benefit. Revisit if codebase grows beyond 100+ files.
+**Why DX-48b-lite instead of full restructuring?**
+- Only restructured shell/ (10 files), left core/ flat (27 files)
+- No file merges (highest risk part of original proposal)
+- ~40 import updates vs ~160 in full proposal
+- 45 minutes vs 3-4 hours
 
 ---
 
@@ -436,12 +441,19 @@ MIGRATIONS = {
 - [x] `invar guard` passes
 - [x] All tests pass
 
-### Phases 2-6 (DX-48b) - Deferred
+### DX-48b-lite - Complete
 
-- [ ] All related modules grouped in subdirectories
-- [ ] Consistent naming (no `_cmd` suffix, use directories)
-- [ ] MCP server works after restructuring
-- [ ] `invar init` works after restructuring
+- [x] CLI commands grouped in `shell/commands/`
+- [x] Prove modules grouped in `shell/prove/`
+- [x] Consistent naming (`cli.py` → `guard.py`, `*_cmd.py` → `*.py`)
+- [x] Entry points updated (`pyproject.toml`, MCP server)
+- [x] `invar guard` passes (0 errors)
+- [x] CLI commands work (`invar guard`, `invar map`, `invar sig`)
+
+### DX-48b-full - Deferred
+
+- [ ] core/ subdirectories (analysis/, format/, verify/)
+- [ ] File merges (purity, shell_analysis, references)
 
 ---
 

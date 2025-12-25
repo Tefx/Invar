@@ -170,7 +170,7 @@ def create_server() -> Server:
 # @invar:allow shell_result: MCP framework API returns list[TextContent]
 async def _run_guard(args: dict[str, Any]) -> list[TextContent]:
     """Run invar guard command."""
-    cmd = [sys.executable, "-m", "invar.shell.cli", "guard"]
+    cmd = [sys.executable, "-m", "invar.shell.commands.guard", "guard"]
 
     path = args.get("path", ".")
     cmd.append(path)
@@ -194,7 +194,7 @@ async def _run_sig(args: dict[str, Any]) -> list[TextContent]:
     if not target:
         return [TextContent(type="text", text="Error: target is required")]
 
-    cmd = [sys.executable, "-m", "invar.shell.cli", "sig", target, "--json"]
+    cmd = [sys.executable, "-m", "invar.shell.commands.guard", "sig", target, "--json"]
     return await _execute_command(cmd)
 
 
@@ -202,7 +202,7 @@ async def _run_sig(args: dict[str, Any]) -> list[TextContent]:
 # @invar:allow shell_result: MCP framework API returns list[TextContent]
 async def _run_map(args: dict[str, Any]) -> list[TextContent]:
     """Run invar map command."""
-    cmd = [sys.executable, "-m", "invar.shell.cli", "map"]
+    cmd = [sys.executable, "-m", "invar.shell.commands.guard", "map"]
 
     path = args.get("path", ".")
     cmd.append(path)

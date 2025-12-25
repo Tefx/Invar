@@ -19,13 +19,13 @@ from returns.result import Failure, Result, Success
 from rich.console import Console
 
 # DX-13: Cache module extracted for file size compliance
-from invar.shell.prove_cache import ProveCache  # noqa: TC001 - runtime usage
+from invar.shell.prove.cache import ProveCache  # noqa: TC001 - runtime usage
 
-# DX-12: Hypothesis fallback (extracted to prove_fallback.py for file size compliance)
-from invar.shell.prove_fallback import (
+# DX-12: Hypothesis fallback
+from invar.shell.prove.hypothesis import (
     run_hypothesis_fallback as run_hypothesis_fallback,
 )
-from invar.shell.prove_fallback import (
+from invar.shell.prove.hypothesis import (
     run_prove_with_fallback as run_prove_with_fallback,
 )
 

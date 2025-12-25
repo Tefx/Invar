@@ -84,7 +84,7 @@ def run_hypothesis_fallback(
         Success with test results or Failure with error message
     """
     # Import CrossHairStatus here to avoid circular import
-    from invar.shell.prove import CrossHairStatus
+    from invar.shell.prove.crosshair import CrossHairStatus
 
     # Check if hypothesis is available
     try:
@@ -186,8 +186,8 @@ def run_prove_with_fallback(
         Success with verification results including routing statistics
     """
     # Import here to avoid circular import
-    from invar.shell.prove import CrossHairStatus, run_crosshair_parallel
-    from invar.shell.prove_cache import ProveCache
+    from invar.shell.prove.cache import ProveCache
+    from invar.shell.prove.crosshair import CrossHairStatus, run_crosshair_parallel
 
     # DX-22: Smart routing - classify files before verification
     routing = classify_files_for_verification(files)

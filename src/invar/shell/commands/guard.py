@@ -283,7 +283,7 @@ def map_command(
     json_output: bool = typer.Option(False, "--json", help="Output as JSON"),
 ) -> None:
     """Generate symbol map with reference counts."""
-    from invar.shell.perception import run_map
+    from invar.shell.commands.perception import run_map
 
     # Phase 9 P11: Auto-detect agent mode
     use_json = json_output or _detect_agent_mode()
@@ -299,7 +299,7 @@ def sig_command(
     json_output: bool = typer.Option(False, "--json", help="Output as JSON"),
 ) -> None:
     """Extract signatures from a file or symbol."""
-    from invar.shell.perception import run_sig
+    from invar.shell.commands.perception import run_sig
 
     # Phase 9 P11: Auto-detect agent mode
     use_json = json_output or _detect_agent_mode()
@@ -382,11 +382,11 @@ def rules(
         console.print(f"\n[dim]{len(rules_list)} rules total. Use --json for full details.[/dim]")
 
 
-# Import commands from separate modules to reduce file size
-from invar.shell.init_cmd import init
-from invar.shell.mutate_cmd import mutate  # DX-28
-from invar.shell.test_cmd import test, verify
-from invar.shell.update_cmd import update
+# DX-48b: Import commands from shell/commands/
+from invar.shell.commands.init import init
+from invar.shell.commands.mutate import mutate  # DX-28
+from invar.shell.commands.test import test, verify
+from invar.shell.commands.update import update
 
 app.command()(init)
 app.command()(update)
