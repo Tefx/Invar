@@ -21,13 +21,10 @@ from invar.shell.mcp_config import (
     get_method_by_name,
     get_recommended_method,
 )
+from invar.shell.template_engine import generate_from_manifest
 from invar.shell.templates import (
     add_config,
     add_invar_reference,
-    copy_commands_directory,
-    copy_examples_directory,
-    copy_skills_directory,
-    copy_template,
     create_agent_config,
     create_directories,
     detect_agent_configs,
@@ -227,26 +224,47 @@ def init(
         raise typer.Exit(1)
     config_added = config_result.unwrap()
 
-    # Create INVAR.md (protocol)
-    result = copy_template("INVAR.md", path)
-    if isinstance(result, Success) and result.unwrap():
-        console.print("[green]Created[/green] INVAR.md (Invar Protocol)")
+    # DX-49: Generate files from manifest (CLI syntax for external projects)
+    console.print("\n[bold]Creating Invar files...[/bold]")
+    init_files = [
+        "INVAR.md",
+        ".invar/context.md",
+        ".invar/examples/",
+        ".pre-commit-config.yaml",
+        ".claude/commands/audit.md",
+        ".claude/commands/guard.md",
+    ]
 
-    # Copy examples directory
-    copy_examples_directory(path, console)
+    # Only create CLAUDE.md from template if claude /init wasn't run
+    if not claude or not (path / "CLAUDE.md").exists():
+        init_files.append("CLAUDE.md")
 
-    # Create .invar directory structure
+    # Generate skills if --claude flag
+    if claude:
+        init_files.extend([
+            ".claude/skills/develop/SKILL.md",
+            ".claude/skills/investigate/SKILL.md",
+            ".claude/skills/propose/SKILL.md",
+            ".claude/skills/review/SKILL.md",
+        ])
+
+    result = generate_from_manifest(path, syntax="cli", files_to_generate=init_files)
+    if isinstance(result, Success):
+        for generated_file in result.unwrap():
+            console.print(f"[green]Created[/green] {generated_file}")
+    else:
+        console.print(f"[yellow]Warning:[/yellow] {result.failure()}")
+
+    # Create .invar directory structure (for proposals template - not in manifest)
     invar_dir = path / ".invar"
     if not invar_dir.exists():
         invar_dir.mkdir()
-        result = copy_template("context.md.template", invar_dir, "context.md")
-        if isinstance(result, Success) and result.unwrap():
-            console.print("[green]Created[/green] .invar/context.md (context management)")
 
     # Create proposals directory for protocol governance
     proposals_dir = invar_dir / "proposals"
     if not proposals_dir.exists():
         proposals_dir.mkdir()
+        from invar.shell.templates import copy_template
         result = copy_template("proposal.md.template", proposals_dir, "TEMPLATE.md")
         if isinstance(result, Success) and result.unwrap():
             console.print("[green]Created[/green] .invar/proposals/TEMPLATE.md")
@@ -273,13 +291,6 @@ def init(
         elif status == "not_found":
             # Create full template with workflow enforcement (DX-17)
             create_agent_config(path, agent, console)
-
-    # Copy Claude commands (DX-32: /review skill with Mode Detection)
-    copy_commands_directory(path, console)
-
-    # Copy Claude skills if --claude (DX-36: Workflow skills)
-    if claude:
-        copy_skills_directory(path, console)
 
     # Configure MCP server (DX-16, DX-21B)
     configure_mcp_with_method(path, mcp_method)
