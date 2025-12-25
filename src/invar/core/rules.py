@@ -299,7 +299,7 @@ def check_shell_result(file_info: FileInfo, config: RuleConfig) -> list[Violatio
 
     Skips:
     - Functions returning None (CLI entry points)
-    - Generators (Iterator/Generator)
+    - Generators (Iterator/Generator/AsyncIterator/AsyncGenerator)
     - Entry points (DX-23: framework callbacks like Flask routes, Typer commands)
 
     Examples:
@@ -320,8 +320,12 @@ def check_shell_result(file_info: FileInfo, config: RuleConfig) -> list[Violatio
         # Skip functions with no return type or returning None
         if "-> None" in symbol.signature or "->" not in symbol.signature:
             continue
-        # Skip generators (Iterator/Generator) - acceptable exception per protocol
-        if "Iterator[" in symbol.signature or "Generator[" in symbol.signature:
+        # Skip generators (Iterator/Generator/AsyncIterator/AsyncGenerator) - acceptable per protocol
+        # MINOR-11: Added async variants
+        if any(
+            pattern in symbol.signature
+            for pattern in ("Iterator[", "Generator[", "AsyncIterator[", "AsyncGenerator[")
+        ):
             continue
         # DX-23: Skip entry points; DX-22: Skip if @invar:allow marker
         if is_entry_point(symbol, file_info.source) or has_allow_marker(symbol, file_info.source, "shell_result"):

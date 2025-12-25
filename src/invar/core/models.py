@@ -218,13 +218,18 @@ class RuleConfig(BaseModel):
         500
         >>> config.strict_pure  # Phase 9 P12: Default ON for agents
         True
+        >>> # MINOR-6: Value ranges validated
+        >>> RuleConfig(max_file_lines=0)  # doctest: +IGNORE_EXCEPTION_DETAIL
+        Traceback (most recent call last):
+        pydantic_core._pydantic_core.ValidationError: ...
     """
 
-    max_file_lines: int = 500  # Phase 9 P1: Raised from 300 for less friction
-    max_function_lines: int = 50
-    entry_max_lines: int = 15  # DX-23: Entry point max lines
-    shell_max_branches: int = 3  # DX-22: Shell function max branches
-    shell_complexity_debt_limit: int = 5  # DX-22: Max unaddressed complexity warnings
+    # MINOR-6: Added ge=1 constraints for numeric fields
+    max_file_lines: int = Field(default=500, ge=1)  # Phase 9 P1: Raised from 300
+    max_function_lines: int = Field(default=50, ge=1)
+    entry_max_lines: int = Field(default=15, ge=1)  # DX-23: Entry point max lines
+    shell_max_branches: int = Field(default=3, ge=1)  # DX-22: Shell function max branches
+    shell_complexity_debt_limit: int = Field(default=5, ge=0)  # DX-22: 0 = no limit
     forbidden_imports: tuple[str, ...] = (
         "os",
         "sys",
@@ -247,7 +252,7 @@ class RuleConfig(BaseModel):
     # DX-22: Simplified defaults - most rules have correct severity now
     severity_overrides: dict[str, str] = Field(default_factory=dict)
     # Phase 9 P8: File size warning threshold (0 to disable, 0.8 = warn at 80%)
-    size_warning_threshold: float = 0.8
+    size_warning_threshold: float = Field(default=0.8, ge=0.0, le=1.0)
     # B4: User-declared purity (override heuristics)
     purity_pure: list[str] = Field(default_factory=list)  # Known pure functions
     purity_impure: list[str] = Field(default_factory=list)  # Known impure functions
@@ -283,7 +288,8 @@ class PerceptionMap(BaseModel):
         5
     """
 
-    project_root: str
-    total_files: int
-    total_symbols: int
+    # MINOR-7: Added field validators
+    project_root: str = Field(min_length=1)
+    total_files: int = Field(ge=0)
+    total_symbols: int = Field(ge=0)
     symbols: list[SymbolRefs] = Field(default_factory=list)

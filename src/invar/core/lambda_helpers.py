@@ -8,6 +8,7 @@ import re
 from deal import post, pre
 
 
+@pre(lambda tree: isinstance(tree, ast.AST))
 @post(lambda result: result is None or isinstance(result, ast.Lambda))
 def find_lambda(tree: ast.Expression) -> ast.Lambda | None:
     """Find the lambda node in an expression tree.

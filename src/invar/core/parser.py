@@ -21,13 +21,13 @@ from invar.core.purity import (
 )
 
 
-@pre(lambda source, path="<string>": isinstance(source, str) and len(source) > 0)
+@pre(lambda source, path="<string>": isinstance(source, str) and len(source.strip()) > 0)
 def parse_source(source: str, path: str = "<string>") -> FileInfo | None:
     """
     Parse Python source code and extract symbols.
 
     Args:
-        source: Python source code as string
+        source: Python source code as string (must contain non-whitespace)
         path: Path for reporting (not used for I/O)
 
     Returns:
@@ -41,6 +41,10 @@ def parse_source(source: str, path: str = "<string>") -> FileInfo | None:
         1
         >>> info.symbols[0].name
         'foo'
+        >>> parse_source("   \\n\\t  ")  # Whitespace-only returns None via contract
+        Traceback (most recent call last):
+            ...
+        deal.PreContractError: ...
     """
     try:
         tree = ast.parse(source)

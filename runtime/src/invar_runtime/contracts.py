@@ -26,6 +26,12 @@ class Contract:
     Contracts encapsulate predicates that can be combined and reused.
     Works with deal.pre for runtime checking.
 
+    Security Warning:
+        Predicates are executed when contracts are checked. Only use predicates
+        from trusted sources. A malicious predicate could execute arbitrary code
+        when check() is called. Predicates should be pure functions with no
+        side effects.
+
     Examples:
         >>> NonEmpty = Contract(lambda x: len(x) > 0, "non-empty")
         >>> Sorted = Contract(lambda x: list(x) == sorted(x), "sorted")

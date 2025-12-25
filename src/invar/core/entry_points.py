@@ -174,6 +174,8 @@ def _has_entry_decorator(symbol: Symbol, source: str) -> bool:
     context = "\n".join(context_lines)
 
     # Check each known decorator pattern
+    # Note: String matching may match decorators in string literals (rare edge case).
+    # AST-based detection would be more robust but adds complexity for a heuristic check.
     for pattern in ENTRY_POINT_DECORATORS:
         # Match @pattern or @something.pattern
         if f"@{pattern}" in context:

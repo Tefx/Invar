@@ -42,6 +42,13 @@ This directory contains design proposals for Invar development.
 **DX-31 Status:**
 - Phase 2: 📋 **Deferred** - Structured schema (current Prompt Guidance sufficient)
 
+### Draft / Discussion
+
+| ID | Name | Description |
+|----|------|-------------|
+| DX-33 | verification-blind-spots | Analysis: why automated verification misses issues |
+| DX-34 | review-cycle | Multi-round review cycle with convergence criteria |
+
 ### Backlog
 
 | ID | Name | Description |

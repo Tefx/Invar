@@ -453,16 +453,26 @@ def classify_file(
         (False, True)
     """
     pattern_result = get_pattern_classification(project_root)
-    core_patterns, shell_patterns = (
-        pattern_result.unwrap() if isinstance(pattern_result, Success) else ([], [])
-    )
+    if isinstance(pattern_result, Success):
+        core_patterns, shell_patterns = pattern_result.unwrap()
+    else:
+        # Log warning about config error, use defaults
+        import logging
+        logging.getLogger(__name__).debug(
+            "Pattern classification failed: %s, using defaults", pattern_result.failure()
+        )
+        core_patterns, shell_patterns = ([], [])
 
     path_result = get_path_classification(project_root)
-    core_paths, shell_paths = (
-        path_result.unwrap()
-        if isinstance(path_result, Success)
-        else (_DEFAULT_CORE_PATHS, _DEFAULT_SHELL_PATHS)
-    )
+    if isinstance(path_result, Success):
+        core_paths, shell_paths = path_result.unwrap()
+    else:
+        # Log warning about config error, use defaults
+        import logging
+        logging.getLogger(__name__).debug(
+            "Path classification failed: %s, using defaults", path_result.failure()
+        )
+        core_paths, shell_paths = (_DEFAULT_CORE_PATHS, _DEFAULT_SHELL_PATHS)
 
     # Priority 1: Pattern-based classification
     if core_patterns and matches_pattern(file_path, core_patterns):
