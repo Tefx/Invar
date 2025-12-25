@@ -168,6 +168,25 @@ def copy_commands_directory(dest: Path, console) -> Result[bool, str]:
         return Failure(f"Failed to copy commands: {e}")
 
 
+# @shell_complexity: Directory copy for Claude skills (DX-36)
+def copy_skills_directory(dest: Path, console) -> Result[bool, str]:
+    """Copy skills directory to .claude/skills/. Returns Success(True) if copied."""
+    import shutil
+    skills_dest = dest / ".claude" / "skills"
+    if skills_dest.exists():
+        return Success(False)
+    try:
+        skills_src = Path(str(resources.files("invar.templates").joinpath("skills")))
+        if not skills_src.exists():
+            return Failure("Skills template directory not found")
+        (dest / ".claude").mkdir(exist_ok=True)
+        shutil.copytree(skills_src, skills_dest)
+        console.print("[green]Created[/green] .claude/skills/ (workflow skills)")
+        return Success(True)
+    except OSError as e:
+        return Failure(f"Failed to copy skills: {e}")
+
+
 # Agent configuration for multi-agent support (DX-11, DX-17)
 AGENT_CONFIGS = {
     "claude": {

@@ -26,6 +26,7 @@ from invar.shell.templates import (
     add_invar_reference,
     copy_commands_directory,
     copy_examples_directory,
+    copy_skills_directory,
     copy_template,
     create_agent_config,
     create_directories,
@@ -275,6 +276,10 @@ def init(
 
     # Copy Claude commands (DX-32: /review skill with Mode Detection)
     copy_commands_directory(path, console)
+
+    # Copy Claude skills if --claude (DX-36: Workflow skills)
+    if claude:
+        copy_skills_directory(path, console)
 
     # Configure MCP server (DX-16, DX-21B)
     configure_mcp_with_method(path, mcp_method)
