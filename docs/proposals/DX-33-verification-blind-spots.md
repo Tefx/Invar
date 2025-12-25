@@ -2,11 +2,11 @@
 
 > **"What the verifier cannot see, the adversary will find."**
 
-**Status:** Partially Addressed
+**Status:** 3/5 Implemented
 **Created:** 2025-12-25
 **Updated:** 2025-12-25
 **Context:** Adversarial code review (DX-31 isolated mode) found 26 issues that Guard, doctests, CrossHair, and Hypothesis all missed.
-**Resolution:** Option B addressed by DX-35. See [Resolution Status](#resolution-status) below.
+**Resolution:** Options B (DX-35), C, and E implemented. Options A and D deferred. See [Resolution Status](#resolution-status).
 
 ## The Question
 
@@ -332,11 +332,11 @@ WARNING: 3 files share identical escape reason "False positive - .get()"
 
 | Option | Status | Resolution |
 |--------|--------|------------|
-| A: Contract Quality Rules | 🔴 Open | Future work - detect ceremonial contracts |
+| A: Contract Quality Rules | 🟡 Deferred | Future work - detect ceremonial contracts (high effort) |
 | B: Adversarial Review Trigger | ✅ Addressed | **DX-35** `/review` workflow |
-| C: Detection Method Audit | 🔴 Open | Future work - AST vs string consistency |
-| D: Coverage Integration | 🔴 Open | Future work - `invar guard --coverage` |
-| E: Escape Hatch Validation | 🔴 Open | Future work - cross-file reason analysis |
+| C: Detection Method Audit | ✅ Implemented | AST-based detection for escape hatches and decorators |
+| D: Coverage Integration | 🟡 Deferred | Future work - `invar guard --coverage` (medium effort) |
+| E: Escape Hatch Validation | ✅ Implemented | Cross-file duplicate reason detection |
 
 ### How DX-35 Addresses Option B
 
