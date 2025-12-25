@@ -1,73 +1,14 @@
-# Code Review (Reviewer Role)
+# Audit
 
-## Mode Detection (Required First Step)
-
-Before reviewing, determine the appropriate mode:
-
-### Check for `review_suggested`
-
-Look at your conversation history for recent `invar guard` output, or run:
-```bash
-invar guard --changed
-```
-
-Check if `review_suggested` warning is present:
-```
-WARNING: review_suggested - High escape hatch count: N @invar:allow markers
-WARNING: review_suggested - Security-sensitive path detected
-WARNING: review_suggested - Low contract coverage
-```
-
-### Select Mode
-
-| Condition | Mode | Why |
-|-----------|------|-----|
-| `review_suggested` present | **Isolated** | Eliminates confirmation bias |
-| No trigger | **Quick** | Faster, context preserved |
-| User requests `--isolated` | **Isolated** | Explicit override |
-| User requests `--quick` | **Quick** | Explicit override |
+Read-only code review. Reports issues without fixing them.
 
 ---
 
-## Isolated Mode
+## Behavior
 
-**Use when:** `review_suggested` triggered, or user explicitly requests isolation.
-
-Spawn an independent reviewer with fresh context using Task tool:
-
-```
-I'll spawn an independent reviewer to eliminate confirmation bias...
-
-[Task tool call]
-prompt: |
-  You are an adversarial code reviewer. Your job is to FIND PROBLEMS.
-
-  Review these files: {files_to_review}
-
-  Read .claude/commands/review.md for the full checklist, then:
-  1. Check contract semantic value (not just syntax)
-  2. Audit all escape hatches (@invar:allow)
-  3. Look for logic errors and edge cases
-  4. Check security if applicable
-
-  Report issues as CRITICAL/MAJOR/MINOR with file:line locations.
-
-  Your success is measured by problems found, not code approved.
-
-subagent_type: "general-purpose"
-```
-
-After receiving the sub-agent's report, summarize findings for the user.
-
-**Key:** The sub-agent has NO conversation history. It only sees the code.
-
----
-
-## Quick Mode
-
-**Use when:** No `review_suggested` trigger, routine review needed.
-
-Proceed with same-context review below.
+1. Analyze code for issues (style, bugs, security, architecture)
+2. Report findings with file:line references
+3. **Do NOT make any changes** - report only
 
 ---
 
@@ -149,7 +90,7 @@ You ARE here to:
 
 ---
 
-## Excluded (Covered by Tools)
+## Excluded (Covered by Guard)
 
 These are checked by Guard or linters - don't duplicate:
 - Core/Shell separation → Guard (forbidden_import, impure_call)
@@ -157,7 +98,6 @@ These are checked by Guard or linters - don't duplicate:
 - Missing contracts → Guard (missing_contract)
 - File/function size limits → Guard (file_size, function_size)
 - Entry point thickness → Guard (entry_point_too_thick)
-- Magic numbers → Linters (ruff)
 - Escape hatch count → Guard (review_suggested)
 
 ---
@@ -166,11 +106,11 @@ These are checked by Guard or linters - don't duplicate:
 
 For each issue found, use severity levels:
 
-| Severity | Meaning | Enforcement |
-|----------|---------|-------------|
-| **CRITICAL** | Must fix before completion | Blocking |
-| **MAJOR** | Fix or provide written justification | Strong |
-| **MINOR** | Optional, can defer | Advisory |
+| Severity | Meaning |
+|----------|---------|
+| **CRITICAL** | Must fix before completion |
+| **MAJOR** | Fix or provide written justification |
+| **MINOR** | Optional, can defer |
 
 ```markdown
 ### [CRITICAL/MAJOR/MINOR] Issue Title
@@ -178,22 +118,20 @@ For each issue found, use severity levels:
 **Location:** file.py:line_number
 **Category:** contract_quality | logic_error | security | escape_hatch | code_smell
 **Problem:** What's wrong
-**Suggestion:** How to fix (if applicable)
+**Suggestion:** How to fix (but don't implement)
 ```
 
 ---
 
-## Instructions Summary
+## Instructions
 
-1. **Mode Detection:** Check for `review_suggested` in guard output
-2. **If Isolated Mode:** Spawn Task sub-agent (fresh context)
-3. **If Quick Mode:** Proceed with same-context adversarial review
-4. Go through each checklist category
-5. For each issue, determine severity (CRITICAL/MAJOR/MINOR)
-6. Report with structured format above
-7. Be thorough and adversarial
+1. Run `invar guard --changed` to see current state
+2. Go through each checklist category
+3. For each issue, determine severity (CRITICAL/MAJOR/MINOR)
+4. Report with structured format above
+5. Be thorough and adversarial
 
-**Remember:** You are READ-ONLY. Report issues, don't fix them directly.
+**Remember:** You are READ-ONLY. Report issues, don't fix them.
 
 ---
 

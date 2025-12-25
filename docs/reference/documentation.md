@@ -81,8 +81,8 @@ Project-level (specific)?       → CLAUDE.md
 | USBV Workflow | ✅ | Brief | Protocol, CLAUDE references |
 | Visible Workflow | ✅ | Brief | Protocol with examples |
 | Review Gate (triggers) | ✅ | - | Guard rule mechanism |
-| Review Modes | - | ✅ | Platform-specific (Task tool) |
-| /review command | Mention | ✅ | Agent skill configuration |
+| Commands (/audit, /guard) | - | ✅ | User-invokable actions |
+| Skills (/review) | - | ✅ | Agent workflow configuration |
 | Check-In/Final | ✅ | ✅ | Protocol + quick reference |
 | Task Completion | ✅ | - | Protocol criteria |
 | Commands | ✅ | - | Tool reference |
@@ -100,12 +100,12 @@ The review system spans both files with clear separation:
 ```
 INVAR.md (Protocol)              CLAUDE.md (Configuration)
 ─────────────────                ─────────────────────────
-Review Gate                      Agent Roles
-├─ Trigger conditions            └─ /review command
-│  ├─ escape hatches >= 3           ├─ Isolated Mode
-│  ├─ coverage < 50%                │   (Task tool sub-agent)
-│  └─ security-sensitive            └─ Quick Mode
-└─ review_suggested rule               (same context)
+Review Gate                      Commands & Skills
+├─ Trigger conditions            ├─ /audit (read-only review)
+│  ├─ escape hatches >= 3        ├─ /guard (run verification)
+│  ├─ coverage < 50%             └─ /review skill (fix loop)
+│  └─ security-sensitive
+└─ review_suggested rule
 
 Guard detects conditions ───────→ Agent selects response
       (Protocol)                       (Platform-specific)
@@ -170,7 +170,7 @@ Guard detects conditions ───────→ Agent selects response
 ### When to Update CLAUDE.md Template
 
 - Agent capability changes (new modes)
-- New agent commands (/review, etc.)
+- New commands (/audit, /guard) or skills (/review)
 - Template structure improvements
 
 ### Sync Command

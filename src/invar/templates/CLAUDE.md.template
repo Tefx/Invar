@@ -80,22 +80,18 @@ For complex tasks (3+ functions), show 3 checkpoints in TodoList:
 
 ---
 
-## Agent Roles
+## Commands (User-Invokable)
 
-| Command | Role | Purpose |
-|---------|------|---------|
-| `/review` | Reviewer | Adversarial code review (DX-31) |
+| Command | Purpose |
+|---------|---------|
+| `/audit` | Read-only code review (reports issues, no fixes) |
+| `/guard` | Run Invar verification (reports results) |
 
-### Review Modes (Auto-Selected)
+## Skills (Agent-Invoked)
 
-`/review` automatically selects mode based on Guard output:
-
-| Condition | Mode | Behavior |
-|-----------|------|----------|
-| `review_suggested` triggered | **Isolated** | Task tool sub-agent (fresh context) |
-| No trigger | **Quick** | Same-context adversarial review |
-| `--isolated` flag | **Isolated** | Force isolation |
-| `--quick` flag | **Quick** | Force same-context |
+| Skill | When | Purpose |
+|-------|------|---------|
+| `/review` | `review_suggested` triggered | Review + fix loop |
 
 Guard triggers `review_suggested` for: security-sensitive files, escape hatches >= 3, contract coverage < 50%.
 

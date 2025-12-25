@@ -27,14 +27,25 @@ src/invar/
 
 ---
 
-## Workflows (DX-35)
+## Commands (User-Invokable)
 
-| Workflow | Triggers | Details |
-|----------|----------|---------|
+| Command | Purpose |
+|---------|---------|
+| `/audit` | Read-only code review (reports issues, no fixes) |
+| `/guard` | Run Invar verification (reports results) |
+
+---
+
+## Workflows (Agent Skills)
+
+| Skill | Triggers | Details |
+|-------|----------|---------|
 | `/investigate` | "why", "explain", vague tasks | [sections/investigate.md](sections/investigate.md) |
 | `/propose` | "should we", "compare" | [sections/propose.md](sections/propose.md) |
 | `/develop` | "add", "fix", "implement" | [sections/develop.md](sections/develop.md) |
 | `/review` | After /develop, `review_suggested` | [sections/review.md](sections/review.md) |
+
+**Note:** Skills are invoked by agent based on context. Use `/audit` for user-initiated review.
 
 **Override:** `/develop!` forces workflow, skips routing.
 
