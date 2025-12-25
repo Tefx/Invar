@@ -2,17 +2,20 @@
 
 > **"Catch logic bugs that type-correct code hides."**
 
-**Status:** 🚧 Partial (P0/P1 Complete, P2 Pending)
+**Status:** ✅ Complete (P0/P1 implemented, P2 merged to DX-38)
+**Archived:** 2025-12-25
 
-## Completion Status
+## Resolution
 
-| Priority | Description | Status |
-|----------|-------------|--------|
-| P0 | Core relational contracts | ✅ Complete |
-| P1 | Skip abuse prevention, FormatSpec | ✅ Complete |
-| P2 | Contract quality rules, Bidirectional testing | ⏳ Pending |
+| Priority | Description | Resolution |
+|----------|-------------|------------|
+| P0 | Core relational contracts | ✅ Implemented |
+| P1 | Skip abuse prevention, FormatSpec | ✅ Implemented |
+| P2 | Contract quality rules | → Merged to **DX-38** Tier 4 |
+| P2 | Bidirectional testing | → Implementation detail (no separate proposal needed) |
+| P2 | CrossHair @relates integration | → Implementation detail (no separate proposal needed) |
 
-### ✅ Completed (P0/P1)
+## Implemented Components (P0/P1)
 
 | Component | Location | Description |
 |-----------|----------|-------------|

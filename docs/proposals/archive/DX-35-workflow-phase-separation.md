@@ -2,33 +2,27 @@
 
 > **"Human-directed phases, Agent-autonomous execution."**
 
-**Status:** 🚧 Partial (Phase 1-2 Complete, Phase 3-5 Pending)
+**Status:** ✅ Complete (Phase 1-2 implemented, Phase 3-5 extracted)
 **Created:** 2025-12-25
 **Related:** DX-31 (Adversarial Reviewer), DX-33 (Verification Blind Spots), DX-34 (Review Cycle)
 
-## Completion Status
+## Resolution
 
-| Phase | Description | Status |
-|-------|-------------|--------|
-| Phase 1 | Documentation (modular INVAR.md) | ✅ Complete |
-| Phase 2 | Claude Code Skills (4 workflow skills) | ✅ Complete |
-| Phase 3 | Review Loop Integration | ⏳ Pending |
-| Phase 4 | Auto-Routing | ⏳ Pending |
-| Phase 5 | Tier 2 Support (Cursor, Windsurf) | ⏳ Pending |
+| Phase | Description | Resolution |
+|-------|-------------|------------|
+| Phase 1 | Documentation (modular INVAR.md) | ✅ Implemented |
+| Phase 2 | Claude Code Skills (4 workflow skills) | ✅ Implemented |
+| Phase 3 | Review Loop Integration | → Extracted to **DX-41** |
+| Phase 4 | Auto-Routing | → Extracted to **DX-42** |
+| Phase 5 | Tier 2 Support (Cursor, Windsurf) | → Extracted to **DX-43** |
 
-### ✅ Completed (Phase 1-2)
+### ✅ Implemented (Phase 1-2)
 
 - Modular INVAR.md with `sections/` directory
 - Simplified CLAUDE.md (~30 lines)
 - 4 workflow skill files: `/investigate`, `/propose`, `/develop`, `/review`
 - Workflow definitions with entry/exit criteria
 - Check-In/Final markers in each skill
-
-### ⏳ Pending (Phase 3-5)
-
-- **Phase 3:** Review loop with DX-31 convergence criteria, isolated sub-agent
-- **Phase 4:** Auto-routing heuristics, workflow announcements
-- **Phase 5:** `.cursorrules` template, Tier 2 platform documentation
 
 ---
 
