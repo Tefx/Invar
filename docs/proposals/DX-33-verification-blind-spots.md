@@ -2,11 +2,11 @@
 
 > **"What the verifier cannot see, the adversary will find."**
 
-**Status:** 3/5 Implemented
+**Status:** Complete (3 implemented, 2 extracted)
 **Created:** 2025-12-25
 **Updated:** 2025-12-25
 **Context:** Adversarial code review (DX-31 isolated mode) found 26 issues that Guard, doctests, CrossHair, and Hypothesis all missed.
-**Resolution:** Options B (DX-35), C, and E implemented. Options A and D deferred. See [Resolution Status](#resolution-status).
+**Resolution:** B/C/E implemented. A→[DX-38](DX-38-contract-quality-rules.md), D→[DX-37](DX-37-coverage-integration.md).
 
 ## The Question
 
@@ -332,10 +332,10 @@ WARNING: 3 files share identical escape reason "False positive - .get()"
 
 | Option | Status | Resolution |
 |--------|--------|------------|
-| A: Contract Quality Rules | 🟡 Deferred | Future work - detect ceremonial contracts (high effort) |
+| A: Contract Quality Rules | 📋 Extracted | **[DX-38](DX-38-contract-quality-rules.md)** - detect ceremonial contracts |
 | B: Adversarial Review Trigger | ✅ Addressed | **DX-35** `/review` workflow |
 | C: Detection Method Audit | ✅ Implemented | AST-based detection for escape hatches and decorators |
-| D: Coverage Integration | 🟡 Deferred | Future work - `invar guard --coverage` (medium effort) |
+| D: Coverage Integration | 📋 Extracted | **[DX-37](DX-37-coverage-integration.md)** - `invar guard --coverage` |
 | E: Escape Hatch Validation | ✅ Implemented | Cross-file duplicate reason detection |
 
 ### How DX-35 Addresses Option B
