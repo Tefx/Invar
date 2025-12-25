@@ -1,8 +1,20 @@
 # DX-34: Multi-Round Review Cycle
 
-**Status:** Draft
+> ⚠️ **This proposal has been superseded by [DX-35](./DX-35-workflow-phase-separation.md).**
+>
+> The `/review` workflow in DX-35 implements all concepts from this document:
+> - Convergence criteria (max 3 rounds, no CRITICAL/MAJOR, no improvement)
+> - Role isolation (isolated sub-agent with fresh context)
+> - Review-fix loop (review → fix → re-review)
+> - Trigger conditions (Guard's `review_suggested`)
+> - Stall detection (Q6 in DX-35)
+>
+> This document is retained for historical reference and design rationale.
+
+**Status:** Superseded by DX-35
 **Created:** 2025-12-25
-**Related:** DX-31 (Adversarial Reviewer), DX-33 (Verification Blind Spots)
+**Updated:** 2025-12-25
+**Related:** DX-31 (Adversarial Reviewer), DX-33 (Verification Blind Spots), **DX-35 (Workflow-based Phase Separation)**
 
 ## Problem Statement
 

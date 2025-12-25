@@ -2,9 +2,11 @@
 
 > **"What the verifier cannot see, the adversary will find."**
 
-**Status:** Discussion
+**Status:** Partially Addressed
 **Created:** 2025-12-25
+**Updated:** 2025-12-25
 **Context:** Adversarial code review (DX-31 isolated mode) found 26 issues that Guard, doctests, CrossHair, and Hypothesis all missed.
+**Resolution:** Option B addressed by DX-35. See [Resolution Status](#resolution-status) below.
 
 ## The Question
 
@@ -323,6 +325,36 @@ WARNING: 3 files share identical escape reason "False positive - .get()"
 5. **Escape Hatches:** Should identical escape reasons across files trigger a warning?
 
 6. **Security Scope:** Should Guard include any security-focused rules, or stay focused on architecture/contracts?
+
+---
+
+## Resolution Status
+
+| Option | Status | Resolution |
+|--------|--------|------------|
+| A: Contract Quality Rules | 🔴 Open | Future work - detect ceremonial contracts |
+| B: Adversarial Review Trigger | ✅ Addressed | **DX-35** `/review` workflow |
+| C: Detection Method Audit | 🔴 Open | Future work - AST vs string consistency |
+| D: Coverage Integration | 🔴 Open | Future work - `invar guard --coverage` |
+| E: Escape Hatch Validation | 🔴 Open | Future work - cross-file reason analysis |
+
+### How DX-35 Addresses Option B
+
+DX-35 (Workflow-based Phase Separation) implements adversarial review through the `/review` workflow:
+
+1. **Isolated Sub-Agent** — Review runs in fresh context, preventing confirmation bias
+2. **Multi-Round Loop** — Review → Fix → Re-review with convergence criteria
+3. **Automatic Trigger** — Guard's `review_suggested` triggers review phase
+4. **Severity-Based Exit** — Exit when no CRITICAL/MAJOR issues OR max 3 rounds
+
+This directly addresses the blind spots by providing human-like (adversarial AI) judgment that automated verification cannot.
+
+### Remaining Work
+
+Options A, C, D, E target improving **Guard itself** (automated verification), while Option B improves the **review process** (human/AI judgment). Both approaches are complementary:
+
+- **Guard improvements** (A, C, D, E) → Catch more automatically
+- **Review improvements** (B, DX-35) → Catch what automation misses
 
 ---
 
