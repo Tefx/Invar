@@ -158,7 +158,16 @@ Exit when ANY condition met:
 
 ### Stall Detection
 
-If >50% issues repeat from previous round:
+**Detection Logic:**
+```python
+def is_stalled(current_issues, previous_issues) -> bool:
+    current_ids = {(i.file, i.line, i.type) for i in current_issues}
+    previous_ids = {(i.file, i.line, i.type) for i in previous_issues}
+    overlap = current_ids & previous_ids
+    return len(overlap) > len(current_ids) * 0.5  # >50% same issues
+```
+
+**When stalled (>50% issues repeat from previous round):**
 ```
 ⚠ Review cycle stalled.
 
@@ -177,6 +186,23 @@ B: /investigate to understand root cause
 C: Continue review (round N, last chance)
 
 Choice?
+```
+
+### Timeout Handling
+
+| Threshold | Duration | Action |
+|-----------|----------|--------|
+| Warning | 65 min (~70%) | Prompt to wrap up |
+| Hard stop | 90 min (max) | Force exit with report |
+
+**Hard Stop:**
+```
+⏱ /review reached 90-minute limit.
+
+   Completed: [N] rounds
+   Current state: [summary]
+
+   Forcing exit with current findings.
 ```
 
 ---

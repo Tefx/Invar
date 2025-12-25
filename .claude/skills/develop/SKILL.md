@@ -96,6 +96,36 @@ For multiple tasks:
 | Contract violation | Report, suggest `/investigate` |
 | Repeated failure | Stop, ask user |
 
+## Timeout Handling
+
+| Threshold | Duration | Action |
+|-----------|----------|--------|
+| Warning | 3 hours (75%) | Soft warning with options |
+| Hard stop | 4 hours (max) | Save state, exit |
+
+**75% Warning:**
+```
+⏱ Time check: /develop has been running for 3 hours.
+   Remaining estimate: [based on TodoWrite progress]
+
+   Options:
+   A: Continue (1 hour max remaining)
+   B: Wrap up current task and exit
+   C: Checkpoint and pause for later
+
+   Choice? (auto-continue in 2 minutes if no response)
+```
+
+**Hard Stop:**
+```
+⏱ /develop reached 4-hour limit.
+
+   Completed: [N]/[M] tasks
+   Current task: [description] - [%] complete
+
+   Saving state for resume. Run '/develop --resume' to continue.
+```
+
 ## Exit Actions (REQUIRED)
 
 ### Final

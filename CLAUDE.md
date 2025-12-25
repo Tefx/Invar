@@ -201,6 +201,55 @@ Guard triggers `review_suggested` for: security-sensitive files, escape hatches 
 
 ---
 
+## Workflow Routing (DX-35)
+
+Four workflows with automatic routing based on user input:
+
+| Workflow | Purpose | Triggers |
+|----------|---------|----------|
+| `/investigate` | Understand before acting | "why", "what is", "explain", vague tasks |
+| `/propose` | Facilitate decisions | "should we", "compare", "which" |
+| `/develop` | Implement solutions | "add", "implement", "fix" (clear target) |
+| `/review` | Quality verification | After /develop, or `review_suggested` |
+
+### Automatic Routing
+
+| User Input Pattern | Route To | Reason |
+|--------------------|----------|--------|
+| Specific symbol + action verb | /develop | Clear, actionable |
+| "Add/implement/fix X" (X is clear) | /develop | Actionable task |
+| "Why...?" "What is...?" "How does...?" | /investigate | Understanding needed |
+| "Improve/optimize" (vague target) | /investigate | Needs analysis first |
+| "Should we...?" "Compare A vs B" | /propose | Decision needed |
+| After /develop completes | /review | Quality gate |
+
+### Workflow Override
+
+| Syntax | Behavior |
+|--------|----------|
+| `/develop` | Normal routing (may redirect if vague) |
+| `/develop!` | Force /develop, skip routing analysis |
+| `develop: [task]` | Explicit workflow prefix |
+
+### Natural Flow
+
+```
+/investigate → findings → /propose (if decision needed) → /develop → /review
+                       → /develop (if ready to implement)
+```
+
+Workflows suggest transitions naturally. Human approves at each boundary.
+
+### Mid-Workflow Switch
+
+When user switches mid-workflow:
+1. **Save state** — Current todos, uncommitted changes noted
+2. **Announce** — Explicit switch message
+3. **Resume** — "continue /develop" restores context
+4. **Discard** — "cancel /develop" with confirmation
+
+---
+
 ## Key Documents
 
 | Document | Purpose |
