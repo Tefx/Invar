@@ -1032,12 +1032,12 @@
                 <div class="step">
                     <div class="step-number">1</div>
                     <h3>Initialize</h3>
-                    <code>uvx invar-tools init</code>
+                    <code>uvx invar-tools init --claude</code>
                 </div>
                 <div class="step">
                     <div class="step-number">2</div>
                     <h3>Code with AI</h3>
-                    <code>AI follows INVAR.md</code>
+                    <code>AI follows USBV workflow</code>
                 </div>
                 <div class="step">
                     <div class="step-number">3</div>
@@ -1048,24 +1048,39 @@
             <p style="margin-bottom: 24px; font-size: 0.9rem; color: var(--text-secondary); text-align: center;">
                 No install required! <code style="background: var(--code-bg); padding: 2px 6px; border-radius: 4px;">uvx</code> runs tools in isolated environment.
             </p>
-            <div class="ai-tools">
-                <h4>Configure Your AI Tool</h4>
+
+            <!-- Experience Tiers -->
+            <div class="ai-tools" style="margin-bottom: 24px;">
+                <h4>Experience Tiers</h4>
                 <div class="ai-tools-list">
                     <div>
-                        <div class="tool-name">Claude Code</div>
-                        <div class="tool-config">Automatic + MCP</div>
+                        <div class="tool-name" style="color: var(--accent-green);">Claude Code</div>
+                        <div class="tool-config">Full: Skills + MCP + Sub-agent review</div>
                     </div>
                     <div>
-                        <div class="tool-name">Cursor</div>
-                        <div class="tool-config">Rules → INVAR.md</div>
+                        <div class="tool-name">Cursor/Windsurf</div>
+                        <div class="tool-config">Basic: Protocol + CLI</div>
                     </div>
                     <div>
                         <div class="tool-name">Others</div>
-                        <div class="tool-config">System prompt</div>
+                        <div class="tool-config">Minimal: CLI only</div>
                     </div>
                 </div>
                 <p style="margin-top: 16px; font-size: 0.85rem; color: var(--text-secondary); text-align: center;">
-                    MCP server included by default
+                    Workflow skills (/develop, /review) require Claude Code's sub-agent capabilities
+                </p>
+            </div>
+
+            <!-- Session Protocol -->
+            <div class="ai-tools">
+                <h4>Session Protocol</h4>
+                <div style="text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; line-height: 2;">
+                    <div style="color: var(--accent-green);">✓ Check-In: guard PASS | top: &lt;entry1&gt;, &lt;entry2&gt;</div>
+                    <div style="color: var(--text-secondary);">... development work ...</div>
+                    <div style="color: var(--accent-green);">✓ Final: guard PASS | 0 errors, 2 warnings</div>
+                </div>
+                <p style="margin-top: 16px; font-size: 0.85rem; color: var(--text-secondary); text-align: center;">
+                    Every AI session starts with Check-In and ends with Final verification
                 </p>
             </div>
         </div>
@@ -1080,7 +1095,7 @@
                 <a href="https://github.com/tefx/invar/blob/main/docs/VISION.md">Vision</a>
             </div>
             <p class="copyright">
-                Invar Protocol v4.0 — Apache-2.0 (runtime) + GPL-3.0 (tools) + CC-BY-4.0 (docs)<br>
+                Invar Protocol v5.0 — Apache-2.0 (runtime) + GPL-3.0 (tools) + CC-BY-4.0 (docs)<br>
                 USBV Workflow • Agent-Native JSON • Human-Directed Purpose
             </p>
         </div>
