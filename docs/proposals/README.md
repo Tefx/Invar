@@ -7,7 +7,7 @@ This directory contains design proposals for Invar development.
 - `DX-XX-name.md` — Developer Experience improvements
 - Archived proposals in `archive/` subdirectory
 
-## Active Proposals (10)
+## Active Proposals (13)
 
 | ID | Name | Status | Description |
 |----|------|--------|-------------|
@@ -19,8 +19,11 @@ This directory contains design proposals for Invar development.
 | DX-39 | workflow-efficiency | Draft | Workflow efficiency (merged DX-27) |
 | DX-40 | smart-tool-redirect-hook | Draft | Smart tool redirect hook (from DX-16) |
 | DX-41 | automatic-review-orchestration | Draft | Automatic review orchestration (from DX-31+35) |
-| DX-42 | workflow-auto-routing | Draft | Workflow auto-routing (from DX-35) |
+| DX-42 | workflow-auto-routing | Draft | Auto-routing + autonomous orchestration |
 | DX-43 | cross-platform-distribution | Draft | Cross-platform distribution (from DX-35+36+11) |
+| DX-45 | template-consistency | Draft | **NEW** Template sync checking |
+| DX-46 | documentation-audit | Draft | **NEW** Documentation freshness audit |
+| DX-47 | command-skill-naming | Draft | **NEW** Review command vs skill naming |
 
 ## Archived Proposals (22)
 
@@ -51,18 +54,27 @@ This directory contains design proposals for Invar development.
 
 | Priority | Proposal | Rationale |
 |----------|----------|-----------|
+| **High** | DX-42 | Auto-routing + orchestration — users can't invoke skills |
 | **High** | DX-41 | Automatic review orchestration — closes VALIDATE loop |
-| **High** | DX-39 | Workflow efficiency — direct UX improvement (includes DX-27) |
-| **High** | DX-43 | Cross-platform distribution — expand Invar reach |
+| **High** | DX-45 | Template consistency — prevents drift |
+| **Medium** | DX-39 | Workflow efficiency — direct UX improvement |
+| **Medium** | DX-43 | Cross-platform distribution — expand reach |
 | **Medium** | DX-37 | Coverage integration — verification enhancement |
-| **Medium** | DX-42 | Workflow auto-routing — reduce manual selection |
-| **Medium** | DX-23 | Entry point detection — Shell architecture |
-| **Medium** | DX-29 | Pure content detection — module classification |
-| **Low** | DX-38 | Contract quality rules — high risk, needs careful design |
-| **Low** | DX-40 | Smart tool redirect — incremental optimization |
-| **Low** | DX-25 | Functional patterns — nice-to-have |
+| **Medium** | DX-47 | Command/skill naming — reduce confusion |
+| **Low** | DX-46 | Documentation audit — maintenance task |
+| **Low** | DX-38 | Contract quality rules — high risk |
+| **Low** | DX-40 | Smart tool redirect — incremental |
+| **Low** | DX-23, DX-25, DX-29 | Architecture enhancements |
 
 ## Recent Changes (2025-12-25)
+
+### New Proposals
+- **DX-45** — Template consistency (pre-commit hook, sync commands)
+- **DX-46** — Documentation audit (stale content detection)
+- **DX-47** — Command vs skill naming clarification
+
+### Updated
+- **DX-42** — Expanded with autonomous orchestration, skill invocation issue
 
 ### Archived
 - **DX-11** — Mostly implemented, `invar migrate` → DX-43
@@ -71,5 +83,11 @@ This directory contains design proposals for Invar development.
 - **DX-32** — USBV implemented as standard workflow
 
 ### Merged
-- **DX-27 → DX-39** — System prompt protocol entry as workflow efficiency feature
+- **DX-27 → DX-39** — System prompt protocol entry
 - **DX-11 remnants → DX-43** — `invar migrate` command
+
+## Key Discoveries
+
+1. **Skills cannot be user-invoked** — Users get "Ask Claude to run /develop for you"
+2. **Command vs Skill confusion** — `/review` exists as both with different behavior
+3. **Template drift risk** — Project files and templates can diverge
