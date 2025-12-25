@@ -4,7 +4,8 @@
 
 **Status:** Draft
 **Created:** 2025-12-25
-**Origin:** Merged from DX-35 Phase 5 + DX-36 Phase 5-6
+**Updated:** 2025-12-25
+**Origin:** Merged from DX-35 Phase 5 + DX-36 Phase 5-6 + DX-11 remnants
 **Effort:** Medium
 **Risk:** Low
 
@@ -78,7 +79,7 @@ Run: `invar guard`
 See: INVAR.md
 ```
 
-### 3. Migration Documentation (from DX-36 Phase 6)
+### 3. Migration Documentation (from DX-36 Phase 6 + DX-11)
 
 Create migration guide for existing projects:
 
@@ -94,6 +95,26 @@ CLAUDE.md changes:
 - Remove workflow details (now in skills)
 - Keep project-specific rules only
 + Add workflow triggers
+```
+
+**From DX-11:** The `invar migrate` command was originally proposed in DX-11 for documentation restructuring. It should support:
+
+```bash
+# Detect current version and suggest migration steps
+$ invar migrate --detect
+Current: v4.2 (ICIDIV workflow in CLAUDE.md)
+Target:  v5.0 (USBV workflow in skills)
+
+Recommended steps:
+1. Run: invar init --claude
+2. Remove: CLAUDE.md workflow section (lines 45-120)
+3. Verify: invar guard
+
+# Dry-run mode
+$ invar migrate --from v4 --to v5 --dry-run
+Would create: .claude/skills/develop/SKILL.md
+Would create: .claude/skills/investigate/SKILL.md
+Would modify: CLAUDE.md (remove 75 lines)
 ```
 
 ## Implementation Plan
@@ -135,6 +156,7 @@ src/invar/templates/
 
 ## Related
 
+- DX-11: Documentation Restructure for Multi-Agent Support (archived, migrate command origin)
 - DX-35: Workflow-based Phase Separation (Phase 5 origin)
 - DX-36: Documentation Restructuring (Phase 5-6 origin)
 - Templates: `src/invar/templates/`

@@ -1,9 +1,17 @@
 # DX-27: System Prompt Protocol Entry
 
-**Status:** Proposed
+**Status:** ✅ Merged into DX-39 (Archived 2025-12-25)
 **Priority:** Medium
 **Created:** 2025-12-24
 **Related:** DX-17 (Workflow Enforcement)
+
+## Merge Status
+
+This proposal has been merged into **DX-39: Workflow Efficiency Improvements** as "Solution 6: Output Style Protocol Entry".
+
+The core idea (using Output Styles for Check-In/Final enforcement) is preserved in DX-39, which provides a unified approach to workflow compliance improvements.
+
+---
 
 ## Problem
 

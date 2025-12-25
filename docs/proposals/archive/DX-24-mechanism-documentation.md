@@ -5,8 +5,20 @@
 ## Status
 
 - **ID**: DX-24
-- **Status**: Draft
+- **Status**: ✅ Complete (Archived 2025-12-25)
 - **Related**: DX-11 (Documentation restructure), DX-22 (Verification strategy), DX-23 (Entry point detection)
+
+## Completion Status
+
+Self-reported as 100% Complete (13/13 documents) within proposal.
+
+| Phase | Documents | Status |
+|-------|-----------|--------|
+| Framework | 6 | ✅ 100% |
+| Contracts | 4 | ✅ 100% |
+| Workflow | 3 | ✅ 100% |
+
+All mechanism documentation created in `docs/mechanisms/` directory.
 
 ---
 

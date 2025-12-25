@@ -2,10 +2,26 @@
 
 > **"Process should match cognition, not fight it."**
 
-**Status:** Proposed
+**Status:** ✅ Implemented (Archived 2025-12-25)
 **Created:** 2024-12-25
 **Updated:** 2024-12-25
 **Relates to:** DX-30 (Visible Workflow), DX-31 (Adversarial Reviewer)
+
+## Completion Status
+
+USBV workflow is now the standard, replacing ICIDIV:
+
+| Feature | Status |
+|---------|--------|
+| USBV phases (Understand → Specify → Build → Validate) | ✅ Implemented |
+| Workflow skills integration | ✅ /develop uses USBV |
+| Variable depth based on task | ✅ Skill descriptions reflect this |
+| Explicit iteration paths | ✅ VALIDATE → back to appropriate phase |
+
+**Implementation locations:**
+- `.claude/skills/develop/SKILL.md` — USBV workflow
+- `INVAR.md` — Protocol v5.0 with workflow sections
+- `sections/develop.md` — Detailed USBV reference
 
 ## Problem
 

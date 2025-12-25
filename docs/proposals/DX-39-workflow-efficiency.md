@@ -4,7 +4,8 @@
 
 **Status:** Draft
 **Created:** 2025-12-25
-**Origin:** Meta-review of DX-33/35/36 development process
+**Updated:** 2025-12-25
+**Origin:** Meta-review of DX-33/35/36 development process, merged DX-27
 **Effort:** Medium
 **Risk:** Low
 
@@ -168,6 +169,40 @@ Track workflow effectiveness:
 - Display in Final output
 - Optional: persist for trend analysis
 
+### 6. Output Style Protocol Entry (from DX-27)
+
+**Problem:** CLAUDE.md is injected as user message, not system prompt. Check-In/Final can be "forgotten" as context grows.
+
+**Solution:** Use Claude Code Output Style for system-level enforcement:
+
+```markdown
+# .claude/output-styles/invar-protocol.md
+---
+name: Invar Protocol
+description: Check-In/Final enforcement
+keep-coding-instructions: true
+---
+
+## Invar Protocol
+
+First message: ✓ Check-In: guard PASS | top: <entry1>, <entry2>
+Last message: ✓ Final: guard PASS | <errors>, <warnings>
+
+Execute invar_guard + invar_map, show one-line summary.
+No visible check-in = Session not started.
+```
+
+**Implementation:**
+- Create output style in `.claude/output-styles/`
+- Update `.claude/settings.json` with `"outputStyle": "invar-protocol"`
+- `invar init --claude` auto-deploys this
+
+**Expected effect:**
+| Metric | Without | With |
+|--------|---------|------|
+| Check-In compliance | ~50% | ~85% |
+| Final compliance | ~30% | ~75% |
+
 ## Implementation Plan
 
 | Phase | Feature | Effort | Priority |
@@ -177,6 +212,7 @@ Track workflow effectiveness:
 | 3 | Skill Caching | Medium | Medium |
 | 4 | Auto-Transition | Low | Low |
 | 5 | Workflow Metrics | Medium | Low |
+| 6 | Output Style Protocol Entry | Low | Medium |
 
 ### Phase 1: Error Pattern Guide (Quick Win)
 
@@ -215,6 +251,7 @@ Add to `.claude/skills/develop/SKILL.md`:
 
 ## Related
 
+- DX-27: System Prompt Protocol Entry (merged into Solution 6)
 - DX-35: Workflow-based Phase Separation (origin of skill system)
 - DX-36: Documentation Restructuring (SKILL.md structure)
 - DX-33: Verification Blind Spots (the development session reviewed)
