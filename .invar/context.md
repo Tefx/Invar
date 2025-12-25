@@ -2,6 +2,14 @@
 
 *Last updated: 2025-12-25*
 
+## Active Work
+
+See [docs/proposals/](../docs/proposals/) for planned changes and their dependencies.
+
+**Current focus:** DX-47 (naming clarification) → DX-49 (SSOT) → DX-42 (auto-routing)
+
+---
+
 ## Coverage Guarantee Matrix
 
 Smart Guard (`invar guard`) runs multiple verification layers. Here's what covers what:

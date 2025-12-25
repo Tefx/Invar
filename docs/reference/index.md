@@ -11,6 +11,7 @@ Technical documentation for Invar's verification and architecture mechanisms.
 | [Contracts](contracts/README.md) | `@pre`/`@post` contracts, doctests, completeness | Writing functions |
 | [Rules](rules/README.md) | Static analysis checks and Fix-or-Explain | Continuous |
 | [Workflow](workflow/README.md) | USBV methodology, Check-In/Final protocols | Every session |
+| [Proposal Workflow](proposal-workflow.md) | Feature-level planning, DX proposals | Large changes |
 | [Documentation](documentation.md) | INVAR vs CLAUDE attribution, templates | Project setup |
 
 ## Key Concepts
