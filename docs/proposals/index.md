@@ -7,29 +7,31 @@ This directory contains design proposals for Invar development.
 - `DX-XX-name.md` — Developer Experience improvements
 - Completed/archived proposals in `completed/` subdirectory
 
-## Active Proposals (13)
+## Active Proposals (14)
 
 | ID | Name | Status | Description |
 |----|------|--------|-------------|
-| DX-23 | entry-point-detection | Draft | Entry point detection & Monad Runner pattern |
-| DX-25 | functional-patterns | Draft | Functional patterns enhancement |
-| DX-29 | pure-content-detection | Proposed | Pure content detection (`@invar:module` marker) |
+| DX-23 | entry-point-detection | Defer | Entry point detection & Monad Runner pattern |
+| DX-25 | functional-patterns | Defer | Functional patterns enhancement |
+| DX-29 | pure-content-detection | Defer | Pure content detection (`@invar:module` marker) |
 | DX-37 | coverage-integration | Draft | Coverage integration for Guard |
-| DX-38 | contract-quality-rules | Draft | Contract quality rules (Tier 1-4) |
+| DX-38 | contract-quality-rules | Defer | Contract quality rules (Tier 1-4) |
 | DX-39 | workflow-efficiency | Draft | Workflow efficiency (merged DX-27) |
 | DX-40 | smart-tool-redirect-hook | Draft | Smart tool redirect hook (from DX-16) |
 | DX-41 | automatic-review-orchestration | Draft | Automatic review orchestration (from DX-31+35) |
 | DX-42 | workflow-auto-routing | Draft | Auto-routing + autonomous orchestration |
 | DX-43 | cross-platform-distribution | Draft | Cross-platform distribution (from DX-35+36+11) |
-| DX-45 | template-consistency | Draft | **NEW** Template sync checking |
-| DX-46 | documentation-audit | Draft | **NEW** Documentation freshness audit |
-| DX-47 | command-skill-naming | Draft | **NEW** Review command vs skill naming |
+| DX-46 | documentation-audit | Draft | docs/ directory audit + `invar check-docs` |
+| DX-47 | command-skill-naming | Draft | Review command vs skill naming |
+| DX-48 | code-structure-reorganization | Draft | Code structure reorganization |
+| DX-49 | protocol-distribution-unification | Draft | SSOT for INVAR.md, CLAUDE.md, skills/ |
 
-## Archived Proposals (22)
+## Archived Proposals (23)
 
 | ID | Name | Status | Description |
 |----|------|--------|-------------|
 | DX-11 | documentation-restructure | ✅ Mostly Implemented | Multi-agent support (remnants → DX-43) |
+| DX-45 | template-consistency | Superseded | → DX-49 (SSOT) |
 | DX-12 | hypothesis-fallback | ✅ Implemented | Hypothesis as CrossHair fallback |
 | DX-13 | incremental-prove | ✅ Implemented | Incremental CrossHair verification |
 | DX-14 | expanded-prove-usage | ✅ Implemented | Expanded --prove usage |
@@ -50,23 +52,91 @@ This directory contains design proposals for Invar development.
 | DX-35 | workflow-phase-separation | ✅ Complete | Workflow skills (Phase 3-5 → DX-41/42/43) |
 | DX-36 | documentation-restructuring | ✅ Complete | Sections (Phase 5-6 → DX-43) |
 
+## Dependency Graph
+
+```
+                         DX-47 (Naming)
+                              │
+              ┌───────────────┴───────────────┐
+              ▼                               ▼
+      DX-49 (SSOT)                    DX-42 (Auto-routing)
+              │                               │
+              ▼                       ┌───────┴───────┐
+      DX-43 (Cross-platform)          ▼               ▼
+                              DX-41 (Auto-review)  DX-39 (Efficiency)
+                                      │
+                                      ▼
+                              DX-40 (Tool redirect)
+
+Independent: DX-48 (Code cleanup), DX-37 (Coverage), DX-46 (docs/ audit)
+Deferred: DX-38, DX-23, DX-25, DX-29
+Archived: DX-45 → DX-49
+```
+
 ## Priority Recommendations
 
-| Priority | Proposal | Rationale |
-|----------|----------|-----------|
-| **High** | DX-42 | Auto-routing + orchestration — users can't invoke skills |
-| **High** | DX-41 | Automatic review orchestration — closes VALIDATE loop |
-| **High** | DX-45 | Template consistency — prevents drift |
-| **Medium** | DX-39 | Workflow efficiency — direct UX improvement |
-| **Medium** | DX-43 | Cross-platform distribution — expand reach |
-| **Medium** | DX-37 | Coverage integration — verification enhancement |
-| **Medium** | DX-47 | Command/skill naming — reduce confusion |
-| **Low** | DX-46 | Documentation audit — maintenance task |
-| **Low** | DX-38 | Contract quality rules — high risk |
-| **Low** | DX-40 | Smart tool redirect — incremental |
-| **Low** | DX-23, DX-25, DX-29 | Architecture enhancements |
+| Priority | Proposal | Description | Rationale | Deps |
+|----------|----------|-------------|-----------|------|
+| **Critical** | DX-47 | Rename `/review` command to resolve command/skill confusion | Blocks DX-49 and DX-42 | — |
+| **High** | DX-49 | SSOT: Unify INVAR.md/CLAUDE.md/skills, delete sections/ | Eliminate version divergence | DX-47 |
+| **High** | DX-42 | Agent auto-identifies task intent and routes to correct workflow | Users cannot invoke skills directly | DX-47 |
+| **High** | DX-41 | Auto-trigger /review skill when Guard outputs `review_suggested` | Close VALIDATE phase loop | DX-42 |
+| **High** | DX-39 | Skill session cache, USBV SPECIFY enforcement, workflow transition | Reduce token waste | DX-42 |
+| **Medium** | DX-43 | `invar init --cursor` generates .cursorrules | Cross-platform expansion | DX-49 |
+| **Medium** | DX-37 | `invar guard --coverage` reports uncovered branches | Verification visibility | — |
+| **Low** | DX-48 | Delete 614 lines dead code, group modules by function | Code cleanup | — |
+| **Low** | DX-46 | docs/ directory audit + `invar check-docs` command | Documentation maintenance | — |
+| **Low** | DX-40 | Hook intercepts incorrect tool calls | Tool enforcement | DX-42 |
+| **Defer** | DX-38 | Tier 1-4 contract quality detection | High false-positive risk | — |
+| **Defer** | DX-23 | Framework callback auto-exempt from Result requirement | DX-22 already covers | — |
+| **Defer** | DX-25 | Validation error accumulation, Monoid, etc. | Non-essential major change | — |
+| **Defer** | DX-29 | `@invar:module` explicit marker | DX-22 sufficient | — |
 
-## Recent Changes (2025-12-25)
+## Recommended Execution Order
+
+| Wave | Proposals | Parallel? | Effort | Goal |
+|------|-----------|-----------|--------|------|
+| **0** | DX-48 | ✅ Can parallel with Wave 1-2 | 0.5 day | Code cleanup |
+| **1** | DX-47 | — | 0.5 day | Unblock (critical path start) |
+| **2** | DX-49 ∥ DX-42 | ✅ Both parallel | 2-3 days | Core infrastructure |
+| **3** | DX-43 ∥ DX-41 | ✅ Both parallel | 1-2 days | Feature completion |
+| **4** | DX-39 | — | 1-2 days | Efficiency optimization |
+| **5** | DX-46 ∥ DX-37 | ✅ Both parallel | 1 day | Quality enhancement |
+| **6** | DX-40 | — | 0.5 day | Tool enforcement (optional) |
+| **∞** | DX-38, DX-23, DX-25, DX-29 | — | — | Deferred |
+
+**Time estimate:** Serial ~10 days, optimized parallel ~6-8 days
+
+**Critical path:** DX-47 → DX-42 → DX-41 → DX-39 → DX-40
+
+## Recent Changes (2025-12-26)
+
+### New Proposals
+- **DX-49** — Protocol Distribution Unification (SSOT for all managed files)
+  - templates/ = single source, all project files generated
+  - Delete sections/, merge into skills/
+  - Jinja2 templates support MCP/CLI syntax switching
+- **DX-48** — Code structure reorganization (delete 614 lines dead code)
+
+### Archived
+- **DX-45** → Superseded by DX-49
+
+### Scope Changes
+- **DX-46** — Scope reduced to docs/ directory audit (INVAR/CLAUDE/sections → DX-49)
+
+### Priority Re-evaluation
+- **DX-47** ↑↑ → **Critical** (blocks DX-49 and DX-42)
+- **DX-49** → **High** (eliminate version divergence)
+- **DX-42** → **High** (users cannot invoke skills directly)
+- **DX-39** ↑ → **High** (efficiency optimization)
+- **DX-38, DX-23, DX-25, DX-29** → **Defer**
+
+### Execution Order Optimization
+- Wave 2: DX-49 ∥ DX-42 can parallel (both only depend on DX-47)
+- Wave 3: DX-43 ∥ DX-41 can parallel
+- Time optimization: serial 10 days → parallel 6-8 days
+
+## Changes (2025-12-25)
 
 ### New Proposals
 - **DX-45** — Template consistency (pre-commit hook, sync commands)

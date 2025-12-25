@@ -1,183 +1,187 @@
-# DX-46: Documentation Audit and Sync
+# DX-46: Documentation Audit (docs/ Directory)
 
 > **"Documentation that contradicts code is worse than no documentation."**
 
 **Status:** Draft
 **Created:** 2025-12-25
-**Effort:** Medium
+**Updated:** 2025-12-26
+**Effort:** Low-Medium
 **Risk:** Low
+
+## Scope Change
+
+**Original scope:** Audit all documentation (INVAR.md, CLAUDE.md, sections/, docs/)
+
+**Updated scope:** Audit docs/ directory only
+
+**Reason:** DX-49 (Protocol Distribution Unification) now handles:
+- INVAR.md → unified single version from templates/
+- CLAUDE.md → generated from templates with user regions
+- sections/ → deleted, merged into templates/skills/
+
+**Remaining:** docs/ directory audit and `invar check-docs` command.
 
 ## Problem Statement
 
-With the new framework (USBV, workflow skills, etc.), existing documentation may be outdated:
+With protocol updates (USBV, workflow skills, v5.0), docs/ may contain outdated content:
 
-| Document | Concern |
-|----------|---------|
-| INVAR.md | May still reference ICIDIV instead of USBV |
-| CLAUDE.md | May have outdated workflow instructions |
-| docs/reference/ | DX-24 said 100% complete, but may not reflect USBV |
-| docs/design.md | May reference old architecture |
-| docs/vision.md | Philosophy should still be valid |
-| GitHub Pages | May not reflect current structure |
+| Document | Lines | Concern |
+|----------|-------|---------|
+| docs/reference/*.md | ~1500 | May reference ICIDIV, old CLI flags |
+| docs/design.md | ~300 | Architecture diagrams may be stale |
+| docs/vision.md | ~200 | Should still be valid |
+| docs/guide.md | ? | May have outdated examples |
 
-**Symptom:** Agent and user confusion when docs contradict actual behavior.
+## Audit Scope
 
-## Proposed Audit
+### In Scope (This Proposal)
 
-### Phase 1: Inventory
+```
+docs/
+├── reference/           # Primary target
+│   ├── workflow/        # USBV content check
+│   ├── architecture/    # Core/Shell diagrams
+│   ├── verification/    # Guard behavior
+│   └── contracts/       # @pre/@post syntax
+├── design.md            # Architecture overview
+├── vision.md            # Philosophy (likely stable)
+├── guide.md             # User guide
+└── history/             # Historical docs (preserve as-is)
+```
 
-| Document | Lines | Last Updated | Check Needed |
-|----------|-------|--------------|--------------|
-| INVAR.md | ~200 | 2025-12-25 | ✅ Recent |
-| CLAUDE.md | ~50 | 2025-12-25 | ✅ Recent |
-| sections/develop.md | ~100 | 2025-12-25 | ✅ Recent |
-| sections/investigate.md | ~50 | 2025-12-25 | ✅ Recent |
-| sections/propose.md | ~50 | 2025-12-25 | ✅ Recent |
-| sections/review.md | ~50 | 2025-12-25 | ✅ Recent |
-| docs/reference/*.md | ~1500 | 2025-12-24 | ⚠️ Pre-USBV |
-| docs/design.md | ~300 | ? | ❓ Unknown |
-| docs/vision.md | ~200 | ? | ❓ Unknown |
-| docs/agents.md | ~150 | ? | ❓ Unknown |
-| README.md | ~100 | ? | ❓ Unknown |
+### Out of Scope (Handled by DX-49)
 
-### Phase 2: Specific Checks
+- INVAR.md
+- CLAUDE.md
+- sections/*.md
+- .claude/skills/*.md
 
-#### INVAR.md / CLAUDE.md
-- [ ] USBV workflow correctly described
-- [ ] Check-In/Final format current
-- [ ] Workflow skill references accurate
-- [ ] No ICIDIV references remain
+## Stale Content Detection
 
-#### docs/reference/
-- [ ] workflow/usbv.md → USBV content current
-- [ ] workflow/session-start.md → Check-In format current
-- [ ] architecture/index.md → Core/Shell still accurate
-- [ ] verification/index.md → Guard behavior current
-- [ ] contracts/pre-post.md → Contract system current
-
-#### docs/design.md
-- [ ] Architecture diagrams current
-- [ ] Version number updated
-- [ ] No stale section references
-
-#### docs/vision.md
-- [ ] Philosophy still applies
-- [ ] No contradictions with current implementation
-
-### Phase 3: Keyword Search
-
-Automated check for potentially stale content:
+### Keyword Patterns
 
 ```python
 STALE_PATTERNS = [
-    r"ICIDIV",                    # Old workflow name
-    r"v3\.\d+",                   # Old version numbers
-    r"v4\.\d+",                   # Old version numbers
-    r"--prove",                   # Old CLI flag
-    r"invar prove",               # Old command
+    r"ICIDIV",                    # Old workflow name → USBV
+    r"v[34]\.\d+",                # Old version numbers → v5.0
+    r"--prove",                   # Old CLI flag → guard default
+    r"invar prove",               # Old command → guard
+    r"--thorough",                # Removed flag
     r"Check-In:.*invar guard",    # Old Check-In format
 ]
 
-def find_stale_content(docs_path: Path) -> list[tuple[Path, str, int]]:
-    """Find potentially stale content in docs."""
-    issues = []
-    for md_file in docs_path.rglob("*.md"):
-        content = md_file.read_text()
-        for pattern in STALE_PATTERNS:
-            for match in re.finditer(pattern, content):
-                line_num = content[:match.start()].count("\n") + 1
-                issues.append((md_file, match.group(), line_num))
-    return issues
+EXCLUDE_PATHS = [
+    "docs/history/",              # Historical docs preserved
+    "docs/proposals/completed/",  # Archived proposals preserved
+]
 ```
 
-### Phase 4: Resolution Options
-
-#### Option A: Incremental Update
-
-Update each document as issues are found:
-
-```
-1. Run keyword search
-2. Review flagged locations
-3. Update one document at a time
-4. Verify with invar guard
-```
-
-**Effort:** Medium (spread over time)
-**Risk:** Low
-
-#### Option B: Comprehensive Rewrite
-
-Systematically rewrite all documentation:
-
-```
-1. Create doc spec from current code
-2. Regenerate all docs from spec
-3. Review and adjust
-4. Replace old docs
-```
-
-**Effort:** High
-**Risk:** Medium (may lose valuable context)
-
-#### Option C: Hybrid (Recommended)
-
-```
-1. Run automated stale content check
-2. Update critical docs immediately (INVAR.md, CLAUDE.md)
-3. Add TODO markers to non-critical docs
-4. Schedule incremental updates
-```
-
-## Implementation Plan
-
-| Phase | Action | Effort | Priority |
-|-------|--------|--------|----------|
-| 1 | Run stale content check | Low | **High** |
-| 2 | Fix critical issues in INVAR.md, CLAUDE.md | Low | **High** |
-| 3 | Update docs/reference/workflow/ | Medium | Medium |
-| 4 | Review docs/design.md | Low | Low |
-| 5 | Add `invar check-docs` command | Medium | Low |
-
-### Quick Win: Stale Content Check
+### Command: `invar check-docs`
 
 ```bash
 $ invar check-docs
 
-Scanning documentation for stale content...
+Scanning docs/ for stale content...
 
-⚠️ Potentially stale content found:
+⚠️ Potentially stale content:
 
-docs/reference/workflow/usbv.md:1
-  "# USBV: The Four-Phase Development Workflow"
-  → ✅ Already updated
+docs/reference/workflow/session-start.md:42
+  Found: "ICIDIV workflow"
+  Suggest: Replace with "USBV workflow"
 
 docs/design.md:15
-  "Version: v5.0"
-  → ✅ Already updated
+  Found: "v4.2"
+  Suggest: Update to "v5.0"
 
-docs/reference/verification/index.md:42
-  "Run `invar guard`"
-  → ✅ Already updated
+docs/reference/verification/index.md:78
+  Found: "--prove flag"
+  Suggest: Remove (now default in guard)
 
-Found 3 potential issues in 3 files.
+Found 3 issues in 3 files.
+Skipped: docs/history/ (preserved), docs/proposals/completed/ (archived)
+```
+
+## Implementation Plan
+
+| Phase | Action | Effort |
+|-------|--------|--------|
+| 1 | Implement `invar check-docs` command | Low |
+| 2 | Run audit on docs/reference/ | Low |
+| 3 | Fix critical issues | Low |
+| 4 | Add TODO markers to non-critical | Low |
+| 5 | Integrate into CI (optional) | Low |
+
+### Phase 1: check-docs Command
+
+```python
+# src/invar/shell/check_docs.py
+
+def check_docs(docs_path: Path) -> list[Issue]:
+    """Scan docs for stale content patterns."""
+    issues = []
+
+    for md_file in docs_path.rglob("*.md"):
+        # Skip excluded paths
+        if any(ex in str(md_file) for ex in EXCLUDE_PATHS):
+            continue
+
+        content = md_file.read_text()
+        for pattern, suggestion in STALE_PATTERNS.items():
+            for match in re.finditer(pattern, content):
+                line_num = content[:match.start()].count("\n") + 1
+                issues.append(Issue(
+                    file=md_file,
+                    line=line_num,
+                    found=match.group(),
+                    suggestion=suggestion
+                ))
+
+    return issues
+```
+
+### Phase 2-4: Manual Audit
+
+Priority order:
+1. **docs/reference/workflow/** — Most likely to have USBV changes
+2. **docs/design.md** — Version number, architecture diagrams
+3. **docs/reference/verification/** — Guard behavior changes
+4. **docs/guide.md** — User-facing examples
+
+### Phase 5: CI Integration (Optional)
+
+```yaml
+# .github/workflows/docs-check.yml
+- name: Check documentation freshness
+  run: invar check-docs --strict
+```
+
+## History Directory Policy
+
+```
+docs/history/
+├── protocol-evolution.md    # v3.5 → v3.6 changes (preserve)
+├── feedback/                # Historical feedback (preserve)
+└── index.md                 # Already has staleness warning
+```
+
+**Policy:** Historical docs preserved as-is. The existing warning banner is sufficient:
+
+```markdown
+> These documents may reference outdated concepts (e.g., ICIDIV workflow, v3.x protocol).
 ```
 
 ## Success Criteria
 
-- [ ] No ICIDIV references in active documentation
-- [ ] Version numbers consistent
+- [ ] `invar check-docs` command implemented
+- [ ] docs/reference/ audited for USBV consistency
+- [ ] Version numbers updated to v5.0
+- [ ] No ICIDIV references in active docs (excluding history/)
 - [ ] CLI examples match current commands
-- [ ] Check-In/Final format consistent
 
-## Open Questions
+## Related Proposals
 
-1. Should we add doc version tracking?
-2. Should `invar check-docs` be part of CI?
-3. How to handle historical docs (proposals)?
-
-## Related
-
-- DX-24: Mechanism Documentation (created the mechanism docs)
-- DX-45: Template Consistency (related sync problem)
-- docs/reference/: Primary audit target
+| Proposal | Relationship |
+|----------|--------------|
+| DX-49 | Handles INVAR.md, CLAUDE.md, sections/ — this proposal is complementary |
+| DX-24 | Created mechanism docs — this proposal audits them |
+| DX-45 | Superseded by DX-49 |
