@@ -1,12 +1,18 @@
 # Invar Project Context
 
-*Last updated: 2025-12-25*
+*Last updated: 2025-12-26*
 
 ## Active Work
 
 See [docs/proposals/](../docs/proposals/) for planned changes and their dependencies.
 
-**Current focus:** DX-47 (naming clarification) → DX-49 (SSOT) → DX-42 (auto-routing)
+**Completed today:**
+- DX-47: Command/Skill separation (`/audit`, `/guard` commands)
+- DX-48: Code structure reorganization (Phase 1 + DX-48b-lite)
+
+**Current focus:** DX-49 (SSOT) → DX-42 (auto-routing)
+
+**Known issues:** DX-50 (Workflow enforcement) - Agent 容易跳过 workflow
 
 ---
 
@@ -55,6 +61,56 @@ Total examples: 7000
 ```
 
 All contracted functions pass property testing after switching to `deal.cases()`.
+
+---
+
+## Session 2025-12-26: DX-47/48 Implementation & Workflow Compliance Issue
+
+### DX-47: Command/Skill Separation
+
+实施了 command 和 skill 的明确分离：
+- `/audit` — 用户命令，只读代码审查
+- `/guard` — 用户命令，运行验证
+- `/review` — Agent skill，adversarial review + fix loop
+
+### DX-48: Code Structure Reorganization
+
+分阶段执行：
+- **DX-48a**: 删除 664 行死代码（contracts.py, decorators.py, invariant.py, resource.py, deprecated/）
+- **DX-48b-lite**: 创建 shell/commands/ 和 shell/prove/ 子目录，移动 10 个文件
+
+### Lesson #29: Agent Workflow Compliance
+
+**问题发现:** 当用户说 "review and fix" 时，Agent 直接开始手动分析，跳过了 `/review` skill。
+
+**根本原因分析:**
+
+1. **把 workflow 当作"可选最佳实践"而非"必须遵守的协议"**
+   - Agent 认为"我知道怎么做"就跳过流程
+   - 这正是 Invar 协议要防止的过度自信
+
+2. **没有内化"触发词 → workflow"的映射**
+   - "review" 应触发 `/review` skill
+   - "fix" 在 review 上下文中应走 review + fix loop
+
+3. **Check-In 被当作仪式而非状态同步点**
+   - 任务切换时没有重新运行 Check-In
+   - 跳过读取 context.md
+
+4. **效率优化偏见**
+   - 直接分析"更快"，跳过 Skill 调用
+   - 短期效率 vs 流程一致性的权衡失败
+
+**改进方向 (DX-50):**
+
+| 层面 | 改进 |
+|------|------|
+| 认知 | 把 workflow 当作协议而非建议 |
+| 习惯 | 任务切换时强制问"这是什么 workflow？" |
+| 机制 | 识别触发词后自动路由到对应 Skill |
+| 检查 | 每次代码修改前检查是否在正确的 workflow 中 |
+
+**类别:** Agent compliance gap — 协议存在但执行依赖自觉，需要更强的强制机制。
 
 ---
 
