@@ -89,11 +89,33 @@ For complex tasks (3+ functions), show 3 checkpoints in TodoList:
 
 ## Skills (Agent-Invoked)
 
-| Skill | When | Purpose |
-|-------|------|---------|
-| `/review` | `review_suggested` triggered | Review + fix loop |
+| Skill | Triggers | Purpose |
+|-------|----------|---------|
+| `/investigate` | "why", "explain", vague tasks | Research mode, no code changes |
+| `/propose` | "should we", "compare" | Decision facilitation |
+| `/develop` | "add", "fix", "implement" | USBV implementation workflow |
+| `/review` | After /develop, `review_suggested` | Adversarial review with fix loop |
+
+**Note:** Skills are invoked by agent based on context. Use `/audit` for user-initiated review.
 
 Guard triggers `review_suggested` for: security-sensitive files, escape hatches >= 3, contract coverage < 50%.
+
+---
+
+## Workflow Routing (MANDATORY)
+
+When user message contains these triggers, you MUST invoke the corresponding skill:
+
+| Trigger Words | Skill | Notes |
+|---------------|-------|-------|
+| "review", "review and fix" | `/review` | Adversarial review with fix loop |
+| "implement", "add", "fix", "update" | `/develop` | Unless in review context |
+| "why", "explain", "investigate" | `/investigate` | Research mode, no code changes |
+| "compare", "should we", "design" | `/propose` | Decision facilitation |
+
+**Violation check (before writing ANY code):**
+- "Am I in a workflow?"
+- "Did I invoke the correct skill?"
 
 ---
 
