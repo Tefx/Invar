@@ -395,11 +395,13 @@ def rules(
 # DX-48b: Import commands from shell/commands/
 from invar.shell.commands.init import init
 from invar.shell.commands.mutate import mutate  # DX-28
+from invar.shell.commands.sync_self import sync_self  # DX-49
 from invar.shell.commands.test import test, verify
 from invar.shell.commands.update import update
 
 app.command()(init)
 app.command()(update)
+app.command("sync-self")(sync_self)  # DX-49: Invar project sync
 app.command()(test)
 app.command()(verify)
 app.command()(mutate)  # DX-28: Mutation testing
