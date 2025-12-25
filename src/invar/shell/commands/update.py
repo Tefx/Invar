@@ -2,23 +2,32 @@
 Update command for Invar.
 
 Shell module: handles updating Invar-managed files to latest version.
+DX-49: Uses three-region architecture for partial updates.
 """
 
 from __future__ import annotations
 
 import re
+import shutil
 from pathlib import Path
 
 import typer
 from returns.result import Failure, Result, Success
 from rich.console import Console
 
-from invar.shell.templates import copy_examples_directory, get_template_path
+from invar.shell.template_engine import (
+    generate_from_manifest,
+    get_templates_dir,
+    load_manifest,
+    parse_invar_regions,
+    reconstruct_file,
+    render_template_file,
+)
 
 console = Console()
 
-# Version pattern: matches "v3.23" or "v3.23.1"
-VERSION_PATTERN = re.compile(r"v(\d+)\.(\d+)(?:\.(\d+))?")
+# Version pattern: matches "v3.23" or "v3.23.1" or "5.0"
+VERSION_PATTERN = re.compile(r"v?(\d+)\.(\d+)(?:\.(\d+))?")
 
 
 # @shell_orchestration: Version parsing helper for update command
@@ -30,6 +39,8 @@ def parse_version(text: str) -> tuple[int, int, int] | None:
     (3, 23, 0)
     >>> parse_version("v3.23.1")
     (3, 23, 1)
+    >>> parse_version("version 5.0")
+    (5, 0, 0)
     >>> parse_version("no version here")
     """
     match = VERSION_PATTERN.search(text)
@@ -58,20 +69,18 @@ def get_current_version(path: Path) -> Result[tuple[int, int, int], str]:
 
 
 def get_template_version() -> Result[tuple[int, int, int], str]:
-    """Get version from template INVAR.md."""
-    template_result = get_template_path("INVAR.md")
-    if isinstance(template_result, Failure):
-        return template_result
+    """Get version from manifest.toml."""
+    templates_dir = get_templates_dir()
+    manifest_result = load_manifest(templates_dir)
+    if isinstance(manifest_result, Failure):
+        return manifest_result
 
-    template_path = template_result.unwrap()
-    try:
-        content = template_path.read_text()
-        version = parse_version(content)
-        if version is None:
-            return Failure("Could not parse version from template")
-        return Success(version)
-    except OSError as e:
-        return Failure(f"Failed to read template: {e}")
+    manifest = manifest_result.unwrap()
+    version_str = manifest.get("meta", {}).get("version", "0.0")
+    version = parse_version(version_str)
+    if version is None:
+        return Failure("Could not parse version from manifest")
+    return Success(version)
 
 
 def format_version(version: tuple[int, int, int]) -> str:
@@ -81,40 +90,108 @@ def format_version(version: tuple[int, int, int]) -> str:
     return f"v{version[0]}.{version[1]}.{version[2]}"
 
 
-def update_invar_md(path: Path, console: Console) -> Result[bool, str]:
-    """Update INVAR.md by overwriting with template."""
-    template_result = get_template_path("INVAR.md")
-    if isinstance(template_result, Failure):
-        return template_result
+# @shell_complexity: File removal before overwrite requires branching
+def update_fully_managed(path: Path, console: Console) -> Result[list[str], str]:
+    """Update fully managed files (overwrite completely)."""
+    # Files to overwrite from manifest
+    overwrite_files = [
+        "INVAR.md",
+        ".invar/examples/",
+    ]
 
-    template_path = template_result.unwrap()
-    dest_file = path / "INVAR.md"
-
-    try:
-        dest_file.write_text(template_path.read_text())
-        return Success(True)
-    except OSError as e:
-        return Failure(f"Failed to update INVAR.md: {e}")
-
-
-def update_examples(path: Path, console: Console) -> Result[bool, str]:
-    """Update .invar/examples/ directory."""
-    import shutil
-
+    # Remove existing examples directory first
     examples_dest = path / ".invar" / "examples"
-
-    # Remove existing examples
     if examples_dest.exists():
         try:
             shutil.rmtree(examples_dest)
         except OSError as e:
             return Failure(f"Failed to remove old examples: {e}")
 
-    # Copy new examples
-    return copy_examples_directory(path, console)
+    # Remove existing INVAR.md to allow overwrite
+    invar_md = path / "INVAR.md"
+    if invar_md.exists():
+        try:
+            invar_md.unlink()
+        except OSError as e:
+            return Failure(f"Failed to remove old INVAR.md: {e}")
+
+    return generate_from_manifest(path, syntax="cli", files_to_generate=overwrite_files)
 
 
-# @shell_complexity: Update command with template comparison
+# @shell_complexity: Partial update with region preservation
+def update_partially_managed(
+    path: Path, console: Console, syntax: str = "cli"
+) -> Result[list[str], str]:
+    """Update partially managed files, preserving user regions."""
+    templates_dir = get_templates_dir()
+    manifest_result = load_manifest(templates_dir)
+    if isinstance(manifest_result, Failure):
+        return manifest_result
+
+    manifest = manifest_result.unwrap()
+    variables = manifest.get("variables", {})
+    variables["syntax"] = syntax
+
+    updated: list[str] = []
+
+    # Files to merge (update managed region only)
+    merge_files = [
+        ("CLAUDE.md", "config/CLAUDE.md.jinja"),
+        (".claude/skills/develop/SKILL.md", "skills/develop/SKILL.md.jinja"),
+        (".claude/skills/investigate/SKILL.md", "skills/investigate/SKILL.md.jinja"),
+        (".claude/skills/propose/SKILL.md", "skills/propose/SKILL.md.jinja"),
+        (".claude/skills/review/SKILL.md", "skills/review/SKILL.md.jinja"),
+    ]
+
+    for dest_rel, template_rel in merge_files:
+        dest_file = path / dest_rel
+        template_path = templates_dir / template_rel
+
+        if not dest_file.exists():
+            continue  # Skip if file doesn't exist (created by init)
+
+        if not template_path.exists():
+            continue
+
+        # Render new template content
+        render_result = render_template_file(template_path, variables)
+        if isinstance(render_result, Failure):
+            continue
+
+        new_content = render_result.unwrap()
+
+        # Parse existing file for regions
+        try:
+            existing_content = dest_file.read_text()
+        except OSError:
+            continue
+
+        parsed = parse_invar_regions(existing_content)
+
+        if not parsed.has_regions:
+            # No regions in existing file - skip (don't overwrite user content)
+            console.print(f"[dim]Skipped {dest_rel} (no region markers)[/dim]")
+            continue
+
+        # Parse new content for managed region
+        new_parsed = parse_invar_regions(new_content)
+        if "managed" not in new_parsed.regions:
+            continue
+
+        # Update managed region only, preserve user region
+        updates = {"managed": new_parsed.regions["managed"].content}
+        result_content = reconstruct_file(parsed, updates)
+
+        try:
+            dest_file.write_text(result_content)
+            updated.append(dest_rel)
+        except OSError:
+            continue
+
+    return Success(updated)
+
+
+# @shell_complexity: Update command with version comparison and region preservation
 def update(
     path: Path = typer.Argument(Path(), help="Project root directory"),
     force: bool = typer.Option(
@@ -123,15 +200,22 @@ def update(
     check: bool = typer.Option(
         False, "--check", help="Check for updates without applying"
     ),
+    syntax: str = typer.Option(
+        "cli", "--syntax", help="Command syntax: cli or mcp"
+    ),
 ) -> None:
     """
     Update Invar-managed files to latest version.
 
-    Updates INVAR.md and .invar/examples/ from the installed python-invar package.
-    User-managed files (CLAUDE.md, .invar/context.md) are never modified.
+    DX-49: Uses three-region architecture:
+    - Fully managed (INVAR.md, examples): Overwritten completely
+    - Partially managed (CLAUDE.md, skills): Only managed regions updated
+
+    User regions (<!--invar:user-->) are always preserved.
 
     Use --check to see if updates are available without applying them.
     Use --force to update even if already at latest version.
+    Use --syntax mcp for MCP command syntax in templates.
     """
     # Get current version
     current_result = get_current_version(path)
@@ -171,23 +255,23 @@ def update(
     console.print(f"  Version: {current_str} → {template_str}")
     console.print()
 
-    # Update INVAR.md
-    result = update_invar_md(path, console)
+    # Update fully managed files (overwrite)
+    result = update_fully_managed(path, console)
     if isinstance(result, Failure):
         console.print(f"[red]Error:[/red] {result.failure()}")
         raise typer.Exit(1)
-    console.print(f"[green]Updated[/green] INVAR.md ({template_str})")
+    for updated_file in result.unwrap():
+        console.print(f"[green]Updated[/green] {updated_file}")
 
-    # Update examples
-    result = update_examples(path, console)
-    if isinstance(result, Failure):
-        console.print(f"[yellow]Warning:[/yellow] {result.failure()}")
-    else:
-        console.print("[green]Updated[/green] .invar/examples/")
+    # Update partially managed files (preserve user regions)
+    result = update_partially_managed(path, console, syntax)
+    if isinstance(result, Success):
+        for updated_file in result.unwrap():
+            console.print(f"[green]Merged[/green] {updated_file} (user regions preserved)")
 
-    # Remind about user-managed files
+    # Summary
     console.print()
-    console.print("[dim]User-managed files unchanged:[/dim]")
-    console.print("[dim]  ○ CLAUDE.md[/dim]")
-    console.print("[dim]  ○ .invar/context.md[/dim]")
-    console.print("[dim]  ○ pyproject.toml [tool.invar][/dim]")
+    console.print("[dim]Region preservation:[/dim]")
+    console.print("[dim]  ✓ <!--invar:managed--> sections updated[/dim]")
+    console.print("[dim]  ○ <!--invar:user--> sections preserved[/dim]")
+    console.print("[dim]  ○ .invar/context.md unchanged[/dim]")
