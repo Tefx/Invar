@@ -9,7 +9,9 @@ Core module: pure logic, no I/O.
 
 from __future__ import annotations
 
+import ast
 import re
+import tokenize
 from typing import TYPE_CHECKING
 
 from deal import post, pre
@@ -74,6 +76,7 @@ def count_escape_hatches(source: str) -> int:
     """
     Count @invar:allow markers in source code (DX-31).
 
+    Uses tokenize to only match real comments, not strings/docstrings (DX-33 Option C).
     Used by check_review_suggested to trigger review when escape count >= 3.
 
     Examples:
@@ -91,8 +94,11 @@ def count_escape_hatches(source: str) -> int:
         2
         >>> count_escape_hatches("regular comment # no marker")
         0
+        >>> # DX-33 Option C: Strings containing the pattern should NOT match
+        >>> count_escape_hatches('s = "# @invar:allow rule: reason"')
+        0
     """
-    return len(INVAR_ALLOW_PATTERN.findall(source))
+    return len(extract_escape_hatches(source))
 
 
 @pre(lambda source: isinstance(source, str))
@@ -101,6 +107,7 @@ def extract_escape_hatches(source: str) -> list[tuple[str, str]]:
     """
     Extract @invar:allow markers with their reasons (DX-33 Option E).
 
+    Uses tokenize to only match real comments, not strings/docstrings.
     Returns list of (rule, reason) tuples for cross-file analysis.
 
     Examples:
@@ -114,8 +121,24 @@ def extract_escape_hatches(source: str) -> list[tuple[str, str]]:
         ... '''
         >>> extract_escape_hatches(source)
         [('rule1', 'same reason'), ('rule2', 'different reason')]
+        >>> # DX-33 Option C: Strings containing the pattern should NOT match
+        >>> extract_escape_hatches('suggestion = "# @invar:allow rule: reason"')
+        []
     """
-    return INVAR_ALLOW_PATTERN.findall(source)
+    results: list[tuple[str, str]] = []
+    try:
+        # Use iterator-based readline to avoid io.StringIO (forbidden in Core)
+        lines = iter(source.splitlines(keepends=True))
+        tokens = tokenize.generate_tokens(lambda: next(lines, ""))
+        for tok in tokens:
+            if tok.type == tokenize.COMMENT:
+                match = INVAR_ALLOW_PATTERN.search(tok.string)
+                if match:
+                    results.append((match.group(1), match.group(2)))
+    except Exception:
+        # Fall back to regex if tokenization fails (invalid syntax, non-printable chars, etc.)
+        return INVAR_ALLOW_PATTERN.findall(source)
+    return results
 
 
 @pre(lambda symbol, source: symbol is not None and isinstance(source, str))
@@ -130,7 +153,7 @@ def is_entry_point(symbol: Symbol, source: str) -> bool:
 
     Examples:
         >>> from invar.core.models import Symbol, SymbolKind
-        >>> sym = Symbol(name="index", kind=SymbolKind.FUNCTION, line=5, end_line=10)
+        >>> sym = Symbol(name="index", kind=SymbolKind.FUNCTION, line=3, end_line=5)
         >>> source = '''
         ... @app.route("/")
         ... def index():
@@ -139,7 +162,7 @@ def is_entry_point(symbol: Symbol, source: str) -> bool:
         >>> is_entry_point(sym, source)
         True
 
-        >>> sym2 = Symbol(name="load_file", kind=SymbolKind.FUNCTION, line=1, end_line=5)
+        >>> sym2 = Symbol(name="load_file", kind=SymbolKind.FUNCTION, line=2, end_line=4)
         >>> source2 = '''
         ... def load_file(path: str) -> Result[str, str]:
         ...     return Success(path.read_text())
@@ -148,7 +171,7 @@ def is_entry_point(symbol: Symbol, source: str) -> bool:
         False
 
         >>> # Explicit marker
-        >>> sym3 = Symbol(name="handler", kind=SymbolKind.FUNCTION, line=3, end_line=8)
+        >>> sym3 = Symbol(name="handler", kind=SymbolKind.FUNCTION, line=3, end_line=5)
         >>> source3 = '''
         ... # @shell:entry - Legacy callback
         ... def handler(data):
@@ -165,50 +188,79 @@ def is_entry_point(symbol: Symbol, source: str) -> bool:
     return _has_entry_marker(symbol, source)
 
 
+
+@post(lambda result: isinstance(result, str))
+def _decorator_to_string(decorator: ast.AST) -> str:
+    """
+    Convert AST decorator node to string representation for matching.
+
+    Examples:
+        >>> import ast
+        >>> tree = ast.parse("@app.route('/')\\ndef f(): pass")
+        >>> func = tree.body[0]
+        >>> _decorator_to_string(func.decorator_list[0])
+        'app.route'
+    """
+    if isinstance(decorator, ast.Name):
+        return decorator.id
+    elif isinstance(decorator, ast.Attribute):
+        parts = []
+        node = decorator
+        while isinstance(node, ast.Attribute):
+            parts.append(node.attr)
+            node = node.value
+        if isinstance(node, ast.Name):
+            parts.append(node.id)
+        return ".".join(reversed(parts))
+    elif isinstance(decorator, ast.Call):
+        return _decorator_to_string(decorator.func)
+    return ""
+
 @pre(lambda symbol, source: symbol is not None and isinstance(source, str))
 @post(lambda result: isinstance(result, bool))
 def _has_entry_decorator(symbol: Symbol, source: str) -> bool:
     """
     Check if symbol has a framework entry point decorator.
 
-    Looks at the source code above the function definition.
+    Uses AST to check decorator nodes, avoiding false matches in strings.
+    DX-33 Option C: Migrated from string matching to AST-based detection.
 
     Examples:
         >>> from invar.core.models import Symbol, SymbolKind
-        >>> sym = Symbol(name="home", kind=SymbolKind.FUNCTION, line=3, end_line=6)
+        >>> sym = Symbol(name="home", kind=SymbolKind.FUNCTION, line=2, end_line=4)
         >>> source = '''@app.route("/")
         ... def home():
         ...     pass
         ... '''
         >>> _has_entry_decorator(sym, source)
         True
+        >>> # DX-33: Decorators in strings should NOT match
+        >>> sym2 = Symbol(name="foo", kind=SymbolKind.FUNCTION, line=2, end_line=4)
+        >>> source2 = '''x = "@app.route('/')"
+        ... def foo():
+        ...     pass
+        ... '''
+        >>> _has_entry_decorator(sym2, source2)
+        False
     """
-    # Get source lines
-    lines = source.splitlines()
-    if not lines:
+    try:
+        tree = ast.parse(source)
+    except SyntaxError:
         return False
 
-    # Look at lines before the function definition (decorators are above)
-    # We check up to 5 lines above the function for decorators
-    start_line = max(0, symbol.line - 6)
-    end_line = symbol.line  # Line numbers are 1-indexed, so line-1 = index
-
-    context_lines = lines[start_line:end_line]
-    context = "\n".join(context_lines)
-
-    # Check each known decorator pattern
-    # Note: String matching may match decorators in string literals (rare edge case).
-    # AST-based detection would be more robust but adds complexity for a heuristic check.
-    for pattern in ENTRY_POINT_DECORATORS:
-        # Match @pattern or @something.pattern
-        if f"@{pattern}" in context:
-            return True
-        # Also match partial patterns (e.g., "route" matches "app.route")
-        if "." in pattern:
-            base = pattern.split(".")[-1]
-            if f".{base}(" in context or f".{base}\n" in context:
-                return True
-
+    # Find the function definition at the symbol's line
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            if node.lineno == symbol.line and node.name == symbol.name:
+                # Check decorators
+                for decorator in node.decorator_list:
+                    decorator_str = _decorator_to_string(decorator)
+                    if decorator_str:
+                        for pattern in ENTRY_POINT_DECORATORS:
+                            if pattern in decorator_str or decorator_str.endswith(
+                                "." + pattern.split(".")[-1]
+                            ):
+                                return True
     return False
 
 
