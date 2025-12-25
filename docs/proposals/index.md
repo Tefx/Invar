@@ -22,7 +22,7 @@ This directory contains design proposals for Invar development.
 | DX-42 | workflow-auto-routing | Draft | Auto-routing + autonomous orchestration |
 | DX-43 | cross-platform-distribution | Draft | Cross-platform distribution (from DX-35+36+11) |
 | DX-46 | documentation-audit | Draft | docs/ directory audit + `invar check-docs` |
-| DX-48 | code-structure-reorganization | Draft | Code structure reorganization |
+| DX-48 | code-structure-reorganization | Phase 1 ✅ | Dead code deleted; restructure deferred |
 | DX-49 | protocol-distribution-unification | Draft | SSOT for INVAR.md, CLAUDE.md, skills/ |
 
 ## Archived Proposals (24)
@@ -106,12 +106,17 @@ Completed: DX-47 (unblocked DX-49 and DX-42)
 
 ## Recent Changes (2025-12-26)
 
+### Implemented
+- **DX-48a** — Dead code deletion complete (-664 lines)
+  - Deleted: `contracts.py`, `decorators.py`, `invariant.py`, `resource.py`, `deprecated/`
+  - Fixed misleading docstrings (now reference `invar_runtime`)
+  - Restructuring (DX-48b) deferred
+
 ### New Proposals
 - **DX-49** — Protocol Distribution Unification (SSOT for all managed files)
   - templates/ = single source, all project files generated
   - Delete sections/, merge into skills/
   - Jinja2 templates support MCP/CLI syntax switching
-- **DX-48** — Code structure reorganization (delete 614 lines dead code)
 
 ### Archived
 - **DX-45** → Superseded by DX-49

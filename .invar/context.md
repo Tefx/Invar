@@ -405,7 +405,7 @@ Proposed in DX-16 for future:
 
 **Usage:**
 ```python
-from invar.decorators import strategy
+from invar_runtime import strategy
 
 @strategy(x="floats(min_value=1e-10, max_value=1e10)")
 def sqrt(x: float) -> float:

@@ -2,11 +2,24 @@
 
 > **"Related code should live together."**
 
-**Status:** Draft
+**Status:** Phase 1 Complete (Dead Code Deletion)
 **Created:** 2025-12-26
-**Effort:** Medium
-**Risk:** Medium (import path changes)
-**Breaking:** Yes (internal imports only, not public API)
+**Effort:** Phase 1: Low | Phases 2-6: Medium
+**Risk:** Phase 1: Very Low | Phases 2-6: Medium
+**Breaking:** Phase 1: No | Phases 2-6: Yes (internal imports)
+
+---
+
+## Scope Split Decision (2025-12-26)
+
+After review, this proposal was split into two independent work items:
+
+| Phase | Scope | Status | Rationale |
+|-------|-------|--------|-----------|
+| **DX-48a** | Delete dead code (~664 lines) | ✅ Complete | Low risk, high value |
+| **DX-48b** | Module restructuring (subdirs) | Deferred | High risk, moderate value |
+
+**Why defer restructuring?** The flat structure (27 files in core/, 21 in shell/) is manageable. Restructuring changes all internal imports with high churn for moderate organizational benefit. Revisit if codebase grows beyond 100+ files.
 
 ---
 
@@ -416,13 +429,19 @@ MIGRATIONS = {
 
 ## Success Criteria
 
-- [ ] All dead code removed (-664 lines)
+### Phase 1 (DX-48a) - Complete
+
+- [x] All dead code removed (-664 lines)
+- [x] Misleading docstrings fixed (reference `invar_runtime` not `invar.decorators`)
+- [x] `invar guard` passes
+- [x] All tests pass
+
+### Phases 2-6 (DX-48b) - Deferred
+
 - [ ] All related modules grouped in subdirectories
 - [ ] Consistent naming (no `_cmd` suffix, use directories)
-- [ ] `invar guard` passes
-- [ ] All tests pass
-- [ ] MCP server works
-- [ ] `invar init` works
+- [ ] MCP server works after restructuring
+- [ ] `invar init` works after restructuring
 
 ---
 

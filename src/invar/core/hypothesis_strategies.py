@@ -363,7 +363,7 @@ def _get_user_strategies(func: Callable) -> dict[str, StrategySpec]:
 
     DX-12-B: Supports both strategy objects and string representations.
 
-    >>> from invar.decorators import strategy
+    >>> from invar_runtime import strategy
     >>> @strategy(x="floats(min_value=0)")
     ... def sqrt(x: float) -> float:
     ...     return x ** 0.5
