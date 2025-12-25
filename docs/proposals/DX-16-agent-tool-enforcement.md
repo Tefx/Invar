@@ -1,8 +1,27 @@
 # DX-16: Agent Tool Enforcement
 
-**Status:** 🚧 In Progress (Phase 1)
+**Status:** 🚧 Partial (Phase 1 Complete)
 **Priority:** High
 **Created:** 2025-12-22
+
+## Completion Status
+
+| Phase | Description | Status |
+|-------|-------------|--------|
+| Phase 1 | MCP Server + Strong Prompt | ✅ Complete |
+| Phase 2 | Smart Hook (PreToolUse) | ⏳ Pending |
+
+### ✅ Completed (Phase 1)
+
+- `src/invar/mcp/` — MCP server with `invar_guard`, `invar_sig`, `invar_map` tools
+- Strong prompt instructions in MCP server configuration
+- Tool substitution rules documented
+
+### ⏳ Pending (Phase 2)
+
+- PreToolUse hook with intelligent pattern matching
+- Blocked patterns for basic pytest/crosshair usage
+- Allowed patterns for advanced debug/coverage usage
 
 ## Problem
 

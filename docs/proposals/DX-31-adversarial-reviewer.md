@@ -2,10 +2,34 @@
 
 > **"Fresh eyes find what invested minds miss."**
 
-**Status:** Phase 1, 3, 4, 5, 6 ✅ | Phase 2 Deferred
+**Status:** 🚧 Partial (5/6 Phases Complete, Phase 2 Deferred)
 **Created:** 2024-12-24
 **Updated:** 2025-12-25
 **Relates to:** DX-30 (Visible Workflow), existing /review and /attack skills
+
+## Completion Status
+
+| Phase | Description | Status |
+|-------|-------------|--------|
+| Phase 1 | Context isolation design | ✅ Complete |
+| Phase 2 | Auto-trigger from Guard | ⏸️ Deferred |
+| Phase 3 | Review checklist | ✅ Complete |
+| Phase 4 | Multi-round review cycle | ✅ Complete |
+| Phase 5 | Convergence criteria | ✅ Complete |
+| Phase 6 | /review skill integration | ✅ Complete |
+
+### ✅ Completed
+
+- Context isolation design (reviewer sees only code + contracts)
+- Review checklist (structured adversarial review questions)
+- Multi-round review cycle (review → fix → re-review)
+- Convergence criteria (severity-based exit)
+- `/review` skill file in `.claude/skills/`
+
+### ⏸️ Deferred (Phase 2)
+
+- Automatic sub-agent review trigger from Guard `review_suggested`
+- Reason: Requires more sophisticated agent orchestration
 
 ## Platform Support
 

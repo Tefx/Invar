@@ -2,10 +2,33 @@
 
 > **"Right information at right time."**
 
-**Status:** Implementing (Phase 4 Templates Complete)
+**Status:** 🚧 Partial (Phase 1-4 Complete, Phase 5-6 Pending)
 **Created:** 2025-12-25
 **Depends On:** DX-35 (Workflow-based Phase Separation)
 **Related:** DX-33 (Verification Blind Spots), DX-34 (Review Cycle)
+
+## Completion Status
+
+| Phase | Description | Status |
+|-------|-------------|--------|
+| Phase 1 | Section files (sections/) | ✅ Complete |
+| Phase 2 | Skill files (.claude/skills/) | ✅ Complete |
+| Phase 3 | Update templates (src/invar/templates/) | ✅ Complete |
+| Phase 4 | Simplify CLAUDE.md | ✅ Complete |
+| Phase 5 | CLI updates (`invar init --claude`) | ⏳ Pending |
+| Phase 6 | Documentation & Migration guide | ⏳ Pending |
+
+### ✅ Completed (Phase 1-4)
+
+- `sections/` directory with investigate.md, propose.md, develop.md, review.md
+- 4 workflow skill files in `.claude/skills/`
+- Template files updated in `src/invar/templates/`
+- Simplified CLAUDE.md (~30 lines)
+
+### ⏳ Pending (Phase 5-6)
+
+- **Phase 5:** `invar init --claude` flag for skill file generation
+- **Phase 6:** Migration guide for existing projects, documentation updates
 
 ---
 

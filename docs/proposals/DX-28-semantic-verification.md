@@ -2,9 +2,17 @@
 
 > **"Catch logic bugs that type-correct code hides."**
 
-## Status: Partial (P0/P1 Implemented)
+**Status:** 🚧 Partial (P0/P1 Complete, P2 Pending)
 
-### Implemented (Dec 2024)
+## Completion Status
+
+| Priority | Description | Status |
+|----------|-------------|--------|
+| P0 | Core relational contracts | ✅ Complete |
+| P1 | Skip abuse prevention, FormatSpec | ✅ Complete |
+| P2 | Contract quality rules, Bidirectional testing | ⏳ Pending |
+
+### ✅ Completed (P0/P1)
 
 | Component | Location | Description |
 |-----------|----------|-------------|
