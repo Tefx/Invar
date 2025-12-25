@@ -7,7 +7,7 @@ packages = ["src/invar_runtime"]
 
 [project]
 name = "invar-runtime"
-version = "1.1.0"
+version = "1.2.0"
 description = "Lightweight runtime contracts for Invar projects"
 readme = "README.md"
 license = "Apache-2.0"
