@@ -15,7 +15,18 @@ description: Decision facilitation phase. Use when design decision is needed, mu
 
 ## Entry Actions
 
-1. Announce: `Entering /propose for: [decision topic]`
+### Routing Announcement
+
+Before any workflow action, display:
+
+```
+📍 Routing: /propose — [trigger detected, e.g. "should we", "compare", "design"]
+   Task: [decision topic summary]
+```
+
+### Entry Steps
+
+1. Display routing announcement (above)
 2. Explore relevant context if needed
 
 ## Output Formats

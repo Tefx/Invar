@@ -15,6 +15,29 @@ description: Implementation phase following USBV workflow. Use when task is clea
 
 ## Entry Actions (REQUIRED)
 
+### Routing Announcement
+
+Before any workflow action, display:
+
+```
+📍 Routing: /develop — [trigger detected, e.g. "add", "fix", "implement"]
+   Task: [user's request summary]
+```
+
+### Simple Task Detection
+
+If task appears simple (4+ signals: single file, clear target, additive change, <50 lines):
+
+```
+📊 Simple task (1 file, ~N lines).
+   Auto-orchestrate: investigate → develop → validate?
+   [Y/N]
+```
+
+- Y → Execute full cycle without intermediate confirmations
+- N → Proceed with normal USBV checkpoints
+- No response → Default to step-by-step (safe)
+
 ### Check-In
 
 ```python

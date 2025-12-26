@@ -14,6 +14,17 @@ description: Adversarial code review with fix loop. Use after development, when 
 > **Purpose:** Find problems that Guard, doctests, and property tests missed.
 > **Mindset:** Adversarial. Your success is measured by problems found, not code approved.
 
+## Entry Actions
+
+### Routing Announcement
+
+Before any workflow action, display:
+
+```
+📍 Routing: /review — [trigger, e.g. "review_suggested", "user requested review"]
+   Task: [review scope summary]
+```
+
 ## Mode Selection
 
 ### Check Guard Output
