@@ -125,6 +125,32 @@ When user message contains these triggers, you MUST invoke the corresponding ski
 **Violation check (before writing ANY code):**
 - "Am I in a workflow?"
 - "Did I invoke the correct skill?"
+
+---
+
+## Routing Control (DX-42)
+
+Agent announces routing decision before entering any workflow:
+
+```
+📍 Routing: /[skill] — [trigger or reason]
+   Task: [summary]
+```
+
+**User can redirect with natural language:**
+- "wait" / "stop" — pause and ask for direction
+- "just do it" — proceed with /develop
+- "let's discuss" — switch to /propose
+- "explain first" — switch to /investigate
+
+**Simple task optimization:** For simple tasks (single file, clear target, <50 lines), agent may offer:
+
+```
+📊 Simple task. Auto-orchestrate? [Y/N]
+```
+
+- Y → Full cycle without intermediate confirmations
+- N → Normal step-by-step workflow
 <!--/invar:managed-->
 
 <!--invar:project-->

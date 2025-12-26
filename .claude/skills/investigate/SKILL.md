@@ -27,7 +27,18 @@ description: Exploration and understanding phase. Use when task is vague, needs 
 
 ## Entry Actions
 
-1. Announce: `Entering /investigate for: [topic]`
+### Routing Announcement
+
+Before any workflow action, display:
+
+```
+📍 Routing: /investigate — [reason, e.g. "task is vague", "trigger 'why'"]
+   Task: [user's request summary]
+```
+
+### Entry Steps
+
+1. Display routing announcement (above)
 2. Run `invar_map(top=10)` for codebase orientation
 3. Read `.invar/context.md` if relevant to topic
 
