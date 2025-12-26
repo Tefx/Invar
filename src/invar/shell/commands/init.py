@@ -233,20 +233,16 @@ def init(
         ".pre-commit-config.yaml",
         ".claude/commands/audit.md",
         ".claude/commands/guard.md",
+        # Skills are always created - they define the workflow
+        ".claude/skills/develop/SKILL.md",
+        ".claude/skills/investigate/SKILL.md",
+        ".claude/skills/propose/SKILL.md",
+        ".claude/skills/review/SKILL.md",
     ]
 
     # Only create CLAUDE.md from template if claude /init wasn't run
     if not claude or not (path / "CLAUDE.md").exists():
         init_files.append("CLAUDE.md")
-
-    # Generate skills if --claude flag
-    if claude:
-        init_files.extend([
-            ".claude/skills/develop/SKILL.md",
-            ".claude/skills/investigate/SKILL.md",
-            ".claude/skills/propose/SKILL.md",
-            ".claude/skills/review/SKILL.md",
-        ])
 
     result = generate_from_manifest(path, syntax="cli", files_to_generate=init_files)
     if isinstance(result, Success):
