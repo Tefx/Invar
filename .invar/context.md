@@ -1041,7 +1041,7 @@ Human (Commander) ──directs──→ Agent (Executor) ──uses──→ In
 23. **Example-Driven Learning** - Abstract rules don't teach; concrete code examples do. New agents learn fastest by seeing working code
 24. **deal Lambda Boolean Trap** - `and`/`or` in contracts may return strings; deal interprets non-bool as error messages. Always use `bool()`
 25. **Skip Requires Justification** - Batch-adding @skip_property_test is lazy shortcut. Each skip needs explicit reason. Guard enforces categories: no_params, strategy_factory, external_io, non_deterministic
-26. **Contract Before Inspect Problem** - ICIDIV's Contract-before-Inspect order causes friction in brownfield development. USBV (Understand → Specify → Build → Validate) with Inspect-before-Contract is more natural
+26. **Contract Before Inspect Problem** - Contract-before-Inspect order causes friction in brownfield development. USBV (Understand → Specify → Build → Validate) with Inspect-before-Contract is more natural. *(Resolved: DX-32 implemented USBV)*
 27. **Process Visibility vs Task Completion** - Agents tend to "just do it" rather than "show what they're doing". Need explicit visibility checkpoints
 28. **Review Gate as Conditional Step** - Review should be automatic trigger at workflow phase boundary (VALIDATE), not separate manual step
 

@@ -1042,7 +1042,7 @@ $ uvx invar-tools init --claude
 Protocol and tool versions are separate:
 
 ```
-INVAR.md v4.0        # Protocol version (MAJOR.MINOR)
+INVAR.md v5.0        # Protocol version (MAJOR.MINOR)
 invar-tools 1.0.2    # Tool version (semver)
 invar-runtime 1.0.2  # Runtime version (semver)
 ```
