@@ -197,10 +197,18 @@ invar guard
 ✓ Final: guard [PASS/FAIL] | [errors] errors, [warnings] warnings
 ```
 
-**If Guard reports `review_suggested`:**
+### Auto-Review (DX-41)
+
+If Guard outputs `review_suggested`:
+
 ```
-⚠ Review suggested. Run /review for quality check.
+⚠ review_suggested: [reason]
+
+📍 Routing: /review — review_suggested triggered
+   Task: Review [N files changed]
 ```
+
+Proceed directly to /review skill. User can say "skip" to bypass.
 
 ## Visible Workflow
 
