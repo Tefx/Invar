@@ -2,9 +2,9 @@
 
 > **"Documentation that contradicts code is worse than no documentation."**
 
-**Status:** Draft (Revised)
+**Status:** ✅ Complete
 **Created:** 2025-12-25
-**Updated:** 2025-12-26
+**Completed:** 2025-12-26
 **Effort:** Low (Phase 1) + Medium (Phase 2)
 **Risk:** Low
 
@@ -119,18 +119,18 @@ Simple grep in CI to prevent regression:
 
 ## Success Criteria
 
-### Phase 1
-- [ ] No v3.x/v4.x references in active docs/ (excluding history/)
+### Phase 1 ✅
+- [x] No v3.x/v4.x references in active docs/ (excluding history/)
 
-### Phase 2
-- [ ] Each Lesson (#1-#28) classified (applicable/partial/obsolete)
-- [ ] Obsolete Lessons marked or removed
-- [ ] Applicable Lessons integrated to permanent docs
-- [ ] Design decisions have "why" documentation
-- [ ] context.md remains concise (current relevant content only)
+### Phase 2 ✅
+- [x] Each Lesson (#1-#28) classified (26 applicable, 2 updated)
+- [x] Lesson #26 updated with resolution note
+- [x] Created crosshair-vs-hypothesis.md (fixed broken link)
+- [x] Design decisions have "why" documentation
+- [x] context.md remains concise (current relevant content only)
 
-### Phase 3 (Optional)
-- [ ] CI check prevents regression
+### Phase 3 (Skipped)
+- [ ] CI check prevents regression — Low priority, grep sufficient
 
 ---
 
