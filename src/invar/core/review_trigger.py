@@ -298,7 +298,10 @@ def check_review_suggested(file_info: FileInfo, config: RuleConfig) -> list[Viol
     return violations
 
 
-@pre(lambda escapes: isinstance(escapes, list))
+@pre(lambda escapes: (
+    isinstance(escapes, list) and
+    all(isinstance(e, tuple) and len(e) == 3 and all(isinstance(s, str) for s in e) for e in escapes)
+))
 @post(lambda result: isinstance(result, list))
 def check_duplicate_escape_reasons(
     escapes: list[tuple[str, str, str]],

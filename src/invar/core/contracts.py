@@ -76,7 +76,7 @@ def is_redundant_type_contract(expression: str, annotations: dict[str, str]) -> 
         return False
 
 
-@pre(lambda node: isinstance(node, ast.expr))
+@pre(lambda node: isinstance(node, ast.expr) and hasattr(node, '__class__'))
 @post(lambda result: result is None or isinstance(result, list))
 def _extract_isinstance_checks(node: ast.expr) -> list[tuple[str, str]] | None:
     """Extract isinstance checks. Returns None if other logic present.

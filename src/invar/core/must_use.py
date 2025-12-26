@@ -58,6 +58,7 @@ def find_must_use_functions(source: str) -> dict[str, str]:
     return must_use_funcs
 
 
+@pre(lambda decorator: isinstance(decorator, ast.expr) and hasattr(decorator, '__class__'))
 @post(lambda result: result is None or isinstance(result, str))
 def _extract_must_use_reason(decorator: ast.expr) -> str | None:
     """Extract reason from @must_use decorator, or None if not a must_use."""

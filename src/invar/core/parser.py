@@ -64,7 +64,7 @@ def parse_source(source: str, path: str = "<string>") -> FileInfo | None:
     )
 
 
-@pre(lambda tree: isinstance(tree, ast.Module))
+@pre(lambda tree: isinstance(tree, ast.Module) and hasattr(tree, 'body'))
 def _extract_symbols(tree: ast.Module) -> list[Symbol]:
     """
     Extract function, class, and method symbols from AST.
@@ -190,7 +190,10 @@ def _parse_class(node: ast.ClassDef) -> Symbol:
     )
 
 
-@pre(lambda node: isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef))
+@pre(lambda node: (
+    isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef) and
+    hasattr(node, 'decorator_list')
+))
 @post(lambda result: all(c.kind in ("pre", "post") for c in result))
 def _extract_contracts(node: ast.FunctionDef | ast.AsyncFunctionDef) -> list[Contract]:
     """Extract @pre and @post contracts from function decorators."""
@@ -230,7 +233,7 @@ def _parse_decorator_as_contract(decorator: ast.expr) -> Contract | None:
     return None
 
 
-@pre(lambda call: isinstance(call, ast.Call))
+@pre(lambda call: isinstance(call, ast.Call) and hasattr(call, 'args'))
 def _get_contract_expression(call: ast.Call) -> str:
     """Extract the expression string from a contract decorator call."""
     if call.args:
@@ -264,7 +267,7 @@ def _build_signature(node: ast.FunctionDef | ast.AsyncFunctionDef) -> str:
     return sig
 
 
-@pre(lambda tree: isinstance(tree, ast.Module))
+@pre(lambda tree: isinstance(tree, ast.Module) and hasattr(tree, 'body'))
 @post(lambda result: all(isinstance(s, str) and s for s in result))
 def _extract_imports(tree: ast.Module) -> list[str]:
     """Extract imported module names from AST (top-level only)."""
