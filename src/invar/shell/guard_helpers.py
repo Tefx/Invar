@@ -82,30 +82,38 @@ def collect_files_to_check(
 
 # @shell_orchestration: Coordinates doctest execution via testing module
 def run_doctests_phase(
-    checked_files: list[Path], explain: bool, timeout: int = 60
-) -> tuple[bool, str]:
+    checked_files: list[Path],
+    explain: bool,
+    timeout: int = 60,
+    collect_coverage: bool = False,
+) -> tuple[bool, str, dict | None]:
     """Run doctests on collected files.
 
     Args:
         checked_files: Files to run doctests on
         explain: Show verbose output
         timeout: Maximum time in seconds (default: 60, from RuleConfig.timeout_doctest)
+        collect_coverage: DX-37: If True, collect branch coverage data
 
-    Returns (passed, output).
+    Returns (passed, output, coverage_data).
     """
     from invar.shell.testing import run_doctests_on_files
 
     if not checked_files:
-        return True, ""
+        return True, "", None
 
-    doctest_result = run_doctests_on_files(checked_files, verbose=explain, timeout=timeout)
+    doctest_result = run_doctests_on_files(
+        checked_files, verbose=explain, timeout=timeout, collect_coverage=collect_coverage
+    )
     if isinstance(doctest_result, Success):
         result_data = doctest_result.unwrap()
         passed = result_data.get("status") in ("passed", "skipped")
         output = result_data.get("stdout", "")
-        return passed, output
+        # DX-37: Return coverage data if collected
+        coverage_data = {"collected": result_data.get("coverage_collected", False)}
+        return passed, output, coverage_data if collect_coverage else None
 
-    return False, doctest_result.failure()
+    return False, doctest_result.failure(), None
 
 
 # @shell_orchestration: Coordinates CrossHair verification via prove module
@@ -255,7 +263,8 @@ def run_property_tests_phase(
     doctest_passed: bool,
     static_exit_code: int,
     max_examples: int = 100,
-) -> tuple[bool, dict]:
+    collect_coverage: bool = False,
+) -> tuple[bool, dict, dict | None]:
     """Run property tests phase (DX-08).
 
     Args:
@@ -263,27 +272,28 @@ def run_property_tests_phase(
         doctest_passed: Whether doctests passed
         static_exit_code: Exit code from static analysis
         max_examples: Maximum Hypothesis examples per function
+        collect_coverage: DX-37: If True, collect branch coverage data
 
-    Returns (passed, output_dict).
+    Returns (passed, output_dict, coverage_data).
     """
     from invar.shell.property_tests import run_property_tests_on_files
 
     # Skip if prior failures
     if not doctest_passed or static_exit_code != 0:
-        return True, {"status": "skipped", "reason": "prior failures"}
+        return True, {"status": "skipped", "reason": "prior failures"}, None
 
     if not checked_files:
-        return True, {"status": "skipped", "reason": "no files"}
+        return True, {"status": "skipped", "reason": "no files"}, None
 
     # Only test Core files (with contracts)
     core_files = [f for f in checked_files if "core" in str(f)]
     if not core_files:
-        return True, {"status": "skipped", "reason": "no core files"}
+        return True, {"status": "skipped", "reason": "no core files"}, None
 
-    result = run_property_tests_on_files(core_files, max_examples)
+    result = run_property_tests_on_files(core_files, max_examples, collect_coverage=collect_coverage)
 
     if isinstance(result, Success):
-        report = result.unwrap()
+        report, coverage_data = result.unwrap()
         # DX-26: Build structured failures array for actionable output
         failures = [
             {
@@ -303,9 +313,9 @@ def run_property_tests_phase(
             "total_examples": report.total_examples,
             "failures": failures,  # DX-26: Structured failure info
             "errors": report.errors,
-        }
+        }, coverage_data
 
-    return False, {"status": "error", "error": result.failure()}
+    return False, {"status": "error", "error": result.failure()}, None
 
 
 # @shell_complexity: Property test status formatting

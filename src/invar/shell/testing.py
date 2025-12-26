@@ -114,7 +114,10 @@ def get_available_verifiers() -> list[str]:
 
 # @shell_complexity: Doctest execution with subprocess and result parsing
 def run_doctests_on_files(
-    files: list[Path], verbose: bool = False, timeout: int = 60
+    files: list[Path],
+    verbose: bool = False,
+    timeout: int = 60,
+    collect_coverage: bool = False,
 ) -> Result[dict, str]:
     """
     Run doctests on a list of Python files.
@@ -123,6 +126,7 @@ def run_doctests_on_files(
         files: List of Python file paths to test
         verbose: Show verbose output
         timeout: Maximum time in seconds (default: 60, from RuleConfig.timeout_doctest)
+        collect_coverage: DX-37: If True, run with coverage.py and return coverage data
 
     Returns:
         Success with test results or Failure with error message
@@ -142,11 +146,21 @@ def run_doctests_on_files(
     if not py_files:
         return Success({"status": "skipped", "reason": "no Python files", "files": []})
 
-    # Build pytest command
-    cmd = [
-        sys.executable, "-m", "pytest",
-        "--doctest-modules", "-x", "--tb=short",
-    ]
+    # DX-37: Build command with optional coverage
+    if collect_coverage:
+        # Use coverage run to wrap pytest
+        cmd = [
+            sys.executable, "-m", "coverage", "run",
+            "--branch",  # Enable branch coverage
+            "--parallel-mode",  # For merging with hypothesis later
+            "-m", "pytest",
+            "--doctest-modules", "-x", "--tb=short",
+        ]
+    else:
+        cmd = [
+            sys.executable, "-m", "pytest",
+            "--doctest-modules", "-x", "--tb=short",
+        ]
     cmd.extend(str(f) for f in py_files)
     if verbose:
         cmd.append("-v")
@@ -161,6 +175,7 @@ def run_doctests_on_files(
             "exit_code": result.returncode,
             "stdout": result.stdout,
             "stderr": result.stderr,
+            "coverage_collected": collect_coverage,  # DX-37: Flag for caller
         })
     except subprocess.TimeoutExpired:
         return Failure(f"Doctest timeout ({timeout}s)")

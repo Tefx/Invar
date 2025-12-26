@@ -132,6 +132,7 @@ def _get_guard_tool() -> Tool:
                 "path": {"type": "string", "description": "Project path (default: .)", "default": "."},
                 "changed": {"type": "boolean", "description": "Only verify git-changed files", "default": True},
                 "strict": {"type": "boolean", "description": "Treat warnings as errors", "default": False},
+                "coverage": {"type": "boolean", "description": "DX-37: Collect branch coverage from doctest + hypothesis", "default": False},
             },
         },
     )
@@ -199,6 +200,7 @@ def create_server() -> Server:
 
 
 # @shell_orchestration: MCP handler - subprocess is called inside
+# @shell_complexity: Guard command with multiple optional flags
 # @invar:allow shell_result: MCP handler for guard tool
 async def _run_guard(args: dict[str, Any]) -> list[TextContent]:
     """Run invar guard command."""
@@ -214,6 +216,9 @@ async def _run_guard(args: dict[str, Any]) -> list[TextContent]:
         cmd.append("--changed")
     if args.get("strict", False):
         cmd.append("--strict")
+    # DX-37: Optional coverage collection
+    if args.get("coverage", False):
+        cmd.append("--coverage")
 
     # DX-26: TTY auto-detection - MCP runs in non-TTY, so agent JSON output is automatic
     # No explicit flag needed

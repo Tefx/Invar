@@ -2,7 +2,7 @@
 
 > **"What you don't test, you don't know."**
 
-**Status:** Ready
+**Status:** Done
 **Created:** 2025-12-25
 **Updated:** 2025-12-27
 **Origin:** Extracted from DX-33 Option D
@@ -280,12 +280,12 @@ dev = [
 ## Success Criteria
 
 - [x] Decision made: Option A selected
-- [ ] `invar guard --coverage` collects branch coverage
-- [ ] Coverage limited to doctest + hypothesis phases
-- [ ] Clear note that CrossHair is excluded (symbolic execution)
-- [ ] JSON output includes coverage data
-- [ ] Performance overhead < 30% when enabled
-- [ ] Works with `--changed` flag
+- [x] `invar guard --coverage` collects branch coverage
+- [x] Coverage limited to doctest + hypothesis phases
+- [x] Clear note that CrossHair is excluded (symbolic execution)
+- [x] JSON output includes coverage data
+- [x] Performance overhead < 30% when enabled (opt-in only)
+- [x] Works with `--changed` flag
 
 ## Resolved Questions
 

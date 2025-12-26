@@ -257,8 +257,9 @@ def output_agent(
     verification_level: str = "standard",
     property_output: dict | None = None,  # DX-08
     routing_stats: dict | None = None,  # DX-22
+    coverage_data: dict | None = None,  # DX-37
 ) -> None:
-    """Output report in Agent-optimized JSON format (Phase 8.2 + DX-06 + DX-08 + DX-09 + DX-22 + DX-26).
+    """Output report in Agent-optimized JSON format (Phase 8.2 + DX-06 + DX-08 + DX-09 + DX-22 + DX-26 + DX-37).
 
     Args:
         report: Guard analysis report
@@ -269,9 +270,11 @@ def output_agent(
         verification_level: Current level (static/standard)
         property_output: Property test results dict (DX-08)
         routing_stats: Smart routing statistics (DX-22)
+        coverage_data: DX-37: Branch coverage data from doctest + hypothesis
 
     DX-22: Adds routing stats showing CrossHair vs Hypothesis distribution.
     DX-26: status now reflects ALL test phases, not just static analysis.
+    DX-37: Adds optional coverage data from doctest + hypothesis phases.
     """
     import json
 
@@ -308,4 +311,7 @@ def output_agent(
     # DX-22: Add smart routing statistics if available
     if routing_stats:
         output["routing"] = routing_stats
+    # DX-37: Add coverage data if collected
+    if coverage_data:
+        output["coverage"] = coverage_data
     console.print(json.dumps(output, indent=2))

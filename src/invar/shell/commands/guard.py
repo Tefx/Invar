@@ -130,6 +130,9 @@ def guard(
     json_output: bool = typer.Option(
         False, "--json", hidden=True, help="[Deprecated] Use TTY auto-detection instead"
     ),
+    coverage: bool = typer.Option(
+        False, "--coverage", help="DX-37: Collect branch coverage from doctest + hypothesis"
+    ),
 ) -> None:
     """Check project against Invar architecture rules.
 
@@ -196,17 +199,30 @@ def guard(
     crosshair_output: dict = {}
     property_passed: bool = True
     property_output: dict = {}
+    # DX-37: Coverage data from doctest + hypothesis phases
+    doctest_coverage: dict | None = None
+    property_coverage: dict | None = None
+
+    # DX-37: Check coverage availability if requested
+    if coverage:
+        from invar.shell.coverage import check_coverage_available
+        cov_check = check_coverage_available()
+        if isinstance(cov_check, Failure):
+            console.print(f"[yellow]Warning:[/yellow] {cov_check.failure()}")
+            coverage = False  # Disable coverage if not available
 
     # DX-19: STANDARD runs all verification phases
     if verification_level == VerificationLevel.STANDARD and static_exit_code == 0:
         checked_files = collect_files_to_check(path, checked_files)
 
-        # Phase 1: Doctests
-        doctest_passed, doctest_output = run_doctests_phase(
-            checked_files, explain, timeout=config.timeout_doctest
+        # Phase 1: Doctests (DX-37: with optional coverage)
+        doctest_passed, doctest_output, doctest_coverage = run_doctests_phase(
+            checked_files, explain, timeout=config.timeout_doctest,
+            collect_coverage=coverage,
         )
 
         # Phase 2: CrossHair symbolic verification
+        # Note: CrossHair uses subprocess + symbolic execution, coverage not applicable
         crosshair_passed, crosshair_output = run_crosshair_phase(
             path, checked_files, doctest_passed, static_exit_code,
             changed_mode=changed,
@@ -214,9 +230,10 @@ def guard(
             per_condition_timeout=config.timeout_crosshair_per_condition,
         )
 
-        # Phase 3: Hypothesis property tests
-        property_passed, property_output = run_property_tests_phase(
-            checked_files, doctest_passed, static_exit_code
+        # Phase 3: Hypothesis property tests (DX-37: with optional coverage)
+        property_passed, property_output, property_coverage = run_property_tests_phase(
+            checked_files, doctest_passed, static_exit_code,
+            collect_coverage=coverage,
         )
     elif verification_level == VerificationLevel.STATIC:
         # Static-only mode: explicitly mark verification as skipped
@@ -227,11 +244,27 @@ def guard(
         crosshair_output = {"status": "skipped", "reason": "prior failures"}
         property_output = {"status": "skipped", "reason": "prior failures"}
 
+    # DX-37: Merge coverage data from doctest + hypothesis
+    coverage_output: dict | None = None
+    if coverage and (doctest_coverage or property_coverage):
+        coverage_output = {
+            "enabled": True,
+            "phases_tracked": [],
+            "phases_excluded": ["crosshair"],  # CrossHair uses symbolic execution
+        }
+        if doctest_coverage and doctest_coverage.get("collected"):
+            coverage_output["phases_tracked"].append("doctest")
+        if property_coverage and property_coverage.get("collected"):
+            coverage_output["phases_tracked"].append("hypothesis")
+            if "overall_branch_coverage" in property_coverage:
+                coverage_output["overall_branch_coverage"] = property_coverage["overall_branch_coverage"]
+
     # DX-26: Unified output (agent JSON or human Rich)
     if use_agent_output:
         output_agent(
             report, strict, doctest_passed, doctest_output, crosshair_output, level_name,
             property_output=property_output,
+            coverage_data=coverage_output,  # DX-37
         )
     else:
         output_rich(report, config.strict_pure, changed, pedantic, explain, static)
@@ -241,6 +274,13 @@ def guard(
             property_output=property_output,
             strict=strict,
         )
+        # DX-37: Show coverage info in human output
+        if coverage_output and coverage_output.get("phases_tracked"):
+            phases = coverage_output.get("phases_tracked", [])
+            overall = coverage_output.get("overall_branch_coverage", 0.0)
+            console.print(f"\n[bold]Coverage Analysis[/bold] ({' + '.join(phases)})")
+            console.print(f"  Overall branch coverage: {overall}%")
+            console.print("  [dim]Note: CrossHair uses symbolic execution; coverage not applicable.[/dim]")
 
     # Exit with combined status
     all_passed = doctest_passed and crosshair_passed and property_passed

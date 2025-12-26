@@ -99,11 +99,13 @@ def run_property_tests_on_file(
     return Success(report)
 
 
+# @shell_complexity: Property test orchestration with optional coverage collection
 def run_property_tests_on_files(
     files: list[Path],
     max_examples: int = 100,
     verbose: bool = False,
-) -> Result[PropertyTestReport, str]:
+    collect_coverage: bool = False,
+) -> Result[tuple[PropertyTestReport, dict | None], str]:
     """
     Run property tests on multiple files.
 
@@ -111,37 +113,71 @@ def run_property_tests_on_files(
         files: List of Python file paths
         max_examples: Maximum Hypothesis examples per function
         verbose: Show detailed output
+        collect_coverage: DX-37: If True, collect branch coverage data
 
     Returns:
-        Combined PropertyTestReport
+        Tuple of (PropertyTestReport, coverage_data) where coverage_data is dict or None
     """
     # Check hypothesis availability first
     try:
         import hypothesis  # noqa: F401
     except ImportError:
-        return Success(PropertyTestReport(
+        return Success((PropertyTestReport(
             errors=["Hypothesis not installed (pip install hypothesis)"]
-        ))
+        ), None))
 
     combined_report = PropertyTestReport()
+    coverage_data = None
 
-    for file_path in files:
-        result = run_property_tests_on_file(file_path, max_examples, verbose)
+    # DX-37: Optional coverage collection for hypothesis tests
+    if collect_coverage:
+        try:
+            from invar.shell.coverage import collect_coverage as cov_ctx
+            from invar.shell.coverage import extract_coverage_report
 
-        if isinstance(result, Failure):
-            combined_report.errors.append(result.failure())
-            continue
+            source_dirs = list({f.parent for f in files})
+            with cov_ctx(source_dirs) as cov:
+                for file_path in files:
+                    result = run_property_tests_on_file(file_path, max_examples, verbose)
+                    _accumulate_report(combined_report, result)
 
-        file_report = result.unwrap()
-        combined_report.functions_tested += file_report.functions_tested
-        combined_report.functions_passed += file_report.functions_passed
-        combined_report.functions_failed += file_report.functions_failed
-        combined_report.functions_skipped += file_report.functions_skipped
-        combined_report.total_examples += file_report.total_examples
-        combined_report.results.extend(file_report.results)
-        combined_report.errors.extend(file_report.errors)
+                # Extract coverage after all tests
+                coverage_report = extract_coverage_report(cov, files, "hypothesis")
+                coverage_data = {
+                    "collected": True,
+                    "overall_branch_coverage": coverage_report.overall_branch_coverage,
+                    "files": len(coverage_report.files),
+                }
+        except ImportError:
+            # coverage not installed, run without it
+            for file_path in files:
+                result = run_property_tests_on_file(file_path, max_examples, verbose)
+                _accumulate_report(combined_report, result)
+    else:
+        for file_path in files:
+            result = run_property_tests_on_file(file_path, max_examples, verbose)
+            _accumulate_report(combined_report, result)
 
-    return Success(combined_report)
+    return Success((combined_report, coverage_data))
+
+
+def _accumulate_report(
+    combined_report: PropertyTestReport,
+    result: Result[PropertyTestReport, str],
+) -> None:
+    """Accumulate a file result into the combined report."""
+    if isinstance(result, Failure):
+        combined_report.errors.append(result.failure())
+        return
+
+    file_report = result.unwrap()
+    combined_report.functions_tested += file_report.functions_tested
+    combined_report.functions_passed += file_report.functions_passed
+    combined_report.functions_failed += file_report.functions_failed
+    combined_report.functions_skipped += file_report.functions_skipped
+    combined_report.total_examples += file_report.total_examples
+    combined_report.results.extend(file_report.results)
+    combined_report.errors.extend(file_report.errors)
 
 
 def _import_module_from_path(file_path: Path) -> object | None:
