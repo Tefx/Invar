@@ -81,6 +81,23 @@ For complex tasks (3+ functions), show 3 checkpoints in TodoList:
 
 **Show contracts before code.** See `.invar/examples/workflow.md` for full example.
 
+## Phase Visibility (DX-51)
+
+Each USBV phase transition requires a visible header:
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📍 /develop → SPECIFY (2/4)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+**Three-layer visibility:**
+- **Skill** (`/develop`) — Routing announcement
+- **Phase** (`SPECIFY 2/4`) — Phase header (this section)
+- **Tasks** — TodoWrite items
+
+Phase headers are SEPARATE from TodoWrite. Phase = where you are; TodoWrite = what to do.
+
 ---
 
 ## Commands (User-Invokable)

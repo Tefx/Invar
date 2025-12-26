@@ -2,11 +2,30 @@
 
 > **"A contract that constrains nothing, guarantees nothing."**
 
-**Status:** Draft
+**Status:** Partial (Tier 1-2 Implemented)
 **Created:** 2025-12-25
+**Updated:** 2025-12-27
 **Origin:** Extracted from DX-33 Option A, merged with DX-28 P2
 **Effort:** High
 **Risk:** High (heuristics, false positives)
+
+## Implementation Status (2025-12-27)
+
+| Tier | Status | Location |
+|------|--------|----------|
+| Tier 1 | ✅ Done | `src/invar/core/tautology.py` |
+| Tier 2 | ✅ Done | `src/invar/core/contracts.py` + `utils.py` |
+| Tier 3 | ⏸ Deferred | High false-positive risk |
+| Tier 4 | ⏸ Deferred | Needs more research |
+
+### Tier 1 Implementation
+- `lambda x: True` → "contract always returns True (no constraint)"
+- `lambda x: False` → "contract always returns False (contradiction)"
+- `lambda: ...` → "contract has no parameters (doesn't validate inputs)"
+
+### Tier 2 Implementation
+- `redundant_type_contract` rule enabled by default (severity: warning)
+- Detects `isinstance(x, T)` redundant with type annotation `x: T`
 
 ## Scope
 

@@ -206,17 +206,37 @@ If Guard outputs `review_suggested`:
 
 Proceed directly to /review skill. User can say "skip" to bypass.
 
-## Visible Workflow
+## Phase Visibility (DX-51)
 
-For complex tasks (3+ functions), show checkpoints:
+**USBV phases must be visually distinct.** On each phase transition, display a phase header:
+
+### Phase Header Format
 
 ```
-□ [UNDERSTAND] Task description, context, constraints
-□ [SPECIFY] Contracts before implementation
-□ [VALIDATE] Guard results, integration status
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📍 /develop → SPECIFY (2/4)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
-**BUILD is internal work** — not shown in TodoList.
+### Compact Format (brief updates)
+
+```
+📍 VALIDATE — Running guard...
+```
+
+### Three-Layer Visibility
+
+| Layer | What | Tool |
+|-------|------|------|
+| Skill | `/develop` | Routing announcement |
+| Phase | `SPECIFY (2/4)` | Phase header (this section) |
+| Tasks | Concrete items | TodoWrite |
+
+**Phase headers are SEPARATE from TodoWrite.**
+- Phase = where you are in workflow (visible in output)
+- TodoWrite = what tasks need doing (visible in status panel)
+
+**BUILD is internal work** — show header but no detailed breakdown.
 
 ## Tool Selection
 
@@ -234,27 +254,39 @@ For complex tasks (3+ functions), show checkpoints:
 ```
 User: "Add input validation to parse_source"
 
-Agent: "Entering /develop for: Add input validation to parse_source
+Agent:
+📍 Routing: /develop — "add" trigger detected
+   Task: Add input validation to parse_source
 
 ✓ Check-In: guard PASS | top: pre, post, Violation
 
-□ [UNDERSTAND] Add input validation to parse_source
-  - Current: accepts any string
-  - Need: reject whitespace-only strings
-  - File: src/invar/core/parser.py
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📍 /develop → UNDERSTAND (1/4)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-□ [SPECIFY] Enhanced precondition
-  @pre(lambda source, path: isinstance(source, str) and len(source.strip()) > 0)
+- Current: accepts any string
+- Need: reject whitespace-only strings
+- File: src/invar/core/parser.py
 
-[BUILD - implementing...]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📍 /develop → SPECIFY (2/4)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-□ [VALIDATE]
-  - Guard: PASS (0 errors, 1 warning)
-  - Tests: All passing
+@pre(lambda source, path: len(source.strip()) > 0)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📍 /develop → BUILD (3/4)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[Implementation...]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📍 /develop → VALIDATE (4/4)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✓ guard PASS | 0 errors, 1 warning
 
 ✓ Final: guard PASS | 0 errors, 1 warning
-
-Development complete."
 ```
 <!--/invar:skill--><!--invar:extensions-->
 <!-- ========================================================================
