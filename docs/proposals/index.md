@@ -18,9 +18,9 @@ This directory contains design proposals for Invar development.
 | DX-38 | contract-quality-rules | Defer | Contract quality rules (Tier 1-4) |
 | DX-39 | workflow-efficiency | Draft | Workflow efficiency (merged DX-27) |
 | DX-40 | smart-tool-redirect-hook | Draft | Smart tool redirect hook (from DX-16) |
-| DX-41 | automatic-review-orchestration | Draft | Automatic review orchestration (from DX-31+35) |
-| DX-42 | workflow-auto-routing | Draft | Auto-routing + autonomous orchestration |
-| DX-43 | cross-platform-distribution | Draft | Cross-platform distribution (from DX-35+36+11) |
+| DX-41 | automatic-review-orchestration | ✅ Complete | Automatic review orchestration (from DX-31+35) |
+| DX-42 | workflow-auto-routing | ✅ Complete | Visible Workflow Routing |
+| DX-43 | cross-platform-distribution | ✅ Complete | Absorbed by DX-49 |
 | DX-46 | documentation-audit | Draft | docs/ directory audit + `invar check-docs` |
 
 ## Archived Proposals (26)
@@ -71,15 +71,15 @@ Deferred: DX-38, DX-23, DX-25, DX-29
 
 ## Priority Recommendations
 
-| Priority | Proposal | Description | Rationale | Deps |
-|----------|----------|-------------|-----------|------|
-| **High** | DX-42 | Agent auto-identifies task intent and routes to correct workflow | Users cannot invoke skills directly | — |
-| **High** | DX-41 | Auto-trigger /review skill when Guard outputs `review_suggested` | Close VALIDATE phase loop | DX-42 |
-| **High** | DX-39 | Skill session cache, USBV SPECIFY enforcement, workflow transition | Reduce token waste | DX-42 |
-| **Medium** | DX-43 | `invar init --cursor` generates .cursorrules | Cross-platform expansion | ✅ DX-49 |
+| Priority | Proposal | Description | Rationale | Status |
+|----------|----------|-------------|-----------|--------|
+| ~~High~~ | ~~DX-42~~ | ~~Visible Workflow Routing~~ | ~~Route announcements~~ | ✅ Complete |
+| ~~High~~ | ~~DX-41~~ | ~~Auto-review on review_suggested~~ | ~~Close VALIDATE loop~~ | ✅ Complete |
+| ~~Medium~~ | ~~DX-43~~ | ~~Cross-platform distribution~~ | ~~Absorbed by DX-49~~ | ✅ Complete |
+| **High** | DX-39 | Skill caching, USBV enforcement, error guides | Reduce token waste | Deps met |
 | **Medium** | DX-37 | `invar guard --coverage` reports uncovered branches | Verification visibility | — |
 | **Low** | DX-46 | docs/ directory audit + `invar check-docs` command | Documentation maintenance | — |
-| **Low** | DX-40 | Hook intercepts incorrect tool calls | Tool enforcement | DX-42 |
+| **Low** | DX-40 | Hook intercepts incorrect tool calls | Tool enforcement | Deps met |
 | **Defer** | DX-38 | Tier 1-4 contract quality detection | High false-positive risk | — |
 | **Defer** | DX-23 | Framework callback auto-exempt from Result requirement | DX-22 already covers | — |
 | **Defer** | DX-25 | Validation error accumulation, Monoid, etc. | Non-essential major change | — |
@@ -90,16 +90,16 @@ Deferred: DX-38, DX-23, DX-25, DX-29
 | Wave | Proposals | Parallel? | Effort | Goal |
 |------|-----------|-----------|--------|------|
 | ~~0~~ | ~~DX-47, DX-48, DX-49~~ | — | — | ✅ Complete |
-| **1** | DX-42 | — | 3 days | Core auto-routing |
-| **2** | DX-43 ∥ DX-41 | ✅ Both parallel | 1-2 days | Feature completion |
+| ~~1~~ | ~~DX-42~~ | — | — | ✅ Complete |
+| ~~2~~ | ~~DX-43, DX-41~~ | — | — | ✅ Complete |
 | **3** | DX-39 | — | 1-2 days | Efficiency optimization |
 | **4** | DX-46 ∥ DX-37 | ✅ Both parallel | 1 day | Quality enhancement |
 | **5** | DX-40 | — | 0.5 day | Tool enforcement (optional) |
 | **∞** | DX-38, DX-23, DX-25, DX-29 | — | — | Deferred |
 
-**Time estimate:** Serial ~7 days, optimized parallel ~4-5 days
+**Time estimate:** ~2-3 days remaining
 
-**Critical path:** DX-42 → DX-41 → DX-39 → DX-40
+**Next:** DX-39 (Workflow Efficiency)
 
 ## Recent Changes (2025-12-26)
 
