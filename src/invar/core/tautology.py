@@ -24,6 +24,11 @@ def is_semantic_tautology(expression: str) -> tuple[bool, str]:
     - x or True (always true due to True)
     - True and x (simplifies but starts with True)
 
+    DX-38 Tier 1: Also detects obvious violations:
+    - lambda x: True (no constraint)
+    - lambda x: False (contradiction)
+    - lambda: ... (no parameters - doesn't validate function inputs)
+
     Examples:
         >>> is_semantic_tautology("lambda x: x == x")
         (True, 'x == x is always True')
@@ -35,6 +40,12 @@ def is_semantic_tautology(expression: str) -> tuple[bool, str]:
         (False, '')
         >>> is_semantic_tautology("lambda x: x or True")
         (True, 'expression contains unconditional True')
+        >>> is_semantic_tautology("lambda x: True")
+        (True, 'contract always returns True (no constraint)')
+        >>> is_semantic_tautology("lambda x: False")
+        (True, 'contract always returns False (contradiction - will always fail)')
+        >>> is_semantic_tautology("lambda: len([1,2]) > 0")
+        (True, "contract has no parameters (doesn't validate function inputs)")
     """
     if not expression.strip():
         return (False, "")
@@ -43,6 +54,12 @@ def is_semantic_tautology(expression: str) -> tuple[bool, str]:
         lambda_node = find_lambda(tree)
         if lambda_node is None:
             return (False, "")
+
+        # DX-38 Tier 1: Check for no-parameter lambda
+        args = lambda_node.args
+        if not args.args and not args.posonlyargs and not args.kwonlyargs and not args.vararg and not args.kwarg:
+            return (True, "contract has no parameters (doesn't validate function inputs)")
+
         return _check_tautology_patterns(lambda_node.body)
     except (SyntaxError, TypeError, ValueError):
         return (False, "")
@@ -51,7 +68,28 @@ def is_semantic_tautology(expression: str) -> tuple[bool, str]:
 @pre(lambda node: isinstance(node, ast.expr) and hasattr(node, '__class__'))
 @post(lambda result: isinstance(result, tuple) and len(result) == 2)
 def _check_tautology_patterns(node: ast.expr) -> tuple[bool, str]:
-    """Check for common tautology patterns in AST node."""
+    """Check for common tautology patterns in AST node.
+
+    DX-38 Tier 1: Detects obvious violations:
+    - Literal True (always passes, no constraint)
+    - Literal False (always fails, contradiction)
+    - x == x, len(x) >= 0, isinstance(x, object), x or True
+
+    Examples:
+        >>> import ast
+        >>> _check_tautology_patterns(ast.Constant(value=True))
+        (True, 'contract always returns True (no constraint)')
+        >>> _check_tautology_patterns(ast.Constant(value=False))
+        (True, 'contract always returns False (contradiction - will always fail)')
+    """
+    # DX-38 Tier 1: Literal True pattern (e.g., lambda x: True)
+    if isinstance(node, ast.Constant) and node.value is True:
+        return (True, "contract always returns True (no constraint)")
+
+    # DX-38 Tier 1: Literal False pattern (e.g., lambda x: False)
+    if isinstance(node, ast.Constant) and node.value is False:
+        return (True, "contract always returns False (contradiction - will always fail)")
+
     # Identity comparison pattern (e.g., x == x)
     if (
         isinstance(node, ast.Compare)
@@ -100,7 +138,7 @@ def _check_tautology_patterns(node: ast.expr) -> tuple[bool, str]:
     return (False, "")
 
 
-@pre(lambda file_info, config: isinstance(file_info, FileInfo))
+@pre(lambda file_info, config: len(file_info.path) > 0)
 def check_semantic_tautology(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
     """Check for semantic tautology contracts. Core files only.
 

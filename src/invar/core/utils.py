@@ -15,7 +15,7 @@ from deal import post, pre
 from invar.core.models import GuardReport, RuleConfig, RuleExclusion
 
 
-@pre(lambda report, strict: isinstance(report, GuardReport))
+@pre(lambda report, strict: report.files_checked >= 0 and report.errors >= 0)
 @post(lambda result: result in (0, 1))
 def get_exit_code(report: GuardReport, strict: bool) -> int:
     """
@@ -37,7 +37,7 @@ def get_exit_code(report: GuardReport, strict: bool) -> int:
     return 0
 
 
-@pre(lambda report, strict, doctest_passed=True, crosshair_passed=True, property_passed=True: isinstance(report, GuardReport))
+@pre(lambda report, strict, doctest_passed=True, crosshair_passed=True, property_passed=True: report.files_checked >= 0)
 @post(lambda result: result in ("passed", "failed"))
 def get_combined_status(
     report: GuardReport,
@@ -83,7 +83,7 @@ def get_combined_status(
     return "passed"
 
 
-@pre(lambda data, source: isinstance(data, dict) and isinstance(source, str))
+@pre(lambda data, source: source in ("pyproject", "invar", "default"))
 @post(lambda result: isinstance(result, dict))
 def extract_guard_section(data: dict[str, Any], source: str) -> dict[str, Any]:
     """
@@ -113,7 +113,7 @@ def extract_guard_section(data: dict[str, Any], source: str) -> dict[str, Any]:
     return result if isinstance(result, dict) else {}
 
 
-@pre(lambda config, key: isinstance(config, dict) and isinstance(key, str))
+@pre(lambda config, key: len(key) > 0)
 @post(lambda result: result is None or isinstance(result, bool))
 def _get_bool(config: dict[str, Any], key: str) -> bool | None:
     """
@@ -130,7 +130,7 @@ def _get_bool(config: dict[str, Any], key: str) -> bool | None:
     return None
 
 
-@pre(lambda config, key: isinstance(config, dict) and isinstance(key, str))
+@pre(lambda config, key: len(key) > 0)
 @post(lambda result: result is None or isinstance(result, int))
 def _get_int(config: dict[str, Any], key: str) -> int | None:
     """
@@ -147,7 +147,7 @@ def _get_int(config: dict[str, Any], key: str) -> int | None:
     return None
 
 
-@pre(lambda config, key: isinstance(config, dict) and isinstance(key, str))
+@pre(lambda config, key: len(key) > 0)
 @post(lambda result: result is None or isinstance(result, float))
 def _get_float(config: dict[str, Any], key: str) -> float | None:
     """
@@ -166,7 +166,7 @@ def _get_float(config: dict[str, Any], key: str) -> float | None:
     return None
 
 
-@pre(lambda config, key: isinstance(config, dict) and isinstance(key, str))
+@pre(lambda config, key: len(key) > 0)
 @post(lambda result: result is None or isinstance(result, list))
 def _get_str_list(config: dict[str, Any], key: str) -> list[str] | None:
     """
@@ -183,7 +183,6 @@ def _get_str_list(config: dict[str, Any], key: str) -> list[str] | None:
     return None
 
 
-@pre(lambda config: isinstance(config, dict))
 @post(lambda result: result is None or isinstance(result, list))
 def _parse_rule_exclusions(config: dict[str, Any]) -> list[RuleExclusion] | None:
     """
@@ -207,28 +206,27 @@ def _parse_rule_exclusions(config: dict[str, Any]) -> list[RuleExclusion] | None
     return exclusions if exclusions else None
 
 
-@pre(lambda config: isinstance(config, dict))
 @post(lambda result: result is None or isinstance(result, dict))
 def _parse_severity_overrides(config: dict[str, Any]) -> dict[str, str] | None:
     """
     Parse severity_overrides from config (merge with defaults).
 
     >>> _parse_severity_overrides({"severity_overrides": {"foo": "off"}})
-    {'redundant_type_contract': 'off', 'foo': 'off'}
+    {'redundant_type_contract': 'warning', 'foo': 'off'}
     >>> _parse_severity_overrides({}) is None
     True
     """
     raw = config.get("severity_overrides")
     if not isinstance(raw, dict):
         return None
-    defaults: dict[str, str] = {"redundant_type_contract": "off"}
+    # DX-38 Tier 2: redundant_type_contract enabled by default
+    defaults: dict[str, str] = {"redundant_type_contract": "warning"}
     for k, v in raw.items():
         if isinstance(k, str) and isinstance(v, str):
             defaults[str(k)] = str(v)
     return defaults
 
 
-@pre(lambda guard_config: isinstance(guard_config, dict))
 @post(lambda result: isinstance(result, RuleConfig))
 def parse_guard_config(guard_config: dict[str, Any]) -> RuleConfig:
     """
@@ -286,7 +284,7 @@ def parse_guard_config(guard_config: dict[str, Any]) -> RuleConfig:
         return RuleConfig()
 
 
-@pre(lambda file_path, patterns: isinstance(file_path, str) and isinstance(patterns, list))
+@pre(lambda file_path, patterns: len(file_path) > 0)
 def matches_pattern(file_path: str, patterns: list[str]) -> bool:
     """
     Check if a file path matches any of the glob patterns.
@@ -316,7 +314,7 @@ def matches_pattern(file_path: str, patterns: list[str]) -> bool:
     return False
 
 
-@pre(lambda file_path, prefixes: isinstance(file_path, str) and isinstance(prefixes, list))
+@pre(lambda file_path, prefixes: len(file_path) > 0)
 def matches_path_prefix(file_path: str, prefixes: list[str]) -> bool:
     """
     Check if file_path starts with any of the given prefixes.
@@ -386,7 +384,7 @@ def match_glob_pattern(file_path: str, pattern: str) -> bool:
     return False
 
 
-@pre(lambda file_path, config: isinstance(config, RuleConfig))
+@pre(lambda file_path, config: len(file_path) > 0)
 def get_excluded_rules(file_path: str, config: RuleConfig) -> set[str]:
     """
     Get the set of rules to exclude for a given file path.

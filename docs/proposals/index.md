@@ -7,17 +7,17 @@ This directory contains design proposals for Invar development.
 - `DX-XX-name.md` — Developer Experience improvements
 - Completed/archived proposals in `completed/` subdirectory
 
-## Active Proposals (11)
+## Active Proposals (8)
 
 | ID | Name | Status | Description |
 |----|------|--------|-------------|
-| DX-23 | entry-point-detection | Defer | Entry point detection & Monad Runner pattern |
+| DX-23 | entry-point-detection | ✅ Complete | Entry point detection & Monad Runner pattern |
 | DX-25 | functional-patterns | Defer | Functional patterns enhancement |
 | DX-29 | pure-content-detection | Defer | Pure content detection (`@invar:module` marker) |
 | DX-37 | coverage-integration | Draft | Coverage integration for Guard |
 | DX-38 | contract-quality-rules | Defer | Contract quality rules (Tier 1-4) |
-| DX-39 | workflow-efficiency | Revised | Error Pattern Guide (scope reduced) |
-| DX-40 | smart-tool-redirect-hook | Draft | Smart tool redirect hook (from DX-16) |
+| DX-39 | workflow-efficiency | ✅ Complete | Error Pattern Guide + bug fixes |
+| DX-40 | smart-tool-redirect-hook | ✗ Dropped | Contradicts Lesson #19 (PreToolUse ineffective) |
 | DX-41 | automatic-review-orchestration | ✅ Complete | Automatic review orchestration (from DX-31+35) |
 | DX-42 | workflow-auto-routing | ✅ Complete | Visible Workflow Routing |
 | DX-43 | cross-platform-distribution | ✅ Complete | Absorbed by DX-49 |
@@ -55,19 +55,19 @@ This directory contains design proposals for Invar development.
 ## Dependency Graph
 
 ```
-      ✅ DX-49 (SSOT)                 DX-42 (Auto-routing)
+      ✅ DX-49 (SSOT)                 ✅ DX-42 (Auto-routing)
               │                               │
               ▼                       ┌───────┴───────┐
-      DX-43 (Cross-platform)          ▼               ▼
-                              DX-41 (Auto-review)  DX-39 (Efficiency)
+      ✅ DX-43 (Cross-platform)       ▼               ▼
+                              ✅ DX-41 (Auto-review)  ✅ DX-39 (Efficiency)
                                       │
                                       ▼
-                              DX-40 (Tool redirect)
+                              ✗ DX-40 (Dropped)
 
-Completed: DX-47, DX-48, DX-49
+Completed: DX-47, DX-48, DX-49, DX-41, DX-42, DX-43, DX-39, DX-46, DX-23
+Dropped: DX-40 (contradicts Lesson #19)
 Independent: DX-37 (Coverage)
-Completed: DX-46 (docs/ audit)
-Deferred: DX-38, DX-23, DX-25, DX-29
+Deferred: DX-38, DX-25, DX-29
 ```
 
 ## Priority Recommendations
@@ -77,12 +77,12 @@ Deferred: DX-38, DX-23, DX-25, DX-29
 | ~~High~~ | ~~DX-42~~ | ~~Visible Workflow Routing~~ | ~~Route announcements~~ | ✅ Complete |
 | ~~High~~ | ~~DX-41~~ | ~~Auto-review on review_suggested~~ | ~~Close VALIDATE loop~~ | ✅ Complete |
 | ~~Medium~~ | ~~DX-43~~ | ~~Cross-platform distribution~~ | ~~Absorbed by DX-49~~ | ✅ Complete |
-| **High** | DX-39 | Error Pattern Guide + bug fix (scope reduced) | Faster error recovery | Deps met |
+| ~~High~~ | ~~DX-39~~ | ~~Error Pattern Guide + bug fix~~ | ~~Faster error recovery~~ | ✅ Complete |
 | **Medium** | DX-37 | `invar guard --coverage` reports uncovered branches | Verification visibility | — |
 | ~~Low~~ | ~~DX-46~~ | ~~docs/ directory audit~~ | ~~Documentation maintenance~~ | ✅ Complete |
-| **Low** | DX-40 | Hook intercepts incorrect tool calls | Tool enforcement | Deps met |
+| ~~Low~~ | ~~DX-40~~ | ~~Hook intercepts incorrect tool calls~~ | ~~Contradicts Lesson #19~~ | ✗ Dropped |
 | **Defer** | DX-38 | Tier 1-4 contract quality detection | High false-positive risk | — |
-| **Defer** | DX-23 | Framework callback auto-exempt from Result requirement | DX-22 already covers | — |
+| ~~Defer~~ | ~~DX-23~~ | ~~Framework callback auto-exempt from Result requirement~~ | ~~Already implemented~~ | ✅ Complete |
 | **Defer** | DX-25 | Validation error accumulation, Monoid, etc. | Non-essential major change | — |
 | **Defer** | DX-29 | `@invar:module` explicit marker | DX-22 sufficient | — |
 
@@ -93,29 +93,43 @@ Deferred: DX-38, DX-23, DX-25, DX-29
 | ~~0~~ | ~~DX-47, DX-48, DX-49~~ | — | — | ✅ Complete |
 | ~~1~~ | ~~DX-42~~ | — | — | ✅ Complete |
 | ~~2~~ | ~~DX-43, DX-41~~ | — | — | ✅ Complete |
-| **3** | DX-39 | — | 0.5 day | Error Pattern Guide (revised) |
+| ~~3~~ | ~~DX-39~~ | — | — | ✅ Complete |
 | ~~4~~ | ~~DX-46~~ ∥ DX-37 | — | 0.5 day | ✅ DX-46 Complete |
-| **5** | DX-40 | — | 0.5 day | Tool enforcement (optional) |
-| **∞** | DX-38, DX-23, DX-25, DX-29 | — | — | Deferred |
+| ~~5~~ | ~~DX-40~~ | — | — | ✗ Dropped (Lesson #19) |
+| **∞** | DX-38, DX-25, DX-29 | — | — | Deferred |
 
-**Time estimate:** ~1.5 days remaining
+**Time estimate:** ~0.5 day remaining (DX-37 only)
 
-**Next:** DX-39 (Error Pattern Guide)
+**Next:** DX-37 (Coverage Integration)
 
 ## Recent Changes (2025-12-27)
 
-### Revised
+### Completed
+- **DX-23** — Already fully implemented (discovered during review)
+  - ✅ `is_entry_point()` detection function
+  - ✅ `ENTRY_POINT_DECORATORS` (Flask, FastAPI, Typer, Click, pytest, Django)
+  - ✅ `@shell:entry` explicit marker support
+  - ✅ `shell_result` rule skips entry points
+  - ✅ `entry_point_too_thick` rule (max 15 lines)
+  - ✅ `RuleConfig.entry_max_lines` configuration
+- **DX-39** — All items implemented
+  - ✅ SKILL.md extensions bug fixed
+  - ✅ Error Pattern Guide added to develop/SKILL.md (lines 129-151)
+  - ✅ Guard suggestion integration documented (line 146-147)
+
+### Dropped
+- **DX-40** — Contradicts Lesson #19
+  - PreToolUse hooks are ineffective (decision already made when hook fires)
+  - Original attempt with Read/.py was removed after reflection
+  - "Pre-commit blocks are effective; PreToolUse hooks are noise"
+
+### Revised (earlier)
 - **DX-39** — Scope reduced after analysis
   - **Keep:** Error Pattern Guide, SKILL.md extensions bug fix
   - **Defer:** Skill Caching (Claude Code lacks session state)
   - **Downgrade:** USBV Enforcement → guidance only
   - **Defer:** Workflow Metrics (unclear ROI)
   - **Drop:** Output Style (loses Anthropic default behaviors)
-  - Effort: 1-2 days → 0.5 day
-
-### Discovered
-- **SKILL.md extensions bug** — develop/SKILL.md has ~200 lines duplicate content
-- **Output Style risk** — Even with `keep-coding-instructions: true`, loses "efficient output" instructions
 
 ## Recent Changes (2025-12-26)
 

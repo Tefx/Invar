@@ -2,11 +2,33 @@
 
 > **"Don't tell agents what to do. Make wrong choices impossible."**
 
-**Status:** Draft
+**Status:** ✗ Dropped (2025-12-27)
 **Created:** 2025-12-25
 **Origin:** Extracted from DX-16 Phase 2
 **Effort:** Low
 **Risk:** Low
+
+## Drop Reason
+
+This proposal contradicts **Lesson #19** from project experience:
+
+> **Lesson #19:** 干预时机决定效果。提交前阻止 = 有效。操作后提醒 = 噪音。
+> "Pre-commit blocks are effective; PreToolUse hooks are noise (decision already made)"
+
+The same mechanism (PreToolUse hook) was previously attempted for Read/.py files and removed after reflection. The fundamental problem is timing:
+
+```
+Decision timeline:
+1. Agent decides to use pytest     ← Decision made HERE
+2. Agent calls Bash("pytest ...")
+3. Hook triggers                   ← Hook fires HERE (too late!)
+4. Hook blocks and suggests alternative
+5. Agent must re-decide            ← Not guaranteed to choose correctly
+```
+
+The hook cannot prevent the agent from **choosing** pytest; it can only prevent **executing** pytest. By then, the decision has already been made.
+
+---
 
 ## Problem Statement
 
