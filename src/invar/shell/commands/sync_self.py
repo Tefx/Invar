@@ -3,15 +3,23 @@ Sync-self command for Invar.
 
 Shell module: Special command for updating Invar's own project files.
 DX-49: Uses MCP syntax and injects project-additions.md content.
+
+Region naming:
+- CLAUDE.md: managed/user/project regions
+- Skills: skill/extensions regions (semantic naming)
 """
 
 from __future__ import annotations
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import typer
 from returns.result import Failure
 from rich.console import Console
+
+if TYPE_CHECKING:
+    from invar.core.template_parser import ParsedFile
 
 from invar.shell.template_engine import (
     get_templates_dir,
@@ -23,6 +31,37 @@ from invar.shell.template_engine import (
 )
 
 console = Console()
+
+# Region name mappings: (primary_region, user_region)
+# Primary region is overwritten, user region is preserved
+REGION_SCHEMES = {
+    "managed": ("managed", "user"),     # CLAUDE.md pattern
+    "skill": ("skill", "extensions"),   # Skill template pattern
+}
+
+
+# @shell_orchestration: Region scheme lookup for sync-self command
+def _find_primary_region(parsed: ParsedFile) -> tuple[str, str] | None:
+    """Find primary region name and its corresponding user region.
+
+    Returns (primary_name, user_name) or None if no known scheme found.
+
+    Examples:
+        >>> from invar.core.template_parser import ParsedFile, Region
+        >>> p = ParsedFile(regions={"managed": Region("managed", 0, 10, "")})
+        >>> _find_primary_region(p)
+        ('managed', 'user')
+        >>> p2 = ParsedFile(regions={"skill": Region("skill", 0, 10, "")})
+        >>> _find_primary_region(p2)
+        ('skill', 'extensions')
+        >>> p3 = ParsedFile(regions={})
+        >>> _find_primary_region(p3) is None
+        True
+    """
+    for _, (primary_name, user_name) in REGION_SCHEMES.items():
+        if primary_name in parsed.regions:
+            return (primary_name, user_name)
+    return None
 
 
 # @shell_complexity: Sync-self with project injection and MCP syntax
@@ -100,11 +139,13 @@ def sync_self(
 
         new_content = render_result.unwrap()
 
-        # Parse new content for managed region
+        # Parse new content for primary region (managed or skill)
         new_parsed = parse_invar_regions(new_content)
-        if "managed" not in new_parsed.regions:
-            console.print(f"[yellow]Warning:[/yellow] No managed region in template: {template_rel}")
+        region_scheme = _find_primary_region(new_parsed)
+        if region_scheme is None:
+            console.print(f"[yellow]Warning:[/yellow] No managed/skill region in template: {template_rel}")
             continue
+        primary_region, user_region = region_scheme
 
         # Check if destination exists
         if not dest_file.exists():
@@ -128,17 +169,17 @@ def sync_self(
         parsed = parse_invar_regions(existing_content)
 
         if not parsed.has_regions:
-            # No regions - wrap existing content in user region, add managed from template
-            managed_region = new_parsed.regions["managed"]
-            managed_content = managed_region.content
+            # No regions - wrap existing content in user region, add primary from template
+            template_region = new_parsed.regions[primary_region]
+            template_content = template_region.content
             # Preserve version attribute from template
-            if managed_region.version:
-                start_tag = f'<!--invar:managed version="{managed_region.version}"-->'
+            if template_region.version:
+                start_tag = f'<!--invar:{primary_region} version="{template_region.version}"-->'
             else:
-                start_tag = "<!--invar:managed-->"
+                start_tag = f"<!--invar:{primary_region}-->"
             wrapped_content = (
-                f"{start_tag}\n{managed_content}\n<!--/invar:managed-->\n\n"
-                f"<!--invar:user-->\n{existing_content}\n<!--/invar:user-->\n"
+                f"{start_tag}\n{template_content}\n<!--/invar:{primary_region}-->\n\n"
+                f"<!--invar:{user_region}-->\n{existing_content}\n<!--/invar:{user_region}-->\n"
             )
             if dry_run:
                 console.print(f"[cyan]Would add regions to[/cyan] {dest_rel}")
@@ -148,9 +189,12 @@ def sync_self(
             updated_files.append(dest_rel)
             continue
 
-        # Build updates
+        # Build updates - use the primary region from template
         updates: dict[str, str] = {}
-        updates["managed"] = new_parsed.regions["managed"].content
+        # Map template region to existing file region (may have different names during migration)
+        existing_primary = _find_primary_region(parsed)
+        existing_primary_name = existing_primary[0] if existing_primary else primary_region
+        updates[existing_primary_name] = new_parsed.regions[primary_region].content
 
         # Inject project additions if CLAUDE.md and project region exists
         if dest_rel == "CLAUDE.md" and "project" in parsed.regions and project_additions:

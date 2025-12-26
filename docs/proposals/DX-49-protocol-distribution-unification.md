@@ -2,9 +2,10 @@
 
 > **"One source, one truth, everywhere."**
 
-**Status:** Draft
+**Status:** Implemented (Phase 1-5)
 **Created:** 2025-12-26
 **Updated:** 2025-12-26
+**Implementation Notes:** Skill templates use `skill/extensions` region naming (semantic, not `managed/user`)
 **Effort:** 8.5 days
 **Risk:** Medium
 **Dependencies:** DX-47 (command/skill naming) - Complete
