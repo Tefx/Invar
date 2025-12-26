@@ -141,7 +141,7 @@ Quick reference for resolving common Guard errors:
 | `redundant_type_contract` | Contract only checks types | Add semantic constraints (bounds, relationships) |
 | `partial_contract` | Only some params validated | Validate all params or document why partial |
 | `file_size` | File > 500 lines | Extract functions to new module |
-| `shell_no_result` | Shell function missing Result | Return `Result[T, E]` from `returns` |
+| `shell_result` | Shell function missing Result | Return `Result[T, E]` from `returns` |
 
 **Tip:** For `missing_contract`, Guard automatically suggests contracts based on parameter types.
 Check the "Suggested:" line in Guard output.

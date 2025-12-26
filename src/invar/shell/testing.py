@@ -129,8 +129,8 @@ def run_doctests_on_files(
     if not files:
         return Success({"status": "skipped", "reason": "no files", "files": []})
 
-    # Filter to Python files only
-    py_files = [f for f in files if f.suffix == ".py" and f.exists()]
+    # Filter to Python files only (exclude conftest.py - pytest config, not test)
+    py_files = [f for f in files if f.suffix == ".py" and f.exists() and f.name != "conftest.py"]
     if not py_files:
         return Success({"status": "skipped", "reason": "no Python files", "files": []})
 
