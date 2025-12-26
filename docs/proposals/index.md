@@ -16,7 +16,7 @@ This directory contains design proposals for Invar development.
 | DX-29 | pure-content-detection | Defer | Pure content detection (`@invar:module` marker) |
 | DX-37 | coverage-integration | Draft | Coverage integration for Guard |
 | DX-38 | contract-quality-rules | Defer | Contract quality rules (Tier 1-4) |
-| DX-39 | workflow-efficiency | Draft | Workflow efficiency (merged DX-27) |
+| DX-39 | workflow-efficiency | Revised | Error Pattern Guide (scope reduced) |
 | DX-40 | smart-tool-redirect-hook | Draft | Smart tool redirect hook (from DX-16) |
 | DX-41 | automatic-review-orchestration | ✅ Complete | Automatic review orchestration (from DX-31+35) |
 | DX-42 | workflow-auto-routing | ✅ Complete | Visible Workflow Routing |
@@ -77,7 +77,7 @@ Deferred: DX-38, DX-23, DX-25, DX-29
 | ~~High~~ | ~~DX-42~~ | ~~Visible Workflow Routing~~ | ~~Route announcements~~ | ✅ Complete |
 | ~~High~~ | ~~DX-41~~ | ~~Auto-review on review_suggested~~ | ~~Close VALIDATE loop~~ | ✅ Complete |
 | ~~Medium~~ | ~~DX-43~~ | ~~Cross-platform distribution~~ | ~~Absorbed by DX-49~~ | ✅ Complete |
-| **High** | DX-39 | Skill caching, USBV enforcement, error guides | Reduce token waste | Deps met |
+| **High** | DX-39 | Error Pattern Guide + bug fix (scope reduced) | Faster error recovery | Deps met |
 | **Medium** | DX-37 | `invar guard --coverage` reports uncovered branches | Verification visibility | — |
 | ~~Low~~ | ~~DX-46~~ | ~~docs/ directory audit~~ | ~~Documentation maintenance~~ | ✅ Complete |
 | **Low** | DX-40 | Hook intercepts incorrect tool calls | Tool enforcement | Deps met |
@@ -93,14 +93,29 @@ Deferred: DX-38, DX-23, DX-25, DX-29
 | ~~0~~ | ~~DX-47, DX-48, DX-49~~ | — | — | ✅ Complete |
 | ~~1~~ | ~~DX-42~~ | — | — | ✅ Complete |
 | ~~2~~ | ~~DX-43, DX-41~~ | — | — | ✅ Complete |
-| **3** | DX-39 | — | 1-2 days | Efficiency optimization |
+| **3** | DX-39 | — | 0.5 day | Error Pattern Guide (revised) |
 | ~~4~~ | ~~DX-46~~ ∥ DX-37 | — | 0.5 day | ✅ DX-46 Complete |
 | **5** | DX-40 | — | 0.5 day | Tool enforcement (optional) |
 | **∞** | DX-38, DX-23, DX-25, DX-29 | — | — | Deferred |
 
-**Time estimate:** ~2-3 days remaining
+**Time estimate:** ~1.5 days remaining
 
-**Next:** DX-39 (Workflow Efficiency)
+**Next:** DX-39 (Error Pattern Guide)
+
+## Recent Changes (2025-12-27)
+
+### Revised
+- **DX-39** — Scope reduced after analysis
+  - **Keep:** Error Pattern Guide, SKILL.md extensions bug fix
+  - **Defer:** Skill Caching (Claude Code lacks session state)
+  - **Downgrade:** USBV Enforcement → guidance only
+  - **Defer:** Workflow Metrics (unclear ROI)
+  - **Drop:** Output Style (loses Anthropic default behaviors)
+  - Effort: 1-2 days → 0.5 day
+
+### Discovered
+- **SKILL.md extensions bug** — develop/SKILL.md has ~200 lines duplicate content
+- **Output Style risk** — Even with `keep-coding-instructions: true`, loses "efficient output" instructions
 
 ## Recent Changes (2025-12-26)
 

@@ -148,6 +148,24 @@ For multiple tasks:
 | Contract violation | Report, suggest `/investigate` |
 | Repeated failure | Stop, ask user |
 
+## Common Guard Errors
+
+Quick reference for resolving common Guard errors:
+
+| Error | Cause | Quick Fix |
+|-------|-------|-----------|
+| `forbidden_import: io` | I/O library in Core | Use `iter(s.splitlines())` not `io.StringIO` |
+| `forbidden_import: os` | os module in Core | Accept `Path` as parameter instead |
+| `forbidden_import: pathlib` | pathlib in Core | Accept `Path` or `str` as parameter |
+| `internal_import` | Import inside function | Move import to module top |
+| `missing_contract` | Core function without @pre/@post | Add contract before implementation |
+| `empty_contract` | Contract with no condition | Add meaningful condition |
+| `file_size` | File > 500 lines | Extract functions to new module |
+| `shell_no_result` | Shell function missing Result | Return `Result[T, E]` from `returns` |
+
+**Tip:** For `missing_contract`, Guard automatically suggests contracts based on parameter types.
+Check the "Suggested:" line in Guard output.
+
 ## Timeout Handling
 
 | Threshold | Duration | Action |

@@ -2,256 +2,293 @@
 
 > **"The best process is the one you don't notice."**
 
-**Status:** Draft
+**Status:** Revised (2025-12-27)
 **Created:** 2025-12-25
-**Updated:** 2025-12-25
+**Updated:** 2025-12-27
 **Origin:** Meta-review of DX-33/35/36 development process, merged DX-27
-**Effort:** Medium
+**Effort:** Low (revised from Medium)
 **Risk:** Low
+
+## Revision Summary (2025-12-27)
+
+After DX-41, DX-42, DX-46, DX-49 completion, this proposal was revised:
+
+| Solution | Original | Revised | Rationale |
+|----------|----------|---------|-----------|
+| Skill Caching | Medium priority | **Defer** | Claude Code lacks session state |
+| USBV Enforcement | High priority | **Downgrade to guidance** | Enforcement complex, guidance sufficient |
+| Auto-Transition | Low priority | **Complete** | DX-42 Simple Task Detection covers this |
+| Error Pattern Guide | High priority | **Keep** | Still needed |
+| Workflow Metrics | Low priority | **Defer** | Unclear ROI, depends on deferred features |
+| Output Style | Medium priority | **Drop** | Risk > benefit (loses efficient output instructions) |
+
+**New items added:**
+- SKILL.md extensions bug fix
+- Guard suggestion integration
 
 ## Problem Statement
 
-The new workflow skill system (DX-35) provides structure but introduces friction:
+The workflow skill system provides structure but has remaining friction:
 
-1. **Skill content re-injection** - Full SKILL.md loaded on every `/develop` call (~90 lines)
-2. **USBV steps invisible** - SPECIFY phase often skipped in practice
-3. **Manual workflow transitions** - User must explicitly request next phase
-4. **Error recovery unclear** - Common Guard errors lack quick-fix guidance
+1. ~~**Skill content re-injection**~~ — Defer (Claude Code lacks session state)
+2. ~~**USBV steps invisible**~~ — Current ~70% compliance acceptable
+3. ~~**Manual workflow transitions**~~ — Solved by DX-42 Simple Task Detection
+4. **Error recovery unclear** — Common Guard errors lack quick-fix guidance (**Active**)
 
-## Observations from DX-33/35/36 Development
+## Current State (Post DX-41/42/49)
 
-### What Worked Well
+### Already Implemented
 
-| Feature | Benefit |
-|---------|---------|
-| `/propose` decision tables | Clear options with trade-offs |
-| Check-In / Final markers | Visible session boundaries |
-| TodoWrite integration | Progress tracking across tasks |
-| Severity-based exit | Know when to stop |
+| Feature | By | Status |
+|---------|-------|--------|
+| Routing announcements | DX-42 | ✅ In SKILL.md |
+| Simple task detection | DX-42 | ✅ In SKILL.md |
+| Auto-review on review_suggested | DX-41 | ✅ In SKILL.md |
+| Check-In/Final protocol | DX-49 | ✅ In CLAUDE.md + MCP |
 
-### What Needs Improvement
+### Still Needed
 
-| Issue | Impact | Frequency |
-|-------|--------|-----------|
-| Skill re-injection | ~2K tokens wasted per call | Every workflow switch |
-| Missing SPECIFY | Contracts added reactively | ~50% of functions |
-| Extra user input for transitions | Breaks flow | Every phase change |
-| Guard error confusion | 2-3 fix iterations | Common errors |
+| Feature | Priority | Status |
+|---------|----------|--------|
+| Error Pattern Guide | High | Not implemented |
+| SKILL.md extensions bug | High | Bug discovered |
+| Guard suggestion integration | Medium | Not linked |
 
-## Proposed Solutions
+## Active Solutions
 
-### 1. Skill Caching (Context Efficiency)
+### 1. SKILL.md Extensions Bug Fix (NEW)
 
-**Current:** Full SKILL.md injected every time
-```
-User: /develop
-System: [91 lines of develop/SKILL.md]
-```
+**Problem:** `develop/SKILL.md` extensions region contains duplicate content (~200 lines).
 
-**Proposed:** Session-level caching via frontmatter
-```yaml
+```markdown
+<!--invar:skill version="5.0"-->
+[... skill content ...]
+<!--/invar:skill-->
+
+<!--invar:extensions-->
 ---
-name: develop
-cache: session  # Only inject once per session
-refresh: on_error  # Re-inject if workflow fails
+name: develop              ← BUG: Duplicate frontmatter
+description: ...           ← BUG: Entire skill duplicated
 ---
+# Development Mode
+[... ~200 lines duplicate ...]
+<!--/invar:extensions-->
 ```
 
-**Implementation:**
-- Track injected skills in session state
-- Skip re-injection if already loaded
-- Force refresh on explicit `/develop!` or after errors
+**Root cause:** Unknown (manual edit or early sync-self bug).
 
-**Estimated savings:** ~2K tokens per workflow switch
+**Fix:** Clear extensions region, verify sync-self logic.
 
-### 2. USBV Enforcement (Quality)
+**Effort:** 5 minutes
 
-**Current:** SPECIFY often skipped
-```
-□ [UNDERSTAND] Add validation
-[jumps directly to code]
-```
+### 2. Error Pattern Guide
 
-**Proposed:** Require SPECIFY checkpoint for Core functions
-```
-□ [UNDERSTAND] Add validation to parse_source
-□ [SPECIFY] Contract design
-  @pre(lambda source: len(source.strip()) > 0)
-  Doctest: >>> parse_source("   ") → PreContractError
-□ [BUILD] Implementation
-□ [VALIDATE] Guard pass
-```
-
-**Implementation:**
-- Detect Core file modifications
-- Require explicit SPECIFY block before BUILD
-- Skip for Shell files (less strict)
-
-**Configuration:**
-```toml
-[tool.invar.workflow]
-require_specify = "core"  # "core" | "all" | "none"
-```
-
-### 3. Auto-Transition (Flow)
-
-**Current:** Manual phase transitions
-```
-Claude: **Recommendation:** /develop
-        **Next step?**
-User: run /develop  ← extra input
-```
-
-**Proposed:** Optional auto-transition
-```
-Claude: **Recommendation:** /develop
-        [Auto-transitioning in 3s... type 'stop' to cancel]
-
-        Entering /develop for: ...
-```
-
-**Implementation:**
-- Add `auto_transition` config option
-- Default: off (preserve current behavior)
-- When on: auto-proceed after recommendation
-- Always show transition, allow interrupt
-
-**Configuration:**
-```toml
-[tool.invar.workflow]
-auto_transition = false  # true to enable
-transition_delay = 3     # seconds to wait
-```
-
-### 4. Error Pattern Guide (Recovery)
-
-**Current:** Raw Guard errors
+**Current:** Raw Guard errors without guidance
 ```
 ERROR: forbidden_import - Imports 'io' (forbidden in Core)
 [user must figure out the fix]
 ```
 
-**Proposed:** Quick-fix suggestions in SKILL.md
-```markdown
-## Common Errors & Fixes
+**Proposed:** Quick-fix table in develop/SKILL.md
 
-| Error | Pattern | Quick Fix |
-|-------|---------|-----------|
-| `forbidden_import: io` | `io.StringIO` in Core | Use `iter(s.splitlines())` |
-| `forbidden_import: os` | `os.path` in Core | Accept `Path` as parameter |
+```markdown
+## Common Guard Errors
+
+| Error | Cause | Quick Fix |
+|-------|-------|-----------|
+| `forbidden_import: io` | I/O in Core | Use `iter(s.splitlines())` |
+| `forbidden_import: os` | os.path in Core | Accept `Path` as parameter |
 | `internal_import` | Import inside function | Move to module top |
-| `missing_contract` | New Core function | Add `@pre`/`@post` before impl |
+| `missing_contract` | Core function without contract | Add `@pre`/`@post` before impl |
 | `file_size` | File > 500 lines | Extract to new module |
+| `shell_no_result` | Shell function missing Result | Return `Result[T, E]` |
 ```
 
 **Implementation:**
-- Add error patterns section to develop/SKILL.md
-- Guard could emit fix hints in JSON output
-- Agent matches error → pattern → fix
+- Add to develop/SKILL.md template
+- Run sync-self to propagate
 
-### 5. Workflow Metrics (Visibility)
+**Effort:** Low
 
-Track workflow effectiveness:
+### 3. Guard Suggestion Integration (NEW)
 
+**Current state:** `suggestions.py` generates smart contract suggestions:
+
+```python
+generate_contract_suggestion("(x: int, y: int) -> int")
+# → '@pre(lambda x, y: x >= 0 and y >= 0)'
+
+generate_pattern_options("(x: int, y: str) -> int")
+# → 'Patterns: x >= 0 | x > 0 | x != 0, len(y) > 0 | y | y.strip()'
+```
+
+But these aren't linked from the Error Pattern Guide.
+
+**Proposed:** Add reference in Error Pattern Guide:
+
+```markdown
+| `missing_contract` | Core function without contract | See Guard "Suggested:" output |
+```
+
+Guard already outputs:
+```
+ERROR: missing_contract at src/core/parser.py:25 (parse_source)
+  Suggested: @pre(lambda source, path: len(source.strip()) > 0)
+  Patterns: len(source) > 0 | source | source.strip()
+```
+
+**Effort:** Minimal (documentation link)
+
+## Deferred Solutions
+
+### Skill Caching — Defer
+
+**Original proposal:**
+```yaml
+---
+name: develop
+cache: session      # Only inject once per session
+refresh: on_error   # Re-inject if workflow fails
+---
+```
+
+**Why defer:**
+
+| Issue | Detail |
+|-------|--------|
+| **No session state** | Claude Code has no native session persistence mechanism |
+| **Custom frontmatter not parsed** | Claude Code ignores unknown frontmatter fields |
+| **Implementation complexity** | Would require MCP server extension or external state |
+| **Limited benefit** | ~2K tokens/call, but 200K context makes 1% savings low priority |
+
+**Alternative:** Agent can self-manage via `<!--invar:skill-->` markers.
+
+### USBV Enforcement — Downgrade to Guidance
+
+**Original proposal:**
+```toml
+[tool.invar.workflow]
+require_specify = "core"  # Enforce SPECIFY before BUILD
+```
+
+**Why downgrade:**
+
+| Issue | Detail |
+|-------|--------|
+| **Enforcement difficult** | Requires Agent execution flow interception |
+| **False positive risk** | Simple one-line fixes would trigger unnecessary SPECIFY |
+| **Current compliance acceptable** | ~70% SPECIFY compliance observed |
+| **ROI questionable** | High implementation cost for ~20% improvement |
+
+**Current state:** SKILL.md guidance is sufficient. SPECIFY section clearly documented.
+
+### Workflow Metrics — Defer
+
+**Original proposal:**
 ```markdown
 ## Session Summary
-
 | Metric | Value |
 |--------|-------|
-| Workflows used | /propose → /develop |
 | USBV compliance | 3/4 functions specified first |
 | Guard iterations | 2.5 avg per function |
-| Context efficiency | 85% (skill cached) |
 ```
 
-**Implementation:**
-- Track in session state
-- Display in Final output
-- Optional: persist for trend analysis
+**Why defer:**
 
-### 6. Output Style Protocol Entry (from DX-27)
+| Issue | Detail |
+|-------|--------|
+| **Data collection difficult** | Requires session-wide state tracking |
+| **No clear action** | Metrics are informational, no improvement action defined |
+| **Dependencies deferred** | "Context efficiency" depends on Skill Caching |
 
-**Problem:** CLAUDE.md is injected as user message, not system prompt. Check-In/Final can be "forgotten" as context grows.
+### Output Style Protocol Entry — Drop
 
-**Solution:** Use Claude Code Output Style for system-level enforcement:
-
+**Original proposal:**
 ```markdown
 # .claude/output-styles/invar-protocol.md
 ---
 name: Invar Protocol
-description: Check-In/Final enforcement
 keep-coding-instructions: true
 ---
-
-## Invar Protocol
-
-First message: ✓ Check-In: guard PASS | top: <entry1>, <entry2>
-Last message: ✓ Final: guard PASS | <errors>, <warnings>
-
-Execute invar_guard + invar_map, show one-line summary.
-No visible check-in = Session not started.
 ```
 
-**Implementation:**
-- Create output style in `.claude/output-styles/`
-- Update `.claude/settings.json` with `"outputStyle": "invar-protocol"`
-- `invar init --claude` auto-deploys this
+**Why drop:**
 
-**Expected effect:**
-| Metric | Without | With |
-|--------|---------|------|
-| Check-In compliance | ~50% | ~85% |
-| Final compliance | ~30% | ~75% |
+| Issue | Detail |
+|-------|--------|
+| **Loses default behaviors** | Even with `keep-coding-instructions: true`, loses "efficient output" instructions |
+| **Risk > benefit** | 50%→85% compliance improvement not worth losing Anthropic optimizations |
+| **Current enforcement sufficient** | MCP Server instructions already enforce Check-In at system level |
+
+**Documentation reference:**
+> "All output styles exclude instructions for efficient output (like responding concisely)"
+> — Claude Code Output Styles documentation
 
 ## Implementation Plan
 
 | Phase | Feature | Effort | Priority |
 |-------|---------|--------|----------|
-| 1 | Error Pattern Guide | Low | High |
-| 2 | USBV Enforcement | Medium | High |
-| 3 | Skill Caching | Medium | Medium |
-| 4 | Auto-Transition | Low | Low |
-| 5 | Workflow Metrics | Medium | Low |
-| 6 | Output Style Protocol Entry | Low | Medium |
+| **0** | SKILL.md extensions bug fix | 5 min | Critical |
+| **1** | Error Pattern Guide | Low | High |
+| **2** | Guard suggestion integration | Minimal | Medium |
+| ∞ | Skill Caching | — | Defer |
+| ∞ | USBV Enforcement | — | Downgrade |
+| ∞ | Workflow Metrics | — | Defer |
+| ✗ | Output Style | — | Drop |
 
-### Phase 1: Error Pattern Guide (Quick Win)
+**Total effort:** ~0.5 day (revised from 1-2 days)
 
-Add to `.claude/skills/develop/SKILL.md`:
+### Phase 0: Bug Fix
+
+```bash
+# Option A: Manual fix
+# Edit .claude/skills/develop/SKILL.md, clear extensions region
+
+# Option B: Regenerate
+invar sync-self
+```
+
+### Phase 1: Error Pattern Guide
+
+Add to `src/invar/templates/skills/develop/SKILL.md.jinja`:
 
 ```markdown
 ## Common Guard Errors
 
-### forbidden_import
-**Cause:** I/O library used in Core module
-**Fix:**
-- Accept data as parameter instead of reading
-- Use iterator patterns: `iter(s.splitlines())` not `io.StringIO(s)`
+| Error | Cause | Quick Fix |
+|-------|-------|-----------|
+| `forbidden_import: io` | I/O library in Core | Use `iter(s.splitlines())` not `io.StringIO` |
+| `forbidden_import: os` | os module in Core | Accept `Path` as parameter |
+| `internal_import` | Import inside function | Move to module top |
+| `missing_contract` | Core function without @pre/@post | See Guard "Suggested:" output |
+| `file_size` | File > 500 lines | Extract to new module |
+| `shell_no_result` | Shell function missing Result | Return `Result[T, E]` |
 
-### internal_import
-**Cause:** Import statement inside function body
-**Fix:** Move import to top of file
-
-### missing_contract
-**Cause:** Core function without @pre/@post
-**Fix:** Add contract BEFORE implementation (SPECIFY phase)
+**Tip:** Guard automatically suggests contracts for `missing_contract` errors.
 ```
+
+Then run `invar sync-self` to propagate.
 
 ## Success Criteria
 
-- [ ] Skill re-injection reduced by 80%
-- [ ] SPECIFY phase visible for Core functions
+- [x] ~~Skill re-injection reduced by 80%~~ — Defer
+- [x] ~~SPECIFY phase visible for Core functions~~ — Current ~70% acceptable
 - [ ] Common errors resolved in 1 iteration (not 2-3)
-- [ ] User reports smoother workflow experience
+- [ ] SKILL.md extensions bug fixed
+- [ ] Error Pattern Guide in develop/SKILL.md
 
 ## Open Questions
 
-1. Should auto-transition be per-workflow or global?
-2. How strict should USBV enforcement be?
-3. Should metrics be opt-in or always-on?
+~~1. Should auto-transition be per-workflow or global?~~ — Solved by DX-42
+~~2. How strict should USBV enforcement be?~~ — Downgraded to guidance
+~~3. Should metrics be opt-in or always-on?~~ — Deferred
+
+No open questions remain.
 
 ## Related
 
-- DX-27: System Prompt Protocol Entry (merged into Solution 6)
+- DX-27: System Prompt Protocol Entry (merged, then dropped)
 - DX-35: Workflow-based Phase Separation (origin of skill system)
-- DX-36: Documentation Restructuring (SKILL.md structure)
-- DX-33: Verification Blind Spots (the development session reviewed)
+- DX-41: Auto-review orchestration (implemented)
+- DX-42: Workflow auto-routing (implemented)
+- DX-49: Protocol distribution unification (implemented)
