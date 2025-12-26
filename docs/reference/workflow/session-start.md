@@ -209,7 +209,7 @@ print(f"✓ Check-In: guard {status} | top: {top_entries}")
 
 ### In INVAR.md
 
-The Check-In format is defined in INVAR.md v3.27:
+The Check-In format is defined in INVAR.md v5.0:
 
 ```markdown
 ## Check-In (Required)
