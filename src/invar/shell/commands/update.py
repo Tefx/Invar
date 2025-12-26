@@ -129,8 +129,8 @@ def update_partially_managed(
         return manifest_result
 
     manifest = manifest_result.unwrap()
-    variables = manifest.get("variables", {})
-    variables["syntax"] = syntax
+    # Copy to avoid mutating cached manifest
+    variables = {**manifest.get("variables", {}), "syntax": syntax}
 
     updated: list[str] = []
 

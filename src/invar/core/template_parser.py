@@ -11,7 +11,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 
-from deal import post, pre
+from deal import ensure, post, pre
 
 # =============================================================================
 # Data Models
@@ -86,6 +86,7 @@ REGION_END_PATTERN = re.compile(r"<!--/invar:(\w+)-->")
 
 @pre(lambda content: isinstance(content, str))
 @post(lambda result: isinstance(result, ParsedFile))
+@ensure(lambda content, result: result.raw == content)  # Preserves input verbatim
 def parse_invar_regions(content: str) -> ParsedFile:
     """Parse <!--invar:...--> regions from content.
 
@@ -158,7 +159,11 @@ def parse_invar_regions(content: str) -> ParsedFile:
 
 
 @pre(lambda parsed, updates: isinstance(parsed, ParsedFile) and isinstance(updates, dict))
+@pre(lambda parsed, updates: all(k == v.name for k, v in parsed.regions.items()))  # Keys must match names
 @post(lambda result: isinstance(result, str))
+@ensure(lambda parsed, updates, result: (
+    not parsed.has_regions or all(f"<!--invar:{r}-->" in result for r in parsed.regions)
+))
 def reconstruct_file(parsed: ParsedFile, updates: dict[str, str]) -> str:
     """Reconstruct file content with updated regions.
 
@@ -166,6 +171,11 @@ def reconstruct_file(parsed: ParsedFile, updates: dict[str, str]) -> str:
     - Content before first marker
     - Content after last marker
     - Regions not in updates dict
+
+    Note:
+        Regions must be contiguous (no content between region end and next start).
+        Content between regions is NOT preserved. This matches Invar's template
+        design where regions are adjacent.
 
     Examples:
         >>> content = '''before

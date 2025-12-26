@@ -59,8 +59,8 @@ def sync_self(
         raise typer.Exit(1)
 
     manifest = manifest_result.unwrap()
-    variables = manifest.get("variables", {})
-    variables["syntax"] = "mcp"  # Always MCP for Invar project
+    # Copy to avoid mutating cached manifest
+    variables = {**manifest.get("variables", {}), "syntax": "mcp"}  # Always MCP for Invar project
 
     # Load project-additions.md if it exists
     project_additions_path = path / ".invar" / "project-additions.md"
@@ -128,12 +128,16 @@ def sync_self(
         parsed = parse_invar_regions(existing_content)
 
         if not parsed.has_regions:
-            # No regions - add them (wrap existing in user region)
+            # No regions - wrap existing content in user region, add managed from template
+            managed_content = new_parsed.regions["managed"].content
+            wrapped_content = (
+                f"<!--invar:managed-->\n{managed_content}\n<!--/invar:managed-->\n\n"
+                f"<!--invar:user-->\n{existing_content}\n<!--/invar:user-->\n"
+            )
             if dry_run:
                 console.print(f"[cyan]Would add regions to[/cyan] {dest_rel}")
             else:
-                # Create new file with managed content + existing as user
-                dest_file.write_text(new_content)
+                dest_file.write_text(wrapped_content)
                 console.print(f"[green]Added regions to[/green] {dest_rel}")
             updated_files.append(dest_rel)
             continue

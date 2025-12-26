@@ -10,6 +10,7 @@ Pure parsing logic is in core/template_parser.py.
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 
 from deal import pre
@@ -256,8 +257,8 @@ def generate_from_manifest(
 
     manifest = manifest_result.unwrap()
     templates = manifest.get("templates", {})
-    variables = manifest.get("variables", {})
-    variables["syntax"] = syntax
+    # Copy to avoid mutating cached manifest
+    variables = {**manifest.get("variables", {}), "syntax": syntax}
 
     generated: list[str] = []
 
@@ -285,7 +286,8 @@ def generate_from_manifest(
             try:
                 full_dest.write_text(src_path.read_text())
                 generated.append(dest_path)
-            except OSError:
+            except OSError as e:
+                print(f"Warning: Failed to copy {dest_path}: {e}", file=sys.stderr)
                 continue
 
         elif template_type == "jinja":
@@ -299,7 +301,8 @@ def generate_from_manifest(
                 try:
                     full_dest.write_text(result.unwrap())
                     generated.append(dest_path)
-                except OSError:
+                except OSError as e:
+                    print(f"Warning: Failed to write {dest_path}: {e}", file=sys.stderr)
                     continue
 
         elif template_type == "copy_dir":
@@ -312,7 +315,8 @@ def generate_from_manifest(
                 import shutil
                 shutil.copytree(src_path, full_dest)
                 generated.append(dest_path)
-            except OSError:
+            except OSError as e:
+                print(f"Warning: Failed to copy directory {dest_path}: {e}", file=sys.stderr)
                 continue
 
     return Success(generated)
