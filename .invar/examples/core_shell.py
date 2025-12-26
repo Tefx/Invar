@@ -7,9 +7,9 @@ Managed by Invar - do not edit directly.
 
 from pathlib import Path
 
-# Use invar_runtime for lightweight runtime contracts
-# (or 'from deal import pre, post' works too - deal is the underlying library)
-from invar_runtime import post, pre
+# For lambda-based contracts, use deal directly
+# invar_runtime.pre/post are for Contract objects (NonEmpty, IsInstance, etc.)
+from deal import post, pre
 from returns.result import Failure, Result, Success
 
 # =============================================================================
@@ -20,6 +20,8 @@ from returns.result import Failure, Result, Success
 # =============================================================================
 
 
+# @invar:allow shell_result: Example file - demonstrates Core pattern
+# @shell_orchestration: Example file - demonstrates Core pattern
 @pre(lambda content: isinstance(content, str))
 @post(lambda result: isinstance(result, list))
 def parse_lines(content: str) -> list[str]:
@@ -36,6 +38,8 @@ def parse_lines(content: str) -> list[str]:
     return [line.strip() for line in content.split("\n") if line.strip()]
 
 
+# @invar:allow shell_result: Example file - demonstrates Core pattern
+# @shell_orchestration: Example file - demonstrates Core pattern
 @pre(lambda items: isinstance(items, list))
 @post(lambda result: isinstance(result, dict))
 def count_items(items: list[str]) -> dict[str, int]:

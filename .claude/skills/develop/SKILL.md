@@ -138,11 +138,16 @@ Quick reference for resolving common Guard errors:
 | `internal_import` | Import inside function | Move import to module top |
 | `missing_contract` | Core function without @pre/@post | Add contract before implementation |
 | `empty_contract` | Contract with no condition | Add meaningful condition |
+| `redundant_type_contract` | Contract only checks types | Add semantic constraints (bounds, relationships) |
+| `partial_contract` | Only some params validated | Validate all params or document why partial |
 | `file_size` | File > 500 lines | Extract functions to new module |
 | `shell_no_result` | Shell function missing Result | Return `Result[T, E]` from `returns` |
 
 **Tip:** For `missing_contract`, Guard automatically suggests contracts based on parameter types.
 Check the "Suggested:" line in Guard output.
+
+**Note:** Use `from deal import pre, post` for lambda-based contracts.
+`invar_runtime.pre/post` are for Contract objects like `NonEmpty`.
 
 ## Timeout Handling
 
