@@ -27,10 +27,11 @@ class Contract:
     Works with deal.pre for runtime checking.
 
     Security Warning:
-        Predicates are executed when contracts are checked. Only use predicates
-        from trusted sources. A malicious predicate could execute arbitrary code
-        when check() is called. Predicates should be pure functions with no
-        side effects.
+        Predicates execute during validation and can run arbitrary code.
+        NEVER use predicates from: user input, untrusted files, network data.
+        A malicious predicate like `lambda x: __import__('os').system('rm -rf /')`
+        would execute when check() is called. Use only hardcoded predicates
+        defined in your source code.
 
     Examples:
         >>> NonEmpty = Contract(lambda x: len(x) > 0, "non-empty")

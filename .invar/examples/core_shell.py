@@ -22,8 +22,8 @@ from returns.result import Failure, Result, Success
 
 # @invar:allow shell_result: Example file - demonstrates Core pattern
 # @shell_orchestration: Example file - demonstrates Core pattern
-@pre(lambda content: isinstance(content, str))
-@post(lambda result: isinstance(result, list))
+@pre(lambda content: content is not None)  # Accepts any string including empty
+@post(lambda result: all(line.strip() == line and line for line in result))  # No whitespace, non-empty
 def parse_lines(content: str) -> list[str]:
     """
     Parse content into non-empty lines.
@@ -40,8 +40,8 @@ def parse_lines(content: str) -> list[str]:
 
 # @invar:allow shell_result: Example file - demonstrates Core pattern
 # @shell_orchestration: Example file - demonstrates Core pattern
-@pre(lambda items: isinstance(items, list))
-@post(lambda result: isinstance(result, dict))
+@pre(lambda items: all(isinstance(i, str) for i in items))  # All items must be strings
+@post(lambda result: all(v > 0 for v in result.values()))  # All counts are positive
 def count_items(items: list[str]) -> dict[str, int]:
     """
     Count occurrences of each item.

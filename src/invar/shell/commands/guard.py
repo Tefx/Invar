@@ -202,12 +202,16 @@ def guard(
         checked_files = collect_files_to_check(path, checked_files)
 
         # Phase 1: Doctests
-        doctest_passed, doctest_output = run_doctests_phase(checked_files, explain)
+        doctest_passed, doctest_output = run_doctests_phase(
+            checked_files, explain, timeout=config.timeout_doctest
+        )
 
         # Phase 2: CrossHair symbolic verification
         crosshair_passed, crosshair_output = run_crosshair_phase(
             path, checked_files, doctest_passed, static_exit_code,
             changed_mode=changed,
+            timeout=config.timeout_crosshair,
+            per_condition_timeout=config.timeout_crosshair_per_condition,
         )
 
         # Phase 3: Hypothesis property tests

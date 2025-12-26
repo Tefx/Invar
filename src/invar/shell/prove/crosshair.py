@@ -59,17 +59,7 @@ class CrossHairStatus:
 # @shell_orchestration: Contract detection for CrossHair prove module
 # @shell_complexity: AST traversal for contract detection
 def has_verifiable_contracts(source: str) -> bool:
-    """
-    Check if source has verifiable contracts.
-
-    DX-13: Hybrid detection - fast string check + AST validation.
-
-    Args:
-        source: Python source code
-
-    Returns:
-        True if file has @pre/@post contracts worth verifying
-    """
+    """Check if source has @pre/@post contracts (DX-13: fast string + AST check)."""
     # Fast path: no contract keywords at all
     if "@pre" not in source and "@post" not in source:
         return False
@@ -111,6 +101,8 @@ def has_verifiable_contracts(source: str) -> bool:
 def _verify_single_file(
     file_path: str,
     max_iterations: int = 5,
+    timeout: int = 300,
+    per_condition_timeout: int = 30,
 ) -> dict[str, Any]:
     """
     Verify a single file with CrossHair.
@@ -120,6 +112,8 @@ def _verify_single_file(
     Args:
         file_path: Path to Python file
         max_iterations: Maximum uninteresting iterations (default: 5)
+        timeout: Max time per file in seconds (default: 300)
+        per_condition_timeout: Max time per contract in seconds (default: 30)
 
     Returns:
         Verification result dict
@@ -135,6 +129,7 @@ def _verify_single_file(
         "check",
         file_path,
         f"--max_uninteresting_iterations={max_iterations}",
+        f"--per_condition_timeout={per_condition_timeout}",
         "--analysis_kind=deal",
     ]
 
@@ -143,7 +138,7 @@ def _verify_single_file(
             cmd,
             capture_output=True,
             text=True,
-            timeout=300,  # 5 minute max per file
+            timeout=timeout,
         )
 
         elapsed_ms = int((time.time() - start_time) * 1000)
@@ -200,7 +195,7 @@ def _verify_single_file(
         return {
             "file": file_path,
             "status": CrossHairStatus.TIMEOUT,
-            "time_ms": 300000,
+            "time_ms": timeout * 1000,
         }
     except Exception as e:
         return {
@@ -221,17 +216,18 @@ def run_crosshair_parallel(
     max_iterations: int = 5,
     max_workers: int | None = None,
     cache: ProveCache | None = None,
+    timeout: int = 300,
+    per_condition_timeout: int = 30,
 ) -> Result[dict, str]:
-    """
-    Run CrossHair on multiple files in parallel.
-
-    DX-13: Parallel execution with caching support.
+    """Run CrossHair on multiple files in parallel (DX-13).
 
     Args:
         files: List of Python file paths to verify
         max_iterations: Maximum uninteresting iterations per condition
         max_workers: Number of parallel workers (default: CPU count)
         cache: Optional verification cache
+        timeout: Max time per file in seconds (default: 300)
+        per_condition_timeout: Max time per contract in seconds (default: 30)
 
     Returns:
         Success with verification results or Failure with error message
@@ -330,7 +326,9 @@ def run_crosshair_parallel(
         # Parallel execution
         with ProcessPoolExecutor(max_workers=max_workers) as executor:
             futures = {
-                executor.submit(_verify_single_file, str(f), max_iterations): f
+                executor.submit(
+                    _verify_single_file, str(f), max_iterations, timeout, per_condition_timeout
+                ): f
                 for f in files_to_verify
             }
 
@@ -352,7 +350,9 @@ def run_crosshair_parallel(
     else:
         # Sequential execution (single file or max_workers=1)
         for py_file in files_to_verify:
-            result = _verify_single_file(str(py_file), max_iterations)
+            result = _verify_single_file(
+                str(py_file), max_iterations, timeout, per_condition_timeout
+            )
             _process_verification_result(
                 result,
                 py_file,
@@ -422,7 +422,7 @@ def _process_verification_result(
 
 
 def run_crosshair_on_files(
-    files: list[Path], timeout: int = 10
+    files: list[Path], timeout: int = 300, per_condition_timeout: int = 30
 ) -> Result[dict, str]:
     """
     Run CrossHair symbolic verification on a list of Python files.
@@ -431,7 +431,8 @@ def run_crosshair_on_files(
 
     Args:
         files: List of Python file paths to verify
-        timeout: Ignored (kept for backwards compatibility)
+        timeout: Max time per file in seconds (default: 300)
+        per_condition_timeout: Max time per contract in seconds (default: 30)
 
     Returns:
         Success with verification results or Failure with error message
@@ -442,6 +443,8 @@ def run_crosshair_on_files(
         max_iterations=5,  # Fast mode
         max_workers=None,  # Auto-detect
         cache=None,  # No cache for basic API
+        timeout=timeout,
+        per_condition_timeout=per_condition_timeout,
     )
 
 

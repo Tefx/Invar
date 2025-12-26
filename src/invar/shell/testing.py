@@ -114,7 +114,7 @@ def get_available_verifiers() -> list[str]:
 
 # @shell_complexity: Doctest execution with subprocess and result parsing
 def run_doctests_on_files(
-    files: list[Path], verbose: bool = False
+    files: list[Path], verbose: bool = False, timeout: int = 60
 ) -> Result[dict, str]:
     """
     Run doctests on a list of Python files.
@@ -122,6 +122,7 @@ def run_doctests_on_files(
     Args:
         files: List of Python file paths to test
         verbose: Show verbose output
+        timeout: Maximum time in seconds (default: 60, from RuleConfig.timeout_doctest)
 
     Returns:
         Success with test results or Failure with error message
@@ -129,8 +130,15 @@ def run_doctests_on_files(
     if not files:
         return Success({"status": "skipped", "reason": "no files", "files": []})
 
-    # Filter to Python files only (exclude conftest.py - pytest config, not test)
-    py_files = [f for f in files if f.suffix == ".py" and f.exists() and f.name != "conftest.py"]
+    # Filter to Python files only
+    # Exclude: conftest.py (pytest config), templates/examples/ (source templates, not user examples)
+    py_files = [
+        f for f in files
+        if f.suffix == ".py"
+        and f.exists()
+        and f.name != "conftest.py"
+        and "templates/examples" not in str(f)
+    ]
     if not py_files:
         return Success({"status": "skipped", "reason": "no Python files", "files": []})
 
@@ -144,7 +152,7 @@ def run_doctests_on_files(
         cmd.append("-v")
 
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
         # Pytest exit codes: 0=passed, 5=no tests collected (also OK)
         is_passed = result.returncode in (0, 5)
         return Success({
@@ -155,14 +163,14 @@ def run_doctests_on_files(
             "stderr": result.stderr,
         })
     except subprocess.TimeoutExpired:
-        return Failure("Doctest timeout (120s)")
+        return Failure(f"Doctest timeout ({timeout}s)")
     except Exception as e:
         return Failure(f"Doctest error: {e}")
 
 
 # @shell_complexity: Property test orchestration with subprocess
 def run_test(
-    target: str, json_output: bool = False, verbose: bool = False
+    target: str, json_output: bool = False, verbose: bool = False, timeout: int = 300
 ) -> Result[dict, str]:
     """
     Run property-based tests using Hypothesis via deal.cases.
@@ -171,6 +179,7 @@ def run_test(
         target: File path or module to test
         json_output: Output as JSON
         verbose: Show verbose output
+        timeout: Maximum time in seconds (default: 300, from RuleConfig.timeout_hypothesis)
 
     Returns:
         Success with test results or Failure with error message
@@ -189,7 +198,7 @@ def run_test(
         cmd.append("-v")
 
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
         test_result = {
             "status": "passed" if result.returncode == 0 else "failed",
             "target": str(target_path),
@@ -213,14 +222,17 @@ def run_test(
 
         return Success(test_result)
     except subprocess.TimeoutExpired:
-        return Failure(f"Test timeout (300s): {target}")
+        return Failure(f"Test timeout ({timeout}s): {target}")
     except Exception as e:
         return Failure(f"Test error: {e}")
 
 
 # @shell_complexity: CrossHair verification with subprocess
 def run_verify(
-    target: str, json_output: bool = False, timeout: int = 30
+    target: str,
+    json_output: bool = False,
+    total_timeout: int = 300,
+    per_condition_timeout: int = 30,
 ) -> Result[dict, str]:
     """
     Run symbolic verification using CrossHair.
@@ -228,7 +240,8 @@ def run_verify(
     Args:
         target: File path or module to verify
         json_output: Output as JSON
-        timeout: Timeout per function in seconds
+        total_timeout: Total timeout in seconds (default: 300, from RuleConfig.timeout_crosshair)
+        per_condition_timeout: Per-contract timeout (default: 30, from RuleConfig.timeout_crosshair_per_condition)
 
     Returns:
         Success with verification results or Failure with error message
@@ -249,11 +262,11 @@ def run_verify(
 
     cmd = [
         sys.executable, "-m", "crosshair", "check",
-        str(target_path), f"--per_condition_timeout={timeout}",
+        str(target_path), f"--per_condition_timeout={per_condition_timeout}",
     ]
 
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout * 10)
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=total_timeout)
 
         # CrossHair format: "file:line: error: Err when calling func(...)"
         counterexamples = [
@@ -282,6 +295,6 @@ def run_verify(
 
         return Success(verify_result)
     except subprocess.TimeoutExpired:
-        return Failure(f"Verification timeout ({timeout * 10}s): {target}")
+        return Failure(f"Verification timeout ({total_timeout}s): {target}")
     except Exception as e:
         return Failure(f"Verification error: {e}")

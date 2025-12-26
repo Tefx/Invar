@@ -10,10 +10,42 @@ from __future__ import annotations
 import json
 import subprocess
 import sys
+from pathlib import Path
 from typing import Any
 
 from mcp.server import Server
 from mcp.types import TextContent, Tool
+
+
+# @invar:allow shell_result: Pure validation helper, no I/O, returns tuple not Result
+# @shell_complexity: Security validation requires multiple checks
+def _validate_path(path: str) -> tuple[bool, str]:
+    """Validate path argument for safety.
+
+    Returns (is_valid, error_message).
+    Rejects paths that could be interpreted as shell commands or flags.
+    """
+    if not path:
+        return True, ""  # Empty path defaults to "." in handlers
+
+    # Reject if looks like a flag (starts with -)
+    if path.startswith("-"):
+        return False, f"Invalid path: cannot start with '-': {path}"
+
+    # Reject shell metacharacters that could cause issues
+    dangerous_chars = [";", "&", "|", "$", "`", "\n", "\r"]
+    for char in dangerous_chars:
+        if char in path:
+            return False, f"Invalid path: contains forbidden character: {char!r}"
+
+    # Try to resolve path - this catches malformed paths
+    try:
+        Path(path).resolve()
+    except (OSError, ValueError) as e:
+        return False, f"Invalid path: {e}"
+
+    return True, ""
+
 
 # Strong instructions for agent behavior (DX-16 + DX-17 + DX-26)
 INVAR_INSTRUCTIONS = """
@@ -170,9 +202,12 @@ def create_server() -> Server:
 # @invar:allow shell_result: MCP handler for guard tool
 async def _run_guard(args: dict[str, Any]) -> list[TextContent]:
     """Run invar guard command."""
-    cmd = [sys.executable, "-m", "invar.shell.commands.guard", "guard"]
-
     path = args.get("path", ".")
+    is_valid, error = _validate_path(path)
+    if not is_valid:
+        return [TextContent(type="text", text=f"Error: {error}")]
+
+    cmd = [sys.executable, "-m", "invar.shell.commands.guard", "guard"]
     cmd.append(path)
 
     if args.get("changed", True):
@@ -194,6 +229,12 @@ async def _run_sig(args: dict[str, Any]) -> list[TextContent]:
     if not target:
         return [TextContent(type="text", text="Error: target is required")]
 
+    # Validate target (can be file path or file::symbol)
+    target_path = target.split("::")[0] if "::" in target else target
+    is_valid, error = _validate_path(target_path)
+    if not is_valid:
+        return [TextContent(type="text", text=f"Error: {error}")]
+
     cmd = [sys.executable, "-m", "invar.shell.commands.guard", "sig", target, "--json"]
     return await _execute_command(cmd)
 
@@ -202,9 +243,12 @@ async def _run_sig(args: dict[str, Any]) -> list[TextContent]:
 # @invar:allow shell_result: MCP handler for map tool
 async def _run_map(args: dict[str, Any]) -> list[TextContent]:
     """Run invar map command."""
-    cmd = [sys.executable, "-m", "invar.shell.commands.guard", "map"]
-
     path = args.get("path", ".")
+    is_valid, error = _validate_path(path)
+    if not is_valid:
+        return [TextContent(type="text", text=f"Error: {error}")]
+
+    cmd = [sys.executable, "-m", "invar.shell.commands.guard", "map"]
     cmd.append(path)
 
     top = args.get("top", 10)
@@ -216,14 +260,19 @@ async def _run_map(args: dict[str, Any]) -> list[TextContent]:
 
 # @shell_complexity: Command execution with error handling branches
 # @invar:allow shell_result: MCP subprocess wrapper utility
-async def _execute_command(cmd: list[str]) -> list[TextContent]:
-    """Execute a command and return the result."""
+async def _execute_command(cmd: list[str], timeout: int = 600) -> list[TextContent]:
+    """Execute a command and return the result.
+
+    Args:
+        cmd: Command to execute
+        timeout: Maximum time in seconds (default: 600, accommodates full Guard cycle)
+    """
     try:
         result = subprocess.run(
             cmd,
             capture_output=True,
             text=True,
-            timeout=120,
+            timeout=timeout,
         )
 
         output = result.stdout
@@ -240,7 +289,7 @@ async def _execute_command(cmd: list[str]) -> list[TextContent]:
         return [TextContent(type="text", text=output)]
 
     except subprocess.TimeoutExpired:
-        return [TextContent(type="text", text="Error: Command timed out (120s)")]
+        return [TextContent(type="text", text=f"Error: Command timed out ({timeout}s)")]
     except Exception as e:
         return [TextContent(type="text", text=f"Error: {e}")]
 

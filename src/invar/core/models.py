@@ -257,6 +257,12 @@ class RuleConfig(BaseModel):
     purity_pure: list[str] = Field(default_factory=list)  # Known pure functions
     purity_impure: list[str] = Field(default_factory=list)  # Known impure functions
 
+    # Timeout configuration (seconds) - MAJOR-3 fix
+    timeout_doctest: int = Field(default=60, ge=1, le=600)  # Doctests should be fast
+    timeout_hypothesis: int = Field(default=300, ge=1, le=1800)  # Property tests
+    timeout_crosshair: int = Field(default=300, ge=1, le=1800)  # Symbolic verification total
+    timeout_crosshair_per_condition: int = Field(default=30, ge=1, le=300)  # Per-contract limit
+
 
 # Phase 4: Perception models
 

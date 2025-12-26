@@ -82,9 +82,14 @@ def collect_files_to_check(
 
 # @shell_orchestration: Coordinates doctest execution via testing module
 def run_doctests_phase(
-    checked_files: list[Path], explain: bool
+    checked_files: list[Path], explain: bool, timeout: int = 60
 ) -> tuple[bool, str]:
     """Run doctests on collected files.
+
+    Args:
+        checked_files: Files to run doctests on
+        explain: Show verbose output
+        timeout: Maximum time in seconds (default: 60, from RuleConfig.timeout_doctest)
 
     Returns (passed, output).
     """
@@ -93,7 +98,7 @@ def run_doctests_phase(
     if not checked_files:
         return True, ""
 
-    doctest_result = run_doctests_on_files(checked_files, verbose=explain)
+    doctest_result = run_doctests_on_files(checked_files, verbose=explain, timeout=timeout)
     if isinstance(doctest_result, Success):
         result_data = doctest_result.unwrap()
         passed = result_data.get("status") in ("passed", "skipped")
@@ -111,6 +116,8 @@ def run_crosshair_phase(
     doctest_passed: bool,
     static_exit_code: int,
     changed_mode: bool = False,
+    timeout: int = 300,
+    per_condition_timeout: int = 30,
 ) -> tuple[bool, dict]:
     """Run CrossHair verification phase.
 
@@ -120,6 +127,8 @@ def run_crosshair_phase(
         doctest_passed: Whether doctests passed
         static_exit_code: Exit code from static analysis
         changed_mode: If True, only verify git-changed files (--changed flag)
+        timeout: Max time per file in seconds (default: 300)
+        per_condition_timeout: Max time per contract in seconds (default: 30)
 
     Returns (passed, output_dict).
     """
@@ -157,6 +166,8 @@ def run_crosshair_phase(
         max_iterations=5,
         max_workers=None,
         cache=cache,
+        timeout=timeout,
+        per_condition_timeout=per_condition_timeout,
     )
 
     if isinstance(crosshair_result, Success):

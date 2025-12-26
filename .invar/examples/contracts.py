@@ -56,8 +56,8 @@ def average(items: list[float]) -> float:
 # =============================================================================
 
 
-@pre(lambda data: isinstance(data, dict))
-@post(lambda result: isinstance(result, dict))
+@pre(lambda data: len(data) > 0)  # Non-empty input (type is in annotation)
+@post(lambda result: len(result) > 0)  # Preserves non-emptiness
 def normalize_keys(data: dict[str, int]) -> dict[str, int]:
     """
     Lowercase all keys.
