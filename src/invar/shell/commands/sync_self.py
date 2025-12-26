@@ -111,7 +111,12 @@ def sync_self(
         except OSError:
             pass
 
-    # Files to sync
+    # Fully managed files (direct copy, no regions)
+    fully_managed = [
+        ("INVAR.md", "protocol/INVAR.md"),
+    ]
+
+    # Partially managed files (region-based sync)
     sync_files = [
         ("CLAUDE.md", "config/CLAUDE.md.jinja"),
         (".claude/skills/develop/SKILL.md", "skills/develop/SKILL.md.jinja"),
@@ -122,6 +127,36 @@ def sync_self(
 
     updated_files: list[str] = []
     skipped_files: list[str] = []
+
+    # Sync fully managed files (direct copy)
+    for dest_rel, template_rel in fully_managed:
+        dest_file = path / dest_rel
+        template_path = templates_dir / template_rel
+
+        if not template_path.exists():
+            console.print(f"[yellow]Warning:[/yellow] Template not found: {template_rel}")
+            continue
+
+        new_content = template_path.read_text()
+
+        if dest_file.exists():
+            existing_content = dest_file.read_text()
+            if existing_content == new_content:
+                skipped_files.append(dest_rel)
+                continue
+
+        if dry_run:
+            if dest_file.exists():
+                console.print(f"[cyan]Would update[/cyan] {dest_rel}")
+            else:
+                console.print(f"[cyan]Would create[/cyan] {dest_rel}")
+        else:
+            dest_file.write_text(new_content)
+            if dest_file.exists():
+                console.print(f"[green]Updated[/green] {dest_rel}")
+            else:
+                console.print(f"[green]Created[/green] {dest_rel}")
+        updated_files.append(dest_rel)
 
     for dest_rel, template_rel in sync_files:
         dest_file = path / dest_rel

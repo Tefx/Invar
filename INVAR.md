@@ -14,79 +14,194 @@
 -->
 # The Invar Protocol v5.0
 
-> **"Trade structure for safety."** Separate what CAN fail (I/O) from what SHOULD NOT fail (logic).
+> **"Trade structure for safety."**
 
-**Design:** Agent-Native. Protocol optimized for AI agent consumption.
-
-**Smart Guard:** `invar guard` runs static analysis + doctests + property tests automatically.
-
-## The Six Laws
+## Six Laws
 
 | Law | Principle |
 |-----|-----------|
-| **1. Separation** | Pure logic (Core) and I/O (Shell) must be physically separate |
-| **2. Contract Complete** | Define COMPLETE boundaries before implementation |
-| **3. Context Economy** | Read map → signatures → implementation (only if needed) |
-| **4. Decompose First** | Break complex tasks into sub-functions before implementing |
-| **5. Verify Reflectively** | If fail: Reflect (why?) → Fix → Verify again |
-| **6. Integrate Fully** | Verify all feature paths connect; local ≠ global correctness |
+| 1. Separation | Core (pure logic) / Shell (I/O) physically separate |
+| 2. Contract Complete | @pre/@post + doctests uniquely determine implementation |
+| 3. Context Economy | map → sig → code (only read what's needed) |
+| 4. Decompose First | Break into sub-functions before implementing |
+| 5. Verify Reflectively | Fail → Reflect (why?) → Fix → Verify |
+| 6. Integrate Fully | Local correct ≠ Global correct; verify all paths |
 
 ## Core/Shell Architecture
 
-| Zone | Location | Must Have | Example |
-|------|----------|-----------|---------|
-| **Core** | `src/*/core/` | `@pre`/`@post` contracts | Pure calculations |
-| **Shell** | `src/*/shell/` | `Result[T, E]` return type | File I/O, network |
+| Zone | Location | Requirements |
+|------|----------|--------------|
+| Core | `**/core/**` | @pre/@post, pure (no I/O), doctests |
+| Shell | `**/shell/**` | `Result[T, E]` return type |
 
 **Forbidden in Core:** `os`, `sys`, `subprocess`, `pathlib`, `open`, `requests`, `datetime.now`
 
-## Commands
+## Core Example (Pure Logic)
 
-```bash
-invar guard              # Full verification (default)
-invar guard --changed    # Modified files only
-invar sig <file>         # Function signatures + contracts
-invar map --top 10       # Entry points by reference count
+```python
+from deal import pre, post
+
+@pre(lambda price, discount: price > 0 and 0 <= discount <= 1)
+@post(lambda result: result >= 0)
+def discounted_price(price: float, discount: float) -> float:
+    """
+    >>> discounted_price(100, 0.2)
+    80.0
+    >>> discounted_price(100, 0)      # Edge: no discount
+    100.0
+    """
+    return price * (1 - discount)
 ```
 
-## Check-In / Final
+**Self-test:** Can someone else write the exact same function from just @pre/@post + doctests?
 
-**First message:**
+## Shell Example (I/O Operations)
+
+```python
+from pathlib import Path
+from returns.result import Result, Success, Failure
+
+def read_config(path: Path) -> Result[dict, str]:
+    """Shell: handles I/O, returns Result for error handling."""
+    try:
+        import json
+        return Success(json.loads(path.read_text()))
+    except FileNotFoundError:
+        return Failure(f"File not found: {path}")
+    except json.JSONDecodeError as e:
+        return Failure(f"Invalid JSON: {e}")
+```
+
+**Pattern:** Shell reads file → passes content to Core → returns Result.
+
+More examples: `.invar/examples/`
+
+## Check-In (Required)
+
+Your first message MUST display:
+
 ```
 ✓ Check-In: guard PASS | top: <entry1>, <entry2>
 ```
 
-**Last message (implementation tasks):**
+Execute `invar_guard(changed=true)` and `invar_map(top=10)`, then show this one-line summary.
+
+This is your sign-in. The user sees it immediately.
+No visible check-in = Session not started.
+
+Then read `.invar/context.md` for project state and lessons learned.
+
+## USBV Workflow (DX-32)
+
+**U**nderstand → **S**pecify → **B**uild → **V**alidate
+
+| Phase | Purpose | Activities |
+|-------|---------|------------|
+| UNDERSTAND | Know what and why | Intent, Inspect (invar sig/map), Constraints |
+| SPECIFY | Define boundaries | @pre/@post, Design decomposition, Doctests |
+| BUILD | Write code | Implement leaves, Compose |
+| VALIDATE | Confirm correctness | invar guard, Review Gate, Reflect |
+
+**Key:** Inspect before Contract. Depth varies naturally. Iterate when needed.
+
+**Review Gate:** When Guard triggers `review_suggested` (escape hatches ≥3, security paths, low coverage), invoke `/review` before completion.
+
+## Visible Workflow (DX-30)
+
+For complex tasks (3+ functions), show 3 checkpoints in TodoList:
+
 ```
-✓ Final: guard PASS | 0 errors, 2 warnings
+□ [UNDERSTAND] Task description, codebase context, constraints
+□ [SPECIFY] Contracts (@pre/@post) and design decomposition
+□ [VALIDATE] Guard results, Review Gate if triggered, integration status
 ```
 
-## Size Limits
+**BUILD is internal work** — not shown in TodoList.
 
-| Limit | Value |
-|-------|-------|
-| File | 500 lines |
-| Function | 50 lines |
+**Show contracts before code.** Example:
 
-## Workflow Sections
+```python
+[SPECIFY] calculate_discount:
+@pre(lambda price, rate: price > 0 and 0 <= rate <= 1)
+@post(lambda result: result >= 0)
+def calculate_discount(price: float, rate: float) -> float: ...
 
-Detailed instructions for each phase:
+[BUILD] Now coding...
+```
 
-| Section | Purpose |
-|---------|---------|
-| [sections/investigate.md](sections/investigate.md) | Exploration, no code changes |
-| [sections/propose.md](sections/propose.md) | Decision facilitation |
-| [sections/develop.md](sections/develop.md) | USBV implementation workflow |
-| [sections/review.md](sections/review.md) | Adversarial review, fix loop |
-| [sections/reference.md](sections/reference.md) | Contracts, markers, config |
+**When to use:** New features (3+ functions), architectural changes, Core modifications.
+**Skip for:** Single-line fixes, documentation, trivial refactoring.
 
-## Installation
+## Task Completion
+
+A task is complete only when ALL conditions are met:
+- Check-In displayed: `✓ Check-In: guard PASS | top: <entry1>, <entry2>`
+- Intent explicitly stated
+- Contract written before implementation
+- Final displayed: `✓ Final: guard PASS | <errors>, <warnings>`
+- User requirement satisfied
+
+**Missing any = Task incomplete.**
+
+## Markers
+
+### Entry Points
+
+Entry points are framework callbacks (`@app.route`, `@app.command`) at Shell boundary.
+- **Exempt** from `Result[T, E]` — must match framework signature
+- **Keep thin** (max 15 lines) — delegate to Shell functions that return Result
+
+Auto-detected by decorators. For custom callbacks:
+
+```python
+# @shell:entry
+def on_custom_event(data: dict) -> dict:
+    result = handle_event(data)
+    return result.unwrap_or({"error": "failed"})
+```
+
+### Shell Complexity
+
+When shell function complexity is justified:
+
+```python
+# @shell_complexity: Subprocess with error classification
+def run_external_tool(...): ...
+
+# @shell_orchestration: Multi-step pipeline coordination
+def process_batch(...): ...
+```
+
+### Architecture Escape Hatch
+
+When rule violation has valid architectural justification:
+
+```python
+# @invar:allow shell_result: Framework callback signature fixed
+def flask_handler(): ...
+```
+
+See `invar rules` for all rule names.
+
+## Commands
 
 ```bash
-pip install invar-tools     # Dev tools (guard, sig, map)
-pip install invar-runtime   # Runtime contracts (@pre, @post)
+invar guard              # Full: static + doctests + CrossHair + Hypothesis (default)
+invar guard --static     # Static only (quick debug, ~0.5s)
+invar guard --changed    # Modified files only
+invar sig <file>         # Show contracts + signatures
+invar map --top 10       # Most-referenced symbols
+```
+
+## Configuration
+
+```toml
+[tool.invar.guard]
+core_paths = ["src/myapp/core"]
+shell_paths = ["src/myapp/shell"]
+# DX-22: Doctest lines are always excluded from size calculations by default
 ```
 
 ---
 
-*Protocol v5.0 — Modular sections for workflow-based phase separation (DX-35/36).*
+*Protocol v5.0 — USBV workflow (DX-32) | [Guide](docs/guide.md) | [Examples](.invar/examples/)*
