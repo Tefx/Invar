@@ -134,16 +134,18 @@ def update_partially_managed(
 
     updated: list[str] = []
 
-    # Files to merge (update managed region only)
+    # Files to merge with region-based updates.
+    # Each tuple: (destination, template, region_name)
+    # CLAUDE.md uses "managed" region; SKILL.md files use "skill" region.
     merge_files = [
-        ("CLAUDE.md", "config/CLAUDE.md.jinja"),
-        (".claude/skills/develop/SKILL.md", "skills/develop/SKILL.md.jinja"),
-        (".claude/skills/investigate/SKILL.md", "skills/investigate/SKILL.md.jinja"),
-        (".claude/skills/propose/SKILL.md", "skills/propose/SKILL.md.jinja"),
-        (".claude/skills/review/SKILL.md", "skills/review/SKILL.md.jinja"),
+        ("CLAUDE.md", "config/CLAUDE.md.jinja", "managed"),
+        (".claude/skills/develop/SKILL.md", "skills/develop/SKILL.md.jinja", "skill"),
+        (".claude/skills/investigate/SKILL.md", "skills/investigate/SKILL.md.jinja", "skill"),
+        (".claude/skills/propose/SKILL.md", "skills/propose/SKILL.md.jinja", "skill"),
+        (".claude/skills/review/SKILL.md", "skills/review/SKILL.md.jinja", "skill"),
     ]
 
-    for dest_rel, template_rel in merge_files:
+    for dest_rel, template_rel, region_name in merge_files:
         dest_file = path / dest_rel
         template_path = templates_dir / template_rel
 
@@ -173,13 +175,13 @@ def update_partially_managed(
             console.print(f"[dim]Skipped {dest_rel} (no region markers)[/dim]")
             continue
 
-        # Parse new content for managed region
+        # Parse new content for the appropriate region
         new_parsed = parse_invar_regions(new_content)
-        if "managed" not in new_parsed.regions:
+        if region_name not in new_parsed.regions:
             continue
 
-        # Update managed region only, preserve user region
-        updates = {"managed": new_parsed.regions["managed"].content}
+        # Update the region, preserve user/extensions regions
+        updates = {region_name: new_parsed.regions[region_name].content}
         result_content = reconstruct_file(parsed, updates)
 
         try:
