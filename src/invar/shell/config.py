@@ -68,7 +68,7 @@ _CONTRACT_DECORATORS = frozenset(["pre", "post", "invariant"])
 _RESULT_TYPES = frozenset(["Result", "Success", "Failure"])
 
 
-# @shell_orchestration: AST analysis helpers for module classification
+# @shell_orchestration: AST analysis helper | @shell_complexity: AST branch checks
 def _has_contract_decorators(tree: ast.Module) -> bool:
     """
     Check if AST contains @pre/@post contract decorators.
@@ -100,7 +100,7 @@ def _has_contract_decorators(tree: ast.Module) -> bool:
     return False
 
 
-# @shell_orchestration: AST analysis helper for module classification
+# @shell_orchestration: AST analysis helper | @shell_complexity: AST branch checks
 def _has_io_imports(tree: ast.Module) -> bool:
     """
     Check if AST contains imports of I/O libraries.
@@ -133,7 +133,7 @@ def _has_io_imports(tree: ast.Module) -> bool:
     return False
 
 
-# @shell_orchestration: AST analysis helper for module classification
+# @shell_orchestration: AST analysis helper | @shell_complexity: AST branch checks
 def _has_result_types(tree: ast.Module) -> bool:
     """
     Check if AST contains Result/Success/Failure usage.
@@ -425,6 +425,7 @@ def get_exclude_paths(project_root: Path) -> Result[list[str], str]:
     return Success(guard_config.get("exclude_paths", _DEFAULT_EXCLUDE_PATHS.copy()))
 
 
+# @shell_complexity: Classification decision tree requires multiple config lookups and priority checks
 # @invar:allow entry_point_too_thick: False positive - .get() matches router.get pattern
 def classify_file(
     file_path: str, project_root: Path, source: str = ""
