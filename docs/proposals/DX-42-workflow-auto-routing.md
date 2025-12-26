@@ -1,278 +1,219 @@
-# DX-42: Workflow Auto-Routing and Autonomous Orchestration
+# DX-42: Visible Workflow Routing
 
-> **"Let the task choose the workflow, not the user."**
+> **"Make routing decisions visible, not automatic."**
 
-**Status:** Draft
+**Status:** Draft (Revised 2025-12-26)
 **Created:** 2025-12-25
-**Updated:** 2025-12-25
-**Origin:** Extracted from DX-35 Phase 4, expanded with orchestration
-**Effort:** Medium-High
-**Risk:** Medium (misrouting risk)
+**Updated:** 2025-12-26
+**Origin:** Extracted from DX-35 Phase 4, simplified after DX-49/DX-50
+**Effort:** Low-Medium (reduced from Medium-High)
+**Risk:** Low (reduced from Medium)
 
-## Problem Statement
+---
 
-### Problem 1: Users Cannot Invoke Skills Directly
+## Problem Statement (Revised)
 
-**Critical Discovery:** Skills cannot be manually invoked by users.
+### Original Problem (Partially Solved)
+
+> "Users cannot invoke skills directly"
+
+This is a Claude Code platform constraint, not solvable by Invar.
+
+### Actual Problem
+
+**Agent skips workflow routing despite having rules.**
+
+| What Exists | What's Missing |
+|-------------|----------------|
+| CLAUDE.md has trigger word → skill mapping | Agent doesn't announce routing decision |
+| Skills have entry/exit actions | User can't see WHY a skill was chosen |
+| Violation check exists | No confirmation before proceeding |
+
+### Root Cause Analysis (from DX-50)
+
+1. Agent treats routing as "optional best practice" not "mandatory protocol"
+2. Efficiency bias: skipping skill invocation feels "faster"
+3. No visible checkpoint between user request and workflow entry
+
+---
+
+## What's Already Implemented
+
+| Component | Status | Location |
+|-----------|--------|----------|
+| Trigger words table | ✅ Done | CLAUDE.md L108-121 |
+| Violation check prompt | ✅ Done | CLAUDE.md L119-121 |
+| Skill entry actions | ✅ Done | .claude/skills/*/SKILL.md |
+
+**Key Insight:** We don't need Python routing code — CLAUDE.md already has the rules.
+
+---
+
+## Revised Solution: Routing Announcement Protocol
+
+### Core Principle
+
+> **"Show the decision, not just the action."**
+
+Before entering any workflow, Agent MUST display:
 
 ```
-User: /develop
-System: "This slash command can only be invoked by Claude, not directly
-        by users. Ask Claude to run /develop for you."
+📍 Routing: /[skill] — [trigger detected]
+   Task: [user's request summary]
+
+   [Proceeds to skill entry...]
 ```
 
-**Implication:** Agent accuracy in understanding user intent is CRITICAL. If the agent doesn't invoke the right workflow, the user has no direct recourse.
+### Examples
 
-### Problem 2: Agent Routing Accuracy
-
-Current state: Agent must infer which workflow to use from natural language.
-
-| Scenario | Agent Behavior | Problem |
-|----------|---------------|---------|
-| "Add validation to X" | Often starts coding directly | Skips /develop workflow |
-| "Make X faster" | Mixed - sometimes investigates | Inconsistent |
-| "Should we use A or B?" | Usually proposes | ✅ Works |
-| Complex multi-step task | No orchestration | User must guide each step |
-
-### Problem 3: Simple Task Overhead
-
-For simple tasks (3-5 minute implementation):
-
+**Clear action task:**
 ```
-Current flow:
-User: "Add input validation to parse_source"
-Agent: [investigation] → "Recommend /develop" → wait
-User: "proceed"  ← unnecessary
-Agent: [development] → "Recommend /review" → wait
-User: "proceed"  ← unnecessary
-Agent: [review] → done
+User: "Add validation to parse_source"
 
-Ideal flow:
-User: "Add input validation to parse_source"
-Agent: [auto-orchestrate: investigate → develop → review] → done
+Agent: 📍 Routing: /develop — trigger "add" detected
+       Task: Add input validation to parse_source
+
+       ✓ Check-In: guard PASS | top: pre, post, Violation
+       ...
 ```
 
-## Proposed Solutions
-
-### Part 1: Routing Heuristics
-
-```python
-def route_task(user_input: str) -> tuple[str, str]:
-    """
-    Analyze user input and route to appropriate workflow.
-
-    Returns: (workflow, reasoning)
-    """
-    input_lower = user_input.lower()
-
-    # Decision patterns → /propose
-    if any(p in input_lower for p in [
-        "should we", "how should", "which",
-        "compare", "vs", "or should",
-        "design", "architect", "approach"
-    ]):
-        return "/propose", "Decision-making task detected"
-
-    # Understanding patterns → /investigate
-    if any(p in input_lower for p in [
-        "why", "what is", "how does", "explain",
-        "understand", "analyze", "investigate", "explore"
-    ]):
-        return "/investigate", "Understanding task detected"
-
-    # Vague action patterns → /investigate first
-    if is_vague_action(user_input):
-        return "/investigate", "Task is vague, needs investigation first"
-
-    # Clear action patterns → /develop
-    if any(p in input_lower for p in [
-        "add", "implement", "create", "fix", "update",
-        "build", "write", "modify", "change", "remove"
-    ]) and has_specific_target(user_input):
-        return "/develop", "Clear actionable task detected"
-
-    # Default to investigation for unclear tasks
-    return "/investigate", "Default: investigate before acting"
-```
-
-### Part 2: Mandatory Routing Announcement
-
-Since users cannot invoke skills directly, the agent MUST announce its routing decision:
-
+**Vague task:**
 ```
 User: "Make the parser faster"
 
-Agent: "📍 Routing: /investigate (task is vague)
+Agent: 📍 Routing: /investigate — task is vague, needs analysis first
+       Task: Improve parser performance
 
-        I'll first investigate to:
-        1. Profile current performance
-        2. Identify bottlenecks
-        3. Report findings
-
-        Type 'stop' to pause, or I'll proceed..."
-
-        [Enters /investigate workflow]
+       Entering /investigate for: parser performance
+       ...
 ```
 
-**Key:** Always show routing decision before proceeding.
+**Decision task:**
+```
+User: "Should we use Redis or in-memory cache?"
 
-### Part 3: Complexity Assessment
+Agent: 📍 Routing: /propose — trigger "should we" detected
+       Task: Cache implementation decision
 
-```python
-def assess_complexity(task: str, context: ProjectContext) -> Complexity:
-    """
-    Assess task complexity to determine orchestration level.
-
-    Returns: Complexity.SIMPLE | Complexity.MODERATE | Complexity.COMPLEX
-    """
-    signals = {
-        "simple": [
-            len(estimated_files) <= 2,
-            estimated_changes < 50,  # lines
-            single_function_scope,
-            no_architectural_decision,
-        ],
-        "complex": [
-            len(estimated_files) > 5,
-            requires_new_module,
-            affects_public_api,
-            security_sensitive,
-            estimated_changes > 200,
-        ]
-    }
-
-    if all(signals["simple"]):
-        return Complexity.SIMPLE
-    elif any(signals["complex"]):
-        return Complexity.COMPLEX
-    else:
-        return Complexity.MODERATE
+       Entering /propose for: Redis vs in-memory cache
+       ...
 ```
 
-### Part 4: Autonomous Orchestration (Simple Tasks)
+---
 
-For SIMPLE complexity tasks, auto-orchestrate the full cycle:
+## User Control Mechanisms
 
-```
-📍 Routing: /develop (clear target: add validation to parse_source)
-📊 Complexity: SIMPLE (1 file, ~20 lines)
+### Implicit Override (Natural Language)
 
-🔄 Auto-orchestrating: investigate → develop → review
+| User Says | Effect |
+|-----------|--------|
+| "just implement it" | Skip to /develop |
+| "I want to discuss options first" | Route to /propose |
+| "explain first" | Route to /investigate |
+| "stop" / "wait" | Pause, ask for direction |
 
-[Phase 1/3: Quick Investigation]
-✓ Found parse_source at src/invar/core/parser.py:45
-✓ Current: accepts any string
-✓ Need: reject whitespace-only strings
-
-[Phase 2/3: Development]
-✓ Check-In: guard PASS
-✓ Added @pre(lambda source: len(source.strip()) > 0)
-✓ Added doctest for empty string
-✓ Final: guard PASS
-
-[Phase 3/3: Quick Review]
-✓ Contract quality: meaningful constraint
-✓ No issues found
-
-📋 Summary:
-- Modified: src/invar/core/parser.py
-- Changes: +5 lines (contract, doctest)
-- Status: Ready for commit
-```
-
-### Part 5: User Override Mechanisms
-
-Since users can't invoke skills directly, provide explicit overrides:
-
-| User Input | Effect |
-|------------|--------|
-| `!develop` | Force /develop workflow, skip routing |
-| `!investigate` | Force /investigate |
-| `!propose` | Force /propose |
-| `stop` | Pause current workflow |
-| `manual` | Disable auto-orchestration, ask at each step |
+### Explicit Correction
 
 ```
-User: "!develop Add validation"
+User: "Add validation"
+Agent: 📍 Routing: /develop — trigger "add" detected
 
-Agent: "📍 Override: /develop (user requested)
-        Skipping routing heuristics..."
+User: "Wait, let's investigate first"
+Agent: 📍 Re-routing: /investigate — user requested
+       Entering /investigate...
 ```
 
-### Part 6: Orchestration Configuration
+**No special syntax needed.** Natural language is the override mechanism.
 
-```toml
-[tool.invar.workflow]
-# Auto-routing
-auto_route = true           # Enable routing heuristics
-announce_routing = true     # Always show routing decision
+---
 
-# Auto-orchestration
-auto_orchestrate = "simple" # "simple" | "all" | "none"
-complexity_threshold = 3    # Max files for SIMPLE classification
+## Implementation Plan (Simplified)
 
-# User control
-allow_override = true       # Enable !develop, !investigate overrides
-pause_between_phases = false # Ask before each phase transition
-```
+| Phase | Feature | Effort | Files Changed |
+|-------|---------|--------|---------------|
+| **1** | Routing announcement format | Low | 4 SKILL.md files |
+| **2** | User control documentation | Low | CLAUDE.md |
 
-## Implementation Plan
+### Phase 1: Update Skill Entry Points
 
-| Phase | Feature | Effort | Priority |
-|-------|---------|--------|----------|
-| 1 | Routing heuristics + announcement | Medium | **High** |
-| 2 | User override commands (!develop) | Low | **High** |
-| 3 | Complexity assessment | Medium | Medium |
-| 4 | Auto-orchestration for simple tasks | Medium | Medium |
-| 5 | Configuration options | Low | Low |
-
-### Phase 1: Core Routing (Priority)
-
-Add to all skill entry points:
+Add to each skill's Entry section:
 
 ```markdown
-## Entry (Updated for DX-42)
+## Entry Actions (REQUIRED)
 
-Before any workflow action:
+### Routing Announcement
 
-1. **Announce routing decision:**
-   ```
-   📍 Routing: /[workflow] ([reason])
-   ```
+Before any workflow action, display:
 
-2. **Check for override:**
-   - If user said `!develop`, skip routing
-   - If user said `stop`, pause and ask
-
-3. **Proceed with workflow**
+```
+📍 Routing: /[skill] — [reason]
+   Task: [summary]
 ```
 
-## Risks and Mitigations
+Then proceed with Check-In (if applicable).
+```
 
-| Risk | Mitigation |
-|------|------------|
-| Misrouting loses user trust | Always announce, allow override |
-| Auto-orchestration does wrong thing | Only for SIMPLE tasks, user can say 'stop' |
-| Override syntax confusing | Clear documentation, consistent `!` prefix |
-| Complex tasks misclassified as simple | Conservative thresholds, default to ask |
+### Phase 2: Document User Controls
+
+Add to CLAUDE.md:
+
+```markdown
+## Routing Control
+
+Agent announces routing decision before entering workflow.
+User can redirect with natural language:
+- "wait" / "stop" — pause and ask
+- "just do it" — proceed with /develop
+- "let's discuss" — switch to /propose
+- "explain first" — switch to /investigate
+```
+
+---
+
+## What Was Removed (vs Original Proposal)
+
+| Removed | Reason |
+|---------|--------|
+| Python routing heuristics | CLAUDE.md already has rules |
+| Complexity assessment | Over-engineering; Agent judges naturally |
+| Auto-orchestration | Moved to DX-41 (review-specific) |
+| `!develop` syntax | Natural language is cleaner |
+| Configuration options | Premature; see if needed later |
+
+---
 
 ## Success Criteria
 
-- [ ] 90%+ tasks routed correctly
-- [ ] Clear routing announcements before every workflow
-- [ ] Override mechanism (`!develop`) works
-- [ ] Simple tasks auto-orchestrate without extra user input
-- [ ] User can say 'stop' at any time
+- [ ] Every workflow entry shows `📍 Routing: /[skill] — [reason]`
+- [ ] User can redirect with natural language
+- [ ] Agent never skips routing announcement
+- [ ] 0 "workflow skip" incidents after implementation
 
-## Open Questions
+---
 
-1. Should `!develop` be the syntax, or something else like `force develop`?
-2. Should auto-orchestration default to on or off?
-3. How to handle mid-workflow complexity escalation?
+## Relationship to Other Proposals
 
-## Related
+| Proposal | Relationship |
+|----------|--------------|
+| DX-50 | Solves Option B (visible routing) |
+| DX-41 | Handles auto-review orchestration separately |
+| DX-39 | Complements with efficiency improvements |
 
-- DX-35: Workflow-based Phase Separation (Phase 4 origin)
-- DX-39: Workflow Efficiency (complementary improvements)
-- DX-41: Automatic Review Orchestration (review-specific automation)
-- Workflow skills: `.claude/skills/`
+---
+
+## Open Questions (Reduced)
+
+1. Should routing announcement be a separate line or merged with skill entry?
+2. How verbose should the "[reason]" be?
+
+---
+
+## Appendix: Original vs Revised
+
+| Aspect | Original | Revised |
+|--------|----------|---------|
+| Scope | 6 parts, Python code | 2 phases, documentation only |
+| Effort | Medium-High (3 days) | Low-Medium (0.5 day) |
+| Risk | Medium (misrouting) | Low (just visibility) |
+| Core change | Automated routing | Visible routing |
+| User control | `!develop` syntax | Natural language |
