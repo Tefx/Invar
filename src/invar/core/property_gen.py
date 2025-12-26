@@ -194,7 +194,10 @@ def _check_decorator_contracts(dec: ast.Call) -> tuple[bool, bool]:
     return has_pre, has_post
 
 
-@pre(lambda node: isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)))
+@pre(lambda node: (
+    isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and
+    hasattr(node, 'decorator_list')
+))
 @post(lambda result: isinstance(result, tuple) and len(result) == 2)
 def _get_function_contracts(node: ast.FunctionDef | ast.AsyncFunctionDef) -> tuple[bool, bool]:
     """Check function decorators for contracts, return (has_pre, has_post).

@@ -84,7 +84,7 @@ Your first message MUST display:
 ✓ Check-In: guard PASS | top: <entry1>, <entry2>
 ```
 
-Execute `invar_guard(changed=true)` and `invar_map(top=10)`, then show this one-line summary.
+Execute `invar guard --changed` and `invar map --top 10`, then show this one-line summary.
 
 This is your sign-in. The user sees it immediately.
 No visible check-in = Session not started.

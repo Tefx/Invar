@@ -192,6 +192,9 @@ def init(
     hooks: bool = typer.Option(
         True, "--hooks/--no-hooks", help="Install pre-commit hooks (default: ON)"
     ),
+    skills: bool = typer.Option(
+        True, "--skills/--no-skills", help="Create .claude/skills/ (default: ON, use --no-skills for Cursor)"
+    ),
     yes: bool = typer.Option(
         False, "--yes", "-y", help="Accept defaults without prompting"
     ),
@@ -209,6 +212,7 @@ def init(
     Use --mcp-method to specify MCP execution method (uvx, command, python).
     Use --dirs to always create directories, --no-dirs to skip.
     Use --no-hooks to skip pre-commit hooks installation.
+    Use --no-skills to skip .claude/skills/ creation (for Cursor users).
     Use --yes to accept defaults without prompting.
     """
     # DX-21B: Run claude /init if requested
@@ -235,18 +239,18 @@ def init(
         ".claude/commands/guard.md",
     ]
 
-    # Only create CLAUDE.md from template if claude /init wasn't run
-    if not claude or not (path / "CLAUDE.md").exists():
-        init_files.append("CLAUDE.md")
-
-    # Generate skills if --claude flag
-    if claude:
+    # Skills define the workflow - optional for non-Claude editors (e.g., Cursor)
+    if skills:
         init_files.extend([
             ".claude/skills/develop/SKILL.md",
             ".claude/skills/investigate/SKILL.md",
             ".claude/skills/propose/SKILL.md",
             ".claude/skills/review/SKILL.md",
         ])
+
+    # Only create CLAUDE.md from template if claude /init wasn't run
+    if not claude or not (path / "CLAUDE.md").exists():
+        init_files.append("CLAUDE.md")
 
     result = generate_from_manifest(path, syntax="cli", files_to_generate=init_files)
     if isinstance(result, Success):
