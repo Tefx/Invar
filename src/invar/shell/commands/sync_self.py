@@ -129,9 +129,15 @@ def sync_self(
 
         if not parsed.has_regions:
             # No regions - wrap existing content in user region, add managed from template
-            managed_content = new_parsed.regions["managed"].content
+            managed_region = new_parsed.regions["managed"]
+            managed_content = managed_region.content
+            # Preserve version attribute from template
+            if managed_region.version:
+                start_tag = f'<!--invar:managed version="{managed_region.version}"-->'
+            else:
+                start_tag = "<!--invar:managed-->"
             wrapped_content = (
-                f"<!--invar:managed-->\n{managed_content}\n<!--/invar:managed-->\n\n"
+                f"{start_tag}\n{managed_content}\n<!--/invar:managed-->\n\n"
                 f"<!--invar:user-->\n{existing_content}\n<!--/invar:user-->\n"
             )
             if dry_run:

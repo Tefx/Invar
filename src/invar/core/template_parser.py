@@ -162,8 +162,8 @@ def parse_invar_regions(content: str) -> ParsedFile:
 @pre(lambda parsed, updates: all(k == v.name for k, v in parsed.regions.items()))  # Keys must match names
 @post(lambda result: isinstance(result, str))
 @ensure(lambda parsed, updates, result: (
-    not parsed.has_regions or all(f"<!--invar:{r}-->" in result for r in parsed.regions)
-))
+    not parsed.has_regions or all(f"<!--invar:{r}" in result for r in parsed.regions)
+))  # Checks start tag prefix (version attribute may follow)
 def reconstruct_file(parsed: ParsedFile, updates: dict[str, str]) -> str:
     """Reconstruct file content with updated regions.
 
