@@ -1,260 +1,142 @@
-# DX-46: Documentation Audit (docs/ Directory)
+# DX-46: Documentation Audit (Revised)
 
 > **"Documentation that contradicts code is worse than no documentation."**
 
-**Status:** Draft
+**Status:** Draft (Revised)
 **Created:** 2025-12-25
 **Updated:** 2025-12-26
-**Effort:** Medium
+**Effort:** Low (Phase 1) + Medium (Phase 2)
 **Risk:** Low
 
-## Scope Change
+## Scope
 
-**Original scope:** Audit all documentation (INVAR.md, CLAUDE.md, sections/, docs/)
+**In scope:** docs/ directory audit + completeness review
+**Out of scope:** INVAR.md, CLAUDE.md, skills/ (handled by DX-49 templates)
 
-**Updated scope:** Audit docs/ directory only
+## Revised Phase Structure
 
-**Reason:** DX-49 (Protocol Distribution Unification) now handles:
-- INVAR.md → unified single version from templates/
-- CLAUDE.md → generated from templates with user regions
-- sections/ → deleted, merged into templates/skills/
+| Phase | Content | Effort | Priority |
+|-------|---------|--------|----------|
+| **Phase 1** | Fix stale references | 10 min | High |
+| **Phase 2** | Completeness audit + Lessons review | 4-8 hours | Medium |
+| **Phase 3** | CI check (optional) | 30 min | Low |
+| ~~Skipped~~ | ~~`invar check-docs` command~~ | — | — |
 
-**Remaining:** docs/ directory audit and `invar check-docs` command.
+### Why No `invar check-docs` Command
 
-## Problem Statement
+- Problem scale is small (2 stale refs found)
+- Problem frequency is low (only on major version upgrades)
+- grep achieves same result:
+  ```bash
+  grep -rn "ICIDIV\|v[34]\.[0-9]" docs/ --include="*.md" |
+    grep -v "history/" | grep -v "proposals/"
+  ```
 
-### Problem 1: Stale Content
+---
 
-With protocol updates (USBV, workflow skills, v5.0), docs/ may contain outdated content:
+## Phase 1: Fix Stale References
 
-| Document | Lines | Concern |
-|----------|-------|---------|
-| docs/reference/*.md | ~1500 | May reference ICIDIV, old CLI flags |
-| docs/design.md | ~300 | Architecture diagrams may be stale |
-| docs/vision.md | ~200 | Should still be valid |
-| docs/guide.md | ? | May have outdated examples |
+**Immediate action (10 min):**
 
-### Problem 2: Completeness Gaps
+| File | Line | Issue | Fix |
+|------|------|-------|-----|
+| `docs/design.md` | 1045 | "INVAR.md v4.0" | → v5.0 |
+| `docs/reference/workflow/session-start.md` | 212 | "v3.27" | → v5.0 |
 
-Documentation may be missing critical design rationale:
+**Exclusions (preserved as-is):**
+- `docs/history/` — Historical docs with warning banner
+- `docs/proposals/completed/` — Archived proposals
 
-| Gap Type | Risk | Example |
-|----------|------|---------|
-| **Undocumented decisions** | Future devs repeat mistakes | Why Core forbids I/O? |
-| **Missing rationale** | Changes break invariants | Why @pre before @post? |
-| **Implicit knowledge** | Knowledge loss on team change | Why two packages? |
-| **Code-doc drift** | Features exist without docs | New rules undocumented |
+---
 
-**Key questions for completeness audit:**
-1. Can a new developer understand WHY, not just WHAT?
-2. Are all design decisions traceable to rationale?
-3. Do lessons learned flow back into docs?
-4. Is `.invar/context.md` the only place for decisions?
+## Phase 2: Completeness Audit
 
-## Audit Scope
+### 2.1 Lessons Applicability Review
 
-### In Scope (This Proposal)
+**Important:** Lessons #1-#28 in context.md may be based on old approaches. Each must be evaluated:
 
-```
-docs/
-├── reference/           # Primary target
-│   ├── workflow/        # USBV content check
-│   ├── architecture/    # Core/Shell diagrams
-│   ├── verification/    # Guard behavior
-│   └── contracts/       # @pre/@post syntax
-├── design.md            # Architecture overview
-├── vision.md            # Philosophy (likely stable)
-├── guide.md             # User guide
-└── history/             # Historical docs (preserve as-is)
-```
+| Category | Judgment Criteria |
+|----------|-------------------|
+| ✅ Still applicable | Core insight remains valid |
+| ⚠️ Partially applicable | Update to reflect current state |
+| ❌ Obsolete | Problem solved or approach changed |
 
-### Out of Scope (Handled by DX-49)
+**Key changes to consider:**
 
-- INVAR.md
-- CLAUDE.md
-- sections/*.md
-- .claude/skills/*.md
+| Old | New | Affected Lessons |
+|-----|-----|------------------|
+| ICIDIV | USBV (DX-32) | Workflow-related |
+| --prove flag | Default in guard (DX-19) | Verification-related |
+| 4 verification levels | 2 levels | Level-related |
+| Manual workflow switch | DX-42 auto-routing | Transition-related |
+| sections/ | skills/ (DX-49) | Structure-related |
 
-## Stale Content Detection
-
-### Keyword Patterns
-
-```python
-STALE_PATTERNS = [
-    r"ICIDIV",                    # Old workflow name → USBV
-    r"v[34]\.\d+",                # Old version numbers → v5.0
-    r"--prove",                   # Old CLI flag → guard default
-    r"invar prove",               # Old command → guard
-    r"--thorough",                # Removed flag
-    r"Check-In:.*invar guard",    # Old Check-In format
-]
-
-EXCLUDE_PATHS = [
-    "docs/history/",              # Historical docs preserved
-    "docs/proposals/completed/",  # Archived proposals preserved
-]
-```
-
-### Command: `invar check-docs`
-
-```bash
-$ invar check-docs
-
-Scanning docs/ for stale content...
-
-⚠️ Potentially stale content:
-
-docs/reference/workflow/session-start.md:42
-  Found: "ICIDIV workflow"
-  Suggest: Replace with "USBV workflow"
-
-docs/design.md:15
-  Found: "v4.2"
-  Suggest: Update to "v5.0"
-
-docs/reference/verification/index.md:78
-  Found: "--prove flag"
-  Suggest: Remove (now default in guard)
-
-Found 3 issues in 3 files.
-Skipped: docs/history/ (preserved), docs/proposals/completed/ (archived)
-```
-
-## Implementation Plan
-
-| Phase | Action | Effort |
-|-------|--------|--------|
-| 1 | Implement `invar check-docs` command | Low |
-| 2 | Run stale content audit on docs/reference/ | Low |
-| 3 | Fix critical staleness issues | Low |
-| 4 | **Completeness audit** (deep review) | Medium |
-| 5 | Fill documentation gaps | Medium |
-| 6 | Integrate into CI (optional) | Low |
-
-### Phase 1: check-docs Command
-
-```python
-# src/invar/shell/check_docs.py
-
-def check_docs(docs_path: Path) -> list[Issue]:
-    """Scan docs for stale content patterns."""
-    issues = []
-
-    for md_file in docs_path.rglob("*.md"):
-        # Skip excluded paths
-        if any(ex in str(md_file) for ex in EXCLUDE_PATHS):
-            continue
-
-        content = md_file.read_text()
-        for pattern, suggestion in STALE_PATTERNS.items():
-            for match in re.finditer(pattern, content):
-                line_num = content[:match.start()].count("\n") + 1
-                issues.append(Issue(
-                    file=md_file,
-                    line=line_num,
-                    found=match.group(),
-                    suggestion=suggestion
-                ))
-
-    return issues
-```
-
-### Phase 2-4: Manual Audit
-
-Priority order:
-1. **docs/reference/workflow/** — Most likely to have USBV changes
-2. **docs/design.md** — Version number, architecture diagrams
-3. **docs/reference/verification/** — Guard behavior changes
-4. **docs/guide.md** — User-facing examples
-
-### Phase 4: Completeness Audit (Deep Review)
-
-Systematic review to identify undocumented designs and rationale:
-
-**Audit Checklist:**
+### 2.2 Documentation Gaps Audit
 
 | Area | Questions | Source of Truth |
 |------|-----------|-----------------|
 | **Architecture** | Why Core/Shell? Why no I/O in Core? | docs/design.md |
 | **Verification** | Why 4 layers? Why CrossHair + Hypothesis? | docs/reference/verification/ |
-| **Contracts** | Why @pre before @post? Contract completeness? | docs/reference/contracts/ |
+| **Rules** | Severity rationale for each rule? | docs/reference/rules/ |
 | **Workflow** | Why USBV? Why Check-In/Final? | docs/reference/workflow/ |
 | **Package Split** | Why two packages? Why Apache + GPL? | README, context.md |
-| **Rules** | Why each rule exists? Severity rationale? | docs/reference/rules/ |
-| **Lessons** | Are context.md lessons in permanent docs? | .invar/context.md → docs/ |
 
-**Audit Process:**
+### 2.3 Integration to Permanent Docs
 
-1. **Inventory:** List all design decisions in code (comments, markers, structure)
-2. **Cross-reference:** Check if each decision has documentation
-3. **Gap analysis:** Identify missing rationale
-4. **Priority:** Rank gaps by impact (onboarding friction, mistake risk)
+```
+Step 1: Classify each Lesson
+├── ✅ Applicable → Integrate to docs/
+├── ⚠️ Partial → Update then integrate
+└── ❌ Obsolete → Mark as historical or remove
 
-**Expected Gaps (Hypotheses):**
+Step 2: Update context.md
+├── Keep applicable Lessons
+├── Update partial ones
+└── Remove or mark obsolete ones
 
-- DX proposal rationale not in permanent docs (only in proposals/)
-- Lesson learned (#1-#28) not consolidated into reference docs
-- Rule severity choices undocumented
-- Package split rationale only in context.md
+Step 3: Integrate to permanent docs
+├── docs/reference/lessons.md (new) or
+└── Distribute to relevant reference docs
+```
 
-### Phase 5: Fill Documentation Gaps
+---
 
-Create or update documentation for identified gaps:
+## Phase 3: CI Check (Optional)
 
-| Gap | Action | Target |
-|-----|--------|--------|
-| Architecture rationale | Expand docs/design.md | "Why Core/Shell" section |
-| Verification layers | Add rationale to docs/reference/verification/ | "Why 4 layers" section |
-| Lessons consolidation | Extract permanent lessons to docs/ | docs/reference/lessons.md |
-| Package split | Add to README or docs/guide.md | "Package Architecture" section |
-| Rule rationale | Add to docs/reference/rules/ | Per-rule "Why" sections |
-
-**Principle:** Each design decision should be findable by searching docs/, not require reading context.md or proposals/.
-
-### Phase 6: CI Integration (Optional)
+Simple grep in CI to prevent regression:
 
 ```yaml
 # .github/workflows/docs-check.yml
-- name: Check documentation freshness
-  run: invar check-docs --strict
+- name: Check for stale docs
+  run: |
+    if grep -rn "ICIDIV\|v[34]\.[0-9]" docs/ --include="*.md" |
+       grep -v "history/" | grep -v "proposals/" | grep -q .; then
+      echo "::warning::Stale documentation found"
+    fi
 ```
 
-## History Directory Policy
-
-```
-docs/history/
-├── protocol-evolution.md    # v3.5 → v3.6 changes (preserve)
-├── feedback/                # Historical feedback (preserve)
-└── index.md                 # Already has staleness warning
-```
-
-**Policy:** Historical docs preserved as-is. The existing warning banner is sufficient:
-
-```markdown
-> These documents may reference outdated concepts (e.g., ICIDIV workflow, v3.x protocol).
-```
+---
 
 ## Success Criteria
 
-### Staleness Audit
-- [ ] `invar check-docs` command implemented
-- [ ] docs/reference/ audited for USBV consistency
-- [ ] Version numbers updated to v5.0
-- [ ] No ICIDIV references in active docs (excluding history/)
-- [ ] CLI examples match current commands
+### Phase 1
+- [ ] No v3.x/v4.x references in active docs/ (excluding history/)
 
-### Completeness Audit
-- [ ] All architecture decisions documented with rationale
-- [ ] Verification layer choices explained (why 4 layers)
-- [ ] Rule severity rationale documented
-- [ ] Package split rationale in permanent docs (not just context.md)
-- [ ] Lessons #1-#28 consolidated into reference docs
-- [ ] New developer can understand "why" without reading context.md
+### Phase 2
+- [ ] Each Lesson (#1-#28) classified (applicable/partial/obsolete)
+- [ ] Obsolete Lessons marked or removed
+- [ ] Applicable Lessons integrated to permanent docs
+- [ ] Design decisions have "why" documentation
+- [ ] context.md remains concise (current relevant content only)
 
-## Related Proposals
+### Phase 3 (Optional)
+- [ ] CI check prevents regression
+
+---
+
+## Related
 
 | Proposal | Relationship |
 |----------|--------------|
-| DX-49 | Handles INVAR.md, CLAUDE.md, sections/ — this proposal is complementary |
+| DX-49 | Handles INVAR.md, CLAUDE.md, skills/ — this proposal is complementary |
 | DX-24 | Created mechanism docs — this proposal audits them |
-| DX-45 | Superseded by DX-49 |
