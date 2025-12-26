@@ -150,11 +150,17 @@ def sync_self(
         # Check if destination exists
         if not dest_file.exists():
             # New file - create with all regions
+            # For CLAUDE.md, inject project additions into new file
+            final_content = new_content
+            if dest_rel == "CLAUDE.md" and project_additions and "project" in new_parsed.regions:
+                new_updates = {"project": project_additions}
+                final_content = reconstruct_file(new_parsed, new_updates)
+
             if dry_run:
                 console.print(f"[cyan]Would create[/cyan] {dest_rel}")
             else:
                 dest_file.parent.mkdir(parents=True, exist_ok=True)
-                dest_file.write_text(new_content)
+                dest_file.write_text(final_content)
                 console.print(f"[green]Created[/green] {dest_rel}")
             updated_files.append(dest_rel)
             continue

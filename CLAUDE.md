@@ -1,31 +1,85 @@
-# Invar Project Development Guide
+<!--invar:managed version="5.0"-->
+# Project Development Guide
 
-> **"Agent-Native Execution, Human-Directed Purpose"**
+> **Protocol:** Follow [INVAR.md](./INVAR.md) — includes Check-In, USBV workflow, and Task Completion requirements.
 
-This project follows the Invar methodology. See [INVAR.md](./INVAR.md) for protocol, [sections/](./sections/) for workflow details.
+## Check-In
 
-**Protocol:** v5.0 | **PyPI:** `invar-tools` + `invar-runtime`
+Your first message MUST display:
+
+```
+✓ Check-In: guard PASS | top: <entry1>, <entry2>
+```
+
+Execute `invar_guard(changed=true)` and `invar_map(top=10)`, then show this one-line summary.
+
+
+Example:
+```
+✓ Check-In: guard PASS | top: parse_file, check_rules
+```
+
+This is your sign-in. The user sees it immediately.
+No visible check-in = Session not started.
+
+Then read `.invar/context.md` for project state and lessons learned.
 
 ---
 
-## Check-In / Final
+## Final
 
-**First message:** `✓ Check-In: guard PASS | top: <entry1>, <entry2>`
-**Last message:** `✓ Final: guard PASS | 0 errors, N warnings`
+Your last message for an implementation task MUST display:
 
-Then read `.invar/context.md` for project state.
+```
+✓ Final: guard PASS | 0 errors, 2 warnings
+```
+
+Execute `invar_guard()` and show this one-line summary.
+
+
+This is your sign-out. Completes the Check-In/Final pair.
 
 ---
 
 ## Project Structure
 
 ```
-src/invar/
-├── core/           # Pure logic, @pre/@post required, no I/O
-└── shell/          # I/O operations, Result[T, E] required
-    ├── commands/   # CLI commands (guard, init)
-    └── prove/      # Verification (crosshair, hypothesis)
+src/{project}/
+├── core/    # Pure logic (@pre/@post, doctests, no I/O)
+└── shell/   # I/O operations (Result[T, E] return type)
 ```
+
+**Key insight:** Core receives data (strings), Shell handles I/O (paths, files).
+
+## Quick Reference
+
+| Zone | Requirements |
+|------|-------------|
+| Core | `@pre`/`@post` + doctests, pure (no I/O) |
+| Shell | Returns `Result[T, E]` from `returns` library |
+
+## Documentation Structure
+
+| File | Owner | Edit? | Purpose |
+|------|-------|-------|---------|
+| INVAR.md | Invar | No | Protocol (`invar update` to sync) |
+| CLAUDE.md | User | Yes | Project customization (this file) |
+| .invar/context.md | User | Yes | Project state, lessons learned |
+| .invar/examples/ | Invar | No | **Must read:** Core/Shell patterns, workflow |
+
+## Visible Workflow (DX-30)
+
+For complex tasks (3+ functions), show 3 checkpoints in TodoList:
+
+```
+□ [UNDERSTAND] Task description, codebase context, constraints
+□ [SPECIFY] Contracts (@pre/@post) and design decomposition
+□ [VALIDATE] Guard results, Review Gate status, integration status
+```
+
+**BUILD is internal work** — not shown in TodoList.
+
+**Show contracts before code.** See `.invar/examples/workflow.md` for full example.
 
 ---
 
@@ -36,20 +90,18 @@ src/invar/
 | `/audit` | Read-only code review (reports issues, no fixes) |
 | `/guard` | Run Invar verification (reports results) |
 
----
+## Skills (Agent-Invoked)
 
-## Workflows (Agent Skills)
-
-| Skill | Triggers | Details |
+| Skill | Triggers | Purpose |
 |-------|----------|---------|
-| `/investigate` | "why", "explain", vague tasks | [sections/investigate.md](sections/investigate.md) |
-| `/propose` | "should we", "compare" | [sections/propose.md](sections/propose.md) |
-| `/develop` | "add", "fix", "implement" | [sections/develop.md](sections/develop.md) |
-| `/review` | After /develop, `review_suggested` | [sections/review.md](sections/review.md) |
+| `/investigate` | "why", "explain", vague tasks | Research mode, no code changes |
+| `/propose` | "should we", "compare" | Decision facilitation |
+| `/develop` | "add", "fix", "implement" | USBV implementation workflow |
+| `/review` | After /develop, `review_suggested` | Adversarial review with fix loop |
 
 **Note:** Skills are invoked by agent based on context. Use `/audit` for user-initiated review.
 
-**Override:** `/develop!` forces workflow, skips routing.
+Guard triggers `review_suggested` for: security-sensitive files, escape hatches >= 3, contract coverage < 50%.
 
 ---
 
@@ -67,6 +119,16 @@ When user message contains these triggers, you MUST invoke the corresponding ski
 **Violation check (before writing ANY code):**
 - "Am I in a workflow?"
 - "Did I invoke the correct skill?"
+<!--/invar:managed--><!--invar:project-->
+## Invar Project Structure
+
+```
+src/invar/
+├── core/           # Pure logic, @pre/@post required, no I/O
+└── shell/          # I/O operations, Result[T, E] required
+    ├── commands/   # CLI commands (guard, init, sync-self)
+    └── prove/      # Verification (crosshair, hypothesis)
+```
 
 ---
 
@@ -83,7 +145,7 @@ When user message contains these triggers, you MUST invoke the corresponding ski
 | Document | Purpose |
 |----------|---------|
 | [INVAR.md](./INVAR.md) | Protocol core |
-| [sections/](./sections/) | Workflow details |
+| [docs/proposals/](./docs/proposals/) | Development proposals |
 | [.invar/context.md](./.invar/context.md) | Project state |
 
 ---
@@ -94,3 +156,23 @@ When user message contains these triggers, you MUST invoke the corresponding ski
 pip install -e ".[dev]"    # Development mode
 pip install -e runtime/    # Runtime in dev mode
 ```
+
+---
+
+## PyPI Packages
+
+| Package | Purpose |
+|---------|---------|
+| `invar-tools` | Dev tools (guard, sig, map) |
+| `invar-runtime` | Runtime contracts (@pre, @post) |
+<!--/invar:project--><!--invar:user-->
+<!-- ========================================================================
+     USER REGION - EDITABLE
+     Add your team conventions and project-specific rules below.
+     This section is preserved across invar update and sync-self.
+     ======================================================================== -->
+<!--/invar:user-->
+
+---
+
+*Generated by `invar init` v5.0. Customize the user section freely.*

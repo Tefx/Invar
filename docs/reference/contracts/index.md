@@ -8,7 +8,8 @@ Invar's contract system for defining and verifying function behavior.
 |----------|---------|
 | [Pre/Post Contracts](./pre-post.md) | `@pre`/`@post` syntax and patterns |
 | [Doctests](./doctests.md) | Executable examples as specification |
-| [Contract Completeness](./contract-complete.md) | When contracts are "complete" |
+| [Contract Completeness](./completeness.md) | When contracts are "complete" |
+| [Advanced Features](./advanced.md) | `@must_use`, `invariant()`, `@must_close` |
 
 ## Core Concept
 
