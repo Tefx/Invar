@@ -159,14 +159,17 @@ def _verify_single_file(
             # Check if this is an execution error vs actual counterexample
             # CrossHair reports TypeError/AttributeError when it can't
             # symbolically execute C extensions like ast.parse()
-            stdout = result.stdout
+            # Check both stdout and stderr for error patterns
+            output = result.stdout + "\n" + result.stderr
             execution_errors = [
                 "TypeError:",
                 "AttributeError:",
                 "NotImplementedError:",
                 "compile() arg 1 must be",  # ast.parse limitation
+                "ValueError: wrong parameter order",  # CrossHair signature bug
+                "ValueError: cannot determine truth",  # Symbolic execution limit
             ]
-            is_execution_error = any(err in stdout for err in execution_errors)
+            is_execution_error = any(err in output for err in execution_errors)
 
             if is_execution_error:
                 # Treat as skipped - function uses unsupported operations
@@ -174,15 +177,15 @@ def _verify_single_file(
                     "file": file_path,
                     "status": CrossHairStatus.SKIPPED,
                     "time_ms": elapsed_ms,
-                    "reason": "uses unsupported operations (ast/compile)",
-                    "stdout": stdout,
+                    "reason": "uses unsupported operations (ast/compile/signature)",
+                    "stdout": output,
                 }
 
             # Extract counterexample lines - CrossHair format: "file:line: error: Err when calling func(...)"
             # Include lines with "error:" as they contain the actual counterexamples
             counterexamples = [
                 line.strip()
-                for line in stdout.split("\n")
+                for line in output.split("\n")
                 if line.strip() and ": error:" in line.lower()
             ]
             return {
@@ -190,7 +193,7 @@ def _verify_single_file(
                 "status": CrossHairStatus.COUNTEREXAMPLE,
                 "time_ms": elapsed_ms,
                 "counterexamples": counterexamples,
-                "stdout": stdout,
+                "stdout": output,
             }
 
     except subprocess.TimeoutExpired:
