@@ -36,6 +36,31 @@
 
 **Forbidden in Core:** `os`, `sys`, `subprocess`, `pathlib`, `open`, `requests`, `datetime.now`
 
+### Decision Tree: Core vs Shell
+
+```
+Does this function...
+│
+├─ Read or write files? ──────────────────→ Shell
+├─ Make network requests? ─────────────────→ Shell
+├─ Access current time (datetime.now)? ────→ Shell OR inject as parameter
+├─ Generate random values? ────────────────→ Shell OR inject as parameter
+├─ Print to console? ──────────────────────→ Shell (return data, Shell logs)
+├─ Access environment variables? ──────────→ Shell
+│
+└─ None of the above? ─────────────────────→ Core
+```
+
+**Pattern:** Inject impure values as parameters:
+```python
+# Core: receives 'now' as parameter (pure)
+def is_expired(expiry: datetime, now: datetime) -> bool:
+    return now > expiry
+
+# Shell calls with actual time
+expired = is_expired(token.expiry, datetime.now())
+```
+
 ## Core Example (Pure Logic)
 
 ```python
@@ -75,6 +100,50 @@ def read_config(path: Path) -> Result[dict, str]:
 **Pattern:** Shell reads file → passes content to Core → returns Result.
 
 More examples: `.invar/examples/`
+
+## Contract Rules
+
+### Lambda Signature (Critical)
+
+```python
+# WRONG: Lambda only takes first parameter
+@pre(lambda x: x >= 0)
+def calculate(x: int, y: int = 0): ...
+
+# CORRECT: Lambda must include ALL parameters (even defaults)
+@pre(lambda x, y=0: x >= 0)
+def calculate(x: int, y: int = 0): ...
+```
+
+Guard's `param_mismatch` rule catches this as ERROR.
+
+### Meaningful Contracts
+
+```python
+# Redundant - type hints already check this
+@pre(lambda x: isinstance(x, int))
+def calc(x: int): ...
+
+# Meaningful - checks business logic
+@pre(lambda x: x > 0)
+def calc(x: int): ...
+
+# Meaningful - checks relationship between params
+@pre(lambda start, end: start < end)
+def process_range(start: int, end: int): ...
+```
+
+### @post Scope
+
+```python
+# WRONG: @post cannot access function parameters
+@post(lambda result: result > x)  # 'x' not available!
+def calc(x: int) -> int: ...
+
+# CORRECT: @post can only use 'result'
+@post(lambda result: result >= 0)
+def calc(x: int) -> int: ...
+```
 
 ## Check-In (Required)
 
@@ -184,27 +253,47 @@ When rule violation has valid architectural justification:
 def flask_handler(): ...
 ```
 
-See `invar rules` for all rule names.
+**Valid rule names for @invar:allow:**
+- `shell_result` — Shell function without Result return type
+- `entry_point_too_thick` — Entry point exceeds 15 lines
+- `forbidden_import` — I/O import in Core (rare, justify carefully)
+
+Run `invar rules` for complete rule catalog with hints.
 
 ## Commands
 
 ```bash
-invar guard              # Full: static + doctests + CrossHair + Hypothesis (default)
+invar guard              # Full: static + doctests + CrossHair + Hypothesis
 invar guard --static     # Static only (quick debug, ~0.5s)
 invar guard --changed    # Modified files only
+invar guard --coverage   # Collect branch coverage
 invar sig <file>         # Show contracts + signatures
 invar map --top 10       # Most-referenced symbols
+invar rules              # List all rules with detection/hints (JSON)
 ```
 
 ## Configuration
 
 ```toml
+# pyproject.toml or invar.toml
 [tool.invar.guard]
-core_paths = ["src/myapp/core"]
-shell_paths = ["src/myapp/shell"]
-# DX-22: Doctest lines are always excluded from size calculations by default
+core_paths = ["src/myapp/core"]    # Default: ["src/core", "core"]
+shell_paths = ["src/myapp/shell"]  # Default: ["src/shell", "shell"]
+max_file_lines = 500               # Default: 500 (warning at 80%)
+max_function_lines = 50            # Default: 50
+# Doctest lines are excluded from size calculations
 ```
+
+## Troubleshooting
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| `param_mismatch` error | Lambda missing params | Include ALL params (even defaults) |
+| `shell_result` error | Shell func no Result | Add Result[T,E] or @invar:allow |
+| Function too long | Over 50 lines | Extract helper: `_impl()` + main with docstring |
+| File too long | Over 500 lines | Split by responsibility |
+| `is_failure()` not found | Wrong Result check | Use `isinstance(result, Failure)` |
 
 ---
 
-*Protocol v5.0 — USBV workflow (DX-32) | [Guide](docs/guide.md) | [Examples](.invar/examples/)*
+*Protocol v5.0 — USBV workflow (DX-32) | [Examples](.invar/examples/)*
