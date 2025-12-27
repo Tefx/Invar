@@ -368,10 +368,10 @@ def init(
             ".claude/skills/review/SKILL.md",
         ])
 
-    # DX-55: Only create CLAUDE.md if not already handled by recovery
-    if action != "recover":
-        if not claude or not (path / "CLAUDE.md").exists():
-            init_files.append("CLAUDE.md")
+    # DX-55: Create CLAUDE.md if not already handled by recovery
+    # Also handles case where binary content was deleted during recovery
+    if not (path / "CLAUDE.md").exists():
+        init_files.append("CLAUDE.md")
 
     result = generate_from_manifest(path, syntax="cli", files_to_generate=init_files)
     if isinstance(result, Success):

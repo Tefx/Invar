@@ -59,6 +59,7 @@ class ProjectState:
                 return "none"
 
 
+# @shell_complexity: State detection requires multiple file existence checks
 def detect_project_state(path: Path) -> ProjectState:
     """Detect Invar initialization state.
 
@@ -74,8 +75,12 @@ def detect_project_state(path: Path) -> ProjectState:
 
     # Detect CLAUDE.md state
     if claude_md.exists():
-        content = claude_md.read_text()
-        claude_state = detect_claude_md_state(content)
+        try:
+            content = claude_md.read_text()
+            claude_state = detect_claude_md_state(content)
+        except UnicodeDecodeError:
+            # Binary or non-UTF-8 content - treat as corrupt, will be replaced
+            claude_state = ClaudeMdState(state="partial")
     else:
         claude_state = ClaudeMdState(state="absent")
 
@@ -111,10 +116,19 @@ def merge_claude_md(path: Path, state: ClaudeMdState) -> Result[str, str]:
 
     DX-55: Preserves user content while restoring Invar regions.
     """
-    claude_md = path / "CLAUDE.md"
+    from pathlib import Path as PathLib  # Runtime import for Path operations
 
-    # Read existing content
-    existing_content = claude_md.read_text() if claude_md.exists() else ""
+    claude_md = PathLib(path) / "CLAUDE.md"
+
+    # Read existing content (handle binary/corrupt files)
+    existing_content = ""
+    if claude_md.exists():
+        try:
+            existing_content = claude_md.read_text()
+        except UnicodeDecodeError:
+            # Binary content - delete and recreate
+            claude_md.unlink()
+            state = ClaudeMdState(state="absent")
 
     match state.state:
         case "intact":

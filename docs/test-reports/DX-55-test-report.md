@@ -21,9 +21,9 @@
 | D. Missing State | 3 | 0 | 0 |
 | E. Absent State | 2 | 0 | 0 |
 | F. Skills Handling | 4 | 0 | 0 |
-| G. Edge Cases | 3 | 0 | 1 |
+| G. Edge Cases | 4 | 0 | 0 |
 | H. Backwards Compat | 3 | 0 | 0 |
-| **Total** | **26** | **0** | **1** |
+| **Total** | **27** | **0** | **0** |
 
 ## Detailed Results
 
@@ -82,7 +82,7 @@
 | Test | Result | Notes |
 |------|--------|-------|
 | G1: Large CLAUDE.md (1000+ lines) | ✅ PASS | < 30s timeout |
-| G2: Binary content in file | ⏭️ SKIP | Requires special handling |
+| G2: Binary content in file | ✅ PASS | Detects corrupt state, replaces with fresh |
 | G3: Read-only file | ✅ PASS | Graceful handling |
 | G4: Special characters in content | ✅ PASS | UTF-8, CJK preserved |
 
@@ -112,6 +112,12 @@
 | 5 | MAJOR | A2: New project with existing CLAUDE.md not merged | Handle `full_init` with existing content |
 | 6 | MAJOR | D3: Empty CLAUDE.md not recreated | Handle `create` action by deleting empty file |
 | 7 | MAJOR | F3: Deleted skills not recreated | Check for missing files in "none" action path |
+
+### Round 3 (Edge Cases)
+
+| # | Severity | Description | Resolution |
+|---|----------|-------------|------------|
+| 8 | MAJOR | G2: Binary content crashes with UnicodeDecodeError | Add try/except in `detect_project_state()` and `merge_claude_md()` |
 
 ## Content Preservation Verification
 
@@ -143,10 +149,10 @@
 
 ## Conclusion
 
-- [x] All tests pass (26/26, 1 skipped)
+- [x] All tests pass (27/27, 0 skipped)
 - [x] No data loss in any scenario
 - [x] Idempotent behavior verified
-- [x] Edge cases handled gracefully
+- [x] Edge cases handled gracefully (including binary content)
 - [x] Performance acceptable
 - [x] **Ready for release**
 
@@ -161,5 +167,6 @@ The comprehensive test script is available at `/tmp/dx55_test.sh` and covers all
 ```
 940863c feat(DX-55): Unified idempotent init with smart CLAUDE.md merge
 75838e7 fix(DX-55): Integration test fixes for idempotent init
-[pending] fix(DX-55): Complete integration test fixes (A2, D3, F3)
+3fe7ea0 fix: Centralize timeout configuration and improve code quality
+[current] fix(DX-55): Handle binary content in CLAUDE.md (G2)
 ```
