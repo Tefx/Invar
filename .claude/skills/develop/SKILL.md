@@ -15,9 +15,13 @@ description: Implementation phase following USBV workflow. Use when task is clea
 
 ## Entry Actions (REQUIRED)
 
-### Routing Announcement
+### Context Refresh (DX-54)
 
-Before any workflow action, display:
+Before any workflow action:
+1. Read `.invar/context.md` (especially Key Rules section)
+2. Display routing announcement
+
+### Routing Announcement
 
 ```
 📍 Routing: /develop — [trigger detected, e.g. "add", "fix", "implement"]
@@ -37,23 +41,6 @@ If task appears simple (4+ signals: single file, clear target, additive change, 
 - Y → Execute full cycle without intermediate confirmations
 - N → Proceed with normal USBV checkpoints
 - No response → Default to step-by-step (safe)
-
-### Check-In
-
-```python
-invar_guard(changed=true)
-invar_map(top=10)
-```
-
-
-**Display:**
-```
-✓ Check-In: guard [PASS/FAIL] | top: [entry1], [entry2], [entry3]
-```
-
-Then read `.invar/context.md` for project state.
-
-**No visible Check-In = Development not started.**
 
 ## USBV Workflow
 

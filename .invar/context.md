@@ -1,18 +1,51 @@
 # Invar Project Context
 
-*Last updated: 2025-12-26*
+*Last updated: 2025-12-27*
+
+## Key Rules (Quick Reference)
+
+<!-- DX-54: Rules summary for long conversation resilience -->
+
+### Core/Shell Separation
+- **Core** (`**/core/**`): @pre/@post + doctests, NO I/O imports
+- **Shell** (`**/shell/**`): Result[T, E] return type
+
+### USBV Workflow
+1. Understand → 2. Specify (contracts first) → 3. Build → 4. Validate
+
+### Verification
+- `invar_guard()` = static + doctests + CrossHair + Hypothesis
+- Final must show: `✓ Final: guard PASS | ...`
+
+## Self-Reminder
+
+<!-- DX-54: AI should re-read this file periodically -->
+
+**When to re-read this file:**
+- Starting a new task
+- Completing a task (before moving to next)
+- Conversation has been going on for a while (~15-20 exchanges)
+- Unsure about project rules or patterns
+
+**Quick rule check:**
+- Am I in Core or Shell?
+- Do I have @pre/@post contracts?
+- Am I following USBV workflow?
+- Did I run guard before claiming "done"?
+
+---
 
 ## Active Work
 
 See [docs/proposals/](../docs/proposals/) for planned changes and their dependencies.
 
 **Completed today:**
-- DX-47: Command/Skill separation (`/audit`, `/guard` commands)
-- DX-48: Code structure reorganization (Phase 1 + DX-48b-lite)
+- DX-54: Agent Native Context Management
+- DX-53: Review Loop Effectiveness
 
-**Current focus:** DX-49 (SSOT) → DX-42 (auto-routing)
+**Current focus:** Template and project file updates for DX-54
 
-**Known issues:** DX-50 (Workflow enforcement) - Agent 容易跳过 workflow
+**Known issues:** None
 
 ---
 

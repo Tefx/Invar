@@ -3,26 +3,28 @@
 
 > **Protocol:** Follow [INVAR.md](./INVAR.md) — includes Check-In, USBV workflow, and Task Completion requirements.
 
-## Check-In
+## Check-In (DX-54)
 
 Your first message MUST display:
 
 ```
-✓ Check-In: guard PASS | top: <entry1>, <entry2>
+✓ Check-In: [project] | [branch] | [clean/dirty]
 ```
 
-Execute `invar_guard(changed=true)` and `invar_map(top=10)`, then show this one-line summary.
-
+Actions:
+1. Read `.invar/context.md` (Key Rules + Current State + Lessons Learned)
+2. Show one-line status
 
 Example:
 ```
-✓ Check-In: guard PASS | top: parse_file, check_rules
+✓ Check-In: Invar | main | clean
 ```
+
+**Do NOT execute guard or map at Check-In.**
+Guard is for VALIDATE phase and Final only.
 
 This is your sign-in. The user sees it immediately.
 No visible check-in = Session not started.
-
-Then read `.invar/context.md` for project state and lessons learned.
 
 ---
 
@@ -165,6 +167,19 @@ Agent announces routing decision before entering any workflow:
 
 **Auto-review (DX-41):** When Guard outputs `review_suggested`, agent automatically
 enters /review. Say "skip" to bypass.
+
+---
+
+## Context Management (DX-54)
+
+Re-read `.invar/context.md` when:
+1. Entering any workflow (/develop, /review, etc.)
+2. Completing a TodoWrite task (before moving to next)
+3. Conversation exceeds ~15-20 exchanges
+4. Unsure about project rules or patterns
+
+**Refresh is transparent** — do not announce "I'm refreshing context."
+Only show routing announcements when entering workflows.
 <!--/invar:managed--><!--invar:project-->
 ## Invar Project Structure
 

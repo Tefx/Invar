@@ -2,7 +2,7 @@
 
 > **"Separate the judge from the accused. Every round is a new trial."**
 
-**Status:** Draft
+**Status:** ✅ Complete
 **Created:** 2025-12-27
 **Effort:** Medium
 **Risk:** Low
@@ -357,7 +357,7 @@ To:
 no_major AND confidence == HIGH → Exit
 ```
 
-LOW confidence forces another round even if no MAJOR issues found.
+MEDIUM/LOW confidence forces another round even if no MAJOR issues found.
 
 ### Phase 4: Add Scope Expansion Logic
 

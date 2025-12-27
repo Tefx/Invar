@@ -24,7 +24,7 @@ This directory contains design proposals for Invar development.
 | DX-46 | documentation-audit | ✅ Complete | docs/ directory audit |
 | DX-51 | workflow-phase-visibility | ✅ Complete | USBV phase headers separate from TodoWrite |
 | DX-52 | venv-dependency-injection | ✅ Complete | PYTHONPATH injection for uvx compatibility |
-| DX-53 | review-loop-effectiveness | Draft | Isolated reviewer + scope expansion per round |
+| DX-53 | review-loop-effectiveness | ✅ Complete | Isolated reviewer + scope expansion per round |
 
 ## Archived Proposals (26)
 
@@ -72,10 +72,9 @@ This directory contains design proposals for Invar development.
               ▼                               ▼
       Extends DX-42 concepts          DX-53 (Review Effectiveness)
 
-Completed: DX-47, DX-48, DX-49, DX-41, DX-42, DX-43, DX-39, DX-46, DX-23, DX-37, DX-51, DX-52
+Completed: DX-47, DX-48, DX-49, DX-41, DX-42, DX-43, DX-39, DX-46, DX-23, DX-37, DX-51, DX-52, DX-53
 Partial: DX-38 (Tier 1-2 done)
 Dropped: DX-40 (contradicts Lesson #19)
-Active: DX-53 (Review Effectiveness)
 Deferred: DX-38 Tier 3-4, DX-25, DX-29
 ```
 
@@ -90,7 +89,7 @@ Deferred: DX-38 Tier 3-4, DX-25, DX-29
 | ~~High~~ | ~~DX-51~~ | ~~USBV phase headers visible in output~~ | ~~Workflow follow rate~~ | ✅ Complete |
 | ~~Medium~~ | ~~DX-37~~ | ~~`invar guard --coverage` reports uncovered branches~~ | ~~Verification visibility~~ | ✅ Complete |
 | ~~High~~ | ~~DX-52~~ | ~~uvx dependency injection~~ | ~~uvx can access project deps~~ | ✅ Complete |
-| **Medium** | DX-53 | Isolated reviewer + scope expansion | Review effectiveness | Draft |
+| ~~Medium~~ | ~~DX-53~~ | ~~Isolated reviewer + scope expansion~~ | ~~Review effectiveness~~ | ✅ Complete |
 | ~~Low~~ | ~~DX-46~~ | ~~docs/ directory audit~~ | ~~Documentation maintenance~~ | ✅ Complete |
 | ~~Low~~ | ~~DX-40~~ | ~~Hook intercepts incorrect tool calls~~ | ~~Contradicts Lesson #19~~ | ✗ Dropped |
 | **Partial** | DX-38 | Tier 1-2 done; Tier 3-4 deferred | High false-positive risk | Tier 1-2 ✅ |
@@ -110,26 +109,26 @@ Deferred: DX-38 Tier 3-4, DX-25, DX-29
 | ~~5~~ | ~~DX-40~~ | — | — | ✗ Dropped (Lesson #19) |
 | ~~6~~ | ~~DX-51~~ | — | — | ✅ Complete |
 | ~~7~~ | ~~DX-52~~ | — | — | ✅ Complete |
-| **8** | DX-53 | — | 0.5 day | Review Effectiveness |
+| ~~8~~ | ~~DX-53~~ | — | — | ✅ Complete |
 | **∞** | DX-38 Tier 3-4, DX-25, DX-29 | — | — | Deferred |
 
-**Time estimate:** ~0.5 day remaining (DX-53)
-
-**Next:** DX-53 (Review Loop Effectiveness)
+**All planned proposals complete.** Only deferred items remain.
 
 ## Recent Changes (2025-12-27)
 
 ### Implemented Today
+- **DX-53** — Review Loop Effectiveness ✅
+  - Isolated reviewer (sub-agent) as default mode
+  - Three-phase review: Regression (15%) + Validation (25%) + Expansion (60%)
+  - Scope expansion across rounds (changed → dependents → integration)
+  - Exit criteria: `no_major AND confidence == HIGH`
+  - Exhaustive Review Declaration requirement
+
 - **DX-52** — Virtual Environment Dependency Injection ✅
   - Phase 1: PYTHONPATH injection for uvx compatibility
   - Phase 2: Smart re-spawn with project Python
   - Phase 3: Version mismatch detection and upgrade prompts
   - Enables `uvx invar-tools guard` to access project dependencies
-
-- **DX-53** — Review Loop Effectiveness (Draft)
-  - Proposes isolated reviewer (sub-agent) as default
-  - Each round includes expansion phase (60% effort on NEW issues)
-  - Exit criteria: `no_major AND confidence == HIGH`
 
 - **DX-51** — Workflow Phase Visibility ✅
   - Separates USBV phase tracking from TodoWrite task tracking

@@ -27,9 +27,13 @@ description: Exploration and understanding phase. Use when task is vague, needs 
 
 ## Entry Actions
 
-### Routing Announcement
+### Context Refresh (DX-54)
 
-Before any workflow action, display:
+Before any workflow action:
+1. Read `.invar/context.md` (especially Key Rules section)
+2. Display routing announcement
+
+### Routing Announcement
 
 ```
 📍 Routing: /investigate — [reason, e.g. "task is vague", "trigger 'why'"]
@@ -40,7 +44,7 @@ Before any workflow action, display:
 
 1. Display routing announcement (above)
 2. Run `invar_map(top=10)` for codebase orientation
-3. Read `.invar/context.md` if relevant to topic
+3. Explore relevant code and documentation
 
 ## Tool Selection
 

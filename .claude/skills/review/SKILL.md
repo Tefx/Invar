@@ -16,9 +16,13 @@ description: Adversarial code review with fix loop. Use after development, when 
 
 ## Entry Actions
 
-### Routing Announcement
+### Context Refresh (DX-54)
 
-Before any workflow action, display:
+Before any workflow action:
+1. Read `.invar/context.md` (especially Key Rules section)
+2. Display routing announcement
+
+### Routing Announcement
 
 ```
 📍 Routing: /review — [trigger, e.g. "review_suggested", "user requested review"]
@@ -36,13 +40,15 @@ WARNING: review_suggested - Security-sensitive path detected
 WARNING: review_suggested - Low contract coverage
 ```
 
-### Select Mode
+### Select Mode (DX-53)
 
-| Condition | Mode |
-|-----------|------|
-| `review_suggested` present | **Isolated** (spawn sub-agent) |
-| `--isolated` flag | **Isolated** |
-| Default (no trigger) | **Quick** (same context) |
+| Condition | Mode | Reason |
+|-----------|------|--------|
+| Default | **Isolated** | Eliminates confirmation bias |
+| `--quick` flag | **Quick** | User opts for speed |
+| Trivial change (<10 lines) | **Quick** | Overhead not justified |
+
+**Why Isolated is Default:** The cost of false negatives (missed bugs) exceeds the cost of sub-agent spawn.
 
 ## Review Checklist
 
@@ -64,20 +70,69 @@ WARNING: review_suggested - Low contract coverage
 - [ ] Input validation against injection, XSS?
 - [ ] No hardcoded secrets?
 
-## Review-Fix Loop
+## Review-Fix Loop (DX-53)
+
+### Three-Phase Review Per Round
+
+Each round has THREE phases, not one:
 
 ```
-Round 1: Review → Find issues
-    ↓
-Fix CRITICAL + MAJOR (MINOR → backlog)
-    ↓
-Round 2: Re-review (if needed)
-    ↓
-Convergence check:
-- No CRITICAL/MAJOR → Exit ✓
-- No improvement → Exit (warn)
-- Round >= 3 → Exit (max)
+Round N:
+├── Phase A: Regression Check (15% effort)
+│   └── Verify previous fixes didn't break anything
+│
+├── Phase B: Fix Validation (25% effort)
+│   └── Confirm fixes actually address the issues
+│
+└── Phase C: Expansion Search (60% effort)  ← PRIMARY
+    └── Actively hunt for NEW issues in:
+        - Modified code
+        - Code adjacent to modifications
+        - Integration points
 ```
+
+### Scope Expansion Across Rounds
+
+```
+Round 1: Changed files only
+         └── Focus: Direct modifications
+
+Round 2: Changed files + Direct dependents
+         └── Focus: How changes affect callers
+
+Round 3: Integration boundaries
+         └── Focus: System-level implications
+```
+
+### Convergence Logic
+
+```
+Round 1:
+    │
+    ├── Spawn Isolated Reviewer (sub-agent)
+    │   └── Prompt: "Find ALL issues. Success = problems found."
+    │
+    ├── Reviewer returns issues + confidence level
+    │
+    ├── Exit check:
+    │   ├── NO MAJOR + HIGH confidence → Exit ✓
+    │   ├── NO MAJOR + MEDIUM/LOW confidence → Continue (expand scope)
+    │   └── MAJOR found → Fix, continue
+    │
+Round 2+:
+    │
+    ├── Spawn NEW Isolated Reviewer (fresh context!)
+    │
+    ├── Convergence check:
+    │   ├── No MAJOR + HIGH confidence → Exit ✓
+    │   ├── No MAJOR + MEDIUM/LOW → Continue (last round if Round 2)
+    │   ├── Round >= 3 → Exit (max)
+    │   └── Continue if needed
+```
+
+**Exit Criteria:** `no_major AND confidence == HIGH`
+
+**Note:** MEDIUM confidence is treated as LOW - requires another round to confirm exhaustive review.
 
 ## Severity Definitions
 
@@ -94,12 +149,20 @@ Convergence check:
 
 **Rounds:** [N]
 **Exit reason:** quality_met | max_rounds | no_improvement
+**Final confidence:** HIGH | MEDIUM | LOW
 
 **Fixed:**
 - [list of fixed issues]
 
 **Remaining (MINOR - backlog):**
 - [list for later]
+
+### Exhaustive Review Declaration
+
+- [ ] Reviewed ALL code in scope, not just diffs
+- [ ] Checked how changes interact with unchanged code
+- [ ] Attempted to find edge cases and boundary conditions
+- [ ] Looked for issues UNRELATED to previous findings
 
 **Recommendation:**
 - [ ] Ready for merge
@@ -131,45 +194,69 @@ WARNING: review_suggested - Security-sensitive path detected
 WARNING: review_suggested - Low contract coverage
 ```
 
-### Select Mode
+### Select Mode (DX-53)
 
 | Condition | Mode | Reason |
 |-----------|------|--------|
-| `review_suggested` present | **Isolated** | Eliminates confirmation bias |
-| `--isolated` flag | **Isolated** | User override |
-| No trigger, `--quick` flag | **Quick** | Faster, context preserved |
-| Default (no trigger) | **Quick** | Routine review |
+| Default | **Isolated** | Eliminates confirmation bias |
+| `--quick` flag | **Quick** | User opts for speed |
+| Trivial change (<10 lines) | **Quick** | Overhead not justified |
+
+**Why Isolated is Default:** The cost of false negatives (missed bugs) exceeds the cost of sub-agent spawn.
 
 ---
 
-## Isolated Mode (Sub-Agent)
+## Isolated Mode (Sub-Agent) (DX-53)
 
 **Spawn independent reviewer with fresh context:**
 
 ```python
 Task(
     subagent_type="general-purpose",
-    prompt="""
-You are an ADVERSARIAL CODE REVIEWER. Your job is to FIND PROBLEMS.
+    prompt=f"""
+You are an ADVERSARIAL CODE REVIEWER for Round {round_num}.
+
+## Your Role
+- You are the JUDGE, not the defense attorney
+- Your success is measured by PROBLEMS FOUND
+- Finding 0 issues is a FAILURE unless you prove exhaustive review
 
 ## Files to Review
-[list of changed files or specified files]
+{file_list}
 
-## Your Mindset
-- The code has bugs until proven otherwise
-- Contracts may be meaningless ceremony
-- Escape hatches may be abused
-- You are NOT here to validate or approve
+## Previous Context
+{f"Round {round_num-1} found {prev_issues} issues (now fixed)." if round_num > 1 else "This is the first review round."}
 
-## Review Focus
-1. Contract QUALITY (not just presence)
-   - Does @pre constrain beyond type checking?
-   - Does @post verify meaningful properties?
-2. Boundary conditions and edge cases
-3. Logic errors and dead code
-4. Error handling paths
-5. Security considerations
-6. Escape hatch validity (@invar:allow)
+## Round {round_num} Objectives (Three-Phase Review)
+
+1. **REGRESSION CHECK (15% effort)**
+   - Verify previous fixes didn't break anything
+
+2. **FIX VALIDATION (25% effort)**
+   - Confirm fixes address original issues
+
+3. **EXPANSION SEARCH (60% effort)** ← PRIMARY
+   - Actively hunt for NEW issues in:
+     - Modified code
+     - Code adjacent to modifications
+     - Integration points
+     - Related functionality
+
+## Review Scope
+{scope_description}
+- Round 1: Changed files only
+- Round 2: + Direct dependents (files importing changed files)
+- Round 3: + Integration boundaries
+
+## What to Look For
+- Contract QUALITY (not just presence)
+  - Does @pre constrain beyond type checking?
+  - Does @post verify meaningful properties?
+- Boundary conditions and edge cases
+- Logic errors and dead code
+- Error handling paths
+- Security considerations
+- Escape hatch validity (@invar:allow)
 
 ## Severity Definitions
 - CRITICAL: Security vulnerability, data loss, crash
@@ -183,12 +270,27 @@ You are an ADVERSARIAL CODE REVIEWER. Your job is to FIND PROBLEMS.
 **Problem:** What's wrong
 **Suggestion:** How to fix
 
-Your success is measured by problems found, not code approved.
+## Required: Completion Declaration
+
+Before exiting, you MUST confirm:
+- [ ] I reviewed ALL code in scope, not just diffs
+- [ ] I checked how changes interact with unchanged code
+- [ ] I attempted to find edge cases and boundary conditions
+- [ ] I looked for issues UNRELATED to previous findings
+
+**Confidence Level:** HIGH | MEDIUM | LOW
+
+If MEDIUM or LOW:
+- What areas need more review?
+- Why couldn't you achieve HIGH confidence?
+
+Remember: You WIN by finding problems. You LOSE by missing them.
 """
 )
 ```
 
 **Key:** Sub-agent has NO conversation history. Only sees the code.
+**Key:** Each round spawns a NEW reviewer with fresh context.
 
 ---
 
@@ -235,34 +337,72 @@ Adopt adversarial mindset:
 
 ---
 
-## Review-Fix Loop
+## Review-Fix Loop (DX-53)
+
+### Three-Phase Review Per Round
+
+Each round has THREE phases:
 
 ```
-Round 1: Review
+Round N:
+├── Phase A: Regression Check (15% effort)
+│   └── Verify previous fixes didn't break anything
+│
+├── Phase B: Fix Validation (25% effort)
+│   └── Confirm fixes actually address the issues
+│
+└── Phase C: Expansion Search (60% effort)  ← PRIMARY
+    └── Actively hunt for NEW issues
+```
+
+### Scope Expansion Across Rounds
+
+| Round | Scope | Focus |
+|-------|-------|-------|
+| 1 | Changed files only | Direct modifications |
+| 2 | + Direct dependents | How changes affect callers |
+| 3 | + Integration boundaries | System-level implications |
+
+### Convergence Logic
+
+```
+Round 1:
     │
-    ├── Issues found?
-    │   ├── NO → Exit, report clean
-    │   └── YES ↓
+    ├── Spawn Isolated Reviewer (sub-agent)
+    │   └── Prompt: "Find ALL issues. Success = problems found."
     │
-    ├── Fix CRITICAL + MAJOR issues
-    │   (MINOR → backlog for later)
+    ├── Reviewer returns issues + confidence level
     │
-Round 2: Re-review (if needed)
+    ├── Exit check:
+    │   ├── NO MAJOR + HIGH confidence → Exit ✓
+    │   ├── NO MAJOR + MEDIUM/LOW confidence → Continue (expand scope)
+    │   └── MAJOR found → Fix, continue
+    │
+Round 2+:
+    │
+    ├── Spawn NEW Isolated Reviewer (fresh context!)
     │
     ├── Convergence check:
-    │   ├── No CRITICAL/MAJOR → Exit ✓
-    │   ├── No improvement → Exit (warn)
-    │   └── Round >= 3 → Exit (max reached)
-    │
-    └── Continue if needed
+    │   ├── No MAJOR + HIGH confidence → Exit ✓
+    │   ├── No MAJOR + MEDIUM/LOW → Continue (last round if Round 2)
+    │   ├── Round >= 3 → Exit (max)
+    │   └── Continue if needed
 ```
 
-### Convergence Criteria
+### Exit Criteria (DX-53)
 
-Exit when ANY condition met:
-1. **Quality target:** No CRITICAL or MAJOR issues
-2. **Max rounds:** 3 rounds completed
-3. **No improvement:** Same or more issues as previous round
+**Must satisfy BOTH conditions:**
+1. **No MAJOR issues:** No CRITICAL or MAJOR issues found
+2. **HIGH confidence:** Reviewer confirms exhaustive review
+
+```python
+exit_if (
+    no_major                      # No MAJOR or CRITICAL issues
+    AND reviewer_confidence == HIGH  # Reviewer confirms exhaustive review
+)
+```
+
+**MEDIUM/LOW confidence forces another round** even if no MAJOR issues found.
 
 ### Stall Detection
 
@@ -347,12 +487,20 @@ Choice?
 
 **Rounds:** [N]
 **Exit reason:** quality_met | max_rounds | no_improvement
+**Final confidence:** HIGH | MEDIUM | LOW
 
 **Fixed:**
 - [list of fixed issues]
 
 **Remaining (MINOR - backlog):**
 - [list of minor issues for later]
+
+### Exhaustive Review Declaration
+
+- [ ] Reviewed ALL code in scope, not just diffs
+- [ ] Checked how changes interact with unchanged code
+- [ ] Attempted to find edge cases and boundary conditions
+- [ ] Looked for issues UNRELATED to previous findings
 
 **Recommendation:**
 - [ ] Ready for merge

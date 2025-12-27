@@ -8,6 +8,43 @@
 - Working on: [current task or feature]
 - Blockers: None
 
+## Key Rules (Quick Reference)
+
+<!-- DX-54: Rules summary for long conversation resilience -->
+
+### Core/Shell Separation
+- **Core** (`**/core/**`): @pre/@post + doctests, NO I/O imports
+- **Shell** (`**/shell/**`): Result[T, E] return type
+
+### USBV Workflow
+1. Understand → 2. Specify (contracts first) → 3. Build → 4. Validate
+
+### Verification
+{% if syntax == "mcp" -%}
+- `invar_guard()` = static + doctests + CrossHair + Hypothesis
+{% else -%}
+- `invar guard` = static + doctests + CrossHair + Hypothesis
+{% endif -%}
+- Final must show: `✓ Final: guard PASS | ...`
+
+## Self-Reminder
+
+<!-- DX-54: AI should re-read this file periodically -->
+
+**When to re-read this file:**
+- Starting a new task
+- Completing a task (before moving to next)
+- Conversation has been going on for a while (~15-20 exchanges)
+- Unsure about project rules or patterns
+
+**Quick rule check:**
+- Am I in Core or Shell?
+- Do I have @pre/@post contracts?
+- Am I following USBV workflow?
+- Did I run guard before claiming "done"?
+
+---
+
 ## Recent Decisions
 
 1. [Decision summary] - [Brief rationale]

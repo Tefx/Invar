@@ -15,9 +15,13 @@ description: Decision facilitation phase. Use when design decision is needed, mu
 
 ## Entry Actions
 
-### Routing Announcement
+### Context Refresh (DX-54)
 
-Before any workflow action, display:
+Before any workflow action:
+1. Read `.invar/context.md` (especially Key Rules section)
+2. Display routing announcement
+
+### Routing Announcement
 
 ```
 📍 Routing: /propose — [trigger detected, e.g. "should we", "compare", "design"]
