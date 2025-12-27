@@ -7,7 +7,7 @@ This directory contains design proposals for Invar development.
 - `DX-XX-name.md` — Developer Experience improvements
 - Completed/archived proposals in `completed/` subdirectory
 
-## Active Proposals (11)
+## Active Proposals (12)
 
 | ID | Name | Status | Description |
 |----|------|--------|-------------|
@@ -25,6 +25,7 @@ This directory contains design proposals for Invar development.
 | DX-51 | workflow-phase-visibility | ✅ Complete | USBV phase headers separate from TodoWrite |
 | DX-52 | venv-dependency-injection | ✅ Complete | PYTHONPATH injection for uvx compatibility |
 | DX-53 | review-loop-effectiveness | ✅ Complete | Isolated reviewer + scope expansion per round |
+| DX-54 | agent-native-context-management | ✅ Complete | Long conversation resilience + workflow refresh |
 
 ## Archived Proposals (26)
 
@@ -70,9 +71,14 @@ This directory contains design proposals for Invar development.
       ✅ DX-51 (Phase Visibility)     ✅ DX-52 (uvx Compatibility)
               │                               │
               ▼                               ▼
-      Extends DX-42 concepts          DX-53 (Review Effectiveness)
+      Extends DX-42 concepts          ✅ DX-53 (Review Effectiveness)
 
-Completed: DX-47, DX-48, DX-49, DX-41, DX-42, DX-43, DX-39, DX-46, DX-23, DX-37, DX-51, DX-52, DX-53
+      ✅ DX-54 (Agent Native Context)
+              │
+              ▼
+      Simplifies Check-In, adds Workflow Refresh
+
+Completed: DX-47, DX-48, DX-49, DX-41, DX-42, DX-43, DX-39, DX-46, DX-23, DX-37, DX-51, DX-52, DX-53, DX-54
 Partial: DX-38 (Tier 1-2 done)
 Dropped: DX-40 (contradicts Lesson #19)
 Deferred: DX-38 Tier 3-4, DX-25, DX-29
@@ -90,6 +96,7 @@ Deferred: DX-38 Tier 3-4, DX-25, DX-29
 | ~~Medium~~ | ~~DX-37~~ | ~~`invar guard --coverage` reports uncovered branches~~ | ~~Verification visibility~~ | ✅ Complete |
 | ~~High~~ | ~~DX-52~~ | ~~uvx dependency injection~~ | ~~uvx can access project deps~~ | ✅ Complete |
 | ~~Medium~~ | ~~DX-53~~ | ~~Isolated reviewer + scope expansion~~ | ~~Review effectiveness~~ | ✅ Complete |
+| ~~Medium~~ | ~~DX-54~~ | ~~Agent Native Context Management~~ | ~~Long conversation resilience~~ | ✅ Complete |
 | ~~Low~~ | ~~DX-46~~ | ~~docs/ directory audit~~ | ~~Documentation maintenance~~ | ✅ Complete |
 | ~~Low~~ | ~~DX-40~~ | ~~Hook intercepts incorrect tool calls~~ | ~~Contradicts Lesson #19~~ | ✗ Dropped |
 | **Partial** | DX-38 | Tier 1-2 done; Tier 3-4 deferred | High false-positive risk | Tier 1-2 ✅ |
@@ -110,6 +117,7 @@ Deferred: DX-38 Tier 3-4, DX-25, DX-29
 | ~~6~~ | ~~DX-51~~ | — | — | ✅ Complete |
 | ~~7~~ | ~~DX-52~~ | — | — | ✅ Complete |
 | ~~8~~ | ~~DX-53~~ | — | — | ✅ Complete |
+| ~~9~~ | ~~DX-54~~ | — | — | ✅ Complete |
 | **∞** | DX-38 Tier 3-4, DX-25, DX-29 | — | — | Deferred |
 
 **All planned proposals complete.** Only deferred items remain.
@@ -117,11 +125,18 @@ Deferred: DX-38 Tier 3-4, DX-25, DX-29
 ## Recent Changes (2025-12-27)
 
 ### Implemented Today
+- **DX-54** — Agent Native Context Management ✅
+  - Simplified Check-In (no guard/map execution, just read context.md)
+  - Workflow Refresh: All skills read context.md before Entry Actions
+  - Key Rules + Self-Reminder in context.md for long conversation resilience
+  - Context Management section in CLAUDE.md (re-read triggers)
+  - Lesson #29 fix: Agent workflow compliance through document-based refresh
+
 - **DX-53** — Review Loop Effectiveness ✅
   - Isolated reviewer (sub-agent) as default mode
   - Three-phase review: Regression (15%) + Validation (25%) + Expansion (60%)
   - Scope expansion across rounds (changed → dependents → integration)
-  - Exit criteria: `no_major AND confidence == HIGH`
+  - Exit criteria: `no_major AND confidence == HIGH/MEDIUM`
   - Exhaustive Review Declaration requirement
 
 - **DX-52** — Virtual Environment Dependency Injection ✅
