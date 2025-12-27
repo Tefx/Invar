@@ -131,7 +131,6 @@ Only show routing announcements when entering workflows.
 |---------|---------|
 | `/audit` | Read-only code review (reports issues, no fixes) |
 | `/guard` | Run Invar verification (reports results) |
-| `/rules` | Show all rule names with detection hints (JSON) |
 
 ## Skills (Agent-Invoked)
 

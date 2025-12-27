@@ -66,7 +66,6 @@ extensions = { action = "preserve" }
 # Commands (direct copy)
 ".claude/commands/audit.md" = { src = "commands/audit.md", type = "copy" }
 ".claude/commands/guard.md" = { src = "commands/guard.md", type = "copy" }
-".claude/commands/rules.md" = { src = "commands/rules.md", type = "copy" }
 
 # Examples (directory copy)
 ".invar/examples/" = { src = "examples/", type = "copy_dir" }
@@ -135,5 +134,4 @@ create_only = [
     ".pre-commit-config.yaml",
     ".claude/commands/audit.md",
     ".claude/commands/guard.md",
-    ".claude/commands/rules.md",
 ]

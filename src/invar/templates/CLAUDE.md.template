@@ -102,7 +102,6 @@ For complex tasks (3+ functions), show 3 checkpoints in TodoList:
 |---------|---------|
 | `/audit` | Read-only code review (reports issues, no fixes) |
 | `/guard` | Run Invar verification (reports results) |
-| `/rules` | Show all rule names with detection hints (JSON) |
 
 ## Skills (Agent-Invoked)
 
