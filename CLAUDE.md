@@ -1,4 +1,14 @@
-<!--invar:managed version="5.0"-->
+<!--invar:critical-->
+## ⚡ Critical Rules
+
+| Always | Remember |
+|--------|----------|
+| **Verify** | `invar_guard` — NOT pytest, NOT crosshair |
+| **Core** | `@pre/@post` + doctests, NO I/O imports |
+| **Shell** | Returns `Result[T, E]` from `returns` library |
+| **Flow** | Specify contracts → Build code → Validate |
+
+<!--/invar:critical--><!--invar:managed version="5.0"-->
 # Project Development Guide
 
 > **Protocol:** Follow [INVAR.md](./INVAR.md) — includes Check-In, USBV workflow, and Task Completion requirements.

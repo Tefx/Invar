@@ -2,11 +2,7 @@
 
 *Last updated: [DATE]*
 
-## Current State
-
-- Phase: [current development phase]
-- Working on: [current task or feature]
-- Blockers: None
+<!-- DX-58: Keep this file under 200 lines for efficient Check-In -->
 
 ## Key Rules (Quick Reference)
 
@@ -20,7 +16,7 @@
 1. Understand → 2. Specify (contracts first) → 3. Build → 4. Validate
 
 ### Verification
-- `invar guard` = static + doctests + CrossHair + Hypothesis
+- `invar_guard` = static + doctests + CrossHair + Hypothesis
 - Final must show: `✓ Final: guard PASS | ...`
 
 ## Self-Reminder
@@ -41,13 +37,39 @@
 
 ---
 
-## Recent Decisions
+## Current State
 
-1. [Decision summary] - [Brief rationale]
+- **Phase:** [current development phase]
+- **Working on:** [current task or feature]
+- **Blockers:** None
+
+## Active Work
+
+**Current focus:** [describe current focus]
+
+**Completed recently:**
+- [recent completion 1]
+- [recent completion 2]
+
+---
 
 ## Lessons Learned
 
-1. [Pitfall or issue] → [Solution or workaround]
+<!-- DX-58: Keep last 5-10 lessons, archive older ones to .invar/archive/ -->
+
+1. [Lesson] - [Brief explanation]
+
+---
+
+## Tool Priority
+
+| Task | Primary | Fallback |
+|------|---------|----------|
+| See contracts | `invar sig` | — |
+| Find entry points | `invar map --top` | — |
+| Verify | `invar guard` | — |
+
+---
 
 ## Documentation Structure
 
@@ -62,6 +84,8 @@
 - Protocol content → Already in INVAR.md, don't duplicate
 - Project-specific → Add to CLAUDE.md or here
 
+---
+
 ## Technical Debt
 
 *Run `invar guard` to check current status.*
@@ -70,15 +94,8 @@
 |------|---------|----------|
 | (none) | — | — |
 
-## Key Files
-
-| File | Purpose |
-|------|---------|
-| INVAR.md | Protocol reference (Invar-managed) |
-| CLAUDE.md | Project guide (customize freely) |
-| src/core/ | Pure business logic |
-| src/shell/ | I/O adapters |
-
 ---
+
+<!-- ARCHIVE: For full session history, create .invar/archive/ directory -->
 
 *Update this file when: completing major tasks, making design decisions, discovering pitfalls.*
