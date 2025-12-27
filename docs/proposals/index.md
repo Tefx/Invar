@@ -7,54 +7,54 @@ This directory contains design proposals for Invar development.
 - `DX-XX-name.md` — Developer Experience improvements
 - Completed/archived proposals in `completed/` subdirectory
 
-## Active Proposals (12)
+## Active Proposals (3)
 
 | ID | Name | Status | Description |
 |----|------|--------|-------------|
-| DX-23 | entry-point-detection | ✅ Complete | Entry point detection & Monad Runner pattern |
 | DX-25 | functional-patterns | Defer | Functional patterns enhancement |
 | DX-29 | pure-content-detection | Defer | Pure content detection (`@invar:module` marker) |
-| DX-37 | coverage-integration | ✅ Complete | Coverage integration for Guard (`--coverage` flag) |
 | DX-38 | contract-quality-rules | Partial | Tier 1-2 done, Tier 3-4 deferred |
-| DX-39 | workflow-efficiency | ✅ Complete | Error Pattern Guide + bug fixes |
-| DX-40 | smart-tool-redirect-hook | ✗ Dropped | Contradicts Lesson #19 (PreToolUse ineffective) |
-| DX-41 | automatic-review-orchestration | ✅ Complete | Automatic review orchestration (from DX-31+35) |
-| DX-42 | workflow-auto-routing | ✅ Complete | Visible Workflow Routing |
-| DX-43 | cross-platform-distribution | ✅ Complete | Absorbed by DX-49 |
-| DX-46 | documentation-audit | ✅ Complete | docs/ directory audit |
-| DX-51 | workflow-phase-visibility | ✅ Complete | USBV phase headers separate from TodoWrite |
-| DX-52 | venv-dependency-injection | ✅ Complete | PYTHONPATH injection for uvx compatibility |
-| DX-53 | review-loop-effectiveness | ✅ Complete | Isolated reviewer + scope expansion per round |
-| DX-54 | agent-native-context-management | ✅ Complete | Long conversation resilience + workflow refresh |
 
-## Archived Proposals (26)
+## Archived Proposals (38)
 
 | ID | Name | Status | Description |
 |----|------|--------|-------------|
+| DX-54 | agent-native-context-management | ✅ Complete | Long conversation resilience + workflow refresh |
+| DX-53 | review-loop-effectiveness | ✅ Complete | Isolated reviewer + scope expansion per round |
+| DX-52 | venv-dependency-injection | ✅ Complete | PYTHONPATH injection for uvx compatibility |
+| DX-51 | workflow-phase-visibility | ✅ Complete | USBV phase headers separate from TodoWrite |
 | DX-48 | code-structure-reorganization | ✅ Complete | Dead code + shell/ restructure done |
 | DX-49 | protocol-distribution-unification | ✅ Complete | SSOT for INVAR.md, CLAUDE.md, skills/ |
-| DX-11 | documentation-restructure | ✅ Mostly Implemented | Multi-agent support (remnants → DX-43) |
-| DX-45 | template-consistency | Superseded | → DX-49 (SSOT) |
-| DX-47 | command-skill-naming | ✅ Implemented | /audit, /guard commands; /review skill |
-| DX-12 | hypothesis-fallback | ✅ Implemented | Hypothesis as CrossHair fallback |
-| DX-13 | incremental-prove | ✅ Implemented | Incremental CrossHair verification |
-| DX-14 | expanded-prove-usage | ✅ Implemented | Expanded --prove usage |
-| DX-16 | agent-tool-enforcement | ✅ Complete | MCP server (Phase 2 → DX-40) |
-| DX-17 | workflow-enforcement | ✅ Evolved | Check-In format |
-| DX-20 | property-testing-enhancements | Draft | Property testing UX |
-| DX-21 | package-and-init | ✅ Implemented | Two-package architecture |
-| DX-22 | verification-strategy | ✅ Implemented | Smart routing, Shell rules |
-| DX-24 | mechanism-documentation | ✅ Complete | 13/13 mechanism docs created |
-| DX-26 | guard-simplification | ✅ Implemented | Guard CLI simplification |
-| DX-27 | system-prompt-protocol | ✅ Merged | → DX-39 (Output Style feature) |
-| DX-28 | semantic-verification | ✅ Complete | @relates, format specs (P2 → DX-38) |
-| DX-30 | visible-workflow | ✅ Complete | TodoList convention |
-| DX-31 | adversarial-reviewer | ✅ Complete | /review skill (Phase 2 → DX-41) |
-| DX-32 | workflow-iteration | ✅ Implemented | USBV is now standard workflow |
-| DX-33 | verification-blind-spots | ✅ Complete | Analysis (→ DX-37, DX-38) |
-| DX-34 | review-cycle | Superseded | → DX-35 |
-| DX-35 | workflow-phase-separation | ✅ Complete | Workflow skills (Phase 3-5 → DX-41/42/43) |
+| DX-47 | command-skill-naming | ✅ Complete | /audit, /guard commands; /review skill |
+| DX-46 | documentation-audit | ✅ Complete | docs/ directory audit |
+| DX-43 | cross-platform-distribution | ✅ Complete | Absorbed by DX-49 |
+| DX-42 | workflow-auto-routing | ✅ Complete | Visible Workflow Routing |
+| DX-41 | automatic-review-orchestration | ✅ Complete | Automatic review orchestration (from DX-31+35) |
+| DX-40 | smart-tool-redirect-hook | ✗ Dropped | Contradicts Lesson #19 (PreToolUse ineffective) |
+| DX-39 | workflow-efficiency | ✅ Complete | Error Pattern Guide + bug fixes |
+| DX-37 | coverage-integration | ✅ Complete | Coverage integration for Guard (`--coverage` flag) |
 | DX-36 | documentation-restructuring | ✅ Complete | Sections (Phase 5-6 → DX-43) |
+| DX-35 | workflow-phase-separation | ✅ Complete | Workflow skills (Phase 3-5 → DX-41/42/43) |
+| DX-34 | review-cycle | Superseded | → DX-35 |
+| DX-33 | verification-blind-spots | ✅ Complete | Analysis (→ DX-37, DX-38) |
+| DX-32 | workflow-iteration | ✅ Complete | USBV is now standard workflow |
+| DX-31 | adversarial-reviewer | ✅ Complete | /review skill (Phase 2 → DX-41) |
+| DX-30 | visible-workflow | ✅ Complete | TodoList convention |
+| DX-28 | semantic-verification | ✅ Complete | @relates, format specs (P2 → DX-38) |
+| DX-27 | system-prompt-protocol | ✅ Merged | → DX-39 (Output Style feature) |
+| DX-26 | guard-simplification | ✅ Complete | Guard CLI simplification |
+| DX-24 | mechanism-documentation | ✅ Complete | 13/13 mechanism docs created |
+| DX-23 | entry-point-detection | ✅ Complete | Entry point detection & Monad Runner pattern |
+| DX-22 | verification-strategy | ✅ Complete | Smart routing, Shell rules |
+| DX-21 | package-and-init | ✅ Complete | Two-package architecture |
+| DX-20 | property-testing-enhancements | Draft | Property testing UX |
+| DX-17 | workflow-enforcement | ✅ Evolved | Check-In format (→ DX-54) |
+| DX-16 | agent-tool-enforcement | ✅ Complete | MCP server (Phase 2 → DX-40) |
+| DX-14 | expanded-prove-usage | ✅ Complete | Expanded --prove usage |
+| DX-13 | incremental-prove | ✅ Complete | Incremental CrossHair verification |
+| DX-12 | hypothesis-fallback | ✅ Complete | Hypothesis as CrossHair fallback |
+| DX-11 | documentation-restructure | ✅ Complete | Multi-agent support (remnants → DX-43) |
+| DX-45 | template-consistency | Superseded | → DX-49 (SSOT) |
 
 ## Dependency Graph
 
@@ -84,43 +84,30 @@ Dropped: DX-40 (contradicts Lesson #19)
 Deferred: DX-38 Tier 3-4, DX-25, DX-29
 ```
 
-## Priority Recommendations
+## Remaining Work
 
-| Priority | Proposal | Description | Rationale | Status |
-|----------|----------|-------------|-----------|--------|
-| ~~High~~ | ~~DX-42~~ | ~~Visible Workflow Routing~~ | ~~Route announcements~~ | ✅ Complete |
-| ~~High~~ | ~~DX-41~~ | ~~Auto-review on review_suggested~~ | ~~Close VALIDATE loop~~ | ✅ Complete |
-| ~~Medium~~ | ~~DX-43~~ | ~~Cross-platform distribution~~ | ~~Absorbed by DX-49~~ | ✅ Complete |
-| ~~High~~ | ~~DX-39~~ | ~~Error Pattern Guide + bug fix~~ | ~~Faster error recovery~~ | ✅ Complete |
-| ~~High~~ | ~~DX-51~~ | ~~USBV phase headers visible in output~~ | ~~Workflow follow rate~~ | ✅ Complete |
-| ~~Medium~~ | ~~DX-37~~ | ~~`invar guard --coverage` reports uncovered branches~~ | ~~Verification visibility~~ | ✅ Complete |
-| ~~High~~ | ~~DX-52~~ | ~~uvx dependency injection~~ | ~~uvx can access project deps~~ | ✅ Complete |
-| ~~Medium~~ | ~~DX-53~~ | ~~Isolated reviewer + scope expansion~~ | ~~Review effectiveness~~ | ✅ Complete |
-| ~~Medium~~ | ~~DX-54~~ | ~~Agent Native Context Management~~ | ~~Long conversation resilience~~ | ✅ Complete |
-| ~~Low~~ | ~~DX-46~~ | ~~docs/ directory audit~~ | ~~Documentation maintenance~~ | ✅ Complete |
-| ~~Low~~ | ~~DX-40~~ | ~~Hook intercepts incorrect tool calls~~ | ~~Contradicts Lesson #19~~ | ✗ Dropped |
-| **Partial** | DX-38 | Tier 1-2 done; Tier 3-4 deferred | High false-positive risk | Tier 1-2 ✅ |
-| ~~Defer~~ | ~~DX-23~~ | ~~Framework callback auto-exempt from Result requirement~~ | ~~Already implemented~~ | ✅ Complete |
-| **Defer** | DX-25 | Validation error accumulation, Monoid, etc. | Non-essential major change | — |
-| **Defer** | DX-29 | `@invar:module` explicit marker | DX-22 sufficient | — |
+| Status | Proposal | Description | Notes |
+|--------|----------|-------------|-------|
+| **Partial** | DX-38 | Contract quality rules | Tier 1-2 ✅, Tier 3-4 deferred (high false-positive risk) |
+| **Defer** | DX-25 | Functional patterns | Non-essential major change |
+| **Defer** | DX-29 | Pure content detection | DX-22 sufficient |
 
-## Recommended Execution Order
+**All planned proposals complete (35/38).** Only 3 deferred/partial items remain.
 
-| Wave | Proposals | Parallel? | Effort | Goal |
-|------|-----------|-----------|--------|------|
-| ~~0~~ | ~~DX-47, DX-48, DX-49~~ | — | — | ✅ Complete |
-| ~~1~~ | ~~DX-42~~ | — | — | ✅ Complete |
-| ~~2~~ | ~~DX-43, DX-41~~ | — | — | ✅ Complete |
-| ~~3~~ | ~~DX-39~~ | — | — | ✅ Complete |
-| ~~4~~ | ~~DX-46, DX-37~~ | — | — | ✅ Complete |
-| ~~5~~ | ~~DX-40~~ | — | — | ✗ Dropped (Lesson #19) |
-| ~~6~~ | ~~DX-51~~ | — | — | ✅ Complete |
-| ~~7~~ | ~~DX-52~~ | — | — | ✅ Complete |
-| ~~8~~ | ~~DX-53~~ | — | — | ✅ Complete |
-| ~~9~~ | ~~DX-54~~ | — | — | ✅ Complete |
-| **∞** | DX-38 Tier 3-4, DX-25, DX-29 | — | — | Deferred |
+## Execution History
 
-**All planned proposals complete.** Only deferred items remain.
+| Wave | Proposals | Status |
+|------|-----------|--------|
+| 0 | DX-47, DX-48, DX-49 | ✅ Complete |
+| 1 | DX-42 | ✅ Complete |
+| 2 | DX-43, DX-41 | ✅ Complete |
+| 3 | DX-39 | ✅ Complete |
+| 4 | DX-46, DX-37 | ✅ Complete |
+| 5 | DX-40 | ✗ Dropped |
+| 6 | DX-51 | ✅ Complete |
+| 7 | DX-52 | ✅ Complete |
+| 8 | DX-53 | ✅ Complete |
+| 9 | DX-54 | ✅ Complete |
 
 ## Recent Changes (2025-12-27)
 
