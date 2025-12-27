@@ -39,27 +39,11 @@ class ModuleType(Enum):
 
 
 # I/O libraries that indicate Shell module (for AST import checking)
-_IO_LIBRARIES = frozenset(
-    [
-        "os",
-        "sys",
-        "subprocess",
-        "pathlib",
-        "shutil",
-        "io",
-        "socket",
-        "requests",
-        "aiohttp",
-        "httpx",
-        "urllib",
-        "sqlite3",
-        "psycopg2",
-        "pymongo",
-        "sqlalchemy",
-        "typer",
-        "click",
-    ]
-)
+_IO_LIBRARIES = frozenset([
+    "os", "sys", "subprocess", "pathlib", "shutil", "io", "socket",
+    "requests", "aiohttp", "httpx", "urllib", "sqlite3", "psycopg2",
+    "pymongo", "sqlalchemy", "typer", "click",
+])
 
 # Contract decorator names
 _CONTRACT_DECORATORS = frozenset(["pre", "post", "invariant"])
@@ -68,7 +52,8 @@ _CONTRACT_DECORATORS = frozenset(["pre", "post", "invariant"])
 _RESULT_TYPES = frozenset(["Result", "Success", "Failure"])
 
 
-# @shell_orchestration: AST analysis helper | @shell_complexity: AST branch checks
+# @shell_orchestration: AST analysis
+# @shell_complexity: AST branches
 def _has_contract_decorators(tree: ast.Module) -> bool:
     """
     Check if AST contains @pre/@post contract decorators.
@@ -100,7 +85,8 @@ def _has_contract_decorators(tree: ast.Module) -> bool:
     return False
 
 
-# @shell_orchestration: AST analysis helper | @shell_complexity: AST branch checks
+# @shell_orchestration: AST analysis
+# @shell_complexity: AST branches
 def _has_io_imports(tree: ast.Module) -> bool:
     """
     Check if AST contains imports of I/O libraries.
@@ -133,7 +119,8 @@ def _has_io_imports(tree: ast.Module) -> bool:
     return False
 
 
-# @shell_orchestration: AST analysis helper | @shell_complexity: AST branch checks
+# @shell_orchestration: AST analysis
+# @shell_complexity: AST branches
 def _has_result_types(tree: ast.Module) -> bool:
     """
     Check if AST contains Result/Success/Failure usage.

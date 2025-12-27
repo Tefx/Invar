@@ -269,7 +269,8 @@ def _create_new_region_file(
     return Success("created")
 
 
-# @shell_complexity: DX-55 state-based merge logic with multiple recovery paths
+# @shell_orchestration: DX-55 state-based merge logic with multiple recovery paths
+# @shell_complexity: Multiple state branches (intact/partial/missing)
 def _merge_region_content(
     existing_content: str,
     new_content: str,

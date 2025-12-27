@@ -40,10 +40,11 @@
 See [docs/proposals/](../docs/proposals/) for planned changes and their dependencies.
 
 **Completed today:**
-- DX-54: Agent Native Context Management
-- DX-53: Review Loop Effectiveness
+- DX-56: Unified template sync engine
+- Rule detection enhancements (semantic_tautology, postcondition_scope, suggestions)
+- Pre-release deep review and fixes
 
-**Current focus:** Template and project file updates for DX-54
+**Current focus:** Pre-release verification
 
 **Known issues:** None
 
@@ -316,11 +317,11 @@ During DX-28 implementation, I batch-added `@skip_property_test` to 4 functions 
 ## Current State
 
 - **PyPI:** `invar-tools` + `invar-runtime` v1.0.2 (DX-21 package split + dual licensing)
-- **Protocol:** v4.0 (DX-32: USBV workflow, DX-31: review triggers)
+- **Protocol:** v5.0 (DX-54/55/56: Template sync, idempotent init, USBV workflow)
 - **GitHub Pages:** https://tefx.github.io/Invar/
 - **Licenses:** Apache-2.0 (runtime) + GPL-3.0 (tools) + CC-BY-4.0 (docs)
 - **Status:** Feature complete, zero technical debt
-- **Recent:** DX-31 Phase 1 (review_suggested rule), DX-32 proposal (workflow iteration)
+- **Recent:** DX-56 (template sync unification), rule detection enhancements
 - **Blockers:** None
 
 ## Documentation Structure (DX-11)
