@@ -9,7 +9,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import typer
-from returns.result import Failure
+from returns.result import Failure, Result
 from rich.console import Console
 
 from invar.shell.claude_hooks import (
@@ -24,7 +24,7 @@ from invar.shell.claude_hooks import (
 console = Console()
 
 
-def _handle_result(result: Failure | object) -> None:
+def _handle_result(result: Result[object, str]) -> None:
     """Print error message if result is Failure."""
     if isinstance(result, Failure):
         console.print(f"[red]Error:[/red] {result.failure()}")

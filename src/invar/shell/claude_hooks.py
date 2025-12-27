@@ -233,10 +233,13 @@ def sync_claude_hooks(
         pass
 
     updated: list[str] = []
+    failed: list[str] = []
 
     for hook_type in HOOK_TYPES:
         result = generate_hook_content(hook_type, project_path)
         if isinstance(result, Failure):
+            console.print(f"  [yellow]Warning:[/yellow] Failed to generate {hook_type}: {result.failure()}")
+            failed.append(hook_type)
             continue
 
         content = result.unwrap()
@@ -249,6 +252,8 @@ def sync_claude_hooks(
 
     if updated:
         console.print(f"[green]✓[/green] Claude hooks synced ({len(updated)} files)")
+    if failed:
+        console.print(f"[yellow]⚠[/yellow] {len(failed)} hook(s) failed to sync")
 
     return Success(updated)
 
