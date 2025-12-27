@@ -492,6 +492,265 @@ Options:
 
 ---
 
+## Testing Requirements
+
+### Test Environment Setup
+
+Create isolated test environments to avoid affecting real projects:
+
+```bash
+# Create temporary test directory
+TEST_DIR=$(mktemp -d)
+cd $TEST_DIR
+
+# Initialize git (required for some Invar features)
+git init
+echo "*.pyc" > .gitignore
+git add .gitignore && git commit -m "init"
+
+# Create minimal Python project structure
+mkdir -p src/myproject
+echo 'print("hello")' > src/myproject/__init__.py
+echo '[project]\nname = "myproject"' > pyproject.toml
+```
+
+### Test Scenarios Matrix
+
+| # | Scenario | Initial State | Action | Expected Result |
+|---|----------|---------------|--------|-----------------|
+| **A. Fresh Project** |
+| A1 | New project, no files | Empty | `invar init` | Full setup created |
+| A2 | New project with existing CLAUDE.md | CLAUDE.md (no regions) | `invar init` | Merge, preserve content |
+| A3 | Run init twice | After A1 | `invar init` | No changes, success message |
+| **B. Intact State** |
+| B1 | All regions present, current version | Intact | `invar init` | No changes |
+| B2 | All regions present, outdated version | Intact (v4.0) | `invar init` | Update managed only |
+| B3 | User content in user region | Intact + user content | `invar init` | Preserve user content exactly |
+| B4 | Force update | Intact + current | `invar init --force` | Refresh managed |
+| **C. Partial State (Corruption)** |
+| C1 | Missing close tag | `<!--invar:managed-->` only | `invar init` | Repair, recover content |
+| C2 | Missing open tag | `<!--/invar:managed-->` only | `invar init` | Repair, recover content |
+| C3 | Nested regions (invalid) | Malformed nesting | `invar init` | Clean + rebuild |
+| C4 | User region only | `<!--invar:user-->` but no managed | `invar init` | Add managed, preserve user |
+| **D. Missing State (Overwritten)** |
+| D1 | Claude /init overwrote | Claude-generated content | `invar init` | Merge, move to user section |
+| D2 | Manual edit removed regions | Plain markdown | `invar init` | Merge, preserve as user |
+| D3 | Empty file | Empty CLAUDE.md | `invar init` | Create fresh regions |
+| **E. Absent State** |
+| E1 | CLAUDE.md deleted | No CLAUDE.md | `invar init` | Create new file |
+| E2 | .invar/ deleted | Missing .invar/ | `invar init` | Recreate directory |
+| **F. Skills Handling** |
+| F1 | Skills intact | All skills with markers | `invar init` | No changes |
+| F2 | Skill missing markers | Skill without `<!--invar:skill-->` | `invar init` | Recover skill |
+| F3 | Skill deleted | Missing skill file | `invar init` | Recreate skill |
+| F4 | Extensions preserved | Skill with user extensions | `invar init` | Preserve extensions |
+| **G. Edge Cases** |
+| G1 | Very large CLAUDE.md | 10000+ lines | `invar init` | Handle without timeout |
+| G2 | Binary content in file | Non-UTF8 content | `invar init` | Graceful error |
+| G3 | Read-only file | Permission denied | `invar init` | Clear error message |
+| G4 | Concurrent modification | File changes during merge | `invar init` | Atomic write |
+| **H. Backwards Compatibility** |
+| H1 | `invar update` command | Any state | `invar update` | Same as `invar init` |
+| H2 | `--check` flag | Any state | `invar init --check` | Preview, no changes |
+| H3 | `--reset` flag | Intact + user content | `invar init --reset` | Confirm, then reset |
+
+### Test Execution Script
+
+```bash
+#!/bin/bash
+# test_dx55.sh - Comprehensive DX-55 test suite
+
+set -e
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+PASS=0
+FAIL=0
+RESULTS=""
+
+run_test() {
+    local name="$1"
+    local setup="$2"
+    local command="$3"
+    local verify="$4"
+
+    echo -n "Testing $name... "
+
+    # Create isolated environment
+    TEST_DIR=$(mktemp -d)
+    cd "$TEST_DIR"
+    git init -q
+    mkdir -p src/myproject
+    echo '[project]\nname = "test"' > pyproject.toml
+
+    # Run setup
+    eval "$setup" 2>/dev/null || true
+
+    # Run command
+    if eval "$command" 2>&1; then
+        # Verify result
+        if eval "$verify" 2>/dev/null; then
+            echo -e "${GREEN}PASS${NC}"
+            ((PASS++))
+            RESULTS+="✅ $name\n"
+        else
+            echo -e "${RED}FAIL${NC} (verification)"
+            ((FAIL++))
+            RESULTS+="❌ $name (verification failed)\n"
+        fi
+    else
+        echo -e "${RED}FAIL${NC} (command error)"
+        ((FAIL++))
+        RESULTS+="❌ $name (command error)\n"
+    fi
+
+    # Cleanup
+    rm -rf "$TEST_DIR"
+}
+
+# A1: Fresh project
+run_test "A1: Fresh project" \
+    "" \
+    "invar init" \
+    "test -f INVAR.md && test -f CLAUDE.md && test -d .invar"
+
+# A3: Idempotent
+run_test "A3: Idempotent" \
+    "invar init" \
+    "invar init" \
+    "grep -q 'no changes' /dev/stdin || true"
+
+# B3: Preserve user content
+run_test "B3: Preserve user content" \
+    "invar init && sed -i 's|<!--/invar:user-->|MY_CUSTOM_CONTENT\n<!--/invar:user-->|' CLAUDE.md" \
+    "invar init --force" \
+    "grep -q 'MY_CUSTOM_CONTENT' CLAUDE.md"
+
+# D1: Claude /init recovery
+run_test "D1: Claude /init recovery" \
+    "invar init && echo '# Claude Generated\nProject analysis here' > CLAUDE.md" \
+    "invar init" \
+    "grep -q 'invar:managed' CLAUDE.md && grep -q 'Project analysis' CLAUDE.md"
+
+# H1: Backwards compat
+run_test "H1: invar update alias" \
+    "invar init" \
+    "invar update" \
+    "test -f CLAUDE.md"
+
+# Summary
+echo ""
+echo "=============================="
+echo -e "Results: ${GREEN}$PASS passed${NC}, ${RED}$FAIL failed${NC}"
+echo "=============================="
+echo -e "$RESULTS"
+
+exit $FAIL
+```
+
+### Test Report Format
+
+After implementation, generate a test report:
+
+```markdown
+# DX-55 Test Report
+
+**Date:** YYYY-MM-DD
+**Version:** X.Y.Z
+**Tester:** [Agent/Human]
+
+## Environment
+
+- OS: [macOS/Linux/Windows]
+- Python: [version]
+- Invar: [version]
+
+## Results Summary
+
+| Category | Pass | Fail | Skip |
+|----------|------|------|------|
+| A. Fresh Project | X | 0 | 0 |
+| B. Intact State | X | 0 | 0 |
+| C. Partial State | X | 0 | 0 |
+| D. Missing State | X | 0 | 0 |
+| E. Absent State | X | 0 | 0 |
+| F. Skills Handling | X | 0 | 0 |
+| G. Edge Cases | X | 0 | 0 |
+| H. Backwards Compat | X | 0 | 0 |
+| **Total** | **XX** | **0** | **0** |
+
+## Detailed Results
+
+### A. Fresh Project
+
+| Test | Result | Notes |
+|------|--------|-------|
+| A1 | ✅ PASS | |
+| A2 | ✅ PASS | |
+| A3 | ✅ PASS | |
+
+### B. Intact State
+
+...
+
+## Content Preservation Verification
+
+For each merge scenario, verify content integrity:
+
+| Scenario | Original Content | After Merge | Preserved? |
+|----------|------------------|-------------|------------|
+| D1 | `# Claude Generated\n...` | In user section | ✅ |
+| ... | | | |
+
+## Regression Check
+
+Verify existing functionality not broken:
+
+- [ ] `invar guard` works normally
+- [ ] `invar sig` works normally
+- [ ] `invar map` works normally
+- [ ] Pre-commit hooks work normally
+- [ ] MCP server works normally
+
+## Performance
+
+| Scenario | Time | Acceptable? |
+|----------|------|-------------|
+| Fresh init | < 2s | ✅ |
+| Large file merge (10K lines) | < 5s | ✅ |
+| Idempotent (no changes) | < 0.5s | ✅ |
+
+## Issues Found
+
+| # | Severity | Description | Resolution |
+|---|----------|-------------|------------|
+| 1 | ... | ... | ... |
+
+## Conclusion
+
+- [ ] All tests pass
+- [ ] No data loss in any scenario
+- [ ] Performance acceptable
+- [ ] Ready for release
+```
+
+### Test Acceptance Criteria
+
+Before marking DX-55 as complete:
+
+1. **100% Scenario Coverage**: All scenarios in matrix tested
+2. **Zero Data Loss**: No test loses user content
+3. **Idempotent Verified**: Running twice produces same result
+4. **Edge Cases Handled**: All edge cases pass or fail gracefully
+5. **Performance Acceptable**: No operation > 5 seconds
+6. **Regression Free**: Existing functionality unaffected
+
+---
+
 ## Alternative Approaches Considered
 
 ### A: Keep Two Commands
