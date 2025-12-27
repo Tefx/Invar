@@ -111,10 +111,10 @@ def append_invar_reference_to_claude_md(path: Path) -> bool:
 Your first message MUST display:
 
 ```
-✓ Check-In: guard PASS | top: <entry1>, <entry2>
+✓ Check-In: [project] | [branch] | [clean/dirty]
 ```
 
-Execute `invar guard --changed` and `invar map --top 10`, then show this one-line summary.
+Read `.invar/context.md` first. Do NOT run guard/map at Check-In.
 
 ### Final
 

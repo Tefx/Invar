@@ -14,9 +14,9 @@ system-prompt: |
 
   ## Check-In
   Your first message MUST display:
-  ✓ Check-In: guard PASS | top: <entry1>, <entry2>
+  ✓ Check-In: [project] | [branch] | [clean/dirty]
 
-  Execute: invar guard --changed && invar map --top 10
+  Read .invar/context.md first. Do NOT run guard/map at Check-In.
   This is your sign-in. No visible check-in = Session not started.
 
   ## Final

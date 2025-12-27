@@ -7,77 +7,72 @@
 Every agent session begins with Check-In:
 
 ```
-✓ Check-In: guard PASS | top: <entry1>, <entry2>
+✓ Check-In: [project] | [branch] | [clean/dirty]
 ```
 
 This is displayed in your **first message** to the user.
 
-## The Check-In Protocol
+## The Check-In Protocol (DX-54)
 
 ### Steps
 
-1. **Execute `invar guard --changed`**
-   - Verify current project state
-   - Identify any existing violations
+1. **Read `.invar/context.md`**
+   - Key Rules (quick reference)
+   - Current State
+   - Lessons Learned
 
-2. **Execute `invar map --top 10`**
-   - Find entry points
-   - Understand project structure
-
-3. **Display one-line summary**
+2. **Display one-line summary**
    ```
-   ✓ Check-In: guard PASS | top: parse_file, check_rules
+   ✓ Check-In: MyProject | main | clean
    ```
 
-4. **Read `.invar/context.md`**
-   - Project state
-   - Lessons learned
-   - Current blockers
+**Do NOT execute guard or map at Check-In.**
+Guard is for VALIDATE phase and Final only.
 
 ### Check-In Format
 
 ```
-✓ Check-In: guard <STATUS> | top: <entry1>, <entry2>
+✓ Check-In: [project] | [branch] | [clean/dirty]
 ```
 
 | Field | Value | Meaning |
 |-------|-------|---------|
-| STATUS | PASS | All checks passed |
-| STATUS | FAIL | Errors exist (show count) |
-| top | entries | Top 2 entry points by reference count |
+| project | name | Project name |
+| branch | name | Current git branch |
+| status | clean | No uncommitted changes |
+| status | dirty | Uncommitted changes exist |
 
 ### Examples
 
 ```
-✓ Check-In: guard PASS | top: main, process_request
+✓ Check-In: MyProject | main | clean
 
-✓ Check-In: guard FAIL (3 errors) | top: cli, api_handler
+✓ Check-In: Invar | feature/dx-54 | dirty
 
-✓ Check-In: guard PASS | top: (no symbols found)
+✓ Check-In: API-Server | develop | clean
 ```
 
-## Why Check-In?
+## Why Check-In Changed (DX-54)
 
-### 1. Establish Project State
+### Before: Guard at Check-In
+```
+✓ Check-In: guard PASS | top: main, cli  # OLD FORMAT
+```
 
-Before working, know:
-- Is the project healthy?
-- What are the entry points?
-- What lessons apply?
+**Problems:**
+- Ran verification before understanding context
+- Guard is for VALIDATE phase, not session start
+- Created confusion about when to run guard
 
-### 2. Signal Session Start
+### After: Context at Check-In
+```
+✓ Check-In: MyProject | main | clean  # NEW FORMAT
+```
 
-The user sees:
-- Agent has initialized correctly
-- Invar tools are working
-- Agent understands the project
-
-### 3. Context Economy
-
-Check-In provides:
-- Quick overview (not reading all files)
-- Entry points for navigation
-- Existing violations to address
+**Benefits:**
+- Shows project state immediately
+- Guard reserved for VALIDATE phase
+- Clearer separation of concerns
 
 ## The Final Protocol
 
@@ -97,9 +92,12 @@ Implementation tasks end with Final:
 
 ```
 Session Start:
-  ✓ Check-In: guard PASS | top: main, cli
+  ✓ Check-In: MyProject | main | clean
 
-... work happens ...
+... USBV workflow happens ...
+
+VALIDATE phase:
+  Run invar guard
 
 Session End:
   ✓ Final: guard PASS | 0 errors, 0 warnings
@@ -122,19 +120,6 @@ A task is complete only when **ALL** conditions are met:
 **Missing any = Task incomplete.**
 
 ## When Guard Fails
-
-### On Check-In
-
-If `invar guard --changed` shows errors:
-
-```
-✓ Check-In: guard FAIL (3 errors) | top: main, cli
-```
-
-Then:
-1. Report the existing errors to user
-2. Ask if they want to fix first
-3. Proceed with caution (don't add more errors)
 
 ### On Final
 
@@ -160,6 +145,10 @@ Then:
 ```markdown
 # Project Context
 
+## Key Rules (Quick Reference)
+- Core: @pre/@post + doctests, NO I/O
+- Shell: Result[T, E] return type
+
 ## Current State
 - Status: Feature complete
 - Version: 1.0.2
@@ -168,10 +157,6 @@ Then:
 ## Lessons Learned
 1. Always use AST for code detection
 2. String matching causes false positives
-3. ...
-
-## Technical Debt
-- None (as of v0.7.1)
 ```
 
 ### Using Context
@@ -183,26 +168,26 @@ Read context.md during Check-In to:
 
 ## MCP Server Tools
 
-When using MCP, equivalent tools:
+When using MCP for VALIDATE phase:
 
-| CLI Command | MCP Tool |
-|-------------|----------|
-| `invar guard --changed` | `invar_guard(changed=true)` |
-| `invar map --top 10` | `invar_map(top=10)` |
-| `invar sig <file>` | `invar_sig(file="<file>")` |
+| Purpose | MCP Tool |
+|---------|----------|
+| Verify code | `invar_guard()` |
+| Check changed only | `invar_guard(changed=true)` |
+| Find entry points | `invar_map(top=10)` |
+| See contracts | `invar_sig(target="<file>")` |
 
-### MCP Check-In Example
+### MCP Final Example
 
 ```python
-# Execute via MCP
-guard_result = invar_guard(changed=True)
-map_result = invar_map(top=10)
+# Execute via MCP during VALIDATE/Final
+guard_result = invar_guard()
 
 # Format output
-status = "PASS" if guard_result.errors == 0 else f"FAIL ({guard_result.errors} errors)"
-top_entries = ", ".join(map_result.top[:2])
-
-print(f"✓ Check-In: guard {status} | top: {top_entries}")
+if guard_result.status == "passed":
+    print(f"✓ Final: guard PASS | {guard_result.errors} errors, {guard_result.warnings} warnings")
+else:
+    print(f"✓ Final: guard FAIL | {guard_result.errors} errors, {guard_result.warnings} warnings")
 ```
 
 ## Configuration
@@ -215,51 +200,29 @@ The Check-In format is defined in INVAR.md v5.0:
 ## Check-In (Required)
 
 Your first message MUST display:
-✓ Check-In: guard PASS | top: <entry1>, <entry2>
-```
+✓ Check-In: [project] | [branch] | [clean/dirty]
 
-### In CLAUDE.md
-
-Project-specific additions:
-
-```markdown
-## Check-In
-
-After standard Check-In, also read:
-- `.invar/context.md` for lessons
-- `docs/design.md` for architecture
+Do NOT execute guard or map at Check-In.
+Guard is for VALIDATE phase and Final only.
 ```
 
 ## Troubleshooting
-
-### No Symbols Found
-
-```
-✓ Check-In: guard PASS | top: (no symbols found)
-```
-
-This means:
-- New project with no code yet
-- Or `invar map` couldn't parse files
-
-Proceed normally; map will populate as code is added.
-
-### Guard Not Available
-
-```
-✓ Check-In: guard N/A | project not initialized
-```
-
-Run `invar init` to initialize the project.
 
 ### Context File Missing
 
 If `.invar/context.md` doesn't exist:
 - Project may not be fully set up
-- Create it or ask user about project state
+- Run `invar init` to create it
+- Or ask user about project state
+
+### Guard Not Available
+
+If Invar tools aren't installed:
+- Check-In can still happen with project context
+- Final verification requires Invar installation
 
 ## See Also
 
 - [USBV Workflow](./usbv.md) - Full development workflow
 - [INVAR.md Check-In section](../../INVAR.md) - Protocol definition
-- [Verification Overview](../verification/README.md) - What guard checks
+- [Verification Overview](../verification/index.md) - What guard checks

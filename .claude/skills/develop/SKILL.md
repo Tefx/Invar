@@ -245,7 +245,7 @@ Agent:
 📍 Routing: /develop — "add" trigger detected
    Task: Add input validation to parse_source
 
-✓ Check-In: guard PASS | top: pre, post, Violation
+✓ Check-In: Invar | main | clean
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📍 /develop → UNDERSTAND (1/4)
@@ -275,7 +275,9 @@ Agent:
 
 ✓ Final: guard PASS | 0 errors, 1 warning
 ```
-<!--/invar:skill--><!--invar:extensions-->
+<!--/invar:skill-->
+
+<!--invar:extensions-->
 <!-- ========================================================================
      EXTENSIONS REGION - USER EDITABLE
      Add project-specific extensions here. This section is preserved on update.

@@ -24,9 +24,9 @@ V - Validate   : invar guard, reflect → iterate → validate
 
 ```
 Session Start:
-  ✓ Check-In: guard PASS | top: main, cli
+  ✓ Check-In: MyProject | main | clean
 
-... USBV workflow ...
+... USBV workflow (guard runs in VALIDATE phase) ...
 
 Session End:
   ✓ Final: guard PASS | 0 errors, 0 warnings

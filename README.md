@@ -120,7 +120,7 @@ Every AI session follows this format:
 
 **First message (Check-In):**
 ```
-✓ Check-In: guard PASS | top: <entry1>, <entry2>
+✓ Check-In: [project] | [branch] | [clean/dirty]
 ```
 
 **Last message (Final):**
@@ -128,7 +128,7 @@ Every AI session follows this format:
 ✓ Final: guard PASS | 0 errors, 2 warnings
 ```
 
-These markers ensure the AI verifies code at session boundaries.
+Check-In shows project context. Guard verification runs during VALIDATE phase and Final, not at Check-In.
 
 ---
 
