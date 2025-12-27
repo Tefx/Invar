@@ -68,7 +68,7 @@ def test(
         console.print(f"[red]Error:[/red] {result.failure()}")
         raise typer.Exit(1)
 
-    report = result.unwrap()
+    report, _coverage_data = result.unwrap()
     output = format_property_test_report(report, use_json)
     console.print(output)
 
