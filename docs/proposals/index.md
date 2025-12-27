@@ -7,10 +7,11 @@ This directory contains design proposals for Invar development.
 - `DX-XX-name.md` — Developer Experience improvements
 - Completed/archived proposals in `completed/` subdirectory
 
-## Active Proposals (3)
+## Active Proposals (4)
 
 | ID | Name | Status | Description |
 |----|------|--------|-------------|
+| DX-55 | claude-init-conflict-resolution | Draft | Handle `claude /init` overwriting Invar config |
 | DX-25 | functional-patterns | Defer | Functional patterns enhancement |
 | DX-29 | pure-content-detection | Defer | Pure content detection (`@invar:module` marker) |
 | DX-38 | contract-quality-rules | Partial | Tier 1-2 done, Tier 3-4 deferred |
