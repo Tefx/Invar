@@ -174,8 +174,7 @@ CROSSHAIR_SPEC = CrossHairOutputSpec()
 PYTEST_SPEC = PytestOutputSpec()
 
 
-@pre(lambda text, spec: isinstance(text, str) and isinstance(spec, CrossHairOutputSpec))
-@post(lambda result: isinstance(result, list))
+@post(lambda result: all(isinstance(line, str) and line.strip() for line in result))  # Non-empty strings
 def extract_by_format(text: str, spec: CrossHairOutputSpec) -> list[str]:
     """
     Extract lines matching a format specification.

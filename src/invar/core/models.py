@@ -94,7 +94,7 @@ class GuardReport(BaseModel):
     core_functions_total: int = 0
     core_functions_with_contracts: int = 0
 
-    @pre(lambda self, violation: isinstance(violation, Violation))
+    @pre(lambda self, violation: violation.rule and violation.severity)  # Valid violation
     def add_violation(self, violation: Violation) -> None:
         """
         Add a violation and update counts.

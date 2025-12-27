@@ -46,6 +46,10 @@ def is_semantic_tautology(expression: str) -> tuple[bool, str]:
         (True, 'contract always returns False (contradiction - will always fail)')
         >>> is_semantic_tautology("lambda: len([1,2]) > 0")
         (True, "contract has no parameters (doesn't validate function inputs)")
+        >>> is_semantic_tautology("lambda result: result or not result")
+        (True, "'result or not result' is always True (tautology)")
+        >>> is_semantic_tautology("lambda x: x and not x")
+        (True, "'x and not x' is always False (contradiction)")
     """
     if not expression.strip():
         return (False, "")
@@ -65,6 +69,76 @@ def is_semantic_tautology(expression: str) -> tuple[bool, str]:
         return (False, "")
 
 
+@pre(lambda node: isinstance(node, ast.expr))
+def _check_literal_patterns(node: ast.expr) -> tuple[bool, str] | None:
+    """Check for literal True/False patterns."""
+    if isinstance(node, ast.Constant) and node.value is True:
+        return (True, "contract always returns True (no constraint)")
+    if isinstance(node, ast.Constant) and node.value is False:
+        return (True, "contract always returns False (contradiction - will always fail)")
+    return None
+
+
+@pre(lambda node: isinstance(node, ast.expr))
+def _check_comparison_patterns(node: ast.expr) -> tuple[bool, str] | None:
+    """Check for identity and len >= 0 patterns."""
+    if not isinstance(node, ast.Compare) or len(node.ops) != 1:
+        return None
+    # Identity comparison pattern
+    if isinstance(node.ops[0], (ast.Eq, ast.Is)):
+        left, right = ast.unparse(node.left), ast.unparse(node.comparators[0])
+        if left == right:
+            return (True, f"{left} == {right} is always True")
+    # Length non-negative pattern
+    if len(node.comparators) == 1:
+        left, op, right = node.left, node.ops[0], node.comparators[0]
+        if (isinstance(left, ast.Call) and isinstance(left.func, ast.Name) and
+            left.func.id == "len" and isinstance(op, ast.GtE) and
+            isinstance(right, ast.Constant) and right.value == 0):
+            arg = ast.unparse(left.args[0]) if left.args else "x"
+            return (True, f"len({arg}) >= 0 is always True for any sequence")
+    return None
+
+
+@pre(lambda node: isinstance(node, ast.expr))
+def _check_isinstance_object(node: ast.expr) -> tuple[bool, str] | None:
+    """Check for isinstance(x, object) pattern."""
+    if (isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and
+        node.func.id == "isinstance" and len(node.args) == 2):
+        type_arg = node.args[1]
+        if isinstance(type_arg, ast.Name) and type_arg.id == "object":
+            return (True, f"isinstance({ast.unparse(node.args[0])}, object) is always True")
+    return None
+
+
+@pre(lambda node: isinstance(node, ast.expr))
+def _check_boolop_patterns(node: ast.expr) -> tuple[bool, str] | None:
+    """Check for boolean operation patterns: x or True, x or not x, x and not x."""
+    if not isinstance(node, ast.BoolOp):
+        return None
+    if isinstance(node.op, ast.Or):
+        # x or True
+        for val in node.values:
+            if isinstance(val, ast.Constant) and val.value is True:
+                return (True, "expression contains unconditional True")
+        # Complement tautology pattern
+        values_unparsed = {ast.unparse(v): v for v in node.values}
+        for val in node.values:
+            if isinstance(val, ast.UnaryOp) and isinstance(val.op, ast.Not):
+                negated = ast.unparse(val.operand)
+                if negated in values_unparsed:
+                    return (True, f"'{negated} or not {negated}' is always True (tautology)")
+    if isinstance(node.op, ast.And):
+        # Complement contradiction pattern
+        values_unparsed = {ast.unparse(v): v for v in node.values}
+        for val in node.values:
+            if isinstance(val, ast.UnaryOp) and isinstance(val.op, ast.Not):
+                negated = ast.unparse(val.operand)
+                if negated in values_unparsed:
+                    return (True, f"'{negated} and not {negated}' is always False (contradiction)")
+    return None
+
+
 @pre(lambda node: isinstance(node, ast.expr) and hasattr(node, '__class__'))
 @post(lambda result: isinstance(result, tuple) and len(result) == 2)
 def _check_tautology_patterns(node: ast.expr) -> tuple[bool, str]:
@@ -74,6 +148,7 @@ def _check_tautology_patterns(node: ast.expr) -> tuple[bool, str]:
     - Literal True (always passes, no constraint)
     - Literal False (always fails, contradiction)
     - x == x, len(x) >= 0, isinstance(x, object), x or True
+    - x or not x (tautology), x and not x (contradiction)
 
     Examples:
         >>> import ast
@@ -82,59 +157,11 @@ def _check_tautology_patterns(node: ast.expr) -> tuple[bool, str]:
         >>> _check_tautology_patterns(ast.Constant(value=False))
         (True, 'contract always returns False (contradiction - will always fail)')
     """
-    # DX-38 Tier 1: Literal True pattern (e.g., lambda x: True)
-    if isinstance(node, ast.Constant) and node.value is True:
-        return (True, "contract always returns True (no constraint)")
-
-    # DX-38 Tier 1: Literal False pattern (e.g., lambda x: False)
-    if isinstance(node, ast.Constant) and node.value is False:
-        return (True, "contract always returns False (contradiction - will always fail)")
-
-    # Identity comparison pattern (e.g., x == x)
-    if (
-        isinstance(node, ast.Compare)
-        and len(node.ops) == 1
-        and isinstance(node.ops[0], (ast.Eq, ast.Is))
-    ):
-        left = ast.unparse(node.left)
-        right = ast.unparse(node.comparators[0])
-        if left == right:
-            return (True, f"{left} == {right} is always True")
-
-    # Length non-negative pattern (e.g., len(x) >= 0)
-    if isinstance(node, ast.Compare) and len(node.ops) == 1 and len(node.comparators) == 1:
-        left = node.left
-        op = node.ops[0]
-        right = node.comparators[0]
-        if (
-            isinstance(left, ast.Call)
-            and isinstance(left.func, ast.Name)
-            and left.func.id == "len"
-            and isinstance(op, ast.GtE)
-            and isinstance(right, ast.Constant)
-            and right.value == 0
-        ):
-            arg = ast.unparse(left.args[0]) if left.args else "x"
-            return (True, f"len({arg}) >= 0 is always True for any sequence")
-
-    # isinstance with object pattern (always True)
-    if (
-        isinstance(node, ast.Call)
-        and isinstance(node.func, ast.Name)
-        and node.func.id == "isinstance"
-        and len(node.args) == 2
-    ):
-        type_arg = node.args[1]
-        if isinstance(type_arg, ast.Name) and type_arg.id == "object":
-            arg = ast.unparse(node.args[0])
-            return (True, f"isinstance({arg}, object) is always True")
-
-    # Pattern: x or True, True or x (always true)
-    if isinstance(node, ast.BoolOp) and isinstance(node.op, ast.Or):
-        for val in node.values:
-            if isinstance(val, ast.Constant) and val.value is True:
-                return (True, "expression contains unconditional True")
-
+    for checker in [_check_literal_patterns, _check_comparison_patterns,
+                    _check_isinstance_object, _check_boolop_patterns]:
+        result = checker(node)
+        if result:
+            return result
     return (False, "")
 
 

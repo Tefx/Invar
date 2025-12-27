@@ -70,8 +70,7 @@ ENTRY_MARKER_PATTERN = re.compile(r"#\s*@shell:entry\b")
 INVAR_ALLOW_PATTERN = re.compile(r"#\s*@invar:allow\s+(\w+)\s*:\s*(.+)")
 
 
-@pre(lambda source: isinstance(source, str))
-@post(lambda result: isinstance(result, int) and result >= 0)
+@post(lambda result: result >= 0)  # Escape hatch count is non-negative
 def count_escape_hatches(source: str) -> int:
     """
     Count @invar:allow markers in source code (DX-31).
@@ -101,8 +100,7 @@ def count_escape_hatches(source: str) -> int:
     return len(extract_escape_hatches(source))
 
 
-@pre(lambda source: isinstance(source, str))
-@post(lambda result: isinstance(result, list))
+@post(lambda result: all(len(t) == 2 for t in result))  # Returns (rule, reason) tuples
 def extract_escape_hatches(source: str) -> list[tuple[str, str]]:
     """
     Extract @invar:allow markers with their reasons (DX-33 Option E).

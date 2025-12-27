@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from deal import post, pre
+from deal import post
 
 from invar.core.contracts import (
     check_empty_contracts,
@@ -12,21 +12,16 @@ from invar.core.contracts import (
     check_partial_contract,
     check_redundant_type_contracts,
     check_semantic_tautology,
-    check_skip_without_reason,  # DX-28
+    check_skip_without_reason,
 )
 from invar.core.entry_points import get_symbol_lines, has_allow_marker, is_entry_point
 from invar.core.extraction import format_extraction_hint
 from invar.core.models import FileInfo, RuleConfig, Severity, SymbolKind, Violation
 from invar.core.must_use import check_must_use
+from invar.core.postcondition_scope import check_postcondition_scope
 from invar.core.purity import check_impure_calls, check_internal_imports
-from invar.core.review_trigger import (
-    check_contract_quality_ratio,  # DX-30
-    check_review_suggested,  # DX-31
-)
-from invar.core.shell_architecture import (
-    check_shell_pure_logic,
-    check_shell_too_complex,
-)
+from invar.core.review_trigger import check_contract_quality_ratio, check_review_suggested
+from invar.core.shell_architecture import check_shell_pure_logic, check_shell_too_complex
 from invar.core.suggestions import format_suggestion_for_violation
 from invar.core.utils import get_excluded_rules
 
@@ -58,7 +53,6 @@ def _build_size_suggestion(base: str, extraction_hint: str, func_hint: str) -> s
     return f"{base}{func_hint}" if func_hint else base
 
 
-@pre(lambda file_info: isinstance(file_info, FileInfo))
 @post(lambda result: isinstance(result, str))
 def _get_func_hint(file_info: FileInfo) -> str:
     """Get top 5 largest functions as hint string."""
@@ -69,7 +63,7 @@ def _get_func_hint(file_info: FileInfo) -> str:
     return f" Functions: {', '.join(f'{n}({sz}L)' for n, sz in funcs)}" if funcs else ""
 
 
-@pre(lambda file_info, config: isinstance(file_info, FileInfo))
+@post(lambda result: all(v.rule in ("file_size", "file_size_warning") for v in result))
 def check_file_size(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
     """
     Check if file exceeds maximum line count or warning threshold.
@@ -110,7 +104,7 @@ def check_file_size(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
     return violations
 
 
-@pre(lambda file_info, config: isinstance(file_info, FileInfo))
+@post(lambda result: all(v.rule == "function_size" for v in result))
 def check_function_size(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
     """
     Check if any function exceeds maximum line count.
@@ -158,7 +152,7 @@ def check_function_size(file_info: FileInfo, config: RuleConfig) -> list[Violati
     return violations
 
 
-@pre(lambda file_info, config: isinstance(file_info, FileInfo))
+@post(lambda result: all(v.rule == "forbidden_import" for v in result))
 def check_forbidden_imports(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
     """
     Check for forbidden imports in Core files.
@@ -202,7 +196,7 @@ def check_forbidden_imports(file_info: FileInfo, config: RuleConfig) -> list[Vio
     return violations
 
 
-@pre(lambda file_info, config: isinstance(file_info, FileInfo))
+@post(lambda result: all(v.rule == "missing_contract" for v in result))
 def check_contracts(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
     """
     Check that public Core functions have contracts.
@@ -223,9 +217,13 @@ def check_contracts(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
     if not file_info.is_core or not config.require_contracts:
         return violations
 
+    source = file_info.source or ""
     for symbol in file_info.symbols:
         # Check all functions and methods - agent needs contracts everywhere
         if symbol.kind in (SymbolKind.FUNCTION, SymbolKind.METHOD) and not symbol.contracts:
+            # DX-22: Skip if @invar:allow marker present
+            if has_allow_marker(symbol, source, "missing_contract"):
+                continue
             kind_name = "Method" if symbol.kind == SymbolKind.METHOD else "Function"
             suggestion = format_suggestion_for_violation(symbol, "missing_contract")
             violations.append(
@@ -242,7 +240,7 @@ def check_contracts(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
     return violations
 
 
-@pre(lambda file_info, config: isinstance(file_info, FileInfo))
+@post(lambda result: all(v.rule == "missing_doctest" for v in result))
 def check_doctests(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
     """
     Check that contracted functions have doctest examples.
@@ -292,7 +290,7 @@ def check_doctests(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
     return violations
 
 
-@pre(lambda file_info, config: isinstance(file_info, FileInfo))
+@post(lambda result: all(v.rule == "shell_result" for v in result))
 def check_shell_result(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
     """
     Check that Shell functions with return values use Result[T, E].
@@ -344,7 +342,7 @@ def check_shell_result(file_info: FileInfo, config: RuleConfig) -> list[Violatio
     return violations
 
 
-@pre(lambda file_info, config: isinstance(file_info, FileInfo))
+@post(lambda result: all(v.rule == "entry_point_too_thick" for v in result))
 def check_entry_point_thin(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
     """
     Check that entry points are thin (DX-23).
@@ -415,6 +413,7 @@ def get_all_rules() -> list[RuleFunc]:
         check_redundant_type_contracts,
         check_param_mismatch,
         check_partial_contract,
+        check_postcondition_scope,
         check_must_use,
         check_skip_without_reason,  # DX-28
         check_contract_quality_ratio,  # DX-30
@@ -462,7 +461,7 @@ def _apply_severity_override(v: Violation, overrides: dict[str, str]) -> Violati
     )
 
 
-@pre(lambda file_info, config: isinstance(file_info, FileInfo))
+@post(lambda result: all(v.rule and v.file for v in result) if result else True)
 def check_all_rules(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
     """
     Run all rules against a file and collect violations.

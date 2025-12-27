@@ -24,7 +24,7 @@ from invar.core.shell_analysis import (
 )
 
 
-@pre(lambda file_info, config: isinstance(file_info, FileInfo))
+@post(lambda result: all(v.rule == "shell_pure_logic" for v in result))
 def check_shell_pure_logic(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
     """
     Check that Shell functions contain I/O operations (DX-22).
@@ -79,7 +79,7 @@ def check_shell_pure_logic(file_info: FileInfo, config: RuleConfig) -> list[Viol
     return violations
 
 
-@pre(lambda file_info, config: isinstance(file_info, FileInfo))
+@post(lambda result: all(v.rule == "shell_too_complex" for v in result))
 def check_shell_too_complex(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
     """
     Check that Shell functions don't have excessive branching (DX-22).

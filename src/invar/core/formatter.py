@@ -15,7 +15,7 @@ from invar.core.models import GuardReport, PerceptionMap, Symbol, SymbolRefs, Vi
 from invar.core.rule_meta import get_rule_meta
 
 
-@pre(lambda perception_map, top_n=0: isinstance(perception_map, PerceptionMap))
+@pre(lambda perception_map, top_n=0: top_n >= 0)
 def format_map_text(perception_map: PerceptionMap, top_n: int = 0) -> str:
     """
     Format perception map as plain text.
@@ -121,7 +121,6 @@ def format_map_json(perception_map: PerceptionMap, top_n: int = 0) -> dict:
     }
 
 
-@pre(lambda sr: isinstance(sr, SymbolRefs))
 @post(lambda result: "name" in result and "ref_count" in result)
 def _symbol_refs_to_dict(sr: SymbolRefs) -> dict:
     """Convert SymbolRefs to dict."""
@@ -138,7 +137,7 @@ def _symbol_refs_to_dict(sr: SymbolRefs) -> dict:
     }
 
 
-@pre(lambda symbol, file_path: isinstance(symbol, Symbol))
+@pre(lambda symbol, file_path: len(file_path) > 0)
 def format_signature(symbol: Symbol, file_path: str) -> str:
     """
     Format a single symbol signature.
@@ -154,7 +153,7 @@ def format_signature(symbol: Symbol, file_path: str) -> str:
     return f"{file_path}::{symbol.name}{sig}"
 
 
-@pre(lambda symbols, file_path: isinstance(symbols, list))
+@pre(lambda symbols, file_path: len(file_path) > 0)
 def format_signatures_text(symbols: list[Symbol], file_path: str) -> str:
     """
     Format multiple signatures as text.
@@ -169,7 +168,7 @@ def format_signatures_text(symbols: list[Symbol], file_path: str) -> str:
     return "\n".join(lines)
 
 
-@pre(lambda symbols, file_path: isinstance(symbols, list))
+@pre(lambda symbols, file_path: len(file_path) > 0)
 def format_signatures_json(symbols: list[Symbol], file_path: str) -> dict:
     """
     Format signatures as JSON-serializable dict.
@@ -200,7 +199,7 @@ def format_signatures_json(symbols: list[Symbol], file_path: str) -> dict:
 # Phase 8.2: Agent-mode formatting
 
 
-@pre(lambda report, combined_status=None: isinstance(report, GuardReport))
+@pre(lambda report, combined_status=None: combined_status is None or combined_status in ("passed", "failed"))
 def format_guard_agent(report: GuardReport, combined_status: str | None = None) -> dict:
     """
     Format Guard report for Agent consumption (Phase 8.2 + DX-26).
@@ -255,7 +254,7 @@ def format_guard_agent(report: GuardReport, combined_status: str | None = None) 
     }
 
 
-@pre(lambda v: isinstance(v, Violation))
+@post(lambda result: "file" in result and "rule" in result and "severity" in result)
 def _violation_to_fix(v: Violation) -> dict:
     """Convert a Violation to an Agent-friendly fix instruction."""
     fix_info = _parse_suggestion(v.suggestion, v.rule) if v.suggestion else None

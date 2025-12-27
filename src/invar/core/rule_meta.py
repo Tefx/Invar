@@ -106,6 +106,14 @@ RULE_META: dict[str, RuleMeta] = {
         cannot_detect=("Runtime binding errors",),
         hint="Lambda must accept ALL function parameters (include defaults like x=10)",
     ),
+    "postcondition_scope_error": RuleMeta(
+        name="postcondition_scope_error",
+        severity=Severity.ERROR,
+        category=RuleCategory.CONTRACTS,
+        detects="@post lambda references function parameters (not available in postcondition)",
+        cannot_detect=("Indirect parameter access via closures",),
+        hint="@post can only use 'result', not function parameters like x, y",
+    ),
     "must_use_ignored": RuleMeta(
         name="must_use_ignored",
         severity=Severity.WARNING,

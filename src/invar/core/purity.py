@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import ast
 
-from deal import pre
+from deal import post, pre
 
 from invar.core.models import FileInfo, RuleConfig, Severity, SymbolKind, Violation
 
@@ -284,7 +284,7 @@ def count_doctest_lines(node: ast.FunctionDef | ast.AsyncFunctionDef) -> int:
 # Rule checking functions
 
 
-@pre(lambda file_info, config: isinstance(file_info, FileInfo))
+@post(lambda result: all(v.rule == "internal_import" for v in result))  # Rule consistency
 def check_internal_imports(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
     """
     Check for imports inside function bodies.
@@ -324,7 +324,7 @@ def check_internal_imports(file_info: FileInfo, config: RuleConfig) -> list[Viol
     return violations
 
 
-@pre(lambda file_info, config: isinstance(file_info, FileInfo))
+@post(lambda result: all(v.rule == "impure_call" for v in result))  # Rule consistency
 def check_impure_calls(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
     """
     Check for calls to known impure functions.

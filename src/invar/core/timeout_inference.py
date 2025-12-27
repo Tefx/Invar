@@ -42,7 +42,7 @@ LIBRARY_BLACKLIST = frozenset([
 
 
 @pre(lambda func: callable(func))
-@post(lambda result: isinstance(result, int) and result > 0)
+@post(lambda result: result > 0)  # Timeout must be positive
 def infer_timeout(func: Callable) -> int:
     """
     Infer appropriate CrossHair timeout from function source.
@@ -80,8 +80,7 @@ def infer_timeout(func: Callable) -> int:
     return TIMEOUT_TIERS["pure_python"].timeout
 
 
-@pre(lambda source: isinstance(source, str))
-@post(lambda result: isinstance(result, int) and result >= 0)
+@post(lambda result: result >= 0)  # Nesting depth is non-negative
 def _estimate_nesting_depth(source: str) -> int:
     """Estimate maximum nesting depth from indentation."""
     max_indent = 0
@@ -94,15 +93,13 @@ def _estimate_nesting_depth(source: str) -> int:
     return max_indent
 
 
-@pre(lambda source: isinstance(source, str))
-@post(lambda result: isinstance(result, int) and result >= 0)
+@post(lambda result: result >= 0)  # Branch count is non-negative
 def _count_branches(source: str) -> int:
     """Count branching statements (if, for, while, try)."""
     return len(re.findall(r"\b(if|for|while|try|elif|except)\b", source))
 
 
-@pre(lambda source: isinstance(source, str))
-@post(lambda result: isinstance(result, bool))
+# @invar:allow missing_contract: Boolean predicate, empty string is valid input
 def _uses_only_stdlib(source: str) -> bool:
     """Check if source only uses standard library."""
     stdlib_patterns = ["collections", "itertools", "functools", "typing", "dataclasses"]

@@ -23,7 +23,7 @@ from invar.core.tautology import check_semantic_tautology as check_semantic_taut
 from invar.core.tautology import is_semantic_tautology as is_semantic_tautology
 
 
-@pre(lambda expression: isinstance(expression, str))
+@post(lambda result: isinstance(result, bool))
 def is_empty_contract(expression: str) -> bool:
     """Check if a contract expression is always True (tautological).
 
@@ -51,7 +51,7 @@ def is_empty_contract(expression: str) -> bool:
         return False
 
 
-@pre(lambda expression, annotations: isinstance(expression, str))
+@post(lambda result: isinstance(result, bool))
 def is_redundant_type_contract(expression: str, annotations: dict[str, str]) -> bool:
     """Check if a contract only checks types already in annotations.
 
@@ -137,7 +137,7 @@ def _types_match(annotation: str, type_name: str) -> bool:
 # Phase 8.3: Parameter mismatch detection
 
 
-@pre(lambda expression, signature: isinstance(expression, str) and isinstance(signature, str))
+@post(lambda result: len(result) == 3 and isinstance(result[0], bool))
 def has_unused_params(expression: str, signature: str) -> tuple[bool, list[str], list[str]]:
     """
     Check if lambda has params it doesn't use (P28: Partial Contract Detection).
@@ -189,7 +189,7 @@ def has_unused_params(expression: str, signature: str) -> tuple[bool, list[str],
     return (len(unused_params) > 0, unused_params, used_params)
 
 
-@pre(lambda expression, signature: isinstance(expression, str) and isinstance(signature, str))
+@post(lambda result: len(result) == 2 and isinstance(result[0], bool))
 def has_param_mismatch(expression: str, signature: str) -> tuple[bool, str]:
     """
     Check if lambda params don't match function params.
@@ -227,7 +227,7 @@ def has_param_mismatch(expression: str, signature: str) -> tuple[bool, str]:
 # Rule checking functions
 
 
-@pre(lambda file_info, config: isinstance(file_info, FileInfo))
+@post(lambda result: all(v.rule == "empty_contract" for v in result))
 def check_empty_contracts(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
     """Check for empty/tautological contracts. Core files only.
 
@@ -260,7 +260,7 @@ def check_empty_contracts(file_info: FileInfo, config: RuleConfig) -> list[Viola
     return violations
 
 
-@pre(lambda file_info, config: isinstance(file_info, FileInfo))
+@post(lambda result: all(v.rule == "redundant_type_contract" for v in result))
 def check_redundant_type_contracts(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
     """Check for contracts that only check types in annotations. Core files only. INFO severity.
 
@@ -298,7 +298,7 @@ def check_redundant_type_contracts(file_info: FileInfo, config: RuleConfig) -> l
     return violations
 
 
-@pre(lambda file_info, config: isinstance(file_info, FileInfo))
+@post(lambda result: all(v.rule == "param_mismatch" for v in result))
 def check_param_mismatch(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
     """Check @pre lambda params match function params. Core files only. ERROR severity.
 
@@ -342,7 +342,7 @@ def check_param_mismatch(file_info: FileInfo, config: RuleConfig) -> list[Violat
     return violations
 
 
-@pre(lambda file_info, config: isinstance(file_info, FileInfo))
+@post(lambda result: all(v.rule == "partial_contract" for v in result))
 def check_partial_contract(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
     """Check @pre contracts that don't use all declared params (P28). Core files only. WARN severity.
 
@@ -393,7 +393,7 @@ def check_partial_contract(file_info: FileInfo, config: RuleConfig) -> list[Viol
     return violations
 
 
-@pre(lambda file_info, config: isinstance(file_info, FileInfo))
+@post(lambda result: all(v.rule == "skip_without_reason" for v in result))
 def check_skip_without_reason(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
     """
     Check that @skip_property_test decorators have a reason.

@@ -32,6 +32,76 @@ CONSTRAINT_PATTERNS: dict[str, list[str]] = {
     "Optional": ["{name} is not None", "{name}"],
 }
 
+# Return-type-aware @post patterns for redundant_type_contract suggestions
+RETURN_TYPE_POST_PATTERNS: dict[str, str] = {
+    "list[Violation]": '@post(lambda result: all(v.rule == "RULE_NAME" for v in result))',
+    "list": '@post(lambda result: all(<predicate> for item in result))',
+    "dict": "@post(lambda result: all(isinstance(k, <type>) for k in result))",
+    "set": "@post(lambda result: all(<predicate> for item in result))",
+    "int": "@post(lambda result: result >= 0)",
+    "float": "@post(lambda result: result >= 0.0)",
+    "str": "@post(lambda result: len(result) > 0)",
+    "bool": "@post(lambda result: <semantic_predicate>)",
+    "None": "",  # No meaningful @post for None return
+}
+
+
+@post(lambda result: result is None or isinstance(result, str))
+def extract_return_type(signature: str) -> str | None:
+    """Extract return type from function signature.
+
+    Examples:
+        >>> extract_return_type("(x: int) -> list[Violation]")
+        'list[Violation]'
+        >>> extract_return_type("(x: int) -> int")
+        'int'
+        >>> extract_return_type("(x: int) -> None")
+        'None'
+        >>> extract_return_type("(x: int)")
+        >>> extract_return_type("()")
+    """
+    if not signature or "->" not in signature:
+        return None
+    match = re.search(r"->\s*(.+)$", signature)
+    if match:
+        return match.group(1).strip()
+    return None
+
+
+@pre(lambda return_type: return_type is None or isinstance(return_type, str))
+@post(lambda result: isinstance(result, str))
+def generate_post_suggestion(return_type: str | None) -> str:
+    """Generate @post suggestion based on return type.
+
+    Examples:
+        >>> generate_post_suggestion("list[Violation]")
+        '@post(lambda result: all(v.rule == "RULE_NAME" for v in result))'
+        >>> generate_post_suggestion("int")
+        '@post(lambda result: result >= 0)'
+        >>> generate_post_suggestion("bool")
+        '@post(lambda result: <semantic_predicate>)'
+        >>> generate_post_suggestion("CustomType")
+        '@post(lambda result: <condition>)'
+        >>> generate_post_suggestion(None)
+        '@post(lambda result: <condition>)'
+    """
+    if not return_type:
+        return "@post(lambda result: <condition>)"
+
+    # Exact match
+    if return_type in RETURN_TYPE_POST_PATTERNS:
+        pattern = RETURN_TYPE_POST_PATTERNS[return_type]
+        return pattern if pattern else "@post(lambda result: <condition>)"
+
+    # Generic match (list[X], dict[K,V], etc.)
+    base_match = re.match(r"^(list|dict|set)\[", return_type)
+    if base_match:
+        base = base_match.group(1)
+        if base in RETURN_TYPE_POST_PATTERNS:
+            return RETURN_TYPE_POST_PATTERNS[base]
+
+    return "@post(lambda result: <condition>)"
+
 
 @pre(lambda signature: signature.startswith("(") or signature == "")
 def generate_contract_suggestion(signature: str) -> str:
@@ -290,6 +360,7 @@ def format_suggestion_for_violation(symbol: Symbol, violation_type: str) -> str:
     Phase 9.2 P4: Generate lambda skeletons when no type-based suggestion available.
     P7: Added semantic_tautology support.
     P27: Show pattern alternatives (Guard provides options, Agent decides).
+    DX-XX: Return-type-aware @post suggestions for redundant_type_contract.
 
     Examples:
         >>> from invar.core.models import Symbol, SymbolKind
@@ -306,6 +377,12 @@ def format_suggestion_for_violation(symbol: Symbol, violation_type: str) -> str:
         >>> msg2 = format_suggestion_for_violation(sym2, "missing_contract")
         >>> "@pre(lambda data, config: <condition>)" in msg2
         True
+        >>> # Return-type-aware @post for redundant_type_contract
+        >>> sym3 = Symbol(name="check", kind=SymbolKind.FUNCTION, line=1, end_line=5,
+        ...     signature="(x: int) -> list[Violation]")
+        >>> msg3 = format_suggestion_for_violation(sym3, "redundant_type_contract")
+        >>> 'all(v.rule ==' in msg3
+        True
     """
     if symbol.kind not in (SymbolKind.FUNCTION, SymbolKind.METHOD):
         return ""
@@ -321,6 +398,15 @@ def format_suggestion_for_violation(symbol: Symbol, violation_type: str) -> str:
     suggestion_prefix, skeleton_prefix = _VIOLATION_PREFIXES[violation_type]
     patterns = generate_pattern_options(sig)
     suggestion = generate_contract_suggestion(sig)
+
+    # For redundant_type_contract, include return-type-aware @post suggestion
+    if violation_type == "redundant_type_contract":
+        return_type = extract_return_type(sig)
+        post_suggestion = generate_post_suggestion(return_type)
+        if suggestion:
+            full_suggestion = f"{suggestion}\n  or {post_suggestion}"
+            return _format_with_patterns(suggestion_prefix, full_suggestion, patterns)
+        return f"{skeleton_prefix}{post_suggestion}"
 
     if suggestion:
         return _format_with_patterns(suggestion_prefix, suggestion, patterns)

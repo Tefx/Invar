@@ -137,7 +137,7 @@ def _get_call_name(call: ast.Call) -> str | None:
     return None
 
 
-@pre(lambda file_info, config: isinstance(file_info, FileInfo))
+@post(lambda result: all(v.rule == "must_use_ignored" for v in result))  # Rule consistency
 def check_must_use(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
     """
     Check for ignored return values of @must_use functions.

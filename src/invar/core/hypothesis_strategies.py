@@ -24,7 +24,7 @@ _hypothesis_available = False
 _numpy_available = False
 
 
-@post(lambda result: isinstance(result, bool))
+# @invar:allow missing_contract: Boolean availability check, no meaningful contract
 def _ensure_hypothesis() -> bool:
     """Check if hypothesis is available."""
     global _hypothesis_available
@@ -37,7 +37,7 @@ def _ensure_hypothesis() -> bool:
         return False
 
 
-@post(lambda result: isinstance(result, bool))
+# @invar:allow missing_contract: Boolean availability check, no meaningful contract
 def _ensure_numpy() -> bool:
     """Check if numpy is available."""
     global _numpy_available
@@ -402,8 +402,7 @@ def _get_user_strategies(func: Callable) -> dict[str, StrategySpec]:
     return user_specs
 
 
-@pre(lambda source: isinstance(source, str))
-@post(lambda result: isinstance(result, list))
+@post(lambda result: all("lambda" in s for s in result))  # Only lambda expressions
 def _extract_pre_lambdas_from_source(source: str) -> list[str]:
     """
     Extract lambda expressions from @pre decorators with balanced parenthesis.
@@ -468,8 +467,7 @@ def _extract_pre_sources(func: Callable) -> list[str]:
     return pre_sources
 
 
-@pre(lambda bounds, strategy_name: isinstance(bounds, dict) and isinstance(strategy_name, str))
-@post(lambda result: isinstance(result, dict))
+@post(lambda result: all(k in ("min_value", "max_value", "min_size", "max_size", "exclude_min", "exclude_max") for k in result))
 def _bounds_to_strategy_kwargs(bounds: dict[str, Any], strategy_name: str) -> dict[str, Any]:
     """Convert bound constraints to Hypothesis strategy kwargs."""
     kwargs = {}

@@ -145,7 +145,7 @@ def generate_property_test(func: Callable) -> GeneratedTest | None:
     )
 
 
-@pre(lambda func_name, strategies: isinstance(func_name, str) and isinstance(strategies, dict))
+@pre(lambda func_name, strategies: len(func_name) > 0 and len(strategies) > 0)
 @post(lambda result: isinstance(result, str) and "@given" in result)
 def _generate_test_code(func_name: str, strategies: dict[str, str]) -> str:
     """
@@ -334,7 +334,7 @@ def build_test_function(
     return property_test
 
 
-@pre(lambda error_str: isinstance(error_str, str))
+@pre(lambda error_str: len(error_str) > 0)
 @post(lambda result: result is None or isinstance(result, int))
 def _extract_hypothesis_seed(error_str: str) -> int | None:
     """Extract Hypothesis seed from error message (DX-26).
@@ -357,7 +357,7 @@ def _extract_hypothesis_seed(error_str: str) -> int | None:
     return None
 
 
-@pre(lambda name, reason: isinstance(name, str) and isinstance(reason, str))
+@pre(lambda name, reason: len(name) > 0 and len(reason) > 0)
 @post(lambda result: isinstance(result, PropertyTestResult) and result.passed)
 def _skip_result(name: str, reason: str) -> PropertyTestResult:
     """Create a skip result (passed=True, 0 examples)."""
@@ -371,7 +371,7 @@ _SKIP_PATTERNS = (
 )
 
 
-@pre(lambda err_str, func_name, max_examples: isinstance(err_str, str))
+@pre(lambda err_str, func_name, max_examples: len(err_str) > 0 and len(func_name) > 0 and max_examples > 0)
 @post(lambda result: isinstance(result, PropertyTestResult))
 def _handle_test_exception(
     err_str: str, func_name: str, max_examples: int

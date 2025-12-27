@@ -52,8 +52,7 @@ def extract_annotations(signature: str) -> dict[str, str]:
     return annotations
 
 
-@pre(lambda expression: isinstance(expression, str))
-@post(lambda result: result is None or isinstance(result, list))
+@post(lambda result: result is None or all(isinstance(p, str) for p in result))  # Valid params
 def extract_lambda_params(expression: str) -> list[str] | None:
     """Extract parameter names from a lambda expression.
 

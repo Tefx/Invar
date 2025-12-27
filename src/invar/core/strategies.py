@@ -26,7 +26,7 @@ class StrategyHint:
     constraints: dict[str, Any] = field(default_factory=dict)
     description: str = ""
 
-    @post(lambda result: isinstance(result, dict))
+    @post(lambda result: all(isinstance(k, str) for k in result))  # Keys are strings
     def to_hypothesis_args(self) -> dict[str, Any]:
         """Convert constraints to Hypothesis strategy arguments.
 
@@ -44,8 +44,7 @@ class StrategyHint:
 _NUMBER_PATTERN = re.compile(r"^-?[0-9]+\.?[0-9]*(?:e[+-]?[0-9]+)?$", re.IGNORECASE)
 
 
-@pre(lambda s: isinstance(s, str) and _NUMBER_PATTERN.match(s.strip()))
-@post(lambda result: isinstance(result, (int, float)))
+@pre(lambda s: _NUMBER_PATTERN.match(s.strip()))  # Valid number format
 def _parse_number(s: str) -> int | float:
     """Parse a number string to int or float.
 
@@ -141,11 +140,8 @@ PATTERNS: list[tuple[str, Callable[[re.Match, str], dict[str, Any] | None]]] = [
 ]
 
 
-@pre(
-    lambda pre_source, param_name, param_type=None: isinstance(pre_source, str)
-    and isinstance(param_name, str)
-)
-@post(lambda result: isinstance(result, StrategyHint))
+@pre(lambda pre_source, param_name, param_type=None: len(param_name) > 0)  # Param must be named
+@post(lambda result: isinstance(result.constraints, dict))  # Returns valid hint
 def infer_from_lambda(
     pre_source: str,
     param_name: str,
@@ -197,10 +193,8 @@ def infer_from_lambda(
     )
 
 
-@pre(
-    lambda pre_sources, param_name, param_type=None: isinstance(pre_sources, list)
-    and isinstance(param_name, str)
-)
+@pre(lambda pre_sources, param_name, param_type=None: len(param_name) > 0)  # Param must be named
+@post(lambda result: isinstance(result.constraints, dict))  # Returns valid hint
 def infer_from_multiple(
     pre_sources: list[str],
     param_name: str,
@@ -232,8 +226,7 @@ def infer_from_multiple(
     )
 
 
-@pre(lambda hint: isinstance(hint, StrategyHint))
-@post(lambda result: isinstance(result, str))
+@post(lambda result: ":" in result)  # Format is "name: strategy"
 def format_strategy_hint(hint: StrategyHint) -> str:
     """
     Format a strategy hint as a human-readable string.

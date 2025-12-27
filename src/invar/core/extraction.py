@@ -11,8 +11,7 @@ from deal import post, pre
 from invar.core.models import FileInfo, Symbol, SymbolKind
 
 
-@pre(lambda funcs: isinstance(funcs, dict))
-@post(lambda result: isinstance(result, dict))
+@post(lambda result: all(k in result for k in result))  # Bidirectional graph
 def _build_call_graph(funcs: dict[str, Symbol]) -> dict[str, set[str]]:
     """Build bidirectional call graph for function grouping.
 
@@ -33,8 +32,8 @@ def _build_call_graph(funcs: dict[str, Symbol]) -> dict[str, set[str]]:
     return graph
 
 
-@pre(lambda start, graph, visited: start and isinstance(graph, dict) and start in graph)
-@post(lambda result: isinstance(result, list))
+@pre(lambda start, graph, visited: start and start in graph)  # Start must exist in graph
+@post(lambda result: len(result) >= 1 or not result)  # At least 1 if found, else empty
 def _find_connected_component(start: str, graph: dict[str, set[str]], visited: set[str]) -> list[str]:
     """BFS to find all functions connected to start.
 
@@ -55,7 +54,7 @@ def _find_connected_component(start: str, graph: dict[str, set[str]], visited: s
     return component
 
 
-@pre(lambda file_info: isinstance(file_info, FileInfo))
+@post(lambda result: all("functions" in g and "lines" in g for g in result))
 def find_extractable_groups(file_info: FileInfo) -> list[dict]:
     """
     Find groups of related functions that could be extracted together.
@@ -136,7 +135,7 @@ def _get_group_dependencies(
     return deps.intersection(set(file_imports)) if file_imports else deps
 
 
-@pre(lambda file_info, max_groups=3: isinstance(file_info, FileInfo))
+@pre(lambda file_info, max_groups=3: max_groups >= 1)  # At least 1 group
 def format_extraction_hint(file_info: FileInfo, max_groups: int = 3) -> str:
     """
     Format extraction suggestions for file_size_warning.

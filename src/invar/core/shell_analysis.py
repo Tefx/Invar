@@ -93,8 +93,7 @@ COMPLEXITY_MARKER_PATTERN = re.compile(r"#\s*@shell_complexity\s*:")
 ORCHESTRATION_MARKER_PATTERN = re.compile(r"#\s*@shell_orchestration\s*:")
 
 
-@pre(lambda source: isinstance(source, str))
-@post(lambda result: isinstance(result, bool))
+# @invar:allow missing_contract: Boolean predicate, empty string is valid input
 def has_io_operations(source: str) -> bool:
     """
     Check if source code contains I/O operations.
@@ -112,8 +111,7 @@ def has_io_operations(source: str) -> bool:
     return any(indicator in source for indicator in IO_INDICATORS)
 
 
-@pre(lambda symbol, source: symbol is not None and isinstance(source, str))
-@post(lambda result: isinstance(result, bool))
+@pre(lambda symbol, source: symbol is not None)  # Symbol must exist
 def has_orchestration_marker(symbol: Symbol, source: str) -> bool:
     """
     Check if symbol has @shell_orchestration marker comment.
@@ -146,8 +144,7 @@ def has_orchestration_marker(symbol: Symbol, source: str) -> bool:
     return bool(ORCHESTRATION_MARKER_PATTERN.search(context))
 
 
-@pre(lambda symbol, source: symbol is not None and isinstance(source, str))
-@post(lambda result: isinstance(result, bool))
+@pre(lambda symbol, source: symbol is not None)  # Symbol must exist
 def has_complexity_marker(symbol: Symbol, source: str) -> bool:
     """
     Check if symbol has @shell_complexity marker comment.
@@ -181,8 +178,7 @@ def has_complexity_marker(symbol: Symbol, source: str) -> bool:
     return bool(COMPLEXITY_MARKER_PATTERN.search(context))
 
 
-@pre(lambda source: isinstance(source, str))
-@post(lambda result: isinstance(result, int) and result >= 0)
+@post(lambda result: result >= 0)  # Branch count is non-negative
 def count_branches(source: str) -> int:
     """
     Count the number of branches in source code.
@@ -225,8 +221,7 @@ def count_branches(source: str) -> int:
     return count
 
 
-@pre(lambda symbol, file_source: symbol is not None and isinstance(file_source, str))
-@post(lambda result: isinstance(result, str))
+@pre(lambda symbol, file_source: symbol is not None)  # Symbol must exist
 def get_symbol_source(symbol: Symbol, file_source: str) -> str:
     """
     Extract the source code for a specific symbol.

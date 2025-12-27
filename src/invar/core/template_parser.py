@@ -53,7 +53,7 @@ class ParsedFile:
     raw: str = ""  # Original content
 
     @property
-    @post(lambda result: isinstance(result, bool))
+    # @invar:allow missing_contract: Boolean derived from dict length
     def has_regions(self) -> bool:
         """Check if any Invar regions were found.
 
@@ -84,8 +84,7 @@ REGION_END_PATTERN = re.compile(r"<!--/invar:(\w+)-->")
 # =============================================================================
 
 
-@pre(lambda content: isinstance(content, str))
-@post(lambda result: isinstance(result, ParsedFile))
+@post(lambda result: result.raw is not None)  # Always captures original content
 @ensure(lambda content, result: result.raw == content)  # Preserves input verbatim
 def parse_invar_regions(content: str) -> ParsedFile:
     """Parse <!--invar:...--> regions from content.
@@ -158,9 +157,7 @@ def parse_invar_regions(content: str) -> ParsedFile:
     return ParsedFile(regions=regions, before=before, after=after, raw=content)
 
 
-@pre(lambda parsed, updates: isinstance(parsed, ParsedFile) and isinstance(updates, dict))
 @pre(lambda parsed, updates: all(k == v.name for k, v in parsed.regions.items()))  # Keys must match names
-@post(lambda result: isinstance(result, str))
 @ensure(lambda parsed, updates, result: (
     not parsed.has_regions or all(f"<!--invar:{r}" in result for r in parsed.regions)
 ))  # Checks start tag prefix (version attribute may follow)
@@ -233,8 +230,7 @@ def reconstruct_file(parsed: ParsedFile, updates: dict[str, str]) -> str:
     return "".join(parts)
 
 
-@pre(lambda command, manifest: isinstance(command, str) and isinstance(manifest, dict))
-@post(lambda result: isinstance(result, str))
+@post(lambda result: len(result) > 0)  # Always returns a syntax variant (defaults to "cli")
 def get_syntax_for_command(command: str, manifest: dict) -> str:
     """Get the syntax variant for a command.
 
@@ -278,7 +274,7 @@ class ClaudeMdState:
     user_content: str = ""  # Preserved user content
 
     @property
-    @post(lambda result: isinstance(result, bool))
+    # @invar:allow missing_contract: Boolean derived from state enum check
     def needs_recovery(self) -> bool:
         """Check if recovery/merge is needed.
 
@@ -291,8 +287,7 @@ class ClaudeMdState:
         return self.state in ("partial", "missing")
 
 
-@pre(lambda content: isinstance(content, str))
-@post(lambda result: isinstance(result, ClaudeMdState))
+@post(lambda result: result.state in ("intact", "partial", "missing", "absent"))
 def detect_claude_md_state(content: str) -> ClaudeMdState:
     """Detect the state of CLAUDE.md Invar regions.
 
@@ -402,8 +397,7 @@ def detect_claude_md_state(content: str) -> ClaudeMdState:
     )
 
 
-@pre(lambda content: isinstance(content, str))
-@post(lambda result: isinstance(result, str))
+@post(lambda result: "<!--invar" not in result)  # All markers removed
 def strip_invar_markers(content: str) -> str:
     """Remove all Invar region markers, keeping content.
 

@@ -10,7 +10,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
-from deal import post, pre
+from deal import post
 
 # Name patterns suggesting impurity
 IMPURE_NAME_PATTERNS = [
@@ -75,8 +75,7 @@ class HeuristicResult:
     hints: list[str]
 
 
-@pre(lambda func_name, hints: isinstance(func_name, str) and isinstance(hints, list))
-@post(lambda result: isinstance(result, tuple) and len(result) == 2)
+@post(lambda result: len(result) == 2 and all(x >= 0 for x in result))  # Scores are non-negative
 def _analyze_name_patterns(func_name: str, hints: list[str]) -> tuple[int, int]:
     """Analyze function name for purity hints. Returns (impure_score, pure_score).
 
@@ -98,8 +97,7 @@ def _analyze_name_patterns(func_name: str, hints: list[str]) -> tuple[int, int]:
     return impure, pure
 
 
-@pre(lambda signature, hints: isinstance(hints, list))
-@post(lambda result: isinstance(result, tuple) and len(result) == 2)
+@post(lambda result: len(result) == 2 and all(x >= 0 for x in result))  # Scores are non-negative
 def _analyze_signature(signature: str | None, hints: list[str]) -> tuple[int, int]:
     """Analyze signature for purity hints. Returns (impure_score, pure_score).
 
@@ -122,8 +120,7 @@ def _analyze_signature(signature: str | None, hints: list[str]) -> tuple[int, in
     return impure, pure
 
 
-@pre(lambda docstring, hints: isinstance(hints, list))
-@post(lambda result: isinstance(result, int) and result >= 0)
+@post(lambda result: result >= 0)  # Impure score is non-negative
 def _analyze_docstring(docstring: str | None, hints: list[str]) -> int:
     """Analyze docstring for purity hints. Returns impure_score.
 
@@ -141,8 +138,7 @@ def _analyze_docstring(docstring: str | None, hints: list[str]) -> int:
     return 0
 
 
-@pre(lambda func_name, signature=None, docstring=None: isinstance(func_name, str))
-@post(lambda result: isinstance(result, HeuristicResult))
+@post(lambda result: 0.0 <= result.confidence <= 1.0)  # Confidence in [0, 1]
 def analyze_purity_heuristic(
     func_name: str,
     signature: str | None = None,

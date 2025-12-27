@@ -10,7 +10,7 @@ from __future__ import annotations
 import re
 from enum import Enum
 
-from deal import post, pre
+from deal import post
 
 
 class VerificationTool(Enum):
@@ -64,8 +64,7 @@ _IMPORT_PATTERN = re.compile(
 )
 
 
-@pre(lambda source: isinstance(source, str))
-@post(lambda result: isinstance(result, bool))
+# @invar:allow missing_contract: Boolean predicate, empty string returns False
 def has_incompatible_imports(source: str) -> bool:
     """
     Check if source contains imports incompatible with CrossHair.
@@ -99,8 +98,7 @@ def has_incompatible_imports(source: str) -> bool:
     return False
 
 
-@pre(lambda source: isinstance(source, str))
-@post(lambda result: isinstance(result, set))
+@post(lambda result: all(lib in CROSSHAIR_INCOMPATIBLE_LIBS for lib in result))
 def get_incompatible_imports(source: str) -> set[str]:
     """
     Get the set of incompatible libraries imported in source.
@@ -126,8 +124,7 @@ def get_incompatible_imports(source: str) -> set[str]:
     return incompatible
 
 
-@pre(lambda source, has_contracts: isinstance(source, str) and isinstance(has_contracts, bool))
-@post(lambda result: isinstance(result, VerificationTool))
+@post(lambda result: result in VerificationTool)  # Returns valid enum member
 def select_verification_tool(source: str, has_contracts: bool) -> VerificationTool:
     """
     Select the appropriate verification tool for a source file.

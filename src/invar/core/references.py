@@ -17,8 +17,8 @@ from deal import post, pre
 from invar.core.models import FileInfo, PerceptionMap, SymbolKind, SymbolRefs
 
 
-@pre(lambda source, known_symbols: isinstance(source, str) and len(source) > 0)
-@post(lambda result: isinstance(result, list))
+@pre(lambda source, known_symbols: len(source) > 0 and len(known_symbols) > 0)  # Non-empty inputs
+@post(lambda result: all(isinstance(name, str) and line > 0 for name, line in result))  # Valid refs
 def find_references_in_source(source: str, known_symbols: set[str]) -> list[tuple[str, int]]:
     """
     Find references to known symbols in source code.
@@ -51,8 +51,7 @@ def find_references_in_source(source: str, known_symbols: set[str]) -> list[tupl
     return list(seen)
 
 
-@pre(lambda file_infos: isinstance(file_infos, list))
-@post(lambda result: isinstance(result, dict))
+@post(lambda result: all(isinstance(v, str) for v in result.values()))
 def build_symbol_table(file_infos: list[FileInfo]) -> dict[str, str]:
     """
     Build a mapping of symbol names to their defining file.
@@ -78,7 +77,7 @@ def build_symbol_table(file_infos: list[FileInfo]) -> dict[str, str]:
     return symbol_table
 
 
-@pre(lambda file_infos, sources: isinstance(file_infos, list))
+@post(lambda result: all("::" in k and v >= 0 for k, v in result.items()))  # Valid ref counts
 def count_cross_file_references(
     file_infos: list[FileInfo], sources: dict[str, str]
 ) -> dict[str, int]:

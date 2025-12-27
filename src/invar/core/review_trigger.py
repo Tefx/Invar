@@ -38,8 +38,7 @@ SECURITY_WORD_PATTERNS: tuple[str, ...] = (
 )
 
 
-@pre(lambda file_info: isinstance(file_info, FileInfo))
-@post(lambda result: isinstance(result, tuple) and len(result) == 3)
+@post(lambda result: len(result) == 3 and 0.0 <= result[0] <= 1.0)  # Ratio in [0, 1]
 def calculate_contract_ratio(file_info: FileInfo) -> tuple[float, int, int]:
     """
     Calculate contract coverage ratio for a file (DX-31).
@@ -88,7 +87,7 @@ def calculate_contract_ratio(file_info: FileInfo) -> tuple[float, int, int]:
     return (ratio, total, with_contracts)
 
 
-@pre(lambda file_info, config: isinstance(file_info, FileInfo))
+@post(lambda result: all(v.rule == "contract_quality_ratio" for v in result))
 def check_contract_quality_ratio(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
     """
     Check contract coverage ratio in Core files (DX-30).
@@ -141,8 +140,7 @@ def check_contract_quality_ratio(file_info: FileInfo, config: RuleConfig) -> lis
     return violations
 
 
-@pre(lambda path: isinstance(path, str))
-@post(lambda result: isinstance(result, bool))
+# @invar:allow missing_contract: Boolean predicate, accepts empty string (doctest shows)
 def is_security_sensitive(path: str) -> bool:
     """
     Check if path indicates security-sensitive code (DX-31).
@@ -200,7 +198,7 @@ def is_security_sensitive(path: str) -> bool:
     return any(word in SECURITY_WORD_PATTERNS for word in words)
 
 
-@pre(lambda file_info, config: isinstance(file_info, FileInfo))
+@post(lambda result: all(v.rule == "review_suggested" for v in result))
 def check_review_suggested(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
     """
     Suggest independent review when conditions warrant (DX-31).
@@ -298,11 +296,8 @@ def check_review_suggested(file_info: FileInfo, config: RuleConfig) -> list[Viol
     return violations
 
 
-@pre(lambda escapes: (
-    isinstance(escapes, list) and
-    all(isinstance(e, tuple) and len(e) == 3 and all(isinstance(s, str) for s in e) for e in escapes)
-))
-@post(lambda result: isinstance(result, list))
+@pre(lambda escapes: all(len(e) == 3 for e in escapes))  # Validate tuple structure
+@post(lambda result: all(v.rule == "duplicate_escape_reason" for v in result))
 def check_duplicate_escape_reasons(
     escapes: list[tuple[str, str, str]],
 ) -> list[Violation]:
