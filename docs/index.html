@@ -840,6 +840,9 @@
                     <div class="terminal-line"><span class="success">✓ CrossHair verified</span> <span class="output">(2 files)</span></div>
                     <div class="terminal-line"><span class="success">✓ Hypothesis property tests passed</span></div>
                     <div class="terminal-line"></div>
+                    <div class="terminal-line"><span class="prompt">$</span> <span class="command">invar guard --coverage</span>  <span class="output"># Branch coverage (doctest + hypothesis)</span></div>
+                    <div class="terminal-line"><span class="success">✓ Overall: 91% branch coverage</span></div>
+                    <div class="terminal-line"></div>
                     <div class="terminal-line"><span class="output"># Default runs full verification — no decisions needed</span></div>
                     <div class="terminal-line"><span class="output"># Incremental mode: only changed files (~5s first, ~2s cached)</span></div>
                 </div>
@@ -942,8 +945,8 @@
             <div class="mcp-tools">
                 <div class="mcp-tool">
                     <div class="mcp-tool-name">invar_guard</div>
-                    <div class="mcp-tool-desc">Smart Guard verification (static + doctests)</div>
-                    <div class="mcp-tool-replaces">Replaces: pytest, crosshair</div>
+                    <div class="mcp-tool-desc">Smart Guard verification (static + doctests + coverage)</div>
+                    <div class="mcp-tool-replaces">Replaces: pytest, crosshair, coverage</div>
                 </div>
                 <div class="mcp-tool">
                     <div class="mcp-tool-name">invar_sig</div>

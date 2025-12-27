@@ -87,6 +87,62 @@ def sqrt(x: float) -> float:
 
 **Total:** ~3-8s for full verification, ~0.5s for `--static`
 
+## Branch Coverage (DX-37)
+
+Optional branch coverage collection for doctest and hypothesis phases.
+
+### Usage
+
+```bash
+invar guard --coverage           # Full verification + coverage
+invar guard --coverage --changed # Coverage for changed files only
+```
+
+### What It Tracks
+
+| Phase | Coverage | Method |
+|-------|----------|--------|
+| Doctests | ✅ Yes | `coverage run` subprocess wrapper |
+| Hypothesis | ✅ Yes | coverage.py context manager |
+| CrossHair | ❌ No | Symbolic execution (Z3 solver) |
+
+**Note:** CrossHair uses symbolic execution in a subprocess, which coverage.py cannot track. This is a fundamental limitation, not a bug.
+
+### Output
+
+```
+Coverage Analysis (doctest + hypothesis):
+  src/core/parser.py: 94% branch (3 uncovered)
+    Line 127: else branch never taken
+  src/core/rules.py: 89% branch (5 uncovered)
+
+Overall: 91% branch coverage (doctest + hypothesis)
+
+Note: CrossHair uses symbolic execution; coverage not applicable.
+```
+
+### JSON Output (Agent Mode)
+
+```json
+{
+  "coverage": {
+    "enabled": true,
+    "phases_tracked": ["doctest", "hypothesis"],
+    "phases_excluded": ["crosshair"],
+    "overall_branch_coverage": 91.2,
+    "files": [...]
+  }
+}
+```
+
+### Requirements
+
+```bash
+pip install coverage[toml]>=7.0  # Or: pip install -e ".[dev]"
+```
+
+If coverage.py is not installed, guard gracefully degrades with a warning message.
+
 ## Incremental Mode
 
 CrossHair uses file hashing to skip unchanged files:

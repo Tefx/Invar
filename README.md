@@ -152,6 +152,7 @@ def load_config(path: Path) -> Result[Config, str]:
 invar guard              # Full verification (static + doctests + property tests)
 invar guard --changed    # Only git-modified files
 invar guard --static     # Static analysis only (~0.5s)
+invar guard --coverage   # Collect branch coverage (doctest + hypothesis)
 ```
 
 **Flags:**
@@ -161,6 +162,7 @@ invar guard --static     # Static analysis only (~0.5s)
 | `--strict` | Treat warnings as errors |
 | `--explain` | Show rule explanations |
 | `--agent` | JSON output for AI tools |
+| `--coverage` | Branch coverage from doctest + hypothesis phases |
 
 ### Other Commands
 

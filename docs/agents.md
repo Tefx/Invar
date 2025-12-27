@@ -357,6 +357,17 @@ uvx invar-tools init    # Auto-creates .mcp.json at project root
 | `invar_sig` | `Read` entire .py file | Show contracts and signatures only |
 | `invar_map` | `Grep` for "def " | Symbol map with reference counts |
 
+### invar_guard Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `path` | string | `"."` | Project path to verify |
+| `changed` | boolean | `true` | Only verify git-changed files |
+| `strict` | boolean | `false` | Treat warnings as errors |
+| `coverage` | boolean | `false` | Collect branch coverage (doctest + hypothesis) |
+
+**Coverage (DX-37):** When `coverage=true`, collects branch coverage from doctest and hypothesis phases. CrossHair is excluded (uses symbolic execution). Requires `coverage[toml]>=7.0`.
+
 ### Why MCP?
 
 **Without MCP:** Agent may use generic tools (pytest, Read) instead of Invar tools.
