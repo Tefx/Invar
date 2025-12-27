@@ -22,7 +22,6 @@ from invar.core.sync_helpers import (
     should_skip_file,
 )
 from invar.core.template_parser import (
-    detect_claude_md_state,
     format_preserved_content,
     parse_invar_regions,
     reconstruct_file,
@@ -282,20 +281,49 @@ def _merge_region_content(
     config: SyncConfig,
 ) -> str:
     """Merge existing content with new template based on DX-55 state."""
-    state = detect_claude_md_state(existing_content)
     updates: dict[str, str] = {}
 
-    if state.state == "intact":
-        # Just update managed region, preserve user
+    # Reset mode: discard all user content, use fresh template
+    if config.reset:
+        # Only inject project additions for CLAUDE.md if available
+        if dest_rel == "CLAUDE.md" and project_additions:
+            parsed = parse_invar_regions(new_content)
+            if "project" in parsed.regions:
+                return reconstruct_file(parsed, {"project": project_additions})
+        return new_content
+
+    # Generic region detection: check if primary region markers exist
+    # This works for any region scheme (managed/user, skill/extensions, etc.)
+    primary_open = f"<!--invar:{primary_region}"
+    primary_close = f"<!--/invar:{primary_region}-->"
+    user_open = f"<!--invar:{user_region}-->"
+    user_close = f"<!--/invar:{user_region}-->"
+
+    has_primary_open = primary_open in existing_content
+    has_primary_close = primary_close in existing_content
+    has_user_open = user_open in existing_content
+    has_user_close = user_close in existing_content
+
+    primary_complete = has_primary_open and has_primary_close
+    user_complete = has_user_open and has_user_close
+
+    # Determine state based on generic region presence
+    if primary_complete and user_complete:
+        # Intact: update primary region, preserve user region
         existing_parsed = parse_invar_regions(existing_content)
         updates[primary_region] = new_parsed.regions[primary_region].content
         if dest_rel == "CLAUDE.md" and project_additions and "project" in existing_parsed.regions:
             updates["project"] = project_additions
         return reconstruct_file(existing_parsed, updates)
 
-    elif state.state == "partial":
-        # Corruption: salvage user content
-        user_content = state.user_content or strip_invar_markers(existing_content)
+    elif has_primary_open or has_user_open:
+        # Partial: some markers present but incomplete - salvage user content
+        existing_parsed = parse_invar_regions(existing_content)
+        user_content = ""
+        if user_region in existing_parsed.regions:
+            user_content = existing_parsed.regions[user_region].content
+        if not user_content:
+            user_content = strip_invar_markers(existing_content)
         if user_content:
             user_content = format_preserved_content(user_content, date.today().isoformat())
         parsed = parse_invar_regions(new_content)
@@ -306,8 +334,8 @@ def _merge_region_content(
             return reconstruct_file(parsed, updates)
         return new_content
 
-    elif state.state == "missing":
-        # No Invar markers - preserve entire content as user content
+    else:
+        # Missing: no Invar markers - preserve entire content as user content
         preserved = format_preserved_content(existing_content, date.today().isoformat())
         parsed = parse_invar_regions(new_content)
         if user_region in parsed.regions:
@@ -316,8 +344,6 @@ def _merge_region_content(
                 updates["project"] = project_additions
             return reconstruct_file(parsed, updates)
         return new_content
-
-    return new_content
 
 
 # @shell_complexity: File creation with multiple template types

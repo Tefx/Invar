@@ -1,3 +1,19 @@
+<!--invar:critical-->
+## ⚡ Critical Rules
+
+| Always | Remember |
+|--------|----------|
+{% if syntax == "mcp" -%}
+| **Verify** | `invar_guard` — NOT pytest, NOT crosshair |
+{% else -%}
+| **Verify** | `invar guard` — NOT pytest, NOT crosshair |
+{% endif -%}
+| **Core** | `@pre/@post` + doctests, NO I/O imports |
+| **Shell** | Returns `Result[T, E]` from `returns` library |
+| **Flow** | Specify contracts → Build code → Validate |
+
+<!--/invar:critical-->
+
 <!--invar:managed version="{{ version }}"-->
 # Project Development Guide
 

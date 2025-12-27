@@ -55,16 +55,22 @@
 
 ## Documentation Structure
 
-| File | Owner | Edit? |
-|------|-------|-------|
-| INVAR.md | Invar | No — use `invar update` |
-| CLAUDE.md | User | Yes |
-| .invar/context.md | User | Yes (this file) |
-| .invar/examples/ | Invar | No |
+| File | Owner | Edit? | When to Read |
+|------|-------|-------|--------------|
+| INVAR.md | Invar | No — use `invar update` | Protocol details, Six Laws |
+| CLAUDE.md | User | Yes | Project rules |
+| .invar/context.md | User | Yes (this file) | Session start, refresh |
+| .invar/examples/ | Invar | No | Learning Core/Shell patterns |
+| .invar/archive/ | User | Yes | Historical session records |
 
 **Decision rule:** Is this Invar protocol or project-specific?
 - Protocol content → Already in INVAR.md, don't duplicate
 - Project-specific → Add to CLAUDE.md or here
+
+**When to consult INVAR.md:**
+- Unsure about Core/Shell separation rules
+- Need to understand Six Laws principles
+- Checking USBV workflow details
 
 ## Technical Debt
 

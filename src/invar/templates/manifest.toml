@@ -103,8 +103,8 @@ overwrite = ["INVAR.md", ".invar/examples/"]
 merge = ["CLAUDE.md", ".claude/skills/"]
 skip = [".invar/context.md"]
 
-[commands.sync_self]
-# For Invar project only
+[commands.dev_sync]
+# For Invar project only (invar dev sync)
 syntax = "mcp"
 inject_project_additions = true
 
