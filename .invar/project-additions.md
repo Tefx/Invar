@@ -4,7 +4,7 @@
 src/invar/
 ├── core/           # Pure logic, @pre/@post required, no I/O
 └── shell/          # I/O operations, Result[T, E] required
-    ├── commands/   # CLI commands (guard, init, sync-self)
+    ├── commands/   # CLI commands (guard, init, dev sync)
     └── prove/      # Verification (crosshair, hypothesis)
 ```
 

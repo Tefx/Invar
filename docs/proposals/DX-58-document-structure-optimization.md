@@ -266,7 +266,7 @@ This ensures consistency between:
 ### Phase 3: Template Sync Integration
 
 1. Update manifest.toml with new regions
-2. Ensure `invar sync-self` handles new structure
+2. Ensure `invar dev sync` handles new structure
 3. Test with existing Invar projects
 
 ## Template Changes

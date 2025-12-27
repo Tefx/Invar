@@ -8,13 +8,14 @@ This directory contains design proposals for Invar development.
 - `LX-XX-name.md` — Language eXtension (multi-language evolution)
 - Completed/archived proposals in `completed/` subdirectory
 
-## Active Proposals (5)
+## Active Proposals (4)
 
 ### DX Series (Developer Experience)
 
 | ID | Name | Status | Description |
 |----|------|--------|-------------|
-| DX-56 | template-sync-unification | Draft | Unify init/sync-self, manifest-driven, shared engine |
+| DX-57 | claude-code-hooks | Draft | Claude Code hooks for protocol enforcement |
+| DX-58 | document-structure-optimization | Draft | Critical section, context.md slimming |
 | DX-25 | functional-patterns | Defer | Functional patterns enhancement |
 | DX-29 | pure-content-detection | Defer | Pure content detection (`@invar:module` marker) |
 | DX-38 | contract-quality-rules | Partial | Tier 1-2 done, Tier 3-4 deferred |
@@ -27,10 +28,11 @@ This directory contains design proposals for Invar development.
 
 **LX Series Vision:** Evolve Invar from Python-specific tool to universal AI-assisted development protocol.
 
-## Archived Proposals (39)
+## Archived Proposals (40)
 
 | ID | Name | Status | Description |
 |----|------|--------|-------------|
+| DX-56 | template-sync-unification | ✅ Complete | Unify init/dev sync, manifest-driven, shared engine |
 | DX-55 | claude-init-conflict-resolution | ✅ Complete | Unified idempotent init with smart CLAUDE.md merge |
 | DX-54 | agent-native-context-management | ✅ Complete | Long conversation resilience + workflow refresh |
 | DX-53 | review-loop-effectiveness | ✅ Complete | Isolated reviewer + scope expansion per round |
@@ -191,8 +193,8 @@ Deferred: DX-38 Tier 3-4, DX-25, DX-29
   - Deleted sections/, merged into skills/
   - Jinja2 templates with MCP/CLI syntax switching
   - Three-region architecture (managed/project/user for CLAUDE.md, skill/extensions for skills)
-  - sync-self with project-additions.md injection
-  - Phase 8: Template system testing (init, sync-self, syntax switching)
+  - dev sync with project-additions.md injection
+  - Phase 8: Template system testing (init, dev sync, syntax switching)
   - Phase 9: Documentation deep review (INVAR.md, CLAUDE.md, Skills)
   - Phase 10: Final validation (guard pass, link check)
   - **Fixes applied:**
