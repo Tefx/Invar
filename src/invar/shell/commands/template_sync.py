@@ -312,6 +312,11 @@ def _merge_region_content(
         # Intact: update primary region, preserve user region
         existing_parsed = parse_invar_regions(existing_content)
         updates[primary_region] = new_parsed.regions[primary_region].content
+
+        # DX-58: Also update critical region if present (always overwrite from template)
+        if "critical" in new_parsed.regions and "critical" in existing_parsed.regions:
+            updates["critical"] = new_parsed.regions["critical"].content
+
         if dest_rel == "CLAUDE.md" and project_additions and "project" in existing_parsed.regions:
             updates["project"] = project_additions
         return reconstruct_file(existing_parsed, updates)
