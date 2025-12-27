@@ -1,13 +1,11 @@
-<!--invar:skill version="5.0"-->
-<!-- ========================================================================
-     SKILL REGION - DO NOT EDIT
-     This section is managed by Invar and will be overwritten on update.
-     To add project-specific extensions, use the "extensions" region below.
-     ======================================================================== -->
 ---
 name: propose
 description: Decision facilitation phase. Use when design decision is needed, multiple approaches are valid, or user asks "should we", "how should", "which", "compare", "design", "architect". Presents options with trade-offs for human choice.
+_invar:
+  version: "5.0"
+  managed: skill
 ---
+<!--invar:skill-->
 
 # Proposal Mode
 
@@ -88,7 +86,8 @@ Create `docs/proposals/DX-XX-[topic].md`:
 | Chooses option | /develop to implement |
 | Needs more info | /investigate for analysis |
 | Approves proposal | Document created |
-<!--/invar:skill--><!--invar:extensions-->
+<!--/invar:skill-->
+<!--invar:extensions-->
 <!-- ========================================================================
      EXTENSIONS REGION - USER EDITABLE
      Add project-specific extensions here. This section is preserved on update.

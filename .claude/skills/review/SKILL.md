@@ -1,13 +1,11 @@
-<!--invar:skill version="5.0"-->
-<!-- ========================================================================
-     SKILL REGION - DO NOT EDIT
-     This section is managed by Invar and will be overwritten on update.
-     To add project-specific extensions, use the "extensions" region below.
-     ======================================================================== -->
 ---
 name: review
 description: Adversarial code review with fix loop. Use after development, when Guard reports review_suggested, or user explicitly requests review. Finds issues that automated verification misses. Supports isolated mode (sub-agent) and quick mode (same context).
+_invar:
+  version: "5.0"
+  managed: skill
 ---
+<!--invar:skill-->
 
 # Review Mode
 
@@ -109,7 +107,8 @@ Convergence check:
 - [ ] Ready for merge
 - [ ] Needs more work: [issues]
 ```
-<!--/invar:skill--><!--invar:extensions-->
+<!--/invar:skill-->
+<!--invar:extensions-->
 <!-- ========================================================================
      EXTENSIONS REGION - USER EDITABLE
      Add project-specific extensions here. This section is preserved on update.

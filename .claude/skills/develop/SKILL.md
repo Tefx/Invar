@@ -1,13 +1,11 @@
-<!--invar:skill version="5.0"-->
-<!-- ========================================================================
-     SKILL REGION - DO NOT EDIT
-     This section is managed by Invar and will be overwritten on update.
-     To add project-specific extensions, use the "extensions" region below.
-     ======================================================================== -->
 ---
 name: develop
 description: Implementation phase following USBV workflow. Use when task is clear and actionable - "add", "implement", "create", "fix", "update", "build", "write". Requires Check-In at start and Final at end.
+_invar:
+  version: "5.0"
+  managed: skill
 ---
+<!--invar:skill-->
 
 # Development Mode
 
@@ -275,7 +273,8 @@ Agent:
 
 ✓ Final: guard PASS | 0 errors, 1 warning
 ```
-<!--/invar:skill--><!--invar:extensions-->
+<!--/invar:skill-->
+<!--invar:extensions-->
 <!-- ========================================================================
      EXTENSIONS REGION - USER EDITABLE
      Add project-specific extensions here. This section is preserved on update.
@@ -286,28 +285,4 @@ Agent:
      - Additional tool integrations
      - Team-specific workflows
      ======================================================================== -->
-<!--/invar:extensions-->
-
-
-<!-- ======================================== -->
-<!-- END MERGED CONTENT -->
-<!-- ======================================== -->
-<!--/invar:extensions-->
-
-
-<!-- ======================================== -->
-<!-- END MERGED CONTENT -->
-<!-- ======================================== -->
-<!--/invar:extensions-->
-
-
-<!-- ======================================== -->
-<!-- END MERGED CONTENT -->
-<!-- ======================================== -->
-<!--/invar:extensions-->
-
-
-<!-- ======================================== -->
-<!-- END MERGED CONTENT -->
-<!-- ======================================== -->
 <!--/invar:extensions-->

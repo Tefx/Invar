@@ -1,13 +1,11 @@
-<!--invar:skill version="5.0"-->
-<!-- ========================================================================
-     SKILL REGION - DO NOT EDIT
-     This section is managed by Invar and will be overwritten on update.
-     To add project-specific extensions, use the "extensions" region below.
-     ======================================================================== -->
 ---
 name: investigate
 description: Exploration and understanding phase. Use when task is vague, needs analysis, or requires understanding before action. Triggers on "why", "what is", "how does", "explain", "understand", "analyze", "investigate", "explore". NO CODE CHANGES in this phase.
+_invar:
+  version: "5.0"
+  managed: skill
 ---
+<!--invar:skill-->
 
 # Investigation Mode
 
@@ -77,7 +75,8 @@ Before any workflow action:
 
 **Next step?**
 ```
-<!--/invar:skill--><!--invar:extensions-->
+<!--/invar:skill-->
+<!--invar:extensions-->
 <!-- ========================================================================
      EXTENSIONS REGION - USER EDITABLE
      Add project-specific extensions here. This section is preserved on update.
@@ -88,28 +87,4 @@ Before any workflow action:
      - Domain-specific research sources
      - Team documentation references
      ======================================================================== -->
-<!--/invar:extensions-->
-
-
-<!-- ======================================== -->
-<!-- END MERGED CONTENT -->
-<!-- ======================================== -->
-<!--/invar:extensions-->
-
-
-<!-- ======================================== -->
-<!-- END MERGED CONTENT -->
-<!-- ======================================== -->
-<!--/invar:extensions-->
-
-
-<!-- ======================================== -->
-<!-- END MERGED CONTENT -->
-<!-- ======================================== -->
-<!--/invar:extensions-->
-
-
-<!-- ======================================== -->
-<!-- END MERGED CONTENT -->
-<!-- ======================================== -->
 <!--/invar:extensions-->
