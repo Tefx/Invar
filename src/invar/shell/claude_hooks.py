@@ -312,7 +312,7 @@ def disable_claude_hooks(
     disabled_marker.touch()
 
     console.print("[yellow]✓ Invar hooks disabled[/yellow]")
-    console.print("[dim]Remove .claude/hooks/.invar_disabled to re-enable[/dim]")
+    console.print(f"[dim]Remove {HOOKS_SUBDIR}/{DISABLED_MARKER} to re-enable[/dim]")
     return Success(None)
 
 

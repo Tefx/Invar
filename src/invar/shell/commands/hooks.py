@@ -9,6 +9,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import typer
+from returns.result import Failure
 from rich.console import Console
 
 from invar.shell.claude_hooks import (
@@ -21,6 +22,12 @@ from invar.shell.claude_hooks import (
 )
 
 console = Console()
+
+
+def _handle_result(result: Failure | object) -> None:
+    """Print error message if result is Failure."""
+    if isinstance(result, Failure):
+        console.print(f"[red]Error:[/red] {result.failure()}")
 
 app = typer.Typer(help="Manage Claude Code hooks")
 
@@ -53,15 +60,15 @@ def hooks(
     path = path.resolve()
 
     if remove:
-        remove_claude_hooks(path, console)
+        _handle_result(remove_claude_hooks(path, console))
     elif disable:
-        disable_claude_hooks(path, console)
+        _handle_result(disable_claude_hooks(path, console))
     elif enable:
-        enable_claude_hooks(path, console)
+        _handle_result(enable_claude_hooks(path, console))
     elif install:
-        install_claude_hooks(path, console)
+        _handle_result(install_claude_hooks(path, console))
     elif sync:
-        sync_claude_hooks(path, console)
+        _handle_result(sync_claude_hooks(path, console))
     else:
         # Default: show status
-        hooks_status(path, console)
+        _handle_result(hooks_status(path, console))

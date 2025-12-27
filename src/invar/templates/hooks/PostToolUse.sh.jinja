@@ -17,13 +17,25 @@ LAST_GUARD="$STATE_DIR/last_guard"
 LAST_CHECK_MARKER="$STATE_DIR/last_check"
 
 # ============================================
-# Reset state on guard run
+# Reset state on guard run (MCP or CLI)
 # ============================================
+# MCP: invar_guard tool call
 if [[ "$TOOL_NAME" == "mcp__invar__invar_guard" ]]; then
   date +%s > "$LAST_GUARD"
   rm -f "$CHANGES_FILE"
   touch "$LAST_CHECK_MARKER"
   exit 0
+fi
+
+# CLI: Bash command containing "invar guard"
+if [[ "$TOOL_NAME" == "Bash" ]]; then
+  TOOL_INPUT="$2"
+  if echo "$TOOL_INPUT" | grep -qE '"command"[^}]*invar\s+guard'; then
+    date +%s > "$LAST_GUARD"
+    rm -f "$CHANGES_FILE"
+    touch "$LAST_CHECK_MARKER"
+    exit 0
+  fi
 fi
 
 # ============================================
@@ -71,7 +83,7 @@ if [[ $CHANGE_COUNT -ge 3 ]]; then
 fi
 
 # Trigger 2: Core file changed (high priority)
-if grep -qE "core/|contracts" "$CHANGES_FILE" 2>/dev/null; then
+if grep -qE "/core/|/contracts/" "$CHANGES_FILE" 2>/dev/null; then
   SHOULD_REMIND=true
   REASON="core/ files modified"
 fi
