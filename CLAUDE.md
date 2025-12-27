@@ -206,7 +206,7 @@ src/invar/
 ## Project Rules
 
 1. **Language:** English for docs/code. User's language for conversation.
-2. **Verify Always:** Run `invar guard` after changes.
+2. **Verify Always:** Run `invar_guard()` after changes.
 3. **Warning Policy:** Fix warnings in files you modify.
 
 ---

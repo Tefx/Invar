@@ -357,9 +357,8 @@ fi
 # NOTE: Inject rules directly, don't tell agent to read files (saves tokens)
 # Content aligns with DX-58 CLAUDE.md critical section
 if [[ $COUNT -ge 25 && $((COUNT % 10)) -eq 0 ]]; then
-  # Syntax-aware: detect MCP vs CLI from project config
-  if grep -q 'syntax.*=.*"mcp"' .invar/config.toml 2>/dev/null || \
-     grep -q '"invar"' .mcp.json 2>/dev/null; then
+  # Syntax-aware: detect MCP vs CLI from .mcp.json presence
+  if grep -q '"invar"' .mcp.json 2>/dev/null; then
     GUARD_CMD="invar_guard"
   else
     GUARD_CMD="invar guard"
@@ -379,10 +378,10 @@ fi
 
 | Approach | Tokens | Rationale |
 |----------|--------|-----------|
-| "Re-read context.md" | ~500+ | Agent reads ~150 lines (DX-58 slimmed) |
+| "Re-read context.md" | ~300+ | Agent reads ~100 lines (DX-58 slimmed) |
 | Direct injection | ~80 | Critical rules only |
 
-Hook injects rules directly to minimize token overhead. Injection content aligns with DX-58's CLAUDE.md critical section for consistency. Syntax detection ensures CLI projects see `invar guard` while MCP projects see `invar_guard`.
+Hook injects rules directly to minimize token overhead. Injection content aligns with DX-58's CLAUDE.md critical section for consistency. Syntax detection via `.mcp.json` ensures CLI projects see `invar guard` while MCP projects see `invar_guard`.
 
 ### 4. Stop Hook (Phase 2 - Lower Priority)
 
