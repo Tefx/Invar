@@ -40,15 +40,13 @@ WARNING: review_suggested - Security-sensitive path detected
 WARNING: review_suggested - Low contract coverage
 ```
 
-### Select Mode (DX-53)
+### Select Mode
 
-| Condition | Mode | Reason |
-|-----------|------|--------|
-| Default | **Isolated** | Eliminates confirmation bias |
-| `--quick` flag | **Quick** | User opts for speed |
-| Trivial change (<10 lines) | **Quick** | Overhead not justified |
-
-**Why Isolated is Default:** The cost of false negatives (missed bugs) exceeds the cost of sub-agent spawn.
+| Condition | Mode |
+|-----------|------|
+| `review_suggested` present | **Isolated** (spawn sub-agent) |
+| `--isolated` flag | **Isolated** |
+| Default (no trigger) | **Quick** (same context) |
 
 ## Review Checklist
 
@@ -70,69 +68,20 @@ WARNING: review_suggested - Low contract coverage
 - [ ] Input validation against injection, XSS?
 - [ ] No hardcoded secrets?
 
-## Review-Fix Loop (DX-53)
-
-### Three-Phase Review Per Round
-
-Each round has THREE phases, not one:
+## Review-Fix Loop
 
 ```
-Round N:
-├── Phase A: Regression Check (15% effort)
-│   └── Verify previous fixes didn't break anything
-│
-├── Phase B: Fix Validation (25% effort)
-│   └── Confirm fixes actually address the issues
-│
-└── Phase C: Expansion Search (60% effort)  ← PRIMARY
-    └── Actively hunt for NEW issues in:
-        - Modified code
-        - Code adjacent to modifications
-        - Integration points
+Round 1: Review → Find issues
+    ↓
+Fix CRITICAL + MAJOR (MINOR → backlog)
+    ↓
+Round 2: Re-review (if needed)
+    ↓
+Convergence check:
+- No CRITICAL/MAJOR → Exit ✓
+- No improvement → Exit (warn)
+- Round >= 3 → Exit (max)
 ```
-
-### Scope Expansion Across Rounds
-
-```
-Round 1: Changed files only
-         └── Focus: Direct modifications
-
-Round 2: Changed files + Direct dependents
-         └── Focus: How changes affect callers
-
-Round 3: Integration boundaries
-         └── Focus: System-level implications
-```
-
-### Convergence Logic
-
-```
-Round 1:
-    │
-    ├── Spawn Isolated Reviewer (sub-agent)
-    │   └── Prompt: "Find ALL issues. Success = problems found."
-    │
-    ├── Reviewer returns issues + confidence level
-    │
-    ├── Exit check:
-    │   ├── NO MAJOR + HIGH confidence → Exit ✓
-    │   ├── NO MAJOR + MEDIUM/LOW confidence → Continue (expand scope)
-    │   └── MAJOR found → Fix, continue
-    │
-Round 2+:
-    │
-    ├── Spawn NEW Isolated Reviewer (fresh context!)
-    │
-    ├── Convergence check:
-    │   ├── No MAJOR + HIGH confidence → Exit ✓
-    │   ├── No MAJOR + MEDIUM/LOW → Continue (last round if Round 2)
-    │   ├── Round >= 3 → Exit (max)
-    │   └── Continue if needed
-```
-
-**Exit Criteria:** `no_major AND confidence == HIGH`
-
-**Note:** MEDIUM confidence is treated as LOW - requires another round to confirm exhaustive review.
 
 ## Severity Definitions
 
@@ -149,20 +98,12 @@ Round 2+:
 
 **Rounds:** [N]
 **Exit reason:** quality_met | max_rounds | no_improvement
-**Final confidence:** HIGH | MEDIUM | LOW
 
 **Fixed:**
 - [list of fixed issues]
 
 **Remaining (MINOR - backlog):**
 - [list for later]
-
-### Exhaustive Review Declaration
-
-- [ ] Reviewed ALL code in scope, not just diffs
-- [ ] Checked how changes interact with unchanged code
-- [ ] Attempted to find edge cases and boundary conditions
-- [ ] Looked for issues UNRELATED to previous findings
 
 **Recommendation:**
 - [ ] Ready for merge

@@ -17,7 +17,7 @@ Actions:
 
 Example:
 ```
-✓ Check-In: Invar | main | clean
+✓ Check-In: MyProject | main | clean
 ```
 
 **Do NOT execute guard or map at Check-In.**
@@ -102,6 +102,19 @@ Phase headers are SEPARATE from TodoWrite. Phase = where you are; TodoWrite = wh
 
 ---
 
+## Context Management (DX-54)
+
+Re-read `.invar/context.md` when:
+1. Entering any workflow (/develop, /review, etc.)
+2. Completing a TodoWrite task (before moving to next)
+3. Conversation exceeds ~15-20 exchanges
+4. Unsure about project rules or patterns
+
+**Refresh is transparent** — do not announce "I'm refreshing context."
+Only show routing announcements when entering workflows.
+
+---
+
 ## Commands (User-Invokable)
 
 | Command | Purpose |
@@ -167,19 +180,6 @@ Agent announces routing decision before entering any workflow:
 
 **Auto-review (DX-41):** When Guard outputs `review_suggested`, agent automatically
 enters /review. Say "skip" to bypass.
-
----
-
-## Context Management (DX-54)
-
-Re-read `.invar/context.md` when:
-1. Entering any workflow (/develop, /review, etc.)
-2. Completing a TodoWrite task (before moving to next)
-3. Conversation exceeds ~15-20 exchanges
-4. Unsure about project rules or patterns
-
-**Refresh is transparent** — do not announce "I'm refreshing context."
-Only show routing announcements when entering workflows.
 <!--/invar:managed--><!--invar:project-->
 ## Invar Project Structure
 
