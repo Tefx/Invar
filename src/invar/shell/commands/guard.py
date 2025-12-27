@@ -437,6 +437,7 @@ def rules(
 
 
 # DX-48b: Import commands from shell/commands/
+from invar.shell.commands.hooks import app as hooks_app  # DX-57
 from invar.shell.commands.init import init
 from invar.shell.commands.mutate import mutate  # DX-28
 from invar.shell.commands.sync_self import sync_self  # DX-49
@@ -448,6 +449,7 @@ app.command()(update)
 app.command()(test)
 app.command()(verify)
 app.command()(mutate)  # DX-28: Mutation testing
+app.add_typer(hooks_app, name="hooks")  # DX-57: Claude Code hooks management
 
 # DX-56: Create dev subcommand group for developer commands
 dev_app = typer.Typer(

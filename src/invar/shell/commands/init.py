@@ -5,6 +5,7 @@ Shell module: handles project initialization.
 DX-21B: Added --claude flag for Claude Code integration.
 DX-55: Unified idempotent init command with smart merge.
 DX-56: Uses unified template sync engine for file generation.
+DX-57: Added Claude Code hooks installation.
 """
 
 from __future__ import annotations
@@ -19,6 +20,10 @@ from rich.console import Console
 
 from invar.core.sync_helpers import SyncConfig
 from invar.core.template_parser import ClaudeMdState
+from invar.shell.claude_hooks import (
+    install_claude_hooks,
+    sync_claude_hooks,
+)
 from invar.shell.commands.merge import (
     ProjectState,
     detect_project_state,
@@ -201,6 +206,10 @@ def init(
     hooks: bool = typer.Option(
         True, "--hooks/--no-hooks", help="Install pre-commit hooks (default: ON)"
     ),
+    claude_hooks: bool = typer.Option(
+        None, "--claude-hooks/--no-claude-hooks",
+        help="Install Claude Code hooks (default: ON when --claude, DX-57)"
+    ),
     skills: bool = typer.Option(
         True, "--skills/--no-skills", help="Create .claude/skills/ (default: ON, use --no-skills for Cursor)"
     ),
@@ -241,6 +250,7 @@ def init(
     Use --mcp-method to specify MCP execution method (uvx, command, python).
     Use --dirs to always create directories, --no-dirs to skip.
     Use --no-hooks to skip pre-commit hooks installation.
+    Use --no-claude-hooks to skip Claude Code hooks (DX-57).
     Use --no-skills to skip .claude/skills/ creation (for Cursor users).
     Use --yes to accept defaults without prompting.
     """
@@ -406,6 +416,24 @@ def init(
     if hooks:
         install_hooks(path, console)
 
+    # DX-57: Handle Claude Code hooks
+    # Determine if we should install/update Claude hooks
+    should_install_claude_hooks = (
+        claude_hooks is True  # Explicitly requested
+        or (claude_hooks is None and claude)  # Default ON when --claude
+    )
+    should_skip_claude_hooks = claude_hooks is False
+
+    if should_install_claude_hooks and not should_skip_claude_hooks:
+        # Install Claude hooks
+        install_claude_hooks(path, console)
+    elif not should_skip_claude_hooks:
+        # Check if hooks already installed and need sync
+        claude_hooks_dir = path / ".claude" / "hooks"
+        if (claude_hooks_dir / "invar.UserPromptSubmit.sh").exists():
+            # Sync existing hooks (idempotent update)
+            sync_claude_hooks(path, console)
+
     if not config_added and not (path / "INVAR.md").exists():
         console.print("[yellow]Invar already configured.[/yellow]")
 
@@ -446,11 +474,13 @@ def _show_check_preview(state: ProjectState, path: Path, version: str) -> None:
             console.print("  - CLAUDE.md")
             console.print("  - .invar/context.md")
             console.print("  - .claude/skills/")
+            console.print("  - .claude/hooks/ (DX-57, with --claude)")
             console.print("  - .pre-commit-config.yaml")
         case "update":
             console.print("Would update:")
             console.print(f"  - CLAUDE.md (managed section v{state.version} → v{version})")
             console.print("  - .claude/skills/* (refresh)")
+            console.print("  - .claude/hooks/* (refresh, if installed)")
         case "recover":
             console.print("[yellow]Would recover:[/yellow]")
             console.print("  - CLAUDE.md (restore regions, preserve content)")

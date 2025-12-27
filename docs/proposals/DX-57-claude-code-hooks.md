@@ -4,7 +4,7 @@
 **Created:** 2025-12-27
 **Updated:** 2025-12-28
 **Dependencies:** DX-54 (Context Management), DX-42 (Workflow Routing), DX-58 (Document Structure)
-**Related:** DX-58 critical section provides content template for hook injection
+**Related:** DX-60 (Structured Rules SSOT) will optimize token usage post-implementation
 
 ## Problem Statement
 
@@ -91,8 +91,8 @@ Agent modifies Python files but forgets to run `invar_guard` before claiming "do
 │  Layer 3: Protocol Refresh (UserPromptSubmit)                │
 │  ├─ Progressive injection based on message count             │
 │  ├─ Keyword-triggered reminders                              │
-│  ├─ Refresh target: .invar/context.md (not INVAR.md)         │
-│  └─ Stability: ⭐⭐⭐⭐⭐ (self-contained logic)                  │
+│  ├─ Full INVAR.md injection (~1,800t) for true SSOT          │
+│  └─ Stability: ⭐⭐⭐⭐⭐ (content always matches protocol)        │
 │                                                              │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -306,7 +306,7 @@ fi
 | core/ detection | ✅ Works | ✅ Works |
 | Error introduced | None | None (graceful degradation) |
 
-### 3. UserPromptSubmit: Protocol Refresh
+### 3. UserPromptSubmit: Protocol Refresh (Full INVAR.md Injection)
 
 ```bash
 #!/bin/bash
@@ -353,35 +353,56 @@ if [[ $COUNT -eq 15 ]]; then
   echo "</system-reminder>"
 fi
 
-# Message 25+: Periodic refresh every 10 messages
-# NOTE: Inject rules directly, don't tell agent to read files (saves tokens)
-# Content aligns with DX-58 CLAUDE.md critical section
+# Message 25+: Full INVAR.md injection every 10 messages
+# SSOT: Inject entire protocol to ensure no content drift
+# DX-60 will optimize this to ~600 tokens while maintaining SSOT
 if [[ $COUNT -ge 25 && $((COUNT % 10)) -eq 0 ]]; then
-  # Syntax-aware: detect MCP vs CLI from .mcp.json presence
-  if grep -q '"invar"' .mcp.json 2>/dev/null; then
-    GUARD_CMD="invar_guard"
-  else
-    GUARD_CMD="invar guard"
-  fi
-
   echo "<system-reminder>"
-  echo "Session refresh ($COUNT messages):"
-  echo "• Verify: $GUARD_CMD — NOT pytest, NOT crosshair"
-  echo "• Core: @pre/@post + doctests, NO I/O imports"
-  echo "• Shell: Returns Result[T, E] from returns library"
-  echo "• Flow: USBV: Understand → Specify → Build → Validate"
+  echo "=== Protocol Refresh (message $COUNT) ==="
+  echo ""
+  # Inject full INVAR.md content (generated at install time)
+  # The INVAR_PROTOCOL variable is populated during hook generation
+  echo "$INVAR_PROTOCOL"
   echo "</system-reminder>"
 fi
 ```
 
-**Design Decision: Direct Injection vs File Reading**
+**Hook Generation (during `invar init --claude`):**
 
-| Approach | Tokens | Rationale |
-|----------|--------|-----------|
-| "Re-read context.md" | ~300+ | Agent reads ~100 lines (DX-58 slimmed) |
-| Direct injection | ~80 | Critical rules only |
+```python
+# src/invar/shell/commands/init.py
 
-Hook injects rules directly to minimize token overhead. Injection content aligns with DX-58's CLAUDE.md critical section for consistency. Syntax detection via `.mcp.json` ensures CLI projects see `invar guard` while MCP projects see `invar_guard`.
+def generate_user_prompt_submit_hook(project_path: Path) -> str:
+    """Generate UserPromptSubmit hook with embedded INVAR.md content."""
+
+    # Read INVAR.md from installed location
+    invar_md = (project_path / "INVAR.md").read_text()
+
+    # Escape for bash heredoc
+    invar_escaped = invar_md.replace("'", "'\"'\"'")
+
+    # Generate hook with embedded content
+    hook_template = HOOK_TEMPLATE.replace(
+        'echo "$INVAR_PROTOCOL"',
+        f"cat << 'INVAR_EOF'\n{invar_md}\nINVAR_EOF"
+    )
+
+    return hook_template
+```
+
+**Design Decision: Full INVAR.md Injection**
+
+| Approach | Tokens | SSOT | Maintenance |
+|----------|--------|------|-------------|
+| Curated subset (~80t) | ~80 | ❌ Drift risk | High |
+| Curated subset (~600t) | ~600 | ❌ Drift risk | Medium |
+| **Full INVAR.md** | **~1,800** | **✅ True SSOT** | **Zero** |
+
+**Rationale:**
+- True SSOT: Injection content IS the protocol, no separate maintenance
+- Zero drift risk: Content always matches INVAR.md
+- Trade-off accepted: Higher token cost (~1,800 vs ~80-600) for correctness
+- Future optimization: DX-60 will reduce to ~600t via structured generation while maintaining SSOT
 
 ### 4. Stop Hook (Phase 2 - Lower Priority)
 
@@ -493,10 +514,32 @@ EOF
 2. If user hook exits non-zero, stop (user can override Invar)
 3. Then Invar hook runs
 
-### Default Installation Behavior
+### Installation via `invar init`
+
+**New flags for DX-57:**
+
+| Flag | Effect |
+|------|--------|
+| `--claude-hooks` | Install Claude Code hooks (default when `--claude`) |
+| `--no-claude-hooks` | Skip Claude Code hooks installation |
+
+**Note:** `--hooks`/`--no-hooks` refers to git pre-commit hooks (existing). `--claude-hooks`/`--no-claude-hooks` is for Claude Code hooks (DX-57).
 
 ```bash
-# invar init --claude
+# Full Claude Code integration with hooks
+invar init --claude
+
+# Claude Code without hooks
+invar init --claude --no-claude-hooks
+
+# Update existing project (hooks auto-updated if present)
+invar init
+```
+
+**Installation output:**
+
+```bash
+# When --claude or --claude-hooks
 
 echo "Claude Code Hooks Installation"
 echo "==============================="
@@ -504,7 +547,7 @@ echo ""
 echo "Hooks will:"
 echo "  ✓ Block pytest/crosshair → redirect to invar_guard"
 echo "  ✓ Remind to verify after code changes"
-echo "  ✓ Refresh protocol in long conversations"
+echo "  ✓ Refresh protocol in long conversations (~1,800 tokens)"
 echo ""
 echo "Auto-escape (no blocking):"
 echo "  • pytest --pdb (debugging)"
@@ -514,15 +557,106 @@ echo ""
 echo "Manual escape: INVAR_ALLOW_PYTEST=1"
 echo ""
 
-if [[ "$INVAR_NO_HOOKS" == "1" ]] || [[ "$1" == "--no-hooks" ]]; then
-  echo "Skipping hook installation (--no-hooks)"
-else
-  # Default: Install hooks
-  install_hooks "PreToolUse"
-  install_hooks "PostToolUse"
-  install_hooks "UserPromptSubmit"
-  echo "✓ Hooks installed"
-fi
+install_hooks "PreToolUse"
+install_hooks "PostToolUse"
+install_hooks "UserPromptSubmit"
+echo "✓ Claude Code hooks installed"
+```
+
+### Hook Update via `invar init` (Idempotent)
+
+**Critical:** Hooks embed INVAR.md content, so they must be regenerated when protocol updates.
+
+**Key insight:** `invar init` is idempotent (DX-55) - running it again updates managed content while preserving user customizations. Hooks follow the same pattern.
+
+```python
+# src/invar/shell/commands/init.py (extended)
+
+def sync_claude_hooks(project_path: Path, invar_md: str) -> Result[None, str]:
+    """Regenerate Claude Code hooks with current INVAR.md content."""
+
+    hooks_dir = project_path / ".claude" / "hooks"
+    if not hooks_dir.exists():
+        return Success(None)  # No hooks installed
+
+    # Check if Invar hooks are installed
+    invar_hook = hooks_dir / "invar.UserPromptSubmit.sh"
+    if not invar_hook.exists():
+        return Success(None)  # User chose --no-claude-hooks
+
+    # Check version in existing hook
+    old_content = invar_hook.read_text()
+    old_version = extract_version(old_content)  # e.g., "5.0"
+    new_version = PROTOCOL_VERSION
+
+    if old_version != new_version:
+        print(f"Updating Claude hooks: v{old_version} → v{new_version}")
+
+    # Regenerate all Invar hooks
+    for hook_type in ["PreToolUse", "PostToolUse", "UserPromptSubmit"]:
+        regenerate_hook(hooks_dir, hook_type, invar_md)
+
+    return Success(None)
+```
+
+**Integration with `invar init`:**
+
+```python
+# In init() command, after sync_templates()
+
+def init(...):
+    # ... existing template sync (INVAR.md, CLAUDE.md, etc.) ...
+
+    # DX-57: Update Claude Code hooks if installed
+    if (project_path / ".claude" / "hooks" / "invar.UserPromptSubmit.sh").exists():
+        invar_md = (project_path / "INVAR.md").read_text()
+        sync_claude_hooks(project_path, invar_md)
+```
+
+**Version tracking in hooks:**
+
+```bash
+#!/bin/bash
+# .claude/hooks/invar.UserPromptSubmit.sh
+# Protocol: v5.0 | Generated: 2025-12-28
+
+# ... hook content ...
+```
+
+**Update Flow:**
+
+```
+pip install -U invar-tools  (升级工具)
+    ↓
+invar init  (重新初始化，幂等)
+    ↓
+┌─────────────────────────────────────┐
+│ init()                               │
+│ ├── sync_templates()                 │
+│ │   ├── INVAR.md 更新 ✓              │
+│ │   ├── CLAUDE.md 更新 ✓             │
+│ │   └── context.md 更新 ✓            │
+│ └── sync_claude_hooks() ← NEW        │
+│     ├── 检测版本变化                  │
+│     ├── 重新嵌入 INVAR.md 内容        │
+│     └── 保留用户 wrapper hook         │
+└─────────────────────────────────────┘
+```
+
+**User Hook Preservation:**
+
+```python
+def regenerate_hook(hooks_dir: Path, hook_type: str, invar_md: str):
+    """Regenerate Invar hook while preserving user customizations."""
+
+    invar_hook = hooks_dir / f"invar.{hook_type}.sh"
+
+    # Only regenerate invar.*.sh, never touch user's wrapper
+    new_content = generate_hook_content(hook_type, invar_md)
+    invar_hook.write_text(new_content)
+
+    # Wrapper {hook_type}.sh (if exists) still sources invar.*.sh
+    # User customizations in wrapper are preserved
 ```
 
 ### Uninstall Mechanism
@@ -568,10 +702,11 @@ enable_hooks() {
 
 | Command | Effect |
 |---------|--------|
-| `invar hooks --remove` | Permanently remove Invar hooks |
+| `invar hooks --remove` | Permanently remove Claude Code hooks |
 | `invar hooks --disable` | Temporarily disable (create .invar_disabled) |
 | `invar hooks --enable` | Re-enable disabled hooks |
-| `invar init --claude --no-hooks` | Install without hooks |
+| `invar init --claude --no-claude-hooks` | Install without Claude Code hooks |
+| `invar init` | Update project (auto-updates hooks if present) |
 
 ## Implementation Plan
 
@@ -580,9 +715,10 @@ enable_hooks() {
 1. Create hook scripts in `src/invar/templates/hooks/`
 2. Implement smart escape logic in PreToolUse
 3. Implement git + fallback detection in PostToolUse
-4. Implement progressive refresh in UserPromptSubmit
-5. Add hook merge logic to `invar init --claude`
+4. Implement progressive refresh in UserPromptSubmit (embed full INVAR.md)
+5. Add hook installation to `invar init --claude` (new `--claude-hooks` flag)
 6. Add `invar hooks` subcommand for management
+7. **Integrate hook update into `invar init` (idempotent, DX-55 pattern)**
 
 ### Phase 2: Refinement
 
@@ -605,7 +741,7 @@ enable_hooks() {
 | Tool compliance (invar_guard vs pytest) | ~50% | >90% |
 | Workflow compliance (USBV) | ~40% | >80% |
 | Protocol retention in long sessions | ~30% | >70% |
-| Token overhead per session | N/A | <500 |
+| Token overhead per 50-msg session | N/A | ~5,700 (DX-60: ~2,000) |
 | User hook compatibility | N/A | 100% |
 
 ## Risks and Mitigations
@@ -621,23 +757,46 @@ enable_hooks() {
 
 ## Appendix: Token Overhead Analysis
 
+### Current Design (Full INVAR.md Injection)
+
 | Messages | Injections | Estimated Tokens |
 |----------|------------|------------------|
 | 1-5 | 0 | 0 |
 | 6-14 | ~2 keyword triggers | ~40 |
 | 15 | 1 checkpoint | ~30 |
 | 16-24 | ~2 keyword triggers | ~40 |
-| 25 | 1 refresh | ~50 |
+| 25 | 1 full INVAR.md | ~1,800 |
 | 26-34 | ~2 keyword triggers | ~40 |
-| 35 | 1 refresh | ~50 |
-| **Total (35 msgs)** | | **~250 tokens** |
+| 35 | 1 full INVAR.md | ~1,800 |
+| **Total (35 msgs)** | | **~3,750 tokens** |
 
-Compared to ~1500 tokens if injecting full protocol every 10 messages.
+### Token Trade-off Analysis
+
+| Metric | Curated (~80t) | Full INVAR.md (~1,800t) |
+|--------|----------------|-------------------------|
+| SSOT | ❌ Separate file | ✅ True SSOT |
+| Maintenance | Manual sync | Zero |
+| Drift risk | High | None |
+| 50-msg session cost | ~250 tokens | ~5,700 tokens |
+| Coverage | ~40% rules | 100% rules |
+| Compliance improvement | +20-30% | +45-55% |
+
+**Decision:** Accept higher token cost for true SSOT and zero maintenance. DX-60 will reduce to ~600t while maintaining SSOT through structured generation.
+
+### Future Optimization (DX-60)
+
+| Phase | Approach | Tokens | SSOT |
+|-------|----------|--------|------|
+| DX-57 (current) | Full INVAR.md | ~1,800 | ✅ |
+| DX-60 (future) | Generated from YAML | ~600 | ✅ |
+
+DX-60 will extract rules to structured YAML and generate both INVAR.md and injection content, reducing tokens by 67% while maintaining single source of truth.
 
 ## References
 
 - DX-16: Agent Tool Enforcement
 - DX-54: Agent-Native Context Management
-- DX-58: Document Structure Optimization (hook injection aligns with critical section)
+- DX-58: Document Structure Optimization
+- **DX-60: Structured Rules SSOT** (future optimization for token reduction)
 - Lesson #29: Agent Workflow Compliance
 - Claude Code Hooks Documentation

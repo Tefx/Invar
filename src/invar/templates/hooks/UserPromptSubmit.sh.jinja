@@ -1,0 +1,57 @@
+#!/bin/bash
+# Invar UserPromptSubmit Hook
+# Protocol: v{{ protocol_version }} | Generated: {{ generated_date }}
+# DX-57: Protocol refresh with full INVAR.md injection
+
+USER_MESSAGE="$1"
+
+# Check if hooks are disabled
+[[ -f ".claude/hooks/.invar_disabled" ]] && exit 0
+
+# Use session-specific state
+STATE_DIR="${CLAUDE_STATE_DIR:-/tmp/invar_hooks_$(id -u)}"
+mkdir -p "$STATE_DIR" 2>/dev/null
+
+COUNT_FILE="$STATE_DIR/msg_count"
+COUNT=$(cat "$COUNT_FILE" 2>/dev/null || echo 0)
+COUNT=$((COUNT + 1))
+echo "$COUNT" > "$COUNT_FILE"
+
+# ============================================
+# Keyword triggers (independent of count)
+# ============================================
+
+# pytest intent → immediate correction
+if echo "$USER_MESSAGE" | grep -qiE "run.*pytest|pytest.*test|用.*pytest"; then
+  echo "<system-reminder>Use {{ guard_cmd }}, not pytest.</system-reminder>"
+fi
+
+# Implementation intent → workflow reminder (after warmup)
+if [[ $COUNT -gt 3 ]]; then
+  if echo "$USER_MESSAGE" | grep -qiE "^implement|^fix|^add|^实现|^修复|^添加"; then
+    echo "<system-reminder>USBV: Specify contracts → Build → Validate</system-reminder>"
+  fi
+fi
+
+# ============================================
+# Progressive refresh based on message count
+# ============================================
+
+# Message 15: Lightweight checkpoint
+if [[ $COUNT -eq 15 ]]; then
+  echo "<system-reminder>"
+  echo "Checkpoint: guard=verify, sig=contracts, USBV workflow."
+  echo "</system-reminder>"
+fi
+
+# Message 25+: Full INVAR.md injection every 10 messages
+# SSOT: Inject entire protocol to ensure no content drift
+if [[ $COUNT -ge 25 && $((COUNT % 10)) -eq 0 ]]; then
+  echo "<system-reminder>"
+  echo "=== Protocol Refresh (message $COUNT) ==="
+  echo ""
+  cat << 'INVAR_EOF'
+{{ invar_protocol }}
+INVAR_EOF
+  echo "</system-reminder>"
+fi
