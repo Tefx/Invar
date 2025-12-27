@@ -6,7 +6,7 @@
 | **Verify** | `invar_guard` — NOT pytest, NOT crosshair |
 | **Core** | `@pre/@post` + doctests, NO I/O imports |
 | **Shell** | Returns `Result[T, E]` from `returns` library |
-| **Flow** | Specify contracts → Build code → Validate |
+| **Flow** | USBV: Understand → Specify → Build → Validate |
 
 <!--/invar:critical-->
 

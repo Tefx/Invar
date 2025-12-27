@@ -1,10 +1,10 @@
 # DX-57: Claude Code Hooks Integration
 
-**Status:** Draft
+**Status:** Ready for Implementation
 **Created:** 2025-12-27
-**Updated:** 2025-12-27
-**Dependencies:** DX-54 (Context Management), DX-42 (Workflow Routing)
-**Related:** DX-58 (Document Structure - hook injection aligns with critical section)
+**Updated:** 2025-12-28
+**Dependencies:** DX-54 (Context Management), DX-42 (Workflow Routing), DX-58 (Document Structure)
+**Related:** DX-58 critical section provides content template for hook injection
 
 ## Problem Statement
 
@@ -357,12 +357,20 @@ fi
 # NOTE: Inject rules directly, don't tell agent to read files (saves tokens)
 # Content aligns with DX-58 CLAUDE.md critical section
 if [[ $COUNT -ge 25 && $((COUNT % 10)) -eq 0 ]]; then
+  # Syntax-aware: detect MCP vs CLI from project config
+  if grep -q 'syntax.*=.*"mcp"' .invar/config.toml 2>/dev/null || \
+     grep -q '"invar"' .mcp.json 2>/dev/null; then
+    GUARD_CMD="invar_guard"
+  else
+    GUARD_CMD="invar guard"
+  fi
+
   echo "<system-reminder>"
   echo "Session refresh ($COUNT messages):"
-  echo "• Verify: invar_guard (NOT pytest)"
-  echo "• Core: @pre/@post + doctests, NO I/O"
-  echo "• Shell: Result[T, E] return type"
-  echo "• Flow: Specify → Build → Validate"
+  echo "• Verify: $GUARD_CMD — NOT pytest, NOT crosshair"
+  echo "• Core: @pre/@post + doctests, NO I/O imports"
+  echo "• Shell: Returns Result[T, E] from returns library"
+  echo "• Flow: USBV: Understand → Specify → Build → Validate"
   echo "</system-reminder>"
 fi
 ```
@@ -371,10 +379,10 @@ fi
 
 | Approach | Tokens | Rationale |
 |----------|--------|-----------|
-| "Re-read context.md" | ~3000+ | Agent reads 1110 lines |
-| Direct injection | ~60 | Critical rules only |
+| "Re-read context.md" | ~500+ | Agent reads ~150 lines (DX-58 slimmed) |
+| Direct injection | ~80 | Critical rules only |
 
-Hook injects rules directly to minimize token overhead. Injection content aligns with DX-58's CLAUDE.md critical section for consistency.
+Hook injects rules directly to minimize token overhead. Injection content aligns with DX-58's CLAUDE.md critical section for consistency. Syntax detection ensures CLI projects see `invar guard` while MCP projects see `invar_guard`.
 
 ### 4. Stop Hook (Phase 2 - Lower Priority)
 

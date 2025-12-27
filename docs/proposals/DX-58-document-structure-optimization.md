@@ -1,7 +1,8 @@
 # DX-58: Document Structure Optimization
 
-**Status:** Draft
+**Status:** Implemented
 **Created:** 2025-12-27
+**Updated:** 2025-12-28
 **Dependencies:** DX-56 (Template Sync), DX-54 (Context Management)
 **Related:** DX-57 (Hooks - references this proposal's critical section)
 
@@ -107,7 +108,7 @@ Add a new `<!--invar:critical-->` section at the very top:
 | **Verify** | `invar_guard` — NOT pytest, NOT crosshair |
 | **Core** | `@pre/@post` + doctests, NO I/O imports |
 | **Shell** | Returns `Result[T, E]` from `returns` library |
-| **Flow** | Specify contracts → Build code → Validate |
+| **Flow** | USBV: Understand → Specify → Build → Validate |
 
 <!--/invar:critical-->
 
@@ -237,9 +238,12 @@ Add a new `<!--invar:critical-->` section at the very top:
 DX-57's UserPromptSubmit hook should inject content aligned with critical section:
 
 ```bash
-# DX-57 hook references DX-58 critical section
+# DX-57 hook references DX-58 critical section (syntax-aware)
 echo "<system-reminder>"
-echo "Critical: invar_guard (not pytest), Core=@pre/@post, Shell=Result[T,E]"
+echo "• Verify: invar_guard — NOT pytest, NOT crosshair"
+echo "• Core: @pre/@post + doctests, NO I/O imports"
+echo "• Shell: Returns Result[T, E] from returns library"
+echo "• Flow: USBV: Understand → Specify → Build → Validate"
 echo "</system-reminder>"
 ```
 
@@ -282,7 +286,7 @@ This ensures consistency between:
 | **Verify** | `invar_guard` — NOT pytest, NOT crosshair |
 | **Core** | `@pre/@post` + doctests, NO I/O imports |
 | **Shell** | Returns `Result[T, E]` from `returns` library |
-| **Flow** | Specify contracts → Build code → Validate |
+| **Flow** | USBV: Understand → Specify → Build → Validate |
 
 <!--/invar:critical-->
 
