@@ -55,6 +55,7 @@ dev = [
     "pytest-cov>=4.0",
     "mypy>=1.0",
     "ruff>=0.1",
+    "coverage[toml]>=7.0",  # DX-37: Branch coverage for guard --coverage
 ]
 
 [project.scripts]
