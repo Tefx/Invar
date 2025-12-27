@@ -316,7 +316,7 @@ During DX-28 implementation, I batch-added `@skip_property_test` to 4 functions 
 
 ## Current State
 
-- **PyPI:** `invar-tools` + `invar-runtime` v1.0.2 (DX-21 package split + dual licensing)
+- **PyPI:** `invar-tools` + `invar-runtime` v1.3.0 (rule detection, template sync)
 - **Protocol:** v5.0 (DX-54/55/56: Template sync, idempotent init, USBV workflow)
 - **GitHub Pages:** https://tefx.github.io/Invar/
 - **Licenses:** Apache-2.0 (runtime) + GPL-3.0 (tools) + CC-BY-4.0 (docs)
@@ -1026,6 +1026,7 @@ Human (Commander) ──directs──→ Agent (Executor) ──uses──→ In
 | 1.0.0 | 2025-12 | DX-21: Package split (invar-runtime + invar-tools), Claude init integration |
 | 1.0.1 | 2025-12 | Deprecated python-invar package with migration warning |
 | 1.0.2 | 2025-12 | Dual licensing: Apache-2.0 (runtime) + GPL-3.0 (tools) + CC-BY-4.0 (docs) |
+| 1.3.0 | 2025-12 | Rule detection enhancements, unified template sync (DX-56), protocol v5.0 |
 
 ## Tool Priority
 
