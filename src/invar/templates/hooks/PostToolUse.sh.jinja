@@ -35,8 +35,8 @@ is_git_repo() {
 
 detect_changes() {
   if is_git_repo; then
-    # Primary: Git-based detection (accurate)
-    git diff --name-only -- '*.py' 2>/dev/null
+    # Primary: Git-based detection (includes staged + unstaged)
+    { git diff --name-only -- '*.py' 2>/dev/null; git diff --cached --name-only -- '*.py' 2>/dev/null; } | sort -u
   elif [[ -f "$LAST_CHECK_MARKER" ]]; then
     # Fallback: Timestamp-based detection (approximate)
     find . -name "*.py" -newer "$LAST_CHECK_MARKER" -type f 2>/dev/null | \

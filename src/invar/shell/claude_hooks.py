@@ -7,6 +7,7 @@ Shell module: handles file I/O for hooks.
 
 from __future__ import annotations
 
+import re
 from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -22,6 +23,10 @@ PROTOCOL_VERSION = "5.0"
 
 # Hook types supported
 HOOK_TYPES = ["PreToolUse", "PostToolUse", "UserPromptSubmit", "Stop"]
+
+# Path constants
+HOOKS_SUBDIR = ".claude/hooks"
+DISABLED_MARKER = ".invar_disabled"
 
 
 def get_templates_path() -> Path:
@@ -108,10 +113,11 @@ def install_claude_hooks(
 
     Preserves existing user hooks by creating wrapper that runs both.
     """
-    hooks_dir = project_path / ".claude" / "hooks"
+    hooks_dir = project_path / HOOKS_SUBDIR
     hooks_dir.mkdir(parents=True, exist_ok=True)
 
     installed: list[str] = []
+    failed: list[str] = []
 
     console.print("\n[bold]Installing Claude Code hooks (DX-57)...[/bold]")
     console.print("  Hooks will:")
@@ -123,7 +129,8 @@ def install_claude_hooks(
     for hook_type in HOOK_TYPES:
         result = generate_hook_content(hook_type, project_path)
         if isinstance(result, Failure):
-            console.print(f"  [yellow]Warning:[/yellow] {result.failure()}")
+            console.print(f"  [red]Failed:[/red] {result.failure()}")
+            failed.append(hook_type)
             continue
 
         content = result.unwrap()
@@ -186,6 +193,9 @@ source "$(dirname "$0")/invar.{hook_type}.sh" "$@"
         console.print("  [dim]Auto-escape: pytest --pdb, pytest --cov, vendor/[/dim]")
         console.print("  [dim]Manual escape: INVAR_ALLOW_PYTEST=1[/dim]")
 
+    if failed:
+        return Failure(f"Failed to install hooks: {', '.join(failed)}")
+
     return Success(installed)
 
 
@@ -200,18 +210,17 @@ def sync_claude_hooks(
     Called during `invar init` to ensure hooks stay in sync with protocol.
     Only updates if Invar hooks are already installed.
     """
-    hooks_dir = project_path / ".claude" / "hooks"
+    hooks_dir = project_path / HOOKS_SUBDIR
 
     # Check if Invar hooks are installed
-    invar_hook = hooks_dir / "invar.UserPromptSubmit.sh"
-    if not invar_hook.exists():
+    check_hook = hooks_dir / "invar.UserPromptSubmit.sh"
+    if not check_hook.exists():
         return Success([])  # No hooks installed, nothing to sync
 
     # Check version in existing hook
     try:
-        existing_content = invar_hook.read_text()
+        existing_content = check_hook.read_text()
         # Extract version from header comment
-        import re
         version_match = re.search(r"Protocol: v([\d.]+)", existing_content)
         old_version = version_match.group(1) if version_match else "unknown"
 
@@ -254,7 +263,7 @@ def remove_claude_hooks(
 
     Restores user hooks from backup if available.
     """
-    hooks_dir = project_path / ".claude" / "hooks"
+    hooks_dir = project_path / HOOKS_SUBDIR
 
     if not hooks_dir.exists():
         console.print("[yellow]No hooks directory found[/yellow]")
@@ -294,12 +303,12 @@ def disable_claude_hooks(
     console: Console,
 ) -> Result[None, str]:
     """Temporarily disable Invar hooks."""
-    hooks_dir = project_path / ".claude" / "hooks"
+    hooks_dir = project_path / HOOKS_SUBDIR
 
     if not hooks_dir.exists():
         return Failure("No hooks directory found")
 
-    disabled_marker = hooks_dir / ".invar_disabled"
+    disabled_marker = hooks_dir / DISABLED_MARKER
     disabled_marker.touch()
 
     console.print("[yellow]✓ Invar hooks disabled[/yellow]")
@@ -312,8 +321,8 @@ def enable_claude_hooks(
     console: Console,
 ) -> Result[None, str]:
     """Re-enable Invar hooks."""
-    hooks_dir = project_path / ".claude" / "hooks"
-    disabled_marker = hooks_dir / ".invar_disabled"
+    hooks_dir = project_path / HOOKS_SUBDIR
+    disabled_marker = hooks_dir / DISABLED_MARKER
 
     if disabled_marker.exists():
         disabled_marker.unlink()
@@ -330,7 +339,7 @@ def hooks_status(
     console: Console,
 ) -> Result[dict[str, str], str]:
     """Check status of Claude Code hooks."""
-    hooks_dir = project_path / ".claude" / "hooks"
+    hooks_dir = project_path / HOOKS_SUBDIR
 
     status: dict[str, str] = {}
 
@@ -338,7 +347,7 @@ def hooks_status(
         console.print("[yellow]No hooks directory[/yellow]")
         return Success({"status": "not_installed"})
 
-    disabled = (hooks_dir / ".invar_disabled").exists()
+    disabled = (hooks_dir / DISABLED_MARKER).exists()
     if disabled:
         console.print("[yellow]⏸ Invar hooks disabled[/yellow]")
         status["status"] = "disabled"
@@ -351,7 +360,6 @@ def hooks_status(
             status[hook_type] = "installed"
             # Try to get version
             try:
-                import re
                 content = invar_hook.read_text()
                 match = re.search(r"Protocol: v([\d.]+)", content)
                 if match:
