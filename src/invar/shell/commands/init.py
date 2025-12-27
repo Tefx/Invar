@@ -3,6 +3,7 @@ Init command for Invar.
 
 Shell module: handles project initialization.
 DX-21B: Added --claude flag for Claude Code integration.
+DX-55: Unified idempotent init command with smart merge.
 """
 
 from __future__ import annotations
@@ -15,6 +16,12 @@ import typer
 from returns.result import Failure, Success
 from rich.console import Console
 
+from invar.core.template_parser import ClaudeMdState
+from invar.shell.commands.merge import (
+    ProjectState,
+    detect_project_state,
+    merge_claude_md,
+)
 from invar.shell.mcp_config import (
     detect_available_methods,
     generate_mcp_json,
@@ -198,9 +205,26 @@ def init(
     yes: bool = typer.Option(
         False, "--yes", "-y", help="Accept defaults without prompting"
     ),
+    check: bool = typer.Option(
+        False, "--check", help="Preview changes without applying (DX-55)"
+    ),
+    force: bool = typer.Option(
+        False, "--force", help="Update even if already current (DX-55)"
+    ),
+    reset: bool = typer.Option(
+        False, "--reset", help="Dangerous: discard all user content (DX-55)"
+    ),
 ) -> None:
     """
-    Initialize Invar configuration in a project.
+    Initialize or update Invar configuration (idempotent).
+
+    DX-55: This command is idempotent - safe to run multiple times.
+    It detects current state and does the right thing:
+
+    \b
+    - New project: Full setup
+    - Existing project: Update managed regions, preserve user content
+    - Corrupted/overwritten: Smart recovery with content preservation
 
     Works with or without pyproject.toml:
 
@@ -208,13 +232,62 @@ def init(
     - If pyproject.toml exists: adds tool.invar section
     - Otherwise: creates invar.toml
 
-    Use --claude to run 'claude /init' first (recommended for Claude Code users).
+    Use --check to preview changes without applying.
+    Use --force to update even if already current.
+    Use --reset to discard all user content (dangerous).
+    Use --claude to run 'claude /init' first.
     Use --mcp-method to specify MCP execution method (uvx, command, python).
     Use --dirs to always create directories, --no-dirs to skip.
     Use --no-hooks to skip pre-commit hooks installation.
     Use --no-skills to skip .claude/skills/ creation (for Cursor users).
     Use --yes to accept defaults without prompting.
     """
+    from invar import __version__
+
+    # DX-55: Detect project state first
+    state = detect_project_state(path)
+
+    # --check mode: preview only
+    if check:
+        _show_check_preview(state, path, __version__)
+        return
+
+    # --reset mode: dangerous full reset
+    if reset:
+        if not yes and not typer.confirm(
+            "[red]This will DELETE all user customizations. Continue?[/red]",
+            default=False,
+        ):
+            console.print("[yellow]Cancelled[/yellow]")
+            return
+        # Fall through to full init with reset flag
+        state = ProjectState(
+            initialized=False,
+            claude_md_state=ClaudeMdState(state="absent"),
+            version="",
+            needs_update=True,
+        )
+
+    # DX-55: Handle based on detected state
+    action = state.action if not force else "update"
+
+    if action == "none" and not force:
+        console.print(f"[green]✓[/green] Invar v{__version__} configured (no changes needed)")
+        console.print("[dim]Use --force to refresh managed regions[/dim]")
+        return
+
+    if action == "recover":
+        console.print(f"\n[yellow]Detected:[/yellow] CLAUDE.md {state.claude_md_state.state} state")
+        console.print("[bold]Recovering Invar configuration...[/bold]")
+        merge_result = merge_claude_md(path, state.claude_md_state)
+        if isinstance(merge_result, Success):
+            action_name = merge_result.unwrap()
+            console.print(f"[green]✓[/green] CLAUDE.md {action_name}")
+            if action_name == "merged":
+                console.print("[dim]Review the merged content in CLAUDE.md[/dim]")
+        else:
+            console.print(f"[yellow]Warning:[/yellow] {merge_result.failure()}")
+
     # DX-21B: Run claude /init if requested
     if claude:
         claude_success = run_claude_init(path)
@@ -248,9 +321,10 @@ def init(
             ".claude/skills/review/SKILL.md",
         ])
 
-    # Only create CLAUDE.md from template if claude /init wasn't run
-    if not claude or not (path / "CLAUDE.md").exists():
-        init_files.append("CLAUDE.md")
+    # DX-55: Only create CLAUDE.md if not already handled by recovery
+    if action != "recover":
+        if not claude or not (path / "CLAUDE.md").exists():
+            init_files.append("CLAUDE.md")
 
     result = generate_from_manifest(path, syntax="cli", files_to_generate=init_files)
     if isinstance(result, Success):
@@ -321,9 +395,53 @@ def init(
     if not config_added and not (path / "INVAR.md").exists():
         console.print("[yellow]Invar already configured.[/yellow]")
 
-    # Summary
-    console.print("\n[bold green]Invar initialized successfully![/bold green]")
+    # DX-55: Summary based on action taken
+    if action == "full_init":
+        console.print(f"\n[bold green]✓ Initialized Invar v{__version__}[/bold green]")
+        console.print("[dim]Note: If you run 'claude /init' later, just run 'invar init' again.[/dim]")
+    elif action == "recover":
+        console.print(f"\n[bold green]✓ Recovered Invar v{__version__}[/bold green]")
+        console.print("[dim]Review the merged content in CLAUDE.md[/dim]")
+    elif action == "update" or force:
+        console.print(f"\n[bold green]✓ Updated Invar v{__version__}[/bold green]")
+        console.print("[dim]Refreshed managed regions, preserved user content[/dim]")
+    else:
+        console.print("\n[bold green]Invar initialized successfully![/bold green]")
+
     if claude:
         console.print("[dim]Next: Review CLAUDE.md and start coding with Claude Code[/dim]")
-    else:
-        console.print("[dim]Tip: Use --claude for Claude Code integration[/dim]")
+
+
+# @shell_complexity: Preview display requires multiple state-specific branches
+def _show_check_preview(state: ProjectState, path: Path, version: str) -> None:
+    """Show preview of what would change (--check mode)."""
+    console.print(f"\n[bold]Invar v{version} - Preview Mode[/bold]\n")
+
+    console.print(f"Project state: [cyan]{state.claude_md_state.state}[/cyan]")
+    console.print(f"Initialized: [cyan]{state.initialized}[/cyan]")
+    console.print(f"Current version: [cyan]{state.version or 'N/A'}[/cyan]")
+    console.print(f"Needs update: [cyan]{state.needs_update}[/cyan]")
+    console.print(f"Action: [cyan]{state.action}[/cyan]\n")
+
+    match state.action:
+        case "none":
+            console.print("[green]No changes needed[/green]")
+        case "full_init":
+            console.print("Would create:")
+            console.print("  - INVAR.md")
+            console.print("  - CLAUDE.md")
+            console.print("  - .invar/context.md")
+            console.print("  - .claude/skills/")
+            console.print("  - .pre-commit-config.yaml")
+        case "update":
+            console.print("Would update:")
+            console.print(f"  - CLAUDE.md (managed section v{state.version} → v{version})")
+            console.print("  - .claude/skills/* (refresh)")
+        case "recover":
+            console.print("[yellow]Would recover:[/yellow]")
+            console.print("  - CLAUDE.md (restore regions, preserve content)")
+        case "create":
+            console.print("Would create:")
+            console.print("  - CLAUDE.md")
+
+    console.print("\n[dim]Run 'invar init' to apply.[/dim]")
