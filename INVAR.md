@@ -81,15 +81,18 @@ More examples: `.invar/examples/`
 Your first message MUST display:
 
 ```
-✓ Check-In: guard PASS | top: <entry1>, <entry2>
+✓ Check-In: [project] | [branch] | [clean/dirty]
 ```
 
-Execute `invar guard --changed` and `invar map --top 10`, then show this one-line summary.
+Actions:
+1. Read `.invar/context.md` (Key Rules + Current State + Lessons Learned)
+2. Show one-line status
+
+**Do NOT execute guard or map at Check-In.**
+Guard is for VALIDATE phase and Final only.
 
 This is your sign-in. The user sees it immediately.
 No visible check-in = Session not started.
-
-Then read `.invar/context.md` for project state and lessons learned.
 
 ## USBV Workflow (DX-32)
 
@@ -135,7 +138,7 @@ def calculate_discount(price: float, rate: float) -> float: ...
 ## Task Completion
 
 A task is complete only when ALL conditions are met:
-- Check-In displayed: `✓ Check-In: guard PASS | top: <entry1>, <entry2>`
+- Check-In displayed: `✓ Check-In: [project] | [branch] | [clean/dirty]`
 - Intent explicitly stated
 - Contract written before implementation
 - Final displayed: `✓ Final: guard PASS | <errors>, <warnings>`

@@ -2,6 +2,16 @@
 
 This example shows how to use the 3-checkpoint TodoList for complex tasks.
 
+## Check-In First (DX-54)
+
+Every session starts with Check-In:
+
+```
+✓ Check-In: MyProject | feature-branch | clean
+```
+
+**Do NOT run guard/map at Check-In.** Guard is for VALIDATE phase and Final only.
+
 ## USBV Workflow
 
 **U**nderstand → **S**pecify → **B**uild → **V**alidate

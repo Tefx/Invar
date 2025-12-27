@@ -11,7 +11,7 @@ User: "Add rate limiting to the API endpoints"
 ```
 Agent: "Entering /develop for: Add rate limiting to API endpoints
 
-✓ Check-In: guard PASS | top: app.route, handle_request, RateLimiter
+✓ Check-In: MyApp | feature/rate-limit | clean
 
 □ [UNDERSTAND]
   - Task: Add rate limiting to API endpoints
@@ -58,12 +58,12 @@ Development complete. Added rate limiting:
 
 ## Key Points
 
-1. **Check-In first** - Shows guard status and top symbols
+1. **Check-In first** - Shows project, branch, git status (no guard/map here)
 2. **UNDERSTAND visible** - Task scope and constraints clear
 3. **SPECIFY visible** - Contracts shown BEFORE implementation
 4. **BUILD hidden** - Internal work, not in checkpoints
 5. **VALIDATE visible** - Guard results and integration status
-6. **Final last** - Completes the session
+6. **Final last** - Runs guard and completes the session
 
 ## When to Use
 
