@@ -5,9 +5,12 @@ This directory contains design proposals for Invar development.
 ## Naming Convention
 
 - `DX-XX-name.md` — Developer Experience improvements
+- `LX-XX-name.md` — Language eXtension (multi-language evolution)
 - Completed/archived proposals in `completed/` subdirectory
 
-## Active Proposals (4)
+## Active Proposals (5)
+
+### DX Series (Developer Experience)
 
 | ID | Name | Status | Description |
 |----|------|--------|-------------|
@@ -15,6 +18,14 @@ This directory contains design proposals for Invar development.
 | DX-25 | functional-patterns | Defer | Functional patterns enhancement |
 | DX-29 | pure-content-detection | Defer | Pure content detection (`@invar:module` marker) |
 | DX-38 | contract-quality-rules | Partial | Tier 1-2 done, Tier 3-4 deferred |
+
+### LX Series (Language eXtension) — NEW
+
+| ID | Name | Status | Description |
+|----|------|--------|-------------|
+| LX-01 | multi-language-feasibility | Draft | Feasibility assessment for multi-language Invar |
+
+**LX Series Vision:** Evolve Invar from Python-specific tool to universal AI-assisted development protocol.
 
 ## Archived Proposals (38)
 
@@ -231,3 +242,45 @@ Deferred: DX-38 Tier 3-4, DX-25, DX-29
 1. **Skills cannot be user-invoked** — Users get "Ask Claude to run /develop for you"
 2. **Command vs Skill confusion** — `/review` exists as both with different behavior
 3. **Template drift risk** — Project files and templates can diverge
+
+---
+
+## LX Series Roadmap (2025-12-27)
+
+### Strategic Direction
+
+Invar's core value (USBV workflow, agent protocol, adversarial review) is language-agnostic.
+The LX series explores evolving Invar into a universal development protocol.
+
+### Proposed Phases
+
+```
+Phase 1: Protocol Extraction (LX-01 → LX-05)
+├── LX-01: Feasibility Assessment ← Current
+├── LX-02: USBV Workflow Specification
+├── LX-03: Skill Format Specification
+├── LX-04: CLAUDE.md Structure Specification
+└── LX-05: Plugin Interface Design
+
+Phase 2: Python Refactor (LX-10+)
+├── Modularize current Python implementation
+└── Use plugin interface from Phase 1
+
+Phase 3: Second Language (LX-20+)
+├── TypeScript adapter (highest demand)
+└── Validates multi-language architecture
+
+Phase 4: Community (LX-30+)
+├── Rust, Go, Java adapters
+└── Community-driven contributions
+```
+
+### Decision Points
+
+| After | Decision |
+|-------|----------|
+| LX-01 | Proceed? (Is multi-language valuable?) |
+| Phase 1 | Continue to Phase 2? (Is spec practical?) |
+| Phase 2 | Continue to Phase 3? (Is TypeScript worth it?) |
+
+Each phase has a natural exit point if approach proves unviable.
