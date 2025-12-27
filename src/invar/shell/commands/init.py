@@ -272,9 +272,32 @@ def init(
     action = state.action if not force else "update"
 
     if action == "none" and not force:
-        console.print(f"[green]✓[/green] Invar v{__version__} configured (no changes needed)")
-        console.print("[dim]Use --force to refresh managed regions[/dim]")
-        return
+        # DX-55: Check for missing required files before declaring "no changes needed"
+        missing_files = []
+        if skills:
+            skill_files = [
+                ".claude/skills/develop/SKILL.md",
+                ".claude/skills/investigate/SKILL.md",
+                ".claude/skills/propose/SKILL.md",
+                ".claude/skills/review/SKILL.md",
+            ]
+            for skill_file in skill_files:
+                if not (path / skill_file).exists():
+                    missing_files.append(skill_file)
+
+        if not missing_files:
+            console.print(f"[green]✓[/green] Invar v{__version__} configured (no changes needed)")
+            console.print("[dim]Use --force to refresh managed regions[/dim]")
+            return
+        else:
+            # Recreate missing files
+            console.print(f"[yellow]Detected:[/yellow] {len(missing_files)} missing file(s)")
+            result = generate_from_manifest(path, syntax="cli", files_to_generate=missing_files)
+            if isinstance(result, Success):
+                for generated_file in result.unwrap():
+                    console.print(f"[green]Restored[/green] {generated_file}")
+            console.print(f"[green]✓[/green] Invar v{__version__} configured")
+            return
 
     if action == "recover":
         console.print(f"\n[yellow]Detected:[/yellow] CLAUDE.md {state.claude_md_state.state} state")
@@ -287,6 +310,30 @@ def init(
                 console.print("[dim]Review the merged content in CLAUDE.md[/dim]")
         else:
             console.print(f"[yellow]Warning:[/yellow] {merge_result.failure()}")
+
+    # DX-55: Handle full_init with existing CLAUDE.md (A2 scenario)
+    if action == "full_init":
+        claude_md = path / "CLAUDE.md"
+        if claude_md.exists():
+            content = claude_md.read_text()
+            if content.strip() and "<!--invar:" not in content:
+                # Existing content without Invar regions - merge it
+                console.print("[yellow]Detected:[/yellow] Existing CLAUDE.md without Invar regions")
+                console.print("[bold]Merging existing content...[/bold]")
+                from invar.core.template_parser import ClaudeMdState as CMS
+                merge_result = merge_claude_md(path, CMS(state="missing"))
+                if isinstance(merge_result, Success):
+                    console.print(f"[green]✓[/green] CLAUDE.md {merge_result.unwrap()}")
+            elif not content.strip():
+                # Empty file - delete so generate_from_manifest can create it
+                claude_md.unlink()
+
+    # DX-55: Handle "create" action (empty CLAUDE.md exists)
+    if action == "create":
+        claude_md = path / "CLAUDE.md"
+        if claude_md.exists() and not claude_md.read_text().strip():
+            # Empty file - delete so generate_from_manifest can create it
+            claude_md.unlink()
 
     # DX-21B: Run claude /init if requested
     if claude:

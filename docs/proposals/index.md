@@ -8,13 +8,12 @@ This directory contains design proposals for Invar development.
 - `LX-XX-name.md` — Language eXtension (multi-language evolution)
 - Completed/archived proposals in `completed/` subdirectory
 
-## Active Proposals (5)
+## Active Proposals (4)
 
 ### DX Series (Developer Experience)
 
 | ID | Name | Status | Description |
 |----|------|--------|-------------|
-| DX-55 | claude-init-conflict-resolution | Draft | Handle `claude /init` overwriting Invar config |
 | DX-25 | functional-patterns | Defer | Functional patterns enhancement |
 | DX-29 | pure-content-detection | Defer | Pure content detection (`@invar:module` marker) |
 | DX-38 | contract-quality-rules | Partial | Tier 1-2 done, Tier 3-4 deferred |
@@ -27,10 +26,11 @@ This directory contains design proposals for Invar development.
 
 **LX Series Vision:** Evolve Invar from Python-specific tool to universal AI-assisted development protocol.
 
-## Archived Proposals (38)
+## Archived Proposals (39)
 
 | ID | Name | Status | Description |
 |----|------|--------|-------------|
+| DX-55 | claude-init-conflict-resolution | ✅ Complete | Unified idempotent init with smart CLAUDE.md merge |
 | DX-54 | agent-native-context-management | ✅ Complete | Long conversation resilience + workflow refresh |
 | DX-53 | review-loop-effectiveness | ✅ Complete | Isolated reviewer + scope expansion per round |
 | DX-52 | venv-dependency-injection | ✅ Complete | PYTHONPATH injection for uvx compatibility |
