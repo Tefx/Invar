@@ -56,7 +56,7 @@ def sqrt(x: float) -> float:
     return x ** 0.5  # CrossHair proves this is correct
 ```
 
-**Files:** `src/invar/shell/prove.py`
+**Files:** `src/invar/shell/prove/crosshair.py`
 
 ### Phase 4: Hypothesis (Property Testing)
 

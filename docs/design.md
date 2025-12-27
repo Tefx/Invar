@@ -818,7 +818,7 @@ invar init --config-only # Only add config, no INVAR.md/CLAUDE.md
 - [x] `invar map` command (with AST-based reference analysis)
 - [x] `invar sig` command
 - [x] JSON output for agent consumption
-- [x] core/references.py, core/formatter.py, shell/perception.py
+- [x] core/references.py, core/formatter.py, shell/commands/perception.py
 
 **Value:** Context compression for large projects
 

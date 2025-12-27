@@ -66,6 +66,16 @@ uvx invar-tools init --claude
 pip install invar-runtime
 ```
 
+**Why uvx is recommended:**
+- Always uses latest version
+- Doesn't pollute project dependencies
+- Automatically accesses your project's venv dependencies (numpy, pandas, etc.)
+- If your project has `invar-tools` installed, uvx will detect and use it
+
+**When to use pip install instead:**
+- CI/CD environments where uvx isn't available
+- Projects with C extensions AND Python version mismatch between uvx and project
+
 ---
 
 ## Quick Start

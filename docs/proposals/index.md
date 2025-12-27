@@ -7,14 +7,14 @@ This directory contains design proposals for Invar development.
 - `DX-XX-name.md` — Developer Experience improvements
 - Completed/archived proposals in `completed/` subdirectory
 
-## Active Proposals (9)
+## Active Proposals (11)
 
 | ID | Name | Status | Description |
 |----|------|--------|-------------|
 | DX-23 | entry-point-detection | ✅ Complete | Entry point detection & Monad Runner pattern |
 | DX-25 | functional-patterns | Defer | Functional patterns enhancement |
 | DX-29 | pure-content-detection | Defer | Pure content detection (`@invar:module` marker) |
-| DX-37 | coverage-integration | Draft | Coverage integration for Guard |
+| DX-37 | coverage-integration | ✅ Complete | Coverage integration for Guard (`--coverage` flag) |
 | DX-38 | contract-quality-rules | Partial | Tier 1-2 done, Tier 3-4 deferred |
 | DX-39 | workflow-efficiency | ✅ Complete | Error Pattern Guide + bug fixes |
 | DX-40 | smart-tool-redirect-hook | ✗ Dropped | Contradicts Lesson #19 (PreToolUse ineffective) |
@@ -22,7 +22,9 @@ This directory contains design proposals for Invar development.
 | DX-42 | workflow-auto-routing | ✅ Complete | Visible Workflow Routing |
 | DX-43 | cross-platform-distribution | ✅ Complete | Absorbed by DX-49 |
 | DX-46 | documentation-audit | ✅ Complete | docs/ directory audit |
-| DX-51 | workflow-phase-visibility | Draft | USBV phase headers separate from TodoWrite |
+| DX-51 | workflow-phase-visibility | ✅ Complete | USBV phase headers separate from TodoWrite |
+| DX-52 | venv-dependency-injection | ✅ Complete | PYTHONPATH injection for uvx compatibility |
+| DX-53 | review-loop-effectiveness | Draft | Isolated reviewer + scope expansion per round |
 
 ## Archived Proposals (26)
 
@@ -65,15 +67,15 @@ This directory contains design proposals for Invar development.
                                       ▼
                               ✗ DX-40 (Dropped)
 
-                              DX-51 (Phase Visibility)
-                                      │
-                                      ▼
-                              Extends DX-42 concepts
+      ✅ DX-51 (Phase Visibility)     ✅ DX-52 (uvx Compatibility)
+              │                               │
+              ▼                               ▼
+      Extends DX-42 concepts          DX-53 (Review Effectiveness)
 
-Completed: DX-47, DX-48, DX-49, DX-41, DX-42, DX-43, DX-39, DX-46, DX-23
+Completed: DX-47, DX-48, DX-49, DX-41, DX-42, DX-43, DX-39, DX-46, DX-23, DX-37, DX-51, DX-52
 Partial: DX-38 (Tier 1-2 done)
 Dropped: DX-40 (contradicts Lesson #19)
-Active: DX-51 (Phase Visibility), DX-37 (Coverage)
+Active: DX-53 (Review Effectiveness)
 Deferred: DX-38 Tier 3-4, DX-25, DX-29
 ```
 
@@ -85,8 +87,10 @@ Deferred: DX-38 Tier 3-4, DX-25, DX-29
 | ~~High~~ | ~~DX-41~~ | ~~Auto-review on review_suggested~~ | ~~Close VALIDATE loop~~ | ✅ Complete |
 | ~~Medium~~ | ~~DX-43~~ | ~~Cross-platform distribution~~ | ~~Absorbed by DX-49~~ | ✅ Complete |
 | ~~High~~ | ~~DX-39~~ | ~~Error Pattern Guide + bug fix~~ | ~~Faster error recovery~~ | ✅ Complete |
-| **High** | DX-51 | USBV phase headers visible in output | Workflow follow rate | Draft |
-| **Medium** | DX-37 | `invar guard --coverage` reports uncovered branches | Verification visibility | — |
+| ~~High~~ | ~~DX-51~~ | ~~USBV phase headers visible in output~~ | ~~Workflow follow rate~~ | ✅ Complete |
+| ~~Medium~~ | ~~DX-37~~ | ~~`invar guard --coverage` reports uncovered branches~~ | ~~Verification visibility~~ | ✅ Complete |
+| ~~High~~ | ~~DX-52~~ | ~~uvx dependency injection~~ | ~~uvx can access project deps~~ | ✅ Complete |
+| **Medium** | DX-53 | Isolated reviewer + scope expansion | Review effectiveness | Draft |
 | ~~Low~~ | ~~DX-46~~ | ~~docs/ directory audit~~ | ~~Documentation maintenance~~ | ✅ Complete |
 | ~~Low~~ | ~~DX-40~~ | ~~Hook intercepts incorrect tool calls~~ | ~~Contradicts Lesson #19~~ | ✗ Dropped |
 | **Partial** | DX-38 | Tier 1-2 done; Tier 3-4 deferred | High false-positive risk | Tier 1-2 ✅ |
@@ -102,42 +106,48 @@ Deferred: DX-38 Tier 3-4, DX-25, DX-29
 | ~~1~~ | ~~DX-42~~ | — | — | ✅ Complete |
 | ~~2~~ | ~~DX-43, DX-41~~ | — | — | ✅ Complete |
 | ~~3~~ | ~~DX-39~~ | — | — | ✅ Complete |
-| ~~4~~ | ~~DX-46~~ ∥ DX-37 | — | 0.5 day | ✅ DX-46 Complete |
+| ~~4~~ | ~~DX-46, DX-37~~ | — | — | ✅ Complete |
 | ~~5~~ | ~~DX-40~~ | — | — | ✗ Dropped (Lesson #19) |
-| **6** | DX-51 | — | 0.5 day | Phase Visibility |
-| **7** | DX-37 | — | 0.5 day | Coverage Integration |
+| ~~6~~ | ~~DX-51~~ | — | — | ✅ Complete |
+| ~~7~~ | ~~DX-52~~ | — | — | ✅ Complete |
+| **8** | DX-53 | — | 0.5 day | Review Effectiveness |
 | **∞** | DX-38 Tier 3-4, DX-25, DX-29 | — | — | Deferred |
 
-**Time estimate:** ~1 day remaining (DX-51 + DX-37)
+**Time estimate:** ~0.5 day remaining (DX-53)
 
-**Next:** DX-51 (Workflow Phase Visibility)
+**Next:** DX-53 (Review Loop Effectiveness)
 
 ## Recent Changes (2025-12-27)
 
-### New Proposals
-- **DX-51** — Workflow Phase Visibility
+### Implemented Today
+- **DX-52** — Virtual Environment Dependency Injection ✅
+  - Phase 1: PYTHONPATH injection for uvx compatibility
+  - Phase 2: Smart re-spawn with project Python
+  - Phase 3: Version mismatch detection and upgrade prompts
+  - Enables `uvx invar-tools guard` to access project dependencies
+
+- **DX-53** — Review Loop Effectiveness (Draft)
+  - Proposes isolated reviewer (sub-agent) as default
+  - Each round includes expansion phase (60% effort on NEW issues)
+  - Exit criteria: `no_major AND confidence == HIGH`
+
+- **DX-51** — Workflow Phase Visibility ✅
   - Separates USBV phase tracking from TodoWrite task tracking
   - Phase headers: `📍 /develop → SPECIFY (2/4)`
-  - Addresses scroll-away problem for workflow visibility
 
-### Implemented
+- **DX-37** — Coverage Integration ✅
+  - `invar guard --coverage` reports branch coverage
+  - Tracks doctest + hypothesis phases (CrossHair excluded)
+
+### Earlier (2025-12-27)
 - **DX-38 Tier 1-2** — Contract quality rules partially implemented
   - ✅ Tier 1: Literal True/False, no-parameter lambda detection
   - ✅ Tier 2: `redundant_type_contract` enabled by default
   - Tier 3-4 deferred (high false-positive risk)
 
-### Completed
+### Completed Earlier
 - **DX-23** — Already fully implemented (discovered during review)
-  - ✅ `is_entry_point()` detection function
-  - ✅ `ENTRY_POINT_DECORATORS` (Flask, FastAPI, Typer, Click, pytest, Django)
-  - ✅ `@shell:entry` explicit marker support
-  - ✅ `shell_result` rule skips entry points
-  - ✅ `entry_point_too_thick` rule (max 15 lines)
-  - ✅ `RuleConfig.entry_max_lines` configuration
-- **DX-39** — All items implemented
-  - ✅ SKILL.md extensions bug fixed
-  - ✅ Error Pattern Guide added to develop/SKILL.md (lines 129-151)
-  - ✅ Guard suggestion integration documented (line 146-147)
+- **DX-39** — Error Pattern Guide + bug fixes
 
 ### Dropped
 - **DX-40** — Contradicts Lesson #19
