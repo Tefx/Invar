@@ -18,6 +18,7 @@ from pathlib import Path
 from returns.result import Failure, Result, Success
 
 from invar.core.verification_routing import get_incompatible_imports
+from invar.shell.subprocess_env import build_subprocess_env
 
 
 @dataclass
@@ -134,7 +135,14 @@ def run_hypothesis_fallback(
     cmd.extend(str(f) for f in py_files)
 
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+        # DX-52: Inject project venv site-packages for uvx compatibility
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=300,
+            env=build_subprocess_env(),
+        )
         # Pytest exit codes: 0=passed, 5=no tests collected
         is_passed = result.returncode in (0, 5)
         return Success(

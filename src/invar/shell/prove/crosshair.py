@@ -18,7 +18,6 @@ from typing import TYPE_CHECKING
 from returns.result import Failure, Result, Success
 from rich.console import Console
 
-# DX-13: Cache module extracted for file size compliance
 from invar.shell.prove.cache import ProveCache  # noqa: TC001 - runtime usage
 
 # DX-12: Hypothesis fallback
@@ -28,12 +27,12 @@ from invar.shell.prove.hypothesis import (
 from invar.shell.prove.hypothesis import (
     run_prove_with_fallback as run_prove_with_fallback,
 )
+from invar.shell.subprocess_env import build_subprocess_env  # DX-52
 
 if TYPE_CHECKING:
     from typing import Any
 
 console = Console()
-
 
 # ============================================================
 # CrossHair Status Codes
@@ -134,11 +133,13 @@ def _verify_single_file(
     ]
 
     try:
+        # DX-52: Inject project venv site-packages for uvx compatibility
         result = subprocess.run(
             cmd,
             capture_output=True,
             text=True,
             timeout=timeout,
+            env=build_subprocess_env(),
         )
 
         elapsed_ms = int((time.time() - start_time) * 1000)

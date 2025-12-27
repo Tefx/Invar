@@ -3,11 +3,13 @@ Invar MCP Server implementation.
 
 Exposes invar guard, sig, and map as first-class MCP tools.
 Part of DX-16: Agent Tool Enforcement.
+DX-52: Added Phase 2 smart re-spawn for project Python compatibility.
 """
 
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -15,6 +17,8 @@ from typing import Any
 
 from mcp.server import Server
 from mcp.types import TextContent, Tool
+
+from invar.shell.subprocess_env import should_respawn
 
 
 # @invar:allow shell_result: Pure validation helper, no I/O, returns tuple not Result
@@ -301,11 +305,36 @@ async def _execute_command(cmd: list[str], timeout: int = 600) -> list[TextConte
 
 # @shell_orchestration: MCP server entry point - runs async server
 def run_server() -> None:
-    """Run the Invar MCP server."""
+    """Run the Invar MCP server.
+
+    DX-52 Phase 2: If project has invar installed, re-spawn with project Python
+    to ensure C extensions are compatible with project's Python version.
+    """
     import asyncio
 
     from mcp.server.stdio import stdio_server
 
+    # DX-52 Phase 2: Smart re-spawn with project Python
+    cwd = Path.cwd()
+    do_respawn, project_python = should_respawn(cwd)
+
+    if do_respawn and project_python is not None:
+        # Re-spawn with project Python (has both invar AND project deps)
+        import subprocess
+        import sys
+
+        if os.name == "nt":
+            # Windows: execv doesn't replace process, use subprocess + exit
+            result = subprocess.call([str(project_python), "-m", "invar.mcp"])
+            sys.exit(result)
+        else:
+            # Unix: execv replaces current process, does not return
+            os.execv(
+                str(project_python),
+                [str(project_python), "-m", "invar.mcp"],
+            )
+
+    # Phase 1 fallback: Continue with uvx + PYTHONPATH injection
     async def main():
         server = create_server()
         async with stdio_server() as (read_stream, write_stream):

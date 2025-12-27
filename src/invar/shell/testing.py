@@ -31,6 +31,7 @@ from invar.shell.prove.crosshair import (
     run_hypothesis_fallback,
     run_prove_with_fallback,
 )
+from invar.shell.subprocess_env import build_subprocess_env
 
 console = Console()
 
@@ -166,7 +167,14 @@ def run_doctests_on_files(
         cmd.append("-v")
 
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+        # DX-52: Inject project venv site-packages for uvx compatibility
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            env=build_subprocess_env(),
+        )
         # Pytest exit codes: 0=passed, 5=no tests collected (also OK)
         is_passed = result.returncode in (0, 5)
         return Success({
@@ -213,7 +221,14 @@ def run_test(
         cmd.append("-v")
 
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+        # DX-52: Inject project venv site-packages for uvx compatibility
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            env=build_subprocess_env(),
+        )
         test_result = {
             "status": "passed" if result.returncode == 0 else "failed",
             "target": str(target_path),
@@ -281,7 +296,14 @@ def run_verify(
     ]
 
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=total_timeout)
+        # DX-52: Inject project venv site-packages for uvx compatibility
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=total_timeout,
+            env=build_subprocess_env(),
+        )
 
         # CrossHair format: "file:line: error: Err when calling func(...)"
         counterexamples = [
