@@ -64,7 +64,7 @@ def detect_project_state(path: Path) -> ProjectState:
 
     DX-55: Core state detection for idempotent init.
     """
-    from invar import __version__
+    from invar import __protocol_version__
 
     invar_md = path / "INVAR.md"
     invar_dir = path / ".invar"
@@ -79,18 +79,18 @@ def detect_project_state(path: Path) -> ProjectState:
     else:
         claude_state = ClaudeMdState(state="absent")
 
-    # Extract version from existing INVAR.md
+    # Extract protocol version from existing INVAR.md
     version = ""
     if invar_md.exists():
         content = invar_md.read_text()
         import re
 
-        match = re.search(r"Invar v([\d.]+)", content)
+        match = re.search(r"Invar (?:Protocol )?v([\d.]+)", content)
         if match:
             version = match.group(1)
 
-    # Check if update needed
-    needs_update = initialized and version != __version__
+    # Check if update needed (compare protocol versions, not package versions)
+    needs_update = initialized and version != __protocol_version__
 
     return ProjectState(
         initialized=initialized,
@@ -172,6 +172,8 @@ def _recover_from_partial(
     path: Path, existing_content: str, state: ClaudeMdState
 ) -> Result[str, str]:
     """Recover from partial corruption."""
+    from pathlib import Path as PathLib  # Runtime import for Path operations
+
     # Try to salvage user content
     if state.user_content:
         user_content = state.user_content
@@ -183,6 +185,11 @@ def _recover_from_partial(
                 user_content, date.today().isoformat()
             )
 
+    # Remove existing CLAUDE.md so generate_from_manifest creates fresh template
+    claude_md = PathLib(path) / "CLAUDE.md"
+    if claude_md.exists():
+        claude_md.unlink()
+
     # Generate fresh template
     result = generate_from_manifest(
         path, syntax="cli", files_to_generate=["CLAUDE.md"]
@@ -192,22 +199,29 @@ def _recover_from_partial(
 
     # Inject recovered user content
     if user_content:
-        new_content = (path / "CLAUDE.md").read_text()
+        new_content = claude_md.read_text()
         parsed = parse_invar_regions(new_content)
         if "user" in parsed.regions:
             updates = {"user": "\n" + user_content + "\n"}
             final_content = reconstruct_file(parsed, updates)
-            (path / "CLAUDE.md").write_text(final_content)
+            claude_md.write_text(final_content)
 
     return Success("recovered")
 
 
 def _merge_with_preserved(path: Path, existing_content: str) -> Result[str, str]:
     """Merge overwritten content as preserved user content."""
+    from pathlib import Path as PathLib  # Runtime import for Path operations
+
     # Format existing content as preserved
     preserved = format_preserved_content(
         existing_content, date.today().isoformat()
     )
+
+    # Remove existing CLAUDE.md so generate_from_manifest creates fresh template
+    claude_md = PathLib(path) / "CLAUDE.md"
+    if claude_md.exists():
+        claude_md.unlink()
 
     # Generate fresh template
     result = generate_from_manifest(
@@ -217,12 +231,12 @@ def _merge_with_preserved(path: Path, existing_content: str) -> Result[str, str]
         return result
 
     # Inject preserved content into user region
-    new_content = (path / "CLAUDE.md").read_text()
+    new_content = claude_md.read_text()
     parsed = parse_invar_regions(new_content)
 
     if "user" in parsed.regions:
         updates = {"user": "\n" + preserved + "\n"}
         final_content = reconstruct_file(parsed, updates)
-        (path / "CLAUDE.md").write_text(final_content)
+        claude_md.write_text(final_content)
 
     return Success("merged")

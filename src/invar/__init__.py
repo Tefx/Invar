@@ -9,6 +9,7 @@ For runtime contracts only, use invar-runtime instead.
 """
 
 __version__ = "1.0.0"
+__protocol_version__ = "5.0"  # Protocol/spec version (separate from package version)
 
 # Re-export from invar-runtime for backwards compatibility
 from invar_runtime import (
