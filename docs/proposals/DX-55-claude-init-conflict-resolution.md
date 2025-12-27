@@ -2,6 +2,7 @@
 
 **Status:** Draft
 **Created:** 2025-12-27
+**Updated:** 2025-12-27
 **Problem:** Running Claude `/init` after `invar init` destroys Invar configuration
 
 ## Problem Statement
@@ -40,23 +41,93 @@
 
 1. **Detection**: Recognize when CLAUDE.md has been overwritten
 2. **Recovery**: Restore Invar regions without losing Claude's content
-3. **Prevention**: Warn users before the problem occurs
-4. **Transparency**: Make the conflict and resolution visible
+3. **Simplicity**: One command that always does the right thing
+4. **Idempotent**: Safe to run multiple times
+
+---
+
+## Key Design Decision: Unified Idempotent Command
+
+### Problem with Two Commands
+
+Current design has `invar init` and `invar update` as separate commands:
+
+| User Scenario | Correct Command | User Confusion |
+|---------------|-----------------|----------------|
+| New project | `init` | None |
+| After `claude /init` | `update`? `init`? | Which one? |
+| After Invar upgrade | `update` | Maybe `init`? |
+| Not sure of state | ??? | Decision paralysis |
+
+This violates Invar's own principles:
+- **DX-54**: Reduce agent decisions
+- **DX-06**: Zero-decision tools
+- **Lesson #11**: Agent-Native means no choices
+
+### Solution: Merge into Idempotent `invar init`
+
+**One command that always works:**
+
+```
+invar init
+│
+├─ Not initialized?
+│   └─ Full setup (create all files)
+│
+├─ Already initialized?
+│   ├─ CLAUDE.md intact? → Update managed regions only
+│   ├─ CLAUDE.md partial? → Clean + rebuild
+│   ├─ CLAUDE.md missing regions? → Smart merge
+│   └─ CLAUDE.md absent? → Create new
+│
+└─ Check version, update if needed
+```
+
+**Backwards Compatibility:**
+- `invar update` becomes an alias for `invar init`
+- Existing scripts continue to work
+
+---
 
 ## Detailed Design
 
-### Phase 1: Detection & Warning (Immediate)
+### Phase 1: Unified Command Architecture
 
-#### 1.1 Region Detection in `invar update`
+#### 1.1 State Detection
 
 ```python
+def detect_project_state(project_path: Path) -> ProjectState:
+    """
+    Detect Invar initialization state.
+
+    Returns:
+        ProjectState with:
+        - initialized: bool
+        - claude_md_state: "intact" | "partial" | "missing" | "absent"
+        - version: str | None
+        - needs_update: bool
+    """
+    invar_md = project_path / "INVAR.md"
+    invar_dir = project_path / ".invar"
+    claude_md = project_path / "CLAUDE.md"
+
+    initialized = invar_md.exists() and invar_dir.exists()
+
+    return ProjectState(
+        initialized=initialized,
+        claude_md_state=detect_claude_md_state(claude_md),
+        version=extract_version(invar_md) if initialized else None,
+        needs_update=check_version_outdated(...)
+    )
+
+
 def detect_claude_md_state(path: Path) -> Literal["intact", "partial", "missing", "absent"]:
     """
     Detect the state of CLAUDE.md Invar regions.
 
     Returns:
-        "intact": All regions present and valid
-        "partial": Some regions missing (corruption)
+        "intact": All regions present and properly closed
+        "partial": Some regions missing or malformed (corruption)
         "missing": File exists but no Invar regions (overwritten)
         "absent": File doesn't exist
     """
@@ -64,274 +135,398 @@ def detect_claude_md_state(path: Path) -> Literal["intact", "partial", "missing"
         return "absent"
 
     content = path.read_text()
-    has_managed = "<!--invar:managed-->" in content
-    has_user = "<!--invar:user-->" in content
 
-    if has_managed and has_user:
+    # Check for proper region structure
+    has_managed_open = "<!--invar:managed" in content
+    has_managed_close = "<!--/invar:managed-->" in content
+    has_user_open = "<!--invar:user-->" in content
+    has_user_close = "<!--/invar:user-->" in content
+
+    if all([has_managed_open, has_managed_close, has_user_open, has_user_close]):
         return "intact"
-    elif has_managed or has_user:
-        return "partial"
+    elif any([has_managed_open, has_managed_close, has_user_open, has_user_close]):
+        return "partial"  # Some markers but not all
     else:
-        return "missing"  # File exists but no Invar markers
+        return "missing"  # No Invar markers at all
 ```
 
-#### 1.2 Warning Output
+#### 1.2 Unified Command Logic
 
-When `invar update` detects "missing" state:
+```python
+@app.command()
+def init(
+    path: Path = Path("."),
+    check: bool = False,      # Preview mode
+    force: bool = False,      # Update even if current
+    reset: bool = False,      # Dangerous: discard user content
+    claude: bool = False,     # Also run claude /init first
+):
+    """
+    Initialize or update Invar configuration.
 
-```
-⚠ CLAUDE.md exists but has no Invar regions.
-  This usually happens after running 'claude /init'.
+    This command is idempotent - safe to run multiple times.
+    It detects current state and does the right thing:
 
-  Current CLAUDE.md content will be preserved in <!--invar:user--> section.
-  Invar managed sections will be restored from template.
+    - New project: Full setup
+    - Existing project: Update managed regions, preserve user content
+    - Corrupted/overwritten: Smart recovery with content preservation
+    """
+    state = detect_project_state(path)
 
-  Options:
-  A: Merge (recommended) - Restore regions, keep existing content in user section
-  B: Overwrite - Replace entirely with Invar template
-  C: Skip - Leave CLAUDE.md unchanged
+    if check:
+        return report_what_would_change(state)
 
-  Choice? [A/B/C]
-```
+    if reset:
+        if not confirm("This will DELETE all user customizations. Continue?"):
+            return
+        return full_reset(path)
 
-#### 1.3 Init-time Warning
+    if not state.initialized:
+        return full_init(path, claude=claude)
 
-When `invar init` completes:
+    # Already initialized - handle various states
+    match state.claude_md_state:
+        case "intact":
+            if state.needs_update or force:
+                return update_managed_regions(path)
+            else:
+                console.print("✓ Invar configured (no changes needed)")
 
-```
-✓ Invar initialized successfully.
+        case "partial":
+            return clean_and_rebuild(path)
 
-⚠ Note: If you later run 'claude /init', it will overwrite CLAUDE.md.
-  Run 'invar update' afterward to restore Invar configuration.
-```
+        case "missing":
+            return smart_merge(path)
 
-### Phase 2: Smart Merge (Core Feature)
-
-#### 2.1 Merge Strategy
-
-```
-Before (Claude-generated CLAUDE.md):
-┌─────────────────────────────────────┐
-│ # Project Guide                     │
-│                                     │
-│ This project uses Python 3.12...   │
-│ Key files: src/main.py, tests/...  │
-│                                     │
-│ ## Architecture                     │
-│ [Claude's analysis]                 │
-└─────────────────────────────────────┘
-
-After (Merged):
-┌─────────────────────────────────────┐
-│ <!--invar:managed version="5.0"-->  │
-│ # Project Development Guide         │
-│ [Invar managed content]             │
-│ <!--/invar:managed-->               │
-│                                     │
-│ <!--invar:project-->                │
-│ [Project-specific if applicable]    │
-│ <!--/invar:project-->               │
-│                                     │
-│ <!--invar:user-->                   │
-│ ## Claude Analysis (Preserved)      │  ← Original content moved here
-│                                     │
-│ This project uses Python 3.12...   │
-│ Key files: src/main.py, tests/...  │
-│                                     │
-│ ## Architecture                     │
-│ [Claude's analysis]                 │
-│ <!--/invar:user-->                  │
-└─────────────────────────────────────┘
+        case "absent":
+            return create_claude_md(path)
 ```
 
-#### 2.2 Implementation
+#### 1.3 Output Examples
+
+```bash
+# First time initialization
+$ invar init
+✓ Initialized Invar v5.0
+  Created: INVAR.md, CLAUDE.md, .invar/, .claude/skills/
+
+⚠ Note: If you run 'claude /init' later, just run 'invar init' again.
+
+# Already initialized, up to date
+$ invar init
+✓ Invar v5.0 configured (no changes needed)
+
+# Already initialized, needs version update
+$ invar init
+✓ Updated Invar v5.0
+  Refreshed: CLAUDE.md (managed section)
+  Refreshed: .claude/skills/* (skill sections)
+  Preserved: All user content
+
+# After claude /init overwrote CLAUDE.md
+$ invar init
+✓ Recovered Invar v5.0
+  Restored: CLAUDE.md regions
+  Preserved: Claude analysis → user section
+
+  Review the merged content in CLAUDE.md
+
+# Partial corruption detected
+$ invar init
+✓ Repaired Invar v5.0
+  Fixed: CLAUDE.md (malformed regions)
+  Recovered: User content from corrupted file
+
+# Preview mode
+$ invar init --check
+Would update:
+  - CLAUDE.md (managed section v4.0 → v5.0)
+  - .claude/skills/develop/SKILL.md (refresh)
+
+Run 'invar init' to apply.
+```
+
+### Phase 2: Smart Merge Implementation
+
+#### 2.1 Merge Strategy by State
 
 ```python
 @pre(lambda content: isinstance(content, str))
-@post(lambda result: "<!--invar:managed-->" in result)
+@post(lambda result: is_valid_region_structure(result))
 def merge_claude_md(
     existing_content: str,
     managed_template: str,
-    project_additions: str | None = None
+    project_additions: str | None = None,
+    state: Literal["intact", "partial", "missing"]
 ) -> str:
     """
-    Merge existing CLAUDE.md content with Invar regions.
-
-    Args:
-        existing_content: Current CLAUDE.md (possibly Claude-generated)
-        managed_template: Invar managed section template
-        project_additions: Optional project-specific content
-
-    Returns:
-        Merged content with all regions
-
-    >>> merge_claude_md("# My Project\\nSome content", "<managed>", None)
-    '...<!--invar:managed-->...<managed>...<!--invar:user-->...# My Project...'
+    Smart merge based on detected state.
     """
-    # Check if already has Invar regions
-    if "<!--invar:managed-->" in existing_content:
-        # Extract and preserve user region content
-        existing_user = extract_region(existing_content, "user")
-        # Rebuild with fresh managed + preserved user
-        return build_claude_md(managed_template, project_additions, existing_user)
+    match state:
+        case "intact":
+            # Just update managed, preserve user exactly
+            existing_user = extract_region(existing_content, "user")
+            return build_claude_md(managed_template, project_additions, existing_user)
 
-    # No Invar regions - treat entire content as user content
-    user_content = f"## Claude Analysis (Preserved)\n\n{existing_content}"
-    return build_claude_md(managed_template, project_additions, user_content)
-```
+        case "partial":
+            # Corruption: try to salvage user content
+            existing_user = try_extract_region(existing_content, "user")
+            non_invar = strip_invar_markers(existing_content)
 
-#### 2.3 Conflict Markers for Manual Review
+            if existing_user:
+                # Found user region, check for extra content outside
+                extra = get_content_outside_regions(existing_content)
+                combined = existing_user
+                if extra.strip():
+                    combined += f"\n\n## Recovered Content\n\n{extra}"
+            else:
+                # No user region found, treat cleaned content as user
+                combined = f"## Recovered Content\n\n{non_invar}"
 
-When content seems complex (multiple headers, code blocks), add markers:
+            return build_claude_md(managed_template, project_additions, combined)
 
-```markdown
-<!--invar:user-->
-<!-- ======================================== -->
+        case "missing":
+            # No Invar markers at all - treat entire file as user content
+            user_content = format_preserved_content(existing_content)
+            return build_claude_md(managed_template, project_additions, user_content)
+
+
+def format_preserved_content(content: str) -> str:
+    """Format preserved content with review markers."""
+    return f"""<!-- ======================================== -->
 <!-- MERGED CONTENT - Please review and organize -->
-<!-- Original source: claude /init -->
-<!-- Merge date: 2025-12-27 -->
+<!-- Original source: claude /init or manual edit -->
+<!-- Merge date: {date.today().isoformat()} -->
 <!-- ======================================== -->
 
 ## Claude Analysis (Preserved)
 
-[original content...]
+{content}
 
 <!-- ======================================== -->
 <!-- END MERGED CONTENT -->
-<!-- ======================================== -->
-<!--/invar:user-->
+<!-- ======================================== -->"""
+
+
+def strip_invar_markers(content: str) -> str:
+    """Remove all Invar region markers, keeping content."""
+    import re
+    # Remove all <!--invar:xxx--> and <!--/invar:xxx--> markers
+    cleaned = re.sub(r'<!--/?invar:\w+[^>]*-->', '', content)
+    # Clean up excessive blank lines
+    cleaned = re.sub(r'\n{3,}', '\n\n', cleaned)
+    return cleaned.strip()
+
+
+def is_valid_region_structure(content: str) -> bool:
+    """Validate that all regions are properly opened and closed."""
+    import re
+    opens = re.findall(r'<!--invar:(\w+)', content)
+    closes = re.findall(r'<!--/invar:(\w+)', content)
+    return opens == closes  # Order and count must match
 ```
 
-### Phase 3: Pre-commit Protection (Optional)
+#### 2.2 Visual Merge Result
 
-#### 3.1 Hook Definition
+```
+Before (Claude-generated or corrupted):
+┌─────────────────────────────────────┐
+│ # Project Guide                     │
+│ <!--invar:managed-->                │  ← Partial marker (no close)
+│ This project uses Python 3.12...   │
+│ Key files: src/main.py, tests/...  │
+│                                     │
+│ ## Architecture                     │
+│ [Claude's analysis]                 │
+└─────────────────────────────────────┘
+
+After (Cleaned and merged):
+┌─────────────────────────────────────┐
+│ <!--invar:managed version="5.0"-->  │
+│ # Project Development Guide         │
+│ [Fresh Invar managed content]       │
+│ <!--/invar:managed-->               │
+│                                     │
+│ <!--invar:project-->                │
+│ <!--/invar:project-->               │
+│                                     │
+│ <!--invar:user-->                   │
+│ <!-- MERGED CONTENT ... -->         │
+│ ## Recovered Content                │
+│                                     │
+│ # Project Guide                     │  ← Original preserved
+│ This project uses Python 3.12...   │
+│ ...                                 │
+│ <!-- END MERGED CONTENT -->         │
+│ <!--/invar:user-->                  │
+└─────────────────────────────────────┘
+```
+
+### Phase 3: Backwards Compatibility
+
+#### 3.1 Update as Alias
+
+```python
+@app.command()
+def update(
+    path: Path = Path("."),
+    check: bool = False,
+    force: bool = False,
+):
+    """
+    Alias for 'invar init'.
+
+    Maintained for backwards compatibility.
+    Both commands are now idempotent and do the same thing.
+    """
+    console.print("[dim]Note: 'update' is now an alias for 'init'[/dim]")
+    return init(path=path, check=check, force=force)
+```
+
+#### 3.2 Deprecation Timeline
+
+| Phase | Behavior |
+|-------|----------|
+| v5.1 | `update` works, shows note |
+| v6.0 | `update` shows deprecation warning |
+| v7.0 | `update` removed (optional) |
+
+### Phase 4: Pre-commit Protection (Optional)
 
 ```yaml
 # .pre-commit-config.yaml
 - id: invar-claude-md-regions
-  name: CLAUDE.md Region Protection
-  entry: bash -c 'if [ -f CLAUDE.md ] && ! grep -q "<!--invar:managed-->" CLAUDE.md; then echo "Warning: CLAUDE.md missing Invar regions. Run: invar update"; exit 1; fi'
+  name: CLAUDE.md Region Check
+  entry: bash -c 'if [ -f CLAUDE.md ] && ! grep -q "<!--invar:managed-->" CLAUDE.md; then echo "⚠ CLAUDE.md missing Invar regions. Run: invar init"; exit 1; fi'
   language: system
   files: ^CLAUDE\.md$
   pass_filenames: false
 ```
 
-#### 3.2 Warning Message
+### Phase 5: Skills Directory Handling
 
-```
-CLAUDE.md Region Protection.............................................Failed
-- hook id: invar-claude-md-regions
-- exit code: 1
-
-Warning: CLAUDE.md missing Invar regions.
-
-This usually happens after running 'claude /init'.
-Run 'invar update' to restore Invar configuration.
-
-Your content will be preserved in the <!--invar:user--> section.
-```
-
-### Phase 4: Skills Directory Handling
-
-#### 4.1 Detection
+Same logic applies to `.claude/skills/`:
 
 ```python
-def detect_skill_conflicts(skills_dir: Path) -> list[SkillConflict]:
+def handle_skills(skills_dir: Path, force: bool = False) -> list[str]:
     """
-    Detect conflicts in .claude/skills/ directory.
+    Check and update skill files.
 
-    Conflicts occur when:
-    - Invar skill file exists without <!--invar:skill--> marker
-    - File modification time suggests external modification
+    Returns list of actions taken.
     """
-    conflicts = []
+    actions = []
     for skill_name in ["develop", "review", "investigate", "propose"]:
         skill_file = skills_dir / skill_name / "SKILL.md"
-        if skill_file.exists():
-            content = skill_file.read_text()
-            if "<!--invar:skill-->" not in content:
-                conflicts.append(SkillConflict(
-                    skill=skill_name,
-                    reason="missing_marker",
-                    file=skill_file
-                ))
-    return conflicts
+
+        if not skill_file.exists():
+            create_skill(skill_file, skill_name)
+            actions.append(f"Created: {skill_file}")
+
+        elif "<!--invar:skill-->" not in skill_file.read_text():
+            # Missing markers - merge with template
+            merge_skill(skill_file, skill_name)
+            actions.append(f"Recovered: {skill_file}")
+
+        elif force or skill_outdated(skill_file):
+            update_skill(skill_file, skill_name)
+            actions.append(f"Updated: {skill_file}")
+
+    return actions
 ```
 
-#### 4.2 Resolution
+---
 
-Skills are simpler than CLAUDE.md - they can be regenerated:
+## Command Reference
+
+### `invar init`
 
 ```
-⚠ Skill files missing Invar markers:
-  - .claude/skills/develop/SKILL.md
-  - .claude/skills/review/SKILL.md
+Usage: invar init [OPTIONS] [PATH]
 
-  Options:
-  A: Regenerate from template (recommended)
-  B: Skip - Keep current files
+Initialize or update Invar configuration (idempotent).
 
-  Choice? [A/B]
+Arguments:
+  PATH    Project directory [default: .]
+
+Options:
+  --check    Preview changes without applying
+  --force    Update even if already current
+  --reset    Dangerous: discard all user content
+  --claude   Run 'claude /init' first, then setup Invar
+  --help     Show this message
 ```
+
+### Behavior Matrix
+
+| State | --check | Default | --force | --reset |
+|-------|---------|---------|---------|---------|
+| Not initialized | Report | Full setup | Full setup | Full setup |
+| Intact + current | Report nothing | No changes | Refresh | Full reset |
+| Intact + outdated | Report updates | Update managed | Update managed | Full reset |
+| Partial | Report repair | Clean + rebuild | Clean + rebuild | Full reset |
+| Missing regions | Report merge | Smart merge | Smart merge | Full reset |
+
+---
 
 ## Implementation Plan
 
 | Phase | Scope | Effort | Priority |
 |-------|-------|--------|----------|
-| 1.1 | Detection logic in `invar update` | Low | High |
-| 1.2 | Warning output and prompts | Low | High |
-| 1.3 | Init-time warning | Low | High |
-| 2.1-2.3 | Smart merge implementation | Medium | High |
-| 3.1-3.2 | Pre-commit hook | Low | Medium |
-| 4.1-4.2 | Skills handling | Low | Medium |
+| 1 | Unified command + state detection | Medium | High |
+| 2 | Smart merge (all states) | Medium | High |
+| 3 | Backwards compat (update alias) | Low | High |
+| 4 | Pre-commit hook | Low | Medium |
+| 5 | Skills handling | Low | Medium |
 
-**Recommended order:** 1.1 → 1.2 → 2.1 → 1.3 → 2.2 → 2.3 → 3.1 → 4.1
+**Recommended order:** 1 → 2 → 3 → 4 → 5
+
+---
 
 ## Success Criteria
 
-1. **Detection**: `invar update` correctly identifies overwritten CLAUDE.md
-2. **Recovery**: User can restore Invar regions with one command
-3. **Preservation**: Claude-generated content is not lost
-4. **Prevention**: Users are warned before/after potential conflicts
-5. **Transparency**: Merge process is visible and reviewable
+1. **Single Command**: `invar init` handles all scenarios
+2. **Idempotent**: Safe to run multiple times
+3. **No Data Loss**: User content always preserved
+4. **Clear Output**: User knows what happened
+5. **Backwards Compatible**: `invar update` still works
+
+---
 
 ## Alternative Approaches Considered
 
-### A: Separate Files
+### A: Keep Two Commands
+
+Keep `init` and `update` separate.
+
+**Pros:** Semantic clarity
+**Cons:** User confusion, decision burden
+
+**Decision:** Rejected - violates zero-decision principle
+
+### B: Separate Files
 
 Use `INVAR-CLAUDE.md` instead of modifying `CLAUDE.md`.
 
 **Pros:** No conflict possible
-**Cons:** Fragmented configuration, two files to maintain
+**Cons:** Fragmented configuration
 
-**Decision:** Rejected - fragmentation is worse than occasional merge
+**Decision:** Rejected - fragmentation worse than merge
 
-### B: Claude /init Integration
+### C: Claude /init Integration
 
 Modify Claude Code to recognize Invar regions.
 
 **Pros:** Perfect integration
-**Cons:** Requires Claude Code changes, out of our control
+**Cons:** Out of our control
 
-**Decision:** Not feasible - we can't modify Claude Code
+**Decision:** Not feasible
 
-### C: File Lock
-
-Prevent any modification to CLAUDE.md except through Invar.
-
-**Pros:** Absolute protection
-**Cons:** Too restrictive, blocks legitimate edits
-
-**Decision:** Rejected - users need to edit CLAUDE.md
-
-## Open Questions
-
-1. Should merge be automatic or always prompt?
-2. How to handle `.mcp.json` conflicts?
-3. Should we backup CLAUDE.md before merge?
+---
 
 ## References
 
 - DX-49: Protocol distribution unification (region architecture)
 - DX-54: Agent native context management (CLAUDE.md structure)
-- Lesson #19: Enforcement timing matters (pre-commit vs runtime)
+- DX-06: Smart Guard (zero-decision tools)
+- Lesson #11: Agent-Native means no unnecessary choices
+- Lesson #19: Enforcement timing matters
