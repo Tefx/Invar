@@ -107,3 +107,31 @@ skip = [".invar/context.md"]
 # For Invar project only
 syntax = "mcp"
 inject_project_additions = true
+
+# =============================================================================
+# DX-56: Sync Configuration (Unified Sync Engine)
+# =============================================================================
+
+[sync]
+# Files that are fully managed (overwrite completely on sync)
+fully_managed = [
+    "INVAR.md",
+]
+
+# Files with region-based updates (update managed, preserve user)
+region_managed = [
+    "CLAUDE.md",
+    ".claude/skills/develop/SKILL.md",
+    ".claude/skills/investigate/SKILL.md",
+    ".claude/skills/propose/SKILL.md",
+    ".claude/skills/review/SKILL.md",
+]
+
+# Files created once, never updated by sync
+create_only = [
+    ".invar/context.md",
+    ".invar/examples/",
+    ".pre-commit-config.yaml",
+    ".claude/commands/audit.md",
+    ".claude/commands/guard.md",
+]

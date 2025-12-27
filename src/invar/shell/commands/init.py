@@ -4,6 +4,7 @@ Init command for Invar.
 Shell module: handles project initialization.
 DX-21B: Added --claude flag for Claude Code integration.
 DX-55: Unified idempotent init command with smart merge.
+DX-56: Uses unified template sync engine for file generation.
 """
 
 from __future__ import annotations
@@ -16,12 +17,13 @@ import typer
 from returns.result import Failure, Success
 from rich.console import Console
 
+from invar.core.sync_helpers import SyncConfig
 from invar.core.template_parser import ClaudeMdState
 from invar.shell.commands.merge import (
     ProjectState,
     detect_project_state,
-    merge_claude_md,
 )
+from invar.shell.commands.template_sync import sync_templates
 from invar.shell.mcp_config import (
     detect_available_methods,
     generate_mcp_json,
@@ -299,43 +301,7 @@ def init(
             console.print(f"[green]✓[/green] Invar v{__version__} configured")
             return
 
-    if action == "recover":
-        console.print(f"\n[yellow]Detected:[/yellow] CLAUDE.md {state.claude_md_state.state} state")
-        console.print("[bold]Recovering Invar configuration...[/bold]")
-        merge_result = merge_claude_md(path, state.claude_md_state)
-        if isinstance(merge_result, Success):
-            action_name = merge_result.unwrap()
-            console.print(f"[green]✓[/green] CLAUDE.md {action_name}")
-            if action_name == "merged":
-                console.print("[dim]Review the merged content in CLAUDE.md[/dim]")
-        else:
-            console.print(f"[yellow]Warning:[/yellow] {merge_result.failure()}")
-
-    # DX-55: Handle full_init with existing CLAUDE.md (A2 scenario)
-    if action == "full_init":
-        claude_md = path / "CLAUDE.md"
-        if claude_md.exists():
-            content = claude_md.read_text()
-            if content.strip() and "<!--invar:" not in content:
-                # Existing content without Invar regions - merge it
-                console.print("[yellow]Detected:[/yellow] Existing CLAUDE.md without Invar regions")
-                console.print("[bold]Merging existing content...[/bold]")
-                from invar.core.template_parser import ClaudeMdState as CMS
-                merge_result = merge_claude_md(path, CMS(state="missing"))
-                if isinstance(merge_result, Success):
-                    console.print(f"[green]✓[/green] CLAUDE.md {merge_result.unwrap()}")
-            elif not content.strip():
-                # Empty file - delete so generate_from_manifest can create it
-                claude_md.unlink()
-
-    # DX-55: Handle "create" action (empty CLAUDE.md exists)
-    if action == "create":
-        claude_md = path / "CLAUDE.md"
-        if claude_md.exists() and not claude_md.read_text().strip():
-            # Empty file - delete so generate_from_manifest can create it
-            claude_md.unlink()
-
-    # DX-21B: Run claude /init if requested
+    # DX-21B: Run claude /init if requested (before sync)
     if claude:
         claude_success = run_claude_init(path)
         if claude_success:
@@ -348,37 +314,38 @@ def init(
         raise typer.Exit(1)
     config_added = config_result.unwrap()
 
-    # DX-49: Generate files from manifest (CLI syntax for external projects)
+    # DX-56: Use unified sync engine for file generation
     console.print("\n[bold]Creating Invar files...[/bold]")
-    init_files = [
-        "INVAR.md",
-        ".invar/context.md",
-        ".invar/examples/",
-        ".pre-commit-config.yaml",
-        ".claude/commands/audit.md",
-        ".claude/commands/guard.md",
-    ]
 
-    # Skills define the workflow - optional for non-Claude editors (e.g., Cursor)
-    if skills:
-        init_files.extend([
-            ".claude/skills/develop/SKILL.md",
-            ".claude/skills/investigate/SKILL.md",
-            ".claude/skills/propose/SKILL.md",
-            ".claude/skills/review/SKILL.md",
-        ])
+    # Check for project-additions.md
+    has_project_additions = (path / ".invar" / "project-additions.md").exists()
 
-    # DX-55: Create CLAUDE.md if not already handled by recovery
-    # Also handles case where binary content was deleted during recovery
-    if not (path / "CLAUDE.md").exists():
-        init_files.append("CLAUDE.md")
+    # Build skip patterns for --no-skills
+    skip_patterns: list[str] = []
+    if not skills:
+        skip_patterns.append(".claude/skills/*")
 
-    result = generate_from_manifest(path, syntax="cli", files_to_generate=init_files)
-    if isinstance(result, Success):
-        for generated_file in result.unwrap():
-            console.print(f"[green]Created[/green] {generated_file}")
-    else:
+    sync_config = SyncConfig(
+        syntax="cli",
+        inject_project_additions=has_project_additions,
+        force=force,
+        check=False,  # Already handled above
+        reset=reset,
+        skip_patterns=skip_patterns,
+    )
+
+    # DX-56: Run unified sync engine (handles DX-55 state detection internally)
+    result = sync_templates(path, sync_config)
+    if isinstance(result, Failure):
         console.print(f"[yellow]Warning:[/yellow] {result.failure()}")
+    else:
+        report = result.unwrap()
+        for file in report.created:
+            console.print(f"[green]Created[/green] {file}")
+        for file in report.updated:
+            console.print(f"[cyan]Updated[/cyan] {file}")
+        for error in report.errors:
+            console.print(f"[yellow]Warning:[/yellow] {error}")
 
     # Create .invar directory structure (for proposals template - not in manifest)
     invar_dir = path / ".invar"

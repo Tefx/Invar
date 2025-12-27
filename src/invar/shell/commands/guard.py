@@ -445,10 +445,21 @@ from invar.shell.commands.update import update
 
 app.command()(init)
 app.command()(update)
-app.command("sync-self")(sync_self)  # DX-49: Invar project sync
 app.command()(test)
 app.command()(verify)
 app.command()(mutate)  # DX-28: Mutation testing
+
+# DX-56: Create dev subcommand group for developer commands
+dev_app = typer.Typer(
+    name="dev",
+    help="Developer commands for Invar project development",
+    add_completion=False,
+)
+dev_app.command("sync")(sync_self)  # DX-56: renamed from sync-self
+app.add_typer(dev_app)
+
+# DX-56: Keep sync-self as alias for backward compatibility (deprecated)
+app.command("sync-self", hidden=True)(sync_self)
 
 
 if __name__ == "__main__":

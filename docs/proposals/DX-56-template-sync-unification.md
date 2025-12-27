@@ -1,8 +1,10 @@
 # DX-56: Template Sync Unification
 
-**Status:** Draft
+**Status:** Complete
 **Created:** 2025-12-27
+**Updated:** 2025-12-27
 **Dependencies:** DX-49 (SSOT), DX-55 (Idempotent Init)
+**Test Report:** [DX-56-test-report.md](../test-reports/DX-56-test-report.md)
 
 ## Problem Statement
 
@@ -382,6 +384,154 @@ invar template vars
 | Init regression | Low | High | DX-55 test suite |
 | Manifest format changes | Low | Medium | Version in manifest |
 | CLI breaking change (rename) | N/A | Low | Alias for 1 version |
+
+---
+
+## Detailed Implementation Plan
+
+### Step 1: Create Unified Sync Engine (`template_sync.py`)
+
+**File:** `src/invar/shell/commands/template_sync.py`
+
+```python
+@dataclass
+class SyncConfig:
+    """Configuration for template sync operation."""
+    syntax: Literal["cli", "mcp"] = "cli"
+    inject_project_additions: bool = False
+    force: bool = False
+    check: bool = False  # Preview only
+    reset: bool = False  # Discard user content
+
+@dataclass
+class SyncReport:
+    """Result of sync operation."""
+    created: list[str]
+    updated: list[str]
+    skipped: list[str]
+    errors: list[str]
+
+def sync_templates(path: Path, config: SyncConfig) -> Result[SyncReport, str]:
+    """Unified template sync engine.
+
+    Handles:
+    1. State detection (DX-55: intact/partial/missing/absent)
+    2. Manifest-driven file list
+    3. Region-based updates (managed/user/project)
+    4. Syntax switching (CLI vs MCP)
+    5. Project additions injection
+    """
+```
+
+### Step 2: Manifest Extensions
+
+**File:** `src/invar/templates/manifest.toml`
+
+Add file categorization for sync engine:
+
+```toml
+[sync]
+# Files that are fully managed (overwrite completely)
+fully_managed = [
+    "INVAR.md",
+    ".invar/examples/",
+]
+
+# Files with region-based updates
+region_managed = [
+    "CLAUDE.md",
+    ".claude/skills/*/SKILL.md",
+]
+
+# Files created once, never updated
+create_only = [
+    ".invar/context.md",
+    ".pre-commit-config.yaml",
+    ".claude/commands/",
+]
+```
+
+### Step 3: Refactor Commands
+
+**init.py** becomes thin wrapper:
+```python
+def init(...):
+    config = SyncConfig(
+        syntax="cli",
+        inject_project_additions=has_project_additions(path),
+        force=force,
+        check=check,
+        reset=reset,
+    )
+    result = sync_templates(path, config)
+    # Handle MCP config, hooks, etc.
+```
+
+**dev/sync.py** (renamed from sync_self.py):
+```python
+def sync(...):
+    if not is_invar_project(path):
+        raise error
+    config = SyncConfig(
+        syntax="mcp",
+        inject_project_additions=True,
+        force=force,
+        check=check,
+    )
+    result = sync_templates(path, config)
+```
+
+### Step 4: CLI Structure
+
+```
+invar/
+├── init          # Main command (uses sync engine)
+├── update        # Alias for init
+├── dev/          # Developer commands (new group)
+│   └── sync      # Invar project sync (renamed from sync-self)
+└── template/     # Template diagnostics (optional)
+    ├── diff      # Show differences
+    └── vars      # Show variables
+```
+
+### Step 5: Test Matrix
+
+| Scenario | init | dev sync | Expected |
+|----------|------|----------|----------|
+| Fresh project | ✓ | N/A | All files created |
+| Invar project | N/A | ✓ | MCP syntax, project additions |
+| CLAUDE.md intact | ✓ | ✓ | Update managed only |
+| CLAUDE.md partial | ✓ | ✓ | DX-55 recovery |
+| CLAUDE.md missing | ✓ | ✓ | Merge as preserved |
+| CLAUDE.md absent | ✓ | ✓ | Create fresh |
+| --force | ✓ | ✓ | Refresh managed |
+| --check | ✓ | ✓ | Preview only |
+| project-additions | ✓ | ✓ | Inject into project region |
+
+---
+
+## Implementation Progress
+
+### Completed
+- [x] Analysis of current implementation
+- [x] Detailed implementation plan
+- [x] Create template_sync.py engine
+- [x] Manifest extensions for sync config
+- [x] Refactor sync_self.py to thin wrapper
+- [x] Refactor init.py to use sync engine
+- [x] CLI restructure (`invar dev sync`)
+- [x] Test suite (16 unit tests)
+- [x] Isolated subagent testing (4 scenarios)
+- [x] Test report generated
+
+### Files Changed
+- `src/invar/core/sync_helpers.py` - Created (pure logic)
+- `src/invar/shell/commands/template_sync.py` - Created (sync engine)
+- `src/invar/shell/commands/sync_self.py` - Refactored (~110 lines)
+- `src/invar/shell/commands/init.py` - Refactored (uses sync engine)
+- `src/invar/shell/commands/guard.py` - Added dev subcommand
+- `src/invar/templates/manifest.toml` - Added sync config
+- `tests/integration/test_dx56_sync.py` - Created (16 tests)
 
 ---
 
