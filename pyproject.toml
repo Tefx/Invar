@@ -10,7 +10,7 @@ packages = ["src/invar"]
 
 [project]
 name = "invar-tools"
-version = "1.3.2"
+version = "1.3.3"
 description = "AI-native software engineering tools with design-by-contract verification"
 readme = "README.md"
 license = "GPL-3.0-or-later"
