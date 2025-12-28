@@ -14,6 +14,7 @@ This directory contains design proposals for Invar development.
 
 | ID | Name | Status | Description |
 |----|------|--------|-------------|
+| DX-61 | functional-pattern-guidance | Draft | Teach agents functional patterns (NewType, Validation, etc.) |
 | DX-60 | structured-rules-ssot | Draft | Optimize DX-57 token usage (1,800t → 600t) |
 | DX-25 | functional-patterns | Defer | Functional patterns enhancement |
 | DX-29 | pure-content-detection | Defer | Pure content detection (`@invar:module` marker) |
