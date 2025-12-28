@@ -73,14 +73,14 @@ Guard passed.
 │  │   └── dependencies = ["invar-runtime"]  ← Ships with code     │
 │  │                                                                │
 │  └── Development (never enters production)                        │
-│      └── uvx --from invar-tools invar guard  ← Guides agents     │
+│      └── uvx invar-tools guard  ← Guides agents     │
 └───────────────────────────────────────────────────────────────────┘
 ```
 
 | Package | Purpose | Install |
 |---------|---------|---------|
 | **invar-runtime** | Runtime contracts. Add to your project dependencies. | `pip install invar-runtime` |
-| **invar-tools** | Development tools. Guides agents during development. | `uvx --from invar-tools invar <cmd>` |
+| **invar-tools** | Development tools. Guides agents during development. | `uvx invar-tools <cmd>` |
 
 **Why uvx?** Always uses latest version, doesn't pollute project dependencies, auto-detects your project's venv.
 
@@ -91,7 +91,7 @@ Guard passed.
 cd your-project
 
 # 2. Initialize with Claude Code (full experience)
-uvx --from invar-tools invar init --claude
+uvx invar-tools init --claude
 
 # 3. Add runtime contracts to your project
 pip install invar-runtime
@@ -106,10 +106,10 @@ pip install invar-runtime
 cd your-project
 
 # Update managed files, preserve your customizations
-uvx --from invar-tools invar init --claude
+uvx invar-tools init --claude
 
 # Or without Claude Code integration
-uvx --from invar-tools invar init
+uvx invar-tools init
 ```
 
 Invar's init is idempotent—safe to run multiple times. It detects existing configuration and updates only managed regions.

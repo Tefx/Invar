@@ -100,7 +100,7 @@ For static analysis and verification tools, install `invar-tools`:
 ```bash
 pip install invar-tools
 # or use without installing:
-uvx --from invar-tools invar guard
+uvx invar-tools guard
 ```
 
 ## License
