@@ -117,7 +117,9 @@ nonempty_pattern = true     # Detect defensive empty checks
 
 ---
 
-## Proposed Rules
+## Part 1: Core Patterns (P0)
+
+These 5 rules have the highest detection reliability, impact, and universal applicability.
 
 ### Rule 1: `suggest_newtype`
 
@@ -186,7 +188,61 @@ SUGGEST: Defensive empty check in 'process'
 
 **Implementation:** Pattern matching on AST
 
-### Rule 4: `suggest_smart_constructor`
+### Rule 4: `suggest_literal_type`
+
+**Detects:** String/int parameters with limited valid values
+
+```python
+# Triggers suggestion:
+def set_log_level(level: str) -> None:
+    if level not in ("debug", "info", "warning", "error"):
+        raise ValueError(f"Invalid level: {level}")
+    ...
+
+# Suggestion:
+SUGGEST: Parameter 'level' has limited valid values
+  → Consider Literal type for compile-time safety
+  → from typing import Literal
+  → LogLevel = Literal["debug", "info", "warning", "error"]
+  → def set_log_level(level: LogLevel) -> None:
+```
+
+**Implementation:** AST pattern matching on `not in (literal, ...)` or if-elif chains with string equality
+
+### Rule 5: `suggest_exhaustive_match`
+
+**Detects:** Match statements without exhaustive handling
+
+```python
+# Triggers suggestion:
+class Status(Enum):
+    PENDING = "pending"
+    RUNNING = "running"
+    DONE = "done"
+    FAILED = "failed"
+
+def handle(status: Status) -> str:
+    match status:
+        case Status.PENDING: return "waiting"
+        case Status.RUNNING: return "in progress"
+        # Missing DONE and FAILED!
+
+# Suggestion:
+SUGGEST: Match on Status is not exhaustive
+  → Missing cases: DONE, FAILED
+  → Add: case _: assert_never(status)
+  → from typing import assert_never
+```
+
+**Implementation:** Compare Enum member count vs match case count
+
+---
+
+## Part 2: Extended Best Practices (P1/P2)
+
+### Category A: Type Safety Patterns
+
+#### Rule 6: `suggest_smart_constructor`
 
 **Detects:** Dataclass with validation logic in methods
 
@@ -211,32 +267,7 @@ SUGGEST: Dataclass 'Symbol' has external validation
 
 **Implementation:** Detect dataclass + validation method pattern
 
----
-
-## Part 2: Extended Best Practices
-
-### Category A: Type Safety Patterns
-
-#### Rule 5: `suggest_literal_type`
-
-**Detects:** String/int parameters with limited valid values
-
-```python
-# Triggers suggestion:
-def set_log_level(level: str) -> None:
-    if level not in ("debug", "info", "warning", "error"):
-        raise ValueError(f"Invalid level: {level}")
-    ...
-
-# Suggestion:
-SUGGEST: Parameter 'level' has limited valid values
-  → Consider Literal type for compile-time safety
-  → from typing import Literal
-  → LogLevel = Literal["debug", "info", "warning", "error"]
-  → def set_log_level(level: LogLevel) -> None:
-```
-
-#### Rule 6: `suggest_protocol`
+#### Rule 7: `suggest_protocol`
 
 **Detects:** Functions accepting objects and only using specific methods
 
@@ -255,7 +286,7 @@ SUGGEST: Function uses .read() and .name on 'obj'
   → def process(obj: Readable) -> str:
 ```
 
-#### Rule 7: `suggest_typeguard`
+#### Rule 8: `suggest_typeguard`
 
 **Detects:** isinstance checks followed by type-specific operations
 
@@ -277,7 +308,7 @@ SUGGEST: Complex type narrowing detected
 
 ### Category B: Error Handling Patterns
 
-#### Rule 8: `suggest_structured_error`
+#### Rule 9: `suggest_structured_error`
 
 **Detects:** String error messages with embedded data
 
@@ -299,7 +330,7 @@ SUGGEST: Error message contains structured data (line number)
   → def parse(text: str) -> Result[AST, ParseError]:
 ```
 
-#### Rule 9: `suggest_error_context`
+#### Rule 10: `suggest_error_context`
 
 **Detects:** Re-raising exceptions without context
 
@@ -316,31 +347,6 @@ SUGGEST: Exception re-raised without context
   → Add context for debugging
   → except Exception as e:
   →     raise ConfigError(f"Failed to load {path}") from e
-```
-
-#### Rule 10: `suggest_exhaustive_match`
-
-**Detects:** Match statements without exhaustive handling
-
-```python
-# Triggers suggestion:
-class Status(Enum):
-    PENDING = "pending"
-    RUNNING = "running"
-    DONE = "done"
-    FAILED = "failed"
-
-def handle(status: Status) -> str:
-    match status:
-        case Status.PENDING: return "waiting"
-        case Status.RUNNING: return "in progress"
-        # Missing DONE and FAILED!
-
-# Suggestion:
-SUGGEST: Match on Status is not exhaustive
-  → Missing cases: DONE, FAILED
-  → Add: case _: assert_never(status)
-  → from typing import assert_never
 ```
 
 ---
@@ -710,22 +716,23 @@ SUGGEST: Type assertion without explanation
 
 ## Pattern Priority Matrix
 
-| Pattern | Detectability | Impact | False Positive Risk | Priority |
-|---------|--------------|--------|---------------------|----------|
-| NewType (Rule 1) | High | High | Low | P0 |
-| Validation (Rule 2) | High | High | Low | P0 |
-| NonEmpty (Rule 3) | High | Medium | Low | P0 |
-| Smart Constructor (Rule 4) | Medium | High | Medium | P1 |
-| Literal Type (Rule 5) | High | Medium | Low | P1 |
-| Structured Error (Rule 8) | Medium | High | Medium | P1 |
-| Frozen Dataclass (Rule 11) | High | Medium | Low | P1 |
-| Total Function (Rule 13) | Medium | High | Medium | P1 |
-| Early Return (Rule 15) | High | Medium | Low | P2 |
-| Generator (Rule 20) | Medium | Medium | Medium | P2 |
-| Extract Function (Rule 22) | Medium | High | High | P2 |
-| Docstring Examples (Rule 24) | High | Medium | Low | P2 |
+| Rule | Pattern | Detectability | Impact | False Positive Risk | Priority |
+|------|---------|--------------|--------|---------------------|----------|
+| 1 | NewType | High | High | Low | **P0** |
+| 2 | Validation | High | High | Low | **P0** |
+| 3 | NonEmpty | High | Medium | Low | **P0** |
+| 4 | Literal Type | High | High | Low | **P0** |
+| 5 | Exhaustive Match | High | High | Low | **P0** |
+| 6 | Smart Constructor | Medium | High | Medium | P1 |
+| 9 | Structured Error | Medium | High | Medium | P1 |
+| 11 | Frozen Dataclass | High | Medium | Low | P1 |
+| 13 | Total Function | Medium | High | Medium | P1 |
+| 15 | Early Return | High | Medium | Low | P2 |
+| 20 | Generator | Medium | Medium | Medium | P2 |
+| 22 | Extract Function | Medium | High | High | P2 |
+| 24 | Docstring Examples | High | Medium | Low | P2 |
 
-**Implementation Order:** P0 → P1 → P2
+**Implementation Order:** P0 (5 rules) → P1 (4 rules) → P2 (remaining)
 
 ---
 
@@ -770,9 +777,17 @@ Functional Patterns for Higher Quality Code
 
 These patterns are SUGGESTIONS, not requirements.
 Guard will suggest them when it detects opportunities.
+
+Part 1 - Core Patterns (P0):
+  1. NewType         - Semantic clarity for primitive types
+  2. Validation      - Error accumulation instead of fail-fast
+  3. NonEmpty        - Compile-time safety for non-empty collections
+  4. Literal         - Type-safe finite value sets
+  5. ExhaustiveMatch - Catch missing cases at compile time
 """
 
-from typing import NewType
+from typing import NewType, Literal, assert_never
+from enum import Enum
 from dataclasses import dataclass
 from returns.result import Result, Success, Failure
 
@@ -853,7 +868,52 @@ def summarize_good(items: NonEmpty[str]) -> str:
 
 
 # =============================================================================
-# Pattern 4: Smart Constructors
+# Pattern 4: Literal for Finite Value Sets
+# =============================================================================
+
+# BEFORE: Runtime error for invalid values
+def set_level_bad(level: str) -> None:
+    if level not in ("debug", "info", "warning", "error"):
+        raise ValueError(f"Invalid level: {level}")
+    ...
+
+# AFTER: Compile-time error for invalid values
+LogLevel = Literal["debug", "info", "warning", "error"]
+
+def set_level_good(level: LogLevel) -> None:
+    ...  # Type checker catches invalid values
+
+
+# =============================================================================
+# Pattern 5: Exhaustive Match
+# =============================================================================
+
+class Status(Enum):
+    PENDING = "pending"
+    RUNNING = "running"
+    DONE = "done"
+    FAILED = "failed"
+
+# BEFORE: Missing cases silently ignored
+def handle_bad(status: Status) -> str:
+    match status:
+        case Status.PENDING: return "waiting"
+        case Status.RUNNING: return "in progress"
+        # DONE and FAILED silently fall through!
+    return "unknown"
+
+# AFTER: Compiler catches missing cases
+def handle_good(status: Status) -> str:
+    match status:
+        case Status.PENDING: return "waiting"
+        case Status.RUNNING: return "in progress"
+        case Status.DONE: return "completed"
+        case Status.FAILED: return "error"
+        case _: assert_never(status)  # Catches future enum additions
+
+
+# =============================================================================
+# Pattern 6: Smart Constructors (P1)
 # =============================================================================
 
 # BEFORE: Can create invalid objects
@@ -941,7 +1001,7 @@ Tier 2 - Guidance (SUGGEST if opportunity):
 ```
 □ Create .invar/examples/functional.py
   ├── Type safety patterns (NewType, Literal, Protocol)
-  ├── Error handling patterns (Validation, structured errors)
+  ├── Error handling patterns (Validation, exhaustive match)
   ├── Immutability patterns (frozen dataclass, tuple)
   └── Function design patterns (total functions, early return)
 □ Document each pattern with before/after
@@ -954,18 +1014,18 @@ Tier 2 - Guidance (SUGGEST if opportunity):
 □ Implement Rule 1: suggest_newtype
 □ Implement Rule 2: suggest_validation
 □ Implement Rule 3: suggest_nonempty
-□ Implement Rule 4: suggest_smart_constructor
+□ Implement Rule 4: suggest_literal_type
+□ Implement Rule 5: suggest_exhaustive_match
 □ Output format: non-blocking, educational
 □ JSON output for agent consumption
 ```
 
 ### Phase 3: Extended Suggestions - P1 (2 days)
 ```
-□ Implement Rule 5: suggest_literal_type
-□ Implement Rule 8: suggest_structured_error
+□ Implement Rule 6: suggest_smart_constructor
+□ Implement Rule 9: suggest_structured_error
 □ Implement Rule 11: suggest_frozen_dataclass
 □ Implement Rule 13: suggest_total_function
-□ Implement Rule 15: suggest_early_return
 ```
 
 ### Phase 4: Config & Polish (1 day)
@@ -996,7 +1056,7 @@ Week 1: Phase 1 (Examples only)
   → Agents learn from examples, no code changes needed
 
 Week 2: Phase 2 (P0 suggestions)
-  → 4 core patterns, maximum impact
+  → 5 core patterns, maximum impact
 
 Week 3: Phase 3 (P1 suggestions)
   → Extended patterns, refine based on feedback
