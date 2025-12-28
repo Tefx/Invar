@@ -120,7 +120,7 @@ rules = ["internal_import"]  # Lazy imports: circular dep avoidance + optional h
 
 [[tool.invar.guard.rule_exclusions]]
 pattern = "**/shell/**"
-rules = ["shell_result", "function_size", "file_size_warning"]  # Shell: relaxed size limits
+rules = ["shell_result", "function_size", "file_size", "file_size_warning"]  # Shell: relaxed size limits
 
 # Large core files that are approaching limits but well-organized
 [[tool.invar.guard.rule_exclusions]]

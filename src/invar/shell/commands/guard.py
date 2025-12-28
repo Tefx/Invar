@@ -136,12 +136,16 @@ def guard(
     suggest: bool = typer.Option(
         False, "--suggest", help="DX-61: Show functional pattern suggestions"
     ),
+    contracts_only: bool = typer.Option(
+        False, "--contracts-only", "-c", help="DX-63: Contract coverage check only"
+    ),
 ) -> None:
     """Check project against Invar architecture rules.
 
     Smart Guard: Runs static analysis + doctests + CrossHair + Hypothesis by default.
     Use --static for quick static-only checks (~0.5s vs ~5s full).
     Use --suggest to get functional pattern suggestions (NewType, Validation, etc.).
+    Use --contracts-only (-c) to check contract coverage without running tests (DX-63).
     """
     from invar.shell.guard_helpers import (
         collect_files_to_check,
@@ -164,6 +168,31 @@ def guard(
         config.strict_pure = False
     if pedantic:
         config.severity_overrides = {}
+
+    # DX-63: Contract coverage check only mode
+    if contracts_only:
+        import json
+
+        from invar.shell.contract_coverage import (
+            calculate_contract_coverage,
+            format_contract_coverage_agent,
+            format_contract_coverage_report,
+        )
+
+        coverage_result = calculate_contract_coverage(path, changed_only=changed)
+        if isinstance(coverage_result, Failure):
+            console.print(f"[red]Error:[/red] {coverage_result.failure()}")
+            raise typer.Exit(1)
+
+        report_data = coverage_result.unwrap()
+        use_agent_output = _determine_output_mode(human, agent, json_output)
+
+        if use_agent_output:
+            console.print(json.dumps(format_contract_coverage_agent(report_data)))
+        else:
+            console.print(format_contract_coverage_report(report_data))
+
+        raise typer.Exit(0 if report_data.ready_for_build else 1)
 
     # Handle --changed mode
     only_files: set[Path] | None = None
