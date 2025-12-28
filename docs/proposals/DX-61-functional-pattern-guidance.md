@@ -213,6 +213,522 @@ SUGGEST: Dataclass 'Symbol' has external validation
 
 ---
 
+## Part 2: Extended Best Practices
+
+### Category A: Type Safety Patterns
+
+#### Rule 5: `suggest_literal_type`
+
+**Detects:** String/int parameters with limited valid values
+
+```python
+# Triggers suggestion:
+def set_log_level(level: str) -> None:
+    if level not in ("debug", "info", "warning", "error"):
+        raise ValueError(f"Invalid level: {level}")
+    ...
+
+# Suggestion:
+SUGGEST: Parameter 'level' has limited valid values
+  → Consider Literal type for compile-time safety
+  → from typing import Literal
+  → LogLevel = Literal["debug", "info", "warning", "error"]
+  → def set_log_level(level: LogLevel) -> None:
+```
+
+#### Rule 6: `suggest_protocol`
+
+**Detects:** Functions accepting objects and only using specific methods
+
+```python
+# Triggers suggestion:
+def process(obj: Any) -> str:
+    return obj.read() + obj.name
+
+# Suggestion:
+SUGGEST: Function uses .read() and .name on 'obj'
+  → Consider Protocol for explicit interface
+  → class Readable(Protocol):
+  →     def read(self) -> str: ...
+  →     @property
+  →     def name(self) -> str: ...
+  → def process(obj: Readable) -> str:
+```
+
+#### Rule 7: `suggest_typeguard`
+
+**Detects:** isinstance checks followed by type-specific operations
+
+```python
+# Triggers suggestion:
+def handle(value: str | int) -> str:
+    if isinstance(value, str):
+        return value.upper()  # Type narrowing works here
+    return str(value)
+
+# Suggestion (for complex cases):
+SUGGEST: Complex type narrowing detected
+  → Consider TypeGuard for reusable type predicates
+  → def is_string_list(val: list) -> TypeGuard[list[str]]:
+  →     return all(isinstance(x, str) for x in val)
+```
+
+---
+
+### Category B: Error Handling Patterns
+
+#### Rule 8: `suggest_structured_error`
+
+**Detects:** String error messages with embedded data
+
+```python
+# Triggers suggestion:
+def parse(text: str) -> Result[AST, str]:
+    if not text:
+        return Failure(f"Parse error at line {line}: unexpected EOF")
+    ...
+
+# Suggestion:
+SUGGEST: Error message contains structured data (line number)
+  → Consider structured error type for programmatic handling
+  → @dataclass
+  → class ParseError:
+  →     message: str
+  →     line: int
+  →     column: int
+  → def parse(text: str) -> Result[AST, ParseError]:
+```
+
+#### Rule 9: `suggest_error_context`
+
+**Detects:** Re-raising exceptions without context
+
+```python
+# Triggers suggestion:
+def load_config(path: str) -> Config:
+    try:
+        return parse(read_file(path))
+    except Exception as e:
+        raise e  # Lost context: which file?
+
+# Suggestion:
+SUGGEST: Exception re-raised without context
+  → Add context for debugging
+  → except Exception as e:
+  →     raise ConfigError(f"Failed to load {path}") from e
+```
+
+#### Rule 10: `suggest_exhaustive_match`
+
+**Detects:** Match statements without exhaustive handling
+
+```python
+# Triggers suggestion:
+class Status(Enum):
+    PENDING = "pending"
+    RUNNING = "running"
+    DONE = "done"
+    FAILED = "failed"
+
+def handle(status: Status) -> str:
+    match status:
+        case Status.PENDING: return "waiting"
+        case Status.RUNNING: return "in progress"
+        # Missing DONE and FAILED!
+
+# Suggestion:
+SUGGEST: Match on Status is not exhaustive
+  → Missing cases: DONE, FAILED
+  → Add: case _: assert_never(status)
+  → from typing import assert_never
+```
+
+---
+
+### Category C: Immutability Patterns
+
+#### Rule 11: `suggest_frozen_dataclass`
+
+**Detects:** Dataclass without frozen=True that isn't mutated
+
+```python
+# Triggers suggestion:
+@dataclass
+class Config:
+    path: str
+    max_lines: int
+
+# If no mutations detected in codebase:
+SUGGEST: Dataclass 'Config' appears immutable
+  → Consider frozen=True for safety
+  → @dataclass(frozen=True)
+  → class Config:
+  → Benefits: hashable, thread-safe, prevents accidental mutation
+```
+
+#### Rule 12: `suggest_tuple_over_list`
+
+**Detects:** List literals that are never mutated
+
+```python
+# Triggers suggestion:
+VALID_EXTENSIONS = [".py", ".pyi", ".pyx"]  # Never modified
+
+# Suggestion:
+SUGGEST: List 'VALID_EXTENSIONS' is never mutated
+  → Consider tuple for immutability
+  → VALID_EXTENSIONS = (".py", ".pyi", ".pyx")
+  → Benefits: immutable, slightly faster, clearer intent
+```
+
+---
+
+### Category D: Function Design Patterns
+
+#### Rule 13: `suggest_total_function`
+
+**Detects:** Functions that raise exceptions for some inputs
+
+```python
+# Triggers suggestion:
+def divide(a: int, b: int) -> float:
+    if b == 0:
+        raise ValueError("Cannot divide by zero")
+    return a / b
+
+# Suggestion:
+SUGGEST: Function 'divide' raises for some inputs
+  → Consider total function with Result
+  → def divide(a: int, b: int) -> Result[float, str]:
+  →     if b == 0:
+  →         return Failure("Cannot divide by zero")
+  →     return Success(a / b)
+  → Benefits: Caller forced to handle error case
+```
+
+#### Rule 14: `suggest_dependency_injection`
+
+**Detects:** Functions creating their own dependencies
+
+```python
+# Triggers suggestion:
+def process_file(path: str) -> Result[Report, str]:
+    content = open(path).read()  # Creates dependency internally
+    return analyze(content)
+
+# Suggestion:
+SUGGEST: Function creates I/O dependency internally
+  → Consider dependency injection for testability
+  → def process_file(path: str, reader: Callable[[str], str] = open_and_read) -> Result[Report, str]:
+  →     content = reader(path)
+  →     return analyze(content)
+  → Benefits: Easy to test with mock reader
+```
+
+#### Rule 15: `suggest_early_return`
+
+**Detects:** Deeply nested conditionals
+
+```python
+# Triggers suggestion:
+def process(data: dict) -> Result[Output, str]:
+    if "key1" in data:
+        if data["key1"] > 0:
+            if "key2" in data:
+                # Deep nesting
+                return Success(compute(data))
+    return Failure("invalid")
+
+# Suggestion:
+SUGGEST: Deep nesting detected (3+ levels)
+  → Consider early returns for readability
+  → def process(data: dict) -> Result[Output, str]:
+  →     if "key1" not in data:
+  →         return Failure("missing key1")
+  →     if data["key1"] <= 0:
+  →         return Failure("key1 must be positive")
+  →     if "key2" not in data:
+  →         return Failure("missing key2")
+  →     return Success(compute(data))
+```
+
+---
+
+### Category E: API Design Patterns
+
+#### Rule 16: `suggest_parse_dont_validate`
+
+**Detects:** Validation that discards information
+
+```python
+# Triggers suggestion:
+def is_valid_email(s: str) -> bool:
+    return "@" in s and "." in s.split("@")[1]
+
+def send_email(to: str) -> None:
+    if not is_valid_email(to):
+        raise ValueError("Invalid email")
+    # to is still just str, not Email
+
+# Suggestion:
+SUGGEST: Validation discards type information
+  → Consider parsing to preserve validated state
+  → @dataclass(frozen=True)
+  → class Email:
+  →     _value: str
+  →     @classmethod
+  →     def parse(cls, s: str) -> Result[Email, str]:
+  →         if "@" not in s: return Failure("missing @")
+  →         return Success(cls(s))
+  → def send_email(to: Email) -> None:  # Guaranteed valid
+```
+
+#### Rule 17: `suggest_builder_pattern`
+
+**Detects:** Functions with many optional parameters
+
+```python
+# Triggers suggestion:
+def create_request(
+    url: str,
+    method: str = "GET",
+    headers: dict | None = None,
+    body: str | None = None,
+    timeout: int = 30,
+    retries: int = 3,
+    auth: tuple | None = None,
+) -> Request:
+    ...
+
+# Suggestion:
+SUGGEST: Function has 5+ optional parameters
+  → Consider builder pattern for clarity
+  → request = Request.builder(url) \
+  →     .method("POST") \
+  →     .header("Content-Type", "application/json") \
+  →     .body(data) \
+  →     .timeout(60) \
+  →     .build()
+```
+
+---
+
+### Category F: Defensive Programming
+
+#### Rule 18: `suggest_assert_invariant`
+
+**Detects:** Implicit assumptions in code
+
+```python
+# Triggers suggestion:
+def binary_search(arr: list[int], target: int) -> int:
+    # Assumes arr is sorted, but doesn't verify
+    left, right = 0, len(arr) - 1
+    ...
+
+# Suggestion:
+SUGGEST: Function assumes sorted input without verification
+  → Consider assertion for invariant
+  → def binary_search(arr: list[int], target: int) -> int:
+  →     assert arr == sorted(arr), "binary_search requires sorted input"
+  → Or use type: SortedList[int]
+```
+
+#### Rule 19: `suggest_explicit_none_handling`
+
+**Detects:** Optional parameters used without None check
+
+```python
+# Triggers suggestion:
+def greet(name: str | None = None) -> str:
+    return f"Hello, {name.upper()}"  # Crashes if name is None
+
+# Suggestion:
+SUGGEST: Optional 'name' used without None check
+  → Handle None explicitly
+  → def greet(name: str | None = None) -> str:
+  →     if name is None:
+  →         return "Hello, stranger"
+  →     return f"Hello, {name.upper()}"
+```
+
+---
+
+### Category G: Performance Patterns
+
+#### Rule 20: `suggest_generator`
+
+**Detects:** Functions building large lists that are iterated once
+
+```python
+# Triggers suggestion:
+def get_all_lines(files: list[Path]) -> list[str]:
+    result = []
+    for f in files:
+        result.extend(f.read_text().splitlines())
+    return result  # Could be huge
+
+# Usage:
+for line in get_all_lines(files):
+    process(line)
+
+# Suggestion:
+SUGGEST: Large list built and iterated once
+  → Consider generator for memory efficiency
+  → def get_all_lines(files: list[Path]) -> Iterator[str]:
+  →     for f in files:
+  →         yield from f.read_text().splitlines()
+```
+
+#### Rule 21: `suggest_early_exit`
+
+**Detects:** Loops that could exit early
+
+```python
+# Triggers suggestion:
+def has_error(items: list[Item]) -> bool:
+    errors = [item for item in items if item.is_error]
+    return len(errors) > 0  # Builds full list
+
+# Suggestion:
+SUGGEST: Loop builds list but only checks existence
+  → Consider early exit with any()
+  → def has_error(items: list[Item]) -> bool:
+  →     return any(item.is_error for item in items)
+  → Benefits: Stops at first match
+```
+
+---
+
+### Category H: Code Organization
+
+#### Rule 22: `suggest_extract_function`
+
+**Detects:** Long functions with distinct logical sections
+
+```python
+# Triggers suggestion:
+def process(data: dict) -> Report:
+    # Section 1: Validation (15 lines)
+    if "a" not in data: ...
+    if "b" not in data: ...
+    ...
+
+    # Section 2: Transformation (20 lines)
+    result = {}
+    for key in data: ...
+    ...
+
+    # Section 3: Formatting (15 lines)
+    output = ""
+    for item in result: ...
+    ...
+
+    return Report(output)
+
+# Suggestion:
+SUGGEST: Function 'process' has 3 distinct sections (50+ lines)
+  → Consider extracting into smaller functions
+  → def process(data: dict) -> Report:
+  →     validated = validate_data(data)
+  →     transformed = transform_data(validated)
+  →     return format_report(transformed)
+```
+
+#### Rule 23: `suggest_enum_over_strings`
+
+**Detects:** String comparisons with fixed set of values
+
+```python
+# Triggers suggestion:
+def get_color(status: str) -> str:
+    if status == "success":
+        return "green"
+    elif status == "warning":
+        return "yellow"
+    elif status == "error":
+        return "red"
+
+# Suggestion:
+SUGGEST: String comparison with fixed values
+  → Consider Enum for type safety
+  → class Status(Enum):
+  →     SUCCESS = "success"
+  →     WARNING = "warning"
+  →     ERROR = "error"
+  → def get_color(status: Status) -> str:
+  →     match status:
+  →         case Status.SUCCESS: return "green"
+```
+
+---
+
+### Category I: Documentation Patterns
+
+#### Rule 24: `suggest_docstring_examples`
+
+**Detects:** Public functions without doctest examples
+
+```python
+# Triggers suggestion:
+def calculate_discount(price: float, percent: float) -> float:
+    """Apply percentage discount to price."""
+    return price * (1 - percent / 100)
+
+# Suggestion:
+SUGGEST: Public function without doctest examples
+  → Add examples for documentation and testing
+  → def calculate_discount(price: float, percent: float) -> float:
+  →     """
+  →     Apply percentage discount to price.
+  →
+  →     >>> calculate_discount(100.0, 20)
+  →     80.0
+  →     >>> calculate_discount(50.0, 10)
+  →     45.0
+  →     """
+```
+
+#### Rule 25: `suggest_type_narrowing_comment`
+
+**Detects:** Type assertions without explanation
+
+```python
+# Triggers suggestion:
+def process(value: str | int | None) -> str:
+    assert value is not None  # Why can we assert this?
+    ...
+
+# Suggestion:
+SUGGEST: Type assertion without explanation
+  → Add comment explaining invariant
+  → # value is guaranteed non-None because caller validates
+  → assert value is not None
+```
+
+---
+
+## Pattern Priority Matrix
+
+| Pattern | Detectability | Impact | False Positive Risk | Priority |
+|---------|--------------|--------|---------------------|----------|
+| NewType (Rule 1) | High | High | Low | P0 |
+| Validation (Rule 2) | High | High | Low | P0 |
+| NonEmpty (Rule 3) | High | Medium | Low | P0 |
+| Smart Constructor (Rule 4) | Medium | High | Medium | P1 |
+| Literal Type (Rule 5) | High | Medium | Low | P1 |
+| Structured Error (Rule 8) | Medium | High | Medium | P1 |
+| Frozen Dataclass (Rule 11) | High | Medium | Low | P1 |
+| Total Function (Rule 13) | Medium | High | Medium | P1 |
+| Early Return (Rule 15) | High | Medium | Low | P2 |
+| Generator (Rule 20) | Medium | Medium | Medium | P2 |
+| Extract Function (Rule 22) | Medium | High | High | P2 |
+| Docstring Examples (Rule 24) | High | Medium | Low | P2 |
+
+**Implementation Order:** P0 → P1 → P2
+
+---
+
 ## Runtime Library Extensions
 
 ### Option A: Extend invar_runtime
@@ -421,36 +937,73 @@ Tier 2 - Guidance (SUGGEST if opportunity):
 
 ## Implementation Plan
 
-### Phase 1: Examples (0.5 day)
+### Phase 1: Examples (1 day)
 ```
 □ Create .invar/examples/functional.py
-□ Document patterns with before/after
+  ├── Type safety patterns (NewType, Literal, Protocol)
+  ├── Error handling patterns (Validation, structured errors)
+  ├── Immutability patterns (frozen dataclass, tuple)
+  └── Function design patterns (total functions, early return)
+□ Document each pattern with before/after
 □ Agent learns from examples immediately
 ```
 
-### Phase 2: Suggestions (1 day)
+### Phase 2: Core Suggestions - P0 (2 days)
 ```
 □ Add SUGGEST severity level to Guard
-□ Implement suggest_newtype rule
-□ Implement suggest_validation rule
+□ Implement Rule 1: suggest_newtype
+□ Implement Rule 2: suggest_validation
+□ Implement Rule 3: suggest_nonempty
+□ Implement Rule 4: suggest_smart_constructor
 □ Output format: non-blocking, educational
+□ JSON output for agent consumption
 ```
 
-### Phase 3: Config (0.5 day)
+### Phase 3: Extended Suggestions - P1 (2 days)
+```
+□ Implement Rule 5: suggest_literal_type
+□ Implement Rule 8: suggest_structured_error
+□ Implement Rule 11: suggest_frozen_dataclass
+□ Implement Rule 13: suggest_total_function
+□ Implement Rule 15: suggest_early_return
+```
+
+### Phase 4: Config & Polish (1 day)
 ```
 □ Add [guard.suggestions] to config
+  ├── enabled = true/false
+  ├── max_per_file = 3
+  ├── categories = ["type_safety", "error_handling", ...]
+  └── thresholds for each rule
 □ Allow per-project opt-in/out
-□ Threshold configuration
+□ Dismissable suggestions (don't repeat)
 ```
 
-### Phase 4: Documentation (0.5 day)
+### Phase 5: Documentation (1 day)
 ```
 □ Update INVAR.md with Tier 2 guidance
-□ Add to .invar/context.md lessons
-□ Blog post on pattern adoption
+□ Add suggestion categories to context.md
+□ Create "Pattern Adoption Guide"
+□ Measure baseline for success metrics
 ```
 
-**Total: ~2.5 days**
+**Total: ~7 days (phased rollout)**
+
+### Rollout Strategy
+
+```
+Week 1: Phase 1 (Examples only)
+  → Agents learn from examples, no code changes needed
+
+Week 2: Phase 2 (P0 suggestions)
+  → 4 core patterns, maximum impact
+
+Week 3: Phase 3 (P1 suggestions)
+  → Extended patterns, refine based on feedback
+
+Week 4: Phase 4-5 (Config & Docs)
+  → Polish, configuration, documentation
+```
 
 ---
 
