@@ -157,8 +157,9 @@ Without guardrails, AI-generated code has systematic risks:
 - **No specification** → Agent guesses intent, misses edge cases
 - **No feedback loop** → Errors accumulate undetected
 - **No workflow** → Jumps to implementation, skips validation
+- **No separation** → I/O mixed with logic, code becomes untestable
 
-Invar addresses these from the ground up.
+Invar addresses each from the ground up.
 
 ### ✅ Solution 1: Contracts as Specification
 
