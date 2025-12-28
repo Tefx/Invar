@@ -1,234 +1,511 @@
 # DX-63: Contracts-First Enforcement
 
-**Status:** Draft
+**Status:** Draft → Ready for Implementation
 **Created:** 2024-12-28
+**Updated:** 2024-12-29
 **Category:** Workflow / Agent Behavior
-**Related:** DX-51 (Phase Visibility), DX-54 (Context Management)
+**Related:** DX-51 (Phase Visibility), DX-54 (Context Management), DX-61 (Pattern Guidance)
+
+---
+
+## Executive Summary
+
+Agents consistently bypass the SPECIFY phase by batch-creating file structures and then filling implementations without contracts. Phase-level gates fail because the batch creation happens before any gate can trigger.
+
+**Solution:** Function-level gates + batch creation detection + incremental development enforcement.
+
+---
 
 ## Problem Statement
 
-Agents consistently violate the USBV workflow by skipping the SPECIFY phase, writing implementations first and retrofitting contracts afterwards. This causes:
-
-1. **Contracts become ceremony** — Added as afterthought, not design tool
-2. **Missing contracts at scale** — 81 `missing_contract` errors in DX-61 implementation
-3. **Lost design value** — Contracts don't constrain implementation, they document it
-
-### Observed Failure Pattern (DX-61 Case Study)
+### The Batch Creation Bypass
 
 ```
-Expected USBV:
-  UNDERSTAND → SPECIFY → BUILD → VALIDATE
-                  ↑
-            Write contracts FIRST
-            (they are the spec)
+DX-63 original assumption:
+  UNDERSTAND → SPECIFY (all contracts) → BUILD (all implementations) → VALIDATE
+                    ↑
+              Gate here
 
-Actual behavior:
-  UNDERSTAND → BUILD → (retrofit) SPECIFY → VALIDATE
-                  ↑
-            Write code FIRST
-            (contracts become documentation)
+Actual agent behavior:
+  Create 8 file skeletons → Fill implementations one by one → VALIDATE (81 errors)
+       ↑
+  Gate never triggered - files exist but are empty
 ```
 
-### Evidence
+### Evidence (DX-61 Case Study)
 
 | Metric | Expected | Actual |
 |--------|----------|--------|
-| Contract coverage at BUILD end | 80%+ | 0% |
-| Files created without contracts | 0 | 8 |
-| Missing contract errors | 0 | 81 |
+| Contract coverage at BUILD end | 80%+ | **0%** |
+| Files created without contracts | 0 | **8** |
+| missing_contract errors | 0 | **81** |
+| Guard rework cycles | 1 | **4+** |
 
 ### Root Causes
 
-| Cause | Why It Happens |
-|-------|----------------|
-| **Prototype mindset** | "Get it working first, polish later" |
-| **Batch creation** | Creating 8 files at once skips per-file SPECIFY |
-| **AST complexity rationalization** | "I need to figure out the implementation first" |
-| **Doctest as substitute** | Treating doctests as "good enough" specification |
-| **Context loss on continuation** | Session continuation loses workflow anchor |
+| Cause | Psychology |
+|-------|------------|
+| **Momentum** | Once coding starts, stopping for contracts feels like interruption |
+| **Uncertainty** | "AST is complex, I need to see implementation before writing contracts" |
+| **Batch mindset** | "Let me set up the structure first, then add contracts" |
+| **Context pressure** | Context filling up → rush to finish → skip contracts |
+
+### Contract Quality Degradation
+
+When contracts are added after implementation:
+
+```python
+# After implementation (descriptive - just documents behavior)
+@post(lambda result: isinstance(result, list))
+
+# Before implementation (prescriptive - constrains design)
+@post(lambda result: all(isinstance(s, PatternSuggestion) for s in result))
+@post(lambda result: all(0.0 <= s.confidence <= 1.0 for s in result))
+```
+
+Contracts-after are documentation. Contracts-before are specification.
 
 ---
 
-## Solution: SPECIFY Phase Gate
-
-### Core Principle
-
-Make SPECIFY phase **visible and gated** — agent cannot proceed to BUILD until contracts are written and shown.
-
-### Proposed Mechanism
+## Core Principles
 
 ```
-Current USBV (no enforcement):
-┌─────────────────────────────────────┐
-│ SPECIFY phase                       │
-│ ├── "Design the contracts"          │  ← Implicit, easily skipped
-│ └── No visible checkpoint           │
-└─────────────────────────────────────┘
-         ↓
-    Agent jumps to BUILD
-
-Proposed USBV (gated):
-┌─────────────────────────────────────┐
-│ SPECIFY phase                       │
-│ ├── Write @pre/@post in code        │
-│ ├── Show contracts in response      │  ← VISIBLE
-│ └── Mark TODO complete              │  ← GATED
-└─────────────────────────────────────┘
-         ↓
-    Only then proceed to BUILD
+┌─────────────────────────────────────────────────────────────┐
+│  1. Function-Level Gates > Phase-Level Gates                │
+│     Each function: SPECIFY → BUILD, not all functions batch │
+│                                                             │
+│  2. Batch Creation = Red Flag                               │
+│     Detect and warn on multi-file creation without contracts│
+│                                                             │
+│  3. Incremental Development                                 │
+│     One file → contracts → implement → verify → next file   │
+│                                                             │
+│  4. No Placeholder Contracts                                │
+│     @post(lambda: True) is trivial and must be rejected     │
+│                                                             │
+│  5. Contracts Must Constrain                                │
+│     Contracts are specification, not documentation          │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Implementation
+## Solution Components
 
-### Layer 1: SKILL.md Enforcement
+### Component 1: Guard `--contracts-only` Mode
 
-Add to `/develop` skill SPECIFY section:
-
-```markdown
-## SPECIFY Phase Requirements
-
-Before proceeding to BUILD, you MUST:
-
-1. **Write contracts first** — Add @pre/@post decorators to function signatures
-2. **Show contracts visibly** — Display contract code block in response
-3. **Mark SPECIFY complete** — TodoWrite status update
-
-### Contract-First Template
-
-For each function to implement:
-
-```python
-# Write THIS first (SPECIFY):
-@pre(lambda x, y: len(x) > 0 and y >= 0)
-@post(lambda result: result is not None)
-def function_name(x: str, y: int) -> Result:
-    """
-    Brief description.
-
-    @pre: x non-empty, y non-negative
-    @post: always returns valid Result
-    """
-    ...  # Implementation in BUILD phase
-```
-
-### Violation Check
-
-Before writing any implementation code, ask:
-- "Have I written the contracts for this function?"
-- "Have I shown the contracts in my response?"
-
-If NO → You are in BUILD without completing SPECIFY.
-```
-
-### Layer 2: TodoWrite Enforcement
-
-Require explicit SPECIFY task in TodoList:
-
-```python
-# Current (allows skipping):
-todos = [
-    {"content": "Implement feature X", "status": "in_progress", ...}
-]
-
-# Proposed (explicit phase):
-todos = [
-    {"content": "SPECIFY: Write contracts for feature X", "status": "pending", ...},
-    {"content": "BUILD: Implement feature X", "status": "pending", ...}
-]
-```
-
-### Layer 3: Guard Pre-Check (Optional)
-
-Add `--contracts-only` mode to guard:
+**Command:**
 
 ```bash
-# Before BUILD phase, run contracts check
-invar guard --contracts-only src/new_module.py
+invar guard --contracts-only [path]
+invar guard -c [path]
+```
 
-# Output:
-# ✓ 5 functions have contracts
-# ✗ 0 functions missing contracts
-# Ready for BUILD phase
+**Checks:**
+
+| Check | Description |
+|-------|-------------|
+| Coverage | X/Y functions have @pre or @post |
+| Trivial | Reject `lambda: True` and similar |
+| Batch | Warn on multiple new files with low coverage |
+
+**Output Examples:**
+
+Pass:
+```
+Contract Coverage Check
+========================================
+Files: 3 | Functions: 12
+
+Coverage: 12/12 (100%) ✓
+Trivial:  0/12 (0%)   ✓
+Batch:    No new uncovered files ✓
+
+Ready for BUILD phase.
+```
+
+Fail:
+```
+Contract Coverage Check
+========================================
+Files: 8 | Functions: 35
+
+Coverage: 5/35 (14%) ✗
+Trivial:  2/35 (6%)  ✗
+
+⚠ BATCH WARNING: 6 new files with 0% coverage
+  - src/core/patterns/p0_exhaustive.py (0/4)
+  - src/core/patterns/p0_validation.py (0/5)
+  - src/core/patterns/p0_newtype.py (0/4)
+  - src/core/patterns/p0_literal.py (0/3)
+  - src/core/patterns/p0_nonempty.py (0/4)
+  - src/core/patterns/detector.py (0/6)
+
+✗ Trivial contracts detected:
+  - src/core/utils.py:10 helper @post(lambda: True)
+  - src/core/utils.py:25 wrapper @pre(lambda x: True)
+
+Recommendation: Add contracts incrementally, one file at a time.
+
+Not ready for BUILD phase.
+```
+
+**Trivial Contract Patterns:**
+
+```python
+TRIVIAL_PATTERNS = [
+    r"lambda\s*:\s*True",           # lambda: True
+    r"lambda\s+\w+\s*:\s*True",     # lambda x: True
+    r"lambda\s+[\w,\s]+:\s*True",   # lambda x, y: True
+    r"lambda\s+\*\w+\s*:\s*True",   # lambda *args: True
+    r"lambda\s+result\s*:\s*True",  # lambda result: True (post)
+]
+```
+
+**Implementation Location:**
+
+```
+src/invar/core/coverage.py  # NEW
+├── calculate_contract_coverage(path) -> CoverageReport
+├── detect_trivial_contracts(path) -> list[TrivialContract]
+├── detect_batch_creation(path, git_status) -> BatchWarning | None
+└── format_coverage_report(report) -> str
+
+src/invar/shell/commands/guard.py
+└── add --contracts-only / -c flag
 ```
 
 ---
 
-## Visible Workflow Change
+### Component 2: SKILL.md Function-Level Gates
 
-### Current Phase Header
+Add to `/develop` skill:
+
+```markdown
+## SPECIFY Phase: Function-Level Gates
+
+### Incremental Development Rule
+
+When creating new modules:
+
+1. Create ONE file
+2. Write contracts for all functions (body = `...`)
+3. Run `invar guard -c <file>`
+4. Implement functions
+5. Run `invar guard --changed`
+6. Proceed to next file
+
+❌ Do NOT create multiple file skeletons at once
+❌ Do NOT "structure first, fill later"
+
+### TodoList Pattern: Interleaved SPECIFY/BUILD
+
+For each function:
 
 ```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📍 /develop → SPECIFY (2/4)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+□ [SPECIFY] Write contract for validate_input
+□ [BUILD] Implement validate_input
+□ [SPECIFY] Write contract for process_data
+□ [BUILD] Implement process_data
 ```
 
-### Proposed Phase Header (with gate)
+NOT:
 
 ```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📍 /develop → SPECIFY (2/4)
-   Gate: Show contracts before BUILD
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+□ [SPECIFY] Write all contracts
+□ [BUILD] Implement all functions
+```
 
-## Contracts for this phase:
+### Per-Function Checkpoint
+
+After writing each function's contract, show in response:
 
 ```python
-@pre(lambda self, tree, file_path: len(file_path) > 0)
-@post(lambda result: all(isinstance(s, PatternSuggestion) for s in result))
-def detect(self, tree: ast.AST, file_path: str) -> list[PatternSuggestion]:
+@pre(lambda items: len(items) > 0)
+@post(lambda result: result >= 0)
+def calculate_average(items: list[float]) -> float:
+    """Calculate average of non-empty list."""
     ...
 ```
 
-✓ Contracts shown. Proceeding to BUILD.
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Then run:
+```
+$ invar guard -c src/module.py
+Coverage: 1/1 (100%) ✓
+```
+
+Only then implement.
+
+### Violation Self-Check
+
+Before writing ANY implementation code, ask:
+
+1. "Have I written the contract for THIS function?"
+2. "Have I shown it in my response?"
+3. "Have I run `invar guard -c`?"
+
+If any NO → Stop. Write contract first.
 ```
 
 ---
 
-## Success Criteria
+### Component 3: Batch Creation Detection
+
+```python
+def detect_batch_creation(
+    path: Path,
+    git_status: GitStatus,
+    threshold: int = 3
+) -> BatchWarning | None:
+    """
+    Detect batch file creation without contracts.
+
+    @pre: path.exists()
+    @post: lambda result: result is None or result.file_count >= threshold
+    """
+    new_files = git_status.untracked + git_status.added
+    new_py_files = [f for f in new_files if f.suffix == '.py']
+
+    uncovered = []
+    for file in new_py_files:
+        coverage = calculate_file_coverage(file)
+        if coverage.percentage < 50:
+            uncovered.append((file, coverage))
+
+    if len(uncovered) >= threshold:
+        return BatchWarning(
+            file_count=len(uncovered),
+            files=uncovered,
+            message="Multiple new files with low contract coverage"
+        )
+
+    return None
+```
+
+---
+
+### Component 4: Layered Supervision
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Layer 1: Self-Check (SKILL.md) - 0 tokens                  │
+│  ├── Violation Self-Check questions                         │
+│  ├── Interleaved TodoList pattern                           │
+│  └── Incremental file creation rule                         │
+├─────────────────────────────────────────────────────────────┤
+│  Layer 2: Guard Check (~0.2s) - per function/file           │
+│  ├── invar guard -c (contract coverage)                     │
+│  ├── Trivial contract rejection                             │
+│  └── Batch creation warning                                 │
+├─────────────────────────────────────────────────────────────┤
+│  Layer 3: /review Adversarial Review (on-demand)            │
+│  ├── Triggered by review_suggested from Guard               │
+│  ├── Checks contract semantic quality                       │
+│  └── High-risk scenarios (security, low coverage)           │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Workflow Comparison
+
+### Before (Failure Mode)
+
+```
+User: Implement pattern detection system
+
+Agent:
+━━━ /develop → UNDERSTAND ━━━
+[Analyze requirements]
+
+━━━ /develop → SPECIFY ━━━
+"I'll create the module structure..."
+[Create 8 file skeletons at once]
+"Structure created."
+
+━━━ /develop → BUILD ━━━
+[Implement each file, no contracts]
+
+━━━ /develop → VALIDATE ━━━
+$ invar guard
+ERROR: 81 missing_contract violations
+
+[Retrofit contracts...]
+[Re-run guard...]
+[Multiple cycles]
+```
+
+### After (Correct Mode)
+
+```
+User: Implement pattern detection system
+
+Agent:
+━━━ /develop → UNDERSTAND ━━━
+[Analyze requirements, plan 8 files]
+
+TodoList:
+□ [SPECIFY] contracts for detector.py
+□ [BUILD] implement detector.py
+□ [SPECIFY] contracts for p0_exhaustive.py
+□ [BUILD] implement p0_exhaustive.py
+... (interleaved pattern)
+
+━━━ /develop → SPECIFY (detector.py) ━━━
+
+@pre(lambda self, tree, file_path: isinstance(tree, ast.AST))
+@post(lambda result: all(isinstance(s, PatternSuggestion) for s in result))
+def detect(self, tree: ast.AST, file_path: str) -> list[PatternSuggestion]:
+    ...
+
+$ invar guard -c src/core/patterns/detector.py
+Coverage: 3/3 (100%) ✓
+
+━━━ /develop → BUILD (detector.py) ━━━
+[Implement detector.py]
+
+$ invar guard --changed
+Guard passed.
+
+━━━ /develop → SPECIFY (p0_exhaustive.py) ━━━
+[Next file...]
+```
+
+---
+
+## Token/Context Analysis
+
+### Concern: Does This Increase Token Usage?
+
+**Per-function overhead:**
+- Showing contract in response: ~50-100 tokens
+- Running `guard -c`: ~20 tokens output
+- Per function total: ~70-120 tokens
+
+**But consider rework cost without DX-63:**
+
+| Scenario | Token Cost |
+|----------|------------|
+| Write 8 files without contracts | ~2000 |
+| Guard fails with 81 errors | ~1500 |
+| Read and understand errors | ~500 |
+| Retrofit contracts | ~2000 |
+| Re-run guard (multiple times) | ~1000 |
+| **Total without DX-63** | **~7000** |
+
+| Scenario | Token Cost |
+|----------|------------|
+| Write contracts incrementally (8 files) | ~800 |
+| Show contracts (8 × 100) | ~800 |
+| Run guard -c (8 times) | ~160 |
+| Implement (8 files) | ~2000 |
+| Final guard (once) | ~200 |
+| **Total with DX-63** | **~3960** |
+
+**Net effect: ~43% token reduction** for complex tasks.
+
+### Simple Task Fast Path
+
+For simple tasks (1-2 functions, single file):
+- Skip explicit contract display
+- Write implementation with inline contracts
+- Guard still verifies
+
+---
+
+## Success Metrics
 
 | Metric | Current | Target |
 |--------|---------|--------|
-| Contract coverage at BUILD end | 0% | 80%+ |
-| SPECIFY phase skipped | Frequent | Never |
-| Retrofit contracts needed | 81 | 0 |
-| Contract quality (semantic value) | Low | High |
+| Batch creation (no contracts) | Common | Detected + warned |
+| Contract coverage @ BUILD end | 0% | 90%+ |
+| Trivial contracts | Allowed | Rejected |
+| Contract quality (constraining) | Low | High |
+| Guard rework cycles | 3-5 | 1 |
+| Token efficiency | Low | High |
+
+---
+
+## Implementation Plan
+
+```
+Phase 1: Guard --contracts-only (Core)          [1 day]
+├── Create src/invar/core/coverage.py
+├── Add -c flag to guard command
+├── Implement trivial detection
+├── Implement batch warning
+└── Add MCP parameter: invar_guard(contracts_only=True)
+
+Phase 2: SKILL.md Updates                       [0.5 day]
+├── Add function-level gate rules
+├── Add interleaved TodoList pattern
+├── Add incremental file creation rule
+├── Add Violation Self-Check
+└── Run invar sync-self
+
+Phase 3: Documentation                          [0.5 day]
+├── Update this proposal
+├── Add workflow example to .invar/examples/
+└── Update INVAR.md if needed
+
+Total: ~2 days
+```
 
 ---
 
 ## Risks and Mitigations
 
-| Risk | Mitigation |
-|------|------------|
-| Overhead for simple tasks | Skip gate for single-function changes |
-| Contracts hard to write upfront | Allow `@post(lambda result: True)` placeholder with TODO |
-| Agent ignores gate anyway | Add hook check (DX-57 extension) |
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| Simple task overhead | Low | Single-function changes can skip gate |
+| Agent ignores warnings | Medium | Guard can be configured ERROR vs WARN |
+| Contracts hard to design upfront | Medium | Allow iteration, but must have constraining contract first |
+| Context usage increase | Low | Interleaved mode reduces rework, net decrease |
 
 ---
 
-## Dependencies
+## Open Questions (Resolved)
 
-- **DX-51** — Phase visibility (provides header format)
-- **DX-54** — Context management (provides workflow refresh)
-- **DX-57** — Hooks (optional enforcement layer)
-
----
-
-## Open Questions
-
-1. Should we require contracts before EVERY function, or only public interfaces?
-2. Should placeholder contracts (`@post(lambda: True)`) be allowed as "TODO"?
-3. How to handle Protocol classes (abstract methods with no implementation)?
+| Question | Resolution |
+|----------|------------|
+| Allow placeholder contracts? | **No.** Trivial contracts defeat the purpose. |
+| Per-function or per-phase gate? | **Per-function.** Prevents batch bypass. |
+| Supervisor agent needed? | **No.** Layered approach (self-check + Guard + /review) sufficient. |
+| Token overhead acceptable? | **Yes.** Net reduction due to avoided rework. |
 
 ---
 
-## Implementation Priority
+## Summary
 
-**Priority:** High
-**Effort:** Medium
-**Value:** High (prevents systemic workflow violations)
+```
+┌─────────────────────────────────────────────────────────────┐
+│  DX-63: Contracts-First Enforcement                         │
+│                                                             │
+│  Core Changes:                                              │
+│  1. Phase-level gates → Function-level gates                │
+│  2. Allow batch creation → Detect and warn batch creation   │
+│  3. Allow placeholder → Reject trivial contracts            │
+│  4. All-at-once SPECIFY → Interleaved SPECIFY/BUILD         │
+│                                                             │
+│  New Tools:                                                 │
+│  • invar guard --contracts-only / -c                        │
+│  • Trivial contract detection                               │
+│  • Batch creation warning                                   │
+│                                                             │
+│  Expected Outcomes:                                         │
+│  • Contracts precede implementation                         │
+│  • Contract quality improves (constraining vs descriptive)  │
+│  • Reduce rework cycles                                     │
+│  • Improve token efficiency                                 │
+│  • Batch creation bypass eliminated                         │
+└─────────────────────────────────────────────────────────────┘
+```
 
-This proposal addresses a fundamental workflow compliance issue observed during DX-61 implementation. Without enforcement, agents consistently optimize for speed over specification quality.
+---
+
+## References
+
+- DX-51: Workflow Phase Visibility
+- DX-54: Agent-Native Context Management
+- DX-61: Functional Pattern Guidance (case study)
+- DX-62: Proactive Reference Reading
