@@ -1,12 +1,16 @@
 # Invar
 
+> **From AI-generated to AI-engineered code.**
+
+Invar brings decades of software engineering best practices to AI-assisted development. Through automated verification, structured workflows, and proven design patterns, agents write code that's correct by construction—not by accident.
+
 [![PyPI version](https://badge.fury.io/py/invar-tools.svg)](https://badge.fury.io/py/invar-tools)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/License-Apache%202.0%20%2B%20GPL--3.0-blue.svg)](#license)
 
-> **Don't hope AI code is correct. Know it.**
+### What It Looks Like
 
-Invar is a verification framework for AI-assisted development. It provides contracts, verification, and a structured workflow methodology.
+An AI agent, guided by Invar, writes code with formal contracts and built-in tests:
 
 ```python
 from invar_runtime import pre, post
@@ -15,322 +19,460 @@ from invar_runtime import pre, post
 @post(lambda result: result >= 0)
 def average(items: list[float]) -> float:
     """
-    >>> average([1, 2, 3])
+    Calculate the average of a non-empty list.
+
+    >>> average([1.0, 2.0, 3.0])
+    2.0
+    >>> average([10.0])
+    10.0
+    """
+    return sum(items) / len(items)
+```
+
+Invar's Guard automatically verifies the code—the agent sees results and fixes issues without human intervention:
+
+```
+$ invar guard
+Invar Guard Report
+========================================
+No violations found.
+----------------------------------------
+Files checked: 1 | Errors: 0 | Warnings: 0
+Contract coverage: 100% (1/1 functions)
+
+Code Health: 100% ████████████████████ (Excellent)
+✓ Doctests passed
+✓ CrossHair: no counterexamples found
+✓ Hypothesis: property tests passed
+----------------------------------------
+Guard passed.
+```
+
+---
+
+## 🚀 Quick Start
+
+### 📦 Two Packages, Different Purposes
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Your Project                                                   │
+│  ├── pyproject.toml                                             │
+│  │   └── dependencies = ["invar-runtime"]  ← Ships with code   │
+│  │                                                              │
+│  └── Development (never enters production)                      │
+│      └── uvx --from invar-tools invar guard  ← Guides agents   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+| Package | Purpose | Install |
+|---------|---------|---------|
+| **invar-runtime** | Runtime contracts. Add to your project dependencies. | `pip install invar-runtime` |
+| **invar-tools** | Development tools. Guides agents during development. | `uvx --from invar-tools invar <cmd>` |
+
+**Why uvx?** Always uses latest version, doesn't pollute project dependencies, auto-detects your project's venv.
+
+### 🆕 New Project
+
+```bash
+# 1. Initialize with Claude Code (full experience)
+uvx --from invar-tools invar init --claude
+
+# 2. Add runtime contracts to your project
+pip install invar-runtime
+# Or add to pyproject.toml: dependencies = ["invar-runtime"]
+
+# 3. Start coding with AI
+```
+
+### 📁 Existing Project
+
+```bash
+# Update managed files, preserve your customizations
+uvx --from invar-tools invar init --claude
+
+# Or without Claude Code integration
+uvx --from invar-tools invar init
+```
+
+Invar's init is idempotent—safe to run multiple times. It detects existing configuration and updates only managed regions.
+
+### 💬 Example Interaction
+
+**You say:**
+> "Add a function that calculates compound interest with validation"
+
+**Agent responds (automatically guided by Invar):**
+
+```
+✓ Check-In: my-project | main | clean
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📍 /develop → SPECIFY (2/4)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+First, I'll define the contract:
+
+@pre(lambda principal, rate, years: principal > 0 and rate >= 0 and years > 0)
+@post(lambda result: result >= principal)
+def compound_interest(principal: float, rate: float, years: int) -> float:
+    ...
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📍 /develop → VALIDATE (4/4)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+$ invar guard --changed
+WARN: missing doctest example (compound_interest)
+
+[Agent adds doctest, re-runs guard]
+
+$ invar guard --changed
+Guard passed. (1 file, 0 errors)
+
+✓ Final: guard PASS | 0 errors, 0 warnings
+```
+
+**Key insight:** The agent verifies and fixes automatically. You review the result, not the process.
+
+---
+
+## Why Invar?
+
+### ⚠️ The Problem: Unconstrained AI = Unpredictable Quality
+
+Without guardrails, AI-generated code has systematic risks:
+- **No specification** → Agent guesses intent, misses edge cases
+- **No feedback loop** → Errors accumulate undetected
+- **No workflow** → Jumps to implementation, skips validation
+
+Invar addresses these from the ground up.
+
+### ✅ Solution 1: Contracts as Specification
+
+Contracts (`@pre`/`@post`) turn vague intent into verifiable specifications:
+
+```python
+# Without contracts: "calculate average" is ambiguous
+def average(items):
+    return sum(items) / len(items)  # What if empty? What's the return type?
+
+# With contracts: specification is explicit and verifiable
+@pre(lambda items: len(items) > 0)      # Precondition: non-empty input
+@post(lambda result: result >= 0)        # Postcondition: non-negative output
+def average(items: list[float]) -> float:
+    """
+    >>> average([1.0, 2.0, 3.0])
     2.0
     """
     return sum(items) / len(items)
 ```
 
----
+**Benefits:**
+- Agent knows exactly what to implement
+- Edge cases are explicit in the contract
+- Verification is automatic, not manual review
 
-## Experience Tiers
+### ✅ Solution 2: Multi-Layer Verification
 
-| Platform | Experience | Features |
-|----------|------------|----------|
-| **Claude Code** | Full | USBV workflow + skill automation + MCP integration |
-| **Cursor/Windsurf** | Basic | INVAR.md protocol + CLI verification |
-| **Other editors** | Minimal | CLI verification tools only |
+Guard provides fast feedback. Agent sees errors, fixes immediately:
 
-**Why tiers?** The skill system (`/develop`, `/review`, etc.) requires Claude Code's sub-agent capabilities. Other editors receive the protocol document and CLI tools.
+| Layer | Tool | Speed | What It Catches |
+|-------|------|-------|-----------------|
+| **Static** | Guard rules | ~0.5s | Architecture violations, missing contracts |
+| **Doctest** | pytest | ~2s | Example correctness |
+| **Property** | Hypothesis | ~10s | Edge cases via random inputs |
+| **Symbolic** | CrossHair | ~30s | Mathematical proof of contracts |
 
----
+```mermaid
+flowchart LR
+    subgraph S["⚡ Static · 0.5s"]
+        S1[Guard Rules]
+    end
+    subgraph D["🧪 Doctest · 2s"]
+        D1[Examples]
+    end
+    subgraph P["🎲 Property · 10s"]
+        P1[Hypothesis]
+    end
+    subgraph X["🔬 Symbolic · 30s"]
+        X1[CrossHair]
+    end
 
-## Installation
+    S --> D --> P --> X
 
-### Two Packages, Different Purposes
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  Your Project                                                   │
-│  ├── src/                                                       │
-│  │   └── from invar_runtime import pre, post  ← Runtime        │
-│  │                                                              │
-│  └── Development (not shipped with your code)                   │
-│      └── uvx invar-tools guard  ← Tools                         │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-| Package | Install | Purpose |
-|---------|---------|---------|
-| **invar-tools** | `uvx invar-tools <cmd>` | Development: verification, init, MCP server |
-| **invar-runtime** | `pip install invar-runtime` | Production: add to your project's dependencies |
-
-### Quick Install
-
-```bash
-# Development tools (recommended: use without installing)
-uvx invar-tools guard
-uvx invar-tools init --claude
-
-# Runtime contracts (add to your project)
-pip install invar-runtime
+    style S fill:#e3f2fd
+    style D fill:#e8f5e9
+    style P fill:#fff3e0
+    style X fill:#fce4ec
 ```
 
-**Why uvx is recommended:**
-- Always uses latest version
-- Doesn't pollute project dependencies
-- Automatically accesses your project's venv dependencies (numpy, pandas, etc.)
-- If your project has `invar-tools` installed, uvx will detect and use it
+```mermaid
+flowchart TD
+    A[Agent writes code] --> G[invar guard]
+    G --> E{Errors?}
+    E -->|Yes| F[Agent fixes]
+    F --> G
+    E -->|No| D[Done ✓]
 
-**When to use pip install instead:**
-- CI/CD environments where uvx isn't available
-- Projects with C extensions AND Python version mismatch between uvx and project
-
----
-
-## Quick Start
-
-```bash
-# 1. Initialize your project
-cd your-project
-uvx invar-tools init --claude    # Full experience (Claude Code)
-uvx invar-tools init             # Basic experience (other editors)
-
-# 2. Write code with AI (AI follows INVAR.md protocol)
-
-# 3. Verify code quality
-uvx invar-tools guard            # Runs static analysis + doctests + property tests
+    style A fill:#e1f5fe
+    style G fill:#fff3e0
+    style D fill:#e8f5e9
 ```
 
----
+### ✅ Solution 3: Workflow Discipline
 
-## The USBV Workflow
+The USBV workflow forces "specify before implement":
 
-AI agents follow a four-phase development cycle:
+```mermaid
+flowchart LR
+    U["🔍 Understand"] --> S["📝 Specify"]
+    S --> B["🔨 Build"]
+    B --> V["✓ Validate"]
 
-```
-┌───────────┐    ┌───────────┐    ┌───────────┐    ┌───────────┐
-│ Understand│ → │  Specify  │ → │   Build   │ → │ Validate  │
-│           │    │           │    │           │    │           │
-│ Intent    │    │ @pre/@post│    │ Implement │    │ invar     │
-│ Inspect   │    │ Doctests  │    │ leaves    │    │ guard     │
-│ Constraints    │ Design    │    │ first     │    │           │
-└───────────┘    └───────────┘    └───────────┘    └───────────┘
-```
-
-**Key insight:** Specify contracts BEFORE implementation. The contract becomes the specification.
-
-See [INVAR.md](./INVAR.md) for complete protocol.
-
----
-
-## Session Protocol
-
-Every AI session follows this format:
-
-**First message (Check-In):**
-```
-✓ Check-In: [project] | [branch] | [clean/dirty]
+    U -.- u1["Context"]
+    S -.- s1["Contracts"]
+    B -.- b1["Code"]
+    V -.- v1["Guard"]
 ```
 
-**Last message (Final):**
+Skill routing ensures agents enter through the correct workflow:
+
+| User Intent | Skill Invoked | Behavior |
+|-------------|---------------|----------|
+| "why does X fail?" | `/investigate` | Research only, no code changes |
+| "should we use A or B?" | `/propose` | Present options with trade-offs |
+| "add feature X" | `/develop` | Full USBV workflow |
+| (after develop) | `/review` | Adversarial review with fix loop |
+
+### ✅ Solution 4: Architecture Constraints
+
+| Pattern | Enforcement | Benefit |
+|---------|-------------|---------|
+| **Core/Shell** | Guard blocks I/O imports in Core | 100% testable business logic |
+| **Result[T, E]** | Guard warns if Shell returns bare values | Explicit error handling |
+
+### 🔮 Future: Quality Guidance (DX-61)
+
+Beyond "correct or not"—Invar will suggest improvements:
+
 ```
-✓ Final: guard PASS | 0 errors, 2 warnings
+SUGGEST: 3 string parameters in 'find_symbol'
+  → Consider NewType for semantic clarity
 ```
 
-Check-In shows project context. Guard verification runs during VALIDATE phase and Final, not at Check-In.
+From gatekeeper to mentor.
 
 ---
 
-## Core/Shell Architecture
+## 🏗️ Core Concepts
 
-Invar enforces separation between pure logic and I/O:
+### Core/Shell Architecture
 
-| Zone | Requirements | Forbidden |
-|------|--------------|-----------|
-| **Core** (`**/core/**`) | `@pre`/`@post` contracts, doctests | I/O imports (os, pathlib, requests...) |
-| **Shell** (`**/shell/**`) | `Result[T, E]` returns | - |
+Separate pure logic from I/O for maximum testability:
+
+| Zone | Location | Requirements |
+|------|----------|--------------|
+| **Core** | `**/core/**` | `@pre`/`@post` contracts, doctests, no I/O imports |
+| **Shell** | `**/shell/**` | `Result[T, E]` return types |
+
+```mermaid
+flowchart TB
+    subgraph Shell["🐚 Shell · I/O Layer"]
+        S1[load_config]
+        S2[save_result]
+    end
+
+    subgraph Core["💎 Core · Pure Logic"]
+        C1[parse_config]
+        C2[validate]
+    end
+
+    Shell --> Core
+    Core -.->|"Result[T, E]"| Shell
+
+    style Core fill:#e8f5e9
+    style Shell fill:#fff3e0
+```
 
 ```python
-# Core: Pure logic, receives data
+# Core: Pure, testable, provable
 def parse_config(content: str) -> Config:
     return Config.parse(content)
 
 # Shell: Handles I/O, returns Result
 def load_config(path: Path) -> Result[Config, str]:
-    content = path.read_text()
-    return Success(parse_config(content))
+    try:
+        return Success(parse_config(path.read_text()))
+    except FileNotFoundError:
+        return Failure(f"Not found: {path}")
+```
+
+### Session Protocol
+
+Clear boundaries for every AI session:
+
+| Phase | Format | Purpose |
+|-------|--------|---------|
+| **Start** | `✓ Check-In: project \| branch \| status` | Context visibility |
+| **End** | `✓ Final: guard PASS \| 0 errors` | Verification proof |
+
+### Intellectual Heritage
+
+**Foundational Theory:**
+Design-by-Contract (Meyer, 1986) ·
+Functional Core/Imperative Shell (Bernhardt) ·
+Property-Based Testing (QuickCheck, 2000) ·
+Symbolic Execution (King, 1976)
+
+**Verification Languages:**
+Eiffel · Dafny · Idris · Haskell
+
+**AI Programming Research:**
+AlphaCodium · Parsel · Reflexion · Clover
+
+**Dependencies:**
+[deal](https://github.com/life4/deal) ·
+[returns](https://github.com/dry-python/returns) ·
+[CrossHair](https://github.com/pschanely/CrossHair) ·
+[Hypothesis](https://hypothesis.readthedocs.io/)
+
+---
+
+## 🖥️ Platform Experience
+
+| Feature | Claude Code | Other Editors |
+|---------|-------------|---------------|
+| CLI verification (`invar guard`) | ✅ | ✅ |
+| Protocol document (INVAR.md) | ✅ | ✅ |
+| MCP tool integration | ✅ Auto-configured | Manual setup possible |
+| Workflow skills | ✅ Auto-configured | Include in system prompt |
+| Pre-commit hooks | ✅ | ✅ |
+| Sub-agent review | ✅ | — |
+
+**Claude Code** provides the full experience—MCP tools, skill routing, and hooks are auto-configured by `invar init --claude`.
+
+**Other editors** can achieve similar results by:
+1. Adding INVAR.md content to system prompts
+2. Manually configuring MCP servers (if supported)
+3. Using CLI commands for verification
+
+---
+
+## 📂 What Gets Installed
+
+`invar init --claude` creates:
+
+| File/Directory | Purpose | Editable? |
+|----------------|---------|-----------|
+| `INVAR.md` | Protocol for AI agents | No (managed) |
+| `CLAUDE.md` | Project configuration | Yes |
+| `.claude/skills/` | Workflow skills | Yes |
+| `.claude/hooks/` | Tool call interception | Yes |
+| `.invar/examples/` | Reference patterns | No (managed) |
+| `.invar/context.md` | Project state, lessons | Yes |
+| `pyproject.toml` | `[tool.invar]` section | Yes |
+
+**Recommended structure:**
+
+```
+src/{project}/
+├── core/    # Pure logic (@pre/@post, doctests, no I/O)
+└── shell/   # I/O operations (Result[T, E] returns)
 ```
 
 ---
 
-## Commands
-
-### Guard (Primary)
-
-```bash
-invar guard              # Full verification (static + doctests + property tests)
-invar guard --changed    # Only git-modified files
-invar guard --static     # Static analysis only (~0.5s)
-invar guard --coverage   # Collect branch coverage (doctest + hypothesis)
-```
-
-**Flags:**
-
-| Flag | Purpose |
-|------|---------|
-| `--strict` | Treat warnings as errors |
-| `--explain` | Show rule explanations |
-| `--agent` | JSON output for AI tools |
-| `--coverage` | Branch coverage from doctest + hypothesis phases |
-
-### Other Commands
-
-```bash
-invar sig <file>         # Show signatures + contracts
-invar map --top 10       # Most-referenced symbols
-invar rules              # List all rules
-invar update             # Update managed files
-```
-
----
-
-## Workflow Skills (Claude Code)
-
-`invar init --claude` creates workflow skills in `.claude/skills/`:
-
-| Skill | Trigger | Purpose |
-|-------|---------|---------|
-| `/investigate` | "why", "explain", vague tasks | Exploration, no code changes |
-| `/propose` | "should we", "compare" | Decision facilitation with options |
-| `/develop` | "add", "fix", "implement" | USBV implementation workflow |
-| `/review` | After develop, `review_suggested` | Adversarial review with fix loop |
-
-**Note:** Skills are Claude Code exclusive. Other editors use INVAR.md protocol directly.
-
----
-
-## Configuration
-
-### pyproject.toml
+## ⚙️ Configuration
 
 ```toml
+# pyproject.toml
+
 [tool.invar.guard]
-# Directory classification
+# Option 1: Explicit paths
 core_paths = ["src/myapp/core"]
 shell_paths = ["src/myapp/shell"]
 
-# Or use patterns for existing projects
+# Option 2: Pattern matching (for existing projects)
 core_patterns = ["**/domain/**", "**/models/**"]
 shell_patterns = ["**/api/**", "**/cli/**"]
+
+# Option 3: Auto-detection (when no paths/patterns specified)
+# - Default paths: src/core, core, src/shell, shell
+# - Content analysis: @pre/@post → Core, Result → Shell
 
 # Size limits
 max_file_lines = 500
 max_function_lines = 50
 
-# Contract requirements
+# Requirements
 require_contracts = true
 require_doctests = true
+```
 
-# Doctest-heavy code
-exclude_doctest_lines = true
+### 🚪 Escape Hatches
 
-# Rule exclusions
+For code that intentionally breaks rules:
+
+```toml
+# Exclude entire directories
 [[tool.invar.guard.rule_exclusions]]
 pattern = "**/generated/**"
 rules = ["*"]
+
+# Exclude specific rules for specific files
+[[tool.invar.guard.rule_exclusions]]
+pattern = "**/legacy_api.py"
+rules = ["missing_contract", "shell_result"]
 ```
 
 ---
 
-## Rules Reference
+## 🔧 Tool Reference
 
-| Rule | Severity | What It Checks |
-|------|----------|----------------|
-| `file_size` | ERROR | File > max lines |
-| `function_size` | WARN | Function > max lines |
-| `missing_contract` | ERROR | Core function lacks @pre/@post |
-| `missing_doctest` | WARN | Contracted function lacks doctest |
-| `forbidden_import` | ERROR | I/O import in Core |
-| `shell_result` | WARN | Shell function not returning Result |
-| `empty_contract` | ERROR | Contract is `lambda: True` |
+### CLI Commands
 
-Full list: `invar rules --explain`
+| Command | Purpose |
+|---------|---------|
+| `invar guard` | Full verification (static + doctest + property + symbolic) |
+| `invar guard --changed` | Only git-modified files |
+| `invar guard --static` | Static analysis only (~0.5s) |
+| `invar init` | Initialize or update project |
+| `invar sig <file>` | Show signatures and contracts |
+| `invar map` | Symbol map with reference counts |
+| `invar rules` | List all rules |
+| `invar test` | Property-based tests (Hypothesis) |
+| `invar verify` | Symbolic verification (CrossHair) |
+| `invar hooks` | Manage Claude Code hooks |
 
----
+### MCP Tools
 
-## MCP Integration (Claude Code)
-
-`invar init --claude` automatically configures MCP:
-
-```json
-{
-  "mcpServers": {
-    "invar": {
-      "command": "uvx",
-      "args": ["invar-tools", "mcp"]
-    }
-  }
-}
-```
-
-**MCP Tools:**
-
-| Tool | Replaces | Purpose |
-|------|----------|---------|
-| `invar_guard` | `pytest`, `crosshair` | Smart verification |
-| `invar_sig` | Reading entire files | Show contracts and signatures |
-| `invar_map` | `grep` for functions | Symbol map with reference counts |
+| Tool | Purpose |
+|------|---------|
+| `invar_guard` | Smart multi-layer verification |
+| `invar_sig` | Extract signatures and contracts |
+| `invar_map` | Symbol map with reference counts |
 
 ---
 
-## Platform Support
+## 📚 Learn More
 
-| Feature | Claude Code | Cursor/Windsurf | Others |
-|---------|-------------|-----------------|--------|
-| Smart Guard CLI | ✅ | ✅ | ✅ |
-| INVAR.md protocol | ✅ | ✅ | ✅ |
-| MCP integration | ✅ | ❌ | ❌ |
-| Workflow skills | ✅ | ❌ | ❌ |
-| Sub-agent review | ✅ | ❌ | ❌ |
-
-**Claude Code** provides the full experience with automated workflow and independent review.
-
-**Other editors** receive the protocol and CLI tools. Workflow adherence is manual.
-
----
-
-## File Ownership
-
-| File | Owner | Edit? |
-|------|-------|-------|
-| `INVAR.md` | Invar | No (`invar update` manages) |
-| `CLAUDE.md` | You | Yes (project config) |
-| `.claude/skills/` | You | Yes (customize workflows) |
-
----
-
-## Runtime Behavior
-
-Contracts are checked at runtime via [deal](https://github.com/life4/deal).
-
-```bash
-# Disable in production for performance
-DEAL_DISABLE=1 python app.py
-```
-
----
-
-## Learn More
-
-**In your project** (created by `invar init`):
-- `INVAR.md` — Protocol v5.0 for AI agents
-- `CLAUDE.md` — Project configuration
+**Created by `invar init`:**
+- `INVAR.md` — Protocol v5.0
 - `.invar/examples/` — Reference patterns
 
 **Documentation:**
-- [docs/vision.md](./docs/vision.md) — Design philosophy
-- [docs/design.md](./docs/design.md) — Technical architecture
-- [GitHub Pages](https://tefx.github.io/Invar/) — Visual overview
+- [Vision & Philosophy](./docs/vision.md)
+- [Technical Design](./docs/design.md)
 
 ---
 
-## License
+## 📄 License
 
-| Component | License | Purpose |
-|-----------|---------|---------|
-| **invar-runtime** | [Apache-2.0](LICENSE) | Runtime contracts - use freely |
-| **invar-tools** | [GPL-3.0](LICENSE-GPL) | CLI tools - improvements shared |
+| Component | License | Notes |
+|-----------|---------|-------|
+| **invar-runtime** | [Apache-2.0](LICENSE) | Use freely in any project |
+| **invar-tools** | [GPL-3.0](LICENSE-GPL) | Improvements must be shared |
 | **Documentation** | [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/) | Share with attribution |
 
 See [NOTICE](NOTICE) for third-party licenses.

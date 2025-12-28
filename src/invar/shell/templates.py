@@ -434,7 +434,7 @@ Find your Python path: `python -c "import sys; print(sys.executable)"`
 
 ```bash
 # Recommended: use uvx (no installation needed)
-uvx invar-tools guard
+uvx --from invar-tools invar guard
 
 # Or install globally
 pip install invar-tools
@@ -449,7 +449,7 @@ Run the MCP server directly:
 
 ```bash
 # Using uvx
-uvx invar-tools mcp
+uvx --from invar-tools invar mcp
 
 # Or if installed
 invar mcp

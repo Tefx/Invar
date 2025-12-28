@@ -351,7 +351,7 @@ jobs:
         # --strict: treat warnings as errors
 ```
 
-> **Tip:** Use `uvx invar-tools guard` locally to run without installing.
+> **Tip:** Use `uvx --from invar-tools invar guard` locally to run without installing.
 
 ---
 
@@ -1012,8 +1012,8 @@ invar-tools (PyPI)
 
 ```bash
 # Recommended: use without installing (always latest)
-uvx invar-tools guard
-uvx invar-tools init --claude
+uvx --from invar-tools invar guard
+uvx --from invar-tools invar init --claude
 
 # Or install globally
 pip install invar-tools
@@ -1025,7 +1025,7 @@ pip install invar-runtime
 ### `invar init` Behavior
 
 ```bash
-$ uvx invar-tools init --claude
+$ uvx --from invar-tools invar init --claude
 
 ✓ Added [tool.invar.guard] to pyproject.toml
 ✓ Created INVAR.md (Invar Protocol)
