@@ -133,11 +133,15 @@ def guard(
     coverage: bool = typer.Option(
         False, "--coverage", help="DX-37: Collect branch coverage from doctest + hypothesis"
     ),
+    suggest: bool = typer.Option(
+        False, "--suggest", help="DX-61: Show functional pattern suggestions"
+    ),
 ) -> None:
     """Check project against Invar architecture rules.
 
     Smart Guard: Runs static analysis + doctests + CrossHair + Hypothesis by default.
     Use --static for quick static-only checks (~0.5s vs ~5s full).
+    Use --suggest to get functional pattern suggestions (NewType, Validation, etc.).
     """
     from invar.shell.guard_helpers import (
         collect_files_to_check,
@@ -180,6 +184,25 @@ def guard(
         console.print(f"[red]Error:[/red] {scan_result.failure()}")
         raise typer.Exit(1)
     report = scan_result.unwrap()
+
+    # DX-61: Run pattern detection if --suggest flag is set
+    pattern_suggestions: list = []
+    if suggest:
+        from invar.shell.pattern_integration import (
+            filter_suggestions,
+            run_pattern_detection,
+            suggestions_to_violations,
+        )
+        # Run pattern detection on checked files
+        files_to_check = list(only_files) if only_files else None
+        pattern_result = run_pattern_detection(path, files_to_check)
+        if isinstance(pattern_result, Success):
+            raw_suggestions = pattern_result.unwrap()
+            # DX-61: Apply config-based filtering
+            pattern_suggestions = filter_suggestions(raw_suggestions, config)
+            # Add suggestions to report as SUGGEST-level violations
+            for violation in suggestions_to_violations(pattern_suggestions):
+                report.add_violation(violation)
 
     # DX-26: Simplified output mode (TTY auto-detect + --human override)
     use_agent_output = _determine_output_mode(human, agent, json_output)

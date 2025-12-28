@@ -2,7 +2,9 @@
 
 **Status:** Draft
 **Created:** 2025-12-28
-**Depends on:** DX-25 (Functional Patterns - internal)
+**Depends on:** None
+**Synergies:** DX-62 (Proactive Reference Reading)
+**References:** DX-38 (Contract Quality Rules - tiered approach)
 **Series:** DX (Developer Experience)
 
 ## Executive Summary

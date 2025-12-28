@@ -131,6 +131,14 @@ rules = ["file_size_warning"]  # Complex strategy inference, hard to split
 pattern = "**/rules.py"
 rules = ["file_size_warning"]  # All rule checks in one place for discoverability
 
+[[tool.invar.guard.rule_exclusions]]
+pattern = ".invar/examples/**"
+rules = ["*"]  # Examples intentionally show "bad" patterns without contracts
+
+[[tool.invar.guard.rule_exclusions]]
+pattern = "**/examples/functional.py"
+rules = ["*"]  # Fallback: Examples intentionally show "bad" patterns
+
 [tool.invar]
 # Protocol governance
 protocol_version = "3.20"

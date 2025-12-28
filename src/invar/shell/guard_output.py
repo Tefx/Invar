@@ -151,6 +151,8 @@ def output_rich(
                     icon = "[red]ERROR[/red]"
                 elif v.severity == Severity.WARNING:
                     icon = "[yellow]WARN[/yellow]"
+                elif v.severity == Severity.SUGGEST:
+                    icon = "[magenta]SUGGEST[/magenta]"  # DX-61
                 else:
                     icon = "[blue]INFO[/blue]"
                 ln = f":{v.line}" if v.line else ""
@@ -182,6 +184,9 @@ def output_rich(
     )
     if report.infos > 0:
         summary += f"\nInfos: {report.infos}"
+    # DX-61: Show suggestions count if any
+    if report.suggests > 0:
+        summary += f"\n[magenta]Suggestions: {report.suggests}[/magenta]"
     console.print(summary)
 
     # P24: Contract coverage statistics (only show if core files exist)

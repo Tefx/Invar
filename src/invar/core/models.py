@@ -28,6 +28,7 @@ class Severity(str, Enum):
     ERROR = "error"
     WARNING = "warning"
     INFO = "info"  # Phase 7: For informational issues like redundant type contracts
+    SUGGEST = "suggest"  # DX-61: Functional pattern suggestions
 
 
 class Contract(BaseModel):
@@ -90,6 +91,7 @@ class GuardReport(BaseModel):
     errors: int = 0
     warnings: int = 0
     infos: int = 0  # Phase 7: Track INFO-level issues
+    suggests: int = 0  # DX-61: Track SUGGEST-level pattern suggestions
     # P24: Contract coverage statistics (Core files only)
     core_functions_total: int = 0
     core_functions_with_contracts: int = 0
@@ -106,12 +108,18 @@ class GuardReport(BaseModel):
             >>> report.add_violation(v)
             >>> report.errors
             1
+            >>> v2 = Violation(rule="pattern", severity=Severity.SUGGEST, file="x.py", message="sug")
+            >>> report.add_violation(v2)
+            >>> report.suggests
+            1
         """
         self.violations.append(violation)
         if violation.severity == Severity.ERROR:
             self.errors += 1
         elif violation.severity == Severity.WARNING:
             self.warnings += 1
+        elif violation.severity == Severity.SUGGEST:
+            self.suggests += 1
         else:
             self.infos += 1
 
@@ -262,6 +270,11 @@ class RuleConfig(BaseModel):
     timeout_hypothesis: int = Field(default=300, ge=1, le=1800)  # Property tests
     timeout_crosshair: int = Field(default=300, ge=1, le=1800)  # Symbolic verification total
     timeout_crosshair_per_condition: int = Field(default=30, ge=1, le=300)  # Per-contract limit
+
+    # DX-61: Pattern detection configuration
+    pattern_min_confidence: str = Field(default="medium")  # low, medium, high
+    pattern_priorities: list[str] = Field(default_factory=lambda: ["P0"])  # P0, P1
+    pattern_exclude: list[str] = Field(default_factory=list)  # Pattern IDs to exclude
 
 
 # Phase 4: Perception models

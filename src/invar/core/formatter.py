@@ -235,7 +235,7 @@ def format_guard_agent(report: GuardReport, combined_status: str | None = None) 
     status = combined_status if combined_status else ("passed" if report.passed else "failed")
     static_passed = report.errors == 0
 
-    return {
+    result = {
         "status": status,
         # DX-26: Separate static results from combined status
         "static": {
@@ -252,6 +252,11 @@ def format_guard_agent(report: GuardReport, combined_status: str | None = None) 
         },
         "fixes": [_violation_to_fix(v) for v in report.violations],
     }
+    # DX-61: Add suggests count if any pattern suggestions exist
+    if report.suggests > 0:
+        result["static"]["suggests"] = report.suggests
+        result["summary"]["suggests"] = report.suggests
+    return result
 
 
 @post(lambda result: "file" in result and "rule" in result and "severity" in result)

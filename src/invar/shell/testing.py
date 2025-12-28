@@ -136,13 +136,24 @@ def run_doctests_on_files(
         return Success({"status": "skipped", "reason": "no files", "files": []})
 
     # Filter to Python files only
-    # Exclude: conftest.py (pytest config), templates/examples/ (source templates, not user examples)
+    # Exclude: conftest.py (pytest config), templates/examples/ (source templates),
+    # .invar/examples/ (documentation examples with intentionally "bad" patterns)
+    def is_excluded(f: Path) -> bool:
+        """Check if path matches excluded patterns using path parts (not substring)."""
+        parts = f.parts
+        # Check for consecutive "templates/examples" or ".invar/examples"
+        for i in range(len(parts) - 1):
+            if (parts[i] == "templates" and parts[i + 1] == "examples") or \
+               (parts[i] == ".invar" and parts[i + 1] == "examples"):
+                return True
+        return False
+
     py_files = [
         f for f in files
         if f.suffix == ".py"
         and f.exists()
         and f.name != "conftest.py"
-        and "templates/examples" not in str(f)
+        and not is_excluded(f)
     ]
     if not py_files:
         return Success({"status": "skipped", "reason": "no Python files", "files": []})
