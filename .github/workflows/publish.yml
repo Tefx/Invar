@@ -59,30 +59,3 @@ jobs:
           skip-existing: true
         # Uses trusted publishing - configure at pypi.org/manage/project/invar-tools/settings/publishing/
 
-  publish-deprecated:
-    name: Publish python-invar (deprecated)
-    runs-on: ubuntu-latest
-    needs: publish-tools  # Deprecated package depends on invar-tools
-    permissions:
-      id-token: write  # Required for trusted publishing
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install build tools
-        run: pip install build
-
-      - name: Build python-invar package
-        run: python -m build deprecated/python-invar/
-
-      - name: Publish python-invar to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          packages-dir: deprecated/python-invar/dist/
-          skip-existing: true
-        # Uses trusted publishing - configure at pypi.org/manage/project/python-invar/settings/publishing/
