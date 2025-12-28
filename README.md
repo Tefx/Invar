@@ -1,12 +1,24 @@
-# Invar
+<p align="center">
+  <img src="docs/logo.svg" alt="Invar Logo" width="128" height="128">
+</p>
 
-> **From AI-generated to AI-engineered code.**
+<h1 align="center">Invar</h1>
 
-Invar brings decades of software engineering best practices to AI-assisted development. Through automated verification, structured workflows, and proven design patterns, agents write code that's correct by construction—not by accident.
+<p align="center">
+  <strong>From AI-generated to AI-engineered code.</strong>
+</p>
 
-[![PyPI version](https://badge.fury.io/py/invar-tools.svg)](https://badge.fury.io/py/invar-tools)
-[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![License](https://img.shields.io/badge/License-Apache%202.0%20%2B%20GPL--3.0-blue.svg)](#license)
+<p align="center">
+Invar brings decades of software engineering best practices to AI-assisted development.<br>
+Through automated verification, structured workflows, and proven design patterns,<br>
+agents write code that's correct by construction—not by accident.
+</p>
+
+<p align="center">
+  <a href="https://badge.fury.io/py/invar-tools"><img src="https://badge.fury.io/py/invar-tools.svg" alt="PyPI version"></a>
+  <a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/python-3.11+-blue.svg" alt="Python 3.11+"></a>
+  <a href="#license"><img src="https://img.shields.io/badge/License-Apache%202.0%20%2B%20GPL--3.0-blue.svg" alt="License"></a>
+</p>
 
 ### What It Looks Like
 
