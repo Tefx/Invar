@@ -20,6 +20,10 @@ agents write code that's correct by construction—not by accident.
   <a href="#license"><img src="https://img.shields.io/badge/License-Apache%202.0%20%2B%20GPL--3.0-blue.svg" alt="License"></a>
 </p>
 
+<p align="center">
+  <a href="#why-invar"><img src="https://img.shields.io/badge/🤖_Dogfooding-This_codebase_is_100%25_AI--generated_and_AI--verified_using_Invar-8A2BE2?style=for-the-badge" alt="Dogfooding"></a>
+</p>
+
 ### What It Looks Like
 
 An AI agent, guided by Invar, writes code with formal contracts and built-in tests:
