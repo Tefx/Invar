@@ -87,19 +87,24 @@ Guard passed.
 ### 🆕 New Project
 
 ```bash
-# 1. Initialize with Claude Code (full experience)
+# 1. Enter your project directory
+cd your-project
+
+# 2. Initialize with Claude Code (full experience)
 uvx --from invar-tools invar init --claude
 
-# 2. Add runtime contracts to your project
+# 3. Add runtime contracts to your project
 pip install invar-runtime
 # Or add to pyproject.toml: dependencies = ["invar-runtime"]
 
-# 3. Start coding with AI
+# 4. Start coding with AI
 ```
 
 ### 📁 Existing Project
 
 ```bash
+cd your-project
+
 # Update managed files, preserve your customizations
 uvx --from invar-tools invar init --claude
 
