@@ -86,8 +86,7 @@ Create `docs/proposals/DX-XX-[topic].md`:
 | Chooses option | /develop to implement |
 | Needs more info | /investigate for analysis |
 | Approves proposal | Document created |
-<!--/invar:skill-->
-<!--invar:extensions-->
+<!--/invar:skill--><!--invar:extensions-->
 <!-- ========================================================================
      EXTENSIONS REGION - USER EDITABLE
      Add project-specific extensions here. This section is preserved on update.

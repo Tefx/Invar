@@ -77,6 +77,7 @@ src/{project}/
 | INVAR.md | Invar | No | Protocol (`invar update` to sync) |
 | CLAUDE.md | User | Yes | Project customization (this file) |
 | .invar/context.md | User | Yes | Project state, lessons learned |
+| .invar/project-additions.md | User | Yes | Project rules → injected into CLAUDE.md |
 | .invar/examples/ | Invar | No | **Must read:** Core/Shell patterns, workflow |
 
 ## Visible Workflow (DX-30)
