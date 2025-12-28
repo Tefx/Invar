@@ -516,5 +516,18 @@ app.add_typer(dev_app)
 app.command("sync-self", hidden=True)(sync_self)
 
 
+# MCP server command for Claude Code integration
+@app.command()
+def mcp() -> None:
+    """Start Invar MCP server for AI agent integration.
+
+    This runs the MCP server using stdio transport.
+    Used by Claude Code and other MCP-compatible AI agents.
+    """
+    from invar.mcp.server import run_server
+
+    run_server()
+
+
 if __name__ == "__main__":
     app()
