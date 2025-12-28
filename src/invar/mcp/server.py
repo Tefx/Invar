@@ -137,6 +137,7 @@ def _get_guard_tool() -> Tool:
                 "changed": {"type": "boolean", "description": "Only verify git-changed files", "default": True},
                 "strict": {"type": "boolean", "description": "Treat warnings as errors", "default": False},
                 "coverage": {"type": "boolean", "description": "DX-37: Collect branch coverage from doctest + hypothesis", "default": False},
+                "contracts_only": {"type": "boolean", "description": "DX-63: Contract coverage check only (skip tests)", "default": False},
             },
         },
     )
@@ -223,6 +224,9 @@ async def _run_guard(args: dict[str, Any]) -> list[TextContent]:
     # DX-37: Optional coverage collection
     if args.get("coverage", False):
         cmd.append("--coverage")
+    # DX-63: Contract coverage check only
+    if args.get("contracts_only", False):
+        cmd.append("--contracts-only")
 
     # DX-26: TTY auto-detection - MCP runs in non-TTY, so agent JSON output is automatic
     # No explicit flag needed

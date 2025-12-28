@@ -67,6 +67,42 @@ def calculate(x: int) -> int:
     ...  # Implementation comes in BUILD
 ```
 
+#### Function-Level Gates (DX-63)
+
+When creating new modules, use **incremental development**:
+
+1. Create ONE file
+2. Write contracts for all functions (body = `...`)
+3. Run `invar_guard(contracts_only=true)` to verify coverage
+4. Implement functions
+5. Run `invar_guard(changed=true)`
+6. Proceed to next file
+
+❌ Do NOT create multiple file skeletons at once
+❌ Do NOT "structure first, fill later"
+
+**TodoList Pattern: Interleaved SPECIFY/BUILD**
+
+For each function:
+```
+□ [SPECIFY] Write contract for validate_input
+□ [BUILD] Implement validate_input
+□ [SPECIFY] Write contract for process_data
+□ [BUILD] Implement process_data
+```
+
+NOT:
+```
+□ [SPECIFY] Write all contracts
+□ [BUILD] Implement all functions
+```
+
+**Violation Self-Check** — Before writing ANY implementation code:
+1. "Have I written the contract for THIS function?"
+2. "Have I shown it in my response?"
+3. "Have I run `invar_guard(contracts_only=true)`?"
+If any NO → Stop. Write contract first.
+
 ### 3. BUILD
 
 **For complex tasks:** Enter Plan Mode first, get user approval.
