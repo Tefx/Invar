@@ -1,0 +1,226 @@
+# Using Invar with Different Coding Agents
+
+Invar's core value—USBV workflow, contract-driven development, and automated verification—works with any AI coding agent. This guide covers integration with popular alternatives to Claude Code.
+
+## Quick Comparison
+
+| Agent | Instruction File | MCP Support | Hooks | Effort |
+|-------|------------------|-------------|-------|--------|
+| [Claude Code](../agents.md) | CLAUDE.md | ✅ Full | ✅ 4 types | Native |
+| [Cline](#cline) | .clinerules | ✅ Full | ❌ | Low |
+| [Cursor](#cursor) | .cursorrules | ✅ Full | ✅ Beta | Medium |
+| [Aider](#aider) | CONVENTIONS.md | ⚠️ CLI | ❌ | Low |
+| [Continue](#continue) | config.yaml | ✅ Full | ❌ | Low |
+
+## What Works Everywhere
+
+| Feature | Mechanism | Portability |
+|---------|-----------|-------------|
+| USBV Workflow | Instruction file | ✅ 100% |
+| Core/Shell Separation | Instruction file | ✅ 100% |
+| Contract Requirements | Instruction file | ✅ 100% |
+| Guard Verification | MCP or CLI | ✅ 100% |
+| Sig/Map Tools | MCP or CLI | ✅ 100% |
+
+## What's Claude Code Specific
+
+| Feature | Alternative |
+|---------|-------------|
+| Skills (auto-routing) | Manual workflow triggers |
+| Hooks (pytest blocking) | Cursor Beta / Manual discipline |
+| Commands (/audit, /guard) | Direct tool calls |
+
+---
+
+## Cline
+
+**VS Code extension with Plan & Act modes**
+
+→ [Full Guide: Cline Integration](./cline.md)
+
+```bash
+# Quick setup
+invar init --agent=cline  # Coming soon
+
+# Or manual setup - create .clinerules in project root
+```
+
+**Key features:**
+- Plan Mode aligns with USBV workflow
+- Full MCP support
+- Open source, active community
+
+---
+
+## Cursor
+
+**AI-first IDE with hooks support**
+
+→ [Full Guide: Cursor Integration](./cursor.md)
+
+```bash
+# Quick setup
+invar init --agent=cursor  # Coming soon
+
+# Or manual setup - create .cursorrules in project root
+```
+
+**Key features:**
+- Hooks (beta) for command interception
+- Largest user base
+- .cursor/rules/ for organized rules
+
+---
+
+## Aider
+
+**Terminal-based pair programmer**
+
+→ [Full Guide: Aider Integration](./aider.md)
+
+```bash
+# Quick setup - use with auto-lint
+aider --lint-cmd "invar guard --changed" --auto-lint
+```
+
+**Key features:**
+- Built-in auto-lint/test verification
+- Git-aware editing
+- CONVENTIONS.md as persistent memory
+
+---
+
+## Continue
+
+**Open-source VS Code/JetBrains extension**
+
+→ [Full Guide: Continue Integration](./continue.md)
+
+```bash
+# Quick setup - add to .continue/config.yaml
+```
+
+**Key features:**
+- First full MCP implementation
+- customCommands for workflows
+- Works with any model
+
+---
+
+## MCP Configuration
+
+All MCP-supporting agents can use Invar's tools:
+
+```json
+{
+  "mcpServers": {
+    "invar": {
+      "command": "uvx",
+      "args": ["invar-tools", "mcp"]
+    }
+  }
+}
+```
+
+Or if installed in a virtual environment:
+
+```json
+{
+  "mcpServers": {
+    "invar": {
+      "command": "/path/to/project/.venv/bin/python",
+      "args": ["-m", "invar.mcp"]
+    }
+  }
+}
+```
+
+### Available MCP Tools
+
+| Tool | Purpose |
+|------|---------|
+| `invar_guard` | Smart verification (static + doctests + symbolic) |
+| `invar_sig` | Show function signatures and contracts |
+| `invar_map` | Symbol map with reference counts |
+
+---
+
+## Feature Parity Matrix
+
+| Feature | Claude | Cursor | Cline | Continue | Aider |
+|---------|--------|--------|-------|----------|-------|
+| USBV Workflow | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Guard via MCP | ✅ | ✅ | ✅ | ✅ | ❌ CLI |
+| Guard via CLI | ✅ | ✅ | ✅ | ✅ | ✅ |
+| pytest Blocking | ✅ Hook | ⚠️ Beta | ❌ | ❌ | ✅ Built-in |
+| Auto-routing | ✅ Skills | ❌ | ⚠️ Modes | ⚠️ Commands | ❌ |
+| Plan Mode | ❌ | ❌ | ✅ | ❌ | ❌ |
+
+---
+
+## Choosing an Agent
+
+| If you want... | Choose |
+|----------------|--------|
+| Full Invar experience | Claude Code |
+| IDE integration + hooks | Cursor |
+| Open source + Plan Mode | Cline |
+| Terminal workflow | Aider |
+| Model flexibility | Continue |
+
+---
+
+## Migration Path
+
+### From Claude Code to Others
+
+1. Copy CLAUDE.md content to target instruction file
+2. Configure MCP (if supported)
+3. Replace skill triggers with manual workflow
+
+### From Others to Claude Code
+
+1. Run `invar init` to generate full setup
+2. Enjoy skills, hooks, and commands
+
+---
+
+## Troubleshooting
+
+### MCP Connection Issues
+
+```bash
+# Test MCP server directly
+uvx invar-tools mcp
+
+# Check if invar is installed
+pip show invar-tools
+```
+
+### Guard Not Found
+
+```bash
+# Install invar-tools
+pip install invar-tools
+
+# Or use uvx (no install needed)
+uvx invar-tools guard
+```
+
+### Instruction File Not Loaded
+
+Each agent has specific file locations:
+- Cline: `.clinerules` in project root
+- Cursor: `.cursorrules` or `.cursor/rules/*.mdc`
+- Aider: `CONVENTIONS.md` in project root
+- Continue: `.continue/config.yaml`
+
+---
+
+## Next Steps
+
+- [Cline Integration Guide](./cline.md)
+- [Cursor Integration Guide](./cursor.md)
+- [Aider Integration Guide](./aider.md)
+- [Continue Integration Guide](./continue.md)
+- [Claude Code Setup](../agents.md) (native)
