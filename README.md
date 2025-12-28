@@ -21,7 +21,7 @@ agents write code that's correct by construction—not by accident.
 </p>
 
 <p align="center">
-  <a href="#why-invar"><img src="https://img.shields.io/badge/🤖_Dogfooding-This_codebase_is_100%25_AI--generated_and_AI--verified_using_Invar-8A2BE2?style=for-the-badge" alt="Dogfooding"></a>
+  <a href="#why-invar"><img src="https://img.shields.io/badge/🤖_Dogfooding-Invar's_code_is_100%25_AI--generated_and_AI--verified_using_itself-8A2BE2?style=for-the-badge" alt="Dogfooding"></a>
 </p>
 
 ### What It Looks Like
