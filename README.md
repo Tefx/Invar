@@ -70,10 +70,10 @@ Guard passed.
 ┌───────────────────────────────────────────────────────────────────┐
 │  Your Project                                                     │
 │  ├── pyproject.toml                                               │
-│  │   └── dependencies = ["invar-runtime"]  ← Ships with code     │
+│  │   └── dependencies = ["invar-runtime"]  ← Ships with code      │
 │  │                                                                │
 │  └── Development (never enters production)                        │
-│      └── uvx invar-tools guard  ← Guides agents     │
+│      └── uvx invar-tools guard  ← Guides agents                   │
 └───────────────────────────────────────────────────────────────────┘
 ```
 
@@ -203,10 +203,10 @@ Guard provides fast feedback. Agent sees errors, fixes immediately:
 | **Symbolic** | CrossHair | ~30s | Mathematical proof of contracts |
 
 ```
-┌──────────┐   ┌──────────┐   ┌──────────┐   ┌──────────┐
+┌──────────┐   ┌───────────┐   ┌───────────┐   ┌────────────┐
 │ ⚡ Static │ → │ 🧪 Doctest│ → │ 🎲 Property│ → │ 🔬 Symbolic│
-│   ~0.5s  │   │   ~2s    │   │   ~10s   │   │   ~30s   │
-└──────────┘   └──────────┘   └──────────┘   └──────────┘
+│   ~0.5s  │   │   ~2s     │   │   ~10s    │   │   ~30s     │
+└──────────┘   └───────────┘   └───────────┘   └────────────┘
 ```
 
 ```
@@ -227,8 +227,8 @@ The USBV workflow forces "specify before implement":
 
 ```
 🔍 Understand  →  📝 Specify  →  🔨 Build  →  ✓ Validate
-      │              │             │            │
-   Context       Contracts       Code        Guard
+      │              │              │            │
+   Context        Contracts        Code        Guard
 ```
 
 Skill routing ensures agents enter through the correct workflow:
