@@ -14,13 +14,12 @@ This directory contains design proposals for Invar development.
 
 | ID | Name | Status | Description |
 |----|------|--------|-------------|
-| DX-57 | claude-code-hooks | Draft | Claude Code hooks for protocol enforcement |
-| DX-58 | document-structure-optimization | Draft | Critical section, context.md slimming |
+| DX-60 | structured-rules-ssot | Draft | Optimize DX-57 token usage (1,800t → 600t) |
 | DX-25 | functional-patterns | Defer | Functional patterns enhancement |
 | DX-29 | pure-content-detection | Defer | Pure content detection (`@invar:module` marker) |
 | DX-38 | contract-quality-rules | Partial | Tier 1-2 done, Tier 3-4 deferred |
 
-### LX Series (Language eXtension) — NEW
+### LX Series (Language eXtension)
 
 | ID | Name | Status | Description |
 |----|------|--------|-------------|
@@ -28,10 +27,12 @@ This directory contains design proposals for Invar development.
 
 **LX Series Vision:** Evolve Invar from Python-specific tool to universal AI-assisted development protocol.
 
-## Archived Proposals (40)
+## Archived Proposals (42)
 
 | ID | Name | Status | Description |
 |----|------|--------|-------------|
+| DX-58 | document-structure-optimization | ✅ Complete | Critical section in CLAUDE.md, context.md slimming |
+| DX-57 | claude-code-hooks | ✅ Complete | Claude Code hooks for protocol enforcement (4 hooks) |
 | DX-56 | template-sync-unification | ✅ Complete | Unify init/dev sync, manifest-driven, shared engine |
 | DX-55 | claude-init-conflict-resolution | ✅ Complete | Unified idempotent init with smart CLAUDE.md merge |
 | DX-54 | agent-native-context-management | ✅ Complete | Long conversation resilience + workflow refresh |
@@ -93,21 +94,29 @@ This directory contains design proposals for Invar development.
               ▼
       Simplifies Check-In, adds Workflow Refresh
 
-Completed: DX-47, DX-48, DX-49, DX-41, DX-42, DX-43, DX-39, DX-46, DX-23, DX-37, DX-51, DX-52, DX-53, DX-54
+      ✅ DX-57 (Claude Code Hooks)    ✅ DX-58 (Document Structure)
+              │                               │
+              ▼                               ▼
+      Protocol enforcement via hooks    Critical section + slimmed context
+
+Completed: DX-47, DX-48, DX-49, DX-41, DX-42, DX-43, DX-39, DX-46, DX-23, DX-37, DX-51, DX-52, DX-53, DX-54, DX-57, DX-58
 Partial: DX-38 (Tier 1-2 done)
 Dropped: DX-40 (contradicts Lesson #19)
 Deferred: DX-38 Tier 3-4, DX-25, DX-29
+Draft: DX-60 (optimizes DX-57), LX-01 (multi-language)
 ```
 
 ## Remaining Work
 
 | Status | Proposal | Description | Notes |
 |--------|----------|-------------|-------|
+| **Draft** | DX-60 | Structured rules SSOT | Optimize DX-57 token usage (1,800t → 600t) |
+| **Draft** | LX-01 | Multi-language feasibility | Strategic exploration for language extension |
 | **Partial** | DX-38 | Contract quality rules | Tier 1-2 ✅, Tier 3-4 deferred (high false-positive risk) |
 | **Defer** | DX-25 | Functional patterns | Non-essential major change |
 | **Defer** | DX-29 | Pure content detection | DX-22 sufficient |
 
-**All planned proposals complete (35/38).** Only 3 deferred/partial items remain.
+**All core proposals complete (42/44).** 2 draft + 3 deferred/partial items remain.
 
 ## Execution History
 
@@ -123,10 +132,25 @@ Deferred: DX-38 Tier 3-4, DX-25, DX-29
 | 7 | DX-52 | ✅ Complete |
 | 8 | DX-53 | ✅ Complete |
 | 9 | DX-54 | ✅ Complete |
+| 10 | DX-57, DX-58 | ✅ Complete |
+
+## Recent Changes (2025-12-28)
+
+### Implemented Today
+- **DX-58** — Document Structure Optimization ✅
+  - Critical section at top of CLAUDE.md (~50 tokens)
+  - Slimmed context.md (~150 lines vs 1110 lines)
+  - Key Rules + Self-Reminder for long conversation resilience
+
+- **DX-57** — Claude Code Hooks Integration ✅
+  - 4 hooks: PreToolUse, PostToolUse, UserPromptSubmit, Stop
+  - pytest/crosshair blocking with smart auto-escape
+  - Protocol refresh in long conversations (~1,800 tokens)
+  - `invar hooks --install/--sync/--remove/--disable/--enable`
 
 ## Recent Changes (2025-12-27)
 
-### Implemented Today
+### Implemented
 - **DX-54** — Agent Native Context Management ✅
   - Simplified Check-In (no guard/map execution, just read context.md)
   - Workflow Refresh: All skills read context.md before Entry Actions
