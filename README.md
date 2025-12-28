@@ -311,7 +311,7 @@ Functional Core/Imperative Shell (Bernhardt) ·
 Property-Based Testing (QuickCheck, 2000) ·
 Symbolic Execution (King, 1976)
 
-**Verification Languages:**
+**Inspired By:**
 Eiffel · Dafny · Idris · Haskell
 
 **AI Programming Research:**

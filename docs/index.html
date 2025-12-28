@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Invar - Verifiable AI Code</title>
-    <meta name="description" content="Don't hope AI code is correct. Know it. Invar provides mechanical verification for AI-generated code.">
+    <title>Invar - From AI-Generated to AI-Engineered Code</title>
+    <meta name="description" content="Invar brings decades of software engineering best practices to AI-assisted development. Through automated verification, structured workflows, and proven design patterns, agents write code that's correct by construction.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -41,7 +41,7 @@
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1100px;
             margin: 0 auto;
             padding: 0 24px;
         }
@@ -70,6 +70,9 @@
             font-size: 1.5rem;
             color: var(--text);
             text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .logo span {
@@ -100,7 +103,7 @@
         }
 
         .hero h1 {
-            font-size: 3.5rem;
+            font-size: 3rem;
             font-weight: 700;
             line-height: 1.2;
             margin-bottom: 24px;
@@ -114,7 +117,7 @@
             font-size: 1.25rem;
             color: var(--text-secondary);
             margin-bottom: 16px;
-            max-width: 600px;
+            max-width: 700px;
             margin-left: auto;
             margin-right: auto;
         }
@@ -123,7 +126,7 @@
             font-size: 1rem;
             color: var(--text-secondary);
             margin-bottom: 48px;
-            max-width: 500px;
+            max-width: 600px;
             margin-left: auto;
             margin-right: auto;
         }
@@ -178,7 +181,7 @@
 
         section h2 {
             text-align: center;
-            font-size: 2.5rem;
+            font-size: 2.25rem;
             margin-bottom: 16px;
         }
 
@@ -186,229 +189,106 @@
             text-align: center;
             color: var(--text-secondary);
             margin-bottom: 48px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
         }
 
-        /* The Six Laws */
-        .laws {
+        /* The Approach - Before/After Comparison */
+        .approach {
             background: var(--bg-secondary);
         }
 
-        .laws-grid {
+        .comparison {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-        }
-
-        .law-card {
-            background: var(--bg);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 24px;
-            text-align: center;
-            transition: border-color 0.2s, transform 0.2s;
-        }
-
-        .law-card:hover {
-            border-color: var(--accent);
-            transform: translateY(-4px);
-        }
-
-        .law-number {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: var(--accent);
-            color: #fff;
-            font-weight: 600;
-            font-size: 1.1rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 16px;
-        }
-
-        .law-card h3 {
-            font-size: 1.1rem;
-            margin-bottom: 8px;
-            color: var(--accent);
-        }
-
-        .law-card p {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-        }
-
-        /* USBV Workflow */
-        .workflow {
-            overflow: hidden;
-        }
-
-        .workflow-diagram {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 48px;
-            flex-wrap: wrap;
-        }
-
-        .workflow-step {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .workflow-letter {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            background: var(--bg-secondary);
-            border: 2px solid var(--accent);
-            color: var(--accent);
-            font-weight: 700;
-            font-size: 1.25rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .workflow-label {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-        }
-
-        .workflow-arrow {
-            color: var(--border);
-            font-size: 1.5rem;
-            margin-top: -24px;
-        }
-
-        .workflow-example {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 32px;
-            max-width: 800px;
-            margin: 0 auto;
-        }
-
-        .workflow-example h3 {
-            margin-bottom: 24px;
-            font-size: 1.1rem;
-        }
-
-        .workflow-example h3 span {
-            color: var(--text-secondary);
-            font-weight: 400;
-        }
-
-        .workflow-steps-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 24px;
-        }
-
-        .workflow-steps-table td {
-            padding: 8px 12px;
-            border-bottom: 1px solid var(--border);
-            font-size: 0.9rem;
-        }
-
-        .workflow-steps-table td:first-child {
-            color: var(--accent);
-            font-weight: 500;
-            width: 100px;
-        }
-
-        .workflow-steps-table td:last-child {
-            color: var(--text-secondary);
-        }
-
-        .workflow-code {
-            background: var(--code-bg);
-            border-radius: 8px;
-            padding: 16px;
-            font-size: 0.85rem;
-            overflow-x: auto;
-            white-space: pre;
-            line-height: 1.5;
-        }
-
-        .workflow-code .decorator {
-            color: var(--accent-yellow);
-        }
-
-        .workflow-code .function {
-            color: var(--accent);
-        }
-
-        .workflow-code .string {
-            color: var(--accent-green);
-        }
-
-        .workflow-code .comment {
-            color: var(--text-secondary);
-        }
-
-        /* Why It Works */
-        .why-works {
-            background: var(--bg-secondary);
-        }
-
-        .why-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: 1fr 1fr;
             gap: 32px;
             max-width: 900px;
             margin: 0 auto;
         }
 
-        .why-card {
+        .comparison-card {
             background: var(--bg);
             border: 1px solid var(--border);
             border-radius: 12px;
             padding: 32px;
         }
 
-        .why-card h3 {
-            font-size: 1.25rem;
-            margin-bottom: 16px;
+        .comparison-card.before {
+            border-color: var(--accent-red);
+        }
+
+        .comparison-card.after {
+            border-color: var(--accent-green);
+        }
+
+        .comparison-card h3 {
+            font-size: 1.1rem;
+            margin-bottom: 20px;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
         }
 
-        .why-card h3 .icon {
-            font-size: 1.5rem;
+        .comparison-card.before h3 {
+            color: var(--accent-red);
         }
 
-        .why-card p {
+        .comparison-card.after h3 {
+            color: var(--accent-green);
+        }
+
+        .comparison-card ul {
+            list-style: none;
+            font-size: 0.95rem;
+        }
+
+        .comparison-card li {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        .comparison-card li:last-child {
+            border-bottom: none;
+        }
+
+        .comparison-card li strong {
+            color: var(--text);
+        }
+
+        .approach-summary {
+            text-align: center;
+            margin-top: 48px;
+            padding: 24px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .approach-summary p {
             color: var(--text-secondary);
             font-size: 0.95rem;
         }
 
-        .feedback-loop {
-            background: var(--code-bg);
-            border-radius: 8px;
-            padding: 16px;
-            margin-top: 16px;
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-            text-align: center;
-        }
-
-        .feedback-loop .arrow {
+        .approach-summary strong {
             color: var(--accent);
         }
 
-        /* Terminal Demo */
+        /* What It Looks Like */
+        .demo {
+            overflow: hidden;
+        }
+
         .terminal {
             background: var(--code-bg);
             border: 1px solid var(--border);
             border-radius: 12px;
             overflow: hidden;
-            max-width: 700px;
+            max-width: 800px;
             margin: 0 auto;
         }
 
@@ -432,9 +312,9 @@
         .terminal-dot.green { background: #27ca40; }
 
         .terminal-body {
-            padding: 20px;
+            padding: 24px;
             font-size: 0.85rem;
-            line-height: 1.8;
+            line-height: 1.9;
         }
 
         .terminal-line .prompt {
@@ -453,80 +333,167 @@
             color: var(--accent-green);
         }
 
-        /* Quick Start */
-        .quickstart h2 {
-            margin-bottom: 48px;
+        .terminal-line .phase {
+            color: var(--accent-yellow);
         }
 
-        .steps {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 24px;
-            max-width: 900px;
-            margin: 0 auto 48px;
+        .terminal-line .comment {
+            color: var(--text-secondary);
+            font-style: italic;
         }
 
-        .step {
+        /* Get Started */
+        .quickstart {
+            background: var(--bg-secondary);
+        }
+
+        .install-command {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px 32px;
+            max-width: 600px;
+            margin: 0 auto 32px;
             text-align: center;
         }
 
-        .step-number {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            background: var(--accent);
-            color: #fff;
-            font-weight: 600;
-            font-size: 1.25rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 16px;
-        }
-
-        .step h3 {
-            margin-bottom: 8px;
-        }
-
-        .step code {
-            display: inline-block;
-            background: var(--code-bg);
-            padding: 8px 16px;
-            border-radius: 6px;
-            font-size: 0.9rem;
+        .install-command code {
+            font-size: 1.1rem;
             color: var(--accent);
         }
 
-        .ai-tools {
+        .install-note {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 48px;
+        }
+
+        .install-note code {
+            background: var(--code-bg);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .experience-tiers {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .tier {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .tier.full {
+            border-color: var(--accent-green);
+        }
+
+        .tier h4 {
+            margin-bottom: 8px;
+        }
+
+        .tier.full h4 {
+            color: var(--accent-green);
+        }
+
+        .tier p {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        /* Built On */
+        .foundations {
+            padding: 60px 0;
+            background: var(--bg);
+        }
+
+        .foundations h2 {
+            margin-bottom: 8px;
+        }
+
+        .foundations-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 32px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .foundation-category {
             background: var(--bg-secondary);
             border: 1px solid var(--border);
             border-radius: 12px;
             padding: 24px;
-            max-width: 600px;
-            margin: 0 auto;
         }
 
-        .ai-tools h4 {
+        .foundation-category h3 {
+            font-size: 1rem;
+            color: var(--accent);
             margin-bottom: 16px;
-            text-align: center;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
         }
 
-        .ai-tools-list {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 16px;
-            text-align: center;
+        .foundation-items {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .foundation-item {
+            display: flex;
+            align-items: baseline;
+            gap: 12px;
+        }
+
+        .foundation-year {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            min-width: 50px;
+        }
+
+        .foundation-name {
+            color: var(--text);
             font-size: 0.9rem;
         }
 
-        .ai-tools-list .tool-name {
+        .foundation-name a {
             color: var(--text);
-            font-weight: 500;
+            text-decoration: none;
         }
 
-        .ai-tools-list .tool-config {
-            color: var(--text-secondary);
-            font-size: 0.8rem;
+        .foundation-name a:hover {
+            color: var(--accent);
+        }
+
+        .deps-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .dep-badge {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 8px 14px;
+            font-size: 0.85rem;
+            text-decoration: none;
+            color: var(--text);
+            transition: border-color 0.2s;
+        }
+
+        .dep-badge:hover {
+            border-color: var(--accent);
+            color: var(--accent);
         }
 
         /* Footer */
@@ -559,196 +526,25 @@
         }
 
         /* Responsive */
-        @media (max-width: 1100px) {
-            .laws-grid {
-                grid-template-columns: repeat(3, 1fr);
-            }
-        }
-
-        @media (max-width: 900px) {
-            .laws-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-
         @media (max-width: 768px) {
             .hero h1 {
-                font-size: 2.5rem;
+                font-size: 2.25rem;
             }
 
-            .laws-grid {
+            .comparison {
                 grid-template-columns: 1fr;
             }
 
-            .workflow-diagram {
-                flex-direction: column;
-            }
-
-            .workflow-arrow {
-                transform: rotate(90deg);
-                margin: 0;
-            }
-
-            .why-grid {
+            .experience-tiers {
                 grid-template-columns: 1fr;
             }
 
-            .steps {
-                grid-template-columns: 1fr;
-            }
-
-            .ai-tools-list {
+            .foundations-grid {
                 grid-template-columns: 1fr;
             }
 
             nav ul {
                 display: none;
-            }
-
-            .mcp-tools {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        /* MCP Section */
-        .mcp {
-            padding: 80px 0;
-            background: var(--bg-secondary);
-        }
-
-        .mcp-tools {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 24px;
-            margin-top: 40px;
-        }
-
-        .mcp-tool {
-            background: var(--bg);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 24px;
-            text-align: center;
-        }
-
-        .mcp-tool-name {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 1.1rem;
-            color: var(--accent);
-            margin-bottom: 12px;
-        }
-
-        .mcp-tool-desc {
-            color: var(--text);
-            margin-bottom: 8px;
-        }
-
-        .mcp-tool-replaces {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-        }
-
-        .mcp-note {
-            text-align: center;
-            margin-top: 24px;
-            color: var(--text-secondary);
-        }
-
-        .mcp-note code {
-            background: var(--code-bg);
-            padding: 2px 6px;
-            border-radius: 4px;
-        }
-
-        /* Foundations Section */
-        .foundations {
-            padding: 60px 0;
-            background: var(--bg);
-            border-top: 1px solid var(--border);
-        }
-
-        .foundations h2 {
-            text-align: center;
-            margin-bottom: 8px;
-        }
-
-        .foundations .subtitle {
-            text-align: center;
-            color: var(--text-secondary);
-            margin-bottom: 40px;
-        }
-
-        .foundations-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 24px;
-        }
-
-        .foundation-item {
-            text-align: center;
-            padding: 20px;
-        }
-
-        .foundation-year {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.85rem;
-            color: var(--accent);
-            margin-bottom: 8px;
-        }
-
-        .foundation-title {
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: var(--text);
-        }
-
-        .foundation-desc {
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-            line-height: 1.5;
-        }
-
-        .foundation-source {
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-            margin-top: 8px;
-            font-style: italic;
-        }
-
-        .foundations-row-label {
-            text-align: center;
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-            margin: 32px 0 16px 0;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .foundations-row-label:first-of-type {
-            margin-top: 0;
-        }
-
-        .foundation-link {
-            font-size: 0.75rem;
-            color: var(--accent);
-            text-decoration: none;
-            display: inline-block;
-            margin-top: 4px;
-        }
-
-        .foundation-link:hover {
-            text-decoration: underline;
-        }
-
-        @media (max-width: 900px) {
-            .foundations-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-
-        @media (max-width: 500px) {
-            .foundations-grid {
-                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -756,11 +552,14 @@
 <body>
     <nav>
         <div class="container">
-            <a href="#" class="logo"><img src="logo.svg" alt="Invar" width="28" height="28" style="vertical-align: middle; margin-right: 8px;">In<span>var</span></a>
+            <a href="#" class="logo">
+                <img src="logo.svg" alt="Invar" width="28" height="28">
+                In<span>var</span>
+            </a>
             <ul>
-                <li><a href="#laws">Laws</a></li>
-                <li><a href="#workflow">Workflow</a></li>
-                <li><a href="#quickstart">Quick Start</a></li>
+                <li><a href="#approach">Approach</a></li>
+                <li><a href="#demo">Demo</a></li>
+                <li><a href="#quickstart">Get Started</a></li>
                 <li><a href="https://github.com/tefx/invar">GitHub</a></li>
             </ul>
         </div>
@@ -768,63 +567,65 @@
 
     <section class="hero">
         <div class="container">
-            <img src="logo.svg" alt="Invar Logo" width="120" height="120" style="margin-bottom: 24px;">
-            <h1>Trust AI Code<br>Without Reading Every Line</h1>
+            <img src="logo.svg" alt="Invar Logo" width="100" height="100" style="margin-bottom: 24px;">
+            <h1>From AI-Generated<br>to AI-Engineered Code</h1>
             <p class="tagline">
-                You use AI to write code. Reading every line defeats the purpose.
+                Invar brings decades of software engineering best practices to AI-assisted development.
             </p>
             <p class="subtagline">
-                Invar provides <strong>mechanical verification</strong> so you can trust AI output without manual review.
+                Through automated verification, structured workflows, and proven design patterns,
+                agents write code that's <strong>correct by construction</strong>—not by accident.
             </p>
             <div class="cta-group">
-                <a href="#quickstart" class="btn btn-primary">
-                    Get Started
-                </a>
-                <a href="https://github.com/tefx/invar" class="btn btn-secondary">
-                    View on GitHub
-                </a>
-                <a href="https://pypi.org/project/invar-tools/" class="btn btn-secondary">
-                    PyPI
-                </a>
+                <a href="#quickstart" class="btn btn-primary">Get Started</a>
+                <a href="https://github.com/tefx/invar" class="btn btn-secondary">GitHub</a>
+                <a href="https://pypi.org/project/invar-tools/" class="btn btn-secondary">PyPI</a>
             </div>
         </div>
     </section>
 
-    <section class="why-works">
+    <section class="approach" id="approach">
         <div class="container">
-            <h2>What You Get</h2>
-            <p class="subtitle">Invar handles mechanical correctness. You focus on business logic.</p>
-            <div class="why-grid">
-                <div class="why-card">
-                    <h3><span class="icon">✓</span> Invar Verifies</h3>
-                    <p>
-                        • Contracts exist (boundaries were considered)<br>
-                        • Contracts aren't empty placeholders<br>
-                        • Doctests pass (behavior is proven)<br>
-                        • Pure logic has no I/O calls<br>
-                        • Code size limits respected
-                    </p>
+            <h2>The Approach</h2>
+            <p class="subtitle">
+                Not a validator that checks code after the fact—a methodology that guides agents to write better code from the start.
+            </p>
+
+            <div class="comparison">
+                <div class="comparison-card before">
+                    <h3>Without Invar</h3>
+                    <ul>
+                        <li><strong>No specification</strong> — Agent guesses intent, misses edge cases</li>
+                        <li><strong>No feedback loop</strong> — Errors accumulate undetected</li>
+                        <li><strong>No workflow</strong> — Jumps to implementation, skips validation</li>
+                        <li><strong>No separation</strong> — I/O mixed with logic, untestable</li>
+                    </ul>
                 </div>
-                <div class="why-card">
-                    <h3><span class="icon">👤</span> You Judge</h3>
-                    <p>
-                        • Whether contracts match business requirements<br>
-                        • Whether edge cases are covered<br>
-                        • Whether the architecture is correct<br>
-                        • Whether to ship
-                    </p>
-                    <div class="feedback-loop mono" style="margin-top: 16px;">
-                        AI writes <span class="arrow">→</span> Invar verifies <span class="arrow">→</span> You review <span class="arrow">→</span> Ship
-                    </div>
+                <div class="comparison-card after">
+                    <h3>With Invar</h3>
+                    <ul>
+                        <li><strong>Contracts as spec</strong> — @pre/@post define exact boundaries</li>
+                        <li><strong>Multi-layer verification</strong> — Static + doctest + property + symbolic</li>
+                        <li><strong>USBV workflow</strong> — Understand → Specify → Build → Validate</li>
+                        <li><strong>Core/Shell split</strong> — Pure logic isolated, 100% testable</li>
+                    </ul>
                 </div>
+            </div>
+
+            <div class="approach-summary">
+                <p>
+                    The key insight: <strong>process determines quality</strong>.
+                    When agents follow proven engineering practices, they produce code that meets specifications—verified automatically.
+                </p>
             </div>
         </div>
     </section>
 
     <section class="demo" id="demo">
         <div class="container">
-            <h2>Two Verification Levels</h2>
-            <p class="subtitle">Zero decisions — default runs full verification</p>
+            <h2>What It Looks Like</h2>
+            <p class="subtitle">Agent workflow with Invar guidance</p>
+
             <div class="terminal">
                 <div class="terminal-header">
                     <div class="terminal-dot red"></div>
@@ -832,198 +633,26 @@
                     <div class="terminal-dot green"></div>
                 </div>
                 <div class="terminal-body mono">
-                    <div class="terminal-line"><span class="prompt">$</span> <span class="command">invar guard --static</span>  <span class="output"># STATIC: rules only (~0.5s, debugging)</span></div>
-                    <div class="terminal-line"><span class="success">✓ Static analysis passed</span></div>
+                    <div class="terminal-line"><span class="success">✓ Check-In:</span> <span class="output">my-project | main | clean</span></div>
                     <div class="terminal-line"></div>
-                    <div class="terminal-line"><span class="prompt">$</span> <span class="command">invar guard</span>  <span class="output"># STANDARD: rules + doctests + CrossHair + Hypothesis (default)</span></div>
-                    <div class="terminal-line"><span class="success">✓ Static analysis passed</span></div>
-                    <div class="terminal-line"><span class="success">✓ Doctests passed</span></div>
-                    <div class="terminal-line"><span class="success">✓ CrossHair verified</span> <span class="output">(2 files)</span></div>
-                    <div class="terminal-line"><span class="success">✓ Hypothesis property tests passed</span></div>
+                    <div class="terminal-line"><span class="phase">━━ /develop → SPECIFY (2/4) ━━</span></div>
                     <div class="terminal-line"></div>
-                    <div class="terminal-line"><span class="prompt">$</span> <span class="command">invar guard --coverage</span>  <span class="output"># Branch coverage (doctest + hypothesis)</span></div>
-                    <div class="terminal-line"><span class="success">✓ Overall: 91% branch coverage</span></div>
+                    <div class="terminal-line"><span class="comment"># Agent defines contract before implementation</span></div>
+                    <div class="terminal-line"><span class="output">@pre(lambda principal, rate, years: principal > 0 and rate >= 0)</span></div>
+                    <div class="terminal-line"><span class="output">@post(lambda result: result >= principal)</span></div>
+                    <div class="terminal-line"><span class="output">def compound_interest(principal, rate, years): ...</span></div>
                     <div class="terminal-line"></div>
-                    <div class="terminal-line"><span class="output"># Default runs full verification — no decisions needed</span></div>
-                    <div class="terminal-line"><span class="output"># Incremental mode: only changed files (~5s first, ~2s cached)</span></div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="laws" id="laws">
-        <div class="container">
-            <h2>The Six Laws</h2>
-            <p class="subtitle">Principles that make AI code verifiable</p>
-            <div class="laws-grid">
-                <div class="law-card">
-                    <div class="law-number">1</div>
-                    <h3>Separation</h3>
-                    <p>Pure logic (Core) and I/O (Shell) must be physically separate</p>
-                </div>
-                <div class="law-card">
-                    <div class="law-number">2</div>
-                    <h3>Contract Complete</h3>
-                    <p>Define COMPLETE boundaries that uniquely determine implementation</p>
-                </div>
-                <div class="law-card">
-                    <div class="law-number">3</div>
-                    <h3>Context Economy</h3>
-                    <p>Read map → signatures → implementation (only if needed)</p>
-                </div>
-                <div class="law-card">
-                    <div class="law-number">4</div>
-                    <h3>Decompose First</h3>
-                    <p>Break complex tasks into sub-functions before implementing</p>
-                </div>
-                <div class="law-card">
-                    <div class="law-number">5</div>
-                    <h3>Verify Reflectively</h3>
-                    <p>If fail: Reflect (why?) → Fix → Verify again</p>
-                </div>
-                <div class="law-card">
-                    <div class="law-number">6</div>
-                    <h3>Integrate Fully</h3>
-                    <p>Verify all feature paths connect; local correctness ≠ global correctness</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="workflow" id="workflow">
-        <div class="container">
-            <h2>The Workflow: USBV</h2>
-            <p class="subtitle">AI follows this workflow for every task — depth varies naturally</p>
-
-            <div class="workflow-diagram">
-                <div class="workflow-step">
-                    <div class="workflow-letter">U</div>
-                    <div class="workflow-label">Understand</div>
-                </div>
-                <div class="workflow-arrow">→</div>
-                <div class="workflow-step">
-                    <div class="workflow-letter">S</div>
-                    <div class="workflow-label">Specify</div>
-                </div>
-                <div class="workflow-arrow">→</div>
-                <div class="workflow-step">
-                    <div class="workflow-letter">B</div>
-                    <div class="workflow-label">Build</div>
-                </div>
-                <div class="workflow-arrow">→</div>
-                <div class="workflow-step">
-                    <div class="workflow-letter">V</div>
-                    <div class="workflow-label">Validate</div>
-                </div>
-            </div>
-
-            <div class="workflow-example">
-                <h3>Example <span>— You: "Add a function to calculate discounted price"</span></h3>
-                <table class="workflow-steps-table">
-                    <tr><td>Understand</td><td>Core function (pure logic), check existing patterns with invar sig</td></tr>
-                    <tr><td>Specify</td><td>@pre: price > 0, discount ∈ [0,1]. @post: result ≥ 0. Decompose if needed.</td></tr>
-                    <tr><td>Build</td><td>Write code with contracts and doctests</td></tr>
-                    <tr><td>Validate</td><td>invar guard — Smart Guard runs static + doctests. Iterate if needed.</td></tr>
-                </table>
-                <div class="workflow-code mono">
-<span class="decorator">@pre</span>(<span class="function">lambda</span> price, discount: price > 0 <span class="function">and</span> 0 <= discount <= 1)
-<span class="decorator">@post</span>(<span class="function">lambda</span> result: result >= 0)
-<span class="function">def</span> discounted_price(price: <span class="function">float</span>, discount: <span class="function">float</span>) -> <span class="function">float</span>:
-    <span class="string">"""
-    >>> discounted_price(100, 0.2)
-    80.0
-    """</span>
-    <span class="function">return</span> price * (1 - discount)
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="mcp" id="mcp">
-        <div class="container">
-            <h2>MCP Integration</h2>
-            <p class="subtitle">First-class tools for AI agents</p>
-            <div class="mcp-tools">
-                <div class="mcp-tool">
-                    <div class="mcp-tool-name">invar_guard</div>
-                    <div class="mcp-tool-desc">Smart Guard verification (static + doctests + coverage)</div>
-                    <div class="mcp-tool-replaces">Replaces: pytest, crosshair, coverage</div>
-                </div>
-                <div class="mcp-tool">
-                    <div class="mcp-tool-name">invar_sig</div>
-                    <div class="mcp-tool-desc">Show function signatures with @pre/@post contracts</div>
-                    <div class="mcp-tool-replaces">Replaces: reading entire files</div>
-                </div>
-                <div class="mcp-tool">
-                    <div class="mcp-tool-name">invar_map</div>
-                    <div class="mcp-tool-desc">Symbol map with reference counts</div>
-                    <div class="mcp-tool-replaces">Replaces: grep for definitions</div>
-                </div>
-            </div>
-            <p class="mcp-note">
-                <code>invar init</code> creates <code>.mcp.json</code> automatically
-            </p>
-        </div>
-    </section>
-
-    <section class="foundations" id="foundations">
-        <div class="container">
-            <h2>Built on Proven Foundations</h2>
-            <p class="subtitle">Every law is grounded in research</p>
-
-            <div class="foundations-row-label">Classic Software Engineering</div>
-            <div class="foundations-grid">
-                <div class="foundation-item">
-                    <div class="foundation-year">1990s</div>
-                    <div class="foundation-title">Functional Purity</div>
-                    <div class="foundation-desc">Haskell IO monad: separate pure logic from effects</div>
-                    <div class="foundation-source">→ Law 1: Separation</div>
-                </div>
-                <div class="foundation-item">
-                    <div class="foundation-year">1986</div>
-                    <div class="foundation-title">Design by Contract</div>
-                    <div class="foundation-desc">Bertrand Meyer's Eiffel: @pre/@post as specification</div>
-                    <div class="foundation-source">→ Law 2: Contract Complete</div>
-                </div>
-                <div class="foundation-item">
-                    <div class="foundation-year">1970s</div>
-                    <div class="foundation-title">Symbolic Execution</div>
-                    <div class="foundation-desc">Prove correctness via constraint solving, not just test</div>
-                    <div class="foundation-source">→ Law 5: Verify</div>
-                </div>
-                <div class="foundation-item">
-                    <div class="foundation-year">Classic</div>
-                    <div class="foundation-title">Integration Testing</div>
-                    <div class="foundation-desc">Unit tests pass ≠ system works; verify end-to-end</div>
-                    <div class="foundation-source">→ Law 6: Integrate Fully</div>
-                </div>
-            </div>
-
-            <div class="foundations-row-label">LLM Code Generation Research (2023)</div>
-            <div class="foundations-grid">
-                <div class="foundation-item">
-                    <div class="foundation-year">Clover</div>
-                    <div class="foundation-title">Closed-Loop Verification</div>
-                    <div class="foundation-desc">Verify correctness via code ↔ spec consistency checking</div>
-                    <div class="foundation-source">→ Law 2: Contract Complete</div>
-                </div>
-                <div class="foundation-item">
-                    <div class="foundation-year">Lost in Middle</div>
-                    <div class="foundation-title">Context Efficiency</div>
-                    <div class="foundation-desc">LLMs struggle with info buried in long contexts</div>
-                    <div class="foundation-source">→ Law 3: Context Economy</div>
-                </div>
-                <div class="foundation-item">
-                    <div class="foundation-year">Parsel</div>
-                    <div class="foundation-title">Hierarchical Decomposition</div>
-                    <div class="foundation-desc">Decompose → implement leaves → compose upward</div>
-                    <div class="foundation-source">→ Law 4: Decompose First</div>
-                </div>
-                <div class="foundation-item">
-                    <div class="foundation-year">Reflexion</div>
-                    <div class="foundation-title">Self-Reflection</div>
-                    <div class="foundation-desc">Reflect on failures, learn from mistakes, retry</div>
-                    <div class="foundation-source">→ Law 5: Verify Reflectively</div>
+                    <div class="terminal-line"><span class="phase">━━ /develop → VALIDATE (4/4) ━━</span></div>
+                    <div class="terminal-line"></div>
+                    <div class="terminal-line"><span class="prompt">$</span> <span class="command">invar guard --changed</span></div>
+                    <div class="terminal-line"><span class="output">WARN: missing doctest example (compound_interest)</span></div>
+                    <div class="terminal-line"></div>
+                    <div class="terminal-line"><span class="comment"># Agent fixes automatically, re-runs guard</span></div>
+                    <div class="terminal-line"></div>
+                    <div class="terminal-line"><span class="prompt">$</span> <span class="command">invar guard --changed</span></div>
+                    <div class="terminal-line"><span class="success">Guard passed.</span> <span class="output">(1 file, 0 errors)</span></div>
+                    <div class="terminal-line"></div>
+                    <div class="terminal-line"><span class="success">✓ Final:</span> <span class="output">guard PASS | 0 errors, 0 warnings</span></div>
                 </div>
             </div>
         </div>
@@ -1031,61 +660,104 @@
 
     <section class="quickstart" id="quickstart">
         <div class="container">
-            <h2>Quick Start</h2>
-            <div class="steps">
-                <div class="step">
-                    <div class="step-number">1</div>
-                    <h3>Initialize</h3>
-                    <code>uvx --from invar-tools invar init --claude</code>
-                </div>
-                <div class="step">
-                    <div class="step-number">2</div>
-                    <h3>Code with AI</h3>
-                    <code>AI follows USBV workflow</code>
-                </div>
-                <div class="step">
-                    <div class="step-number">3</div>
-                    <h3>Verify</h3>
-                    <code>uvx --from invar-tools invar guard</code>
-                </div>
+            <h2>Get Started</h2>
+            <p class="subtitle">One command to set up your project</p>
+
+            <div class="install-command">
+                <code>uvx --from invar-tools invar init --claude</code>
             </div>
-            <p style="margin-bottom: 24px; font-size: 0.9rem; color: var(--text-secondary); text-align: center;">
-                No install required! <code style="background: var(--code-bg); padding: 2px 6px; border-radius: 4px;">uvx</code> runs tools in isolated environment.
+
+            <p class="install-note">
+                No install required. <code>uvx</code> runs tools in an isolated environment.
+                Add <code>pip install invar-runtime</code> for runtime contracts.
             </p>
 
-            <!-- Experience Tiers -->
-            <div class="ai-tools" style="margin-bottom: 24px;">
-                <h4>Experience Tiers</h4>
-                <div class="ai-tools-list">
-                    <div>
-                        <div class="tool-name" style="color: var(--accent-green);">Claude Code</div>
-                        <div class="tool-config">Full: Skills + MCP + Sub-agent review</div>
-                    </div>
-                    <div>
-                        <div class="tool-name">Cursor/Windsurf</div>
-                        <div class="tool-config">Basic: Protocol + CLI</div>
-                    </div>
-                    <div>
-                        <div class="tool-name">Others</div>
-                        <div class="tool-config">Minimal: CLI only</div>
-                    </div>
+            <div class="experience-tiers">
+                <div class="tier full">
+                    <h4>Claude Code</h4>
+                    <p>Full experience: Skills, MCP tools, sub-agent review</p>
                 </div>
-                <p style="margin-top: 16px; font-size: 0.85rem; color: var(--text-secondary); text-align: center;">
-                    Workflow skills (/develop, /review) require Claude Code's sub-agent capabilities
-                </p>
+                <div class="tier">
+                    <h4>Cursor / Windsurf</h4>
+                    <p>Protocol document + CLI verification</p>
+                </div>
+                <div class="tier">
+                    <h4>Others</h4>
+                    <p>CLI commands work everywhere</p>
+                </div>
             </div>
+        </div>
+    </section>
 
-            <!-- Session Protocol -->
-            <div class="ai-tools">
-                <h4>Session Protocol</h4>
-                <div style="text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; line-height: 2;">
-                    <div style="color: var(--accent-green);">✓ Check-In: MyProject | main | clean</div>
-                    <div style="color: var(--text-secondary);">... development work ...</div>
-                    <div style="color: var(--accent-green);">✓ Final: guard PASS | 0 errors, 2 warnings</div>
+    <section class="foundations" id="foundations">
+        <div class="container">
+            <h2>Built On</h2>
+            <p class="subtitle">Decades of research, one integrated workflow</p>
+
+            <div class="foundations-grid">
+                <div class="foundation-category">
+                    <h3>Foundational Theory</h3>
+                    <div class="foundation-items">
+                        <div class="foundation-item">
+                            <span class="foundation-year">1976</span>
+                            <span class="foundation-name">Symbolic Execution (King)</span>
+                        </div>
+                        <div class="foundation-item">
+                            <span class="foundation-year">1986</span>
+                            <span class="foundation-name">Design by Contract (Meyer)</span>
+                        </div>
+                        <div class="foundation-item">
+                            <span class="foundation-year">2000</span>
+                            <span class="foundation-name">Property-Based Testing (QuickCheck)</span>
+                        </div>
+                        <div class="foundation-item">
+                            <span class="foundation-year">2012</span>
+                            <span class="foundation-name">Functional Core/Imperative Shell (Bernhardt)</span>
+                        </div>
+                    </div>
                 </div>
-                <p style="margin-top: 16px; font-size: 0.85rem; color: var(--text-secondary); text-align: center;">
-                    Check-In shows context. Guard runs in VALIDATE phase and Final.
-                </p>
+
+                <div class="foundation-category">
+                    <h3>AI Code Generation Research</h3>
+                    <div class="foundation-items">
+                        <div class="foundation-item">
+                            <span class="foundation-year">2023</span>
+                            <span class="foundation-name">Clover — Closed-loop verification</span>
+                        </div>
+                        <div class="foundation-item">
+                            <span class="foundation-year">2023</span>
+                            <span class="foundation-name">Parsel — Hierarchical decomposition</span>
+                        </div>
+                        <div class="foundation-item">
+                            <span class="foundation-year">2023</span>
+                            <span class="foundation-name">Reflexion — Self-reflection on failures</span>
+                        </div>
+                        <div class="foundation-item">
+                            <span class="foundation-year">2024</span>
+                            <span class="foundation-name">AlphaCodium — Flow engineering</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="foundation-category">
+                    <h3>Inspired By</h3>
+                    <div class="deps-grid">
+                        <span class="dep-badge">Eiffel</span>
+                        <span class="dep-badge">Dafny</span>
+                        <span class="dep-badge">Idris</span>
+                        <span class="dep-badge">Haskell</span>
+                    </div>
+                </div>
+
+                <div class="foundation-category">
+                    <h3>Dependencies</h3>
+                    <div class="deps-grid">
+                        <a href="https://github.com/life4/deal" class="dep-badge">deal</a>
+                        <a href="https://github.com/dry-python/returns" class="dep-badge">returns</a>
+                        <a href="https://github.com/pschanely/CrossHair" class="dep-badge">CrossHair</a>
+                        <a href="https://hypothesis.readthedocs.io/" class="dep-badge">Hypothesis</a>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
@@ -1099,8 +771,7 @@
                 <a href="https://github.com/tefx/invar/blob/main/docs/vision.md">Vision</a>
             </div>
             <p class="copyright">
-                Invar Protocol v5.0 — Apache-2.0 (runtime) + GPL-3.0 (tools) + CC-BY-4.0 (docs)<br>
-                USBV Workflow • Agent-Native JSON • Human-Directed Purpose
+                Apache-2.0 (runtime) · GPL-3.0 (tools) · CC-BY-4.0 (docs)
             </p>
         </div>
     </footer>
