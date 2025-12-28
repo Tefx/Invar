@@ -55,14 +55,14 @@ Guard passed.
 ### 📦 Two Packages, Different Purposes
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│  Your Project                                                   │
-│  ├── pyproject.toml                                             │
-│  │   └── dependencies = ["invar-runtime"]  ← Ships with code   │
-│  │                                                              │
-│  └── Development (never enters production)                      │
-│      └── uvx --from invar-tools invar guard  ← Guides agents   │
-└─────────────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────────┐
+│  Your Project                                                     │
+│  ├── pyproject.toml                                               │
+│  │   └── dependencies = ["invar-runtime"]  ← Ships with code     │
+│  │                                                                │
+│  └── Development (never enters production)                        │
+│      └── uvx --from invar-tools invar guard  ← Guides agents     │
+└───────────────────────────────────────────────────────────────────┘
 ```
 
 | Package | Purpose | Install |
@@ -184,56 +184,33 @@ Guard provides fast feedback. Agent sees errors, fixes immediately:
 | **Property** | Hypothesis | ~10s | Edge cases via random inputs |
 | **Symbolic** | CrossHair | ~30s | Mathematical proof of contracts |
 
-```mermaid
-flowchart LR
-    subgraph S["⚡ Static · 0.5s"]
-        S1[Guard Rules]
-    end
-    subgraph D["🧪 Doctest · 2s"]
-        D1[Examples]
-    end
-    subgraph P["🎲 Property · 10s"]
-        P1[Hypothesis]
-    end
-    subgraph X["🔬 Symbolic · 30s"]
-        X1[CrossHair]
-    end
-
-    S --> D --> P --> X
-
-    style S fill:#e3f2fd
-    style D fill:#e8f5e9
-    style P fill:#fff3e0
-    style X fill:#fce4ec
+```
+┌──────────┐   ┌──────────┐   ┌──────────┐   ┌──────────┐
+│ ⚡ Static │ → │ 🧪 Doctest│ → │ 🎲 Property│ → │ 🔬 Symbolic│
+│   ~0.5s  │   │   ~2s    │   │   ~10s   │   │   ~30s   │
+└──────────┘   └──────────┘   └──────────┘   └──────────┘
 ```
 
-```mermaid
-flowchart TD
-    A[Agent writes code] --> G[invar guard]
-    G --> E{Errors?}
-    E -->|Yes| F[Agent fixes]
-    F --> G
-    E -->|No| D[Done ✓]
-
-    style A fill:#e1f5fe
-    style G fill:#fff3e0
-    style D fill:#e8f5e9
+```
+Agent writes code
+       ↓
+   invar guard  ←──────┐
+       ↓               │
+   Error found?        │
+       ↓ Yes           │
+   Agent fixes ────────┘
+       ↓ No
+   Done ✓
 ```
 
 ### ✅ Solution 3: Workflow Discipline
 
 The USBV workflow forces "specify before implement":
 
-```mermaid
-flowchart LR
-    U["🔍 Understand"] --> S["📝 Specify"]
-    S --> B["🔨 Build"]
-    B --> V["✓ Validate"]
-
-    U -.- u1["Context"]
-    S -.- s1["Contracts"]
-    B -.- b1["Code"]
-    V -.- v1["Guard"]
+```
+🔍 Understand  →  📝 Specify  →  🔨 Build  →  ✓ Validate
+      │              │             │            │
+   Context       Contracts       Code        Guard
 ```
 
 Skill routing ensures agents enter through the correct workflow:
@@ -276,23 +253,19 @@ Separate pure logic from I/O for maximum testability:
 | **Core** | `**/core/**` | `@pre`/`@post` contracts, doctests, no I/O imports |
 | **Shell** | `**/shell/**` | `Result[T, E]` return types |
 
-```mermaid
-flowchart TB
-    subgraph Shell["🐚 Shell · I/O Layer"]
-        S1[load_config]
-        S2[save_result]
-    end
-
-    subgraph Core["💎 Core · Pure Logic"]
-        C1[parse_config]
-        C2[validate]
-    end
-
-    Shell --> Core
-    Core -.->|"Result[T, E]"| Shell
-
-    style Core fill:#e8f5e9
-    style Shell fill:#fff3e0
+```
+┌─────────────────────────────────────────────┐
+│  🐚 Shell (I/O Layer)                       │
+│  load_config, save_result, fetch_data       │
+└──────────────────┬──────────────────────────┘
+                   │
+                   ▼
+┌─────────────────────────────────────────────┐
+│  💎 Core (Pure Logic)                       │
+│  parse_config, validate, calculate          │
+└──────────────────┬──────────────────────────┘
+                   │
+                   ▼ Result[T, E]
 ```
 
 ```python
