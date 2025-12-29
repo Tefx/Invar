@@ -8,7 +8,13 @@ This package provides development tools (guard, map, sig).
 For runtime contracts only, use invar-runtime instead.
 """
 
-__version__ = "1.0.0"
+import importlib.metadata
+
+try:
+    __version__ = importlib.metadata.version("invar-tools")
+except importlib.metadata.PackageNotFoundError:
+    __version__ = "0.0.0.dev"  # Development mode fallback
+
 __protocol_version__ = "5.0"  # Protocol/spec version (separate from package version)
 
 # Re-export from invar-runtime for backwards compatibility

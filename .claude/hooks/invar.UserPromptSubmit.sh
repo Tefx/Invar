@@ -1,6 +1,6 @@
 #!/bin/bash
 # Invar UserPromptSubmit Hook
-# Protocol: v5.0 | Generated: 2025-12-28
+# Protocol: v5.0 | Generated: 2025-12-29
 # DX-57: Protocol refresh with full INVAR.md injection
 
 USER_MESSAGE="$1"

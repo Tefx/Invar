@@ -379,7 +379,7 @@ def _show_verification_level(verification_level) -> None:
 @app.command()
 def version() -> None:
     """Show Invar version."""
-    console.print(f"invar {__version__}")
+    console.print(f"invar-tools {__version__}")
 
 
 @app.command("map")

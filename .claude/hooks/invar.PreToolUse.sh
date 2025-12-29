@@ -1,6 +1,6 @@
 #!/bin/bash
 # Invar PreToolUse Hook
-# Protocol: v5.0 | Generated: 2025-12-28
+# Protocol: v5.0 | Generated: 2025-12-29
 # DX-57: Smart blocking with auto-escape for pytest/crosshair
 
 TOOL_NAME="$1"
