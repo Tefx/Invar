@@ -150,18 +150,26 @@ Guard triggers `review_suggested` for: security-sensitive files, escape hatches 
 
 ## Workflow Routing (MANDATORY)
 
-When user message contains these triggers, you MUST invoke the corresponding skill:
+When user message contains these triggers, you MUST use the **Skill tool** to invoke the skill:
 
-| Trigger Words | Skill | Notes |
-|---------------|-------|-------|
-| "review", "review and fix" | `/review` | Adversarial review with fix loop |
-| "implement", "add", "fix", "update" | `/develop` | Unless in review context |
-| "why", "explain", "investigate" | `/investigate` | Research mode, no code changes |
-| "compare", "should we", "design" | `/propose` | Decision facilitation |
+| Trigger Words | Skill Tool Call | Notes |
+|---------------|-----------------|-------|
+| "review", "review and fix" | `Skill(skill="review")` | Adversarial review with fix loop |
+| "implement", "add", "fix", "update" | `Skill(skill="develop")` | Unless in review context |
+| "why", "explain", "investigate" | `Skill(skill="investigate")` | Research mode, no code changes |
+| "compare", "should we", "design" | `Skill(skill="propose")` | Decision facilitation |
+
+**⚠️ CRITICAL: You must call the Skill tool, not just follow the workflow mentally.**
+
+The Skill tool reads `.claude/skills/<skill>/SKILL.md` which contains:
+- Detailed phase instructions (USBV breakdown)
+- Error handling rules
+- Timeout policies
+- Incremental development patterns (DX-63)
 
 **Violation check (before writing ANY code):**
-- "Am I in a workflow?"
-- "Did I invoke the correct skill?"
+- "Did I call `Skill(skill="...")`?"
+- "Am I following the SKILL.md instructions?"
 
 ---
 
