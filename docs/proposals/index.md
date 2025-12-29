@@ -8,7 +8,7 @@ This directory contains design proposals for Invar development.
 - `LX-XX-name.md` — Language eXtension (multi-language evolution)
 - Completed/archived proposals in `completed/` subdirectory
 
-## Active Proposals (8)
+## Active Proposals (9)
 
 ### DX Series (Developer Experience)
 
@@ -26,6 +26,7 @@ This directory contains design proposals for Invar development.
 
 | ID | Name | Status | Description |
 |----|------|--------|-------------|
+| LX-04 | multi-agent-framework | Draft | Multi-Agent Support Framework (Claude, Pi, Aider, Cline, Codex, Cursor) |
 | LX-03 | multi-agent-support | In Progress | Multi-agent support implementation (Phase 1 ✅) |
 | LX-02 | agent-portability-analysis | Complete | Invar portability to Aider, Cline, Continue, Cursor |
 | LX-01 | multi-language-feasibility | Draft | Feasibility assessment for multi-language Invar |
@@ -156,9 +157,31 @@ Draft: DX-60 (optimizes DX-57), DX-61, DX-62, DX-63, LX-01 (multi-language)
 | 9 | DX-54 | ✅ Complete |
 | 10 | DX-57, DX-58 | ✅ Complete |
 
+## Recent Changes (2025-12-29)
+
+### Proposed Today
+- **LX-04** — Multi-Agent Support Framework (expanded scope)
+  - Originally Pi-only support, now comprehensive 6-agent framework
+  - **Agents:** Claude Code, Pi, Cursor, Codex CLI, Aider, Cline
+  - **Integration patterns:**
+    - Native Skill (Claude, Pi, Codex) — SKILL.md + hooks
+    - Lint Hook (Aider) — CONVENTIONS.md + lint-cmd
+    - MCP First (Claude, Cline, Codex, Cursor) — MCP tools + CLI fallback
+    - Rules File (Cline, Cursor) — .clinerules / .mdc
+  - **Key Design Change:** Copy-Sync instead of Symlink
+    - Claude Code doesn't follow symlinks (security)
+    - Skills copied from `.invar/skills/` to `.{agent}/skills/`
+    - Generation markers for drift detection
+  - Manifest-driven architecture with JSON agent definitions
+  - Hook logic SSOT in Python, generated to Bash/TypeScript
+  - System prompt templates with Jinja2
+  - **Platform:** macOS/Linux only (Windows not supported)
+  - **Implementation order:** Claude → Pi → Cursor → Codex → Aider/Cline
+  - **Estimated:** 16 days implementation
+
 ## Recent Changes (2025-12-28)
 
-### Implemented Today
+### Implemented
 - **DX-58** — Document Structure Optimization ✅
   - Critical section at top of CLAUDE.md (~50 tokens)
   - Slimmed context.md (~150 lines vs 1110 lines)
