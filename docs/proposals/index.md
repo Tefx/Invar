@@ -8,12 +8,13 @@ This directory contains design proposals for Invar development.
 - `LX-XX-name.md` — Language eXtension (multi-language evolution)
 - Completed/archived proposals in `completed/` subdirectory
 
-## Active Proposals (7)
+## Active Proposals (8)
 
 ### DX Series (Developer Experience)
 
 | ID | Name | Status | Description |
 |----|------|--------|-------------|
+| DX-67 | explicit-skill-invocation | **New** | Require Skill tool call for workflow routing |
 | DX-62 | proactive-reference-reading | Partial | Task Router (Layer 1) done, Layers 2-4 pending |
 | DX-61 | functional-pattern-guidance | Draft | Teach agents functional patterns (NewType, Validation, etc.) |
 | DX-60 | structured-rules-ssot | Draft | Optimize DX-57 token usage (1,800t → 600t) |
@@ -31,12 +32,14 @@ This directory contains design proposals for Invar development.
 
 **LX Series Vision:** Evolve Invar from Python-specific tool to universal AI-assisted development protocol.
 
-**LX-02 Key Findings:**
+**LX-02 Key Findings + Testing:**
 - SKILL.md is de facto standard (Claude, Pi, Codex) — 50% CLI agents
 - CLI is universal interface — 100% agents can call `invar guard`
 - MCP widely supported but Pi rejects it (design decision)
 - AGENTS.md emerging standard (Pi, Codex)
 - Hooks divergent: Claude (Bash), Pi (TypeScript), Cursor (JSON)
+- **Pi reads CLAUDE.md** — No separate SYSTEM.md needed (verified)
+- **Pi reads .claude/skills/** — Skill sharing works!
 
 ## Archived Proposals (47)
 
@@ -141,6 +144,7 @@ Complete: DX-63 (contracts-first)
 
 | Status | Proposal | Description | Notes |
 |--------|----------|-------------|-------|
+| **New** | DX-67 | Explicit Skill tool invocation | Verified in benchmark, templates updated |
 | **Partial** | DX-62 | Proactive reference reading | Layer 1 (Task Router) ✅, Layers 2-4 pending |
 | **Draft** | DX-61 | Functional pattern guidance | Teach agents functional patterns |
 | **Draft** | DX-60 | Structured rules SSOT | Optimize DX-57 token usage (1,800t → 600t) |
@@ -149,7 +153,7 @@ Complete: DX-63 (contracts-first)
 | **Defer** | DX-25 | Functional patterns | Non-essential major change |
 | **Defer** | DX-29 | Pure content detection | DX-22 sufficient |
 
-**All core proposals complete (47/51).** LX-04 active, 2 draft + 2 partial + 2 deferred items remain.
+**All core proposals complete (47/52).** LX-04 active, DX-67 new, 2 draft + 2 partial + 2 deferred items remain.
 
 ## Execution History
 
@@ -169,6 +173,14 @@ Complete: DX-63 (contracts-first)
 
 ## Recent Changes (2025-12-29)
 
+### Proposed Today
+- **DX-67** — Explicit Skill Tool Invocation **New**
+  - Problem: Claude followed USBV workflow but never called Skill tool
+  - SKILL.md content (DX-63, timeout, error recovery) was never read
+  - Solution: Explicit `Skill(skill="...")` syntax in routing table
+  - Verified: Skill Calls 0 → 1 in benchmark
+  - Templates updated: CLAUDE.md, CLAUDE.md.template, CLAUDE.md.jinja
+
 ### Updated Today (LX Series Research)
 - **LX-02** — Agent Portability Analysis ✅ (Deep Research Update)
   - Removed Continue, added Pi and Codex CLI
@@ -181,11 +193,13 @@ Complete: DX-63 (contracts-first)
   - Moved to completed/ directory
   - Implementation work continues in LX-04
 
-- **LX-04** — Multi-Agent Support Framework (Updated)
-  - Incorporated LX-02 key findings table
-  - Updated Cursor manifest with 6 hook types
-  - Updated event mapping with Cursor hooks
-  - Emphasized SKILL.md as de facto standard
+- **LX-04** — Multi-Agent Support Framework (Major Simplification)
+  - **Key Discovery:** Pi reads CLAUDE.md directly → No SYSTEM.md needed!
+  - **Key Discovery:** Pi reads .claude/skills/ → Skill sharing works!
+  - Phase 3 reduced: 3 days → 2 days (no SYSTEM.md template)
+  - Total reduced: 16 days → 15 days
+  - Updated Pi manifest: shared_with: ["claude"]
+  - Updated migration guide for Pi users
 
 ### Completed Earlier Today
 - **DX-66** — Escape Hatch Visibility ✅
@@ -217,7 +231,7 @@ Complete: DX-63 (contracts-first)
   - System prompt templates with Jinja2
   - **Platform:** macOS/Linux only (Windows not supported)
   - **Implementation order:** Claude → Pi → Cursor → Codex → Aider/Cline
-  - **Estimated:** 16 days implementation
+  - **Estimated:** 15 days implementation (reduced due to Pi/Claude sharing)
 
 ## Recent Changes (2025-12-28)
 
@@ -375,22 +389,27 @@ LX-04: Multi-Agent Framework         ← Active (canonical implementation)
 
 ### LX-02 Research Summary (6 Agents)
 
-| Agent | Skills | MCP | Hooks | Tier |
-|-------|--------|-----|-------|------|
-| Claude Code | SKILL.md ✅ | ✅ | Bash (4) | 1 |
-| Pi | SKILL.md ✅ | ❌ | TypeScript | 1 |
-| Codex CLI | SKILL.md ✅ | ✅ | ❌ | 2 |
-| Cursor | ❌ | ✅ | JSON (6) | 2 |
-| Cline | ❌ | ✅ | ❌ | 3 |
-| Aider | ❌ | ⚠️ | lint-cmd | 4 |
+| Agent | Skills | MCP | Hooks | System Prompt | Tier |
+|-------|--------|-----|-------|---------------|------|
+| Claude Code | SKILL.md ✅ | ✅ | Bash (4) | CLAUDE.md | 1 |
+| Pi | SKILL.md ✅ | ❌ | TypeScript | **CLAUDE.md** ✅ | 1 |
+| Codex CLI | SKILL.md ✅ | ✅ | ❌ | AGENTS.md | 2 |
+| Cursor | ❌ | ✅ | JSON (6) | .cursor/rules/ | 2 |
+| Cline | ❌ | ✅ | ❌ | .clinerules | 3 |
+| Aider | ❌ | ⚠️ | lint-cmd | CONVENTIONS.md | 4 |
+
+> **Key:** Pi reads CLAUDE.md → Claude/Pi share same system prompt!
 
 ### LX-04 Implementation Order
 
 ```
 Claude Code ─────► Pi ─────► Cursor ─────► Codex CLI ─────► Aider/Cline
     ✅              │          │             │                │
-  Current        Week 1     Week 2        Week 3           Week 4
+  Current        2 days     Week 2        Week 3           Week 4
+               (simplified)
 ```
+
+> **Simplification:** Pi reads CLAUDE.md directly → shares prompt with Claude Code.
 
 ### Future Phases
 
