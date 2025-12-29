@@ -8,7 +8,7 @@ This directory contains design proposals for Invar development.
 - `LX-XX-name.md` — Language eXtension (multi-language evolution)
 - Completed/archived proposals in `completed/` subdirectory
 
-## Active Proposals (8)
+## Active Proposals (7)
 
 ### DX Series (Developer Experience)
 
@@ -26,7 +26,6 @@ This directory contains design proposals for Invar development.
 | ID | Name | Status | Description |
 |----|------|--------|-------------|
 | LX-04 | multi-agent-framework | **Active** | Canonical multi-agent implementation (6 agents, manifest-driven) |
-| LX-03 | multi-agent-support | Phase 1 ✅, Superseded | docs/guides/ created, Phase 2+ absorbed by LX-04 |
 | LX-02 | agent-portability-analysis | ✅ Complete | Research: 6 agents (Claude, Pi, Codex, Cursor, Cline, Aider) |
 | LX-01 | multi-language-feasibility | Draft | Feasibility assessment for multi-language Invar |
 
@@ -39,10 +38,11 @@ This directory contains design proposals for Invar development.
 - AGENTS.md emerging standard (Pi, Codex)
 - Hooks divergent: Claude (Bash), Pi (TypeScript), Cursor (JSON)
 
-## Archived Proposals (46)
+## Archived Proposals (47)
 
 | ID | Name | Status | Description |
 |----|------|--------|-------------|
+| LX-03 | multi-agent-support | ✅ Complete | docs/guides/ created, implementation → LX-04 |
 | DX-66 | escape-hatch-visibility | ✅ Complete | Guard shows escape hatch summary in output |
 | DX-65 | single-file-guard | ✅ Complete | `invar guard file.py` support |
 | DX-64 | version-display-unification | ✅ Complete | Use importlib.metadata for accurate version |
@@ -149,7 +149,7 @@ Complete: DX-63 (contracts-first)
 | **Defer** | DX-25 | Functional patterns | Non-essential major change |
 | **Defer** | DX-29 | Pure content detection | DX-22 sufficient |
 
-**All core proposals complete (46/50).** 2 draft + 2 partial + 2 deferred items remain.
+**All core proposals complete (47/51).** LX-04 active, 2 draft + 2 partial + 2 deferred items remain.
 
 ## Execution History
 
@@ -176,11 +176,10 @@ Complete: DX-63 (contracts-first)
   - Key findings: SKILL.md standard, CLI universal, MCP non-universal, AGENTS.md emerging
   - Portability matrix: Concepts (100%) > Tools (90%) > Integration (50%)
 
-- **LX-03** — Multi-Agent Support Implementation (Updated)
-  - Updated agent matrix based on LX-02 findings
-  - Added Pi and Codex CLI, removed Continue
-  - Updated hook mapping (3 implementations: Bash, TypeScript, JSON)
-  - Phase 2+ marked as superseded by LX-04
+- **LX-03** — Multi-Agent Support Implementation ✅ **Archived**
+  - Simplified to Phase 1 summary only (docs/guides/ output)
+  - Moved to completed/ directory
+  - Implementation work continues in LX-04
 
 - **LX-04** — Multi-Agent Support Framework (Updated)
   - Incorporated LX-02 key findings table
@@ -370,7 +369,7 @@ The LX series explores evolving Invar into a universal development protocol.
 ```
 LX-01: Multi-Language Feasibility    ← Draft (strategic exploration)
 LX-02: Agent Portability Analysis    ← ✅ Complete (research)
-LX-03: Multi-Agent Support (Docs)    ← ✅ Phase 1 Complete, Phase 2+ → LX-04
+LX-03: Multi-Agent Support (Docs)    ← ✅ Archived (output: docs/guides/)
 LX-04: Multi-Agent Framework         ← Active (canonical implementation)
 ```
 
