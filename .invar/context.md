@@ -19,6 +19,18 @@
 - `invar_guard()` = static + doctests + CrossHair + Hypothesis
 - Final must show: `✓ Final: guard PASS | ...`
 
+## Task Router (DX-62)
+
+| If you are about to... | STOP and read first |
+|------------------------|---------------------|
+| Write code in `core/` | `.invar/examples/contracts.py` |
+| Write code in `shell/` | `.invar/examples/core_shell.py` |
+| Add `@pre`/`@post` contracts | `.invar/examples/contracts.py` |
+| Use functional patterns | `.invar/examples/functional.py` |
+| Implement a feature | `.invar/examples/workflow.md` |
+
+**Rule:** Match found above? Read the file BEFORE writing code.
+
 ## Self-Reminder
 
 <!-- DX-54: AI should re-read this file periodically -->
