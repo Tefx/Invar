@@ -84,10 +84,21 @@ class Violation(BaseModel):
 
 
 class EscapeHatchDetail(BaseModel):
-    """Detail of a single escape hatch (@invar:allow) marker (DX-66)."""
+    """
+    Detail of a single escape hatch (@invar:allow) marker (DX-66).
+
+    Examples:
+        >>> d = EscapeHatchDetail(file="test.py", line=10, rule="shell_result", reason="API")
+        >>> d.line
+        10
+        >>> # line=0 is valid (fallback when line number unknown)
+        >>> d0 = EscapeHatchDetail(file="test.py", line=0, rule="test", reason="fallback")
+        >>> d0.line
+        0
+    """
 
     file: str
-    line: int
+    line: int = Field(ge=0)  # 0 = fallback when line number unknown
     rule: str
     reason: str
 
@@ -117,13 +128,25 @@ class EscapeHatchSummary(BaseModel):
     @property
     @post(lambda result: result >= 0)
     def count(self) -> int:
-        """Total number of escape hatches."""
+        """
+        Total number of escape hatches.
+
+        Examples:
+            >>> EscapeHatchSummary().count
+            0
+        """
         return len(self.details)
 
     @property
     @post(lambda result: all(v >= 0 for v in result.values()))
     def by_rule(self) -> dict[str, int]:
-        """Count of escape hatches grouped by rule."""
+        """
+        Count of escape hatches grouped by rule.
+
+        Examples:
+            >>> EscapeHatchSummary().by_rule
+            {}
+        """
         counts: dict[str, int] = {}
         for detail in self.details:
             counts[detail.rule] = counts.get(detail.rule, 0) + 1
@@ -131,7 +154,15 @@ class EscapeHatchSummary(BaseModel):
 
     @pre(lambda self, detail: bool(detail.rule) and bool(detail.file))
     def add(self, detail: EscapeHatchDetail) -> None:
-        """Add an escape hatch detail to the summary."""
+        """
+        Add an escape hatch detail to the summary.
+
+        Examples:
+            >>> s = EscapeHatchSummary()
+            >>> s.add(EscapeHatchDetail(file="t.py", line=1, rule="r", reason="x"))
+            >>> s.count
+            1
+        """
         self.details.append(detail)
 
 
