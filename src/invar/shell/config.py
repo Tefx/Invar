@@ -267,6 +267,52 @@ def _find_config_source(project_root: Path) -> Result[tuple[Path | None, ConfigS
         return Failure(f"Failed to find config: {e}")
 
 
+# @shell_complexity: Project root discovery requires checking multiple markers
+def find_project_root(start_path: "Path") -> "Path":  # noqa: UP037
+    """
+    Find project root by walking up from start_path looking for config files.
+
+    Looks for (in order): pyproject.toml, invar.toml, .invar/, .git/
+
+    Args:
+        start_path: Starting path (file or directory)
+
+    Returns:
+        Project root directory (absolute path), or start_path's parent if no markers found
+
+    Examples:
+        >>> from pathlib import Path
+        >>> import tempfile
+        >>> with tempfile.TemporaryDirectory() as tmpdir:
+        ...     root = Path(tmpdir).resolve()
+        ...     (root / "pyproject.toml").touch()
+        ...     subdir = root / "src" / "core"
+        ...     subdir.mkdir(parents=True)
+        ...     found = find_project_root(subdir / "file.py")
+        ...     found == root
+        True
+    """
+    from pathlib import Path
+
+    current = Path(start_path).resolve()  # Resolve to absolute path
+    if current.is_file():
+        current = current.parent
+
+    # Walk up looking for project markers
+    for parent in [current, *current.parents]:
+        if (parent / "pyproject.toml").exists():
+            return parent
+        if (parent / "invar.toml").exists():
+            return parent
+        if (parent / ".invar").is_dir():
+            return parent
+        if (parent / ".git").exists():
+            return parent
+
+    # Fallback to the starting directory
+    return current
+
+
 def _read_toml(path: Path) -> Result[dict[str, Any], str]:
     """Read and parse a TOML file."""
     try:

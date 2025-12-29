@@ -25,7 +25,7 @@ from invar import __version__
 from invar.core.models import GuardReport, RuleConfig
 from invar.core.rules import check_all_rules
 from invar.core.utils import get_exit_code
-from invar.shell.config import load_config
+from invar.shell.config import find_project_root, load_config
 from invar.shell.fs import scan_project
 from invar.shell.guard_output import output_agent, output_rich
 
@@ -102,7 +102,11 @@ def _scan_and_check(
 @app.command()
 def guard(
     path: Path = typer.Argument(
-        Path(), help="Project root directory", exists=True, file_okay=False, dir_okay=True
+        Path(),
+        help="Project directory or single Python file",
+        exists=True,
+        file_okay=True,
+        dir_okay=True,
     ),
     strict: bool = typer.Option(False, "--strict", help="Treat warnings as errors"),
     changed: bool = typer.Option(
@@ -157,6 +161,16 @@ def guard(
     )
     from invar.shell.testing import VerificationLevel
 
+    # DX-65: Handle single file mode
+    single_file_mode = path.is_file()
+    single_file: Path | None = None
+    if single_file_mode:
+        if path.suffix != ".py":
+            console.print(f"[red]Error:[/red] {path} is not a Python file")
+            raise typer.Exit(1)
+        single_file = path.resolve()
+        path = find_project_root(path)
+
     # Load and configure
     config_result = load_config(path)
     if isinstance(config_result, Failure):
@@ -179,7 +193,9 @@ def guard(
             format_contract_coverage_report,
         )
 
-        coverage_result = calculate_contract_coverage(path, changed_only=changed)
+        # DX-65: Use single file path if in single file mode
+        coverage_path = single_file if single_file else path
+        coverage_result = calculate_contract_coverage(coverage_path, changed_only=changed)
         if isinstance(coverage_result, Failure):
             console.print(f"[red]Error:[/red] {coverage_result.failure()}")
             raise typer.Exit(1)
@@ -194,10 +210,14 @@ def guard(
 
         raise typer.Exit(0 if report_data.ready_for_build else 1)
 
-    # Handle --changed mode
+    # Handle --changed mode or single file mode (DX-65)
     only_files: set[Path] | None = None
     checked_files: list[Path] = []
-    if changed:
+    if single_file:
+        # DX-65: Single file mode - only check the specified file
+        only_files = {single_file}
+        checked_files = [single_file]
+    elif changed:
         changed_result = handle_changed_mode(path)
         if isinstance(changed_result, Failure):
             if changed_result.failure() == "NO_CHANGES":
