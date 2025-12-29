@@ -10,13 +10,15 @@
 
 ## Executive Summary
 
-Invar 目前深度绑定 Claude Code 的机制（Skills, Hooks, CLAUDE.md, MCP）。本文档分析这些机制在其他开源 coding agent 中的适用性，为 Invar 的跨平台策略提供依据。
+Invar 目前深度绑定 Claude Code 的机制（Skills, Hooks, CLAUDE.md, MCP）。本文档分析这些机制在 6 个主流 coding agent 中的适用性，为 Invar 的跨平台策略提供依据。
 
 **关键发现:**
-- **MCP** 是唯一接近通用的标准 (Claude Code, Cline, Continue, Aider, Cursor 均支持)
-- **Hooks** 仅 Claude Code 和 Cursor 1.7+ 支持
-- **Skills** 是 Claude Code 独有机制
-- **指令文件** 各 agent 有不同格式但概念相似
+- **SKILL.md** 成为事实标准 (Claude Code, Pi, Codex CLI 均支持)
+- **CLI** 是真正的通用接口 (所有 agent 可调用 `invar guard`)
+- **MCP** 广泛但非普适 (Pi 明确拒绝 MCP 作为设计决策)
+- **AGENTS.md** 新兴上下文标准 (Pi, Codex CLI 使用)
+- **Hooks** 分化严重 (Claude=Bash, Pi=TypeScript, Cursor=JSON)
+- **指令文件** 各 agent 有不同格式 (CLAUDE.md, SYSTEM.md, AGENTS.md, .cursorrules, .clinerules, CONVENTIONS.md)
 
 ---
 
@@ -72,17 +74,26 @@ Invar 目前深度绑定 Claude Code 的机制（Skills, Hooks, CLAUDE.md, MCP�
 
 ## Part 2: 主流 Coding Agent 对比
 
+> **更新 2025-12-29:** 移除 Continue，添加 Pi 和 Codex CLI。
+
 ### 2.1 机制支持矩阵
 
-| 机制 | Claude Code | Cursor | Cline | Continue | Aider |
-|------|-------------|--------|-------|----------|-------|
-| **指令文件** | CLAUDE.md | .cursorrules | .clinerules | config.yaml | CONVENTIONS.md |
-| **目录规则** | .claude/ | .cursor/rules/ | - | .continue/rules/ | - |
-| **Hooks** | ✅ 4种 | ✅ Beta (1.7+) | ❌ | ❌ | ❌ |
-| **Skills/Commands** | ✅ | ❌ | ❌ (Modes) | ✅ customCommands | ❌ |
-| **MCP** | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Plan Mode** | ❌ (manual) | ❌ | ✅ | ❌ | ❌ |
-| **自动测试** | ❌ | ❌ | ❌ | ❌ | ✅ lint/test |
+| 机制 | Claude Code | Pi | Codex CLI | Cursor | Cline | Aider |
+|------|-------------|-------|-----------|--------|-------|-------|
+| **指令文件** | CLAUDE.md | SYSTEM.md | AGENTS.md | .cursorrules | .clinerules | CONVENTIONS.md |
+| **上下文文件** | - | AGENTS.md | AGENTS.md | - | - | - |
+| **目录规则** | .claude/ | .pi/ | .codex/ | .cursor/rules/ | - | - |
+| **Hooks** | ✅ 4种 | ✅ TypeScript | ❌ | ✅ 6种 | ❌ | ❌ |
+| **Skills** | ✅ SKILL.md | ✅ SKILL.md | ✅ SKILL.md | ❌ | ❌ | ❌ |
+| **Commands** | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
+| **MCP** | ✅ | ❌ (设计决策) | ✅ | ✅ | ✅ | ⚠️ 社区 |
+| **Plan Mode** | ❌ | ❌ (用文件) | ❌ | ❌ | ✅ | ❌ |
+| **自动测试** | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ lint-cmd |
+
+**关键发现:**
+- **SKILL.md 是事实标准:** Claude Code, Pi, Codex CLI 都支持
+- **AGENTS.md 新兴标准:** Pi 和 Codex 都使用 AGENTS.md 作为上下文文件
+- **Hooks 分化:** Claude (Bash), Pi (TypeScript), Cursor (JSON+脚本)
 
 ### 2.2 详细分析
 
@@ -92,23 +103,104 @@ Invar 目前深度绑定 Claude Code 的机制（Skills, Hooks, CLAUDE.md, MCP�
 .claude/
 ├── settings.local.json    # 权限、MCP 配置
 ├── commands/              # 用户可调用命令 (markdown)
-├── hooks/                 # 工具拦截 (shell scripts)
+├── hooks/                 # 工具拦截 (Bash scripts)
 │   ├── PreToolUse.sh
 │   ├── PostToolUse.sh
 │   ├── UserPromptSubmit.sh
 │   └── Stop.sh
-└── skills/                # Agent 可调用工作流 (markdown)
+└── skills/                # Agent 可调用工作流 (SKILL.md)
     └── {name}/SKILL.md
 ```
 
-**Hooks 机制:**
+**Hooks (4种):**
 - `PreToolUse`: 工具执行前，可阻止
 - `PostToolUse`: 工具执行后，可修改输出
 - `UserPromptSubmit`: 用户消息提交时
 - `Stop`: 会话结束时
 
-**优势:** 最完整的扩展体系
-**劣势:** 完全私有，无法迁移
+**优势:** 最完整的扩展体系，MCP + Skills + Hooks
+**劣势:** 不跟随符号链接 (安全特性)
+
+#### Pi (shittycodingagent.ai)
+
+```
+~/.pi/agent/
+├── settings.json          # 配置
+├── auth.json              # API 凭证
+├── AGENTS.md              # 全局上下文
+├── SYSTEM.md              # 系统提示覆盖
+├── commands/              # 自定义命令 (*.md)
+├── skills/                # 全局 Skills (SKILL.md)
+└── themes/                # 主题文件
+
+.pi/                       # 项目级配置
+├── AGENTS.md              # 项目上下文
+├── SYSTEM.md              # 项目系统提示
+├── commands/              # 项目命令
+└── skills/                # 项目 Skills
+```
+
+**Hooks (TypeScript):**
+- 有状态 TypeScript 模块
+- UI 帮助器 (selects, confirms, inputs, notifications)
+- 自由形式事件发送
+
+**Skills:** 支持 SKILL.md 格式 (Agent Skills 标准)
+
+**设计哲学 (故意不做):**
+- ❌ **No MCP** — "build CLI tools with READMEs instead"
+- ❌ **No Plan Mode** — 用文件写计划
+- ❌ **No To-dos** — 使用 TODO.md 文件
+- ❌ **No Sub-agents** — 用 tmux 启动新 pi 实例
+- ❌ **No Permission Popups** — YOLO 模式
+
+**核心工具:** read, write, edit, bash (仅 4 个)
+
+**优势:** 极简、透明、低上下文开销 (~1000 tokens)
+**劣势:** 无 MCP，需要手动构建工具集成
+
+> **参考:** [What I learned building an opinionated and minimal coding agent](https://mariozechner.at/posts/2025-11-30-pi-coding-agent/)
+
+#### Codex CLI (OpenAI)
+
+```
+~/.codex/
+├── config.toml            # TOML 配置
+├── AGENTS.md              # 全局指令 (32KB 限制)
+└── skills/                # 用户 Skills
+
+.codex/
+├── AGENTS.md              # 项目指令
+└── skills/                # 项目 Skills (SKILL.md)
+```
+
+**MCP 支持:**
+- 完整 MCP 客户端支持
+- 可配置 STDIO 或 SSE 服务器
+- `codex mcp` 命令管理
+- **Codex 可作为 MCP 服务器运行**
+
+**Skills:** 支持 SKILL.md 格式 (Agent Skills 标准)
+- 位置优先级: PROJECT > USER > ADMIN > SYSTEM
+- Frontmatter 元数据: name, description
+
+**AGENTS.md 发现:**
+1. `~/.codex/AGENTS.md` (全局)
+2. 从仓库根目录向下遍历
+3. 后面的文件覆盖前面的
+
+**关键特性:**
+- 沙箱执行 (read-only / workspace-write / full-access)
+- Web 搜索 (可选)
+- 会话恢复 (`codex resume`)
+- IDE 扩展 (VS Code, Cursor)
+- GitHub Actions 集成
+- GPT-5.2-Codex 模型优化
+
+**优势:** OpenAI 官方、沙箱安全、MCP 双向支持
+**劣势:** 无 Hooks
+
+> **参考:** [Codex CLI Documentation](https://developers.openai.com/codex/cli/)
 
 #### Cursor (1.7+)
 
@@ -116,65 +208,62 @@ Invar 目前深度绑定 Claude Code 的机制（Skills, Hooks, CLAUDE.md, MCP�
 .cursor/
 ├── rules/                 # MDC 格式规则文件
 │   └── *.mdc
-└── hooks.json             # Hook 配置 (Beta)
+└── hooks.json             # Hook 配置
 ```
 
-**Hooks 机制 (Beta):**
-- `afterFileEdit`: 文件修改后
-- `beforeShellExecution`: Shell 命令前
+**Hooks (6种):**
+- `beforeSubmitPrompt`: 提示提交前
+- `beforeShellExecution`: Shell 命令前，可阻止
+- `beforeMCPExecution`: MCP 调用前
+- `beforeReadFile`: 文件读取前
+- `afterFileEdit`: 文件编辑后 (用于格式化)
 - `stop`: 会话结束
 
-**优势:** 开始支持 hooks，有市场份额
-**劣势:** Hooks 仍是 Beta，覆盖不如 Claude Code
+**配置格式:** JSON (hooks.json) + 脚本文件
+
+**优势:** Hooks 最完整 (6 种)，MCP 支持
+**劣势:** 无 Skills 系统
+
+> **参考:** [Cursor Hooks Documentation](https://cursor.com/docs/agent/hooks)
 
 #### Cline (VS Code)
 
 ```
-.clinerules              # 项目级规则
-.roomodes                # Roo-Cline 模式定义 (fork)
+.clinerules              # 项目级规则 (文件或目录)
+.vscode/mcp.json         # MCP 服务器配置
 ```
 
 **特点:**
 - Plan & Act 模式分离
-- MCP 支持完整
+- MCP 完整支持 (可动态创建工具)
 - 无 Hook 系统
-- Custom Roles 定义
+- 无 Skills 系统
 
-**优势:** 开源，社区活跃
-**劣势:** 无 Hook，扩展能力有限
+**MCP 亮点:** "add a tool" 命令可让 Cline 自动创建 MCP 服务器
 
-#### Continue.dev
-
-```
-.continue/
-├── config.json           # 主配置
-└── rules/                # 规则目录
-```
-
-**特点:**
-- 完整 MCP 支持 (首个全特性支持)
-- customCommands 数组
-- 无 Hook 系统
-
-**优势:** MCP 支持最好
-**劣势:** 无 Hook
+**优势:** 开源，4M+ 用户，Plan Mode
+**劣势:** 无 Hook，无 Skills
 
 #### Aider
 
 ```
 .aider.conf.yml           # YAML 配置
-CONVENTIONS.md            # 编码约定
+CONVENTIONS.md            # 编码约定 (--read 加载)
 .aiderignore              # 忽略文件
 ```
 
 **特点:**
 - 约定文件作为持久记忆
-- 自动 lint/test 验证
-- 无 Hook 系统
+- `lint-cmd` 自动验证 (每次编辑后运行)
 - Git-aware 编辑
+- 无 Hook 系统
 
-**优势:** 简单，自动验证
-**劣势:** 扩展能力最弱
+**MCP 状态:**
+- 原生支持: 待定 (Issue #3314, 185+ 👍)
+- 社区服务器: 多个 MCP-Aider 桥接项目
+
+**优势:** 简单，lint-cmd 自动验证循环
+**劣势:** 无 Hook，无 Skills，MCP 待支持
 
 ---
 
@@ -186,11 +275,12 @@ CONVENTIONS.md            # 编码约定
 |------------|----------|----------|
 | **USBV 工作流** | ✅ 高 | 写入任何指令文件 |
 | **Check-In/Final** | ✅ 高 | 写入指令文件 |
-| **Guard (MCP)** | ✅ 高 | MCP 是通用标准 |
+| **Guard (MCP)** | ⚠️ 中 | MCP 广泛支持，但 Pi 拒绝 MCP |
+| **Guard (CLI)** | ✅ 高 | 所有 agent 可调用 CLI |
 | **Context.md** | ✅ 高 | 纯文件，任何 agent 可读 |
 | **Examples/** | ✅ 高 | 纯文件 |
-| **Skills** | ❌ 低 | Claude Code 独有 |
-| **Hooks 拦截** | ⚠️ 中 | 仅 Cursor 1.7+ 类似 |
+| **Skills (SKILL.md)** | ✅ 高 | Claude Code, Pi, Codex 均支持 |
+| **Hooks 拦截** | ⚠️ 低 | Claude (Bash), Pi (TS), Cursor (JSON) 各不兼容 |
 | **自动路由** | ⚠️ 中 | 需要 skill 或类似机制 |
 
 ### 3.2 核心价值分析
@@ -205,34 +295,44 @@ Invar 价值层次:
 │  ├── 契约驱动开发                                       │
 │  └── 对抗性审查                                         │
 ├─────────────────────────────────────────────────────────┤
-│  Layer 2: 工具 (通过 MCP 可移植)                        │
+│  Layer 2: 工具 (CLI 100%, MCP ~80%)                     │
 │  ├── invar guard                                        │
 │  ├── invar sig                                          │
 │  └── invar map                                          │
 ├─────────────────────────────────────────────────────────┤
-│  Layer 3: 集成 (Claude Code 特定)                       │
-│  ├── Skills (自动路由)                                  │
-│  ├── Hooks (命令拦截)                                   │
-│  └── Commands (用户调用)                                │
+│  Layer 2.5: Skills (SKILL.md 标准, ~50%)                │
+│  └── Claude Code, Pi, Codex CLI 支持                    │
+├─────────────────────────────────────────────────────────┤
+│  Layer 3: 集成 (平台特定, ~20%)                         │
+│  ├── Hooks (Claude/Pi/Cursor, 格式各异)                 │
+│  ├── Commands (Claude/Pi/Codex)                         │
+│  └── 自动路由 (需 Skills 支持)                          │
 └─────────────────────────────────────────────────────────┘
 ```
 
 ### 3.3 关键洞察
 
-> **MCP 是唯一的通用桥梁**
+> **SKILL.md 是新兴跨平台标准**
 >
-> 所有主流 coding agent 都支持 MCP。Invar 的核心工具 (guard, sig, map)
-> 通过 MCP 暴露，理论上任何支持 MCP 的 agent 都可以使用。
+> Claude Code, Pi, Codex CLI 都支持 SKILL.md 格式 (Agent Skills 标准)。
+> 这意味着 Invar 的 Skills 可以跨 50% 的 CLI agent 使用。
 
-> **Hooks 是差异化但非通用**
+> **MCP 广泛但非普适**
 >
-> Invar 的 pytest/crosshair 拦截依赖 PreToolUse hook。
-> 这在 Aider/Cline/Continue 中无法实现。
+> 大多数 agent 支持 MCP，但 Pi 明确拒绝 MCP (设计决策: "build CLI tools with READMEs")。
+> 对于 Pi，应使用 CLI fallback (invar guard 命令而非 MCP 工具)。
 
-> **Skills 是编排层，非核心**
+> **AGENTS.md 是新兴上下文标准**
 >
-> Skills 提供便捷的工作流编排，但 USBV 工作流可以通过
-> 指令文件描述，agent 会自然遵循。
+> Pi 和 Codex CLI 都使用 AGENTS.md 作为上下文文件。
+> 未来可考虑生成 AGENTS.md 作为补充格式。
+
+> **Hooks 完全分化**
+>
+> 三种 Hook 实现完全不兼容:
+> - Claude Code: Bash 脚本 (PreToolUse, PostToolUse, etc.)
+> - Pi: TypeScript 模块 (有状态, UI 帮助器)
+> - Cursor: JSON 配置 + 脚本 (6 种 hook 类型)
 
 ---
 
@@ -248,45 +348,45 @@ Invar 价值层次:
 │  - USBV 工作流描述                                          │
 │  - Core/Shell 规则                                          │
 │  - 契约要求                                                 │
-│  - 验证步骤 (调用 MCP 工具)                                 │
+│  - 验证步骤 (CLI 或 MCP)                                    │
 │                                                             │
 │  + 适配文件:                                                │
 │  - CLAUDE.md (Claude Code)                                  │
+│  - SYSTEM.md + AGENTS.md (Pi)                               │
+│  - AGENTS.md (Codex CLI)                                    │
 │  - .cursorrules (Cursor)                                    │
 │  - .clinerules (Cline)                                      │
 │  - CONVENTIONS.md (Aider)                                   │
-│  - config.yaml (Continue)                                   │
 └─────────────────────────────────────────────────────────────┘
                           │
                           ▼
 ┌─────────────────────────────────────────────────────────────┐
-│  Tier 2: MCP 工具层 (支持 MCP 的 agent)                     │
+│  Tier 2: 工具层                                             │
 │                                                             │
-│  invar MCP server:                                          │
-│  - invar_guard()                                            │
-│  - invar_sig()                                              │
-│  - invar_map()                                              │
+│  MCP (Claude, Codex, Cursor, Cline):                        │
+│  - invar_guard(), invar_sig(), invar_map()                  │
+│                                                             │
+│  CLI Fallback (Pi, Aider, 或任何 agent):                    │
+│  - invar guard, invar sig, invar map                        │
 │                                                             │
 │  配置方式:                                                  │
 │  - Claude Code: settings.local.json                         │
+│  - Codex CLI: config.toml mcpServers                        │
 │  - Cursor: MCP 配置                                         │
 │  - Cline: MCP 设置                                          │
-│  - Continue: config.json mcpServers                         │
-│  - Aider: 需确认                                            │
+│  - Pi/Aider: 无需配置，直接调用 CLI                         │
 └─────────────────────────────────────────────────────────────┘
                           │
                           ▼
 ┌─────────────────────────────────────────────────────────────┐
 │  Tier 3: 增强层 (特定 agent)                                │
 │                                                             │
-│  Claude Code:                                               │
-│  - Skills (自动路由)                                        │
-│  - Hooks (命令拦截)                                         │
+│  Claude Code / Pi / Codex:                                  │
+│  - Skills (SKILL.md, 自动路由)                              │
 │  - Commands (用户调用)                                      │
 │                                                             │
-│  Cursor 1.7+:                                               │
-│  - hooks.json (部分拦截)                                    │
-│  - .cursor/rules/ (MDC 规则)                                │
+│  Claude Code + Pi + Cursor:                                 │
+│  - Hooks (格式各异，需单独适配)                             │
 │                                                             │
 │  Cline:                                                     │
 │  - Custom Roles                                             │
@@ -302,44 +402,49 @@ invar init                    # 生成 Claude Code 配置
 
 # 建议扩展
 invar init --agent=claude     # Claude Code (默认)
+invar init --agent=pi         # Pi (shittycodingagent)
+invar init --agent=codex      # Codex CLI
 invar init --agent=cursor     # Cursor
 invar init --agent=cline      # Cline
-invar init --agent=continue   # Continue.dev
 invar init --agent=aider      # Aider
-invar init --agent=universal  # 仅生成 MCP + 通用指令
+invar init --agent=universal  # 仅生成通用指令 + CLI
 ```
 
 ### 4.3 生成文件映射
 
-| Agent | 指令文件 | MCP 配置 | Hooks |
-|-------|----------|----------|-------|
-| Claude Code | CLAUDE.md | settings.local.json | .claude/hooks/ |
-| Cursor | .cursorrules | cursor 设置 | .cursor/hooks.json |
-| Cline | .clinerules | 扩展设置 | N/A |
-| Continue | .continue/config.yaml | mcpServers | N/A |
-| Aider | CONVENTIONS.md | N/A (CLI) | N/A |
+| Agent | 指令文件 | 上下文文件 | MCP | Hooks | Skills |
+|-------|----------|------------|-----|-------|--------|
+| Claude Code | CLAUDE.md | - | ✅ settings.json | ✅ .claude/hooks/ | ✅ |
+| Pi | SYSTEM.md | AGENTS.md | ❌ | ✅ .pi/hooks/ (TS) | ✅ |
+| Codex CLI | - | AGENTS.md | ✅ config.toml | ❌ | ✅ |
+| Cursor | .cursorrules | - | ✅ | ✅ .cursor/hooks.json | ❌ |
+| Cline | .clinerules | - | ✅ | ❌ | ❌ |
+| Aider | CONVENTIONS.md | - | ⚠️ 社区 | ❌ | ❌ |
 
 ---
 
 ## Part 5: 功能降级矩阵
 
-### 5.1 在无 Hooks 的 Agent 中
+### 5.1 Hook 依赖功能的降级
 
-| 原功能 | Claude Code | 其他 Agent | 降级策略 |
-|--------|-------------|------------|----------|
-| pytest 拦截 | Hook 阻止 | ❌ 无法阻止 | 指令中说明 "使用 invar guard 而非 pytest" |
-| 自动路由 | Skill 触发 | ❌ 无自动 | 指令中写明触发词 → 行为映射 |
-| 协议刷新 | Hook 注入 | ❌ 无注入 | 依赖指令文件，用户手动触发 |
+| 原功能 | Claude Code | Pi | Codex/Cursor/Cline/Aider | 降级策略 |
+|--------|-------------|-----|--------------------------|----------|
+| pytest 拦截 | ✅ Hook | ✅ Hook (TS) | ❌ 无法阻止 | 指令中说明 "使用 invar guard 而非 pytest" |
+| 自动路由 | ✅ Skill | ✅ Skill | ⚠️ 有限 | SKILL.md (Codex) 或指令中写明触发词 |
+| 协议刷新 | ✅ Hook | ✅ Hook | ❌ 无注入 | 依赖指令文件，用户手动触发 |
 
-### 5.2 功能可用性
+### 5.2 功能可用性矩阵
 
-| 功能 | Claude | Cursor | Cline | Continue | Aider |
-|------|--------|--------|-------|----------|-------|
-| USBV 工作流 | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Guard 验证 | ✅ MCP | ✅ MCP | ✅ MCP | ✅ MCP | ⚠️ CLI |
-| 命令拦截 | ✅ | ⚠️ Beta | ❌ | ❌ | ✅ 内置 |
-| 自动路由 | ✅ | ❌ | ⚠️ Modes | ⚠️ Commands | ❌ |
-| 对抗性审查 | ✅ Skill | ✅ 指令 | ✅ 指令 | ✅ 指令 | ✅ 指令 |
+| 功能 | Claude | Pi | Codex | Cursor | Cline | Aider |
+|------|--------|-----|-------|--------|-------|-------|
+| USBV 工作流 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Guard (MCP) | ✅ | ❌ | ✅ | ✅ | ✅ | ⚠️ 社区 |
+| Guard (CLI) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Skills | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
+| Hooks | ✅ | ✅ | ❌ | ✅ | ❌ | ❌ |
+| 命令拦截 | ✅ | ✅ | ❌ | ✅ | ❌ | ✅ lint-cmd |
+| 自动路由 | ✅ | ✅ | ✅ | ❌ | ⚠️ Modes | ❌ |
+| 对抗性审查 | ✅ Skill | ✅ Skill | ✅ Skill | ✅ 指令 | ✅ 指令 | ✅ 指令 |
 
 ---
 
@@ -352,30 +457,40 @@ invar init --agent=universal  # 仅生成 MCP + 通用指令
    - 作为所有 agent 的基础指令
    - 包含 USBV 工作流、契约要求、验证步骤
 
-2. **文档化 MCP 配置**
-   - 为每个主流 agent 提供 MCP 配置示例
-   - 添加到 Invar 文档
+2. **文档化工具调用方式**
+   - MCP 配置示例 (Claude, Codex, Cursor, Cline)
+   - CLI fallback 示例 (Pi, Aider)
+
+3. **测试 SKILL.md 跨平台兼容性**
+   - 验证现有 Skills 在 Pi 和 Codex 中工作
+   - 调整元数据格式以满足各平台要求
 
 ### 6.2 中期 (需开发)
 
-3. **扩展 `invar init`**
+4. **扩展 `invar init`**
    - 添加 `--agent` 参数
    - 生成适配的配置文件
 
-4. **创建适配器模板**
-   - `.cursorrules.jinja`
-   - `.clinerules.jinja`
-   - `CONVENTIONS.md.jinja`
+5. **创建适配器模板**
+   - `SYSTEM.md.jinja` + `AGENTS.md.jinja` (Pi)
+   - `AGENTS.md.jinja` (Codex CLI)
+   - `.cursorrules.jinja` (Cursor)
+   - `.clinerules.jinja` (Cline)
+   - `CONVENTIONS.md.jinja` (Aider)
+
+6. **TypeScript Hooks 适配 (Pi)**
+   - 移植 pytest 拦截逻辑到 TypeScript
+   - 利用 Pi 的 UI 帮助器增强体验
 
 ### 6.3 长期 (战略)
 
-5. **评估 Hooks 替代方案**
-   - 对于无 Hook 的 agent，研究是否有其他拦截机制
-   - 例如: Aider 的 auto-lint 可能可以集成 invar guard
+7. **SKILL.md 标准贡献**
+   - 参与 Agent Skills 标准制定
+   - 确保 Invar Skills 格式兼容
 
-6. **社区贡献**
-   - 为其他 agent 贡献 Invar 集成
-   - 例如: Cline 插件、Continue 扩展
+8. **社区贡献**
+   - Cline 插件
+   - Aider MCP 集成 (待官方支持后)
 
 ---
 
@@ -389,58 +504,76 @@ invar init --agent=universal  # 仅生成 MCP + 通用指令
   ┌─────────────────────────┼─────────────────────────┐
   │                         │                         │
   ▼                         ▼                         ▼
-理念 100%              工具 ~80%              集成 ~20%
-USBV 工作流           MCP (Guard/Sig/Map)    Skills/Hooks
-Core/Shell            纯文件 (context.md)    Commands
-契约驱动              Examples               自动路由
+理念 100%              工具 ~90%              集成 ~50%
+USBV 工作流           CLI (Guard/Sig/Map)    Skills (SKILL.md)
+Core/Shell            MCP (大多数 agent)     Hooks (格式分化)
+契约驱动              纯文件 (context.md)    Commands
 ```
 
 ### 7.2 关键结论
 
-1. **Invar 的核心价值可移植**
+1. **Invar 的核心价值完全可移植**
    - USBV 工作流、契约驱动、Core/Shell 分离是理念
    - 可以通过任何 agent 的指令文件表达
 
-2. **MCP 是跨平台关键**
-   - `invar guard/sig/map` 通过 MCP 暴露
-   - 所有主流 agent 支持 MCP
+2. **CLI 是真正的通用接口**
+   - `invar guard/sig/map` CLI 命令在所有 agent 中可用
+   - MCP 覆盖大多数 agent (Pi 例外)
 
-3. **Hooks 是差异化但非必需**
-   - pytest 拦截是便利功能，非核心价值
-   - 无 Hook 的 agent 可以通过指令约束
+3. **SKILL.md 成为跨平台标准**
+   - Claude Code, Pi, Codex CLI 均支持
+   - 50% 的主流 CLI agent 可复用 Skills
 
-4. **Skills 是 Claude Code 独有优势**
-   - 提供最佳用户体验
-   - 其他 agent 需手动触发或简化体验
+4. **Hooks 完全分化但可映射**
+   - Claude (Bash), Pi (TypeScript), Cursor (JSON) 格式不同
+   - 核心逻辑可移植，需要格式适配
+
+5. **AGENTS.md 新兴标准**
+   - Pi 和 Codex 都使用 AGENTS.md
+   - 未来可作为补充上下文格式
 
 ### 7.3 推荐策略
 
-**拥抱 MCP，接受降级:**
+**拥抱标准，接受差异:**
 
 ```
-Claude Code: 完整体验 (Skills + Hooks + MCP)
-     ↓
-Cursor 1.7+: 良好体验 (Rules + Hooks Beta + MCP)
-     ↓
-Cline/Continue: 基础体验 (Rules + MCP)
-     ↓
-Aider: 最小体验 (Conventions + CLI)
+Tier 1: 完整体验 (Skills + Hooks + MCP/CLI)
+├── Claude Code: Skills + Bash Hooks + MCP
+└── Pi: Skills + TS Hooks + CLI
+
+Tier 2: 良好体验 (Skills/Rules + MCP)
+├── Codex CLI: Skills + MCP
+└── Cursor: Rules + Hooks + MCP
+
+Tier 3: 基础体验 (Rules + MCP)
+└── Cline: Rules + MCP
+
+Tier 4: 最小体验 (Conventions + CLI)
+└── Aider: Conventions + lint-cmd + CLI
 ```
 
-每个层级都能使用 Invar 的核心价值，只是便利性逐级降低。
+每个层级都能使用 Invar 的核心价值，只是便利性和自动化程度不同。
 
 ---
 
 ## References
 
+### Agent Documentation
+
 - [Aider Configuration](https://aider.chat/docs/config.html)
 - [Cline GitHub](https://github.com/cline/cline)
-- [Continue MCP Support](https://blog.continue.dev/model-context-protocol/)
-- [Cursor Hooks Guide](https://skywork.ai/blog/how-to-cursor-1-7-hooks-guide/)
+- [Codex CLI Documentation](https://github.com/openai/codex)
+- [Cursor Hooks Documentation](https://cursor.com/docs/agent/hooks)
 - [Cursor Rules Documentation](https://cursor.com/docs/context/rules)
+- [Pi Coding Agent](https://shittycodingagent.ai/)
+- [Pi Design Philosophy](https://mariozechner.at/posts/2025-11-30-pi-coding-agent/)
+
+### Standards
+
+- [Agent Skills Specification](https://github.com/anthropics/claude-code/tree/main/docs/skills)
 - [Model Context Protocol](https://www.anthropic.com/news/model-context-protocol)
 - [MCP Joins Linux Foundation](https://github.blog/open-source/maintainers/mcp-joins-the-linux-foundation-what-this-means-for-developers-building-the-next-era-of-ai-tools-and-agents/)
 
 ---
 
-*Research completed 2025-12-28*
+*Research completed 2025-12-28, updated 2025-12-29 (Pi, Codex CLI)*
