@@ -100,30 +100,30 @@ def count_escape_hatches(source: str) -> int:
     return len(extract_escape_hatches(source))
 
 
-@post(lambda result: all(len(t) == 2 for t in result))  # Returns (rule, reason) tuples
-def extract_escape_hatches(source: str) -> list[tuple[str, str]]:
+@post(lambda result: all(len(t) == 3 for t in result))  # Returns (rule, reason, line) tuples
+def extract_escape_hatches(source: str) -> list[tuple[str, str, int]]:
     """
-    Extract @invar:allow markers with their reasons (DX-33 Option E).
+    Extract @invar:allow markers with their reasons and line numbers (DX-33, DX-66).
 
     Uses tokenize to only match real comments, not strings/docstrings.
-    Returns list of (rule, reason) tuples for cross-file analysis.
+    Returns list of (rule, reason, line) tuples for cross-file analysis.
 
     Examples:
         >>> extract_escape_hatches("")
         []
         >>> extract_escape_hatches("# @invar:allow shell_result: API boundary")
-        [('shell_result', 'API boundary')]
+        [('shell_result', 'API boundary', 1)]
         >>> source = '''
         ... # @invar:allow rule1: same reason
         ... # @invar:allow rule2: different reason
         ... '''
         >>> extract_escape_hatches(source)
-        [('rule1', 'same reason'), ('rule2', 'different reason')]
+        [('rule1', 'same reason', 2), ('rule2', 'different reason', 3)]
         >>> # DX-33 Option C: Strings containing the pattern should NOT match
         >>> extract_escape_hatches('suggestion = "# @invar:allow rule: reason"')
         []
     """
-    results: list[tuple[str, str]] = []
+    results: list[tuple[str, str, int]] = []
     try:
         # Use iterator-based readline to avoid io.StringIO (forbidden in Core)
         lines = iter(source.splitlines(keepends=True))
@@ -132,10 +132,12 @@ def extract_escape_hatches(source: str) -> list[tuple[str, str]]:
             if tok.type == tokenize.COMMENT:
                 match = INVAR_ALLOW_PATTERN.search(tok.string)
                 if match:
-                    results.append((match.group(1), match.group(2)))
+                    # DX-66: tok.start[0] is the 1-based line number
+                    results.append((match.group(1), match.group(2), tok.start[0]))
     except Exception:
-        # Fall back to regex if tokenization fails (invalid syntax, non-printable chars, etc.)
-        return INVAR_ALLOW_PATTERN.findall(source)
+        # Fall back to regex if tokenization fails - can't get line numbers
+        # Return line 0 to indicate unknown position
+        return [(r, reason, 0) for r, reason in INVAR_ALLOW_PATTERN.findall(source)]
     return results
 
 

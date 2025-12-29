@@ -83,6 +83,58 @@ class Violation(BaseModel):
     suggestion: str | None = None
 
 
+class EscapeHatchDetail(BaseModel):
+    """Detail of a single escape hatch (@invar:allow) marker (DX-66)."""
+
+    file: str
+    line: int
+    rule: str
+    reason: str
+
+
+class EscapeHatchSummary(BaseModel):
+    """
+    Summary of escape hatches in the codebase (DX-66).
+
+    Provides visibility into @invar:allow usage for tracking technical debt.
+
+    Examples:
+        >>> summary = EscapeHatchSummary()
+        >>> summary.count
+        0
+        >>> summary.by_rule
+        {}
+        >>> detail = EscapeHatchDetail(file="test.py", line=10, rule="shell_result", reason="API boundary")
+        >>> summary.add(detail)
+        >>> summary.count
+        1
+        >>> summary.by_rule
+        {'shell_result': 1}
+    """
+
+    details: list[EscapeHatchDetail] = Field(default_factory=list)
+
+    @property
+    @post(lambda result: result >= 0)
+    def count(self) -> int:
+        """Total number of escape hatches."""
+        return len(self.details)
+
+    @property
+    @post(lambda result: all(v >= 0 for v in result.values()))
+    def by_rule(self) -> dict[str, int]:
+        """Count of escape hatches grouped by rule."""
+        counts: dict[str, int] = {}
+        for detail in self.details:
+            counts[detail.rule] = counts.get(detail.rule, 0) + 1
+        return counts
+
+    @pre(lambda self, detail: bool(detail.rule) and bool(detail.file))
+    def add(self, detail: EscapeHatchDetail) -> None:
+        """Add an escape hatch detail to the summary."""
+        self.details.append(detail)
+
+
 class GuardReport(BaseModel):
     """Complete Guard report for a project."""
 
@@ -95,6 +147,8 @@ class GuardReport(BaseModel):
     # P24: Contract coverage statistics (Core files only)
     core_functions_total: int = 0
     core_functions_with_contracts: int = 0
+    # DX-66: Escape hatch visibility
+    escape_hatches: EscapeHatchSummary = Field(default_factory=EscapeHatchSummary)
 
     @pre(lambda self, violation: violation.rule and violation.severity)  # Valid violation
     def add_violation(self, violation: Violation) -> None:

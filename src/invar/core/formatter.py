@@ -256,6 +256,21 @@ def format_guard_agent(report: GuardReport, combined_status: str | None = None) 
     if report.suggests > 0:
         result["static"]["suggests"] = report.suggests
         result["summary"]["suggests"] = report.suggests
+    # DX-66: Add escape hatch summary if any exist
+    if report.escape_hatches.count > 0:
+        result["escape_hatches"] = {
+            "count": report.escape_hatches.count,
+            "by_rule": report.escape_hatches.by_rule,
+            "details": [
+                {
+                    "file": d.file,
+                    "line": d.line,
+                    "rule": d.rule,
+                    "reason": d.reason,
+                }
+                for d in report.escape_hatches.details
+            ],
+        }
     return result
 
 

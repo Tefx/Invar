@@ -209,6 +209,16 @@ def output_rich(
         if issue_parts:
             console.print(f"[dim]Issues: {', '.join(issue_parts)}[/dim]")
 
+    # DX-66: Escape hatch summary (only show if any exist)
+    if report.escape_hatches.count > 0:
+        escape_count = report.escape_hatches.count
+        by_rule = report.escape_hatches.by_rule
+        rule_parts = [f"{count} {rule}" for rule, count in sorted(by_rule.items())]
+        console.print(
+            f"\n[bold]Escape hatches:[/bold] {escape_count} "
+            f"({', '.join(rule_parts)})"
+        )
+
     # Code Health display (only when guard passes)
     if report.passed and report.files_checked > 0:
         # Calculate health: 100% for 0 warnings, decreases by 5% per warning, min 50%
