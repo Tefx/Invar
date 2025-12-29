@@ -12,7 +12,7 @@
 
 Design a manifest-driven, extensible framework that enables Invar to work with multiple coding agents (Claude Code, Pi, Aider, Cline, Codex CLI, Cursor) while maintaining a single source of truth for skills, commands, and hook logic.
 
-### LX-02 Key Findings (Incorporated)
+### LX-02 Key Findings + Testing Results (Incorporated)
 
 | Finding | Impact on LX-04 |
 |---------|-----------------|
@@ -20,7 +20,9 @@ Design a manifest-driven, extensible framework that enables Invar to work with m
 | **CLI is universal interface** | All 6 agents can call `invar guard` → CLI fallback always works |
 | **MCP widely supported but not universal** | Pi explicitly rejects MCP → need CLI-only path |
 | **AGENTS.md emerging standard** | Pi, Codex use AGENTS.md → generate as context file |
-| **Hooks completely divergent** | Claude (Bash), Pi (TS), Cursor (JSON) → need code generation |
+| **Hooks completely divergent** | Claude (Bash), Pi (TS), Cursor (JSON) → need templates per agent |
+| **Pi reads CLAUDE.md** ✅ | No separate SYSTEM.md needed → prompt sharing works! |
+| **Pi reads .claude/skills/** ✅ | Skill sharing between agents works without duplication |
 
 ## Motivation
 
@@ -37,18 +39,20 @@ Design a manifest-driven, extensible framework that enables Invar to work with m
 | Agent | Type | System Prompt | Context File | Skills | MCP | Hooks | Integration |
 |-------|------|---------------|--------------|--------|-----|-------|-------------|
 | **Claude Code** | CLI | CLAUDE.md | - | SKILL.md ✅ | ✅ | Bash (4 types) | Native |
-| **Pi** | CLI | SYSTEM.md | AGENTS.md | SKILL.md ✅ | ❌ 设计决策 | TypeScript (有状态) | Native |
+| **Pi** | CLI | CLAUDE.md ✅ | AGENTS.md | SKILL.md ✅ | ❌ 设计决策 | TypeScript (有状态) | Native |
 | **Codex CLI** | CLI | - | AGENTS.md | SKILL.md ✅ | ✅ | ❌ | Native |
 | **Cursor** | IDE | .cursor/rules/*.mdc | - | ❌ | ✅ | JSON (6 types) | MCP |
 | **Cline** | VS Code | .clinerules | - | ❌ | ✅ | ❌ | MCP |
 | **Aider** | CLI | CONVENTIONS.md | - | ❌ | ⚠️ 社区 | lint-cmd | Lint Hook |
 
-**Key Insights (LX-02):**
+**Key Insights (LX-02 + Testing):**
 1. **SKILL.md** is de facto standard (Claude, Pi, Codex) → 50% of CLI agents
 2. **CLI is universal** → 100% of agents can call `invar guard`
 3. **MCP widely supported** but Pi explicitly rejects it (design: "build CLI tools with READMEs")
 4. **AGENTS.md emerging** → Pi and Codex both use AGENTS.md for context
 5. **Hooks divergent** → Claude (Bash 4), Pi (TS stateful), Cursor (JSON 6)
+6. **Pi reads CLAUDE.md** → No separate SYSTEM.md needed (verified 2025-12-29)
+7. **Pi reads .claude/skills/** → Skill sharing between agents works!
 
 ### Agent Integration Patterns
 
@@ -64,7 +68,7 @@ Design a manifest-driven, extensible framework that enables Invar to work with m
 | Agent | System Prompt | Config | Verification |
 |-------|--------------|--------|--------------|
 | **Claude Code** | CLAUDE.md | .claude/settings.local.json | hooks + MCP |
-| **Pi** | SYSTEM.md | .pi/settings.json | hooks |
+| **Pi** | CLAUDE.md ✅ | .pi/settings.json | hooks |
 | **Aider** | CONVENTIONS.md | .aider.conf.yml | lint-cmd |
 | **Cline** | .clinerules | .vscode/mcp.json | MCP |
 | **Codex CLI** | AGENTS.md | .codex/config.toml | MCP |
@@ -179,10 +183,9 @@ invar dev sync --dry-run
 
 ```
 project/
-├── CLAUDE.md                    # Claude Code system prompt
-├── SYSTEM.md                    # Pi system prompt
+├── CLAUDE.md                    # Claude Code + Pi system prompt (shared!)
 ├── CONVENTIONS.md               # Aider conventions (--read)
-├── AGENTS.md                    # Codex CLI system prompt (future)
+├── AGENTS.md                    # Codex CLI system prompt (+ Pi context)
 ├── INVAR.md                     # Shared protocol document
 │
 ├── .aider.conf.yml              # Aider configuration (root-level)
@@ -414,6 +417,9 @@ project/
 
 ### Pi Manifest
 
+> **Key Finding (2025-12-29):** Pi reads CLAUDE.md automatically! No separate SYSTEM.md needed.
+> Pi also reads AGENTS.md for project context. This enables skill/prompt sharing with Claude Code.
+
 ```json
 {
   "name": "pi",
@@ -422,9 +428,17 @@ project/
   "website": "https://shittycodingagent.ai",
 
   "system_prompt": {
-    "filename": "SYSTEM.md",
+    "filename": "CLAUDE.md",
     "location": "root",
-    "template": "pi.md.j2"
+    "shared_with": ["claude"],
+    "notes": "Pi reads CLAUDE.md directly - no separate file needed"
+  },
+
+  "context_file": {
+    "filename": "AGENTS.md",
+    "location": "root",
+    "optional": true,
+    "notes": "Pi reads AGENTS.md for additional project context"
   },
 
   "config_dir": ".pi",
@@ -1545,8 +1559,11 @@ auto_approve = ["invar_guard", "invar_sig", "invar_map"]
 ```
 Claude Code ─────► Pi ─────► Cursor ─────► Codex CLI ─────► Aider/Cline
     ✅              │          │             │                │
-  Current        Week 1     Week 2        Week 3           Week 4
+  Current        2 days     Week 2        Week 3           Week 4
+               (simplified)
 ```
+
+> **Pi simplification:** Since Pi reads CLAUDE.md directly, Phase 3 reduced from 3 to 2 days.
 
 **Rationale:**
 1. **Claude Code** — Already complete, validates architecture
@@ -1575,9 +1592,9 @@ Claude Code ─────► Pi ─────► Cursor ─────► C
 
 **Key:** Skills are **copied**, not symlinked (Claude Code security restriction).
 
-### Phase 3: Pi Integration (3 days)
+### Phase 3: Pi Integration (2 days)
 
-> **Updated 2025-12-29:** Simplified from code generation to template-based.
+> **Updated 2025-12-29:** Significantly simplified after discovering Pi reads CLAUDE.md directly.
 > Pi hook tested and verified working with `pi 0.30.2`.
 
 | Task | Description | Output |
@@ -1585,12 +1602,14 @@ Claude Code ─────► Pi ─────► Cursor ─────► C
 | 3.1 | Create Pi manifest | `.invar/agents/pi.json` |
 | 3.2 | Create TypeScript hook template | `.invar/hooks/templates/pi/invar-guard.ts` |
 | 3.3 | Implement hook copy to `.pi/hooks/` | `copy_hooks()` in sync.py |
-| 3.4 | Create SYSTEM.md template | `pi.md.j2` → SYSTEM.md |
-| 3.5 | Create AGENTS.md template | Context file for Pi |
-| 3.6 | Test: `pi -p "run: pytest"` | Verify block works |
+| 3.4 | Create AGENTS.md template (optional) | Pi-specific context if needed |
+| 3.5 | Test: `pi -p "run: pytest"` | Verify block works |
 
-**Key simplification:** No Python→TypeScript code generation. TypeScript hook
-is a handwritten template (verified working). Copy to `.pi/hooks/` on sync.
+**Key simplifications:**
+1. **No SYSTEM.md needed** — Pi reads CLAUDE.md automatically (verified)
+2. **Shared prompt** — Claude Code and Pi share the same CLAUDE.md
+3. **AGENTS.md optional** — Only needed for Pi-specific project context
+4. **No code generation** — TypeScript hook is a handwritten template
 
 ### Phase 4: Cursor Integration (2 days)
 
@@ -1628,7 +1647,7 @@ is a handwritten template (verified working). Copy to `.pi/hooks/` on sync.
 | 7.3 | Integration tests: all agents | E2E tests |
 | 7.4 | Documentation update | User guide |
 
-**Total: 16 days**
+**Total: 15 days** (reduced by 1 day due to Pi/Claude prompt sharing)
 
 **Platform:** macOS and Linux only (Windows not supported)
 
@@ -1666,16 +1685,26 @@ invar init --agent claude,aider
 
 ### For Pi Users (New)
 
+> **Good news:** Pi reads CLAUDE.md directly! If you already have a Claude Code project,
+> Pi works out of the box. Only hooks need Pi-specific setup.
+
 ```bash
-# Pi-only project
+# Existing Claude project → Add Pi hooks
+invar dev sync --agent pi
+# Creates: .pi/hooks/invar-guard.ts
+
+# Pi-only project (creates CLAUDE.md + Pi hooks)
 invar init --agent pi
 
 # Verify installation
 pi --version
 
 # Start using Invar with Pi
-pi  # In project directory
+pi  # In project directory - reads CLAUDE.md automatically
 ```
+
+**Key difference from Claude Code:** Only hooks are agent-specific.
+CLAUDE.md and .claude/skills/ are shared!
 
 ### For Aider Users (New)
 
@@ -1804,10 +1833,9 @@ def test_init_with_all_agents(tmp_path):
     assert not (tmp_path / ".claude/skills").is_symlink()  # NOT a symlink
     assert (tmp_path / "CLAUDE.md").exists()
 
-    # Check Pi config (copied, not symlinked)
-    assert (tmp_path / ".pi/skills/develop/SKILL.md").exists()
-    assert not (tmp_path / ".pi/skills").is_symlink()  # NOT a symlink
-    assert (tmp_path / "SYSTEM.md").exists()
+    # Check Pi config (shares CLAUDE.md, has own hooks)
+    assert (tmp_path / ".pi/hooks/invar-guard.ts").exists()
+    # Pi reads CLAUDE.md directly - no separate SYSTEM.md needed!
 
     # Check Cursor config
     assert (tmp_path / ".cursor/rules/invar.mdc").exists()
