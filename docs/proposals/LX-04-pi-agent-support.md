@@ -720,11 +720,17 @@ project/
 
 ## Hook System
 
-### Design Goals
+### Design Goals (Revised)
 
-1. **Single Logic Definition**: Business logic in Python (testable, type-safe)
-2. **Multi-Target Generation**: Generate Bash, TypeScript, etc. from Python
-3. **Event Mapping**: Map agent events to Invar hook logic
+> **Updated 2025-12-29:** Simplified from Python→code generation to template-based approach.
+> Pi hooks tested and verified working with `pi 0.30.2`.
+
+1. **Template-Based**: Agent-specific hook templates, not code generation
+2. **Config-Driven**: Block patterns defined in TOML, read by templates
+3. **Handwritten When Simple**: For simple logic, handwrite rather than generate
+
+**Rationale:** Hook logic is simple (pattern matching, counting). Code generation
+from Python→TypeScript adds complexity without proportional value.
 
 ### Event Mapping
 
@@ -738,15 +744,111 @@ project/
 | `on_file_read` | - | - | beforeReadFile | - |
 | `on_session_end` | Stop | session (shutdown) | stop | - |
 
-### Python Hook Logic (SSOT)
+### Pi Hook Discovery (Verified)
+
+```
+~/.pi/agent/hooks/*.ts    ← Global hooks (all projects)
+<cwd>/.pi/hooks/*.ts      ← Project hooks
+
+Loaded via jiti (TypeScript works without compilation)
+```
+
+### Pi Skill Discovery (Verified)
+
+```
+~/.codex/skills/**/SKILL.md     ← Codex format (recursive)
+~/.claude/skills/*/SKILL.md     ← Claude format (one level)
+~/.pi/agent/skills/**/SKILL.md  ← Pi global (recursive)
+<cwd>/.claude/skills/*/SKILL.md ← Project Claude
+<cwd>/.pi/skills/**/SKILL.md    ← Project Pi (recursive)
+
+Later paths win on name collision.
+```
+
+**Implication:** Pi can read Claude Code skills! This enables skill sharing:
+```
+.invar/skills/          ← SSOT
+    └── develop/SKILL.md
+
+.claude/skills/         ← Claude reads here
+    └── develop/SKILL.md  ← copied
+
+.pi/skills/             ← Pi reads here (OR .claude/skills/)
+    └── develop/SKILL.md  ← copied (optional, Pi can read .claude/)
+```
+
+### Pi Hook API (Verified)
+
+```typescript
+import type { HookAPI } from "@mariozechner/pi-coding-agent/hooks";
+
+export default function (pi: HookAPI) {
+  // Block tool calls
+  pi.on("tool_call", async (event, ctx) => {
+    if (event.toolName === "bash" && /pytest/.test(event.input.command)) {
+      return { block: true, reason: "Use invar guard" };
+    }
+  });
+
+  // Track changes
+  pi.on("tool_result", async (event, ctx) => {
+    if (event.toolName === "write" || event.toolName === "edit") {
+      await ctx.ui.notify("File modified", "info");
+    }
+  });
+}
+```
+
+**Available ctx methods:**
+- `ctx.ui.confirm(title, message)` — Get user confirmation
+- `ctx.ui.notify(message, type)` — Show notification
+- `ctx.ui.select(title, options)` — Present selection
+- `ctx.exec(command, args)` — Execute system command
+
+### Hook Config (SSOT Alternative)
+
+> **Simplified approach:** Instead of Python code generation, use TOML config.
+
+```toml
+# .invar/hooks/config.toml
+
+[block]
+# Commands to block and redirect to invar guard
+patterns = [
+  "^pytest\\b",
+  "^python\\s+-m\\s+pytest\\b",
+  "^crosshair\\b",
+]
+
+# Auto-escape patterns (allow these even if they match block patterns)
+escape_patterns = [
+  "--pdb",       # Debug mode
+  "--cov",       # Coverage mode
+  "vendor/",     # External tests
+]
+
+redirect_message = "Use `invar guard` instead"
+
+[remind]
+# Remind to run guard after N file changes
+after_changes = 5
+# Or after N seconds without guard
+after_seconds = 300
+```
+
+### Python Hook Logic (Reference Implementation)
+
+> **Note:** This Python code serves as reference/documentation.
+> Actual hooks are handwritten in agent-native languages (Bash, TypeScript).
 
 ```python
 # .invar/hooks/logic/block_pytest.py
 """
-Pytest blocking logic - single source of truth.
+Pytest blocking logic - reference implementation.
 
-This module defines the business logic for blocking pytest commands.
-It is used to generate agent-specific hook implementations.
+This documents the business logic. Actual implementation is in:
+- .claude/hooks/PreToolUse.sh (Bash)
+- .pi/hooks/invar-guard.ts (TypeScript)
 """
 
 from dataclasses import dataclass
@@ -919,133 +1021,92 @@ fi
 exit 0
 ```
 
-### Generated TypeScript Hook (Pi)
+### Pi TypeScript Hook (Tested & Verified)
+
+> **Tested with Pi 0.30.2** — This hook successfully blocks pytest commands.
+> Location: `~/.pi/agent/hooks/invar-guard.ts` or `.pi/hooks/invar-guard.ts`
 
 ```typescript
-// AUTO-GENERATED from .invar/hooks/logic/*.py
-// DO NOT EDIT - changes will be overwritten by `invar dev sync`
-//
-// Invar Hook for Pi Coding Agent
-// Protocol: v5.0 | Generated: 2025-12-29
+/**
+ * Invar Guard Hook for Pi
+ * Blocks pytest/crosshair and redirects to `invar guard`
+ *
+ * Install: Copy to ~/.pi/agent/hooks/invar-guard.ts
+ * Test: pi -p "run: pytest --version"
+ * Expected: Command blocked with redirect message
+ */
+import type { HookAPI } from "@mariozechner/pi-coding-agent/hooks";
 
-import type { HookAPI, ToolCallEvent, ToolResultEvent } from "@mariozechner/pi-coding-agent/hooks";
-import * as fs from "fs";
-import * as path from "path";
-import { execSync } from "child_process";
+const BLOCKED_PATTERNS = [
+  /^pytest\b/,
+  /^python\s+-m\s+pytest\b/,
+  /^crosshair\b/,
+];
 
-// State directory for tracking changes
-const STATE_DIR = process.env.PI_STATE_DIR || `/tmp/invar_hooks_${process.getuid?.() || 0}`;
+const ESCAPE_PATTERNS = [
+  /--pdb/,      // Debug mode
+  /--cov/,      // Coverage mode
+  /vendor\//,   // External tests
+];
 
 export default function (pi: HookAPI) {
-  // Ensure state directory exists
-  try { fs.mkdirSync(STATE_DIR, { recursive: true }); } catch {}
+  // Block pytest/crosshair
+  pi.on("tool_call", async (event, ctx) => {
+    if (event.toolName !== "bash") return undefined;
 
-  // ============================================
-  // tool_call: Block pytest and crosshair
-  // ============================================
-  pi.on("tool_call", async (event: ToolCallEvent, ctx) => {
-    if (event.tool !== "bash") return;
+    const command = (event.input.command as string).trim();
 
-    const cmd = event.input?.command || "";
+    // Check if command should be blocked
+    const shouldBlock = BLOCKED_PATTERNS.some(p => p.test(command));
+    if (!shouldBlock) return undefined;
 
-    // Environment variable escape
-    if (process.env.INVAR_ALLOW_PYTEST === "1") return;
-    if (process.env.INVAR_ALLOW_CROSSHAIR === "1") return;
+    // Check escape patterns
+    const shouldEscape = ESCAPE_PATTERNS.some(p => p.test(command));
+    if (shouldEscape) return undefined;
 
-    // pytest blocking (from block_pytest.py)
-    if (/\bpytest\b|python.*-m\s+pytest/.test(cmd)) {
-      // Auto-escape: Debug mode
-      if (/--pdb|--debug|--tb=/.test(cmd)) return;
-      // Auto-escape: Coverage mode
-      if (/--cov/.test(cmd)) return;
-      // Auto-escape: External tests
-      if (/vendor\/|third_party\/|external\/|node_modules\//.test(cmd)) return;
+    // Block with helpful message
+    await ctx.ui.notify(`Blocked: ${command}`, "warning");
+    return {
+      block: true,
+      reason: `
+⚠️ Command blocked by Invar
 
-      return {
-        block: true,
-        message:
-          "❌ Use `invar guard` instead of pytest\n" +
-          "   invar guard = static + doctests + CrossHair + Hypothesis\n" +
-          "\n" +
-          "   Auto-allowed: pytest --pdb (debug), pytest --cov (coverage)\n" +
-          "   Manual escape: INVAR_ALLOW_PYTEST=1 pytest ..."
-      };
-    }
+Use instead:
+  invar guard           # Full verification
+  invar guard --changed # Only changed files
 
-    // crosshair blocking (from block_crosshair.py)
-    if (/\bcrosshair\b/.test(cmd)) {
-      return {
-        block: true,
-        message:
-          "❌ Use `invar guard` (includes CrossHair by default)\n" +
-          "   Manual escape: INVAR_ALLOW_CROSSHAIR=1 crosshair ..."
-      };
-    }
+The Invar Guard provides:
+- Static analysis with contracts
+- Doctest execution
+- CrossHair symbolic verification
+- Hypothesis property testing
+`,
+    };
   });
 
-  // ============================================
-  // tool_result: Track changes and remind guard
-  // ============================================
-  pi.on("tool_result", async (event: ToolResultEvent, ctx) => {
-    const CHANGES_FILE = path.join(STATE_DIR, "changes");
-    const LAST_GUARD = path.join(STATE_DIR, "last_guard");
+  // Track file changes and remind
+  let changeCount = 0;
 
-    // Reset state on guard run
-    if (event.tool === "bash") {
-      const cmd = event.input?.command || "";
-      if (/invar\s+guard/.test(cmd)) {
-        fs.writeFileSync(LAST_GUARD, Date.now().toString());
-        try { fs.unlinkSync(CHANGES_FILE); } catch {}
-        return;
+  pi.on("tool_result", async (event, ctx) => {
+    if (event.toolName === "write" || event.toolName === "edit") {
+      changeCount++;
+      if (changeCount >= 5) {
+        await ctx.ui.notify(
+          `${changeCount} files modified. Run 'invar guard' to verify.`,
+          "info"
+        );
+        changeCount = 0;
       }
     }
 
-    // Detect file changes
-    const changes = detectChanges();
-    if (changes.length > 0) {
-      appendChanges(CHANGES_FILE, changes);
-    }
-
-    // Smart reminder
-    const changeCount = getChangeCount(CHANGES_FILE);
-    const elapsed = getElapsedSinceGuard(LAST_GUARD);
-
-    if (changeCount >= 3) {
-      ctx.log(`\n⚠️ Verification suggested: ${changeCount} files changed`);
-      ctx.log("   Run: invar guard --changed");
-    } else if (elapsed > 300 && changeCount > 0) {
-      ctx.log("\n⚠️ Verification suggested: >5 min since last guard");
-      ctx.log("   Run: invar guard --changed");
+    // Reset on guard run
+    if (event.toolName === "bash") {
+      const cmd = event.input?.command as string || "";
+      if (/invar\s+guard/.test(cmd)) {
+        changeCount = 0;
+      }
     }
   });
-}
-
-// Helper functions
-function detectChanges(): string[] {
-  try {
-    const staged = execSync("git diff --name-only -- '*.py'", { encoding: "utf-8" });
-    const unstaged = execSync("git diff --cached --name-only -- '*.py'", { encoding: "utf-8" });
-    return [...new Set([...staged.split("\n"), ...unstaged.split("\n")].filter(Boolean))];
-  } catch {
-    return [];
-  }
-}
-
-function appendChanges(file: string, changes: string[]): void {
-  const existing = fs.existsSync(file) ? fs.readFileSync(file, "utf-8").split("\n") : [];
-  const all = [...new Set([...existing, ...changes].filter(Boolean))];
-  fs.writeFileSync(file, all.join("\n"));
-}
-
-function getChangeCount(file: string): number {
-  if (!fs.existsSync(file)) return 0;
-  return fs.readFileSync(file, "utf-8").split("\n").filter(Boolean).length;
-}
-
-function getElapsedSinceGuard(file: string): number {
-  if (!fs.existsSync(file)) return Infinity;
-  const lastTime = parseInt(fs.readFileSync(file, "utf-8"), 10);
-  return (Date.now() - lastTime) / 1000;
 }
 ```
 
@@ -1516,13 +1577,20 @@ Claude Code ─────► Pi ─────► Cursor ─────► C
 
 ### Phase 3: Pi Integration (3 days)
 
+> **Updated 2025-12-29:** Simplified from code generation to template-based.
+> Pi hook tested and verified working with `pi 0.30.2`.
+
 | Task | Description | Output |
 |------|-------------|--------|
-| 3.1 | Create Pi manifest | `pi.json` |
-| 3.2 | Create Python hook logic modules | `.invar/hooks/logic/*.py` |
-| 3.3 | Implement TypeScript hook generator | `generate_ts_hooks()` |
-| 3.4 | Generate SYSTEM.md template | Pi system prompt |
-| 3.5 | Test full Pi workflow | E2E test |
+| 3.1 | Create Pi manifest | `.invar/agents/pi.json` |
+| 3.2 | Create TypeScript hook template | `.invar/hooks/templates/pi/invar-guard.ts` |
+| 3.3 | Implement hook copy to `.pi/hooks/` | `copy_hooks()` in sync.py |
+| 3.4 | Create SYSTEM.md template | `pi.md.j2` → SYSTEM.md |
+| 3.5 | Create AGENTS.md template | Context file for Pi |
+| 3.6 | Test: `pi -p "run: pytest"` | Verify block works |
+
+**Key simplification:** No Python→TypeScript code generation. TypeScript hook
+is a handwritten template (verified working). Copy to `.pi/hooks/` on sync.
 
 ### Phase 4: Cursor Integration (2 days)
 
