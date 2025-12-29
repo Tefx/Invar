@@ -12,6 +12,16 @@
 
 Design a manifest-driven, extensible framework that enables Invar to work with multiple coding agents (Claude Code, Pi, Aider, Cline, Codex CLI, Cursor) while maintaining a single source of truth for skills, commands, and hook logic.
 
+### LX-02 Key Findings (Incorporated)
+
+| Finding | Impact on LX-04 |
+|---------|-----------------|
+| **SKILL.md is de facto standard** | Claude, Pi, Codex support SKILL.md → shared skills work |
+| **CLI is universal interface** | All 6 agents can call `invar guard` → CLI fallback always works |
+| **MCP widely supported but not universal** | Pi explicitly rejects MCP → need CLI-only path |
+| **AGENTS.md emerging standard** | Pi, Codex use AGENTS.md → generate as context file |
+| **Hooks completely divergent** | Claude (Bash), Pi (TS), Cursor (JSON) → need code generation |
+
 ## Motivation
 
 1. **Agent Choice**: Developers should use their preferred agent
@@ -22,20 +32,23 @@ Design a manifest-driven, extensible framework that enables Invar to work with m
 
 ## Agent Ecosystem Analysis
 
-| Agent | Type | System Prompt | Skills | MCP | Hooks | Integration |
-|-------|------|---------------|--------|-----|-------|-------------|
-| **Claude Code** | CLI | CLAUDE.md | SKILL.md ✅ | ✅ | Bash (.sh) | Native |
-| **Pi** | CLI | SYSTEM.md | SKILL.md ✅ | ❌ | TypeScript (.ts) | Native |
-| **Aider** | CLI | CONVENTIONS.md | ❌ | ❌ | lint-cmd | Lint Hook |
-| **Cline** | VS Code | .clinerules | ❌ | ✅ | Auto-approve | MCP |
-| **Codex CLI** | CLI | AGENTS.md | SKILL.md ✅ | ✅ | Unknown | Native |
-| **Cursor** | IDE | .cursor/rules/*.mdc | ❌ | ✅ | VS Code ext | MCP |
+> **Updated from LX-02 research (2025-12-29)**
 
-**Key Insights:**
-1. **SKILL.md** is a de facto standard across Claude Code, Pi, and Codex CLI
-2. **MCP support** enables rich tool integration (Claude, Cline, Codex, Cursor)
-3. **CLI-only agents** (Pi, Aider) need command-based integration
-4. **IDE agents** (Cline, Cursor) integrate via VS Code extension settings
+| Agent | Type | System Prompt | Context File | Skills | MCP | Hooks | Integration |
+|-------|------|---------------|--------------|--------|-----|-------|-------------|
+| **Claude Code** | CLI | CLAUDE.md | - | SKILL.md ✅ | ✅ | Bash (4 types) | Native |
+| **Pi** | CLI | SYSTEM.md | AGENTS.md | SKILL.md ✅ | ❌ 设计决策 | TypeScript (有状态) | Native |
+| **Codex CLI** | CLI | - | AGENTS.md | SKILL.md ✅ | ✅ | ❌ | Native |
+| **Cursor** | IDE | .cursor/rules/*.mdc | - | ❌ | ✅ | JSON (6 types) | MCP |
+| **Cline** | VS Code | .clinerules | - | ❌ | ✅ | ❌ | MCP |
+| **Aider** | CLI | CONVENTIONS.md | - | ❌ | ⚠️ 社区 | lint-cmd | Lint Hook |
+
+**Key Insights (LX-02):**
+1. **SKILL.md** is de facto standard (Claude, Pi, Codex) → 50% of CLI agents
+2. **CLI is universal** → 100% of agents can call `invar guard`
+3. **MCP widely supported** but Pi explicitly rejects it (design: "build CLI tools with READMEs")
+4. **AGENTS.md emerging** → Pi and Codex both use AGENTS.md for context
+5. **Hooks divergent** → Claude (Bash 4), Pi (TS stateful), Cursor (JSON 6)
 
 ### Agent Integration Patterns
 
@@ -645,7 +658,9 @@ project/
 }
 ```
 
-### Cursor Manifest (Future)
+### Cursor Manifest
+
+> **Updated from LX-02 research:** Cursor supports 6 hook types via JSON config.
 
 ```json
 {
@@ -668,14 +683,28 @@ project/
   "config_dir": ".cursor",
 
   "skills": {
-    "format": "unknown",
-    "notes": "Cursor skill format needs research"
+    "format": "none",
+    "notes": "Cursor does not support SKILL.md format"
   },
 
   "hooks": {
-    "supported": false,
-    "language": "none",
-    "notes": "Cursor uses VS Code extensions"
+    "supported": true,
+    "language": "json",
+    "location": ".cursor/hooks.json",
+    "events": [
+      "beforeSubmitPrompt",
+      "beforeShellExecution",
+      "beforeMCPExecution",
+      "beforeReadFile",
+      "afterFileEdit",
+      "stop"
+    ],
+    "generation": {
+      "enabled": true,
+      "source": ".invar/hooks/logic",
+      "target": ".invar/hooks/generated/cursor"
+    },
+    "notes": "JSON config + script files. beforeShellExecution can block pytest."
   },
 
   "tools": {
@@ -699,12 +728,15 @@ project/
 
 ### Event Mapping
 
-| Invar Hook | Claude Code Event | Pi Event | Codex Event |
-|------------|-------------------|----------|-------------|
-| `on_tool_before` | PreToolUse | tool_call | - |
-| `on_tool_after` | PostToolUse | tool_result | - |
-| `on_prompt_submit` | UserPromptSubmit | agent_start | - |
-| `on_session_end` | Stop | session (shutdown) | - |
+> **Updated from LX-02:** Added Cursor 6 hook types.
+
+| Invar Hook | Claude Code | Pi | Cursor | Codex |
+|------------|-------------|-----|--------|-------|
+| `on_tool_before` | PreToolUse | tool_call | beforeShellExecution, beforeMCPExecution | - |
+| `on_tool_after` | PostToolUse | tool_result | afterFileEdit | - |
+| `on_prompt_submit` | UserPromptSubmit | agent_start | beforeSubmitPrompt | - |
+| `on_file_read` | - | - | beforeReadFile | - |
+| `on_session_end` | Stop | session (shutdown) | stop | - |
 
 ### Python Hook Logic (SSOT)
 

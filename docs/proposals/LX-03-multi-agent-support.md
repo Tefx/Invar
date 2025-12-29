@@ -2,6 +2,7 @@
 
 **Status:** Phase 1 ✅ Complete, Phase 2+ Superseded by LX-04
 **Created:** 2025-12-28
+**Updated:** 2025-12-29
 **Series:** LX (Language/Platform eXtension)
 **Depends on:** LX-02 (Agent Portability Analysis)
 **Superseded by:** LX-04 (Multi-Agent Framework) for Phase 2+
@@ -9,6 +10,13 @@
 
 > **Note:** Phase 1 (Documentation) is complete. Phase 2+ has been absorbed into LX-04,
 > which provides a more comprehensive manifest-driven architecture with Copy-Sync support.
+>
+> **LX-02 Key Findings (2025-12-29):**
+> - SKILL.md is de facto standard (Claude, Pi, Codex CLI)
+> - CLI is universal interface (all agents)
+> - MCP widely supported except Pi (design decision)
+> - AGENTS.md emerging standard (Pi, Codex)
+> - Hooks divergent: Claude (Bash), Pi (TypeScript), Cursor (JSON)
 
 ---
 
@@ -17,6 +25,12 @@
 基于 LX-02 的可移植性分析，本提案实施 Invar 对多个 coding agent 的支持。目标是让 Invar 的核心价值（USBV 工作流、契约驱动、Guard 验证）能在 Claude Code 之外的 agent 中使用。
 
 **策略:** 渐进式支持，从文档开始，逐步添加工具集成。
+
+**目标 Agent (6 个):**
+- **Tier 1 (完整体验):** Claude Code, Pi
+- **Tier 2 (良好体验):** Codex CLI, Cursor
+- **Tier 3 (基础体验):** Cline
+- **Tier 4 (最小体验):** Aider
 
 ---
 
@@ -32,7 +46,8 @@
 | `cline.md` | 8 KB | .clinerules 模板、Plan Mode 映射 |
 | `cursor.md` | 9 KB | .cursorrules、hooks.json、pytest 拦截 |
 | `aider.md` | 9 KB | CONVENTIONS.md、auto-lint 集成 |
-| `continue.md` | 11 KB | config.json、customCommands |
+
+> **Note:** Pi 和 Codex CLI 文档待创建 (LX-04 Phase 3/5)
 
 ### 文档特点
 
@@ -40,7 +55,7 @@
 
 1. **Quick Start** - 5 分钟内可运行
 2. **完整配置模板** - 复制即用
-3. **MCP 配置** - 多种选项 (uvx, venv, global)
+3. **MCP 配置** - 多种选项 (uvx, venv, global)；Pi 使用 CLI
 4. **Feature Mapping** - 与 Claude Code 对比
 5. **Troubleshooting** - 常见问题解决
 
@@ -49,13 +64,17 @@
 | Agent | 独特功能 | 文档覆盖 |
 |-------|----------|----------|
 | Cline | Plan Mode | ✅ USBV 阶段映射 |
-| Cursor | Hooks (beta) | ✅ pytest 拦截脚本 |
+| Cursor | Hooks (6 types) | ✅ pytest 拦截脚本 |
 | Aider | auto-lint | ✅ Guard 反馈循环 |
-| Continue | customCommands | ✅ 类 Skill 配置 |
+| Pi | TypeScript Hooks | 📋 LX-04 Phase 3 |
+| Codex CLI | SKILL.md + MCP | 📋 LX-04 Phase 5 |
 
 ---
 
-## Phase 2: Template Generation
+## Phase 2: Template Generation (Superseded by LX-04)
+
+> **Note:** This phase has been absorbed into LX-04. See LX-04 for the manifest-driven
+> architecture with Copy-Sync support.
 
 ### 目标
 
@@ -63,16 +82,19 @@
 
 ```bash
 invar init                    # Claude Code (默认)
-invar init --agent=cline      # Cline
+invar init --agent=pi         # Pi
+invar init --agent=codex      # Codex CLI
 invar init --agent=cursor     # Cursor
+invar init --agent=cline      # Cline
 invar init --agent=aider      # Aider
-invar init --agent=continue   # Continue
-invar init --agent=universal  # 仅 MCP + 通用指令
+invar init --agent=universal  # 仅 CLI + 通用指令
 ```
 
 ### 实现设计
 
 #### 2.1 模板文件结构
+
+> **Updated (LX-02):** Added Pi, Codex CLI. Removed Continue.
 
 ```
 src/invar/templates/
@@ -81,22 +103,24 @@ src/invar/templates/
 │   ├── INVAR.md.jinja
 │   └── context.md.jinja
 ├── agents/                    # NEW
+│   ├── pi/
+│   │   ├── SYSTEM.md.jinja
+│   │   ├── AGENTS.md.jinja    # Pi uses AGENTS.md for context
+│   │   └── hooks/
+│   │       └── invar.ts       # TypeScript hooks
+│   ├── codex/
+│   │   └── AGENTS.md.jinja    # Codex uses AGENTS.md
 │   ├── cline/
 │   │   └── clinerules.jinja
 │   ├── cursor/
 │   │   ├── cursorrules.jinja
 │   │   ├── rules/
-│   │   │   ├── invar-core.mdc.jinja
-│   │   │   └── invar-workflow.mdc.jinja
+│   │   │   └── invar.mdc.jinja
 │   │   └── hooks/
-│   │       └── check-command.js
-│   ├── aider/
-│   │   ├── CONVENTIONS.md.jinja
-│   │   └── aider.conf.yml.jinja
-│   └── continue/
-│       ├── config.json.jinja
-│       └── rules/
-│           └── invar.md.jinja
+│   │       └── hooks.json     # Cursor JSON hooks config
+│   └── aider/
+│       ├── CONVENTIONS.md.jinja
+│       └── aider.conf.yml.jinja
 └── universal/                 # NEW
     └── INVAR-INSTRUCTIONS.md.jinja
 ```
@@ -108,11 +132,12 @@ src/invar/templates/
 
 SUPPORTED_AGENTS = {
     "claude": "Claude Code (default)",
-    "cline": "Cline VS Code extension",
-    "cursor": "Cursor IDE",
-    "aider": "Aider terminal assistant",
-    "continue": "Continue.dev extension",
-    "universal": "Universal MCP + instructions",
+    "pi": "Pi coding agent (CLI, TypeScript hooks)",
+    "codex": "OpenAI Codex CLI (SKILL.md, MCP)",
+    "cursor": "Cursor IDE (MCP, JSON hooks)",
+    "cline": "Cline VS Code extension (MCP)",
+    "aider": "Aider terminal assistant (lint-cmd)",
+    "universal": "Universal CLI + instructions",
 }
 
 def init_command(
@@ -121,27 +146,37 @@ def init_command(
 ):
     """Initialize Invar for the specified agent."""
     if agent == "claude":
-        # Existing behavior
         generate_claude_config()
+    elif agent == "pi":
+        generate_pi_config()  # SYSTEM.md, AGENTS.md, .pi/hooks/
+        print_cli_instructions("pi")  # Pi doesn't use MCP
+    elif agent == "codex":
+        generate_codex_config()  # AGENTS.md, .codex/skills/
+        print_mcp_instructions("codex")
+    elif agent == "cursor":
+        generate_cursor_config()  # .cursorrules, .cursor/rules/
+        print_mcp_instructions("cursor")
     elif agent == "cline":
         generate_clinerules()
         print_mcp_instructions("cline")
-    elif agent == "cursor":
-        generate_cursorrules()
-        generate_cursor_hooks()
-        print_mcp_instructions("cursor")
+    elif agent == "aider":
+        generate_aider_config()
+        print_cli_instructions("aider")  # Aider uses lint-cmd
     # ... etc
 ```
 
 #### 2.3 生成文件映射
 
+> **Updated (LX-02):** Added Pi, Codex. Removed Continue. Added AGENTS.md for Pi/Codex.
+
 | Agent | 生成文件 |
 |-------|----------|
 | claude | CLAUDE.md, .claude/skills/, .claude/hooks/, .invar/ |
-| cline | .clinerules, .invar/ |
-| cursor | .cursorrules, .cursor/rules/, .cursor/hooks/, .invar/ |
+| pi | SYSTEM.md, AGENTS.md, .pi/skills/, .pi/hooks/, .invar/ |
+| codex | AGENTS.md, .codex/skills/, .invar/ |
+| cursor | .cursorrules, .cursor/rules/, .cursor/hooks.json, .invar/ |
+| cline | .clinerules, .vscode/mcp.json, .invar/ |
 | aider | CONVENTIONS.md, .aider.conf.yml, .invar/ |
-| continue | .continue/config.json, .continue/rules/, .invar/ |
 | universal | INVAR-INSTRUCTIONS.md, .invar/ |
 
 ### 工作量估算
@@ -156,7 +191,9 @@ def init_command(
 
 ---
 
-## Phase 3: MCP Compatibility Testing
+## Phase 3: MCP Compatibility Testing (Superseded by LX-04)
+
+> **Note:** This phase has been absorbed into LX-04.
 
 ### 目标
 
@@ -164,13 +201,16 @@ def init_command(
 
 ### 测试矩阵
 
+> **Updated (LX-02):** Pi explicitly rejects MCP (design decision). Added Codex.
+
 | Agent | MCP 配置 | guard | sig | map | 状态 |
 |-------|----------|-------|-----|-----|------|
 | Claude Code | ✅ 原生 | ✅ | ✅ | ✅ | 已验证 |
-| Cline | 待测试 | ? | ? | ? | 待验证 |
+| Pi | ❌ 不支持 | CLI | CLI | CLI | N/A (设计决策) |
+| Codex CLI | 待测试 | ? | ? | ? | 待验证 |
 | Cursor | 待测试 | ? | ? | ? | 待验证 |
-| Continue | 待测试 | ? | ? | ? | 待验证 |
-| Aider | N/A (CLI) | ✅ | ✅ | ✅ | 已验证 |
+| Cline | 待测试 | ? | ? | ? | 待验证 |
+| Aider | ⚠️ 社区 | CLI | CLI | CLI | CLI fallback |
 
 ### 测试计划
 
@@ -202,11 +242,22 @@ def init_command(
 
 ---
 
-## Phase 4: Hooks Portability
+## Phase 4: Hooks Portability (Superseded by LX-04)
+
+> **Note:** This phase has been absorbed into LX-04. See LX-04 for Python SSOT +
+> multi-target hook generation (Bash, TypeScript, JSON).
 
 ### 目标
 
 将 Claude Code hooks 移植到支持 hooks 的 agent。
+
+### Hook 系统对比 (LX-02 发现)
+
+| Agent | 语言 | Hook 类型 | 特点 |
+|-------|------|-----------|------|
+| Claude Code | Bash | 4 种 | PreToolUse, PostToolUse, UserPromptSubmit, Stop |
+| Pi | TypeScript | 有状态 | tool_call, tool_result, session, agent_start, agent_end |
+| Cursor | JSON+脚本 | 6 种 | beforeSubmitPrompt, beforeShellExecution, beforeMCPExecution, beforeReadFile, afterFileEdit, stop |
 
 ### 当前 Claude Code Hooks
 
@@ -218,16 +269,16 @@ def init_command(
 └── Stop.sh            # 会话结束
 ```
 
-### Cursor Hooks 移植
+### Hooks 移植映射
 
-Cursor 1.7+ 支持部分 hooks：
+> **Updated (LX-02):** Added Pi TypeScript and Cursor 6 hooks.
 
-| Claude Code | Cursor | 移植可行性 |
-|-------------|--------|------------|
-| PreToolUse | beforeShellExecution | ✅ 可移植 |
-| PostToolUse | afterFileEdit | ⚠️ 部分 |
-| UserPromptSubmit | N/A | ❌ 不支持 |
-| Stop | stop | ✅ 可移植 |
+| Claude Code | Pi (TypeScript) | Cursor (JSON) | 移植可行性 |
+|-------------|-----------------|---------------|------------|
+| PreToolUse | tool_call | beforeShellExecution, beforeMCPExecution | ✅ 可移植 |
+| PostToolUse | tool_result | afterFileEdit | ⚠️ 部分 |
+| UserPromptSubmit | agent_start | beforeSubmitPrompt | ✅ 可移植 |
+| Stop | session (shutdown) | stop | ✅ 可移植 |
 
 ### 实现
 
@@ -388,22 +439,37 @@ Cursor 1.7+ 支持部分 hooks：
 
 ## Open Questions
 
-1. **是否需要 pi (shittycodingagent) 支持?**
-   - 用户量小，但理念相近
-   - Skills 格式兼容
-   - 决定: Phase 6 后评估
+> **Updated (LX-02):** Pi 已确认支持，列为 Tier 1 优先级。
 
-2. **是否创建独立的 npm/pypi 包?**
+1. **Pi 支持** ✅ 已决定
+   - Pi 与 Invar 理念高度一致 (极简、CLI 优先)
+   - Skills 格式兼容 (SKILL.md)
+   - 决定: 作为 Tier 1 优先支持
+
+2. **Codex CLI 支持** ✅ 已决定
+   - OpenAI 官方工具，MCP + SKILL.md 支持
+   - 决定: 作为 Tier 2 优先支持
+
+3. **是否创建独立的 npm/pypi 包?**
    - 例如: `@invar/cursor-config`
    - 决定: 根据社区需求
 
-3. **如何处理 agent 版本差异?**
+4. **如何处理 agent 版本差异?**
    - 例如: Cursor 1.6 vs 1.7
    - 决定: 文档注明最低版本
 
 ---
 
 ## Changelog
+
+### 2025-12-29
+
+- 📝 Updated based on LX-02 research findings
+  - Removed Continue, added Pi and Codex CLI
+  - Updated agent matrix with 6 agents
+  - Added AGENTS.md as emerging standard
+  - Updated hook mapping (3 implementations)
+  - Marked Phase 2+ as superseded by LX-04
 
 ### 2025-12-28
 
@@ -413,14 +479,15 @@ Cursor 1.7+ 支持部分 hooks：
   - 创建 cline.md
   - 创建 cursor.md
   - 创建 aider.md
-  - 创建 continue.md
 
 ---
 
 ## References
 
 - [LX-02: Agent Portability Analysis](./LX-02-agent-portability-analysis.md)
+- [LX-04: Multi-Agent Support Framework](./LX-04-pi-agent-support.md)
 - [Cline GitHub](https://github.com/cline/cline)
 - [Cursor Docs](https://cursor.com/docs)
 - [Aider Docs](https://aider.chat/docs)
-- [Continue Docs](https://docs.continue.dev/)
+- [Pi Coding Agent](https://shittycodingagent.ai/)
+- [Codex CLI](https://github.com/openai/codex)
