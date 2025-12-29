@@ -1,1960 +1,373 @@
 # LX-04: Multi-Agent Support Framework
 
-**Status:** Active (Canonical Implementation)
+**Status:** Phase 1 + 1.5 Complete, Ready for Phase 2
 **Priority:** High
 **Category:** Language/Agent eXtensions
 **Created:** 2025-12-29
-**Updated:** 2025-12-29
-**Based on:** LX-02 (research), LX-03 Phase 1 (docs)
+**Updated:** 2025-12-30
+**Based on:** LX-02 (research), LX-03 Phase 1 (docs), Framework Review
 **Supersedes:** LX-03 Phase 2+ (template generation)
+**Reduction:** 15 days → 6 days (leverages existing infrastructure)
 
 ## Summary
 
-Design a manifest-driven, extensible framework that enables Invar to work with multiple coding agents (Claude Code, Pi, Aider, Cline, Codex CLI, Cursor) while maintaining a single source of truth for skills, commands, and hook logic.
+Design a minimal, pragmatic multi-agent support leveraging existing Invar infrastructure (manifest.toml, sync_templates, region system) rather than building a new framework.
 
-### LX-02 Key Findings + Testing Results (Incorporated)
+## Key Findings (2025-12-30 Review)
 
-| Finding | Impact on LX-04 |
-|---------|-----------------|
-| **SKILL.md is de facto standard** | Claude, Pi, Codex support SKILL.md → shared skills work |
-| **CLI is universal interface** | All 6 agents can call `invar guard` → CLI fallback always works |
-| **MCP widely supported but not universal** | Pi explicitly rejects MCP → need CLI-only path |
-| **AGENTS.md emerging standard** | Pi, Codex use AGENTS.md → generate as context file |
-| **Hooks completely divergent** | Claude (Bash), Pi (TS), Cursor (JSON) → need templates per agent |
-| **Pi reads CLAUDE.md** ✅ | No separate SYSTEM.md needed → prompt sharing works! |
-| **Pi reads .claude/skills/** ✅ | Skill sharing between agents works without duplication |
-
-## Motivation
-
-1. **Agent Choice**: Developers should use their preferred agent
-2. **Cost Optimization**: Pi + Ollama enables free local inference
-3. **Model Diversity**: Compare contract quality across providers
-4. **Future-Proofing**: New agents emerge frequently; framework must be extensible
-5. **Maintenance Efficiency**: Avoid duplicating skills and hook logic per agent
-
-## Agent Ecosystem Analysis
-
-> **Updated from LX-02 research (2025-12-29)**
-
-| Agent | Type | System Prompt | Context File | Skills | MCP | Hooks | Integration |
-|-------|------|---------------|--------------|--------|-----|-------|-------------|
-| **Claude Code** | CLI | CLAUDE.md | - | SKILL.md ✅ | ✅ | Bash (4 types) | Native |
-| **Pi** | CLI | CLAUDE.md ✅ | AGENTS.md | SKILL.md ✅ | ❌ 设计决策 | TypeScript (有状态) | Native |
-| **Codex CLI** | CLI | - | AGENTS.md | SKILL.md ✅ | ✅ | ❌ | Native |
-| **Cursor** | IDE | .cursor/rules/*.mdc | - | ❌ | ✅ | JSON (6 types) | MCP |
-| **Cline** | VS Code | .clinerules | - | ❌ | ✅ | ❌ | MCP |
-| **Aider** | CLI | CONVENTIONS.md | - | ❌ | ⚠️ 社区 | lint-cmd | Lint Hook |
-
-**Key Insights (LX-02 + Testing):**
-1. **SKILL.md** is de facto standard (Claude, Pi, Codex) → 50% of CLI agents
-2. **CLI is universal** → 100% of agents can call `invar guard`
-3. **MCP widely supported** but Pi explicitly rejects it (design: "build CLI tools with READMEs")
-4. **AGENTS.md emerging** → Pi and Codex both use AGENTS.md for context
-5. **Hooks divergent** → Claude (Bash 4), Pi (TS stateful), Cursor (JSON 6)
-6. **Pi reads CLAUDE.md** → No separate SYSTEM.md needed (verified 2025-12-29)
-7. **Pi reads .claude/skills/** → Skill sharing between agents works!
-
-### Agent Integration Patterns
-
-| Pattern | Agents | How Invar Integrates |
-|---------|--------|---------------------|
-| **Native Skill** | Claude, Pi, Codex | SKILL.md symlinks, hooks, system prompt |
-| **Lint Hook** | Aider | CONVENTIONS.md + lint-cmd = `invar guard` |
-| **MCP First** | Claude, Cline, Codex, Cursor | MCP tools with CLI fallback |
-| **Rules File** | Cline, Cursor | .clinerules / .mdc with Invar rules |
-
-### Generated Files by Agent
-
-| Agent | System Prompt | Config | Verification |
-|-------|--------------|--------|--------------|
-| **Claude Code** | CLAUDE.md | .claude/settings.local.json | hooks + MCP |
-| **Pi** | CLAUDE.md ✅ | .pi/settings.json | hooks |
-| **Aider** | CONVENTIONS.md | .aider.conf.yml | lint-cmd |
-| **Cline** | .clinerules | .vscode/mcp.json | MCP |
-| **Codex CLI** | AGENTS.md | .codex/config.toml | MCP |
-| **Cursor** | .cursor/rules/invar.mdc | .cursor/settings.json | MCP |
-
-## Design Principles
-
-1. **Single Source of Truth (SSOT)**: Skills, commands, and hook logic defined once
-2. **Manifest-Driven**: Agent capabilities declared in JSON manifests
-3. **Graceful Degradation**: MCP when available, CLI as universal fallback
-4. **Backward Compatible**: Existing Claude Code users unaffected
-5. **Incremental Adoption**: Add agents without modifying existing configs
-6. **Copy-Sync over Symlink**: Claude Code doesn't follow symlinks (security); use copy + sync
-
-## Critical Design Constraint: No Symlinks
-
-**Claude Code does not follow symbolic links** ([Issue #764](https://github.com/anthropics/claude-code/issues/764)).
-
-This is a security feature, not a bug. Implications:
-
-| Approach | Status | Reason |
-|----------|--------|--------|
-| `.claude/skills/` → symlink → `.invar/skills/` | ❌ Won't work | Claude Code ignores symlinked directories |
-| Individual skill symlinks | ❌ Won't work | Same security restriction |
-| **Copy + Sync** | ✅ Works | Real files, `invar dev sync` manages updates |
-
-### Copy-Sync Architecture
+### Correct Version Flow
 
 ```
-.invar/skills/              ← SOURCE (Single Source of Truth)
-    ├── develop/SKILL.md
-    ├── review/SKILL.md
-    └── ...
-
+src/invar/templates/              ← SSOT (Single Source of Truth)
         │
-        │  invar dev sync --agent claude
-        ▼
-
-.claude/skills/             ← TARGET (Generated, do not edit)
-    ├── develop/SKILL.md    ← <!-- Generated by Invar -->
-    ├── review/SKILL.md     ← <!-- Generated by Invar -->
-    └── ...
+        ├── invar dev sync        (Invar project, syntax=mcp)
+        │
+        └── invar init/update     (User projects, syntax=cli)
+                │
+                ▼
+       Project files              ← Generated/synced
 ```
 
-**Sync Behavior:**
-1. Copies files from `.invar/skills/` to `.{agent}/skills/`
-2. Adds generation marker: `<!-- Generated by Invar - DO NOT EDIT -->`
-3. Detects manual edits and warns user
-4. Supports `--force` to overwrite manual changes
+**Fix Required:** `.invar/context.md` incorrectly states "INVAR.md is the source". The templates are the true source.
 
-### Generation Marker Format
+### CLAUDE.md / INVAR.md Content Duplication
+
+| Content | CLAUDE.md | INVAR.md | Issue |
+|---------|-----------|----------|-------|
+| Check-In | Full (16 lines) | Full (18 lines) | **Duplicate** |
+| Visible Workflow | Partial | Full | Partial duplicate |
+| Core/Shell | Summary table | Full + decision tree | OK (layered) |
+| Contract Rules | None | Full (44 lines) | OK (INVAR.md only) |
+
+**Recommendation:** Remove duplicates from CLAUDE.md, keep only references to INVAR.md.
+
+### Content Gap Analysis (If Agent Only Reads CLAUDE.md)
+
+| Source | Lines | What Agent Misses |
+|--------|-------|-------------------|
+| **INVAR.md** | 310 | Six Laws, Contract Rules (44 lines), Core/Shell Examples, USBV details |
+| **context.md** | 163 | Task Router, Lessons Learned, Tool Priority |
+| **examples/** | ~400 | Working code patterns |
+
+**Critical Missing Content:**
+
+| Content | Location | Impact |
+|---------|----------|--------|
+| **Lambda Signature Rule** | INVAR.md:106-118 | Agents write `@pre(lambda x: ...)` for `def f(x, y)` → ERROR |
+| **@post Scope Limitation** | INVAR.md:136-146 | Agents write `@post(lambda r: r > x)` → ERROR (`x` not accessible) |
+| **Task Router** | context.md:30-42 | Agents skip reading examples before coding |
+| **Core/Shell Examples** | INVAR.md:64-103 | Agents guess patterns instead of copying working code |
+
+**Contract Rules That Agents Miss (INVAR.md:104-147):**
+
+```python
+# WRONG (agent common mistake) - Lambda missing parameter
+@pre(lambda x: x >= 0)
+def calc(x: int, y: int = 0): ...
+
+# CORRECT - Lambda must include ALL params
+@pre(lambda x, y=0: x >= 0)
+def calc(x: int, y: int = 0): ...
+
+# WRONG - @post cannot access function parameters
+@post(lambda result: result > x)  # 'x' not available!
+
+# CORRECT - @post only sees 'result'
+@post(lambda result: result >= 0)
+```
+
+**Conclusion:** These rules MUST be inlined in CLAUDE.md critical section.
+
+### Agent Ecosystem (Updated)
+
+| Agent | Prompt File | Skills | MCP | Hooks | Integration |
+|-------|-------------|--------|-----|-------|-------------|
+| **Claude Code** | CLAUDE.md | .claude/skills/ ✅ | ✅ | Bash | Native |
+| **Pi** | CLAUDE.md ✅ | .claude/skills/ ✅ | ❌ | TypeScript | Native |
+| **Cursor** | .cursor/rules/*.mdc | ❌ | ✅ | JSON | MCP |
+| **Aider** | CONVENTIONS.md | ❌ | ❌ | lint-cmd | Lint Hook |
+
+**Key Insight:** Pi reads CLAUDE.md and .claude/skills/ directly. Only hooks need Pi-specific files.
+
+## Existing Infrastructure to Leverage
+
+### 1. Template System (Already Complete)
+
+```
+src/invar/templates/
+├── manifest.toml           ← File ownership & sync rules
+├── protocol/INVAR.md       ← Protocol source
+├── config/CLAUDE.md.jinja  ← Jinja2 with syntax variable
+├── skills/*/SKILL.md.jinja ← Skills with syntax variable
+└── hooks/*.sh.jinja        ← Bash hooks
+```
+
+### 2. Sync Engine (Already Complete)
+
+```python
+# DX-56: Unified sync engine
+sync_templates(path, SyncConfig(
+    syntax="mcp",                    # or "cli"
+    inject_project_additions=True,  # or False
+))
+```
+
+### 3. Region System (Already Complete)
 
 ```markdown
-<!-- Generated by Invar v5.0 - DO NOT EDIT
-     Source: .invar/skills/develop/SKILL.md
-     Generated: 2025-12-29T14:30:00Z
-     Hash: a1b2c3d4e5f6...
-     Agent: claude
-
-     To update, edit the source file and run:
-       invar dev sync --agent claude
-
-     To keep local changes, remove this marker.
--->
-
-# Skill content follows...
+<!--invar:critical-->   ← Always update
+<!--invar:managed-->    ← Update managed, preserve user
+<!--invar:project-->    ← Inject from project-additions.md
+<!--invar:user-->       ← Preserve user content
+<!--invar:skill-->      ← Skill content
+<!--invar:extensions--> ← User extensions for skills
 ```
 
-### Drift Detection
+## What's Missing (Minimal Additions)
 
-```python
-def has_manual_edits(path: Path) -> bool:
-    """Check if file was manually edited after generation."""
-    content = path.read_text()
-
-    # Extract stored hash from generation marker
-    match = re.search(r'Hash: ([a-f0-9]+)', content)
-    if not match:
-        return True  # No marker = assume manual edit
-
-    stored_hash = match.group(1)
-    current_hash = compute_content_hash(remove_marker(content))
-
-    return stored_hash != current_hash
-```
-
-### Sync Commands
-
-```bash
-# Check for drift (read-only)
-invar dev sync --check
-# Output: ⚠️ .claude/skills/develop/SKILL.md: modified locally
-
-# Sync all enabled agents
-invar dev sync
-
-# Sync specific agent
-invar dev sync --agent claude
-
-# Force overwrite local changes
-invar dev sync --force
-
-# Show what would be synced (dry-run)
-invar dev sync --dry-run
-```
-
----
-
-## Architecture
-
-### Directory Structure
+### 1. Pi TypeScript Hooks
 
 ```
-project/
-├── CLAUDE.md                    # Claude Code + Pi system prompt (shared!)
-├── CONVENTIONS.md               # Aider conventions (--read)
-├── AGENTS.md                    # Codex CLI system prompt (+ Pi context)
-├── INVAR.md                     # Shared protocol document
-│
-├── .aider.conf.yml              # Aider configuration (root-level)
-├── .clinerules                  # Cline rules (file or directory)
-│
-├── .claude/                     # Claude Code configuration
-│   ├── settings.local.json
-│   ├── commands/                # ← copied from .invar/commands/
-│   ├── hooks/                   # Bash hooks (agent-specific)
-│   │   ├── PreToolUse.sh
-│   │   ├── PostToolUse.sh
-│   │   ├── UserPromptSubmit.sh
-│   │   └── Stop.sh
-│   └── skills/                  # ← copied from .invar/skills/
-│       ├── develop/SKILL.md     # <!-- Generated by Invar -->
-│       └── review/SKILL.md
-│
-├── .pi/                         # Pi configuration
-│   ├── settings.json
-│   ├── commands/                # ← copied from .invar/commands/
-│   ├── hooks/                   # TypeScript hooks (agent-specific)
-│   │   └── invar.ts
-│   └── skills/                  # ← copied from .invar/skills/
-│
-├── .vscode/                     # VS Code settings (Cline)
-│   └── mcp.json                 # MCP server configuration
-│
-├── .codex/                      # Codex CLI configuration (future)
-│   ├── config.toml
-│   ├── commands/                # ← copied from .invar/commands/
-│   └── skills/                  # ← copied from .invar/skills/
-│
-├── .cursor/                     # Cursor configuration (future)
-│   └── rules/
-│       └── invar.mdc            # Cursor-specific rules
-│
-└── .invar/                      # Shared Invar configuration
-    ├── context.md               # Project context (shared)
-    ├── examples/                # Code examples (shared)
-    │
-    ├── agents/                  # Agent manifests
-    │   ├── claude.json
-    │   ├── pi.json
-    │   ├── aider.json
-    │   ├── cline.json
-    │   ├── codex.json
-    │   ├── cursor.json
-    │   └── _template.json
-    │
-    ├── skills/                  # Canonical skills (SKILL.md format)
-    │   ├── develop/
-    │   │   └── SKILL.md
-    │   ├── review/
-    │   │   └── SKILL.md
-    │   ├── propose/
-    │   │   └── SKILL.md
-    │   └── investigate/
-    │       └── SKILL.md
-    │
-    ├── commands/                # Canonical commands
-    │   ├── audit.md
-    │   └── guard.md
-    │
-    ├── hooks/                   # Hook definitions
-    │   ├── logic/               # Python SSOT (business logic)
-    │   │   ├── __init__.py
-    │   │   ├── block_pytest.py
-    │   │   ├── block_crosshair.py
-    │   │   ├── track_changes.py
-    │   │   └── remind_guard.py
-    │   │
-    │   └── generated/           # Generated agent-specific hooks
-    │       ├── claude/
-    │       │   ├── PreToolUse.sh
-    │       │   └── PostToolUse.sh
-    │       └── pi/
-    │           └── invar.ts
-    │
-    └── templates/               # System prompt templates
-        ├── _base.md.j2          # Shared content
-        ├── claude.md.j2         # Claude-specific sections
-        ├── pi.md.j2             # Pi-specific sections
-        ├── aider.md.j2          # Aider conventions template
-        ├── cline.md.j2          # Cline rules template
-        ├── codex.md.j2          # Codex-specific sections
-        └── cursor.mdc.j2        # Cursor rules template
+src/invar/templates/hooks/pi/
+└── invar-guard.ts.jinja
 ```
 
-### Component Ownership
-
-| Component | Location | Owner | Distribution |
-|-----------|----------|-------|--------------|
-| Skills (SSOT) | `.invar/skills/` | Invar | Source of truth |
-| Skills (agent) | `.{agent}/skills/` | Invar | **Copied** from SSOT |
-| Commands (SSOT) | `.invar/commands/` | Invar | Source of truth |
-| Commands (agent) | `.{agent}/commands/` | Invar | **Copied** from SSOT |
-| Hook Logic | `.invar/hooks/logic/` | Invar | Python SSOT |
-| Hook Impl | `.{agent}/hooks/` | Invar | **Generated** per agent |
-| Manifests | `.invar/agents/` | Invar | Registry |
-| Context | `.invar/context.md` | User | Shared (read by all) |
-| System Prompt | `{AGENT}.md` | Invar | **Generated** per agent |
-
-**Key:** All agent-specific files are generated/copied by `invar dev sync`. Do not edit directly.
-
----
-
-## Manifest Specification
-
-### Schema
-
-```json
-{
-  "$schema": "https://invar.dev/schemas/agent-manifest-v1.json",
-  "name": "string",
-  "display_name": "string",
-  "version": "string",
-  "website": "string (optional)",
-
-  "system_prompt": {
-    "filename": "string",
-    "location": "root | config_dir",
-    "template": "string (optional, .j2 file)",
-    "supports_override": "boolean (optional)",
-    "override_filename": "string (optional)"
-  },
-
-  "config_dir": "string",
-
-  "skills": {
-    "format": "skill-md | cursor-mdc | unknown",
-    "location": "string (path pattern)",
-    "copy_from": "string (optional, SSOT path - files are COPIED, not symlinked)",
-    "depth": "number (optional, default 1)"
-  },
-
-  "commands": {
-    "format": "markdown | unknown",
-    "location": "string (path pattern)",
-    "copy_from": "string (optional, SSOT path - files are COPIED, not symlinked)"
-  },
-
-  "hooks": {
-    "supported": "boolean",
-    "language": "bash | typescript | python | none",
-    "location": "string (path pattern)",
-    "events": ["array of event names"],
-    "generation": {
-      "enabled": "boolean",
-      "source": "string (path to logic/)",
-      "target": "string (path to generated/)"
-    }
-  },
-
-  "tools": {
-    "mcp_support": "boolean",
-    "preference": "mcp_first | cli_first | cli_only | mcp_only",
-    "mcp_tools": ["array of MCP tool names"],
-    "cli_commands": ["array of CLI commands"],
-    "cli_fallback": "boolean"
-  },
-
-  "features": {
-    "session_management": "boolean",
-    "context_compression": "boolean",
-    "thinking_mode": "boolean",
-    "image_support": "boolean"
-  }
-}
-```
-
-### Claude Code Manifest
-
-```json
-{
-  "name": "claude",
-  "display_name": "Claude Code",
-  "version": "1.0.0",
-  "website": "https://claude.ai/claude-code",
-
-  "system_prompt": {
-    "filename": "CLAUDE.md",
-    "location": "root",
-    "template": "claude.md.j2"
-  },
-
-  "config_dir": ".claude",
-
-  "skills": {
-    "format": "skill-md",
-    "location": "{config_dir}/skills",
-    "copy_from": ".invar/skills",
-    "depth": 1
-  },
-
-  "commands": {
-    "format": "markdown",
-    "location": "{config_dir}/commands",
-    "copy_from": ".invar/commands"
-  },
-
-  "hooks": {
-    "supported": true,
-    "language": "bash",
-    "location": "{config_dir}/hooks",
-    "events": ["PreToolUse", "PostToolUse", "UserPromptSubmit", "Stop"],
-    "generation": {
-      "enabled": true,
-      "source": ".invar/hooks/logic",
-      "target": ".invar/hooks/generated/claude"
-    }
-  },
-
-  "tools": {
-    "mcp_support": true,
-    "preference": "mcp_first",
-    "mcp_tools": ["invar_guard", "invar_sig", "invar_map"],
-    "cli_commands": ["invar guard", "invar sig", "invar map"],
-    "cli_fallback": true
-  },
-
-  "features": {
-    "session_management": true,
-    "context_compression": true,
-    "thinking_mode": true,
-    "image_support": true
-  }
-}
-```
-
-### Pi Manifest
-
-> **Key Finding (2025-12-29):** Pi reads CLAUDE.md automatically! No separate SYSTEM.md needed.
-> Pi also reads AGENTS.md for project context. This enables skill/prompt sharing with Claude Code.
-
-```json
-{
-  "name": "pi",
-  "display_name": "Pi Coding Agent",
-  "version": "1.0.0",
-  "website": "https://shittycodingagent.ai",
-
-  "system_prompt": {
-    "filename": "CLAUDE.md",
-    "location": "root",
-    "shared_with": ["claude"],
-    "notes": "Pi reads CLAUDE.md directly - no separate file needed"
-  },
-
-  "context_file": {
-    "filename": "AGENTS.md",
-    "location": "root",
-    "optional": true,
-    "notes": "Pi reads AGENTS.md for additional project context"
-  },
-
-  "config_dir": ".pi",
-
-  "skills": {
-    "format": "skill-md",
-    "location": "{config_dir}/skills",
-    "copy_from": ".invar/skills",
-    "depth": 1
-  },
-
-  "commands": {
-    "format": "markdown",
-    "location": "{config_dir}/commands",
-    "copy_from": ".invar/commands"
-  },
-
-  "hooks": {
-    "supported": true,
-    "language": "typescript",
-    "location": "{config_dir}/hooks",
-    "events": ["tool_call", "tool_result", "session", "agent_start", "agent_end"],
-    "generation": {
-      "enabled": true,
-      "source": ".invar/hooks/logic",
-      "target": ".invar/hooks/generated/pi"
-    }
-  },
-
-  "tools": {
-    "mcp_support": false,
-    "preference": "cli_only",
-    "mcp_tools": [],
-    "cli_commands": ["invar guard", "invar sig", "invar map"],
-    "cli_fallback": false
-  },
-
-  "features": {
-    "session_management": true,
-    "context_compression": true,
-    "thinking_mode": true,
-    "image_support": true
-  }
-}
-```
-
-### Aider Manifest
-
-```json
-{
-  "name": "aider",
-  "display_name": "Aider",
-  "version": "1.0.0",
-  "website": "https://aider.chat",
-
-  "system_prompt": {
-    "filename": "CONVENTIONS.md",
-    "location": "root",
-    "template": "aider.md.j2",
-    "injection_method": "--read"
-  },
-
-  "config_dir": null,
-  "config_file": {
-    "filename": ".aider.conf.yml",
-    "location": "root",
-    "format": "yaml"
-  },
-
-  "skills": {
-    "format": "none",
-    "notes": "Aider doesn't support skills; use CONVENTIONS.md"
-  },
-
-  "commands": {
-    "format": "none",
-    "notes": "Aider doesn't support slash commands"
-  },
-
-  "hooks": {
-    "supported": false,
-    "language": "none",
-    "integration": {
-      "type": "lint-cmd",
-      "config": {
-        "lint-cmd": ["python: invar guard --changed"],
-        "auto-lint": true,
-        "test-cmd": "invar guard",
-        "auto-test": false
-      }
-    }
-  },
-
-  "tools": {
-    "mcp_support": false,
-    "preference": "cli_only",
-    "cli_commands": ["invar guard", "invar sig", "invar map"],
-    "invocation": "shell_command"
-  },
-
-  "features": {
-    "session_management": false,
-    "context_compression": false,
-    "thinking_mode": false,
-    "image_support": false,
-    "repo_map": true,
-    "auto_commit": true
-  }
-}
-```
-
-**Key Integration Points:**
-
-1. **CONVENTIONS.md**: Contains Invar critical rules, loaded via `aider --read CONVENTIONS.md`
-2. **lint-cmd**: Runs `invar guard --changed` after each code change
-3. **auto-lint**: Enabled to catch issues immediately after edits
-4. **Repo map**: Aider's native feature, complements Invar's codebase understanding
-
-### Cline Manifest
-
-```json
-{
-  "name": "cline",
-  "display_name": "Cline",
-  "version": "1.0.0",
-  "website": "https://cline.bot",
-
-  "system_prompt": {
-    "filename": ".clinerules",
-    "location": "root",
-    "template": "cline.md.j2",
-    "format": "clinerules",
-    "supports_directory": true
-  },
-
-  "config_dir": ".vscode",
-
-  "skills": {
-    "format": "none",
-    "notes": "Cline uses .clinerules for project guidance"
-  },
-
-  "commands": {
-    "format": "none",
-    "notes": "Cline uses /newrule command internally"
-  },
-
-  "hooks": {
-    "supported": false,
-    "language": "none",
-    "notes": "Cline uses auto-approve permission system instead of hooks"
-  },
-
-  "tools": {
-    "mcp_support": true,
-    "preference": "mcp_first",
-    "mcp_tools": ["invar_guard", "invar_sig", "invar_map"],
-    "cli_commands": ["invar guard", "invar sig", "invar map"],
-    "cli_fallback": true,
-    "mcp_config": {
-      "location": ".vscode/mcp.json",
-      "auto_approve": {
-        "recommended": ["invar_guard", "invar_sig", "invar_map"],
-        "notes": "Enable auto-approve for Invar tools for seamless verification"
-      }
-    }
-  },
-
-  "features": {
-    "session_management": true,
-    "context_compression": true,
-    "thinking_mode": true,
-    "image_support": true,
-    "browser_control": true,
-    "checkpoints": true
-  }
-}
-```
-
-**Key Integration Points:**
-
-1. **.clinerules**: Contains Invar critical rules, auto-loaded by Cline
-2. **MCP tools**: Full support with auto-approve for frictionless verification
-3. **.vscode/mcp.json**: Configures Invar MCP server
-4. **Checkpoints**: Cline's native rollback feature, complements verification
-
-### Codex CLI Manifest (Future)
-
-```json
-{
-  "name": "codex",
-  "display_name": "OpenAI Codex CLI",
-  "version": "1.0.0",
-  "website": "https://developers.openai.com/codex",
-
-  "system_prompt": {
-    "filename": "AGENTS.md",
-    "location": "root",
-    "template": "codex.md.j2",
-    "supports_override": true,
-    "override_filename": "AGENTS.override.md"
-  },
-
-  "config_dir": ".codex",
-
-  "skills": {
-    "format": "skill-md",
-    "location": "{config_dir}/skills",
-    "copy_from": ".invar/skills"
-  },
-
-  "commands": {
-    "format": "markdown",
-    "location": "{config_dir}/commands",
-    "copy_from": ".invar/commands"
-  },
-
-  "hooks": {
-    "supported": false,
-    "language": "none",
-    "events": []
-  },
-
-  "tools": {
-    "mcp_support": true,
-    "preference": "mcp_first",
-    "mcp_tools": ["invar_guard", "invar_sig", "invar_map"],
-    "cli_commands": ["invar guard", "invar sig", "invar map"],
-    "cli_fallback": true
-  }
-}
-```
-
-### Cursor Manifest
-
-> **Updated from LX-02 research:** Cursor supports 6 hook types via JSON config.
-
-```json
-{
-  "name": "cursor",
-  "display_name": "Cursor",
-  "version": "1.0.0",
-  "website": "https://cursor.com",
-
-  "system_prompt": {
-    "filename": "index.mdc",
-    "location": ".cursor/rules",
-    "template": "cursor.mdc.j2",
-    "legacy": {
-      "filename": ".cursorrules",
-      "location": "root",
-      "deprecated": true
-    }
-  },
-
-  "config_dir": ".cursor",
-
-  "skills": {
-    "format": "none",
-    "notes": "Cursor does not support SKILL.md format"
-  },
-
-  "hooks": {
-    "supported": true,
-    "language": "json",
-    "location": ".cursor/hooks.json",
-    "events": [
-      "beforeSubmitPrompt",
-      "beforeShellExecution",
-      "beforeMCPExecution",
-      "beforeReadFile",
-      "afterFileEdit",
-      "stop"
-    ],
-    "generation": {
-      "enabled": true,
-      "source": ".invar/hooks/logic",
-      "target": ".invar/hooks/generated/cursor"
-    },
-    "notes": "JSON config + script files. beforeShellExecution can block pytest."
-  },
-
-  "tools": {
-    "mcp_support": true,
-    "preference": "mcp_first",
-    "mcp_tools": ["invar_guard", "invar_sig", "invar_map"],
-    "cli_fallback": true
-  }
-}
-```
-
----
-
-## Hook System
-
-### Design Goals (Revised)
-
-> **Updated 2025-12-29:** Simplified from Python→code generation to template-based approach.
-> Pi hooks tested and verified working with `pi 0.30.2`.
-
-1. **Template-Based**: Agent-specific hook templates, not code generation
-2. **Config-Driven**: Block patterns defined in TOML, read by templates
-3. **Handwritten When Simple**: For simple logic, handwrite rather than generate
-
-**Rationale:** Hook logic is simple (pattern matching, counting). Code generation
-from Python→TypeScript adds complexity without proportional value.
-
-### Event Mapping
-
-> **Updated from LX-02:** Added Cursor 6 hook types.
-
-| Invar Hook | Claude Code | Pi | Cursor | Codex |
-|------------|-------------|-----|--------|-------|
-| `on_tool_before` | PreToolUse | tool_call | beforeShellExecution, beforeMCPExecution | - |
-| `on_tool_after` | PostToolUse | tool_result | afterFileEdit | - |
-| `on_prompt_submit` | UserPromptSubmit | agent_start | beforeSubmitPrompt | - |
-| `on_file_read` | - | - | beforeReadFile | - |
-| `on_session_end` | Stop | session (shutdown) | stop | - |
-
-### Pi Hook Discovery (Verified)
-
-```
-~/.pi/agent/hooks/*.ts    ← Global hooks (all projects)
-<cwd>/.pi/hooks/*.ts      ← Project hooks
-
-Loaded via jiti (TypeScript works without compilation)
-```
-
-### Pi Skill Discovery (Verified)
-
-```
-~/.codex/skills/**/SKILL.md     ← Codex format (recursive)
-~/.claude/skills/*/SKILL.md     ← Claude format (one level)
-~/.pi/agent/skills/**/SKILL.md  ← Pi global (recursive)
-<cwd>/.claude/skills/*/SKILL.md ← Project Claude
-<cwd>/.pi/skills/**/SKILL.md    ← Project Pi (recursive)
-
-Later paths win on name collision.
-```
-
-**Implication:** Pi can read Claude Code skills! This enables skill sharing:
-```
-.invar/skills/          ← SSOT
-    └── develop/SKILL.md
-
-.claude/skills/         ← Claude reads here
-    └── develop/SKILL.md  ← copied
-
-.pi/skills/             ← Pi reads here (OR .claude/skills/)
-    └── develop/SKILL.md  ← copied (optional, Pi can read .claude/)
-```
-
-### Pi Hook API (Verified)
-
+**Content:**
 ```typescript
 import type { HookAPI } from "@mariozechner/pi-coding-agent/hooks";
 
-export default function (pi: HookAPI) {
-  // Block tool calls
+const BLOCKED = [/^pytest\b/, /^python\s+-m\s+pytest/, /^crosshair\b/];
+const ALLOWED = [/--pdb/, /--cov/, /--debug/];
+
+export default function(pi: HookAPI) {
   pi.on("tool_call", async (event, ctx) => {
-    if (event.toolName === "bash" && /pytest/.test(event.input.command)) {
-      return { block: true, reason: "Use invar guard" };
-    }
-  });
+    if (event.toolName !== "bash") return;
+    const cmd = (event.input.command as string).trim();
 
-  // Track changes
-  pi.on("tool_result", async (event, ctx) => {
-    if (event.toolName === "write" || event.toolName === "edit") {
-      await ctx.ui.notify("File modified", "info");
-    }
-  });
-}
-```
+    if (!BLOCKED.some(p => p.test(cmd))) return;
+    if (ALLOWED.some(p => p.test(cmd))) return;
 
-**Available ctx methods:**
-- `ctx.ui.confirm(title, message)` — Get user confirmation
-- `ctx.ui.notify(message, type)` — Show notification
-- `ctx.ui.select(title, options)` — Present selection
-- `ctx.exec(command, args)` — Execute system command
-
-### Hook Config (SSOT Alternative)
-
-> **Simplified approach:** Instead of Python code generation, use TOML config.
-
-```toml
-# .invar/hooks/config.toml
-
-[block]
-# Commands to block and redirect to invar guard
-patterns = [
-  "^pytest\\b",
-  "^python\\s+-m\\s+pytest\\b",
-  "^crosshair\\b",
-]
-
-# Auto-escape patterns (allow these even if they match block patterns)
-escape_patterns = [
-  "--pdb",       # Debug mode
-  "--cov",       # Coverage mode
-  "vendor/",     # External tests
-]
-
-redirect_message = "Use `invar guard` instead"
-
-[remind]
-# Remind to run guard after N file changes
-after_changes = 5
-# Or after N seconds without guard
-after_seconds = 300
-```
-
-### Python Hook Logic (Reference Implementation)
-
-> **Note:** This Python code serves as reference/documentation.
-> Actual hooks are handwritten in agent-native languages (Bash, TypeScript).
-
-```python
-# .invar/hooks/logic/block_pytest.py
-"""
-Pytest blocking logic - reference implementation.
-
-This documents the business logic. Actual implementation is in:
-- .claude/hooks/PreToolUse.sh (Bash)
-- .pi/hooks/invar-guard.ts (TypeScript)
-"""
-
-from dataclasses import dataclass
-from typing import Tuple
-import re
-
-
-@dataclass
-class BlockDecision:
-    """Result of a blocking decision."""
-    block: bool
-    message: str = ""
-    reason: str = ""
-
-
-def should_block_pytest(command: str) -> BlockDecision:
-    """
-    Determine if a pytest command should be blocked.
-
-    Args:
-        command: The shell command to evaluate.
-
-    Returns:
-        BlockDecision with block=True if command should be blocked.
-
-    Examples:
-        >>> should_block_pytest("pytest tests/").block
-        True
-
-        >>> should_block_pytest("pytest --pdb tests/").block
-        False
-
-        >>> should_block_pytest("pytest --cov tests/").block
-        False
-
-        >>> should_block_pytest("python -m pytest").block
-        True
-
-        >>> should_block_pytest("ls -la").block
-        False
-    """
-    # Not a pytest command
-    if not re.search(r'\bpytest\b|python.*-m\s+pytest', command):
-        return BlockDecision(block=False)
-
-    # Auto-escape: Debug mode
-    if re.search(r'--pdb|--debug|--tb=', command):
-        return BlockDecision(
-            block=False,
-            reason="debug_mode"
-        )
-
-    # Auto-escape: Coverage collection
-    if re.search(r'--cov', command):
-        return BlockDecision(
-            block=False,
-            reason="coverage_mode"
-        )
-
-    # Auto-escape: External/vendor tests
-    if re.search(r'vendor/|third_party/|external/|node_modules/', command):
-        return BlockDecision(
-            block=False,
-            reason="external_tests"
-        )
-
-    # Block with helpful message
-    return BlockDecision(
-        block=True,
-        message=(
-            "❌ Use `invar guard` instead of pytest\n"
-            "   invar guard = static + doctests + CrossHair + Hypothesis\n"
-            "\n"
-            "   Auto-allowed: pytest --pdb (debug), pytest --cov (coverage)\n"
-            "   Manual escape: INVAR_ALLOW_PYTEST=1 pytest ..."
-        ),
-        reason="redirect_to_guard"
-    )
-
-
-def should_block_crosshair(command: str) -> BlockDecision:
-    """
-    Determine if a crosshair command should be blocked.
-
-    Examples:
-        >>> should_block_crosshair("crosshair check file.py").block
-        True
-
-        >>> should_block_crosshair("invar guard").block
-        False
-    """
-    if not re.search(r'\bcrosshair\b', command):
-        return BlockDecision(block=False)
-
-    return BlockDecision(
-        block=True,
-        message=(
-            "❌ Use `invar guard` (includes CrossHair by default)\n"
-            "   Manual escape: INVAR_ALLOW_CROSSHAIR=1 crosshair ..."
-        ),
-        reason="redirect_to_guard"
-    )
-```
-
-### Generated Bash Hook (Claude Code)
-
-```bash
-#!/bin/bash
-# AUTO-GENERATED from .invar/hooks/logic/block_pytest.py
-# DO NOT EDIT - changes will be overwritten by `invar dev sync`
-#
-# Invar PreToolUse Hook for Claude Code
-# Protocol: v5.0 | Generated: 2025-12-29
-
-TOOL_NAME="$1"
-TOOL_INPUT="$2"
-
-# Check if hooks are disabled
-[[ -f ".claude/hooks/.invar_disabled" ]] && exit 0
-
-# Only process Bash commands
-[[ "$TOOL_NAME" != "Bash" ]] && exit 0
-
-# Parse command from JSON input
-if command -v jq &>/dev/null; then
-  CMD=$(echo "$TOOL_INPUT" | jq -r '.command // empty' 2>/dev/null)
-else
-  CMD=$(echo "$TOOL_INPUT" | grep -o '"command"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*: *"\(.*\)"/\1/')
-fi
-[[ -z "$CMD" ]] && exit 0
-
-# Environment variable escape
-[[ "$INVAR_ALLOW_PYTEST" == "1" ]] && exit 0
-[[ "$INVAR_ALLOW_CROSSHAIR" == "1" ]] && exit 0
-
-# ============================================
-# pytest blocking (from block_pytest.py)
-# ============================================
-if echo "$CMD" | grep -qE '\bpytest\b|python.*-m\s+pytest'; then
-  # Auto-escape: Debug mode
-  if echo "$CMD" | grep -qE '\-\-pdb|\-\-debug|\-\-tb='; then
-    exit 0
-  fi
-  # Auto-escape: Coverage mode
-  if echo "$CMD" | grep -qE '\-\-cov'; then
-    exit 0
-  fi
-  # Auto-escape: External tests
-  if echo "$CMD" | grep -qE 'vendor/|third_party/|external/|node_modules/'; then
-    exit 0
-  fi
-  # Block with message
-  echo "❌ Use \`invar guard\` instead of pytest"
-  echo "   invar guard = static + doctests + CrossHair + Hypothesis"
-  echo ""
-  echo "   Auto-allowed: pytest --pdb (debug), pytest --cov (coverage)"
-  echo "   Manual escape: INVAR_ALLOW_PYTEST=1 pytest ..."
-  exit 1
-fi
-
-# ============================================
-# crosshair blocking (from block_crosshair.py)
-# ============================================
-if echo "$CMD" | grep -qE '\bcrosshair\b'; then
-  echo "❌ Use \`invar guard\` (includes CrossHair by default)"
-  echo "   Manual escape: INVAR_ALLOW_CROSSHAIR=1 crosshair ..."
-  exit 1
-fi
-
-exit 0
-```
-
-### Pi TypeScript Hook (Tested & Verified)
-
-> **Tested with Pi 0.30.2** — This hook successfully blocks pytest commands.
-> Location: `~/.pi/agent/hooks/invar-guard.ts` or `.pi/hooks/invar-guard.ts`
-
-```typescript
-/**
- * Invar Guard Hook for Pi
- * Blocks pytest/crosshair and redirects to `invar guard`
- *
- * Install: Copy to ~/.pi/agent/hooks/invar-guard.ts
- * Test: pi -p "run: pytest --version"
- * Expected: Command blocked with redirect message
- */
-import type { HookAPI } from "@mariozechner/pi-coding-agent/hooks";
-
-const BLOCKED_PATTERNS = [
-  /^pytest\b/,
-  /^python\s+-m\s+pytest\b/,
-  /^crosshair\b/,
-];
-
-const ESCAPE_PATTERNS = [
-  /--pdb/,      // Debug mode
-  /--cov/,      // Coverage mode
-  /vendor\//,   // External tests
-];
-
-export default function (pi: HookAPI) {
-  // Block pytest/crosshair
-  pi.on("tool_call", async (event, ctx) => {
-    if (event.toolName !== "bash") return undefined;
-
-    const command = (event.input.command as string).trim();
-
-    // Check if command should be blocked
-    const shouldBlock = BLOCKED_PATTERNS.some(p => p.test(command));
-    if (!shouldBlock) return undefined;
-
-    // Check escape patterns
-    const shouldEscape = ESCAPE_PATTERNS.some(p => p.test(command));
-    if (shouldEscape) return undefined;
-
-    // Block with helpful message
-    await ctx.ui.notify(`Blocked: ${command}`, "warning");
     return {
       block: true,
-      reason: `
-⚠️ Command blocked by Invar
-
-Use instead:
-  invar guard           # Full verification
-  invar guard --changed # Only changed files
-
-The Invar Guard provides:
-- Static analysis with contracts
-- Doctest execution
-- CrossHair symbolic verification
-- Hypothesis property testing
-`,
+      reason: "Use `{{ syntax == 'mcp' and 'invar_guard()' or 'invar guard' }}` instead."
     };
-  });
-
-  // Track file changes and remind
-  let changeCount = 0;
-
-  pi.on("tool_result", async (event, ctx) => {
-    if (event.toolName === "write" || event.toolName === "edit") {
-      changeCount++;
-      if (changeCount >= 5) {
-        await ctx.ui.notify(
-          `${changeCount} files modified. Run 'invar guard' to verify.`,
-          "info"
-        );
-        changeCount = 0;
-      }
-    }
-
-    // Reset on guard run
-    if (event.toolName === "bash") {
-      const cmd = event.input?.command as string || "";
-      if (/invar\s+guard/.test(cmd)) {
-        changeCount = 0;
-      }
-    }
   });
 }
 ```
 
+### 2. Cursor Rules Template
+
+```
+src/invar/templates/config/cursor.mdc.jinja
+```
+
+**Content:**
+```markdown
+---
+description: Invar verification rules
+globs: ["**/*.py"]
+alwaysApply: true
 ---
 
-## Copy-Sync System
+{{ critical_rules }}
 
-### Why Copy Instead of Symlink?
+## Contract Rules (Critical)
 
-Claude Code [does not follow symbolic links](https://github.com/anthropics/claude-code/issues/764) for security reasons. This affects:
+### Lambda Signature
+\```python
+# ❌ WRONG: Lambda only takes first parameter
+@pre(lambda x: x >= 0)
+def calculate(x: int, y: int = 0): ...
 
-- `.claude/skills/` directory and subdirectories
-- `.claude/commands/` directory
-- Any configuration symlinked from external locations
+# ✅ CORRECT: Lambda must include ALL parameters
+@pre(lambda x, y=0: x >= 0)
+def calculate(x: int, y: int = 0): ...
+\```
 
-**Solution:** Copy files from SSOT (`.invar/`) to agent directories, with generation markers for drift detection.
+## MCP Tools
 
-### Implementation
-
-```python
-# src/invar/shell/sync.py
-
-from dataclasses import dataclass, field
-from pathlib import Path
-from datetime import datetime
-import hashlib
-import re
-
-
-@dataclass
-class SyncResult:
-    """Result of a sync operation."""
-    copied: list[str] = field(default_factory=list)
-    skipped: list[str] = field(default_factory=list)
-    warnings: list[str] = field(default_factory=list)
-
-    def add_copied(self, path: str) -> None:
-        self.copied.append(path)
-
-    def add_skipped(self, path: str, reason: str) -> None:
-        self.skipped.append(f"{path}: {reason}")
-
-    def add_warning(self, msg: str) -> None:
-        self.warnings.append(msg)
-
-
-MARKER_TEMPLATE = '''<!-- Generated by Invar v{version} - DO NOT EDIT
-     Source: {source}
-     Generated: {timestamp}
-     Hash: {hash}
-     Agent: {agent}
-
-     To update, edit the source file and run:
-       invar dev sync --agent {agent}
-
-     To keep local changes, remove this marker.
--->
-
-'''
-
-
-def add_generation_marker(content: str, source: str, agent: str) -> str:
-    """Add generation marker to content."""
-    content_hash = hashlib.sha256(content.encode()).hexdigest()[:16]
-    marker = MARKER_TEMPLATE.format(
-        version="5.0",
-        source=source,
-        timestamp=datetime.now().isoformat(),
-        hash=content_hash,
-        agent=agent
-    )
-    return marker + content
-
-
-def remove_marker(content: str) -> str:
-    """Remove generation marker from content."""
-    return re.sub(r'<!-- Generated by Invar.*?-->\n\n', '', content, flags=re.DOTALL)
-
-
-def extract_hash(content: str) -> str | None:
-    """Extract hash from generation marker."""
-    match = re.search(r'Hash: ([a-f0-9]+)', content)
-    return match.group(1) if match else None
-
-
-def has_manual_edits(path: Path) -> bool:
-    """Check if file was manually edited after generation."""
-    content = path.read_text()
-
-    stored_hash = extract_hash(content)
-    if not stored_hash:
-        return True  # No marker = assume manual edit
-
-    clean_content = remove_marker(content)
-    current_hash = hashlib.sha256(clean_content.encode()).hexdigest()[:16]
-
-    return stored_hash != current_hash
-
-
-def copy_skills(
-    source_dir: Path,
-    target_dir: Path,
-    agent: str,
-    force: bool = False
-) -> SyncResult:
-    """
-    Copy skills from SSOT to agent directory.
-
-    Args:
-        source_dir: .invar/skills/
-        target_dir: .claude/skills/ or .pi/skills/
-        agent: Agent name for marker
-        force: Overwrite even if manually edited
-
-    Returns:
-        SyncResult with operation details
-    """
-    result = SyncResult()
-
-    for skill_dir in source_dir.iterdir():
-        if not skill_dir.is_dir():
-            continue
-
-        skill_md = skill_dir / "SKILL.md"
-        if not skill_md.exists():
-            continue
-
-        # Read source
-        content = skill_md.read_text()
-
-        # Prepare target
-        target_skill_dir = target_dir / skill_dir.name
-        target_skill_md = target_skill_dir / "SKILL.md"
-
-        # Check for existing file with manual edits
-        if target_skill_md.exists() and has_manual_edits(target_skill_md):
-            if not force:
-                result.add_warning(f"{target_skill_md}: has manual edits (use --force)")
-                result.add_skipped(str(target_skill_md), "manual edits")
-                continue
-
-        # Add marker and write
-        marked_content = add_generation_marker(
-            content,
-            source=str(skill_md.relative_to(source_dir.parent.parent)),
-            agent=agent
-        )
-
-        target_skill_dir.mkdir(parents=True, exist_ok=True)
-        target_skill_md.write_text(marked_content)
-        result.add_copied(str(target_skill_md))
-
-    return result
+| Task | Tool |
+|------|------|
+| Verify | `invar_guard()` |
+| Signatures | `invar_sig(target)` |
+| Entry points | `invar_map()` |
 ```
 
-### Sync Workflow
+### 3. manifest.toml Extensions
 
-```
-┌──────────────────────────────────────────────────────────────┐
-│  invar dev sync --agent claude                               │
-├──────────────────────────────────────────────────────────────┤
-│                                                              │
-│  1. Load manifest: .invar/agents/claude.json                 │
-│         ↓                                                    │
-│  2. For each source in manifest.skills.copy_from:            │
-│         ↓                                                    │
-│  3. Check target exists?                                     │
-│         ├── No  → Copy with marker                           │
-│         └── Yes → Check for manual edits                     │
-│                    ├── No edits  → Update with marker        │
-│                    └── Has edits → Skip (or --force)         │
-│         ↓                                                    │
-│  4. Report results                                           │
-│                                                              │
-│  Output:                                                     │
-│  ✓ Copied: .claude/skills/develop/SKILL.md                   │
-│  ✓ Copied: .claude/skills/review/SKILL.md                    │
-│  ⚠ Skipped: .claude/skills/propose/SKILL.md (manual edits)   │
-│                                                              │
-└──────────────────────────────────────────────────────────────┘
+```toml
+# Add agent configuration
+[agents]
+claude = { enabled = true }
+pi = { enabled = false, hooks_lang = "typescript" }
+cursor = { enabled = false, rules_format = "mdc" }
+
+# Add new templates
+[templates]
+".pi/hooks/invar-guard.ts" = { src = "hooks/pi/invar-guard.ts.jinja", type = "jinja", agent = "pi" }
+".cursor/rules/invar.mdc" = { src = "config/cursor.mdc.jinja", type = "jinja", agent = "cursor" }
 ```
 
----
+### 4. CLI Extension
 
-## System Prompt Generation
+```bash
+# Add --agent flag to init
+invar init --agent pi          # Enable Pi hooks
+invar init --agent cursor      # Enable Cursor rules
+invar init --agent claude,pi   # Multiple agents
+```
 
-### Template System
+## Content Optimization (Phase 1)
 
-Base template with agent-specific sections:
+### Problem: CLAUDE.md/INVAR.md Duplication
 
-```jinja2
-{# .invar/templates/_base.md.j2 #}
-<!--invar:critical-->
+Current Check-In content exists in both files (~95% duplicate).
+
+### Solution: Reference, Don't Copy
+
+**Before (CLAUDE.md):**
+```markdown
+## Check-In (DX-54)
+
+Your first message MUST display:
+...
+[16 lines of content]
+```
+
+**After (CLAUDE.md):**
+```markdown
+## Check-In
+
+> See [INVAR.md#check-in](./INVAR.md#check-in-required) for protocol.
+
+Display: `✓ Check-In: [project] | [branch] | [clean/dirty]`
+Then read `.invar/context.md`.
+```
+
+### Inline Critical Rules (MUST Add to CLAUDE.md)
+
+Add to `<!--invar:critical-->` section in `CLAUDE.md.jinja`:
+
+```markdown
 ## ⚡ Critical Rules
 
 | Always | Remember |
 |--------|----------|
-| **Verify** | `invar guard` — NOT pytest, NOT crosshair |
+| **Verify** | `invar_guard` — NOT pytest, NOT crosshair |
 | **Core** | `@pre/@post` + doctests, NO I/O imports |
 | **Shell** | Returns `Result[T, E]` from `returns` library |
 | **Flow** | USBV: Understand → Specify → Build → Validate |
 
-<!--/invar:critical-->
+### Contract Rules (CRITICAL)
 
-{% block tool_invocation %}
-{# Agent-specific tool invocation section #}
-{% endblock %}
+```python
+# ❌ WRONG: Lambda must include ALL parameters
+@pre(lambda x: x >= 0)
+def calc(x: int, y: int = 0): ...
 
-{% block project_structure %}
-## Project Structure
+# ✅ CORRECT: Include defaults too
+@pre(lambda x, y=0: x >= 0)
+def calc(x: int, y: int = 0): ...
 
+# ❌ WRONG: @post cannot access parameters
+@post(lambda result: result > x)  # 'x' not available!
+
+# ✅ CORRECT: @post only sees 'result'
+@post(lambda result: result >= 0)
 ```
-src/{project}/
-├── core/    # Pure logic (@pre/@post, doctests, no I/O)
-└── shell/   # I/O operations (Result[T, E] return type)
-```
-{% endblock %}
-
-{% include "_shared_sections.md.j2" %}
-```
-
-Claude-specific:
-
-```jinja2
-{# .invar/templates/claude.md.j2 #}
-{% extends "_base.md.j2" %}
-
-{% block tool_invocation %}
-## Invar Tool Invocation
-
-**Prefer MCP tools** (faster, structured output):
-
-| Task | MCP Tool | CLI Fallback |
-|------|----------|--------------|
-| Verify code | `invar_guard()` | `invar guard` |
-| See signatures | `invar_sig(target)` | `invar sig <file>` |
-| Find entry points | `invar_map()` | `invar map --top 10` |
-
-Use MCP tools when available. Fall back to CLI via Bash if MCP unavailable.
-{% endblock %}
 ```
 
-Pi-specific:
-
-```jinja2
-{# .invar/templates/pi.md.j2 #}
-{% extends "_base.md.j2" %}
-
-{% block tool_invocation %}
-## Invar Tool Invocation
-
-**Use CLI via bash** (MCP not supported):
-
-| Task | Command |
-|------|---------|
-| Verify code | `invar guard` |
-| See signatures | `invar sig <file>` |
-| Find entry points | `invar map --top 10` |
-
-All Invar tools are CLI commands. Invoke via the bash tool.
-{% endblock %}
-```
-
-Aider-specific (CONVENTIONS.md format):
-
-```jinja2
-{# .invar/templates/aider.md.j2 #}
-# Invar Coding Conventions
-
-> These conventions are loaded via `aider --read CONVENTIONS.md`
-
-## Critical Rules
-
-| Always | Remember |
-|--------|----------|
-| **Verify** | Code is verified by `invar guard` (runs via lint-cmd) |
-| **Core** | `@pre/@post` contracts + doctests, NO I/O imports |
-| **Shell** | Returns `Result[T, E]` from `returns` library |
-| **Flow** | USBV: Understand → Specify → Build → Validate |
-
-## Tool Usage
-
-Aider integrates with Invar via lint-cmd:
-- **Auto-lint**: Runs `invar guard --changed` after each edit
-- **Manual check**: Run `invar guard` in terminal
-
-## Quick Reference
-
-| Task | Command |
-|------|---------|
-| Verify code | `invar guard` |
-| See signatures | `invar sig <file>` |
-| Find entry points | `invar map --top 10` |
-
-## Project Structure
-
-```
-src/{project}/
-├── core/    # Pure logic (@pre/@post, doctests, no I/O)
-└── shell/   # I/O operations (Result[T, E] return type)
-```
-
-{% include "_rules_section.md.j2" %}
-```
-
-Cline-specific (.clinerules format):
-
-```jinja2
-{# .invar/templates/cline.md.j2 #}
-# Invar Project Rules
-
-> These rules are automatically loaded by Cline from .clinerules
-
-## Critical Rules
-
-| Always | Remember |
-|--------|----------|
-| **Verify** | Use `invar_guard` MCP tool — NOT pytest, NOT crosshair |
-| **Core** | `@pre/@post` contracts + doctests, NO I/O imports |
-| **Shell** | Returns `Result[T, E]` from `returns` library |
-| **Flow** | USBV: Understand → Specify → Build → Validate |
-
-## Tool Usage
-
-**Prefer MCP tools** (faster, structured output):
-
-| Task | MCP Tool | CLI Fallback |
-|------|----------|--------------|
-| Verify code | `invar_guard()` | `invar guard` |
-| See signatures | `invar_sig(target)` | `invar sig <file>` |
-| Find entry points | `invar_map()` | `invar map --top 10` |
-
-## Auto-Approve Recommendation
-
-Enable auto-approve for these Invar MCP tools:
-- `invar_guard` - Code verification
-- `invar_sig` - Signature inspection
-- `invar_map` - Codebase navigation
-
-## Project Structure
-
-```
-src/{project}/
-├── core/    # Pure logic (@pre/@post, doctests, no I/O)
-└── shell/   # I/O operations (Result[T, E] return type)
-```
-
-{% include "_rules_section.md.j2" %}
-```
-
----
-
-## CLI Interface
-
-### New Commands
-
-```bash
-# Initialize with specific agent(s)
-invar init                      # Default: claude only
-invar init --agent claude       # Claude Code only
-invar init --agent pi           # Pi only
-invar init --agent aider        # Aider only
-invar init --agent cline        # Cline only
-invar init --agent all          # All supported agents
-invar init --agent claude,pi    # Multiple specific agents
-
-# Sync configuration
-invar dev sync                  # Sync current agent(s)
-invar dev sync --agent pi       # Add Pi support
-invar dev sync --agent aider    # Add Aider support
-invar dev sync --agent all      # Sync all agents
-
-# List available agents
-invar agent list
-# Output:
-# NAME      STATUS      TYPE      MCP    HOOKS        INTEGRATION
-# claude    installed   CLI       ✅     bash         Native
-# pi        available   CLI       ❌     typescript   Native
-# aider     available   CLI       ❌     lint-cmd     Lint Hook
-# cline     available   VS Code   ✅     none         MCP
-# codex     available   CLI       ✅     none         Native
-# cursor    available   IDE       ✅     none         MCP
-
-# Show agent info
-invar agent info pi
-# Output:
-# Pi Coding Agent
-# Website: https://shittycodingagent.ai
-# Config: .pi/
-# System Prompt: SYSTEM.md
-# Skills: SKILL.md (compatible)
-# MCP: Not supported
-# Hooks: TypeScript
-
-# Generate hooks from Python logic
-invar dev hooks --generate
-invar dev hooks --generate --agent pi
-```
-
-### Configuration
-
-```toml
-# .invar/config.toml
-
-[agents]
-# Agents to manage (default: ["claude"])
-enabled = ["claude", "pi", "aider", "cline"]
-
-# Default agent for new projects
-default = "claude"
-
-[hooks]
-# Auto-regenerate hooks on sync
-auto_generate = true
-
-# Source directory for hook logic
-logic_dir = ".invar/hooks/logic"
-
-[agents.aider]
-# Aider-specific overrides
-conventions_file = "CONVENTIONS.md"
-auto_lint = true
-
-[agents.cline]
-# Cline-specific overrides
-mcp_config = ".vscode/mcp.json"
-auto_approve = ["invar_guard", "invar_sig", "invar_map"]
-```
-
----
+**Rationale:** These two rules have the highest agent failure rate. Inlining adds ~15 lines but prevents common errors.
 
 ## Implementation Plan
 
-### Implementation Order
+### Phase 1: Content Optimization ✅ Complete
 
-```
-Claude Code ─────► Pi ─────► Cursor ─────► Codex CLI ─────► Aider/Cline
-    ✅              │          │             │                │
-  Current        2 days     Week 2        Week 3           Week 4
-               (simplified)
-```
+| Task | File | Change | Status |
+|------|------|--------|--------|
+| 1.1 | `.invar/context.md` | Fixed version flow (templates are SSOT) | ✅ |
+| 1.2 | `templates/config/CLAUDE.md.jinja` | Add Contract Rules to critical section (+15 lines) | ✅ |
+| 1.3 | `templates/config/CLAUDE.md.jinja` | Simplify Check-In (reference INVAR.md, -11 lines) | ✅ |
+| 1.4 | `invar dev sync` | Sync changes to Invar project | ✅ |
+| 1.5 | Test | Verified in isolation environment | ✅ |
 
-> **Pi simplification:** Since Pi reads CLAUDE.md directly, Phase 3 reduced from 3 to 2 days.
+**Actual Change:** +4 lines in CLAUDE.md (add +15 contract rules, reduce -11 Check-In)
 
-**Rationale:**
-1. **Claude Code** — Already complete, validates architecture
-2. **Pi** — Validates TypeScript hook generation + CLI-only integration
-3. **Cursor** — High user demand, MCP support, validates IDE integration
-4. **Codex CLI** — OpenAI official tool, SKILL.md compatible
-5. **Aider/Cline** — Lower priority, different integration patterns
+### Phase 1.5: Layered Redundancy ✅ Complete
 
-### Phase 1: Foundation + Claude Migration (3 days)
+| Task | File | Change | Status |
+|------|------|--------|--------|
+| 1.5a | `templates/config/CLAUDE.md.jinja` | Add Task Router reference (+1 line) | ✅ |
+| 1.5b | `templates/config/CLAUDE.md.jinja` | Add Core/Shell edge cases (+7 lines) | ✅ |
+| 1.5c | `templates/skills/develop/SKILL.md.jinja` | Add Task Router to Entry Actions (+1 line) | ✅ |
 
-| Task | Description | Output |
-|------|-------------|--------|
-| 1.1 | Create `.invar/agents/` directory structure | Directory layout |
-| 1.2 | Implement manifest schema and loader | `src/invar/shell/agents.py` |
-| 1.3 | Create Claude manifest | `claude.json` |
-| 1.4 | Refactor `invar init` for `--agent` flag | CLI update |
+**Actual Change:** +10 lines in CLAUDE.md, +1 line in SKILL.md develop
 
-### Phase 2: Skill Copy-Sync (2 days)
+### Phase 2: Pi Support (2 days)
 
-| Task | Description | Output |
-|------|-------------|--------|
-| 2.1 | Move skills to `.invar/skills/` (SSOT) | Directory restructure |
-| 2.2 | Implement `copy_skills()` with generation markers | Copy mechanism |
-| 2.3 | Add `invar dev sync --check` for drift detection | Sync check |
-| 2.4 | Test Claude skill loading after copy | Integration tests |
+| Task | Output |
+|------|--------|
+| 2.1 Create Pi TypeScript hook template | `templates/hooks/pi/invar-guard.ts.jinja` |
+| 2.2 Extend manifest.toml with agent config | Agent configuration |
+| 2.3 Add `--agent pi` to init command | CLI support |
+| 2.4 Test Pi blocking pytest | Validation |
 
-**Key:** Skills are **copied**, not symlinked (Claude Code security restriction).
+### Phase 3: Cursor Support (2 days)
 
-### Phase 3: Pi Integration (2 days)
+| Task | Output |
+|------|--------|
+| 3.1 Create Cursor .mdc template | `templates/config/cursor.mdc.jinja` |
+| 3.2 Add `--agent cursor` to init | CLI support |
+| 3.3 Test Cursor MCP integration | Validation |
 
-> **Updated 2025-12-29:** Significantly simplified after discovering Pi reads CLAUDE.md directly.
-> Pi hook tested and verified working with `pi 0.30.2`.
+**Total: 6 days** (vs original 15 days)
 
-| Task | Description | Output |
-|------|-------------|--------|
-| 3.1 | Create Pi manifest | `.invar/agents/pi.json` |
-| 3.2 | Create TypeScript hook template | `.invar/hooks/templates/pi/invar-guard.ts` |
-| 3.3 | Implement hook copy to `.pi/hooks/` | `copy_hooks()` in sync.py |
-| 3.4 | Create AGENTS.md template (optional) | Pi-specific context if needed |
-| 3.5 | Test: `pi -p "run: pytest"` | Verify block works |
+## Architecture Comparison
 
-**Key simplifications:**
-1. **No SYSTEM.md needed** — Pi reads CLAUDE.md automatically (verified)
-2. **Shared prompt** — Claude Code and Pi share the same CLAUDE.md
-3. **AGENTS.md optional** — Only needed for Pi-specific project context
-4. **No code generation** — TypeScript hook is a handwritten template
-
-### Phase 4: Cursor Integration (2 days)
-
-| Task | Description | Output |
-|------|-------------|--------|
-| 4.1 | Create Cursor manifest | `cursor.json` |
-| 4.2 | Research .mdc format (Cursor rules) | Format spec |
-| 4.3 | Create `.cursor/rules/invar.mdc` template | Cursor rules |
-| 4.4 | Test MCP integration with Cursor | E2E test |
-
-### Phase 5: Codex CLI Integration (2 days)
-
-| Task | Description | Output |
-|------|-------------|--------|
-| 5.1 | Create Codex manifest | `codex.json` |
-| 5.2 | Generate AGENTS.md template | Codex system prompt |
-| 5.3 | Test SKILL.md loading in Codex | Compatibility test |
-| 5.4 | Test MCP integration | E2E test |
-
-### Phase 6: Aider & Cline (2 days)
-
-| Task | Description | Output |
-|------|-------------|--------|
-| 6.1 | Create Aider/Cline manifests | `aider.json`, `cline.json` |
-| 6.2 | Generate CONVENTIONS.md / .clinerules | System prompts |
-| 6.3 | Generate `.aider.conf.yml` with lint-cmd | Aider config |
-| 6.4 | Generate `.vscode/mcp.json` for Cline | VS Code MCP config |
-
-### Phase 7: Testing & Documentation (2 days)
-
-| Task | Description | Output |
-|------|-------------|--------|
-| 7.1 | Unit tests for manifest loading | `test_agents.py` |
-| 7.2 | Unit tests for copy-sync mechanism | `test_sync.py` |
-| 7.3 | Integration tests: all agents | E2E tests |
-| 7.4 | Documentation update | User guide |
-
-**Total: 15 days** (reduced by 1 day due to Pi/Claude prompt sharing)
-
-**Platform:** macOS and Linux only (Windows not supported)
-
----
-
-## Migration Guide
-
-### For Existing Claude Code Users
-
-**No action required.** Existing `.claude/` configuration continues to work.
-
-Optional: Enable multi-agent support:
-
-```bash
-# Add other agents alongside Claude
-invar dev sync --agent pi
-invar dev sync --agent aider
-
-# Or restructure for shared skills
-invar dev migrate --to-shared-skills
-```
-
-### For New Projects
-
-```bash
-# Single agent (Claude - default)
-invar init
-
-# Multiple agents
-invar init --agent all
-
-# Specific combination
-invar init --agent claude,aider
-```
-
-### For Pi Users (New)
-
-> **Good news:** Pi reads CLAUDE.md directly! If you already have a Claude Code project,
-> Pi works out of the box. Only hooks need Pi-specific setup.
-
-```bash
-# Existing Claude project → Add Pi hooks
-invar dev sync --agent pi
-# Creates: .pi/hooks/invar-guard.ts
-
-# Pi-only project (creates CLAUDE.md + Pi hooks)
-invar init --agent pi
-
-# Verify installation
-pi --version
-
-# Start using Invar with Pi
-pi  # In project directory - reads CLAUDE.md automatically
-```
-
-**Key difference from Claude Code:** Only hooks are agent-specific.
-CLAUDE.md and .claude/skills/ are shared!
-
-### For Aider Users (New)
-
-```bash
-# Aider-only project
-invar init --agent aider
-
-# This creates:
-# - CONVENTIONS.md (Invar rules for --read flag)
-# - .aider.conf.yml (with lint-cmd configured)
-
-# Start Aider with Invar conventions
-aider --read CONVENTIONS.md
-
-# Or configure .aider.conf.yml to auto-load:
-# read:
-#   - CONVENTIONS.md
-```
-
-**Key differences from Claude/Pi:**
-- No skills (use CONVENTIONS.md instead)
-- Verification via lint-cmd (auto-lint after edits)
-- No hooks (Aider manages via auto-lint/auto-test)
-
-### For Cline Users (New)
-
-```bash
-# Cline with Invar
-invar init --agent cline
-
-# This creates:
-# - .clinerules (Invar project rules)
-# - .vscode/mcp.json (MCP server configuration)
-
-# Configure MCP server in VS Code:
-# 1. Open Cline extension settings
-# 2. Navigate to MCP Servers
-# 3. Import from .vscode/mcp.json (or configure manually)
-```
-
-**Recommended auto-approve settings:**
-1. Enable global MCP auto-approve
-2. Enable individual tool approval for:
-   - `invar_guard` - Code verification
-   - `invar_sig` - Signature inspection
-   - `invar_map` - Codebase navigation
-
-This enables seamless verification without permission prompts.
-
----
+| Aspect | Original LX-04 | Revised LX-04 |
+|--------|----------------|---------------|
+| Manifest | New JSON Schema | **Extend manifest.toml** |
+| Copy-Sync | Full implementation | **Not needed** (Pi reads .claude/) |
+| Templates | Jinja2 system | **Already exists** |
+| Sync engine | New implementation | **Use sync_templates()** |
+| Region markers | Generation markers | **Use existing <!--invar:*-->** |
+| Time estimate | 15 days | **6 days** |
 
 ## Testing Strategy
 
-### Unit Tests
+### Test: Agent Link Following (Validated by Design)
 
-```python
-# tests/test_agent_manifest.py
+**Question:** Will agents follow `[INVAR.md](./INVAR.md)` links?
 
-def test_load_claude_manifest():
-    manifest = load_manifest("claude")
-    assert manifest.name == "claude"
-    assert manifest.tools.mcp_support is True
-    assert manifest.hooks.language == "bash"
+**Answer:** Unreliably. Design already mitigates this:
+- Critical rules inlined in CLAUDE.md
+- Task Router uses explicit "STOP and read" prompts
+- "**Must read:**" emphasis for examples
 
-def test_load_pi_manifest():
-    manifest = load_manifest("pi")
-    assert manifest.name == "pi"
-    assert manifest.tools.mcp_support is False
-    assert manifest.hooks.language == "typescript"
+**Conclusion:** No runtime test needed. Keep critical rules in CLAUDE.md.
 
-def test_load_aider_manifest():
-    manifest = load_manifest("aider")
-    assert manifest.name == "aider"
-    assert manifest.tools.mcp_support is False
-    assert manifest.hooks.integration.type == "lint-cmd"
+### Test: Task Router Works
 
-def test_load_cline_manifest():
-    manifest = load_manifest("cline")
-    assert manifest.name == "cline"
-    assert manifest.tools.mcp_support is True
-    assert manifest.hooks.supported is False
+1. Request "add a function to core/"
+2. Observe: Does agent read `.invar/examples/contracts.py` first?
+3. **Success criteria:** Agent shows evidence of reading example before coding
 
-def test_manifest_validation():
-    with pytest.raises(ManifestError):
-        load_manifest("nonexistent")
-```
+### Test: Pi Integration (Phase 2)
 
-### Hook Parity Tests
-
-```python
-# tests/test_hook_parity.py
-
-@pytest.mark.parametrize("command,expected_block", [
-    ("pytest tests/", True),
-    ("pytest --pdb tests/", False),
-    ("pytest --cov tests/", False),
-    ("crosshair check file.py", True),
-    ("invar guard", False),
-])
-def test_block_decisions_match(command, expected_block):
-    # Python logic
-    python_result = should_block_pytest(command)
-
-    # Simulated Bash hook
-    bash_result = simulate_bash_hook(command)
-
-    # Simulated TypeScript hook
-    ts_result = simulate_ts_hook(command)
-
-    assert python_result.block == expected_block
-    assert bash_result == expected_block
-    assert ts_result == expected_block
-```
-
-### Integration Tests
-
-```python
-# tests/test_multi_agent.py
-
-def test_init_with_all_agents(tmp_path):
-    os.chdir(tmp_path)
-    run_command("invar init --agent all")
-
-    # Check Claude config (copied, not symlinked)
-    assert (tmp_path / ".claude/skills/develop/SKILL.md").exists()
-    assert not (tmp_path / ".claude/skills").is_symlink()  # NOT a symlink
-    assert (tmp_path / "CLAUDE.md").exists()
-
-    # Check Pi config (shares CLAUDE.md, has own hooks)
-    assert (tmp_path / ".pi/hooks/invar-guard.ts").exists()
-    # Pi reads CLAUDE.md directly - no separate SYSTEM.md needed!
-
-    # Check Cursor config
-    assert (tmp_path / ".cursor/rules/invar.mdc").exists()
-
-    # Check Aider config
-    assert (tmp_path / "CONVENTIONS.md").exists()
-    assert (tmp_path / ".aider.conf.yml").exists()
-
-    # Check Cline config
-    assert (tmp_path / ".clinerules").exists()
-    assert (tmp_path / ".vscode/mcp.json").exists()
-
-    # Check shared skills (SSOT)
-    assert (tmp_path / ".invar/skills/develop/SKILL.md").exists()
-
-
-def test_skills_have_generation_marker(tmp_path):
-    """Verify copied skills have generation markers."""
-    os.chdir(tmp_path)
-    run_command("invar init --agent claude")
-
-    skill_content = (tmp_path / ".claude/skills/develop/SKILL.md").read_text()
-    assert "<!-- Generated by Invar" in skill_content
-
-
-def test_sync_detects_manual_edits(tmp_path):
-    """Verify sync warns about manual edits."""
-    os.chdir(tmp_path)
-    run_command("invar init --agent claude")
-
-    # Manually edit a skill
-    skill_path = tmp_path / ".claude/skills/develop/SKILL.md"
-    skill_path.write_text("# Manually edited")
-
-    # Sync should warn
-    result = run_command("invar dev sync --check", capture=True)
-    assert "modified" in result.lower() or "changed" in result.lower()
-
-
-def test_aider_lint_cmd_integration(tmp_path):
-    """Verify Aider lint-cmd runs invar guard."""
-    os.chdir(tmp_path)
-    run_command("invar init --agent aider")
-
-    # Parse .aider.conf.yml
-    import yaml
-    with open(tmp_path / ".aider.conf.yml") as f:
-        config = yaml.safe_load(f)
-
-    assert "lint-cmd" in config
-    assert any("invar guard" in cmd for cmd in config["lint-cmd"])
-    assert config.get("auto-lint") is True
-
-
-def test_cline_mcp_config(tmp_path):
-    """Verify Cline MCP configuration."""
-    os.chdir(tmp_path)
-    run_command("invar init --agent cline")
-
-    import json
-    with open(tmp_path / ".vscode/mcp.json") as f:
-        config = json.load(f)
-
-    assert "mcpServers" in config
-    assert "invar" in config["mcpServers"]
-```
-
----
+1. Run `invar init --agent pi`
+2. Run `pi -p "run: pytest --version"`
+3. Observe: Command blocked with "Use invar_guard() instead"?
 
 ## Risks and Mitigations
 
-| Risk | Probability | Impact | Mitigation |
-|------|-------------|--------|------------|
-| Hook behavior differs between agents | Medium | High | Comprehensive parity tests |
-| Pi skill loading differs | Low | Medium | Follow Agent Skills standard |
-| Skills out of sync after edit | Medium | Medium | Generation markers + `invar dev sync --check` |
-| User edits generated skills | Medium | Low | Clear markers + warnings on sync |
-| Template rendering errors | Low | High | Validate templates on sync |
-| Maintenance burden increases | Medium | Medium | Shared logic in Python |
-| Aider lint-cmd ignored | Low | Medium | Test with actual Aider; document |
-| Cline MCP config varies | Medium | Medium | Support multiple MCP config formats |
-| VS Code settings conflict | Low | Low | Use project-local settings only |
-
-**Note:** Windows is not supported. macOS and Linux only.
-
----
-
-## Future Work
-
-1. **Codex CLI Support**: Add manifest and test (estimated 2 days)
-2. **Cursor Support**: Research .mdc format, add adapter (estimated 5 days)
-3. **Agent Skills Registry**: Publish Invar skills to public registry
-4. **Cross-Agent Benchmark**: Compare contract quality across agents/models
-5. **Hook Language Plugins**: Support Python hooks directly (no generation)
-6. **Aider Deep Integration**: Custom edit format for contract-first workflow
-7. **Cline Custom MCP Tools**: Agent-specific MCP tool extensions
-
----
+| Risk | Probability | Mitigation |
+|------|-------------|------------|
+| Agent doesn't follow INVAR.md link | Medium | Keep critical rules in CLAUDE.md |
+| Pi TypeScript hook compatibility | Low | Test with Pi 0.30.2+ |
+| Cursor .mdc format changes | Low | Simple template, easy to update |
 
 ## References
 
-### Agent Documentation
-
-- [Claude Code Documentation](https://docs.anthropic.com/claude-code)
-- [Pi GitHub Repository](https://github.com/badlogic/pi-mono)
-- [Pi Skills](https://github.com/badlogic/pi-skills)
 - [Pi Hooks Documentation](https://github.com/badlogic/pi-mono/blob/main/packages/coding-agent/docs/hooks.md)
-- [Aider Documentation](https://aider.chat/docs/)
-- [Aider Configuration](https://aider.chat/docs/config/aider_conf.html)
-- [Aider Conventions](https://aider.chat/docs/usage/conventions.html)
-- [Cline Documentation](https://docs.cline.bot/)
-- [Cline Rules](https://docs.cline.bot/features/cline-rules)
-- [Cline MCP Configuration](https://docs.cline.bot/mcp/configuring-mcp-servers)
-- [Cline Auto-Approve](https://docs.cline.bot/features/auto-approve)
-- [Codex AGENTS.md](https://developers.openai.com/codex/guides/agents-md/)
-- [Codex Skills](https://developers.openai.com/codex/skills)
 - [Cursor Rules](https://cursor.com/docs/context/rules)
-
-### Standards
-
-- [Agent Skills Standard](https://github.com/anthropics/courses/blob/master/claude_code/06-skills.md)
-- [Model Context Protocol](https://modelcontextprotocol.io/)
+- [DX-56: Unified Sync Engine](./completed/DX-56-template-sync.md)

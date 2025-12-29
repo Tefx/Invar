@@ -148,12 +148,13 @@ gh release create vX.Y.Z --title "vX.Y.Z - Title" --notes "..."
 
 | File | Owner | Edit? |
 |------|-------|-------|
-| INVAR.md | **Source** | Yes (this IS the source) |
-| CLAUDE.md | User | Yes |
+| src/invar/templates/ | **SSOT** | Yes (templates are source) |
+| INVAR.md | Sync | No (`invar dev sync`) |
+| CLAUDE.md | Sync + User | Regions only |
 | .invar/context.md | User | Yes (this file) |
-| .invar/examples/ | Sync | `invar update --force` |
+| .invar/examples/ | Sync | `invar dev sync` |
 
-**Note:** This is the Invar project. INVAR.md is the **source**, not a copy.
+**Version Flow:** `templates/` → Invar project (via `invar dev sync`, syntax=mcp) AND → User projects (via `invar init/update`, syntax=cli)
 
 ---
 

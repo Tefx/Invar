@@ -17,7 +17,8 @@ _invar:
 
 Before any workflow action:
 1. Read `.invar/context.md` (especially Key Rules section)
-2. Display routing announcement
+2. **Check Task Router** — read examples before coding in `core/` or `shell/`
+3. Display routing announcement
 
 ### Routing Announcement
 

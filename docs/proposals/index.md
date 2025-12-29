@@ -8,12 +8,13 @@ This directory contains design proposals for Invar development.
 - `LX-XX-name.md` — Language eXtension (multi-language evolution)
 - Completed/archived proposals in `completed/` subdirectory
 
-## Active Proposals (8)
+## Active Proposals (9)
 
 ### DX Series (Developer Experience)
 
 | ID | Name | Status | Description |
 |----|------|--------|-------------|
+| DX-68 | agent-behavior-optimization | Draft | Agent reading reliability improvements (P3-P5) |
 | DX-67 | explicit-skill-invocation | **New** | Require Skill tool call for workflow routing |
 | DX-62 | proactive-reference-reading | Partial | Task Router (Layer 1) done, Layers 2-4 pending |
 | DX-61 | functional-pattern-guidance | Draft | Teach agents functional patterns (NewType, Validation, etc.) |
@@ -26,7 +27,7 @@ This directory contains design proposals for Invar development.
 
 | ID | Name | Status | Description |
 |----|------|--------|-------------|
-| LX-04 | multi-agent-framework | **Active** | Canonical multi-agent implementation (6 agents, manifest-driven) |
+| LX-04 | multi-agent-framework | **Revised** | Minimal multi-agent (Pi+Cursor), leverages existing infra (6 days) |
 | LX-02 | agent-portability-analysis | ✅ Complete | Research: 6 agents (Claude, Pi, Codex, Cursor, Cline, Aider) |
 | LX-01 | multi-language-feasibility | Draft | Feasibility assessment for multi-language Invar |
 
@@ -171,9 +172,26 @@ Complete: DX-63 (contracts-first)
 | 9 | DX-54 | ✅ Complete |
 | 10 | DX-57, DX-58 | ✅ Complete |
 
+## Recent Changes (2025-12-30)
+
+### LX-04 Phase 1 + 1.5 Complete
+- **LX-04** — Multi-Agent Framework **Revised** (15 days → 6 days)
+  - **Phase 1 ✅:** Contract Rules added to CLAUDE.md critical section, Check-In simplified
+  - **Phase 1.5 ✅:** Core/Shell edge cases, Task Router reference, SKILL.md Entry Actions
+  - **Version Flow Corrected:** `templates/` → Invar project (syntax=mcp) AND → User projects (syntax=cli)
+  - **Design Document:** Created `docs/reference/agent-information-hierarchy.md`
+  - Phase 2 (Pi) and Phase 3 (Cursor) pending
+
+### DX-68 Created
+- **DX-68** — Agent Behavior Optimization (Draft)
+  - Future optimizations identified during LX-04 analysis
+  - Phase A: Context enforcement (P3)
+  - Phase B: Example inlining (P4)
+  - Phase C: Agent behavior monitoring (P5)
+
 ## Recent Changes (2025-12-29)
 
-### Proposed Today
+### Proposed Earlier
 - **DX-67** — Explicit Skill Tool Invocation **New**
   - Problem: Claude followed USBV workflow but never called Skill tool
   - SKILL.md content (DX-63, timeout, error recovery) was never read
@@ -400,16 +418,26 @@ LX-04: Multi-Agent Framework         ← Active (canonical implementation)
 
 > **Key:** Pi reads CLAUDE.md → Claude/Pi share same system prompt!
 
-### LX-04 Implementation Order
+### LX-04 Implementation Order (Revised 2025-12-30)
 
 ```
-Claude Code ─────► Pi ─────► Cursor ─────► Codex CLI ─────► Aider/Cline
-    ✅              │          │             │                │
-  Current        2 days     Week 2        Week 3           Week 4
-               (simplified)
+Phase 1: Content Optimization (2 days)
+├── Fix version flow documentation
+├── Remove CLAUDE.md/INVAR.md duplicates
+└── Inline critical contract rules
+
+Phase 2: Pi Support (2 days)
+├── Create Pi TypeScript hook template
+├── Extend manifest.toml with agent config
+└── Add --agent pi to init command
+
+Phase 3: Cursor Support (2 days)
+├── Create Cursor .mdc template
+├── Add --agent cursor to init
+└── Test MCP integration
 ```
 
-> **Simplification:** Pi reads CLAUDE.md directly → shares prompt with Claude Code.
+> **Key Insight:** Leverages existing `sync_templates()` engine. No new copy-sync needed.
 
 ### Future Phases
 

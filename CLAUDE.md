@@ -8,33 +8,36 @@
 | **Shell** | Returns `Result[T, E]` from `returns` library |
 | **Flow** | USBV: Understand → Specify → Build → Validate |
 
+### Contract Rules (CRITICAL)
+
+```python
+# ❌ WRONG: Lambda must include ALL parameters
+@pre(lambda x: x >= 0)
+def calc(x: int, y: int = 0): ...
+
+# ✅ CORRECT: Include defaults too
+@pre(lambda x, y=0: x >= 0)
+def calc(x: int, y: int = 0): ...
+
+# ❌ WRONG: @post cannot access parameters
+@post(lambda result: result > x)  # 'x' not available!
+
+# ✅ CORRECT: @post only sees 'result'
+@post(lambda result: result >= 0)
+```
+
 <!--/invar:critical--><!--invar:managed version="5.0"-->
 # Project Development Guide
 
 > **Protocol:** Follow [INVAR.md](./INVAR.md) — includes Check-In, USBV workflow, and Task Completion requirements.
 
-## Check-In (DX-54)
+## Check-In
 
-Your first message MUST display:
+> See [INVAR.md#check-in](./INVAR.md#check-in-required) for full protocol.
 
-```
-✓ Check-In: [project] | [branch] | [clean/dirty]
-```
+**Your first message MUST display:** `✓ Check-In: [project] | [branch] | [clean/dirty]`
 
-Actions:
-1. Read `.invar/context.md` (Key Rules + Current State + Lessons Learned)
-2. Show one-line status
-
-Example:
-```
-✓ Check-In: MyProject | main | clean
-```
-
-**Do NOT execute guard or map at Check-In.**
-Guard is for VALIDATE phase and Final only.
-
-This is your sign-in. The user sees it immediately.
-No visible check-in = Session not started.
+**Actions:** Read `.invar/context.md`, then show status. Do NOT run guard at Check-In.
 
 ---
 
@@ -70,6 +73,14 @@ src/{project}/
 | Core | `@pre`/`@post` + doctests, pure (no I/O) |
 | Shell | Returns `Result[T, E]` from `returns` library |
 
+### Core vs Shell (Edge Cases)
+
+- File/network/env vars → **Shell**
+- `datetime.now()`, `random` → **Inject param** OR Shell
+- Pure logic → **Core**
+
+> Full decision tree: [INVAR.md#core-shell](./INVAR.md#decision-tree-core-vs-shell)
+
 ## Documentation Structure
 
 | File | Owner | Edit? | Purpose |
@@ -79,6 +90,8 @@ src/{project}/
 | .invar/context.md | User | Yes | Project state, lessons learned |
 | .invar/project-additions.md | User | Yes | Project rules → injected into CLAUDE.md |
 | .invar/examples/ | Invar | No | **Must read:** Core/Shell patterns, workflow |
+
+> **Before writing code:** Check Task Router in `.invar/context.md`
 
 ## Visible Workflow (DX-30)
 
