@@ -25,9 +25,9 @@ This directory contains design proposals for Invar development.
 
 | ID | Name | Status | Description |
 |----|------|--------|-------------|
-| LX-04 | multi-agent-framework | Draft | Multi-Agent Support Framework (Claude, Pi, Aider, Cline, Codex, Cursor) |
-| LX-03 | multi-agent-support | In Progress | Multi-agent support implementation (Phase 1 ✅) |
-| LX-02 | agent-portability-analysis | Complete | Invar portability to Aider, Cline, Continue, Cursor |
+| LX-04 | multi-agent-framework | **Active** | Canonical multi-agent implementation (6 agents, manifest-driven) |
+| LX-03 | multi-agent-support | Phase 1 ✅, Superseded | docs/guides/ created, Phase 2+ absorbed by LX-04 |
+| LX-02 | agent-portability-analysis | ✅ Complete | Research: Agent compatibility matrix |
 | LX-01 | multi-language-feasibility | Draft | Feasibility assessment for multi-language Invar |
 
 **LX Series Vision:** Evolve Invar from Python-specific tool to universal AI-assisted development protocol.

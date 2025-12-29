@@ -1,10 +1,12 @@
 # LX-04: Multi-Agent Support Framework
 
-**Status:** Draft
+**Status:** Active (Canonical Implementation)
 **Priority:** High
 **Category:** Language/Agent eXtensions
 **Created:** 2025-12-29
 **Updated:** 2025-12-29
+**Based on:** LX-02 (research), LX-03 Phase 1 (docs)
+**Supersedes:** LX-03 Phase 2+ (template generation)
 
 ## Summary
 
