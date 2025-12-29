@@ -150,6 +150,8 @@ def guard_single_file(file_path: Path) -> Result[GuardReport, str]:
 
 ---
 
-*提案状态: 待审批*
+*提案状态: ✅ 已完成*
 *创建日期: 2025-12-29*
+*完成日期: 2025-12-29*
 *来源: v1.5.0 测试报告 V150-02*
+*实现: commit 6eeaf9e*
