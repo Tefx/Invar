@@ -27,10 +27,17 @@ This directory contains design proposals for Invar development.
 |----|------|--------|-------------|
 | LX-04 | multi-agent-framework | **Active** | Canonical multi-agent implementation (6 agents, manifest-driven) |
 | LX-03 | multi-agent-support | Phase 1 ✅, Superseded | docs/guides/ created, Phase 2+ absorbed by LX-04 |
-| LX-02 | agent-portability-analysis | ✅ Complete | Research: Agent compatibility matrix |
+| LX-02 | agent-portability-analysis | ✅ Complete | Research: 6 agents (Claude, Pi, Codex, Cursor, Cline, Aider) |
 | LX-01 | multi-language-feasibility | Draft | Feasibility assessment for multi-language Invar |
 
 **LX Series Vision:** Evolve Invar from Python-specific tool to universal AI-assisted development protocol.
+
+**LX-02 Key Findings:**
+- SKILL.md is de facto standard (Claude, Pi, Codex) — 50% CLI agents
+- CLI is universal interface — 100% agents can call `invar guard`
+- MCP widely supported but Pi rejects it (design decision)
+- AGENTS.md emerging standard (Pi, Codex)
+- Hooks divergent: Claude (Bash), Pi (TypeScript), Cursor (JSON)
 
 ## Archived Proposals (46)
 
@@ -162,7 +169,26 @@ Complete: DX-63 (contracts-first)
 
 ## Recent Changes (2025-12-29)
 
-### Completed Today
+### Updated Today (LX Series Research)
+- **LX-02** — Agent Portability Analysis ✅ (Deep Research Update)
+  - Removed Continue, added Pi and Codex CLI
+  - 6 agents analyzed: Claude Code, Pi, Codex CLI, Cursor, Cline, Aider
+  - Key findings: SKILL.md standard, CLI universal, MCP non-universal, AGENTS.md emerging
+  - Portability matrix: Concepts (100%) > Tools (90%) > Integration (50%)
+
+- **LX-03** — Multi-Agent Support Implementation (Updated)
+  - Updated agent matrix based on LX-02 findings
+  - Added Pi and Codex CLI, removed Continue
+  - Updated hook mapping (3 implementations: Bash, TypeScript, JSON)
+  - Phase 2+ marked as superseded by LX-04
+
+- **LX-04** — Multi-Agent Support Framework (Updated)
+  - Incorporated LX-02 key findings table
+  - Updated Cursor manifest with 6 hook types
+  - Updated event mapping with Cursor hooks
+  - Emphasized SKILL.md as de facto standard
+
+### Completed Earlier Today
 - **DX-66** — Escape Hatch Visibility ✅
   - Guard output now includes `escape_hatches` summary
   - Shows count, files, rules, and reasons
@@ -174,10 +200,10 @@ Complete: DX-63 (contracts-first)
   - Added Task Router to context.md template
   - Benchmark treatment config updated
 
-### Proposed Today
+### Proposed Earlier Today
 - **LX-04** — Multi-Agent Support Framework (expanded scope)
   - Originally Pi-only support, now comprehensive 6-agent framework
-  - **Agents:** Claude Code, Pi, Cursor, Codex CLI, Aider, Cline
+  - **Agents:** Claude Code, Pi, Codex CLI, Cursor, Cline, Aider
   - **Integration patterns:**
     - Native Skill (Claude, Pi, Codex) — SKILL.md + hooks
     - Lint Hook (Aider) — CONVENTIONS.md + lint-cmd
@@ -188,7 +214,7 @@ Complete: DX-63 (contracts-first)
     - Skills copied from `.invar/skills/` to `.{agent}/skills/`
     - Generation markers for drift detection
   - Manifest-driven architecture with JSON agent definitions
-  - Hook logic SSOT in Python, generated to Bash/TypeScript
+  - Hook logic SSOT in Python, generated to Bash/TypeScript/JSON
   - System prompt templates with Jinja2
   - **Platform:** macOS/Linux only (Windows not supported)
   - **Implementation order:** Claude → Pi → Cursor → Codex → Aider/Cline
@@ -332,23 +358,44 @@ Complete: DX-63 (contracts-first)
 
 ---
 
-## LX Series Roadmap (2025-12-27)
+## LX Series Roadmap (Updated 2025-12-29)
 
 ### Strategic Direction
 
 Invar's core value (USBV workflow, agent protocol, adversarial review) is language-agnostic.
 The LX series explores evolving Invar into a universal development protocol.
 
-### Proposed Phases
+### Current Focus: Multi-Agent Support
 
 ```
-Phase 1: Protocol Extraction (LX-01 → LX-05)
-├── LX-01: Feasibility Assessment ← Current
-├── LX-02: USBV Workflow Specification
-├── LX-03: Skill Format Specification
-├── LX-04: CLAUDE.md Structure Specification
-└── LX-05: Plugin Interface Design
+LX-01: Multi-Language Feasibility    ← Draft (strategic exploration)
+LX-02: Agent Portability Analysis    ← ✅ Complete (research)
+LX-03: Multi-Agent Support (Docs)    ← ✅ Phase 1 Complete, Phase 2+ → LX-04
+LX-04: Multi-Agent Framework         ← Active (canonical implementation)
+```
 
+### LX-02 Research Summary (6 Agents)
+
+| Agent | Skills | MCP | Hooks | Tier |
+|-------|--------|-----|-------|------|
+| Claude Code | SKILL.md ✅ | ✅ | Bash (4) | 1 |
+| Pi | SKILL.md ✅ | ❌ | TypeScript | 1 |
+| Codex CLI | SKILL.md ✅ | ✅ | ❌ | 2 |
+| Cursor | ❌ | ✅ | JSON (6) | 2 |
+| Cline | ❌ | ✅ | ❌ | 3 |
+| Aider | ❌ | ⚠️ | lint-cmd | 4 |
+
+### LX-04 Implementation Order
+
+```
+Claude Code ─────► Pi ─────► Cursor ─────► Codex CLI ─────► Aider/Cline
+    ✅              │          │             │                │
+  Current        Week 1     Week 2        Week 3           Week 4
+```
+
+### Future Phases
+
+```
 Phase 2: Python Refactor (LX-10+)
 ├── Modularize current Python implementation
 └── Use plugin interface from Phase 1
@@ -366,8 +413,8 @@ Phase 4: Community (LX-30+)
 
 | After | Decision |
 |-------|----------|
-| LX-01 | Proceed? (Is multi-language valuable?) |
-| Phase 1 | Continue to Phase 2? (Is spec practical?) |
-| Phase 2 | Continue to Phase 3? (Is TypeScript worth it?) |
+| LX-04 | Validate Pi/Codex integration |
+| LX-01 | Proceed with multi-language? |
+| Phase 2 | Continue to Phase 3? |
 
 Each phase has a natural exit point if approach proves unviable.
