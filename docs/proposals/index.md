@@ -14,7 +14,7 @@ This directory contains design proposals for Invar development.
 
 | ID | Name | Status | Description |
 |----|------|--------|-------------|
-| DX-62 | proactive-reference-reading | Draft | Active reference chain to ensure agents read examples |
+| DX-62 | proactive-reference-reading | Partial | Task Router (Layer 1) done, Layers 2-4 pending |
 | DX-61 | functional-pattern-guidance | Draft | Teach agents functional patterns (NewType, Validation, etc.) |
 | DX-60 | structured-rules-ssot | Draft | Optimize DX-57 token usage (1,800t → 600t) |
 | DX-25 | functional-patterns | Defer | Functional patterns enhancement |
@@ -32,10 +32,13 @@ This directory contains design proposals for Invar development.
 
 **LX Series Vision:** Evolve Invar from Python-specific tool to universal AI-assisted development protocol.
 
-## Archived Proposals (43)
+## Archived Proposals (46)
 
 | ID | Name | Status | Description |
 |----|------|--------|-------------|
+| DX-66 | escape-hatch-visibility | ✅ Complete | Guard shows escape hatch summary in output |
+| DX-65 | single-file-guard | ✅ Complete | `invar guard file.py` support |
+| DX-64 | version-display-unification | ✅ Complete | Use importlib.metadata for accurate version |
 | DX-63 | contracts-first-enforcement | ✅ Complete | Guard -c flag + function-level gates + trivial detection |
 | DX-58 | document-structure-optimization | ✅ Complete | Critical section in CLAUDE.md, context.md slimming |
 | DX-57 | claude-code-hooks | ✅ Complete | Claude Code hooks for protocol enforcement (4 hooks) |
@@ -131,7 +134,7 @@ Complete: DX-63 (contracts-first)
 
 | Status | Proposal | Description | Notes |
 |--------|----------|-------------|-------|
-| **Draft** | DX-62 | Proactive reference reading | Active reference chain for examples |
+| **Partial** | DX-62 | Proactive reference reading | Layer 1 (Task Router) ✅, Layers 2-4 pending |
 | **Draft** | DX-61 | Functional pattern guidance | Teach agents functional patterns |
 | **Draft** | DX-60 | Structured rules SSOT | Optimize DX-57 token usage (1,800t → 600t) |
 | **Draft** | LX-01 | Multi-language feasibility | Strategic exploration for language extension |
@@ -139,7 +142,7 @@ Complete: DX-63 (contracts-first)
 | **Defer** | DX-25 | Functional patterns | Non-essential major change |
 | **Defer** | DX-29 | Pure content detection | DX-22 sufficient |
 
-**All core proposals complete (43/47).** 3 draft + 3 deferred/partial items remain.
+**All core proposals complete (46/50).** 2 draft + 2 partial + 2 deferred items remain.
 
 ## Execution History
 
@@ -158,6 +161,18 @@ Complete: DX-63 (contracts-first)
 | 10 | DX-57, DX-58 | ✅ Complete |
 
 ## Recent Changes (2025-12-29)
+
+### Completed Today
+- **DX-66** — Escape Hatch Visibility ✅
+  - Guard output now includes `escape_hatches` summary
+  - Shows count, files, rules, and reasons
+- **DX-65** — Single File Guard ✅
+  - `invar guard src/core/file.py` now works
+- **DX-64** — Version Display Unification ✅
+  - Uses `importlib.metadata` for accurate PyPI version
+- **DX-62** — Proactive Reference Reading (Layer 1) ✅
+  - Added Task Router to context.md template
+  - Benchmark treatment config updated
 
 ### Proposed Today
 - **LX-04** — Multi-Agent Support Framework (expanded scope)
