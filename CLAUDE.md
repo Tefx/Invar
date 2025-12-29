@@ -241,7 +241,7 @@ pip install -e runtime/    # Runtime in dev mode
 <!-- ========================================================================
      USER REGION - EDITABLE
      Add your team conventions and project-specific rules below.
-     This section is preserved across invar update and sync-self.
+     This section is preserved across `invar update` and `invar dev sync`.
      ======================================================================== -->
 <!--/invar:user-->
 

@@ -8,13 +8,12 @@ This directory contains design proposals for Invar development.
 - `LX-XX-name.md` — Language eXtension (multi-language evolution)
 - Completed/archived proposals in `completed/` subdirectory
 
-## Active Proposals (9)
+## Active Proposals (8)
 
 ### DX Series (Developer Experience)
 
 | ID | Name | Status | Description |
 |----|------|--------|-------------|
-| DX-63 | contracts-first-enforcement | Draft | Enforce SPECIFY phase gate — contracts before BUILD |
 | DX-62 | proactive-reference-reading | Draft | Active reference chain to ensure agents read examples |
 | DX-61 | functional-pattern-guidance | Draft | Teach agents functional patterns (NewType, Validation, etc.) |
 | DX-60 | structured-rules-ssot | Draft | Optimize DX-57 token usage (1,800t → 600t) |
@@ -33,10 +32,11 @@ This directory contains design proposals for Invar development.
 
 **LX Series Vision:** Evolve Invar from Python-specific tool to universal AI-assisted development protocol.
 
-## Archived Proposals (42)
+## Archived Proposals (43)
 
 | ID | Name | Status | Description |
 |----|------|--------|-------------|
+| DX-63 | contracts-first-enforcement | ✅ Complete | Guard -c flag + function-level gates + trivial detection |
 | DX-58 | document-structure-optimization | ✅ Complete | Critical section in CLAUDE.md, context.md slimming |
 | DX-57 | claude-code-hooks | ✅ Complete | Claude Code hooks for protocol enforcement (4 hooks) |
 | DX-56 | template-sync-unification | ✅ Complete | Unify init/dev sync, manifest-driven, shared engine |
@@ -109,7 +109,8 @@ Completed: DX-47, DX-48, DX-49, DX-41, DX-42, DX-43, DX-39, DX-46, DX-23, DX-37,
 Partial: DX-38 (Tier 1-2 done)
 Dropped: DX-40 (contradicts Lesson #19)
 Deferred: DX-38 Tier 3-4, DX-25, DX-29
-Draft: DX-60 (optimizes DX-57), DX-61, DX-62, DX-63, LX-01 (multi-language)
+Draft: DX-60 (optimizes DX-57), DX-61, DX-62, LX-01 (multi-language)
+Complete: DX-63 (contracts-first)
 
       Draft: DX-61 ↔ DX-62 (Synergy)
               │
@@ -130,7 +131,6 @@ Draft: DX-60 (optimizes DX-57), DX-61, DX-62, DX-63, LX-01 (multi-language)
 
 | Status | Proposal | Description | Notes |
 |--------|----------|-------------|-------|
-| **Draft** | DX-63 | Contracts-first enforcement | SPECIFY phase gate before BUILD |
 | **Draft** | DX-62 | Proactive reference reading | Active reference chain for examples |
 | **Draft** | DX-61 | Functional pattern guidance | Teach agents functional patterns |
 | **Draft** | DX-60 | Structured rules SSOT | Optimize DX-57 token usage (1,800t → 600t) |
@@ -139,7 +139,7 @@ Draft: DX-60 (optimizes DX-57), DX-61, DX-62, DX-63, LX-01 (multi-language)
 | **Defer** | DX-25 | Functional patterns | Non-essential major change |
 | **Defer** | DX-29 | Pure content detection | DX-22 sufficient |
 
-**All core proposals complete (42/46).** 4 draft + 3 deferred/partial items remain.
+**All core proposals complete (43/47).** 3 draft + 3 deferred/partial items remain.
 
 ## Execution History
 

@@ -252,7 +252,7 @@ class PatternSuggestion:
 
 ### Phase 1: Context.md Task Router (Low Risk)
 - Add Task Router section to context.md template
-- Update existing projects via `invar sync-self`
+- Update existing projects via `invar dev sync`
 - No behavior change required, just improved guidance
 
 ### Phase 2: Pre-Flight Confirmation (Medium Risk)

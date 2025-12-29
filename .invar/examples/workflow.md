@@ -136,6 +136,105 @@ Code Health: 100%
 # If triggered: invoke /review sub-agent before completion
 ```
 
+## Interleaved SPECIFY/BUILD (DX-63)
+
+For multi-function tasks, use **interleaved** pattern instead of batch creation.
+
+### ❌ Wrong: Batch Creation
+
+```
+# Creates 5 files at once, then fills implementations
+1. Create file1.py, file2.py, file3.py, file4.py, file5.py (skeletons)
+2. Implement all functions
+3. Run guard → 40 missing_contract errors
+4. Retrofit contracts (descriptive, not prescriptive)
+```
+
+### ✅ Correct: Interleaved Pattern
+
+```
+TodoList:
+□ [SPECIFY] Write contracts for parser.py
+□ [BUILD] Implement parser.py
+□ [SPECIFY] Write contracts for validator.py
+□ [BUILD] Implement validator.py
+□ [SPECIFY] Write contracts for formatter.py
+□ [BUILD] Implement formatter.py
+```
+
+### Function-Level Gates
+
+For each file:
+
+```python
+# Step 1: Create file with contracts only (body = ...)
+@pre(lambda text: len(text) > 0)
+@post(lambda result: all(isinstance(t, Token) for t in result))
+def tokenize(text: str) -> list[Token]:
+    """Tokenize input text."""
+    ...
+
+@pre(lambda tokens: len(tokens) > 0)
+@post(lambda result: isinstance(result, AST))
+def parse(tokens: list[Token]) -> AST:
+    """Parse tokens into AST."""
+    ...
+```
+
+```bash
+# Step 2: Verify contract coverage
+$ invar guard -c src/core/parser.py
+Contract Coverage Check
+========================================
+Files: 1 | Functions: 2
+
+Coverage: 2/2 (100%) ✓
+Trivial:  0/2 (0%)   ✓
+
+Ready for BUILD phase.
+```
+
+```python
+# Step 3: Implement (only after coverage check passes)
+@pre(lambda text: len(text) > 0)
+@post(lambda result: all(isinstance(t, Token) for t in result))
+def tokenize(text: str) -> list[Token]:
+    """
+    Tokenize input text.
+
+    >>> tokenize("hello world")
+    [Token('hello'), Token('world')]
+    """
+    return [Token(word) for word in text.split()]
+```
+
+```bash
+# Step 4: Full verification
+$ invar guard --changed
+Guard passed.
+
+# Step 5: Proceed to next file
+```
+
+### Violation Self-Check
+
+Before writing ANY implementation code, ask:
+
+1. "Have I written the contract for THIS function?"
+2. "Have I shown it in my response?"
+3. "Have I run `invar guard -c`?"
+
+If any NO → Stop. Write contract first.
+
+### Benefits
+
+| Without DX-63 | With DX-63 |
+|---------------|------------|
+| 81 errors at end | 0 errors |
+| 4+ guard cycles | 1 cycle |
+| ~7000 tokens | ~4000 tokens |
+| Descriptive contracts | Prescriptive contracts |
+
 ## When to Use Visible Workflow
 
 Use for:
