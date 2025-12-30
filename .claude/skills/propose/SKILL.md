@@ -10,6 +10,35 @@ _invar:
 # Proposal Mode
 
 > **Purpose:** Facilitate human decision-making with clear options and trade-offs.
+> **Mindset:** OPTIONS, not decisions — human chooses.
+
+## Scope Boundaries
+
+**This skill IS for:**
+- Presenting design choices with trade-offs
+- Facilitating architectural decisions
+- Comparing approaches (A vs B)
+- Creating formal proposals for complex decisions
+
+**This skill is NOT for:**
+- Implementing the chosen option → switch to `/develop`
+- Researching to understand the problem → switch to `/investigate`
+- Reviewing existing code → switch to `/review`
+
+**Drift detection:** If you find yourself writing implementation code → STOP, wait for user choice, then exit to `/develop`.
+
+## Constraints
+
+**FORBIDDEN in this phase:**
+- Writing implementation code (beyond examples)
+- Making decisions for the user
+- Creating files other than proposals
+- Committing changes
+
+**ALLOWED:**
+- Read, Glob, Grep (research for options)
+- invar_sig, invar_map (understand current state)
+- Creating proposal documents in `docs/proposals/`
 
 ## Entry Actions
 

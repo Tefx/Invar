@@ -11,6 +11,21 @@ _invar:
 
 > **Purpose:** Understand before acting. Gather information, analyze code, report findings.
 
+## Scope Boundaries
+
+**This skill IS for:**
+- Understanding vague or unclear tasks
+- Analyzing existing code and architecture
+- Researching before implementation
+- Answering "why", "what", "how does" questions
+
+**This skill is NOT for:**
+- Writing or modifying code → switch to `/develop`
+- Making design decisions → switch to `/propose`
+- Reviewing code quality → switch to `/review`
+
+**Drift detection:** If you find yourself wanting to edit files → STOP, exit to `/develop`.
+
 ## Constraints
 
 **FORBIDDEN in this phase:**

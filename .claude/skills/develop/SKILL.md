@@ -10,8 +10,48 @@ _invar:
 # Development Mode
 
 > **Purpose:** Implement solution following USBV workflow with verification.
+> **Mindset:** CONTRACTS before code — no exceptions.
+
+## Scope Boundaries
+
+**This skill IS for:**
+- Implementing features ("add", "create", "build")
+- Fixing bugs ("fix", "resolve")
+- Modifying existing code ("update", "change")
+- Writing tests and contracts
+
+**This skill is NOT for:**
+- Exploring unclear requirements → switch to `/investigate`
+- Choosing between approaches → switch to `/propose`
+- Reviewing completed work → switch to `/review`
+
+**Drift detection:** If requirements are unclear → STOP, exit to `/investigate` first.
 
 ## Entry Actions (REQUIRED)
+
+### Session Restore (if continuing from summary)
+
+When conversation begins with a previous session summary:
+
+1. **ALWAYS display Check-In first** — even when continuing
+2. **Determine current phase** from todo items:
+   | Todo keywords | Phase |
+   |---------------|-------|
+   | "research", "understand", "analyze" | UNDERSTAND |
+   | "contract", "design", "specify" | SPECIFY |
+   | "implement", "code", "build" | BUILD |
+   | "verify", "test", "guard" | VALIDATE |
+3. **Display phase header** before resuming work
+4. **Re-read context.md** for project state
+
+```
+# Example session restore:
+✓ Check-In: Invar | Main | dirty
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📍 /develop → BUILD (3/4) [resumed]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
 
 ### Context Refresh (DX-54)
 
@@ -105,6 +145,25 @@ NOT:
 If any NO → Stop. Write contract first.
 
 ### 3. BUILD
+
+#### New Function Gate (MANDATORY)
+
+**Before writing ANY new Core function, STOP and verify:**
+
+| Check | If NO → Action |
+|-------|----------------|
+| Contract shown in SPECIFY phase? | ⛔ STOP. Return to SPECIFY. |
+| Doctest written? | ⛔ STOP. Write doctest first. |
+
+```
+⛔ GATE VIOLATION: Writing new function without prior contract.
+   → Return to SPECIFY phase. Show contract first.
+```
+
+**Exempt from gate:**
+- Shell functions (no @pre/@post required)
+- Editing existing functions (contract already exists)
+- Non-Python files
 
 **For complex tasks:** Enter Plan Mode first, get user approval.
 

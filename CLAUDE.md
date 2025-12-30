@@ -264,6 +264,24 @@ pip install -e runtime/    # Runtime in dev mode
      Add your team conventions and project-specific rules below.
      This section is preserved across `invar update` and `invar dev sync`.
      ======================================================================== -->
+
+## Code Style
+
+Run `ruff check --fix` frequently after changing code to fix lint issues before commit.
+
+## Session Restore
+
+When continuing from a previous session summary:
+
+1. **ALWAYS display Check-In first**
+2. **Infer current phase** from todo keywords:
+   - "research/understand" → UNDERSTAND
+   - "contract/design" → SPECIFY
+   - "implement/code" → BUILD
+   - "verify/test" → VALIDATE
+3. **Display phase header** before resuming work
+4. **Re-read context.md** for project state
+
 <!--/invar:user-->
 
 ---

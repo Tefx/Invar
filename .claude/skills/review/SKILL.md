@@ -14,6 +14,21 @@ _invar:
 > **Success Metric:** Issues FOUND, not code approved. Zero issues = you failed to look hard enough.
 > **Workflow:** AUTOMATIC Reviewer↔Fixer loop until quality_met or max_rounds (no human confirmation).
 
+## Scope Boundaries
+
+**This skill IS for:**
+- Finding bugs and logic errors in existing code
+- Verifying contract semantic value
+- Auditing escape hatches
+- Security review
+
+**This skill is NOT for:**
+- Implementing new features → switch to `/develop`
+- Understanding how code works → switch to `/investigate`
+- Deciding on architecture → switch to `/propose`
+
+**Drift detection:** If you're writing significant new code (not fixes) → STOP, you're in wrong skill.
+
 ## Auto-Loop Configuration
 
 ```
