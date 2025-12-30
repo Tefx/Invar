@@ -29,7 +29,7 @@ This directory contains design proposals for Invar development.
 
 | ID | Name | Status | Description |
 |----|------|--------|-------------|
-| LX-04 | multi-agent-framework | **Phase 2 Partial** | Pi init/uninstall done, hooks template pending |
+| LX-04 | multi-agent-framework | ✅ Pi Complete | Pi native support (--pi flag, init/uninstall, docs) |
 | LX-02 | agent-portability-analysis | ✅ Complete | Research: 6 agents (Claude, Pi, Codex, Cursor, Cline, Aider) |
 | LX-01 | multi-language-feasibility | Draft | Feasibility assessment for multi-language Invar |
 
@@ -43,6 +43,7 @@ This directory contains design proposals for Invar development.
 - Hooks divergent: Claude (Bash), Pi (TypeScript), Cursor (JSON)
 - **Pi reads CLAUDE.md** — No separate SYSTEM.md needed (verified)
 - **Pi reads .claude/skills/** — Skill sharing works!
+- **Pi fully supported** — `invar init --pi` for quick setup
 
 ## Archived Proposals (47)
 
@@ -176,14 +177,18 @@ Complete: DX-63 (contracts-first)
 
 ## Recent Changes (2025-12-30)
 
-### LX-04 Phase 2 Revised
-- **LX-04** — Multi-Agent Framework **Phase 2 Ready** (15 days → 4.5 days)
+### LX-04 Pi Support Complete
+- **LX-04** — Multi-Agent Framework **Pi Complete** (15 days → 4.5 days)
   - **Phase 1 ✅:** Contract Rules added to CLAUDE.md critical section, Check-In simplified
   - **Phase 1.5 ✅:** Core/Shell edge cases, Task Router reference, SKILL.md Entry Actions
-  - **Phase 2 Revised:** Pi hooks with `pi.send()` for protocol injection (full feature parity!)
-  - **Key Discovery:** Pi's `pi.send()` API supports message injection → same capability as Claude Code
-  - **CLI Aligned:** Interactive menu instead of `--agent pi` flag (DX-70 consistent)
-  - Phase 2 (Pi: 1.5 days) and Phase 3 (Cursor: 1 day) ready to implement
+  - **Phase 2 ✅:** Pi native support fully implemented
+    - `invar init --pi` for quick setup
+    - Pi menu option in interactive mode
+    - Pi hooks installation (.pi/hooks/invar.ts)
+    - Pi uninstall support
+    - Documentation: README.md, docs/guides/pi.md, multi-agent.md
+  - **Key Discovery:** Pi reads CLAUDE.md + .claude/skills/ directly → shares config with Claude Code
+  - Phase 3 (Cursor: 1 day) available for future implementation
 
 ### DX-68 Created
 - **DX-68** — Agent Behavior Optimization (Draft)
@@ -429,20 +434,21 @@ Phase 1: Content Optimization ✅ Complete
 ├── Task Router reference added
 └── Core/Shell edge cases documented
 
-Phase 2: Pi Support (1.5 days) ← NEXT
-├── Create Pi TypeScript hook template
-├── Implement pi.send() protocol injection (NEW!)
-├── Implement pytest/crosshair blocking
-└── Extend interactive menu for Pi selection
+Phase 2: Pi Support ✅ Complete
+├── invar init --pi for quick setup
+├── Interactive menu with Pi option
+├── Pi hooks installation (.pi/hooks/)
+├── Pi uninstall support
+└── Documentation (README, pi.md, multi-agent.md)
 
-Phase 3: Cursor Support (1 day)
+Phase 3: Cursor Support (1 day) — Future
 ├── Create Cursor .mdc template
 ├── Extend interactive menu for Cursor selection
 └── Test MCP integration
 ```
 
-> **Key Discovery:** Pi's `pi.send()` enables full feature parity with Claude Code hooks.
-> **CLI Alignment:** No new flags. Interactive menu only (DX-70 consistent).
+> **Key Discovery:** Pi reads CLAUDE.md + .claude/skills/ → shares config with Claude Code.
+> **CLI:** `invar init --pi` or interactive menu selection.
 
 ### Future Phases
 
