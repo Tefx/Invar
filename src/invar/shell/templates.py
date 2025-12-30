@@ -392,36 +392,28 @@ The server communicates via stdio and should be managed by your AI agent.
 
 # @shell_complexity: Git hooks installation with backup
 def install_hooks(path: Path, console) -> Result[bool, str]:
-    """Install pre-commit hooks configuration and activate them."""
+    """Run 'pre-commit install' if config exists (file created by sync_templates)."""
     import subprocess
 
     pre_commit_config = path / ".pre-commit-config.yaml"
 
-    if pre_commit_config.exists():
-        console.print("[yellow]Skipped[/yellow] .pre-commit-config.yaml (already exists)")
+    if not pre_commit_config.exists():
+        # File should be created by sync_templates; skip if missing
         return Success(False)
 
-    result = copy_template("pre-commit-config.yaml.template", path, ".pre-commit-config.yaml")
-    if isinstance(result, Failure):
-        return result
-
-    if result.unwrap():
-        console.print("[green]Created[/green] .pre-commit-config.yaml")
-
-        # Auto-install hooks (Automatic > Opt-in)
-        try:
-            subprocess.run(
-                ["pre-commit", "install"],
-                cwd=path,
-                check=True,
-                capture_output=True,
-            )
-            console.print("[green]Installed[/green] pre-commit hooks")
-        except FileNotFoundError:
-            console.print("[dim]Run: pre-commit install (pre-commit not in PATH)[/dim]")
-        except subprocess.CalledProcessError:
-            console.print("[dim]Run: pre-commit install (not a git repo?)[/dim]")
-
+    # Auto-install hooks (Automatic > Opt-in)
+    try:
+        subprocess.run(
+            ["pre-commit", "install"],
+            cwd=path,
+            check=True,
+            capture_output=True,
+        )
+        console.print("[green]Installed[/green] pre-commit hooks")
         return Success(True)
+    except FileNotFoundError:
+        console.print("[dim]Run: pre-commit install (pre-commit not in PATH)[/dim]")
+    except subprocess.CalledProcessError:
+        console.print("[dim]Run: pre-commit install (not a git repo?)[/dim]")
 
     return Success(False)
