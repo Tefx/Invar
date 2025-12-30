@@ -210,6 +210,7 @@ AGENT_CONFIGS = {
 }
 
 
+# @shell_complexity: Multi-agent config detection with file existence checks
 def detect_agent_configs(path: Path) -> Result[dict[str, str], str]:
     """
     Detect existing agent configuration files.

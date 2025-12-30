@@ -49,7 +49,7 @@ FILE_CATEGORIES: dict[str, list[tuple[str, str]]] = {
         ("CLAUDE.md", "Agent instructions"),
         (".claude/skills/", "Workflow automation"),
         (".claude/commands/", "User commands (/audit, /guard)"),
-        (".claude/hooks/", "Tool guidance"),
+        (".claude/hooks/", "Tool guidance (+ settings.local.json)"),
         (".mcp.json", "MCP server config"),
     ],
     "generic": [
@@ -74,39 +74,56 @@ def _is_interactive() -> bool:
     return sys.stdin.isatty() and sys.stdout.isatty()
 
 
-# @shell_complexity: Interactive prompt with input validation loop
+# @shell_orchestration: Style configuration for questionary UI library
+def _get_prompt_style():
+    """Get custom style for questionary prompts.
+
+    Simple design:
+    - Pointer (») indicates current row
+    - Checkbox (●/○) indicates selected state
+    - All text in default color, no reverse
+    """
+    from questionary import Style
+
+    return Style([
+        ("pointer", "fg:cyan bold"),        # Pointer: cyan bold
+        ("highlighted", "noreverse"),       # Current row: no reverse
+        ("selected", "noreverse"),          # Selected items: no reverse
+        ("text", "noreverse"),              # Normal text: no reverse
+    ])
+
+
+# @shell_complexity: Interactive prompt with cursor selection
 def _prompt_agent_selection() -> list[str]:
-    """Prompt user to select code agent(s)."""
-    console.print("\n[bold]Select code agent(s):[/bold]")
-    console.print("  1. Claude Code (recommended)")
-    console.print("  2. Other (AGENT.md)")
-    console.print()
+    """Prompt user to select code agent using cursor navigation."""
+    import questionary
 
-    while True:
-        choice = typer.prompt(
-            "Enter number(s) separated by comma",
-            default="1",
-        )
-        try:
-            numbers = [int(x.strip()) for x in choice.split(",")]
-            agents = []
-            for n in numbers:
-                if n == 1:
-                    agents.append("claude")
-                elif n == 2:
-                    agents.append("generic")
-                else:
-                    console.print(f"[yellow]Invalid choice: {n}[/yellow]")
-                    continue
-            if agents:
-                return agents
-        except ValueError:
-            console.print("[yellow]Please enter valid numbers[/yellow]")
+    console.print("\n[bold]Select code agent:[/bold]")
+    console.print("[dim]Use arrow keys to move, enter to select[/dim]\n")
+
+    choices = [
+        questionary.Choice("Claude Code (recommended)", value="claude"),
+        questionary.Choice("Other (AGENT.md)", value="generic"),
+    ]
+
+    selected = questionary.select(
+        "",
+        choices=choices,
+        instruction="",
+        style=_get_prompt_style(),
+    ).ask()
+
+    # Handle Ctrl+C
+    if not selected:
+        return ["claude"]  # Default to Claude Code
+    return [selected]
 
 
-# @shell_complexity: Interactive file selection with dynamic categories
+# @shell_complexity: Interactive file selection with cursor navigation
 def _prompt_file_selection(agents: list[str]) -> dict[str, bool]:
-    """Prompt user to select optional files."""
+    """Prompt user to select optional files using cursor navigation."""
+    import questionary
+
     # Build available files
     available: dict[str, list[tuple[str, str]]] = {
         "optional": FILE_CATEGORIES["optional"],
@@ -117,7 +134,7 @@ def _prompt_file_selection(agents: list[str]) -> dict[str, bool]:
             category = config["category"]
             available[category] = FILE_CATEGORIES.get(category, [])
 
-    # Show file table
+    # Show header
     console.print("\n[bold]File Selection:[/bold]")
     console.print("[dim]Existing files will be MERGED (your content preserved).[/dim]\n")
 
@@ -126,9 +143,12 @@ def _prompt_file_selection(agents: list[str]) -> dict[str, bool]:
     for file, desc in FILE_CATEGORIES["required"]:
         console.print(f"  [green]✓[/green] {file:30} {desc}")
 
-    # Optional files
-    file_index: dict[int, tuple[str, str, str]] = {}  # index -> (file, desc, category)
-    idx = 1
+    console.print()
+    console.print("[dim]Use arrow keys to move, space to toggle, enter to confirm[/dim]\n")
+
+    # Build choices with categories as separators
+    choices: list[questionary.Choice | questionary.Separator] = []
+    file_list: list[str] = []
 
     for category, files in available.items():
         if category == "required":
@@ -136,33 +156,26 @@ def _prompt_file_selection(agents: list[str]) -> dict[str, bool]:
         category_name = category.capitalize()
         if category == "claude":
             category_name = "Claude Code"
-        console.print(f"\n[bold]{category_name}:[/bold]")
+        choices.append(questionary.Separator(f"── {category_name} ──"))
         for file, desc in files:
-            file_index[idx] = (file, desc, category)
-            console.print(f"  [{idx}] [green]✓[/green] {file:28} {desc}")
-            idx += 1
+            choices.append(
+                questionary.Choice(f"{file:28} {desc}", value=file, checked=True)
+            )
+            file_list.append(file)
 
-    console.print()
-    console.print("[dim]All files selected by default. Enter numbers to toggle off, or press Enter to continue.[/dim]")
+    selected = questionary.checkbox(
+        "Select files to install:",
+        choices=choices,
+        instruction="",
+        style=_get_prompt_style(),
+    ).ask()
 
-    while True:
-        choice = typer.prompt(
-            "Toggle off (comma-separated numbers, or Enter to keep all)",
-            default="",
-        )
-        if not choice.strip():
-            # Keep all selected
-            result = {f: True for f, _, _ in file_index.values()}
-            return result
+    # Handle Ctrl+C or empty result
+    if selected is None:
+        return dict.fromkeys(file_list, True)  # Default: all selected
 
-        try:
-            numbers = [int(x.strip()) for x in choice.split(",") if x.strip()]
-            result = {}
-            for i, (file, _, _) in file_index.items():
-                result[file] = i not in numbers
-            return result
-        except ValueError:
-            console.print("[yellow]Please enter valid numbers[/yellow]")
+    # Build result dict
+    return {f: f in selected for f in file_list}
 
 
 def _show_execution_output(

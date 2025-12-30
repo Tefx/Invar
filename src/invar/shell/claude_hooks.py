@@ -29,6 +29,26 @@ HOOKS_SUBDIR = ".claude/hooks"
 DISABLED_MARKER = ".invar_disabled"
 
 
+# Marker for identifying Invar hooks in settings
+INVAR_HOOK_MARKER = ".claude/hooks/"
+
+
+# @shell_orchestration: Tightly coupled to Claude Code settings.local.json format
+def is_invar_hook(hook_entry: dict) -> bool:
+    """Check if a hook entry is an Invar hook.
+
+    Works with both new format ({"hooks": [...]}) and legacy format.
+    """
+    # All hook types now use {"hooks": [...]} format
+    if "hooks" in hook_entry:
+        return any(
+            INVAR_HOOK_MARKER in h.get("command", "")
+            for h in hook_entry.get("hooks", [])
+        )
+    # Legacy format fallback: {"type": "command", "command": "..."}
+    return INVAR_HOOK_MARKER in hook_entry.get("command", "")
+
+
 def get_templates_path() -> Path:
     """Get the path to hook templates."""
     return Path(__file__).parent.parent / "templates" / "hooks"
@@ -100,6 +120,68 @@ def generate_hook_content(
 
 
 # @shell_complexity: Hook installation with user hook merging
+
+def _register_hooks_in_settings(project_path: Path) -> Result[bool, str]:
+    """
+    Register hooks in .claude/settings.local.json.
+
+    Claude Code requires explicit hook registration - hooks are NOT auto-discovered
+    from the .claude/hooks/ directory.
+
+    Uses merge strategy:
+    - Preserves user's existing hooks
+    - Only adds/updates Invar hooks (identified by .claude/hooks/ path)
+    """
+    import json
+
+    settings_path = project_path / ".claude" / "settings.local.json"
+
+    def build_invar_hook(hook_type: str) -> dict:
+        """Build Invar hook entry for a hook type."""
+        hook_cmd = {
+            "type": "command",
+            "command": f".claude/hooks/{hook_type}.sh",
+        }
+        if hook_type in ("PreToolUse", "PostToolUse"):
+            # These need a matcher - use "*" to match all tools
+            return {
+                "matcher": "*",
+                "hooks": [hook_cmd],
+            }
+        # UserPromptSubmit, Stop don't use matchers but still need hooks wrapper
+        return {
+            "hooks": [hook_cmd],
+        }
+
+    try:
+        existing = json.loads(settings_path.read_text()) if settings_path.exists() else {}
+
+        # Get existing hooks or create empty dict
+        existing_hooks = existing.get("hooks", {})
+
+        # Merge each hook type
+        for hook_type in HOOK_TYPES:
+            existing_list = existing_hooks.get(hook_type, [])
+
+            # Filter out old Invar hooks, keep user hooks
+            user_hooks = [h for h in existing_list if not is_invar_hook(h)]
+
+            # Append new Invar hook
+            user_hooks.append(build_invar_hook(hook_type))
+
+            existing_hooks[hook_type] = user_hooks
+
+        existing["hooks"] = existing_hooks
+
+        settings_path.parent.mkdir(parents=True, exist_ok=True)
+        settings_path.write_text(json.dumps(existing, indent=2))
+        return Success(True)
+
+    except (OSError, json.JSONDecodeError) as e:
+        return Failure(f"Failed to update settings: {e}")
+
+
+# @shell_complexity: Multi-file installation with backup/merge logic for user hooks
 def install_claude_hooks(
     project_path: Path,
     console: Console,
@@ -189,9 +271,17 @@ source "$(dirname "$0")/invar.{hook_type}.sh" "$@"
         installed.append(hook_type)
 
     if installed:
+        # Register hooks in settings.local.json (Claude Code requires explicit registration)
+        reg_result = _register_hooks_in_settings(project_path)
+        if isinstance(reg_result, Failure):
+            console.print(f"  [yellow]Warning:[/yellow] {reg_result.failure()}")
+        else:
+            console.print("  [green]Registered[/green] hooks in .claude/settings.local.json")
+
         console.print("\n  [bold green]✓ Claude Code hooks installed[/bold green]")
         console.print("  [dim]Auto-escape: pytest --pdb, pytest --cov, vendor/[/dim]")
         console.print("  [dim]Manual escape: INVAR_ALLOW_PYTEST=1[/dim]")
+        console.print("  [yellow]⚠ Restart Claude Code session for hooks to take effect[/yellow]")
 
     if failed:
         return Failure(f"Failed to install hooks: {', '.join(failed)}")

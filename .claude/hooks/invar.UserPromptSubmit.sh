@@ -1,6 +1,6 @@
 #!/bin/bash
 # Invar UserPromptSubmit Hook
-# Protocol: v5.0 | Generated: 2025-12-29
+# Protocol: v5.0 | Generated: 2025-12-30
 # DX-57: Protocol refresh with full INVAR.md injection
 
 USER_MESSAGE="$1"
@@ -340,6 +340,7 @@ invar guard              # Full: static + doctests + CrossHair + Hypothesis
 invar guard --static     # Static only (quick debug, ~0.5s)
 invar guard --changed    # Modified files only
 invar guard --coverage   # Collect branch coverage
+invar guard -c           # Contract coverage only (DX-63)
 invar sig <file>         # Show contracts + signatures
 invar map --top 10       # Most-referenced symbols
 invar rules              # List all rules with detection/hints (JSON)

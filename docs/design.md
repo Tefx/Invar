@@ -768,10 +768,11 @@ Create src/core and src/shell? [Y/n]
 **CLI Options:**
 
 ```bash
-invar init              # Interactive, asks about directories
-invar init --dirs       # Always create src/core, src/shell
-invar init --no-dirs    # Never create directories
-invar init --config-only # Only add config, no INVAR.md/CLAUDE.md
+invar init              # Interactive mode with menus
+invar init --claude     # Auto-select Claude Code, skip prompts
+invar init --preview    # Show what would be done (dry run)
+invar uninstall         # Remove Invar from project (preserves user content)
+invar uninstall --dry-run  # Preview what would be removed
 ```
 
 ---

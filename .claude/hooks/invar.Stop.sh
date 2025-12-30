@@ -1,6 +1,6 @@
 #!/bin/bash
 # Invar Stop Hook
-# Protocol: v5.0 | Generated: 2025-12-29
+# Protocol: v5.0 | Generated: 2025-12-30
 # DX-57: Session cleanup and unverified changes warning
 
 # Use session-specific state

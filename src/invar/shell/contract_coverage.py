@@ -121,6 +121,7 @@ def count_contracts_in_file(
     return Success(result)
 
 
+# @shell_complexity: Git status parsing requires multiple branch conditions
 def get_changed_python_files(path: Path) -> Result[list[Path], str]:
     """Get Python files changed in git."""
     try:
@@ -153,6 +154,7 @@ def get_changed_python_files(path: Path) -> Result[list[Path], str]:
         return Failure("Git not found")
 
 
+# @shell_complexity: Coverage calculation with multiple file/directory handling paths
 def calculate_contract_coverage(
     path: Path, changed_only: bool = False
 ) -> Result[ContractCoverageReport, str]:
@@ -207,6 +209,7 @@ def calculate_contract_coverage(
     return Success(report)
 
 
+# @shell_complexity: Batch detection with git status parsing and threshold logic
 def detect_batch_creation(
     path: Path, threshold: int = 3
 ) -> Result[BatchWarning | None, str]:
@@ -263,7 +266,7 @@ def detect_batch_creation(
         return Success(None)
 
 
-# @shell_orchestration: Report formatting tightly coupled with CLI output
+# @shell_complexity: Report formatting with multiple conditional sections
 def format_contract_coverage_report(report: ContractCoverageReport) -> str:
     """Format coverage report for human-readable output."""
     lines = [

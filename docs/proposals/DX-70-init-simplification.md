@@ -262,7 +262,7 @@ Cons: Requires terminal UI library.
 ## Dependencies
 
 - Rich library for terminal UI (already a dependency)
-- Or simple input() based menu for MVP
+- `questionary>=2.0` - Interactive prompts with cursor-based selection (arrow keys + space to toggle)
 
 ## Risk Assessment
 

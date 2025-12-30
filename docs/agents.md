@@ -345,8 +345,7 @@ Invar provides MCP (Model Context Protocol) tools for deeper integration with Cl
 ### Setup
 
 ```bash
-uvx invar-tools init    # Auto-creates .mcp.json at project root
-# or: invar init (if installed globally)
+uvx invar-tools init    # Interactive mode, auto-creates .mcp.json
 ```
 
 ### Available Tools

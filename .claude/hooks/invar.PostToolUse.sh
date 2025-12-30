@@ -1,6 +1,6 @@
 #!/bin/bash
 # Invar PostToolUse Hook
-# Protocol: v5.0 | Generated: 2025-12-29
+# Protocol: v5.0 | Generated: 2025-12-30
 # DX-57: Git-based change detection with fallback
 
 TOOL_NAME="$1"

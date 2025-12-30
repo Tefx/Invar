@@ -83,7 +83,7 @@ def get_combined_status(
     return "passed"
 
 
-@pre(lambda data, source: source in ("pyproject", "invar", "default"))
+@pre(lambda data, source: source in ("pyproject", "invar", "invar_dir", "default"))
 @post(lambda result: isinstance(result, dict))
 def extract_guard_section(data: dict[str, Any], source: str) -> dict[str, Any]:
     """
@@ -94,6 +94,8 @@ def extract_guard_section(data: dict[str, Any], source: str) -> dict[str, Any]:
         {'x': 1}
         >>> extract_guard_section({"guard": {"y": 2}}, "invar")
         {'y': 2}
+        >>> extract_guard_section({"guard": {"z": 3}}, "invar_dir")
+        {'z': 3}
         >>> extract_guard_section({}, "default")
         {}
         >>> extract_guard_section({"guard": 0}, "invar")  # Non-dict value returns empty

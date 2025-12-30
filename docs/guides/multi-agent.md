@@ -2,15 +2,23 @@
 
 Invar's core value—USBV workflow, contract-driven development, and automated verification—works with any AI coding agent. This guide covers integration with popular alternatives to Claude Code.
 
+## Agent Support Status
+
+| Agent | Status | Setup |
+|-------|--------|-------|
+| **Claude Code** | ✅ Full | `invar init` → select Claude Code |
+| **Pi / Cursor** | 🚧 In progress | `invar init` → select Other, include `AGENT.md` in prompt |
+| **Other** | 📝 Manual | `invar init` → select Other, include `AGENT.md` in prompt |
+
 ## Quick Comparison
 
 | Agent | Instruction File | MCP Support | Hooks | Effort |
 |-------|------------------|-------------|-------|--------|
 | [Claude Code](../agents.md) | CLAUDE.md | ✅ Full | ✅ 4 types | Native |
-| [Cline](#cline) | .clinerules | ✅ Full | ❌ | Low |
-| [Cursor](#cursor) | .cursorrules | ✅ Full | ✅ Beta | Medium |
-| [Aider](#aider) | CONVENTIONS.md | ⚠️ CLI | ❌ | Low |
-| [Continue](#continue) | config.yaml | ✅ Full | ❌ | Low |
+| [Cline](#cline) | .clinerules | ✅ Full | ❌ | Manual |
+| [Cursor](#cursor) | .cursorrules | ✅ Full | ✅ Beta | Manual |
+| [Aider](#aider) | CONVENTIONS.md | ⚠️ CLI | ❌ | Manual |
+| [Continue](#continue) | config.yaml | ✅ Full | ❌ | Manual |
 
 ## What Works Everywhere
 
@@ -39,10 +47,8 @@ Invar's core value—USBV workflow, contract-driven development, and automated v
 → [Full Guide: Cline Integration](./cline.md)
 
 ```bash
-# Quick setup
-invar init --agent=cline  # Coming soon
-
-# Or manual setup - create .clinerules in project root
+# Setup
+invar init    # Select "Other (AGENT.md)", then copy to .clinerules
 ```
 
 **Key features:**
@@ -59,10 +65,8 @@ invar init --agent=cline  # Coming soon
 → [Full Guide: Cursor Integration](./cursor.md)
 
 ```bash
-# Quick setup
-invar init --agent=cursor  # Coming soon
-
-# Or manual setup - create .cursorrules in project root
+# Setup
+invar init    # Select "Other (AGENT.md)", then copy to .cursorrules
 ```
 
 **Key features:**
@@ -174,14 +178,14 @@ Or if installed in a virtual environment:
 
 ### From Claude Code to Others
 
-1. Copy CLAUDE.md content to target instruction file
-2. Configure MCP (if supported)
-3. Replace skill triggers with manual workflow
+1. Run `invar init` → select "Other (AGENT.md)"
+2. Copy AGENT.md content to target instruction file
+3. Configure MCP (if supported)
 
 ### From Others to Claude Code
 
-1. Run `invar init` to generate full setup
-2. Enjoy skills, hooks, and commands
+1. Run `invar init` → select Claude Code
+2. All features auto-configured (skills, hooks, MCP)
 
 ---
 

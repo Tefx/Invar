@@ -1,3 +1,9 @@
+---
+_invar:
+  version: "5.0"
+  type: command
+---
+
 # Guard
 
 Run Invar verification on the project and report results.
