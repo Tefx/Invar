@@ -96,8 +96,9 @@ cd your-project
 # Interactive mode - choose what to install
 uvx invar-tools init
 
-# Or quick setup for Claude Code (skip prompts)
-uvx invar-tools init --claude
+# Or quick setup (skip prompts)
+uvx invar-tools init --claude    # Claude Code
+uvx invar-tools init --pi        # Pi Coding Agent
 
 # Add runtime contracts to your project
 pip install invar-runtime

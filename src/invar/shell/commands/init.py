@@ -250,6 +250,11 @@ def init(
         "--claude",
         help="Auto-select Claude Code, skip all prompts",
     ),
+    pi: bool = typer.Option(
+        False,
+        "--pi",
+        help="Auto-select Pi Coding Agent, skip all prompts",
+    ),
     preview: bool = typer.Option(
         False,
         "--preview",
@@ -260,6 +265,11 @@ def init(
     Initialize or update Invar configuration.
 
     DX-70: Simplified init with interactive selection and safe merge.
+
+    \b
+    Quick setup options:
+    - --claude  Auto-select Claude Code (MCP + hooks + skills)
+    - --pi      Auto-select Pi (shares CLAUDE.md + skills, adds Pi hooks)
 
     \b
     This command is safe - it always MERGES with existing files:
@@ -273,6 +283,11 @@ def init(
     """
     from invar import __version__
 
+    # Mutual exclusivity check
+    if claude and pi:
+        console.print("[red]Error:[/red] Cannot use --claude and --pi together.")
+        raise typer.Exit(1)
+
     # Resolve path
     if path == Path():
         path = Path.cwd()
@@ -281,6 +296,8 @@ def init(
     # Header
     if claude:
         console.print(f"\n[bold]Invar v{__version__} - Quick Setup (Claude Code)[/bold]")
+    elif pi:
+        console.print(f"\n[bold]Invar v{__version__} - Quick Setup (Pi)[/bold]")
     else:
         console.print(f"\n[bold]Invar v{__version__} - Project Setup[/bold]")
     console.print("=" * 45)
@@ -288,16 +305,23 @@ def init(
 
     # Determine agents and files
     if claude:
-        # Quick mode: use defaults
+        # Quick mode: Claude Code defaults
         agents = ["claude"]
         selected_files: dict[str, bool] = {}
         for category in ["optional", "claude"]:
             for file, _ in FILE_CATEGORIES.get(category, []):
                 selected_files[file] = True
+    elif pi:
+        # Quick mode: Pi defaults
+        agents = ["pi"]
+        selected_files = {}
+        for category in ["optional", "pi"]:
+            for file, _ in FILE_CATEGORIES.get(category, []):
+                selected_files[file] = True
     else:
         # Interactive mode
         if not _is_interactive():
-            console.print("[yellow]Non-interactive terminal detected. Use --claude for quick setup.[/yellow]")
+            console.print("[yellow]Non-interactive terminal detected. Use --claude or --pi for quick setup.[/yellow]")
             raise typer.Exit(1)
 
         agents = _prompt_agent_selection()
@@ -410,13 +434,23 @@ def init(
     # Completion message
     console.print(f"\n[bold green]✓ Initialized Invar v{__version__}[/bold green]")
 
-    # Show tip for Claude users
+    # Show agent-specific tips
     if "claude" in agents:
         console.print()
         console.print(
             Panel(
                 "[dim]If you run [bold]claude /init[/bold] afterward, "
                 "run [bold]invar init[/bold] again to restore protocol.[/dim]",
+                title="📌 Tip",
+                border_style="dim",
+            )
+        )
+    elif "pi" in agents:
+        console.print()
+        console.print(
+            Panel(
+                "[dim]Pi reads CLAUDE.md and .claude/skills/ directly.\n"
+                "Run [bold]pi[/bold] to start — USBV workflow is auto-enabled.[/dim]",
                 title="📌 Tip",
                 border_style="dim",
             )
