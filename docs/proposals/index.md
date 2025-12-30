@@ -8,15 +8,16 @@ This directory contains design proposals for Invar development.
 - `LX-XX-name.md` — Language eXtension (multi-language evolution)
 - Completed/archived proposals in `completed/` subdirectory
 
-## Active Proposals (10)
+## Active Proposals (9)
 
 ### DX Series (Developer Experience)
 
 | ID | Name | Status | Description |
 |----|------|--------|-------------|
+| DX-70 | init-simplification | ✅ Complete | Simplified init with interactive menus and safe merge |
 | DX-69 | project-uninstall | ✅ Complete | `invar uninstall` command with marker-based detection |
 | DX-68 | agent-behavior-optimization | Draft | Agent reading reliability improvements (P3-P5) |
-| DX-67 | explicit-skill-invocation | **New** | Require Skill tool call for workflow routing |
+| DX-67 | explicit-skill-invocation | ✅ Complete | Require Skill tool call for workflow routing |
 | DX-62 | proactive-reference-reading | Partial | Task Router (Layer 1) done, Layers 2-4 pending |
 | DX-61 | functional-pattern-guidance | Draft | Teach agents functional patterns (NewType, Validation, etc.) |
 | DX-60 | structured-rules-ssot | Draft | Optimize DX-57 token usage (1,800t → 600t) |

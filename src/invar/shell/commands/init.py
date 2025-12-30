@@ -2,108 +2,195 @@
 Init command for Invar.
 
 Shell module: handles project initialization.
-DX-21B: Added --claude flag for Claude Code integration.
-DX-55: Unified idempotent init command with smart merge.
-DX-56: Uses unified template sync engine for file generation.
-DX-57: Added Claude Code hooks installation.
+DX-70: Simplified init with interactive menus and safe merge behavior.
 """
 
 from __future__ import annotations
 
-import shutil
-import subprocess
+import sys
 from pathlib import Path
 
 import typer
 from returns.result import Failure, Success
 from rich.console import Console
+from rich.panel import Panel
 
 from invar.core.sync_helpers import SyncConfig
-from invar.core.template_parser import ClaudeMdState
-from invar.shell.claude_hooks import (
-    install_claude_hooks,
-    sync_claude_hooks,
-)
-from invar.shell.commands.merge import (
-    ProjectState,
-    detect_project_state,
-)
+from invar.shell.claude_hooks import install_claude_hooks
 from invar.shell.commands.template_sync import sync_templates
 from invar.shell.mcp_config import (
-    detect_available_methods,
     generate_mcp_json,
-    get_method_by_name,
     get_recommended_method,
 )
-from invar.shell.template_engine import generate_from_manifest
 from invar.shell.templates import (
     add_config,
     create_directories,
-    detect_agent_configs,
     install_hooks,
 )
 
 console = Console()
 
 
-# @shell_complexity: Claude init with config file detection
-def run_claude_init(path: Path) -> bool:
-    """
-    Run 'claude /init' to generate intelligent CLAUDE.md.
+# =============================================================================
+# File Categories (DX-70)
+# =============================================================================
 
-    Returns True if successful, False otherwise.
-    """
-    if not shutil.which("claude"):
-        console.print(
-            "[yellow]Warning:[/yellow] 'claude' CLI not found. "
-            "Install Claude Code: https://claude.ai/code"
+FILE_CATEGORIES: dict[str, list[tuple[str, str]]] = {
+    "required": [
+        ("INVAR.md", "Protocol and contract rules"),
+        (".invar/", "Config, context, examples"),
+    ],
+    "optional": [
+        (".pre-commit-config.yaml", "Verification before commit"),
+        ("src/core/", "Pure logic directory"),
+        ("src/shell/", "I/O operations directory"),
+    ],
+    "claude": [
+        ("CLAUDE.md", "Agent instructions"),
+        (".claude/skills/", "Workflow automation"),
+        (".claude/commands/", "User commands (/audit, /guard)"),
+        (".claude/hooks/", "Tool guidance"),
+        (".mcp.json", "MCP server config"),
+    ],
+    "generic": [
+        ("AGENT.md", "Universal agent instructions"),
+    ],
+}
+
+AGENT_CONFIGS: dict[str, dict[str, str]] = {
+    "claude": {"name": "Claude Code", "category": "claude"},
+    "generic": {"name": "Other (AGENT.md)", "category": "generic"},
+    # Future: "cursor", "windsurf", etc.
+}
+
+
+# =============================================================================
+# Interactive Prompts (DX-70)
+# =============================================================================
+
+
+def _is_interactive() -> bool:
+    """Check if running in an interactive terminal."""
+    return sys.stdin.isatty() and sys.stdout.isatty()
+
+
+# @shell_complexity: Interactive prompt with input validation loop
+def _prompt_agent_selection() -> list[str]:
+    """Prompt user to select code agent(s)."""
+    console.print("\n[bold]Select code agent(s):[/bold]")
+    console.print("  1. Claude Code (recommended)")
+    console.print("  2. Other (AGENT.md)")
+    console.print()
+
+    while True:
+        choice = typer.prompt(
+            "Enter number(s) separated by comma",
+            default="1",
         )
-        console.print("[dim]Skipping claude /init, will create basic CLAUDE.md[/dim]")
-        return False
+        try:
+            numbers = [int(x.strip()) for x in choice.split(",")]
+            agents = []
+            for n in numbers:
+                if n == 1:
+                    agents.append("claude")
+                elif n == 2:
+                    agents.append("generic")
+                else:
+                    console.print(f"[yellow]Invalid choice: {n}[/yellow]")
+                    continue
+            if agents:
+                return agents
+        except ValueError:
+            console.print("[yellow]Please enter valid numbers[/yellow]")
 
-    console.print("\n[bold]Running claude /init...[/bold]")
-    try:
-        # Don't capture output - claude /init is interactive and needs user input
-        result = subprocess.run(
-            ["claude", "/init"],
-            cwd=path,
-            timeout=120,
+
+# @shell_complexity: Interactive file selection with dynamic categories
+def _prompt_file_selection(agents: list[str]) -> dict[str, bool]:
+    """Prompt user to select optional files."""
+    # Build available files
+    available: dict[str, list[tuple[str, str]]] = {
+        "optional": FILE_CATEGORIES["optional"],
+    }
+    for agent in agents:
+        config = AGENT_CONFIGS.get(agent)
+        if config:
+            category = config["category"]
+            available[category] = FILE_CATEGORIES.get(category, [])
+
+    # Show file table
+    console.print("\n[bold]File Selection:[/bold]")
+    console.print("[dim]Existing files will be MERGED (your content preserved).[/dim]\n")
+
+    # Required files (always installed)
+    console.print("[bold]Required (always installed):[/bold]")
+    for file, desc in FILE_CATEGORIES["required"]:
+        console.print(f"  [green]✓[/green] {file:30} {desc}")
+
+    # Optional files
+    file_index: dict[int, tuple[str, str, str]] = {}  # index -> (file, desc, category)
+    idx = 1
+
+    for category, files in available.items():
+        if category == "required":
+            continue
+        category_name = category.capitalize()
+        if category == "claude":
+            category_name = "Claude Code"
+        console.print(f"\n[bold]{category_name}:[/bold]")
+        for file, desc in files:
+            file_index[idx] = (file, desc, category)
+            console.print(f"  [{idx}] [green]✓[/green] {file:28} {desc}")
+            idx += 1
+
+    console.print()
+    console.print("[dim]All files selected by default. Enter numbers to toggle off, or press Enter to continue.[/dim]")
+
+    while True:
+        choice = typer.prompt(
+            "Toggle off (comma-separated numbers, or Enter to keep all)",
+            default="",
         )
-        if result.returncode == 0:
-            console.print("[green]claude /init completed successfully[/green]")
-            return True
-        else:
-            console.print("[yellow]Warning:[/yellow] claude /init failed")
-            return False
-    except subprocess.TimeoutExpired:
-        console.print("[yellow]Warning:[/yellow] claude /init timed out")
-        return False
-    except Exception as e:
-        console.print(f"[yellow]Warning:[/yellow] claude /init error: {e}")
-        return False
+        if not choice.strip():
+            # Keep all selected
+            result = {f: True for f, _, _ in file_index.values()}
+            return result
+
+        try:
+            numbers = [int(x.strip()) for x in choice.split(",") if x.strip()]
+            result = {}
+            for i, (file, _, _) in file_index.items():
+                result[file] = i not in numbers
+            return result
+        except ValueError:
+            console.print("[yellow]Please enter valid numbers[/yellow]")
 
 
-# @shell_complexity: MCP config with method selection and validation
-def configure_mcp_with_method(
-    path: Path, mcp_method: str | None
+def _show_execution_output(
+    created: list[str],
+    merged: list[str],
+    skipped: list[str],
 ) -> None:
-    """Configure MCP server with specified or detected method."""
+    """Display execution results."""
+    console.print()
+    for file in created:
+        console.print(f"  [green]✓[/green] {file:30} [dim]created[/dim]")
+    for file in merged:
+        console.print(f"  [cyan]↻[/cyan] {file:30} [dim]merged[/dim]")
+    for file in skipped:
+        console.print(f"  [dim]○[/dim] {file:30} [dim]skipped[/dim]")
+
+
+# =============================================================================
+# MCP Configuration
+# =============================================================================
+
+
+# @shell_complexity: MCP config merge with existing file handling
+def _configure_mcp(path: Path) -> bool:
+    """Configure MCP server with recommended method."""
     import json
 
-    # Determine method to use
-    if mcp_method:
-        config = get_method_by_name(mcp_method)
-        if config is None:
-            console.print(f"[yellow]Warning:[/yellow] Method '{mcp_method}' not available")
-            config = get_recommended_method()
-            console.print(f"[dim]Using fallback: {config.description}[/dim]")
-    else:
-        config = get_recommended_method()
-
-    console.print("\n[bold]Configuring MCP server...[/bold]")
-    console.print(f"  Method: {config.description}")
-
-    # Generate and write .mcp.json
+    config = get_recommended_method()
     mcp_json_path = path / ".mcp.json"
     mcp_content = generate_mcp_json(config)
 
@@ -111,310 +198,200 @@ def configure_mcp_with_method(
         try:
             existing = json.loads(mcp_json_path.read_text())
             if "mcpServers" in existing and "invar" in existing.get("mcpServers", {}):
-                console.print("[dim]Skipped[/dim] .mcp.json (invar already configured)")
-                return
+                return False  # Already configured
             # Add invar to existing config
             if "mcpServers" not in existing:
                 existing["mcpServers"] = {}
             existing["mcpServers"]["invar"] = mcp_content["mcpServers"]["invar"]
             mcp_json_path.write_text(json.dumps(existing, indent=2))
-            console.print("[green]Updated[/green] .mcp.json (added invar)")
+            return True
         except (json.JSONDecodeError, OSError):
-            console.print("[yellow]Warning:[/yellow] .mcp.json exists but couldn't update")
+            return False
     else:
         mcp_json_path.write_text(json.dumps(mcp_content, indent=2))
-        console.print("[green]Created[/green] .mcp.json")
+        return True
 
 
-def show_available_mcp_methods() -> None:
-    """Display available MCP execution methods."""
-    methods = detect_available_methods()
-    console.print("\n[bold]Available MCP methods:[/bold]")
-    for i, method in enumerate(methods):
-        marker = "[green]→[/green]" if i == 0 else " "
-        console.print(f"  {marker} {method.method.value}: {method.description}")
+# =============================================================================
+# Main Init Command (DX-70)
+# =============================================================================
 
 
-# @shell_complexity: Project init with config detection and template setup
+# @shell_complexity: Main CLI entry point with interactive flow and file generation
 def init(
-    path: Path = typer.Argument(Path(), help="Project root directory"),
+    path: Path = typer.Argument(
+        Path(),
+        help="Project root directory (default: current directory)",
+    ),
     claude: bool = typer.Option(
-        False, "--claude", help="Run 'claude /init' and integrate with Claude Code"
+        False,
+        "--claude",
+        help="Auto-select Claude Code, skip all prompts",
     ),
-    mcp_method: str = typer.Option(
-        None,
-        "--mcp-method",
-        help="MCP execution method: uvx (recommended), command, or python",
-    ),
-    dirs: bool = typer.Option(
-        None, "--dirs/--no-dirs", help="Create src/core and src/shell directories"
-    ),
-    hooks: bool = typer.Option(
-        True, "--hooks/--no-hooks", help="Install pre-commit hooks (default: ON)"
-    ),
-    claude_hooks: bool = typer.Option(
-        None, "--claude-hooks/--no-claude-hooks",
-        help="Install Claude Code hooks (default: ON when --claude, DX-57)"
-    ),
-    skills: bool = typer.Option(
-        True, "--skills/--no-skills", help="Create .claude/skills/ (default: ON, use --no-skills for Cursor)"
-    ),
-    yes: bool = typer.Option(
-        False, "--yes", "-y", help="Accept defaults without prompting"
-    ),
-    check: bool = typer.Option(
-        False, "--check", help="Preview changes without applying (DX-55)"
-    ),
-    force: bool = typer.Option(
-        False, "--force", help="Update even if already current (DX-55)"
-    ),
-    reset: bool = typer.Option(
-        False, "--reset", help="Dangerous: discard all user content (DX-55)"
+    preview: bool = typer.Option(
+        False,
+        "--preview",
+        help="Show what would be done (dry run)",
     ),
 ) -> None:
     """
-    Initialize or update Invar configuration (idempotent).
+    Initialize or update Invar configuration.
 
-    DX-55: This command is idempotent - safe to run multiple times.
-    It detects current state and does the right thing:
-
-    \b
-    - New project: Full setup
-    - Existing project: Update managed regions, preserve user content
-    - Corrupted/overwritten: Smart recovery with content preservation
-
-    Works with or without pyproject.toml:
+    DX-70: Simplified init with interactive selection and safe merge.
 
     \b
-    - If pyproject.toml exists: adds tool.invar section
-    - Otherwise: creates invar.toml
+    This command is safe - it always MERGES with existing files:
+    - File doesn't exist → Create
+    - File exists → Merge (update invar regions, preserve your content)
+    - Never overwrites user content
+    - Never deletes files
 
-    Use --check to preview changes without applying.
-    Use --force to update even if already current.
-    Use --reset to discard all user content (dangerous).
-    Use --claude to run 'claude /init' first.
-    Use --mcp-method to specify MCP execution method (uvx, command, python).
-    Use --dirs to always create directories, --no-dirs to skip.
-    Use --no-hooks to skip pre-commit hooks installation.
-    Use --no-claude-hooks to skip Claude Code hooks (DX-57).
-    Use --no-skills to skip .claude/skills/ creation (for Cursor users).
-    Use --yes to accept defaults without prompting.
+    \b
+    For full reset, use: invar uninstall && invar init
     """
     from invar import __version__
 
-    # DX-55: Detect project state first
-    state = detect_project_state(path)
+    # Resolve path
+    if path == Path():
+        path = Path.cwd()
+    path = path.resolve()
 
-    # --check mode: preview only
-    if check:
-        _show_check_preview(state, path, __version__)
+    # Header
+    if claude:
+        console.print(f"\n[bold]Invar v{__version__} - Quick Setup (Claude Code)[/bold]")
+    else:
+        console.print(f"\n[bold]Invar v{__version__} - Project Setup[/bold]")
+    console.print("=" * 45)
+    console.print("[dim]Existing files will be MERGED (your content preserved).[/dim]")
+
+    # Determine agents and files
+    if claude:
+        # Quick mode: use defaults
+        agents = ["claude"]
+        selected_files: dict[str, bool] = {}
+        for category in ["optional", "claude"]:
+            for file, _ in FILE_CATEGORIES.get(category, []):
+                selected_files[file] = True
+    else:
+        # Interactive mode
+        if not _is_interactive():
+            console.print("[yellow]Non-interactive terminal detected. Use --claude for quick setup.[/yellow]")
+            raise typer.Exit(1)
+
+        agents = _prompt_agent_selection()
+        selected_files = _prompt_file_selection(agents)
+
+    # Preview mode
+    if preview:
+        console.print("\n[bold]Preview - Would create/update:[/bold]")
+        console.print("\n[bold]Required:[/bold]")
+        for file, desc in FILE_CATEGORIES["required"]:
+            console.print(f"  [green]✓[/green] {file:30} {desc}")
+
+        console.print("\n[bold]Selected:[/bold]")
+        for file, selected in selected_files.items():
+            if selected:
+                console.print(f"  [green]✓[/green] {file}")
+            else:
+                console.print(f"  [dim]○[/dim] {file} [dim](skipped)[/dim]")
+
+        console.print("\n[dim]Run without --preview to apply.[/dim]")
         return
 
-    # --reset mode: dangerous full reset
-    if reset:
-        if not yes and not typer.confirm(
-            "[red]This will DELETE all user customizations. Continue?[/red]",
-            default=False,
-        ):
-            console.print("[yellow]Cancelled[/yellow]")
-            return
-        # Fall through to full init with reset flag
-        state = ProjectState(
-            initialized=False,
-            claude_md_state=ClaudeMdState(state="absent"),
-            version="",
-            needs_update=True,
-        )
+    # Execute
+    console.print("\n[bold]Creating files...[/bold]")
 
-    # DX-55: Handle based on detected state
-    action = state.action if not force else "update"
+    created: list[str] = []
+    merged: list[str] = []
+    skipped: list[str] = []
 
-    if action == "none" and not force:
-        # DX-55: Check for missing required files before declaring "no changes needed"
-        missing_files = []
-        if skills:
-            skill_files = [
-                ".claude/skills/develop/SKILL.md",
-                ".claude/skills/investigate/SKILL.md",
-                ".claude/skills/propose/SKILL.md",
-                ".claude/skills/review/SKILL.md",
-            ]
-            for skill_file in skill_files:
-                if not (path / skill_file).exists():
-                    missing_files.append(skill_file)
-
-        if not missing_files:
-            console.print(f"[green]✓[/green] Invar v{__version__} configured (no changes needed)")
-            console.print("[dim]Use --force to refresh managed regions[/dim]")
-            return
-        else:
-            # Recreate missing files
-            console.print(f"[yellow]Detected:[/yellow] {len(missing_files)} missing file(s)")
-            result = generate_from_manifest(path, syntax="cli", files_to_generate=missing_files)
-            if isinstance(result, Success):
-                for generated_file in result.unwrap():
-                    console.print(f"[green]Restored[/green] {generated_file}")
-            console.print(f"[green]✓[/green] Invar v{__version__} configured")
-            return
-
-    # DX-21B: Run claude /init if requested (before sync)
-    # DX-69: sync_templates() will merge claude's CLAUDE.md with invar template
-    if claude:
-        run_claude_init(path)
-
+    # Add config file (.invar/config.toml or pyproject.toml)
     config_result = add_config(path, console)
     if isinstance(config_result, Failure):
         console.print(f"[red]Error:[/red] {config_result.failure()}")
         raise typer.Exit(1)
-    config_added = config_result.unwrap()
 
-    # DX-56: Use unified sync engine for file generation
-    console.print("\n[bold]Creating Invar files...[/bold]")
-
-    # Check for project-additions.md
-    has_project_additions = (path / ".invar" / "project-additions.md").exists()
-
-    # Build skip patterns for --no-skills
-    skip_patterns: list[str] = []
-    if not skills:
-        skip_patterns.append(".claude/skills/*")
-
-    sync_config = SyncConfig(
-        syntax="cli",
-        inject_project_additions=has_project_additions,
-        force=force,
-        check=False,  # Already handled above
-        reset=reset,
-        skip_patterns=skip_patterns,
-    )
-
-    # DX-56: Run unified sync engine (handles DX-55 state detection internally)
-    result = sync_templates(path, sync_config)
-    if isinstance(result, Failure):
-        console.print(f"[yellow]Warning:[/yellow] {result.failure()}")
-    else:
-        report = result.unwrap()
-        for file in report.created:
-            console.print(f"[green]Created[/green] {file}")
-        for file in report.updated:
-            console.print(f"[cyan]Updated[/cyan] {file}")
-        for error in report.errors:
-            console.print(f"[yellow]Warning:[/yellow] {error}")
-
-    # Create .invar directory structure (for proposals template - not in manifest)
+    # Ensure .invar directory exists
     invar_dir = path / ".invar"
     if not invar_dir.exists():
         invar_dir.mkdir()
 
-    # Create proposals directory for protocol governance
+    # Build skip patterns based on selection
+    skip_patterns: list[str] = []
+    if not selected_files.get(".claude/skills/", True):
+        skip_patterns.append(".claude/skills/*")
+    if not selected_files.get(".claude/commands/", True):
+        skip_patterns.append(".claude/commands/*")
+    if not selected_files.get(".pre-commit-config.yaml", True):
+        skip_patterns.append(".pre-commit-config.yaml")
+
+    # Run template sync
+    sync_config = SyncConfig(
+        syntax="cli",
+        inject_project_additions=(path / ".invar" / "project-additions.md").exists(),
+        force=False,
+        check=False,
+        reset=False,
+        skip_patterns=skip_patterns,
+    )
+
+    result = sync_templates(path, sync_config)
+    if isinstance(result, Success):
+        report = result.unwrap()
+        created.extend(report.created)
+        merged.extend(report.updated)
+
+    # Create proposals directory
     proposals_dir = invar_dir / "proposals"
     if not proposals_dir.exists():
         proposals_dir.mkdir()
         from invar.shell.templates import copy_template
-        result = copy_template("proposal.md.template", proposals_dir, "TEMPLATE.md")
-        if isinstance(result, Success) and result.unwrap():
-            console.print("[green]Created[/green] .invar/proposals/TEMPLATE.md")
 
-    # Agent detection (DX-69: simplified, only Claude Code supported)
-    console.print("\n[bold]Checking for agent configurations...[/bold]")
-    agent_result = detect_agent_configs(path)
-    if isinstance(agent_result, Success):
-        agent_status = agent_result.unwrap()
-        if agent_status.get("claude") == "configured":
-            console.print("  [green]✓[/green] claude: already configured")
+        copy_template("proposal.md.template", proposals_dir, "TEMPLATE.md")
 
-    # Configure MCP server (DX-16, DX-21B)
-    configure_mcp_with_method(path, mcp_method)
+    # Configure MCP if Claude selected
+    if "claude" in agents and selected_files.get(".mcp.json", True):
+        if _configure_mcp(path):
+            created.append(".mcp.json")
 
-    # Show available methods if user might want to change
-    if not mcp_method and not yes:
-        show_available_mcp_methods()
+    # Create directories if selected
+    if selected_files.get("src/core/", True):
+        create_directories(path, console)
+
+    # Install pre-commit hooks if selected
+    if selected_files.get(".pre-commit-config.yaml", True):
+        install_hooks(path, console)
+
+    # Install Claude hooks if selected
+    if "claude" in agents and selected_files.get(".claude/hooks/", True):
+        install_claude_hooks(path, console)
 
     # Create MCP setup guide
     mcp_setup = invar_dir / "mcp-setup.md"
     if not mcp_setup.exists():
         from invar.shell.templates import _MCP_SETUP_TEMPLATE
+
         mcp_setup.write_text(_MCP_SETUP_TEMPLATE)
-        console.print("[green]Created[/green] .invar/mcp-setup.md (setup guide)")
 
-    # Handle directory creation based on --dirs flag
-    if dirs is not False:
-        create_directories(path, console)
+    # Track skipped files
+    for file, selected in selected_files.items():
+        if not selected:
+            skipped.append(file)
 
-    # Install pre-commit hooks if requested
-    if hooks:
-        install_hooks(path, console)
+    # Show results
+    _show_execution_output(created, merged, skipped)
 
-    # DX-57: Handle Claude Code hooks
-    # Determine if we should install/update Claude hooks
-    should_install_claude_hooks = (
-        claude_hooks is True  # Explicitly requested
-        or (claude_hooks is None and claude)  # Default ON when --claude
-    )
-    should_skip_claude_hooks = claude_hooks is False
+    # Completion message
+    console.print(f"\n[bold green]✓ Initialized Invar v{__version__}[/bold green]")
 
-    if should_install_claude_hooks and not should_skip_claude_hooks:
-        # Install Claude hooks
-        install_claude_hooks(path, console)
-    elif not should_skip_claude_hooks:
-        # Check if hooks already installed and need sync
-        claude_hooks_dir = path / ".claude" / "hooks"
-        if (claude_hooks_dir / "invar.UserPromptSubmit.sh").exists():
-            # Sync existing hooks (idempotent update)
-            sync_claude_hooks(path, console)
-
-    if not config_added and not (path / "INVAR.md").exists():
-        console.print("[yellow]Invar already configured.[/yellow]")
-
-    # DX-55: Summary based on action taken
-    if action == "full_init":
-        console.print(f"\n[bold green]✓ Initialized Invar v{__version__}[/bold green]")
-        console.print("[dim]Note: If you run 'claude /init' later, just run 'invar init' again.[/dim]")
-    elif action == "recover":
-        console.print(f"\n[bold green]✓ Recovered Invar v{__version__}[/bold green]")
-        console.print("[dim]Review the merged content in CLAUDE.md[/dim]")
-    elif action == "update" or force:
-        console.print(f"\n[bold green]✓ Updated Invar v{__version__}[/bold green]")
-        console.print("[dim]Refreshed managed regions, preserved user content[/dim]")
-    else:
-        console.print("\n[bold green]Invar initialized successfully![/bold green]")
-
-    if claude:
-        console.print("[dim]Next: Review CLAUDE.md and start coding with Claude Code[/dim]")
-
-
-# @shell_complexity: Preview display requires multiple state-specific branches
-def _show_check_preview(state: ProjectState, path: Path, version: str) -> None:
-    """Show preview of what would change (--check mode)."""
-    console.print(f"\n[bold]Invar v{version} - Preview Mode[/bold]\n")
-
-    console.print(f"Project state: [cyan]{state.claude_md_state.state}[/cyan]")
-    console.print(f"Initialized: [cyan]{state.initialized}[/cyan]")
-    console.print(f"Current version: [cyan]{state.version or 'N/A'}[/cyan]")
-    console.print(f"Needs update: [cyan]{state.needs_update}[/cyan]")
-    console.print(f"Action: [cyan]{state.action}[/cyan]\n")
-
-    match state.action:
-        case "none":
-            console.print("[green]No changes needed[/green]")
-        case "full_init":
-            console.print("Would create:")
-            console.print("  - INVAR.md")
-            console.print("  - CLAUDE.md")
-            console.print("  - .invar/context.md")
-            console.print("  - .claude/skills/")
-            console.print("  - .claude/hooks/ (DX-57, with --claude)")
-            console.print("  - .pre-commit-config.yaml")
-        case "update":
-            console.print("Would update:")
-            console.print(f"  - CLAUDE.md (managed section v{state.version} → v{version})")
-            console.print("  - .claude/skills/* (refresh)")
-            console.print("  - .claude/hooks/* (refresh, if installed)")
-        case "recover":
-            console.print("[yellow]Would recover:[/yellow]")
-            console.print("  - CLAUDE.md (restore regions, preserve content)")
-        case "create":
-            console.print("Would create:")
-            console.print("  - CLAUDE.md")
-
-    console.print("\n[dim]Run 'invar init' to apply.[/dim]")
+    # Show tip for Claude users
+    if "claude" in agents:
+        console.print()
+        console.print(
+            Panel(
+                "[dim]If you run [bold]claude /init[/bold] afterward, "
+                "run [bold]invar init[/bold] again to restore protocol.[/dim]",
+                title="📌 Tip",
+                border_style="dim",
+            )
+        )

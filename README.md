@@ -94,8 +94,11 @@ Guard passed.
 # 1. Enter your project directory
 cd your-project
 
-# 2. Initialize with Claude Code (full experience)
+# 2. Initialize with Claude Code (quick setup)
 uvx invar-tools init --claude
+
+# Or use interactive mode to customize
+uvx invar-tools init
 
 # 3. Add runtime contracts to your project
 pip install invar-runtime
@@ -112,11 +115,11 @@ cd your-project
 # Update managed files, preserve your customizations
 uvx invar-tools init --claude
 
-# Or without Claude Code integration
+# Or interactive mode for selective updates
 uvx invar-tools init
 ```
 
-Invar's init is idempotent—safe to run multiple times. It detects existing configuration and updates only managed regions.
+Invar's init is idempotent—safe to run multiple times. It always **merges** with existing files, preserving your content.
 
 ### 💬 Example Interaction
 
@@ -336,16 +339,23 @@ AlphaCodium · Parsel · Reflexion · Clover
 
 ## 🖥️ Platform Experience
 
-| Feature | Claude Code | Other Editors |
-|---------|-------------|---------------|
-| CLI verification (`invar guard`) | ✅ | ✅ |
-| Protocol document (INVAR.md) | ✅ | ✅ |
-| MCP tool integration | ✅ Auto-configured | Manual setup possible |
-| Workflow skills | ✅ Auto-configured | Include in system prompt |
-| Pre-commit hooks | ✅ | ✅ |
-| Sub-agent review | ✅ | — |
+| Feature | Claude Code | Pi / Cursor | Other Editors |
+|---------|-------------|-------------|---------------|
+| CLI verification (`invar guard`) | ✅ | ✅ | ✅ |
+| Protocol document (INVAR.md) | ✅ | ✅ | ✅ |
+| MCP tool integration | ✅ Auto | ✅ Manual | Manual setup possible |
+| Workflow skills | ✅ Auto | 🚧 In progress | Include in system prompt |
+| Pre-commit hooks | ✅ | ✅ | ✅ |
+| Claude Code hooks | ✅ | — | — |
+| Sub-agent review | ✅ | — | — |
+
+**Legend:** ✅ Full support | 🚧 In progress | — Not applicable
 
 **Claude Code** provides the full experience—MCP tools, skill routing, and hooks are auto-configured by `invar init --claude`.
+
+**Pi / Cursor** support is in progress. Currently:
+- Run `invar init` and select "Other (AGENT.md)" for generic agent instructions
+- MCP server can be configured manually
 
 **Other editors** can achieve similar results by:
 1. Adding INVAR.md content to system prompts
@@ -363,10 +373,15 @@ AlphaCodium · Parsel · Reflexion · Clover
 | `INVAR.md` | Protocol for AI agents | No (managed) |
 | `CLAUDE.md` | Project configuration | Yes |
 | `.claude/skills/` | Workflow skills | Yes |
+| `.claude/commands/` | User commands (/audit, /guard) | Yes |
 | `.claude/hooks/` | Tool call interception | Yes |
-| `.invar/examples/` | Reference patterns | No (managed) |
+| `.invar/config.toml` | Guard configuration | Yes |
 | `.invar/context.md` | Project state, lessons | Yes |
-| `pyproject.toml` | `[tool.invar]` section | Yes |
+| `.invar/examples/` | Reference patterns | No (managed) |
+| `.mcp.json` | MCP server configuration | Yes |
+| `.pre-commit-config.yaml` | Pre-commit hooks | Yes |
+
+**Note:** If `pyproject.toml` exists, configuration goes there as `[tool.invar.guard]` instead of `.invar/config.toml`.
 
 **Recommended structure:**
 
@@ -432,7 +447,9 @@ rules = ["missing_contract", "shell_result"]
 | `invar guard` | Full verification (static + doctest + property + symbolic) |
 | `invar guard --changed` | Only git-modified files |
 | `invar guard --static` | Static analysis only (~0.5s) |
-| `invar init` | Initialize or update project |
+| `invar init` | Initialize or update project (interactive) |
+| `invar init --claude` | Quick setup for Claude Code |
+| `invar uninstall` | Remove Invar from project (preserves user content) |
 | `invar sig <file>` | Show signatures and contracts |
 | `invar map` | Symbol map with reference counts |
 | `invar rules` | List all rules |

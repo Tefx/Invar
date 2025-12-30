@@ -76,11 +76,18 @@ def copy_template(
 
 # @shell_complexity: Config addition with existing file detection
 def add_config(path: Path, console) -> Result[bool, str]:
-    """Add configuration to project. Returns Success(True) if added, Success(False) if skipped."""
+    """Add configuration to project. Returns Success(True) if added, Success(False) if skipped.
+
+    DX-70: Creates .invar/config.toml instead of invar.toml for cleaner organization.
+    Backward compatible: still reads from invar.toml if it exists.
+    """
     pyproject = path / "pyproject.toml"
-    invar_toml = path / "invar.toml"
+    invar_dir = path / ".invar"
+    invar_config = invar_dir / "config.toml"
+    legacy_invar_toml = path / "invar.toml"
 
     try:
+        # Priority 1: Add to pyproject.toml if it exists
         if pyproject.exists():
             content = pyproject.read_text()
             if "[tool.invar]" not in content:
@@ -90,9 +97,15 @@ def add_config(path: Path, console) -> Result[bool, str]:
                 return Success(True)
             return Success(False)
 
-        if not invar_toml.exists():
-            invar_toml.write_text(_DEFAULT_INVAR_TOML)
-            console.print("[green]Created[/green] invar.toml")
+        # Skip if legacy invar.toml exists (backward compatibility)
+        if legacy_invar_toml.exists():
+            return Success(False)
+
+        # Create .invar/config.toml (DX-70: new default location)
+        if not invar_config.exists():
+            invar_dir.mkdir(exist_ok=True)
+            invar_config.write_text(_DEFAULT_INVAR_TOML)
+            console.print("[green]Created[/green] .invar/config.toml")
             return Success(True)
 
         return Success(False)
