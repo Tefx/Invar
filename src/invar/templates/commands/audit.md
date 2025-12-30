@@ -1,3 +1,9 @@
+---
+_invar:
+  version: "5.0"
+  type: command
+---
+
 # Audit
 
 Read-only code review. Reports issues without fixing them.

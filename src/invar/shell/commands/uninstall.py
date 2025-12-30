@@ -1,0 +1,341 @@
+"""
+DX-69: Uninstall Invar from a project.
+
+Safely removes Invar files and configurations while preserving user content.
+Uses marker-based detection to identify Invar-generated content.
+"""
+
+from __future__ import annotations
+
+import json
+import re
+import shutil
+from pathlib import Path
+
+import typer
+from rich.console import Console
+
+console = Console()
+
+
+def has_invar_marker(path: Path) -> bool:
+    """Check if a file has Invar markers (_invar: or <!--invar:)."""
+    try:
+        content = path.read_text()
+        return "_invar:" in content or "<!--invar:" in content
+    except (OSError, UnicodeDecodeError):
+        return False
+
+
+def has_invar_region_marker(path: Path) -> bool:
+    """Check if a file has # invar:begin marker."""
+    try:
+        content = path.read_text()
+        return "# invar:begin" in content
+    except (OSError, UnicodeDecodeError):
+        return False
+
+
+def has_invar_hook_marker(path: Path) -> bool:
+    """Check if a hook file has invar marker."""
+    try:
+        content = path.read_text()
+        # Invar hooks have specific patterns
+        return "invar" in content.lower() and (
+            "INVAR_" in content
+            or "invar guard" in content
+            or "invar_guard" in content
+            or "invar." in content.lower()  # wrapper files: source invar.PreToolUse.sh
+            or "invar hook" in content.lower()  # comment: # Invar hook wrapper
+        )
+    except (OSError, UnicodeDecodeError):
+        return False
+
+
+# @shell_orchestration: Regex patterns tightly coupled to file removal logic
+def remove_invar_regions(content: str) -> str:
+    """Remove <!--invar:xxx-->...<!--/invar:xxx--> regions except user region."""
+    patterns = [
+        # HTML-style regions (CLAUDE.md)
+        (r"<!--invar:critical-->.*?<!--/invar:critical-->\n?", ""),
+        (r"<!--invar:managed[^>]*-->.*?<!--/invar:managed-->\n?", ""),
+        (r"<!--invar:project-->.*?<!--/invar:project-->\n?", ""),
+        # Comment-style regions (.pre-commit-config.yaml)
+        (r"# invar:begin\n.*?# invar:end\n?", ""),
+    ]
+    for pattern, replacement in patterns:
+        content = re.sub(pattern, replacement, content, flags=re.DOTALL)
+    return content.strip()
+
+
+def remove_mcp_invar_entry(path: Path) -> tuple[bool, str]:
+    """Remove invar entry from .mcp.json, return (modified, new_content)."""
+    try:
+        content = path.read_text()
+        data = json.loads(content)
+        if "mcpServers" in data and "invar" in data["mcpServers"]:
+            del data["mcpServers"]["invar"]
+            # If no servers left, indicate file can be deleted
+            if not data["mcpServers"]:
+                return True, ""
+            return True, json.dumps(data, indent=2)
+        return False, content
+    except (OSError, json.JSONDecodeError):
+        return False, ""
+
+
+# @shell_complexity: Multi-file type detection requires comprehensive branching
+def collect_removal_targets(path: Path) -> dict:
+    """Collect files and directories to remove/modify."""
+    targets = {
+        "delete_dirs": [],
+        "delete_files": [],
+        "modify_files": [],
+        "skip": [],
+    }
+
+    # Directories to delete entirely
+    invar_dir = path / ".invar"
+    if invar_dir.exists():
+        targets["delete_dirs"].append((".invar/", "directory"))
+
+    # Files to delete entirely
+    for file_name, description in [
+        ("invar.toml", "config"),
+        ("INVAR.md", "protocol"),
+    ]:
+        file_path = path / file_name
+        if file_path.exists():
+            targets["delete_files"].append((file_name, description))
+
+    # Skills with _invar marker
+    skills_dir = path / ".claude" / "skills"
+    if skills_dir.exists():
+        for skill_dir in skills_dir.iterdir():
+            if skill_dir.is_dir():
+                skill_file = skill_dir / "SKILL.md"
+                if skill_file.exists():
+                    if has_invar_marker(skill_file):
+                        targets["delete_dirs"].append(
+                            (f".claude/skills/{skill_dir.name}/", "skill, has _invar marker")
+                        )
+                    else:
+                        targets["skip"].append(
+                            (f".claude/skills/{skill_dir.name}/", "no _invar marker")
+                        )
+
+    # Commands with _invar marker
+    commands_dir = path / ".claude" / "commands"
+    if commands_dir.exists():
+        for cmd_file in commands_dir.glob("*.md"):
+            if has_invar_marker(cmd_file):
+                targets["delete_files"].append(
+                    (f".claude/commands/{cmd_file.name}", "command, has _invar marker")
+                )
+            else:
+                targets["skip"].append(
+                    (f".claude/commands/{cmd_file.name}", "no _invar marker")
+                )
+
+    # Hooks with invar marker
+    hooks_dir = path / ".claude" / "hooks"
+    if hooks_dir.exists():
+        for hook_file in hooks_dir.glob("*.sh"):
+            if has_invar_hook_marker(hook_file):
+                targets["delete_files"].append(
+                    (f".claude/hooks/{hook_file.name}", "hook, has invar marker")
+                )
+
+    # CLAUDE.md - modify, not delete
+    claude_md = path / "CLAUDE.md"
+    if claude_md.exists():
+        content = claude_md.read_text()
+        if "<!--invar:" in content:
+            # Check if there's user content
+            has_user_region = "<!--invar:user-->" in content
+            targets["modify_files"].append(
+                ("CLAUDE.md", f"remove invar regions{', keep user region' if has_user_region else ''}")
+            )
+
+    # .mcp.json - modify or delete
+    mcp_json = path / ".mcp.json"
+    if mcp_json.exists():
+        modified, new_content = remove_mcp_invar_entry(mcp_json)
+        if modified:
+            if new_content:
+                targets["modify_files"].append((".mcp.json", "remove mcpServers.invar"))
+            else:
+                targets["delete_files"].append((".mcp.json", "only had invar config"))
+
+    # Config files with region markers (DX-69: cursor/aider removed)
+    for file_name in [".pre-commit-config.yaml"]:
+        file_path = path / file_name
+        if file_path.exists():
+            if has_invar_region_marker(file_path):
+                content = file_path.read_text()
+                cleaned = remove_invar_regions(content)
+                if cleaned:
+                    targets["modify_files"].append((file_name, "remove invar:begin..end block"))
+                else:
+                    targets["delete_files"].append((file_name, "only had invar content"))
+            else:
+                targets["skip"].append((file_name, "no invar:begin marker"))
+
+    # Empty directories to clean up
+    for dir_name in ["src/core", "src/shell"]:
+        dir_path = path / dir_name
+        if dir_path.exists() and dir_path.is_dir():
+            if not any(dir_path.iterdir()):
+                targets["delete_dirs"].append((dir_name, "empty directory"))
+
+    return targets
+
+
+# @shell_complexity: Rich output formatting for different target categories
+def show_preview(targets: dict) -> None:
+    """Display what would be removed/modified."""
+    console.print("\n[bold]Invar Uninstall Preview[/bold]")
+    console.print("=" * 40)
+
+    if targets["delete_dirs"] or targets["delete_files"]:
+        console.print("\n[red]Will DELETE:[/red]")
+        for item, desc in targets["delete_dirs"]:
+            console.print(f"  {item:40} ({desc})")
+        for item, desc in targets["delete_files"]:
+            console.print(f"  {item:40} ({desc})")
+
+    if targets["modify_files"]:
+        console.print("\n[yellow]Will MODIFY:[/yellow]")
+        for item, desc in targets["modify_files"]:
+            console.print(f"  {item:40} ({desc})")
+
+    if targets["skip"]:
+        console.print("\n[dim]Will SKIP:[/dim]")
+        for item, desc in targets["skip"]:
+            console.print(f"  {item:40} ({desc})")
+
+    console.print()
+
+
+# @shell_complexity: Different file types require different removal strategies
+def execute_removal(path: Path, targets: dict) -> None:
+    """Execute the removal/modification operations."""
+    # Delete directories
+    for dir_name, _ in targets["delete_dirs"]:
+        dir_path = path / dir_name.rstrip("/")
+        if dir_path.exists():
+            shutil.rmtree(dir_path)
+            console.print(f"[red]Deleted[/red] {dir_name}")
+
+    # Delete files
+    for file_name, _ in targets["delete_files"]:
+        file_path = path / file_name
+        if file_path.exists():
+            file_path.unlink()
+            console.print(f"[red]Deleted[/red] {file_name}")
+
+    # Modify files
+    for file_name, _desc in targets["modify_files"]:
+        file_path = path / file_name
+        if not file_path.exists():
+            continue
+
+        if file_name == ".mcp.json":
+            modified, new_content = remove_mcp_invar_entry(file_path)
+            if modified and new_content:
+                file_path.write_text(new_content)
+                console.print(f"[yellow]Modified[/yellow] {file_name}")
+        else:
+            content = file_path.read_text()
+            cleaned = remove_invar_regions(content)
+            if cleaned:
+                file_path.write_text(cleaned + "\n")
+                console.print(f"[yellow]Modified[/yellow] {file_name}")
+            else:
+                file_path.unlink()
+                console.print(f"[red]Deleted[/red] {file_name} (empty after cleanup)")
+
+    # Clean up empty .claude directory if it exists and is empty
+    claude_dir = path / ".claude"
+    if claude_dir.exists():
+        # Check subdirectories
+        for subdir in ["skills", "commands", "hooks"]:
+            subdir_path = claude_dir / subdir
+            if subdir_path.exists() and not any(subdir_path.iterdir()):
+                subdir_path.rmdir()
+                console.print(f"[dim]Removed empty[/dim] .claude/{subdir}/")
+        # Check if .claude itself is empty
+        if not any(claude_dir.iterdir()):
+            claude_dir.rmdir()
+            console.print("[dim]Removed empty[/dim] .claude/")
+
+
+def uninstall(
+    path: Path = typer.Argument(
+        Path(),
+        help="Project path",
+        exists=True,
+        file_okay=False,
+        dir_okay=True,
+        resolve_path=True,
+    ),
+    dry_run: bool = typer.Option(
+        False,
+        "--dry-run",
+        "-n",
+        help="Show what would be removed without removing",
+    ),
+    force: bool = typer.Option(
+        False,
+        "--force",
+        "-f",
+        help="Skip confirmation prompt",
+    ),
+) -> None:
+    """Remove Invar from a project.
+
+    Safely removes Invar-generated files and configurations while
+    preserving user content. Uses marker-based detection.
+
+    Examples:
+        invar uninstall --dry-run    # Preview changes
+        invar uninstall              # Remove with confirmation
+        invar uninstall --force      # Remove without confirmation
+    """
+    # Check if this is an Invar project
+    invar_toml = path / "invar.toml"
+    invar_md = path / "INVAR.md"
+    invar_dir = path / ".invar"
+
+    if not (invar_toml.exists() or invar_md.exists() or invar_dir.exists()):
+        console.print("[yellow]Warning:[/yellow] This doesn't appear to be an Invar project.")
+        console.print("No invar.toml, INVAR.md, or .invar/ directory found.")
+        raise typer.Exit(1)
+
+    # Collect targets
+    targets = collect_removal_targets(path)
+
+    # Check if there's anything to do
+    if not any([targets["delete_dirs"], targets["delete_files"], targets["modify_files"]]):
+        console.print("[green]Nothing to remove.[/green] Project is clean.")
+        raise typer.Exit(0)
+
+    # Show preview
+    show_preview(targets)
+
+    # Dry run exits here
+    if dry_run:
+        console.print("[dim]Dry run complete. No changes made.[/dim]")
+        raise typer.Exit(0)
+
+    # Confirmation
+    if not force:
+        confirm = typer.confirm("Proceed with uninstall?", default=False)
+        if not confirm:
+            console.print("[dim]Cancelled.[/dim]")
+            raise typer.Exit(0)
+
+    # Execute
+    execute_removal(path, targets)
+
+    console.print("\n[green]✓ Invar has been removed from the project.[/green]")

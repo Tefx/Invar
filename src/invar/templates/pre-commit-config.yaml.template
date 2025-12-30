@@ -1,3 +1,4 @@
+# invar:begin
 # Invar Pre-commit Hooks
 # Install: pre-commit install
 #
@@ -42,3 +43,4 @@ repos:
         pass_filenames: false
         stages: [pre-commit]
         types: [python]
+# invar:end

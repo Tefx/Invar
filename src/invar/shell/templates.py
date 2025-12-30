@@ -187,30 +187,16 @@ def copy_skills_directory(dest: Path, console) -> Result[bool, str]:
         return Failure(f"Failed to copy skills: {e}")
 
 
-# Agent configuration for multi-agent support (DX-11, DX-17)
+# Agent configuration - Claude Code only (DX-69: simplified, cursor/aider removed)
 AGENT_CONFIGS = {
     "claude": {
         "file": "CLAUDE.md",
         "template": "CLAUDE.md.template",
-        "reference": '> **Protocol:** Follow [INVAR.md](./INVAR.md) for the Invar development methodology.\n',
-        "check_pattern": "INVAR.md",
-    },
-    "cursor": {
-        "file": ".cursorrules",
-        "template": "cursorrules.template",
-        "reference": "Follow the Invar Protocol in INVAR.md.\n\n",
-        "check_pattern": "INVAR.md",
-    },
-    "aider": {
-        "file": ".aider.conf.yml",
-        "template": "aider.conf.yml.template",
-        "reference": "# Follow the Invar Protocol in INVAR.md\nread:\n  - INVAR.md\n",
         "check_pattern": "INVAR.md",
     },
 }
 
 
-# @shell_complexity: Agent config detection across multiple locations
 def detect_agent_configs(path: Path) -> Result[dict[str, str], str]:
     """
     Detect existing agent configuration files.
@@ -242,61 +228,6 @@ def detect_agent_configs(path: Path) -> Result[dict[str, str], str]:
         return Success(results)
     except OSError as e:
         return Failure(f"Failed to detect agent configs: {e}")
-
-
-# @shell_complexity: Reference addition with existing check
-def add_invar_reference(path: Path, agent: str, console) -> Result[bool, str]:
-    """Add Invar reference to an existing agent config file."""
-    if agent not in AGENT_CONFIGS:
-        return Failure(f"Unknown agent: {agent}")
-
-    config = AGENT_CONFIGS[agent]
-    config_path = path / config["file"]
-
-    if not config_path.exists():
-        return Failure(f"Config file not found: {config['file']}")
-
-    try:
-        content = config_path.read_text()
-        if config["check_pattern"] in content:
-            return Success(False)  # Already configured
-
-        # Prepend reference
-        new_content = config["reference"] + content
-        config_path.write_text(new_content)
-        console.print(f"[green]Updated[/green] {config['file']} (added Invar reference)")
-        return Success(True)
-    except OSError as e:
-        return Failure(f"Failed to update {config['file']}: {e}")
-
-
-# @shell_complexity: Config creation with template selection
-def create_agent_config(path: Path, agent: str, console) -> Result[bool, str]:
-    """
-    Create agent config from template (DX-17).
-
-    Creates full template file for agents that don't have an existing config.
-    """
-    if agent not in AGENT_CONFIGS:
-        return Failure(f"Unknown agent: {agent}")
-
-    config = AGENT_CONFIGS[agent]
-    config_path = path / config["file"]
-
-    if config_path.exists():
-        return Success(False)  # Already exists
-
-    # Use template if available
-    template_name = config.get("template")
-    if template_name:
-        result = copy_template(template_name, path, config["file"])
-        if isinstance(result, Success) and result.unwrap():
-            console.print(f"[green]Created[/green] {config['file']} (Invar workflow enforcement)")
-            return Success(True)
-        elif isinstance(result, Failure):
-            return result
-
-    return Success(False)
 
 
 # @shell_complexity: MCP server config with JSON manipulation

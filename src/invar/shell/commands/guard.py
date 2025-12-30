@@ -521,9 +521,11 @@ from invar.shell.commands.init import init
 from invar.shell.commands.mutate import mutate  # DX-28
 from invar.shell.commands.sync_self import sync_self  # DX-49
 from invar.shell.commands.test import test, verify
+from invar.shell.commands.uninstall import uninstall  # DX-69
 from invar.shell.commands.update import update
 
 app.command()(init)
+app.command()(uninstall)  # DX-69: Remove Invar from project
 app.command()(update)
 app.command()(test)
 app.command()(verify)
