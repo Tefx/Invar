@@ -329,7 +329,7 @@ AlphaCodium · Parsel · Reflexion · Clover
 | Agent | Status | Setup |
 |-------|--------|-------|
 | **Claude Code** | ✅ Full | `invar init --claude` |
-| **Pi** | ✅ Full | `invar init --pi` |
+| **[Pi](https://shittycodingagent.ai/)** | ✅ Full | `invar init --pi` |
 | **Cursor** | ✅ MCP | `invar init` → select Other, add MCP config |
 | **Other** | 📝 Manual | `invar init` → select Other, include `AGENT.md` in prompt |
 
@@ -343,7 +343,7 @@ All features auto-configured:
 - Claude Code hooks (tool guidance, verification reminders)
 - Pre-commit hooks
 
-### Pi (Full Support)
+### [Pi](https://shittycodingagent.ai/) (Full Support)
 
 Pi reads CLAUDE.md and .claude/skills/ directly, sharing configuration with Claude Code:
 - **Same instruction file** — CLAUDE.md (no separate AGENT.md needed)
