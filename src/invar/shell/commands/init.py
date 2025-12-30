@@ -22,6 +22,7 @@ from invar.shell.mcp_config import (
     generate_mcp_json,
     get_recommended_method,
 )
+from invar.shell.pi_hooks import install_pi_hooks
 from invar.shell.templates import (
     add_config,
     create_directories,
@@ -55,12 +56,16 @@ FILE_CATEGORIES: dict[str, list[tuple[str, str]]] = {
     "generic": [
         ("AGENT.md", "Universal agent instructions"),
     ],
+    "pi": [
+        ("AGENT.md", "Universal agent instructions"),
+        (".pi/hooks/", "Tool guidance hooks"),
+    ],
 }
 
 AGENT_CONFIGS: dict[str, dict[str, str]] = {
     "claude": {"name": "Claude Code", "category": "claude"},
+    "pi": {"name": "Pi Coding Agent", "category": "pi"},
     "generic": {"name": "Other (AGENT.md)", "category": "generic"},
-    # Future: "cursor", "windsurf", etc.
 }
 
 
@@ -103,6 +108,7 @@ def _prompt_agent_selection() -> list[str]:
 
     choices = [
         questionary.Choice("Claude Code (recommended)", value="claude"),
+        questionary.Choice("Pi Coding Agent", value="pi"),
         questionary.Choice("Other (AGENT.md)", value="generic"),
     ]
 
@@ -156,6 +162,8 @@ def _prompt_file_selection(agents: list[str]) -> dict[str, bool]:
         category_name = category.capitalize()
         if category == "claude":
             category_name = "Claude Code"
+        elif category == "pi":
+            category_name = "Pi Coding Agent"
         choices.append(questionary.Separator(f"── {category_name} ──"))
         for file, desc in files:
             choices.append(
@@ -378,6 +386,10 @@ def init(
     # Install Claude hooks if selected
     if "claude" in agents and selected_files.get(".claude/hooks/", True):
         install_claude_hooks(path, console)
+
+    # Install Pi hooks if selected
+    if "pi" in agents and selected_files.get(".pi/hooks/", True):
+        install_pi_hooks(path, console)
 
     # Create MCP setup guide
     mcp_setup = invar_dir / "mcp-setup.md"

@@ -1,0 +1,73 @@
+/**
+ * Invar Pi Hook
+ * Protocol: v{{ protocol_version }} | Generated: {{ generated_date }}
+ * LX-04: Full feature parity with Claude Code hooks
+ *
+ * Features:
+ * - pytest/crosshair blocking via tool_call
+ * - Protocol injection via pi.send() for long conversations
+ */
+
+import type { HookAPI } from "@mariozechner/pi-coding-agent/hooks";
+
+// Blocked commands (same as Claude Code)
+const BLOCKED_CMDS = [/^pytest\b/, /^python\s+-m\s+pytest/, /^crosshair\b/];
+const ALLOWED_FLAGS = [/--pdb/, /--cov/, /--debug/];
+
+// Protocol content for injection (escaped for JS)
+const INVAR_PROTOCOL = `{{ invar_protocol_escaped }}`;
+
+export default function (pi: HookAPI) {
+  let msgCount = 0;
+
+  // ============================================
+  // Session Management
+  // ============================================
+  pi.on("session", async (event) => {
+    // Reset count on session start/restore
+    if (event.reason === "start" || event.reason === "branch") {
+      msgCount = 0;
+    }
+  });
+
+  // ============================================
+  // Long Conversation Protocol Refresh
+  // ============================================
+  pi.on("agent_start", async () => {
+    msgCount++;
+
+    // Message 15: Lightweight checkpoint
+    if (msgCount === 15) {
+      pi.send(
+        "<system-reminder>Checkpoint: guard=verify, sig=contracts, USBV workflow.</system-reminder>"
+      );
+    }
+
+    // Message 25+: Full protocol injection every 10 messages
+    if (msgCount >= 25 && msgCount % 10 === 0) {
+      pi.send(`<system-reminder>
+=== Protocol Refresh (message ${msgCount}) ===
+${INVAR_PROTOCOL}
+</system-reminder>`);
+    }
+  });
+
+  // ============================================
+  // pytest/crosshair Blocking
+  // ============================================
+  pi.on("tool_call", async (event) => {
+    if (event.toolName !== "bash") return;
+    const cmd = ((event.input as Record<string, unknown>).command as string || "").trim();
+
+    // Skip if not a blocked command
+    if (!BLOCKED_CMDS.some((p) => p.test(cmd))) return;
+
+    // Allow if has debug/test flags
+    if (ALLOWED_FLAGS.some((p) => p.test(cmd))) return;
+
+    return {
+      block: true,
+      reason: "Use `{{ guard_cmd }}` instead of pytest/crosshair.",
+    };
+  });
+}
