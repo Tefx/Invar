@@ -6,8 +6,8 @@ Invar's core value—USBV workflow, contract-driven development, and automated v
 
 | Agent | Status | Setup |
 |-------|--------|-------|
-| **Claude Code** | ✅ Full | `invar init` → select Claude Code |
-| **Pi** | ✅ Native | `invar init` → select Pi |
+| **Claude Code** | ✅ Full | `invar init --claude` |
+| **Pi** | ✅ Full | `invar init --pi` |
 | **Cursor** | ✅ MCP | `invar init` → select Other, add MCP |
 | **Other** | 📝 Manual | `invar init` → select Other, include `AGENT.md` in prompt |
 
