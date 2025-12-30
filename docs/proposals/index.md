@@ -29,7 +29,7 @@ This directory contains design proposals for Invar development.
 
 | ID | Name | Status | Description |
 |----|------|--------|-------------|
-| LX-04 | multi-agent-framework | **Revised** | Minimal multi-agent (Pi+Cursor), leverages existing infra (6 days) |
+| LX-04 | multi-agent-framework | **Phase 2 Ready** | Pi hooks with `pi.send()` protocol injection (4.5 days) |
 | LX-02 | agent-portability-analysis | ✅ Complete | Research: 6 agents (Claude, Pi, Codex, Cursor, Cline, Aider) |
 | LX-01 | multi-language-feasibility | Draft | Feasibility assessment for multi-language Invar |
 
@@ -176,13 +176,14 @@ Complete: DX-63 (contracts-first)
 
 ## Recent Changes (2025-12-30)
 
-### LX-04 Phase 1 + 1.5 Complete
-- **LX-04** — Multi-Agent Framework **Revised** (15 days → 6 days)
+### LX-04 Phase 2 Revised
+- **LX-04** — Multi-Agent Framework **Phase 2 Ready** (15 days → 4.5 days)
   - **Phase 1 ✅:** Contract Rules added to CLAUDE.md critical section, Check-In simplified
   - **Phase 1.5 ✅:** Core/Shell edge cases, Task Router reference, SKILL.md Entry Actions
-  - **Version Flow Corrected:** `templates/` → Invar project (syntax=mcp) AND → User projects (syntax=cli)
-  - **Design Document:** Created `docs/reference/agent-information-hierarchy.md`
-  - Phase 2 (Pi) and Phase 3 (Cursor) pending
+  - **Phase 2 Revised:** Pi hooks with `pi.send()` for protocol injection (full feature parity!)
+  - **Key Discovery:** Pi's `pi.send()` API supports message injection → same capability as Claude Code
+  - **CLI Aligned:** Interactive menu instead of `--agent pi` flag (DX-70 consistent)
+  - Phase 2 (Pi: 1.5 days) and Phase 3 (Cursor: 1 day) ready to implement
 
 ### DX-68 Created
 - **DX-68** — Agent Behavior Optimization (Draft)
@@ -423,23 +424,25 @@ LX-04: Multi-Agent Framework         ← Active (canonical implementation)
 ### LX-04 Implementation Order (Revised 2025-12-30)
 
 ```
-Phase 1: Content Optimization (2 days)
-├── Fix version flow documentation
-├── Remove CLAUDE.md/INVAR.md duplicates
-└── Inline critical contract rules
+Phase 1: Content Optimization ✅ Complete
+├── Contract Rules inlined in CLAUDE.md critical section
+├── Task Router reference added
+└── Core/Shell edge cases documented
 
-Phase 2: Pi Support (2 days)
+Phase 2: Pi Support (1.5 days) ← NEXT
 ├── Create Pi TypeScript hook template
-├── Extend manifest.toml with agent config
-└── Add --agent pi to init command
+├── Implement pi.send() protocol injection (NEW!)
+├── Implement pytest/crosshair blocking
+└── Extend interactive menu for Pi selection
 
-Phase 3: Cursor Support (2 days)
+Phase 3: Cursor Support (1 day)
 ├── Create Cursor .mdc template
-├── Add --agent cursor to init
+├── Extend interactive menu for Cursor selection
 └── Test MCP integration
 ```
 
-> **Key Insight:** Leverages existing `sync_templates()` engine. No new copy-sync needed.
+> **Key Discovery:** Pi's `pi.send()` enables full feature parity with Claude Code hooks.
+> **CLI Alignment:** No new flags. Interactive menu only (DX-70 consistent).
 
 ### Future Phases
 

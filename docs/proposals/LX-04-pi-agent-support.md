@@ -1,13 +1,13 @@
 # LX-04: Multi-Agent Support Framework
 
-**Status:** Phase 1 + 1.5 Complete, Ready for Phase 2
+**Status:** Phase 1 + 1.5 Complete, Phase 2 Revised
 **Priority:** High
 **Category:** Language/Agent eXtensions
 **Created:** 2025-12-29
 **Updated:** 2025-12-30
-**Based on:** LX-02 (research), LX-03 Phase 1 (docs), Framework Review
+**Based on:** LX-02 (research), LX-03 Phase 1 (docs), Framework Review, Pi Hook API Analysis
 **Supersedes:** LX-03 Phase 2+ (template generation)
-**Reduction:** 15 days → 6 days (leverages existing infrastructure)
+**Reduction:** 15 days → 4.5 days (leverages existing infrastructure + simplified CLI)
 
 ## Summary
 
@@ -123,37 +123,98 @@ sync_templates(path, SyncConfig(
 <!--invar:extensions--> ← User extensions for skills
 ```
 
+## Pi Hook API Analysis (2025-12-30)
+
+### Key Discovery: `pi.send()` Supports Message Injection
+
+Pi's hook API supports injecting messages into the conversation via `pi.send()`:
+
+| Method | Purpose | Behavior |
+|--------|---------|----------|
+| `pi.send(text, attachments?)` | Inject message | If streaming → queue; else → new agent loop |
+| `queue_message` RPC | Queue for next turn | Inject without triggering new prompt |
+| `set_queue_mode` | Control injection | Configure how queued messages are injected |
+
+**Source:** [Pi Hooks Documentation](https://github.com/badlogic/pi-mono/blob/main/packages/coding-agent/docs/hooks.md)
+
+### Capability Comparison
+
+| Feature | Claude Code | Pi | Parity |
+|---------|-------------|-----|--------|
+| pytest blocking | `tool_call` block | `tool_call` block | ✅ Full |
+| Protocol injection | `UserPromptSubmit` echo | `agent_start` + `pi.send()` | ✅ Full |
+| Message counting | File state | Memory variable | ✅ Full |
+| Long conversation support | Every 10 msgs after 25 | Every 10 msgs after 25 | ✅ Full |
+
+**Conclusion:** Pi hooks can achieve full feature parity with Claude Code hooks.
+
 ## What's Missing (Minimal Additions)
 
 ### 1. Pi TypeScript Hooks
 
 ```
 src/invar/templates/hooks/pi/
-└── invar-guard.ts.jinja
+└── invar.ts.jinja
 ```
 
-**Content:**
+**Content (Full Feature Parity with Claude Code):**
 ```typescript
 import type { HookAPI } from "@mariozechner/pi-coding-agent/hooks";
 
-const BLOCKED = [/^pytest\b/, /^python\s+-m\s+pytest/, /^crosshair\b/];
-const ALLOWED = [/--pdb/, /--cov/, /--debug/];
+const BLOCKED_CMDS = [/^pytest\b/, /^python\s+-m\s+pytest/, /^crosshair\b/];
+const ALLOWED_FLAGS = [/--pdb/, /--cov/, /--debug/];
+
+// Protocol content injected via Jinja
+const INVAR_PROTOCOL = `{{ invar_protocol | escape_js }}`;
 
 export default function(pi: HookAPI) {
-  pi.on("tool_call", async (event, ctx) => {
-    if (event.toolName !== "bash") return;
-    const cmd = (event.input.command as string).trim();
+  let msgCount = 0;
 
-    if (!BLOCKED.some(p => p.test(cmd))) return;
-    if (ALLOWED.some(p => p.test(cmd))) return;
+  // ============================================
+  // Long Conversation Protocol Refresh
+  // ============================================
+  pi.on("agent_start", async () => {
+    msgCount++;
+
+    // Message 15: Lightweight checkpoint
+    if (msgCount === 15) {
+      pi.send("<system-reminder>Checkpoint: guard=verify, sig=contracts, USBV workflow.</system-reminder>");
+    }
+
+    // Message 25+: Full protocol injection every 10 messages
+    if (msgCount >= 25 && msgCount % 10 === 0) {
+      pi.send(`<system-reminder>
+=== Protocol Refresh (message ${msgCount}) ===
+${INVAR_PROTOCOL}
+</system-reminder>`);
+    }
+  });
+
+  // ============================================
+  // pytest/crosshair Blocking
+  // ============================================
+  pi.on("tool_call", async (event) => {
+    if (event.toolName !== "bash") return;
+    const cmd = (event.input.command as string || "").trim();
+
+    // Skip if not a blocked command
+    if (!BLOCKED_CMDS.some(p => p.test(cmd))) return;
+
+    // Allow if has debug/test flags
+    if (ALLOWED_FLAGS.some(p => p.test(cmd))) return;
 
     return {
       block: true,
-      reason: "Use `{{ syntax == 'mcp' and 'invar_guard()' or 'invar guard' }}` instead."
+      reason: "Use `invar guard` instead of pytest/crosshair."
     };
   });
 }
 ```
+
+**Key Features:**
+1. **Protocol injection** via `pi.send()` — same cadence as Claude Code (msg 15, 25, 35...)
+2. **pytest/crosshair blocking** via `tool_call` — same logic as Claude Code
+3. **Memory-based counting** — simpler than file-based state
 
 ### 2. Cursor Rules Template
 
@@ -208,14 +269,20 @@ cursor = { enabled = false, rules_format = "mdc" }
 ".cursor/rules/invar.mdc" = { src = "config/cursor.mdc.jinja", type = "jinja", agent = "cursor" }
 ```
 
-### 4. CLI Extension
+### 4. CLI Extension (DX-70 Aligned)
+
+**No new flags.** Use interactive selection (consistent with DX-70 simplification):
 
 ```bash
-# Add --agent flag to init
-invar init --agent pi          # Enable Pi hooks
-invar init --agent cursor      # Enable Cursor rules
-invar init --agent claude,pi   # Multiple agents
+invar init
+# → Interactive menu:
+#   [x] Claude Code (full support)
+#   [ ] Pi (hooks + protocol injection)
+#   [ ] Cursor (MCP + rules)
+#   [ ] Other (AGENT.md only)
 ```
+
+**Implementation:** Extend existing questionary menu in `init.py` to include agent selection.
 
 ## Content Optimization (Phase 1)
 
@@ -303,35 +370,47 @@ def calc(x: int, y: int = 0): ...
 
 **Actual Change:** +10 lines in CLAUDE.md, +1 line in SKILL.md develop
 
-### Phase 2: Pi Support (2 days)
+### Phase 2: Pi Support (1.5 days) — REVISED
 
-| Task | Output |
-|------|--------|
-| 2.1 Create Pi TypeScript hook template | `templates/hooks/pi/invar-guard.ts.jinja` |
-| 2.2 Extend manifest.toml with agent config | Agent configuration |
-| 2.3 Add `--agent pi` to init command | CLI support |
-| 2.4 Test Pi blocking pytest | Validation |
+| Task | Output | Priority |
+|------|--------|----------|
+| 2.1 Create Pi TypeScript hook template | `templates/hooks/pi/invar.ts.jinja` | P0 |
+| 2.2 Implement protocol injection (`pi.send()`) | Long conversation support | P0 |
+| 2.3 Implement pytest/crosshair blocking | Tool call interception | P0 |
+| 2.4 Add `escape_js` Jinja filter | Protocol escaping for JS | P1 |
+| 2.5 Extend interactive menu for Pi | Agent selection in init | P1 |
+| 2.6 Test Pi integration | pytest blocking + protocol refresh | P1 |
+| 2.7 Documentation | docs/guides/pi.md | P2 |
 
-### Phase 3: Cursor Support (2 days)
+**Key Changes from Original:**
+- ~~`--agent pi` flag~~ → Interactive menu (DX-70 aligned)
+- Added protocol injection via `pi.send()` (major feature)
+- Simplified to single hook file (pytest + protocol combined)
 
-| Task | Output |
-|------|--------|
-| 3.1 Create Cursor .mdc template | `templates/config/cursor.mdc.jinja` |
-| 3.2 Add `--agent cursor` to init | CLI support |
-| 3.3 Test Cursor MCP integration | Validation |
+### Phase 3: Cursor Support (1 day)
 
-**Total: 6 days** (vs original 15 days)
+| Task | Output | Priority |
+|------|--------|----------|
+| 3.1 Create Cursor .mdc template | `templates/config/cursor.mdc.jinja` | P0 |
+| 3.2 Extend interactive menu for Cursor | Agent selection in init | P1 |
+| 3.3 Test Cursor MCP integration | Validation | P1 |
+
+**Note:** Cursor has no hook equivalent. Protocol refresh relies on MCP tools + rules file.
+
+**Total: 4.5 days** (vs original 6 days, vs original-original 15 days)
 
 ## Architecture Comparison
 
-| Aspect | Original LX-04 | Revised LX-04 |
-|--------|----------------|---------------|
+| Aspect | Original LX-04 | Revised LX-04 (2025-12-30) |
+|--------|----------------|----------------------------|
 | Manifest | New JSON Schema | **Extend manifest.toml** |
 | Copy-Sync | Full implementation | **Not needed** (Pi reads .claude/) |
 | Templates | Jinja2 system | **Already exists** |
 | Sync engine | New implementation | **Use sync_templates()** |
 | Region markers | Generation markers | **Use existing <!--invar:*-->** |
-| Time estimate | 15 days | **6 days** |
+| CLI flags | `--agent pi/cursor` | **Interactive menu** (DX-70) |
+| Pi protocol refresh | Not planned | **`pi.send()` injection** ✨ |
+| Time estimate | 15 days | **4.5 days** |
 
 ## Testing Strategy
 
@@ -354,20 +433,44 @@ def calc(x: int, y: int = 0): ...
 
 ### Test: Pi Integration (Phase 2)
 
-1. Run `invar init --agent pi`
+**Test A: pytest Blocking**
+1. Run `invar init` → select Pi
 2. Run `pi -p "run: pytest --version"`
-3. Observe: Command blocked with "Use invar_guard() instead"?
+3. **Success:** Command blocked with "Use invar guard instead"
+
+**Test B: Protocol Injection (Long Conversation)**
+1. Start Pi session with Invar project
+2. Send 25+ messages
+3. **Success:** Protocol refresh message appears at message 25, 35, etc.
+
+**Test C: Full Workflow**
+1. Run `invar init` → select Pi
+2. Request: "add a function to calculate compound interest"
+3. **Success:** Agent follows USBV, uses `invar guard`, contracts correct
 
 ## Risks and Mitigations
 
 | Risk | Probability | Mitigation |
 |------|-------------|------------|
 | Agent doesn't follow INVAR.md link | Medium | Keep critical rules in CLAUDE.md |
-| Pi TypeScript hook compatibility | Low | Test with Pi 0.30.2+ |
+| Pi TypeScript hook compatibility | Low | Test with Pi 0.30.2+; minimal API surface |
+| `pi.send()` timing issues | Low | Queue behavior documented; test streaming scenarios |
 | Cursor .mdc format changes | Low | Simple template, easy to update |
+| Protocol too large for injection | Low | Use same ~300 line protocol as Claude Code |
+
+## Open Questions
+
+1. **Session persistence:** Does Pi hook state (msgCount) persist across session restore?
+   - If not, protocol refresh may trigger unexpectedly after restore
+   - Mitigation: Use `session` event to reset count on restore
+
+2. **`pi.send()` during streaming:** What happens if we call `pi.send()` while agent is streaming?
+   - Documentation says "queued" — need to verify this works for protocol injection
 
 ## References
 
 - [Pi Hooks Documentation](https://github.com/badlogic/pi-mono/blob/main/packages/coding-agent/docs/hooks.md)
+- [Pi RPC Documentation](https://github.com/badlogic/pi-mono/blob/main/packages/coding-agent/docs/rpc.md)
 - [Cursor Rules](https://cursor.com/docs/context/rules)
 - [DX-56: Unified Sync Engine](./completed/DX-56-template-sync.md)
+- [DX-70: Init Simplification](./DX-70-init-simplification.md)
