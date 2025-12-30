@@ -54,6 +54,7 @@ extensions = { action = "preserve" }
 
 # Config files (Jinja2 templates)
 "CLAUDE.md" = { src = "config/CLAUDE.md.jinja", type = "jinja" }
+"AGENT.md" = { src = "config/AGENT.md.jinja", type = "jinja" }
 ".invar/context.md" = { src = "config/context.md.jinja", type = "jinja" }
 ".pre-commit-config.yaml" = { src = "config/pre-commit.yaml.jinja", type = "jinja" }
 

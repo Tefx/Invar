@@ -260,6 +260,23 @@ def collect_removal_targets(path: Path) -> dict:
                     (f".claude/hooks/{hook_file.name}", "hook, has invar marker")
                 )
 
+    # Pi hooks (LX-04)
+    pi_hooks_dir = path / ".pi" / "hooks"
+    if pi_hooks_dir.exists():
+        invar_ts = pi_hooks_dir / "invar.ts"
+        if invar_ts.exists():
+            targets["delete_files"].append((".pi/hooks/invar.ts", "Pi hook"))
+        # Check if .pi/hooks is empty after removal
+        if not any(f for f in pi_hooks_dir.iterdir() if f.name != "invar.ts"):
+            targets["delete_dirs"].append((".pi/hooks/", "empty after removal"))
+        # Check if .pi is empty
+        pi_dir = path / ".pi"
+        hooks_only = all(
+            child.name == "hooks" for child in pi_dir.iterdir() if child.is_dir()
+        )
+        if hooks_only:
+            targets["delete_dirs"].append((".pi/", "only had hooks"))
+
     # CLAUDE.md - delete if empty user region, otherwise modify
     claude_md = path / "CLAUDE.md"
     if claude_md.exists():

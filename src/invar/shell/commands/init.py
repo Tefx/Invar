@@ -57,8 +57,9 @@ FILE_CATEGORIES: dict[str, list[tuple[str, str]]] = {
         ("AGENT.md", "Universal agent instructions"),
     ],
     "pi": [
-        ("AGENT.md", "Universal agent instructions"),
-        (".pi/hooks/", "Tool guidance hooks"),
+        ("CLAUDE.md", "Agent instructions (Pi compatible)"),
+        (".claude/skills/", "Workflow automation (Pi compatible)"),
+        (".pi/hooks/", "Pi-specific hooks"),
     ],
 }
 
