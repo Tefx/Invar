@@ -328,8 +328,11 @@ AlphaCodium · Parsel · Reflexion · Clover
 | Agent | Status | Setup |
 |-------|--------|-------|
 | **Claude Code** | ✅ Full | `invar init` → select Claude Code |
-| **Pi / Cursor** | 🚧 In progress | `invar init` → select Other, include `AGENT.md` in prompt |
+| **Pi** | ✅ Native | `invar init` → select Pi |
+| **Cursor** | ✅ MCP | `invar init` → select Other, add MCP config |
 | **Other** | 📝 Manual | `invar init` → select Other, include `AGENT.md` in prompt |
+
+> **See also:** [Multi-Agent Guide](./docs/guides/multi-agent.md) for detailed integration instructions.
 
 ### Claude Code (Full Experience)
 
@@ -339,13 +342,24 @@ All features auto-configured:
 - Claude Code hooks (tool guidance, verification reminders)
 - Pre-commit hooks
 
-### Pi / Cursor (In Progress)
+### Pi (Native Support)
 
-Currently available:
-- Protocol document (INVAR.md)
-- CLI verification (`invar guard`)
+Pi reads CLAUDE.md and .claude/skills/ directly, sharing configuration with Claude Code:
+- **Same instruction file** — CLAUDE.md (no separate AGENT.md needed)
+- **Same workflow skills** — .claude/skills/ work in Pi
+- **Pi-specific hooks** — .pi/hooks/invar.ts for pytest blocking and protocol refresh
+- **Protocol injection** — Long conversation support via `pi.send()`
 - Pre-commit hooks
-- MCP server (manual configuration)
+
+### Cursor (MCP + Rules)
+
+Cursor users get full verification via MCP:
+- MCP tools (`invar_guard`, `invar_sig`, `invar_map`)
+- .cursor/rules/ for USBV workflow guidance
+- Hooks (beta) for pytest blocking
+- Pre-commit hooks
+
+> See [Cursor Guide](./docs/guides/cursor.md) for detailed setup.
 
 ### Other Editors (Manual)
 

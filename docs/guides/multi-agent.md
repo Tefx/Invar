@@ -7,7 +7,8 @@ Invar's core value—USBV workflow, contract-driven development, and automated v
 | Agent | Status | Setup |
 |-------|--------|-------|
 | **Claude Code** | ✅ Full | `invar init` → select Claude Code |
-| **Pi / Cursor** | 🚧 In progress | `invar init` → select Other, include `AGENT.md` in prompt |
+| **Pi** | ✅ Native | `invar init` → select Pi |
+| **Cursor** | ✅ MCP | `invar init` → select Other, add MCP |
 | **Other** | 📝 Manual | `invar init` → select Other, include `AGENT.md` in prompt |
 
 ## Quick Comparison
@@ -15,6 +16,7 @@ Invar's core value—USBV workflow, contract-driven development, and automated v
 | Agent | Instruction File | MCP Support | Hooks | Effort |
 |-------|------------------|-------------|-------|--------|
 | [Claude Code](../agents.md) | CLAUDE.md | ✅ Full | ✅ 4 types | Native |
+| [Pi](#pi) | CLAUDE.md (shared) | ❌ | ✅ TypeScript | Native |
 | [Cline](#cline) | .clinerules | ✅ Full | ❌ | Manual |
 | [Cursor](#cursor) | .cursorrules | ✅ Full | ✅ Beta | Manual |
 | [Aider](#aider) | CONVENTIONS.md | ⚠️ CLI | ❌ | Manual |
@@ -34,9 +36,34 @@ Invar's core value—USBV workflow, contract-driven development, and automated v
 
 | Feature | Alternative |
 |---------|-------------|
-| Skills (auto-routing) | Manual workflow triggers |
-| Hooks (pytest blocking) | Cursor Beta / Manual discipline |
+| Skills (auto-routing) | Pi: skills work / Others: Manual triggers |
+| Hooks (pytest blocking) | Pi: TypeScript hooks / Cursor: Beta / Others: Manual |
 | Commands (/audit, /guard) | Direct tool calls |
+
+---
+
+## Pi
+
+**Terminal-based coding agent with CLAUDE.md support**
+
+→ [Full Guide: Pi Integration](./pi.md)
+
+```bash
+# Setup
+invar init    # Select "Pi Coding Agent"
+```
+
+**Key discovery:** Pi reads CLAUDE.md and .claude/skills/ directly — no separate configuration needed!
+
+**Features:**
+- **Same instruction file** — CLAUDE.md (shared with Claude Code)
+- **Same workflow skills** — .claude/skills/ work natively
+- **TypeScript hooks** — .pi/hooks/invar.ts for pytest blocking
+- **Protocol injection** — `pi.send()` for long conversation support
+- Pre-commit hooks
+
+**What's installed:**
+- `.pi/hooks/invar.ts` — pytest/crosshair blocking + protocol refresh
 
 ---
 
@@ -151,14 +178,15 @@ Or if installed in a virtual environment:
 
 ## Feature Parity Matrix
 
-| Feature | Claude | Cursor | Cline | Continue | Aider |
-|---------|--------|--------|-------|----------|-------|
-| USBV Workflow | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Guard via MCP | ✅ | ✅ | ✅ | ✅ | ❌ CLI |
-| Guard via CLI | ✅ | ✅ | ✅ | ✅ | ✅ |
-| pytest Blocking | ✅ Hook | ⚠️ Beta | ❌ | ❌ | ✅ Built-in |
-| Auto-routing | ✅ Skills | ❌ | ⚠️ Modes | ⚠️ Commands | ❌ |
-| Plan Mode | ❌ | ❌ | ✅ | ❌ | ❌ |
+| Feature | Claude | Pi | Cursor | Cline | Continue | Aider |
+|---------|--------|-----|--------|-------|----------|-------|
+| USBV Workflow | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Guard via MCP | ✅ | ❌ | ✅ | ✅ | ✅ | ❌ CLI |
+| Guard via CLI | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| pytest Blocking | ✅ Hook | ✅ Hook | ⚠️ Beta | ❌ | ❌ | ✅ Built-in |
+| Auto-routing | ✅ Skills | ✅ Skills | ❌ | ⚠️ Modes | ⚠️ Commands | ❌ |
+| Protocol Refresh | ✅ Hook | ✅ Hook | ❌ | ❌ | ❌ | ❌ |
+| Plan Mode | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ |
 
 ---
 
@@ -167,14 +195,22 @@ Or if installed in a virtual environment:
 | If you want... | Choose |
 |----------------|--------|
 | Full Invar experience | Claude Code |
+| Terminal + skill sharing | Pi |
 | IDE integration + hooks | Cursor |
 | Open source + Plan Mode | Cline |
-| Terminal workflow | Aider |
+| Terminal + git-aware | Aider |
 | Model flexibility | Continue |
 
 ---
 
 ## Migration Path
+
+### From Claude Code to Pi
+
+No migration needed! Pi reads the same files:
+- CLAUDE.md → works in Pi
+- .claude/skills/ → works in Pi
+- Just run `invar init` → select Pi to add hooks
 
 ### From Claude Code to Others
 
@@ -223,6 +259,7 @@ Each agent has specific file locations:
 
 ## Next Steps
 
+- [Pi Integration Guide](./pi.md) — Native support, shares CLAUDE.md
 - [Cline Integration Guide](./cline.md)
 - [Cursor Integration Guide](./cursor.md)
 - [Aider Integration Guide](./aider.md)

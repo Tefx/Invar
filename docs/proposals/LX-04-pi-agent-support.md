@@ -1,6 +1,6 @@
 # LX-04: Multi-Agent Support Framework
 
-**Status:** Phase 1 + 1.5 Complete, Phase 2 Revised
+**Status:** Phase 1 + 1.5 + 2 (Partial) Complete
 **Priority:** High
 **Category:** Language/Agent eXtensions
 **Created:** 2025-12-29
@@ -370,17 +370,30 @@ def calc(x: int, y: int = 0): ...
 
 **Actual Change:** +10 lines in CLAUDE.md, +1 line in SKILL.md develop
 
-### Phase 2: Pi Support (1.5 days) — REVISED
+### Phase 2: Pi Support (1.5 days) — PARTIAL COMPLETE
 
-| Task | Output | Priority |
-|------|--------|----------|
-| 2.1 Create Pi TypeScript hook template | `templates/hooks/pi/invar.ts.jinja` | P0 |
-| 2.2 Implement protocol injection (`pi.send()`) | Long conversation support | P0 |
-| 2.3 Implement pytest/crosshair blocking | Tool call interception | P0 |
-| 2.4 Add `escape_js` Jinja filter | Protocol escaping for JS | P1 |
-| 2.5 Extend interactive menu for Pi | Agent selection in init | P1 |
-| 2.6 Test Pi integration | pytest blocking + protocol refresh | P1 |
-| 2.7 Documentation | docs/guides/pi.md | P2 |
+| Task | Output | Priority | Status |
+|------|--------|----------|--------|
+| 2.1 Create Pi TypeScript hook template | `templates/hooks/pi/invar.ts.jinja` | P0 | 🔄 Pending |
+| 2.2 Implement protocol injection (`pi.send()`) | Long conversation support | P0 | 🔄 Pending |
+| 2.3 Implement pytest/crosshair blocking | Tool call interception | P0 | 🔄 Pending |
+| 2.4 Add `escape_js` Jinja filter | Protocol escaping for JS | P1 | 🔄 Pending |
+| 2.5 Extend interactive menu for Pi | Agent selection in init | P1 | ✅ Done |
+| 2.6 Test Pi integration | pytest blocking + protocol refresh | P1 | 🔄 Pending |
+| 2.7 Documentation | docs/guides/pi.md | P2 | ✅ Done |
+| 2.8 Fix Pi preview in init | FILE_CATEGORIES correction | P0 | ✅ Done |
+| 2.9 Add Pi to uninstall | .pi/hooks/ removal | P1 | ✅ Done |
+
+**Completed (2025-12-30):**
+- Interactive menu shows "Pi Coding Agent" option
+- Pi category installs CLAUDE.md + .claude/skills/ (shared with Claude Code)
+- Pi hooks removal added to `invar uninstall`
+- Documentation: README.md, docs/guides/multi-agent.md, docs/guides/pi.md
+
+**Remaining:**
+- Create Pi TypeScript hook template (`.pi/hooks/invar.ts.jinja`)
+- Implement actual hook installation (currently placeholder)
+- Test with real Pi agent
 
 **Key Changes from Original:**
 - ~~`--agent pi` flag~~ → Interactive menu (DX-70 aligned)
