@@ -349,17 +349,23 @@ def init(
 
     # LX-05: Language detection and validation
     if language is None:
-        language = detect_language(path)
+        detected = detect_language(path)
+        # Fall back to python for unsupported detected languages
+        if detected in FUTURE_LANGUAGES:
+            console.print(
+                f"[yellow]Note:[/yellow] {detected} project detected. "
+                f"Using python templates (most similar). "
+                f"Native {detected} support coming soon."
+            )
+            language = "python"
+        else:
+            language = detected
     else:
-        # Validate provided language
+        # Validate explicitly provided language
         if language not in VALID_LANGUAGES:
             valid = ", ".join(sorted(VALID_LANGUAGES))
             console.print(f"[red]Error:[/red] Invalid language '{language}'. Must be one of: {valid}")
             raise typer.Exit(1)
-
-    # Warn for future languages
-    if language in FUTURE_LANGUAGES:
-        console.print(f"[yellow]Warning:[/yellow] {language} support is experimental")
 
     # Header
     if claude:

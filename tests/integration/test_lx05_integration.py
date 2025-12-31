@@ -178,6 +178,29 @@ class TestCLILanguageParameter:
         # Should show typescript detected
         assert "typescript" in result.stdout.lower()
 
+    def test_cli_future_language_fallback(self, tmp_path: Path):
+        """CLI handles future language (rust) by falling back to python."""
+        (tmp_path / "Cargo.toml").write_text("[package]\nname = 'test'")
+
+        result = subprocess.run(
+            [
+                "invar",
+                "init",
+                str(tmp_path),
+                "--claude",
+                "--preview",
+            ],
+            capture_output=True,
+            text=True,
+        )
+
+        # Should succeed (no crash) and show rust detected with fallback
+        assert result.returncode == 0
+        # Should mention rust was detected
+        assert "rust" in result.stdout.lower()
+        # Should indicate fallback to python
+        assert "python" in result.stdout.lower()
+
 
 # =============================================================================
 # Agent Workflow Acceptance Tests
