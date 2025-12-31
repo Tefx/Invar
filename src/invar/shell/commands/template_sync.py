@@ -87,7 +87,12 @@ def sync_templates(path: Path, config: SyncConfig) -> Result[SyncReport, str]:
     for dest_rel, src_rel in fully_managed:
         if should_skip_file(dest_rel, config.skip_patterns):
             continue
-        result = _sync_fully_managed(path, templates_dir, dest_rel, src_rel, config, report)
+        # Get template type from manifest (LX-05: support jinja for fully_managed)
+        template_config = manifest.get("templates", {}).get(dest_rel, {})
+        template_type = template_config.get("type", "copy")
+        result = _sync_fully_managed(
+            path, templates_dir, dest_rel, src_rel, template_type, variables, config, report
+        )
         if isinstance(result, Failure):
             report.errors.append(result.failure())
 
@@ -128,26 +133,38 @@ def _load_project_additions(path: Path) -> str:
     return ""
 
 
-# @shell_complexity: File I/O with multiple existence/content checks
+# @shell_complexity: File I/O with multiple existence/content checks and Jinja rendering
 def _sync_fully_managed(
     path: Path,
     templates_dir: Path,
     dest_rel: str,
     src_rel: str,
+    template_type: str,
+    variables: dict,
     config: SyncConfig,
     report: SyncReport,
 ) -> Result[str, str]:
-    """Sync a fully managed file (direct overwrite)."""
+    """Sync a fully managed file (direct overwrite).
+
+    LX-05: Now supports Jinja templates for composition.
+    """
     dest_file = path / dest_rel
     src_file = templates_dir / src_rel
 
     if not src_file.exists():
         return Failure(f"Template not found: {src_rel}")
 
-    try:
-        new_content = src_file.read_text()
-    except OSError as e:
-        return Failure(f"Failed to read template {src_rel}: {e}")
+    # LX-05: Render Jinja templates, copy plain files
+    if template_type == "jinja":
+        render_result = render_template_file(src_file, variables)
+        if isinstance(render_result, Failure):
+            return render_result
+        new_content = render_result.unwrap()
+    else:
+        try:
+            new_content = src_file.read_text()
+        except OSError as e:
+            return Failure(f"Failed to read template {src_rel}: {e}")
 
     # Check if update needed
     if dest_file.exists() and not config.force:

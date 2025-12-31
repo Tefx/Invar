@@ -162,7 +162,9 @@ def render_template_file(
     template_path: Path,
     variables: dict[str, str],
 ) -> Result[str, str]:
-    """Render a Jinja2 template file.
+    """Render a Jinja2 template file with {% include %} support.
+
+    Uses FileSystemLoader to resolve includes relative to templates directory.
 
     Examples:
         >>> from pathlib import Path
@@ -176,11 +178,33 @@ def render_template_file(
         >>> path.unlink()
     """
     try:
-        content = template_path.read_text()
+        from jinja2 import Environment, FileSystemLoader, StrictUndefined
+
+        # Use FileSystemLoader for {% include %} support (LX-05)
+        templates_dir = get_templates_dir()
+        env = Environment(
+            loader=FileSystemLoader(str(templates_dir)),
+            undefined=StrictUndefined,
+            keep_trailing_newline=True,
+        )
+
+        # Get template path relative to templates directory
+        try:
+            rel_path = template_path.relative_to(templates_dir)
+            template = env.get_template(str(rel_path))
+        except ValueError:
+            # Template is not in templates_dir, fall back to direct rendering
+            content = template_path.read_text()
+            template = env.from_string(content)
+
+        rendered = template.render(**variables)
+        return Success(rendered)
     except OSError as e:
         return Failure(f"Failed to read template {template_path}: {e}")
-
-    return render_template(content, variables)
+    except ImportError:
+        return Failure("Jinja2 not installed. Run: pip install jinja2")
+    except Exception as e:
+        return Failure(f"Template rendering failed: {e}")
 
 
 # =============================================================================
