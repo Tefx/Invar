@@ -1,14 +1,31 @@
 ## Commands (TypeScript)
 
 ```bash
-# Verification
-npm run guard                # Full: tsc + eslint + vitest + fast-check
-npm run guard:static         # Static only (quick debug)
-npm run guard:changed        # Modified files only
+# Verification (Python CLI - works for TypeScript)
+invar guard                  # Full: tsc + eslint + vitest + ts-analyzer
+invar guard --json           # Agent-friendly v2.0 JSON output
+invar guard --changed        # Modified files only
 
-# Analysis (when invar-ts available)
-invar sig <file>             # Show Zod schemas + signatures
+# Analysis
+invar sig <file>             # Show function signatures
 invar map --top 10           # Most-referenced symbols
+```
+
+## Guard Output (v2.0 JSON)
+
+```json
+{
+  "version": "2.0",
+  "language": "typescript",
+  "status": "passed",
+  "contracts": {
+    "coverage": {"total": 10, "withContracts": 7, "percent": 70},
+    "quality": {"strong": 3, "medium": 2, "weak": 1, "useless": 0},
+    "blind_spots": [
+      {"function": "deleteUser", "risk": "high", "suggested_schema": "z.object({...})"}
+    ]
+  }
+}
 ```
 
 ## Configuration (TypeScript)
@@ -17,10 +34,9 @@ invar map --top 10           # Most-referenced symbols
 // package.json
 {
   "scripts": {
-    "guard": "tsc --noEmit && eslint . && vitest run",
-    "guard:static": "tsc --noEmit && eslint .",
-    "test": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "build": "tsc",
+    "test": "vitest run",
+    "lint": "eslint src/"
   }
 }
 ```
@@ -31,11 +47,19 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   test: {
-    include: ['src/**/*.test.ts'],
-    coverage: {
-      provider: 'v8',
-      reporter: ['text', 'json'],
-    },
+    include: ['src/**/*.test.ts', 'src/**/*.property.ts'],
   },
 });
 ```
+
+## Embedded Node Tools
+
+Invar includes bundled TypeScript analysis tools (no npm install required):
+
+| Tool | Purpose |
+|------|---------|
+| **ts-analyzer** | Contract coverage, blind spot detection |
+| **fc-runner** | Property-based testing with fast-check |
+| **quick-check** | Fast pre-commit verification (<1s) |
+
+These are called automatically by `invar guard` when analyzing TypeScript projects.

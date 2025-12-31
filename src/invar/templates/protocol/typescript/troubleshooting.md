@@ -1,5 +1,45 @@
 ## Troubleshooting (TypeScript)
 
+### Guard Output Interpretation
+
+```json
+{
+  "status": "failed",
+  "contracts": {
+    "coverage": {"total": 10, "withContracts": 5, "percent": 50},
+    "blind_spots": [
+      {"function": "deleteUser", "risk": "high", "suggested_schema": "z.object({userId: z.string()})"}
+    ]
+  }
+}
+```
+
+| Field | Meaning | Action |
+|-------|---------|--------|
+| `status: failed` | Verification errors | Fix tsc/eslint/test errors first |
+| `coverage.percent < 70` | Low contract coverage | Add Zod schemas to uncovered functions |
+| `blind_spots` (high risk) | Critical functions without contracts | Priority: add schemas before next commit |
+| `blind_spots` (medium risk) | Functions that should have contracts | Add schemas when modifying |
+
+### Fixing Blind Spots
+
+```typescript
+// Before: blind spot (no validation)
+function deleteUser(userId: string): void {
+  db.delete(userId);
+}
+
+// After: contract added
+const DeleteUserInput = z.object({
+  userId: z.string().uuid(),
+});
+
+function deleteUser(input: z.infer<typeof DeleteUserInput>): void {
+  const { userId } = DeleteUserInput.parse(input);
+  db.delete(userId);
+}
+```
+
 ### Size Limits (Agent Quick Reference)
 
 | Rule | Limit | Fix |
