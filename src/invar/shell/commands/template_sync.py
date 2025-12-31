@@ -369,6 +369,14 @@ def _merge_region_content(
 
     else:
         # Missing: no Invar markers - preserve entire content as user content
+        # Handle empty content - just return fresh template
+        if not existing_content.strip():
+            if dest_rel == "CLAUDE.md" and project_additions:
+                parsed = parse_invar_regions(new_content)
+                if "project" in parsed.regions:
+                    return reconstruct_file(parsed, {"project": project_additions})
+            return new_content
+
         preserved = format_preserved_content(existing_content, date.today().isoformat())
         parsed = parse_invar_regions(new_content)
         if user_region in parsed.regions:
