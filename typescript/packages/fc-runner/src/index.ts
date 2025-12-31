@@ -205,7 +205,6 @@ function runProperty<T extends Record<string, unknown>>(
   options: RunnerOptions
 ): PropertyResult {
   const start = Date.now();
-  const paramNames = Object.keys(prop.arbitraries);
 
   // Create record arbitrary
   const recordArbitrary = fc.record(prop.arbitraries);

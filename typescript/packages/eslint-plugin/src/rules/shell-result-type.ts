@@ -81,11 +81,14 @@ export const shellResultType: Rule.RuleModule = {
 
     /**
      * Get the text of a return type annotation from source code.
+     * Strips the leading ": " to return just the type (e.g., "Result<T, E>").
      */
     function getReturnTypeText(node: Rule.Node): string | null {
       const typedNode = node as unknown as { returnType?: Rule.Node };
       if (!typedNode.returnType) return null;
-      return sourceCode.getText(typedNode.returnType);
+      const text = sourceCode.getText(typedNode.returnType);
+      // Strip leading ": " from type annotation (e.g., ": Result<T, E>" -> "Result<T, E>")
+      return text.replace(/^:\s*/, '');
     }
 
     function checkFunction(

@@ -9,8 +9,7 @@
  */
 
 import * as ts from 'typescript';
-import { existsSync, readFileSync } from 'node:fs';
-import { join, resolve, dirname } from 'node:path';
+import { dirname, resolve } from 'node:path';
 import { z } from 'zod';
 
 // ============================================================================

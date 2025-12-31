@@ -85,11 +85,14 @@ export const requireSchemaValidation: Rule.RuleModule = {
 
     /**
      * Get the text of a type annotation from source code.
+     * Strips the leading ": " to return just the type.
      */
     function getTypeAnnotationText(param: Node): string | null {
       const typedParam = param as unknown as { typeAnnotation?: Node };
       if (!typedParam.typeAnnotation) return null;
-      return sourceCode.getText(typedParam.typeAnnotation as unknown as Rule.Node);
+      const text = sourceCode.getText(typedParam.typeAnnotation as unknown as Rule.Node);
+      // Strip leading ": " from type annotation
+      return text.replace(/^:\s*/, '');
     }
 
     function checkFunction(
@@ -111,25 +114,57 @@ export const requireSchemaValidation: Rule.RuleModule = {
       }
     }
 
+    /**
+     * Extract param name and type annotation from various param patterns.
+     */
+    function extractParamInfo(param: Node): { name: string; typeAnnotation: string | null } | null {
+      if (param.type === 'Identifier') {
+        return {
+          name: (param as Identifier).name,
+          typeAnnotation: getTypeAnnotationText(param),
+        };
+      }
+      // Handle destructuring patterns: { a, b }: ZodSchema
+      if (param.type === 'ObjectPattern' || param.type === 'ArrayPattern') {
+        // For destructuring, we use a placeholder name and check the pattern's type
+        const patternName = param.type === 'ObjectPattern' ? '{...}' : '[...]';
+        return {
+          name: patternName,
+          typeAnnotation: getTypeAnnotationText(param),
+        };
+      }
+      // Handle rest parameters: ...args: ZodSchema[]
+      if (param.type === 'RestElement') {
+        const restParam = param as unknown as { argument?: Identifier };
+        const name = restParam.argument?.name || '...rest';
+        return {
+          name,
+          typeAnnotation: getTypeAnnotationText(param),
+        };
+      }
+      // Handle assignment patterns: param = default
+      if (param.type === 'AssignmentPattern') {
+        const assignParam = param as unknown as { left?: Node };
+        if (assignParam.left) {
+          return extractParamInfo(assignParam.left);
+        }
+      }
+      return null;
+    }
+
     return {
       FunctionDeclaration(node) {
         const params = node.params
-          .filter((p): p is Identifier => p.type === 'Identifier')
-          .map(p => ({
-            name: p.name,
-            typeAnnotation: getTypeAnnotationText(p as unknown as Node),
-          }));
+          .map(p => extractParamInfo(p as unknown as Node))
+          .filter((p): p is { name: string; typeAnnotation: string | null } => p !== null);
 
         checkFunction(node as unknown as FunctionDeclaration, params);
       },
 
       ArrowFunctionExpression(node) {
         const params = node.params
-          .filter((p): p is Identifier => p.type === 'Identifier')
-          .map(p => ({
-            name: p.name,
-            typeAnnotation: getTypeAnnotationText(p as unknown as Node),
-          }));
+          .map(p => extractParamInfo(p as unknown as Node))
+          .filter((p): p is { name: string; typeAnnotation: string | null } => p !== null);
 
         checkFunction(node as unknown as ArrowFunctionExpression, params);
       },

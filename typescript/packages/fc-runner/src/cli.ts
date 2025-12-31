@@ -9,9 +9,7 @@
  *   npx @invar/fc-runner [config-file] [options]
  */
 
-import { readFileSync, existsSync } from 'node:fs';
-import { resolve } from 'node:path';
-import { runProperties, type RunnerResult, type PropertyResult } from './index.js';
+import { runProperties, defineProperty, fc, type RunnerResult, type PropertyResult } from './index.js';
 
 function printHelp(): void {
   console.log(`
@@ -116,9 +114,7 @@ function main(): void {
     }
   }
 
-  // Demo: run a simple built-in property
-  const { fc, defineProperty } = await import('./index.js');
-
+  // Demo: run a simple built-in property using already imported modules
   const demoProps = [
     defineProperty({
       name: 'demo: array concatenation length',
@@ -144,7 +140,7 @@ function main(): void {
 
   console.log('Running demo properties...\n');
 
-  const result = runProperties(demoProps as any, options);
+  const result = runProperties(demoProps, options);
   console.log(formatResult(result, options.json));
 
   process.exit(result.passed ? 0 : 1);
