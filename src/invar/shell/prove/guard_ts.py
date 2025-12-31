@@ -36,6 +36,42 @@ class TypeScriptViolation:
 
 
 @dataclass
+class ContractQuality:
+    """Contract quality metrics from ts-analyzer."""
+
+    strong: int = 0
+    medium: int = 0
+    weak: int = 0
+    useless: int = 0
+
+
+@dataclass
+class BlindSpot:
+    """High-risk code without validation."""
+
+    function: str
+    file: str
+    line: int
+    risk: Literal["critical", "high", "medium", "low"]
+    reason: str
+    suggested_schema: str | None = None
+
+
+@dataclass
+class EnhancedAnalysis:
+    """Enhanced analysis from @invar/* Node components."""
+
+    quick_check_available: bool = False
+    ts_analyzer_available: bool = False
+    fc_runner_available: bool = False
+    contract_coverage: float | None = None
+    contract_quality: ContractQuality | None = None
+    blind_spots: list[BlindSpot] = field(default_factory=list)
+    property_tests_passed: bool | None = None
+    property_test_failures: list[dict] = field(default_factory=list)
+
+
+@dataclass
 class TypeScriptGuardResult:
     """Result of TypeScript verification."""
 
@@ -46,6 +82,8 @@ class TypeScriptGuardResult:
     vitest_available: bool = False
     error_count: int = 0
     warning_count: int = 0
+    tool_errors: list[str] = field(default_factory=list)
+    enhanced: EnhancedAnalysis | None = None
 
 
 # @shell_complexity: JSON assembly with multiple conditional sections
@@ -227,6 +265,9 @@ def _generate_fix_suggestions(violations: list[TSViolation]) -> list[dict]:
             param_match = re_module.search(r'"(\w+)"', v.message)
             param = param_match.group(1) if param_match else "input"
             code = code.replace("{param}", param)
+        elif rule == "@invar/shell-result-type":
+            # Use 'T' as placeholder since actual type requires source analysis
+            code = code.replace("{return_type}", "T")
 
         fix = {
             "id": f"FIX-{fix_counter:03d}",
@@ -238,7 +279,10 @@ def _generate_fix_suggestions(violations: list[TSViolation]) -> list[dict]:
             },
             "repair": {
                 "action": action,
-                "target": {"file": v.file, "line": v.line + 1},  # Insert after
+                "target": {
+                    "file": v.file,
+                    "line": (v.line + 1) if v.line is not None else None,
+                },
                 "code": code,
                 "explanation": f"Fix for {rule}",
             },

@@ -127,7 +127,10 @@ export const requireSchemaValidation: Rule.RuleModule = {
                     if (!blockBody.body || blockBody.body.length === 0) return null;
 
                     const firstStatement = blockBody.body[0];
-                    const parseCode = `const ${validatedVarName} = ${schemaName}.parse(${param.name});\n  `;
+                    // Detect indentation from the first statement
+                    const firstStatementStart = (firstStatement as unknown as { loc?: { start: { column: number } } }).loc?.start.column ?? 2;
+                    const indent = ' '.repeat(firstStatementStart);
+                    const parseCode = `const ${validatedVarName} = ${schemaName}.parse(${param.name});\n${indent}`;
                     return fixer.insertTextBefore(firstStatement as unknown as Rule.Node, parseCode);
                   },
                 },
