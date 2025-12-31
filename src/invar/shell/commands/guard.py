@@ -158,6 +158,8 @@ def guard(
     Use --suggest to get functional pattern suggestions (NewType, Validation, etc.).
     Use --contracts-only (-c) to check contract coverage without running tests (DX-63).
     """
+    # LX-06: Language detection and dispatch
+    from invar.shell.commands.init import detect_language
     from invar.shell.guard_helpers import (
         collect_files_to_check,
         handle_changed_mode,
@@ -168,7 +170,58 @@ def guard(
     )
     from invar.shell.testing import VerificationLevel
 
-    # DX-65: Handle single file mode
+    project_language = detect_language(path if path.is_dir() else find_project_root(path))
+
+    # Dispatch to language-specific guard if not Python
+    if project_language == "typescript":
+        from invar.shell.prove.guard_ts import run_typescript_guard
+
+        ts_result = run_typescript_guard(path if path.is_dir() else find_project_root(path))
+        match ts_result:
+            case Success(result):
+                if json_output or agent:
+                    import json as json_mod
+                    output = {
+                        "status": result.status,
+                        "language": "typescript",
+                        "static": {
+                            "errors": result.error_count,
+                            "warnings": result.warning_count,
+                        },
+                        "tools": {
+                            "tsc": result.tsc_available,
+                            "eslint": result.eslint_available,
+                            "vitest": result.vitest_available,
+                        },
+                        "violations": [
+                            {
+                                "file": v.file,
+                                "line": v.line,
+                                "rule": v.rule,
+                                "message": v.message,
+                                "severity": v.severity,
+                                "source": v.source,
+                            }
+                            for v in result.violations
+                        ],
+                    }
+                    console.print(json_mod.dumps(output, indent=2))
+                else:
+                    console.print(f"[bold]TypeScript Guard[/bold] ({project_language})")
+                    if result.status == "passed":
+                        console.print("[green]✓ PASSED[/green]")
+                    elif result.status == "skipped":
+                        console.print("[yellow]⚠ SKIPPED[/yellow] (no TypeScript tools available)")
+                    else:
+                        console.print(f"[red]✗ FAILED[/red] ({result.error_count} errors)")
+                        for v in result.violations[:10]:  # Show first 10
+                            console.print(f"  {v.file}:{v.line}: [{v.severity}] {v.message}")
+                raise typer.Exit(0 if result.status == "passed" else 1)
+            case Failure(err):
+                console.print(f"[red]Error:[/red] {err}")
+                raise typer.Exit(1)
+
+    # DX-65: Handle single file mode (Python only from here)
     single_file_mode = path.is_file()
     single_file: Path | None = None
     if single_file_mode:

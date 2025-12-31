@@ -140,6 +140,10 @@ rules = ["*"]  # Examples intentionally show "bad" patterns without contracts
 pattern = "**/examples/functional.py"
 rules = ["*"]  # Fallback: Examples intentionally show "bad" patterns
 
+[[tool.invar.guard.rule_exclusions]]
+pattern = "**/templates/examples/**"
+rules = ["*"]  # LX-05: Template source files (language-specific examples)
+
 [tool.invar]
 # Protocol governance
 protocol_version = "3.20"

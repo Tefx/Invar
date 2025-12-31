@@ -1,16 +1,70 @@
 # LX-05: Language-Agnostic Protocol Extraction
 
-**Status:** Draft (Revised)
+**Status:** In Progress
 **Priority:** Medium
 **Category:** Language/Agent eXtensions
 **Created:** 2025-12-30
 **Revised:** 2025-12-31
+**Hotfix:** 2025-12-31 - Examples language-aware copy
 **Based on:** LX-01 (feasibility), LX-04 (multi-agent), INVAR.md v5.0
 **Depends on:** LX-04 completion ✅
 
 ## Executive Summary
 
 Extract a language-agnostic version of the Invar protocol and skills that can be applied to any programming language. The core insight: **80% of Invar's value is in workflow and agent discipline, not Python-specific tools**.
+
+---
+
+## Hotfix: Language-Aware Examples (2025-12-31)
+
+### Problem
+
+After `invar init --language=typescript` or auto-detection of TypeScript project:
+- INVAR.md correctly renders TypeScript content (Zod schemas, etc.)
+- CLAUDE.md correctly renders TypeScript critical rules
+- **But `.invar/examples/` still contains Python files** (contracts.py, core_shell.py)
+
+### Root Cause
+
+Manifest uses `copy_dir` which blindly copies the Python examples:
+```toml
+".invar/examples/" = { src = "examples/", type = "copy_dir" }
+```
+
+### Solution
+
+1. **Reorganize templates:**
+   ```
+   src/invar/templates/examples/
+   ├── python/
+   │   ├── contracts.py
+   │   ├── core_shell.py
+   │   └── workflow.md
+   └── typescript/
+       ├── contracts.ts
+       ├── core_shell.ts
+       └── workflow.md
+   ```
+
+2. **New manifest type `copy_dir_lang`:**
+   ```toml
+   ".invar/examples/" = { src = "examples/{language}/", type = "copy_dir_lang" }
+   ```
+
+3. **template_sync.py enhancement:**
+   - Resolve `{language}` placeholder from SyncConfig
+   - Copy language-specific directory
+
+### Files Changed
+
+| File | Change |
+|------|--------|
+| `src/invar/templates/examples/python/` | Move existing files |
+| `src/invar/templates/examples/typescript/` | Create new |
+| `src/invar/templates/manifest.toml` | Add `copy_dir_lang` |
+| `src/invar/shell/commands/template_sync.py` | Handle `copy_dir_lang` |
+
+---
 
 ## Problem Statement
 

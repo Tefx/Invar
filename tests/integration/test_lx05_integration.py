@@ -423,6 +423,35 @@ class TestCrossLanguageStructure:
             assert "Shell" in invar_content
             assert "pure" in invar_content.lower() or "I/O" in invar_content
 
+    def test_language_specific_examples(self, tmp_path: Path):
+        """LX-05 Hotfix: Examples should be language-specific."""
+        python_dir = tmp_path / "python"
+        typescript_dir = tmp_path / "typescript"
+        python_dir.mkdir()
+        typescript_dir.mkdir()
+
+        sync_templates(python_dir, SyncConfig(language="python"))
+        sync_templates(typescript_dir, SyncConfig(language="typescript"))
+
+        # Python should have .py examples
+        py_examples = python_dir / ".invar" / "examples"
+        assert py_examples.exists(), "Python examples directory missing"
+        assert (py_examples / "contracts.py").exists(), "contracts.py missing"
+        assert (py_examples / "core_shell.py").exists(), "core_shell.py missing"
+        assert (py_examples / "functional.py").exists(), "functional.py missing"
+
+        # TypeScript should have .ts examples
+        ts_examples = typescript_dir / ".invar" / "examples"
+        assert ts_examples.exists(), "TypeScript examples directory missing"
+        assert (ts_examples / "contracts.ts").exists(), "contracts.ts missing"
+        assert (ts_examples / "core_shell.ts").exists(), "core_shell.ts missing"
+        assert (ts_examples / "functional.ts").exists(), "functional.ts missing"
+
+        # Python examples should NOT have .ts files
+        assert not (py_examples / "contracts.ts").exists()
+        # TypeScript examples should NOT have .py files
+        assert not (ts_examples / "contracts.py").exists()
+
 
 # =============================================================================
 # Regression Tests

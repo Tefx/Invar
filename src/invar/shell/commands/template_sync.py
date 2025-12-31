@@ -407,7 +407,8 @@ def _sync_create_only(
         report.skipped.append(dest_rel)
         return Success("skipped")
 
-    if not src_file.exists():
+    # LX-05: Skip existence check for copy_dir_lang (has {language} placeholder)
+    if template_type != "copy_dir_lang" and not src_file.exists():
         return Failure(f"Template not found: {src_rel}")
 
     try:
@@ -425,6 +426,17 @@ def _sync_create_only(
                 shutil.copytree(src_file, dest_file)
             else:
                 return Failure(f"Expected directory: {src_rel}")
+        elif template_type == "copy_dir_lang":
+            # LX-05 hotfix: Language-aware directory copy
+            lang = variables.get("language", "python")
+            lang_src_rel = src_rel.replace("{language}", lang)
+            lang_src_file = templates_dir / lang_src_rel
+            if not lang_src_file.exists():
+                return Failure(f"Language-specific template not found: {lang_src_rel}")
+            if lang_src_file.is_dir():
+                shutil.copytree(lang_src_file, dest_file)
+            else:
+                return Failure(f"Expected directory: {lang_src_rel}")
 
         report.created.append(dest_rel)
         return Success("created")

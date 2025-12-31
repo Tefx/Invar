@@ -68,8 +68,8 @@ extensions = { action = "preserve" }
 ".claude/commands/audit.md" = { src = "commands/audit.md.jinja", type = "jinja" }
 ".claude/commands/guard.md" = { src = "commands/guard.md", type = "copy" }
 
-# Examples (directory copy)
-".invar/examples/" = { src = "examples/", type = "copy_dir" }
+# Examples (language-aware directory copy - LX-05 hotfix)
+".invar/examples/" = { src = "examples/{language}/", type = "copy_dir_lang" }
 
 # =============================================================================
 # Variables

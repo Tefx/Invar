@@ -45,12 +45,54 @@ def discover_python_files(
 
         excluded = False
         for pattern in exclude_patterns:
-            if relative_str.startswith(pattern) or f"/{pattern}/" in f"/{relative_str}":
+            # Match whole path component, not prefix
+            if relative_str == pattern or relative_str.startswith(pattern + "/") or f"/{pattern}/" in f"/{relative_str}":
                 excluded = True
                 break
 
         if not excluded:
             yield py_file
+
+
+# @shell_complexity: Recursive TypeScript file discovery with exclusions
+def discover_typescript_files(
+    project_root: Path,
+    exclude_patterns: list[str] | None = None,
+) -> Iterator[Path]:
+    """
+    Discover all TypeScript files in a project (LX-06).
+
+    Args:
+        project_root: Root directory to search
+        exclude_patterns: Patterns to exclude (uses config defaults if None)
+
+    Yields:
+        Path objects for each TypeScript file found
+    """
+    if exclude_patterns is None:
+        exclude_result = get_exclude_paths(project_root)
+        exclude_patterns = exclude_result.unwrap() if isinstance(exclude_result, Success) else []
+
+    # Always exclude node_modules and common build directories
+    default_ts_excludes = ["node_modules", "dist", "build", ".next", "out"]
+    all_excludes = list(set(list(exclude_patterns) + default_ts_excludes))
+
+    for ext in ("*.ts", "*.tsx"):
+        for ts_file in project_root.rglob(ext):
+            # Check exclusions
+            relative = ts_file.relative_to(project_root)
+            relative_str = str(relative)
+
+            excluded = False
+            for pattern in all_excludes:
+                # Match whole path component, not prefix
+                # e.g., "dist" should exclude "dist/file.ts" but NOT "dist_backup/file.ts"
+                if relative_str == pattern or relative_str.startswith(pattern + "/") or f"/{pattern}/" in f"/{relative_str}":
+                    excluded = True
+                    break
+
+            if not excluded:
+                yield ts_file
 
 
 # @shell_complexity: File reading with AST parsing and error handling
