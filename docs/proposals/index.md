@@ -29,6 +29,7 @@ This directory contains design proposals for Invar development.
 
 | ID | Name | Status | Description |
 |----|------|--------|-------------|
+| LX-05 | language-agnostic-protocol | Draft | Extract universal protocol from Python-specific content |
 | LX-04 | multi-agent-framework | ✅ Pi Complete | Pi native support (--pi flag, init/uninstall, docs) |
 | LX-02 | agent-portability-analysis | ✅ Complete | Research: 6 agents (Claude, Pi, Codex, Cursor, Cline, Aider) |
 | LX-01 | multi-language-feasibility | Draft | Feasibility assessment for multi-language Invar |
