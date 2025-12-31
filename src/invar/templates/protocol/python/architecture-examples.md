@@ -15,6 +15,8 @@ def discounted_price(price: float, discount: float) -> float:
     return price * (1 - discount)
 ```
 
+**Self-test:** Can someone else write the exact same function from just @pre/@post + doctests?
+
 **Forbidden in Core:** `os`, `sys`, `subprocess`, `pathlib`, `open`, `requests`, `datetime.now`
 
 ## Shell Example (Python)
