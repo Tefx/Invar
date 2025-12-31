@@ -115,11 +115,19 @@ def calculate(x: int) -> int:
 {% elif language == "typescript" %}
 ```typescript
 // SPECIFY before BUILD:
-// @pre: x > 0
-// @post: result >= 0
+import { z } from 'zod';
+
+const CalculateInput = z.number().positive();
+const CalculateOutput = z.number().nonnegative();
+
+/**
+ * @example
+ * calculate(10) // => 100
+ */
 function calculate(x: number): number {
-    // Example: calculate(10) -> 100
+    const validated = CalculateInput.parse(x);
     // Implementation comes in BUILD
+    return CalculateOutput.parse(result);
 }
 ```
 {% endif %}
@@ -420,7 +428,7 @@ Agent:
 {% if language == "python" %}
 @pre(lambda source, path: len(source.strip()) > 0)
 {% elif language == "typescript" %}
-// @pre: source.trim().length > 0
+const SourceInput = z.string().refine(s => s.trim().length > 0);
 {% endif %}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
