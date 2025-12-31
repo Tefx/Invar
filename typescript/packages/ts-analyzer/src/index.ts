@@ -234,7 +234,27 @@ function analyzeFunction(
   const validationLocations: { method: string; line: number }[] = [];
   let hasRuntimeValidation = false;
 
-  // Analyze parameters
+  // IMPORTANT: Check function body for .parse() calls FIRST
+  // so hasRuntimeValidation is known before assessing param quality
+  if (node.body) {
+    const checkValidation = (n: ts.Node): void => {
+      if (ts.isCallExpression(n)) {
+        const expr = n.expression;
+        if (ts.isPropertyAccessExpression(expr)) {
+          const method = expr.name.getText(sourceFile);
+          if (method === 'parse' || method === 'safeParse') {
+            hasRuntimeValidation = true;
+            const { line: validLine } = sourceFile.getLineAndCharacterOfPosition(n.getStart());
+            validationLocations.push({ method, line: validLine + 1 });
+          }
+        }
+      }
+      ts.forEachChild(n, checkValidation);
+    };
+    checkValidation(node.body);
+  }
+
+  // Analyze parameters (now hasRuntimeValidation is known)
   for (const param of node.parameters) {
     const paramName = param.name.getText(sourceFile);
     const paramType = checker.typeToString(checker.getTypeAtLocation(param));
@@ -255,25 +275,6 @@ function analyzeFunction(
       hasContract,
       quality,
     });
-  }
-
-  // Check function body for .parse() calls
-  if (node.body) {
-    const checkValidation = (n: ts.Node): void => {
-      if (ts.isCallExpression(n)) {
-        const expr = n.expression;
-        if (ts.isPropertyAccessExpression(expr)) {
-          const method = expr.name.getText(sourceFile);
-          if (method === 'parse' || method === 'safeParse') {
-            hasRuntimeValidation = true;
-            const { line: validLine } = sourceFile.getLineAndCharacterOfPosition(n.getStart());
-            validationLocations.push({ method, line: validLine + 1 });
-          }
-        }
-      }
-      ts.forEachChild(n, checkValidation);
-    };
-    checkValidation(node.body);
   }
 
   // Check for JSDoc @example

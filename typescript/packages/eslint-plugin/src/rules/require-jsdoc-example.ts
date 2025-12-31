@@ -7,20 +7,6 @@
 
 import type { Rule } from 'eslint';
 
-function hasExampleTag(node: Rule.Node): boolean {
-  const sourceCode = (node as unknown as { parent?: unknown }).parent;
-  // @ts-expect-error - accessing internal comment structure
-  const comments = sourceCode?.leadingComments || [];
-
-  for (const comment of comments) {
-    if (comment.type === 'Block' && comment.value.includes('@example')) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
 function isExported(node: Rule.Node): boolean {
   const parent = (node as unknown as { parent?: { type: string } }).parent;
   if (!parent) return false;

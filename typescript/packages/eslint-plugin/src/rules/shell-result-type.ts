@@ -71,11 +71,21 @@ export const shellResultType: Rule.RuleModule = {
 
   create(context): Rule.RuleListener {
     const filename = context.filename || context.getFilename();
+    const sourceCode = context.sourceCode || context.getSourceCode();
     const options = context.options[0] || {};
     const checkPrivate = options.checkPrivate || false;
 
     if (!isInShellDirectory(filename)) {
       return {};
+    }
+
+    /**
+     * Get the text of a return type annotation from source code.
+     */
+    function getReturnTypeText(node: Rule.Node): string | null {
+      const typedNode = node as unknown as { returnType?: Rule.Node };
+      if (!typedNode.returnType) return null;
+      return sourceCode.getText(typedNode.returnType);
     }
 
     function checkFunction(
@@ -105,14 +115,12 @@ export const shellResultType: Rule.RuleModule = {
     return {
       FunctionDeclaration(node) {
         const name = node.id?.name || null;
-        const returnTypeAnnotation = (node as unknown as {
-          returnType?: { typeAnnotation?: { type: string } }
-        }).returnType?.typeAnnotation?.type;
+        const returnType = getReturnTypeText(node as unknown as Rule.Node);
 
         checkFunction(
           node as unknown as Rule.Node,
           name,
-          returnTypeAnnotation || null
+          returnType
         );
       },
 
@@ -123,14 +131,12 @@ export const shellResultType: Rule.RuleModule = {
           ? parent.id.name
           : null;
 
-        const returnTypeAnnotation = (node as unknown as {
-          returnType?: { typeAnnotation?: { type: string } }
-        }).returnType?.typeAnnotation?.type;
+        const returnType = getReturnTypeText(node as unknown as Rule.Node);
 
         checkFunction(
           node as unknown as Rule.Node,
           name,
-          returnTypeAnnotation || null
+          returnType
         );
       },
     };

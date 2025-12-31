@@ -81,9 +81,20 @@ export const requireSchemaValidation: Rule.RuleModule = {
   },
 
   create(context): Rule.RuleListener {
+    const sourceCode = context.sourceCode || context.getSourceCode();
+
+    /**
+     * Get the text of a type annotation from source code.
+     */
+    function getTypeAnnotationText(param: Node): string | null {
+      const typedParam = param as unknown as { typeAnnotation?: Node };
+      if (!typedParam.typeAnnotation) return null;
+      return sourceCode.getText(typedParam.typeAnnotation as unknown as Rule.Node);
+    }
+
     function checkFunction(
       node: FunctionDeclaration | ArrowFunctionExpression,
-      params: Array<{ name: string; typeAnnotation?: string }>
+      params: Array<{ name: string; typeAnnotation: string | null }>
     ): void {
       const body = 'body' in node ? node.body : null;
 
@@ -106,8 +117,7 @@ export const requireSchemaValidation: Rule.RuleModule = {
           .filter((p): p is Identifier => p.type === 'Identifier')
           .map(p => ({
             name: p.name,
-            typeAnnotation: (p as unknown as { typeAnnotation?: { typeAnnotation?: { type: string } } })
-              .typeAnnotation?.typeAnnotation?.type,
+            typeAnnotation: getTypeAnnotationText(p as unknown as Node),
           }));
 
         checkFunction(node as unknown as FunctionDeclaration, params);
@@ -118,8 +128,7 @@ export const requireSchemaValidation: Rule.RuleModule = {
           .filter((p): p is Identifier => p.type === 'Identifier')
           .map(p => ({
             name: p.name,
-            typeAnnotation: (p as unknown as { typeAnnotation?: { typeAnnotation?: { type: string } } })
-              .typeAnnotation?.typeAnnotation?.type,
+            typeAnnotation: getTypeAnnotationText(p as unknown as Node),
           }));
 
         checkFunction(node as unknown as ArrowFunctionExpression, params);
