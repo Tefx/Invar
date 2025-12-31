@@ -141,12 +141,14 @@ WARNING: review_suggested - Low contract coverage
 > **Principle:** Only items requiring semantic judgment. Mechanical checks are handled by Guard.
 
 ### A. Contract Semantic Value
+
 - [ ] Does @pre constrain inputs beyond type checking?
   - Bad: `@pre(lambda x: isinstance(x, int))`
   - Good: `@pre(lambda x: x > 0 and x < MAX_VALUE)`
 - [ ] Does @post verify meaningful output properties?
   - Bad: `@post(lambda result: result is not None)`
   - Good: `@post(lambda result: len(result) == len(input))`
+
 - [ ] Could someone implement correctly from contracts alone?
 - [ ] Are boundary conditions explicit in contracts?
 

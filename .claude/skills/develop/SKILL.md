@@ -92,9 +92,10 @@ If task appears simple (4+ signals: single file, clear target, additive change, 
 
 ### 2. SPECIFY
 
-- **Contracts FIRST:** Write `@pre`/`@post` before implementation
-- **Doctests:** Add examples for expected behavior
+- **Contracts FIRST:** Write contracts before implementation
+- **Examples:** Add examples for expected behavior
 - **Design:** Decompose complex tasks into sub-functions
+
 
 ```python
 # SPECIFY before BUILD:
@@ -107,6 +108,7 @@ def calculate(x: int) -> int:
     """
     ...  # Implementation comes in BUILD
 ```
+
 
 #### Function-Level Gates (DX-63)
 
@@ -211,6 +213,7 @@ For multiple tasks:
 
 Quick reference for resolving common Guard errors:
 
+
 | Error | Cause | Quick Fix |
 |-------|-------|-----------|
 | `forbidden_import: io` | I/O library in Core | Use `iter(s.splitlines())` not `io.StringIO` |
@@ -229,6 +232,7 @@ Check the "Suggested:" line in Guard output.
 
 **Note:** Use `from deal import pre, post` for lambda-based contracts.
 `invar_runtime.pre/post` are for Contract objects like `NonEmpty`.
+
 
 ## Timeout Handling
 
@@ -354,6 +358,7 @@ Agent:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 @pre(lambda source, path: len(source.strip()) > 0)
+
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📍 /develop → BUILD (3/4)
