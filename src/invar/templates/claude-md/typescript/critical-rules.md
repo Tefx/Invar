@@ -4,9 +4,9 @@
 | Always | Remember |
 |--------|----------|
 {% if syntax == "mcp" -%}
-| **Verify** | `npm run guard` — NOT just `tsc`, NOT just `vitest` |
+| **Verify** | `invar_guard` — NOT just `tsc`, NOT just `vitest` |
 {% else -%}
-| **Verify** | `npm run guard` — NOT just `tsc`, NOT just `vitest` |
+| **Verify** | `invar guard` — NOT just `tsc`, NOT just `vitest` |
 {% endif -%}
 | **Core** | Zod schemas + JSDoc examples, NO I/O imports |
 | **Shell** | Returns `Result<T, E>` from `neverthrow` library |
