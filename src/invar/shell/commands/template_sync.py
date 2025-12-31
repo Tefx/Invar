@@ -166,8 +166,11 @@ def _sync_fully_managed(
         except OSError as e:
             return Failure(f"Failed to read template {src_rel}: {e}")
 
+    # Track if file exists BEFORE write (for correct created/updated reporting)
+    file_existed = dest_file.exists()
+
     # Check if update needed
-    if dest_file.exists() and not config.force:
+    if file_existed and not config.force:
         try:
             if dest_file.read_text() == new_content:
                 report.skipped.append(dest_rel)
@@ -183,7 +186,11 @@ def _sync_fully_managed(
         except OSError as e:
             return Failure(f"Failed to write {dest_rel}: {e}")
 
-    report.updated.append(dest_rel) if dest_file.exists() else report.created.append(dest_rel)
+    # Report based on pre-write existence
+    if file_existed:
+        report.updated.append(dest_rel)
+    else:
+        report.created.append(dest_rel)
     return Success("synced")
 
 
