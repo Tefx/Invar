@@ -395,11 +395,13 @@ def run_ts_analyzer(project_path: Path) -> Result[dict, str]:
             timeout=60,
             cwd=project_path,
         )
-        if result.returncode == 0:
+        # ts-analyzer exits non-zero when critical blind spots found, but still outputs valid JSON
+        # Try to parse JSON output regardless of exit code
+        if result.stdout.strip():
             with contextlib.suppress(json.JSONDecodeError):
                 return Success(json.loads(result.stdout))
-            return Failure("Invalid JSON output from ts-analyzer")
-        # Non-zero return could mean package not installed or analysis error
+
+        # Only report failure if no valid JSON output
         if "not found" in result.stderr.lower() or "ENOENT" in result.stderr:
             return Failure("@invar/ts-analyzer not installed")
         return Failure(result.stderr or "ts-analyzer failed")
@@ -483,10 +485,11 @@ def run_quick_check(project_path: Path) -> Result[dict, str]:
             timeout=30,  # Quick check should be fast
             cwd=project_path,
         )
-        if result.returncode == 0:
+        # quick-check exits non-zero when checks fail, but still outputs valid JSON
+        if result.stdout.strip():
             with contextlib.suppress(json.JSONDecodeError):
                 return Success(json.loads(result.stdout))
-            return Failure("Invalid JSON output from quick-check")
+
         if "not found" in result.stderr.lower() or "ENOENT" in result.stderr:
             return Failure("@invar/quick-check not installed")
         return Failure(result.stderr or "quick-check failed")
