@@ -49,8 +49,8 @@ extensions = { action = "preserve" }
 # =============================================================================
 
 [templates]
-# Protocol files (direct copy)
-"INVAR.md" = { src = "protocol/INVAR.md", type = "copy" }
+# Protocol files (Jinja2 composition - LX-05)
+"INVAR.md" = { src = "protocol/INVAR.md.jinja", type = "jinja" }
 
 # Config files (Jinja2 templates)
 "CLAUDE.md" = { src = "config/CLAUDE.md.jinja", type = "jinja" }
@@ -78,6 +78,7 @@ extensions = { action = "preserve" }
 [variables]
 # Available for Jinja2 templates
 syntax = "cli"          # "cli" or "mcp"
+language = "python"     # "python" or "typescript" (LX-05)
 version = "5.0"
 project_name = ""       # Set by init
 
