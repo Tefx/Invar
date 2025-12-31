@@ -1,6 +1,6 @@
 # LX-06: TypeScript Tooling Support
 
-**Status:** In Progress — Phase 1 Complete ✅
+**Status:** In Progress — Phase 2 Complete ✅
 **Priority:** High
 **Category:** Language/Agent eXtensions
 **Created:** 2025-12-31
@@ -829,12 +829,18 @@ test('traces z.infer across files', async () => {
 - Graceful degradation when Node.js tools unavailable
 - 23 integration tests covering all TypeScript tooling
 
-### Phase 2 (Core Enhancement)
+### Phase 2 (Core Enhancement) ✅ Complete
 
-- [ ] Pre-commit < 1s with @invar/quick-check
-- [ ] Cross-file contract tracing works
-- [ ] Property test failures include causal analysis
-- [ ] @invar/eslint-plugin published
+- [x] Pre-commit < 1s with @invar/quick-check
+- [x] Cross-file contract tracing works
+- [x] Property test failures include causal analysis
+- [x] @invar/eslint-plugin published
+
+**Implementation Notes:**
+- pnpm monorepo in `typescript/` subdirectory
+- 4 packages: quick-check, ts-analyzer, fc-runner, eslint-plugin
+- Python integration with graceful degradation
+- All packages use Zod for runtime validation
 
 ### Phase 3 (Agent Optimization)
 

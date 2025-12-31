@@ -5,6 +5,11 @@ Part of LX-06 TypeScript tooling support.
 
 This module provides graceful degradation - if TypeScript tools are not
 installed, it reports the missing dependency rather than failing hard.
+
+LX-06 Phase 2: Added support for optional @invar/* Node components:
+- @invar/quick-check: Fast pre-commit verification
+- @invar/ts-analyzer: Deep contract analysis
+- @invar/fc-runner: Property test runner
 """
 
 from __future__ import annotations
@@ -26,6 +31,42 @@ from invar.core.ts_parsers import (
 
 
 @dataclass
+class ContractQuality:
+    """Contract quality metrics from ts-analyzer."""
+
+    strong: int = 0
+    medium: int = 0
+    weak: int = 0
+    useless: int = 0
+
+
+@dataclass
+class BlindSpot:
+    """High-risk code without validation."""
+
+    function: str
+    file: str
+    line: int
+    risk: Literal["critical", "high", "medium", "low"]
+    reason: str
+    suggested_schema: str | None = None
+
+
+@dataclass
+class EnhancedAnalysis:
+    """Enhanced analysis from @invar/* Node components."""
+
+    quick_check_available: bool = False
+    ts_analyzer_available: bool = False
+    fc_runner_available: bool = False
+    contract_coverage: float | None = None
+    contract_quality: ContractQuality | None = None
+    blind_spots: list[BlindSpot] = field(default_factory=list)
+    property_tests_passed: bool | None = None
+    property_test_failures: list[dict] = field(default_factory=list)
+
+
+@dataclass
 class TypeScriptGuardResult:
     """Result of TypeScript verification."""
 
@@ -37,6 +78,7 @@ class TypeScriptGuardResult:
     error_count: int = 0
     warning_count: int = 0
     tool_errors: list[str] = field(default_factory=list)  # Non-fatal tool errors
+    enhanced: EnhancedAnalysis | None = None  # LX-06 Phase 2: Optional enhanced analysis
 
 
 def check_tool_available(tool: str, check_args: list[str]) -> bool:
@@ -182,20 +224,218 @@ def run_vitest(project_path: Path) -> Result[list[TSViolation], str]:
         return Failure("vitest timed out after 300 seconds")
 
 
+# =============================================================================
+# LX-06 Phase 2: Optional @invar/* Node Components
+# =============================================================================
+
+
+def check_invar_package_available(package: str) -> bool:
+    """Check if an @invar/* npm package is available.
+
+    Args:
+        package: Package name (e.g., "quick-check", "ts-analyzer")
+
+    Returns:
+        True if package is installed and executable.
+    """
+    try:
+        result = subprocess.run(
+            ["npx", f"@invar/{package}", "--help"],
+            capture_output=True,
+            timeout=10,
+        )
+        return result.returncode == 0
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        return False
+
+
+# @shell_complexity: Subprocess call to @invar/quick-check
+def run_quick_check(project_path: Path) -> Result[dict, str]:
+    """Run @invar/quick-check for fast pre-commit verification.
+
+    This is optional - if @invar/quick-check is not installed,
+    returns a Failure with installation suggestion.
+
+    Args:
+        project_path: Path to TypeScript project root.
+
+    Returns:
+        Result containing quick check output or error message.
+    """
+    try:
+        result = subprocess.run(
+            ["npx", "@invar/quick-check", "--json", str(project_path)],
+            capture_output=True,
+            text=True,
+            timeout=30,  # Quick check should be fast
+        )
+
+        if result.returncode == 0 or result.stdout:
+            try:
+                return Success(json.loads(result.stdout))
+            except json.JSONDecodeError:
+                return Failure("Invalid JSON from quick-check")
+
+        return Failure(result.stderr[:200] if result.stderr else "quick-check failed")
+
+    except FileNotFoundError:
+        return Failure("Install: npm install -D @invar/quick-check")
+    except subprocess.TimeoutExpired:
+        return Failure("quick-check timed out")
+
+
+# @shell_complexity: Subprocess call to @invar/ts-analyzer
+def run_ts_analyzer(project_path: Path) -> Result[dict, str]:
+    """Run @invar/ts-analyzer for deep contract analysis.
+
+    This is optional - if @invar/ts-analyzer is not installed,
+    returns a Failure with installation suggestion.
+
+    Args:
+        project_path: Path to TypeScript project root.
+
+    Returns:
+        Result containing analysis output or error message.
+    """
+    try:
+        result = subprocess.run(
+            ["npx", "@invar/ts-analyzer", "--json", str(project_path)],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+
+        if result.stdout:
+            try:
+                return Success(json.loads(result.stdout))
+            except json.JSONDecodeError:
+                return Failure("Invalid JSON from ts-analyzer")
+
+        return Failure(result.stderr[:200] if result.stderr else "ts-analyzer failed")
+
+    except FileNotFoundError:
+        return Failure("Install: npm install -D @invar/ts-analyzer")
+    except subprocess.TimeoutExpired:
+        return Failure("ts-analyzer timed out")
+
+
+# @shell_complexity: Subprocess call to @invar/fc-runner
+def run_fc_runner(project_path: Path, num_runs: int = 100) -> Result[dict, str]:
+    """Run @invar/fc-runner for property-based testing.
+
+    This is optional - if @invar/fc-runner is not installed,
+    returns a Failure with installation suggestion.
+
+    Args:
+        project_path: Path to TypeScript project root.
+        num_runs: Number of test runs per property.
+
+    Returns:
+        Result containing test results or error message.
+    """
+    try:
+        result = subprocess.run(
+            ["npx", "@invar/fc-runner", "--json", f"--num-runs={num_runs}"],
+            cwd=project_path,
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
+
+        if result.stdout:
+            try:
+                return Success(json.loads(result.stdout))
+            except json.JSONDecodeError:
+                return Failure("Invalid JSON from fc-runner")
+
+        return Failure(result.stderr[:200] if result.stderr else "fc-runner failed")
+
+    except FileNotFoundError:
+        return Failure("Install: npm install -D @invar/fc-runner")
+    except subprocess.TimeoutExpired:
+        return Failure("fc-runner timed out")
+
+
+# @shell_complexity: Multi-package orchestration with conditional analysis
+def _run_enhanced_analysis(
+    project_path: Path,
+    enhanced: EnhancedAnalysis,
+) -> None:
+    """Run optional @invar/* Node components.
+
+    Modifies enhanced in place with results.
+
+    Args:
+        project_path: Path to TypeScript project root.
+        enhanced: EnhancedAnalysis object to populate.
+    """
+    # Check availability
+    enhanced.quick_check_available = check_invar_package_available("quick-check")
+    enhanced.ts_analyzer_available = check_invar_package_available("ts-analyzer")
+    enhanced.fc_runner_available = check_invar_package_available("fc-runner")
+
+    # Run ts-analyzer if available
+    if enhanced.ts_analyzer_available:
+        analyzer_result = run_ts_analyzer(project_path)
+        match analyzer_result:
+            case Success(data):
+                if "coverage" in data:
+                    enhanced.contract_coverage = data["coverage"].get("percent")
+                if "quality" in data:
+                    enhanced.contract_quality = ContractQuality(
+                        strong=data["quality"].get("strong", 0),
+                        medium=data["quality"].get("medium", 0),
+                        weak=data["quality"].get("weak", 0),
+                        useless=data["quality"].get("useless", 0),
+                    )
+                if "blindSpots" in data:
+                    for spot in data["blindSpots"]:
+                        enhanced.blind_spots.append(
+                            BlindSpot(
+                                function=spot.get("function", ""),
+                                file=spot.get("file", ""),
+                                line=spot.get("line", 0),
+                                risk=spot.get("risk", "medium"),
+                                reason=spot.get("reason", ""),
+                                suggested_schema=spot.get("suggestedSchema"),
+                            )
+                        )
+            case Failure(_):
+                pass  # Graceful degradation
+
+    # Run fc-runner if available
+    if enhanced.fc_runner_available:
+        fc_result = run_fc_runner(project_path)
+        match fc_result:
+            case Success(data):
+                enhanced.property_tests_passed = data.get("passed", True)
+                if "properties" in data:
+                    for prop in data["properties"]:
+                        if not prop.get("passed", True):
+                            enhanced.property_test_failures.append(prop)
+            case Failure(_):
+                pass  # Graceful degradation
+
+
 # @shell_complexity: Multi-tool orchestration with graceful degradation
 def run_typescript_guard(
     project_path: Path,
     *,
     skip_tests: bool = False,
+    enhanced_analysis: bool = True,
 ) -> Result[TypeScriptGuardResult, str]:
     """Run full TypeScript verification pipeline.
 
     Orchestrates tsc, eslint, and vitest with graceful degradation
     if tools are unavailable.
 
+    LX-06 Phase 2: Optionally runs @invar/* Node components for
+    enhanced analysis (contract coverage, blind spots, property tests).
+
     Args:
         project_path: Path to TypeScript project root.
         skip_tests: If True, skip vitest execution.
+        enhanced_analysis: If True, run optional @invar/* Node components.
 
     Returns:
         Result containing guard result or error message.
@@ -253,5 +493,18 @@ def run_typescript_guard(
         result.status = "failed"
     elif not any([result.tsc_available, result.eslint_available]):
         result.status = "skipped"
+
+    # LX-06 Phase 2: Run enhanced analysis if requested
+    if enhanced_analysis:
+        enhanced = EnhancedAnalysis()
+        _run_enhanced_analysis(project_path, enhanced)
+        result.enhanced = enhanced
+
+        # Critical blind spots should trigger review_suggested
+        critical_spots = [s for s in enhanced.blind_spots if s.risk == "critical"]
+        if critical_spots:
+            result.tool_errors.append(
+                f"review_suggested: {len(critical_spots)} critical blind spot(s) found"
+            )
 
     return Success(result)

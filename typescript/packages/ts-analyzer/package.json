@@ -1,0 +1,42 @@
+{
+  "name": "@invar/ts-analyzer",
+  "version": "0.1.0",
+  "description": "TypeScript contract analysis using Compiler API",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "invar-ts-analyzer": "dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "prepublishOnly": "pnpm build"
+  },
+  "keywords": [
+    "invar",
+    "typescript",
+    "analysis",
+    "contracts",
+    "zod"
+  ],
+  "author": "Invar Team",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/invar.git",
+    "directory": "typescript/packages/ts-analyzer"
+  },
+  "dependencies": {
+    "zod": "^3.22.0"
+  },
+  "peerDependencies": {
+    "typescript": ">=4.9.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

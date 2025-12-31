@@ -1,0 +1,47 @@
+{
+  "name": "@invar/quick-check",
+  "version": "0.1.0",
+  "description": "Fast pre-commit verification for Invar TypeScript projects",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "invar-quick-check": "dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "prepublishOnly": "pnpm build"
+  },
+  "keywords": [
+    "invar",
+    "typescript",
+    "verification",
+    "pre-commit"
+  ],
+  "author": "Invar Team",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/invar.git",
+    "directory": "typescript/packages/quick-check"
+  },
+  "dependencies": {
+    "zod": "^3.22.0"
+  },
+  "peerDependencies": {
+    "typescript": ">=4.9.0",
+    "eslint": ">=8.0.0"
+  },
+  "peerDependenciesMeta": {
+    "eslint": {
+      "optional": true
+    }
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
