@@ -266,6 +266,7 @@ def detect_batch_creation(
         return Success(None)
 
 
+# @shell_orchestration: Report formatting for CLI output display
 # @shell_complexity: Report formatting with multiple conditional sections
 def format_contract_coverage_report(report: ContractCoverageReport) -> str:
     """Format coverage report for human-readable output."""

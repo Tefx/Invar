@@ -55,19 +55,31 @@ class ValidationDetector(BaseDetector):
     @property
     @post(lambda result: result == PatternID.VALIDATION)
     def pattern_id(self) -> PatternID:
-        """Unique identifier for this pattern."""
+        """Unique identifier for this pattern.
+
+        >>> ValidationDetector().pattern_id
+        <PatternID.VALIDATION: 'validation'>
+        """
         return PatternID.VALIDATION
 
     @property
     @post(lambda result: result == Priority.P0)
     def priority(self) -> Priority:
-        """Priority tier."""
+        """Priority tier.
+
+        >>> ValidationDetector().priority
+        <Priority.P0: 'P0'>
+        """
         return Priority.P0
 
     @property
     @post(lambda result: len(result) > 0)
     def description(self) -> str:
-        """Human-readable description."""
+        """Human-readable description.
+
+        >>> len(ValidationDetector().description) > 0
+        True
+        """
         return "Use error accumulation instead of fail-fast validation"
 
     @post(lambda result: all(isinstance(s, PatternSuggestion) for s in result))

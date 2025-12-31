@@ -74,17 +74,25 @@ AGENT_CONFIGS: dict[str, dict[str, str]] = {
 # Language Detection (LX-05)
 # =============================================================================
 
-# Supported languages for template rendering
-SUPPORTED_LANGUAGES = frozenset({"python", "typescript"})
-FUTURE_LANGUAGES = frozenset({"rust", "go"})
+from invar.core.language import (
+    FUTURE_LANGUAGES,
+    detect_language_from_markers,
+)
+
+# Marker files to check for language detection
+LANGUAGE_MARKERS: frozenset[str] = frozenset({
+    "pyproject.toml", "setup.py",  # Python
+    "tsconfig.json", "package.json",  # TypeScript
+    "Cargo.toml",  # Rust (future)
+    "go.mod",  # Go (future)
+})
 
 
-# @shell_complexity: Multi-marker file detection for language auto-detect
 def detect_language(path: Path) -> str:
-    """Auto-detect project language from marker files.
+    """Detect project language from marker files (Shell wrapper).
 
-    Checks for common project configuration files to determine the primary
-    language. Returns a supported language or defaults to "python".
+    This is the Shell wrapper that handles I/O. The actual detection
+    logic is in core.language.detect_language_from_markers.
 
     Examples:
         >>> from pathlib import Path
@@ -106,16 +114,12 @@ def detect_language(path: Path) -> str:
         ...     detect_language(p)  # Empty dir defaults to python
         'python'
     """
-    # Detection order matters - first match wins
-    if (path / "pyproject.toml").exists() or (path / "setup.py").exists():
-        return "python"
-    if (path / "tsconfig.json").exists() or (path / "package.json").exists():
-        return "typescript"
-    if (path / "Cargo.toml").exists():
-        return "rust"  # Future
-    if (path / "go.mod").exists():
-        return "go"  # Future
-    return "python"  # Default
+    # Collect present markers (I/O operation)
+    present_markers = frozenset(
+        marker for marker in LANGUAGE_MARKERS if (path / marker).exists()
+    )
+    # Delegate to pure core function
+    return detect_language_from_markers(present_markers)
 
 
 # =============================================================================

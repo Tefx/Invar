@@ -1,13 +1,56 @@
 # LX-05: Language-Agnostic Protocol Extraction
 
-**Status:** In Progress
+**Status:** ✅ Protocol Complete (Tooling → LX-06)
 **Priority:** Medium
 **Category:** Language/Agent eXtensions
 **Created:** 2025-12-30
 **Revised:** 2025-12-31
+**Completed:** 2025-12-31
 **Hotfix:** 2025-12-31 - Examples language-aware copy
 **Based on:** LX-01 (feasibility), LX-04 (multi-agent), INVAR.md v5.0
 **Depends on:** LX-04 completion ✅
+**Successor:** [LX-06: TypeScript Tooling Support](LX-06-typescript-tooling.md)
+
+---
+
+## Completion Summary
+
+### ✅ Completed (Phases 1-3)
+
+| Component | Files | Status |
+|-----------|-------|--------|
+| Protocol templates (universal) | 8 | ✅ |
+| Protocol templates (python) | 5 | ✅ |
+| Protocol templates (typescript) | 5 | ✅ |
+| CLAUDE.md templates | 7 | ✅ |
+| Skills as Jinja templates | 4 | ✅ |
+| Language detection | 1 | ✅ |
+| `--language` CLI parameter | 1 | ✅ |
+| `copy_dir_lang` manifest type | 1 | ✅ |
+| TypeScript examples | 4 | ✅ |
+| **Total** | **36 files** | ✅ |
+
+### → Migrated to LX-06 (Phase 4)
+
+TypeScript tooling implementation moved to dedicated proposal:
+
+| Tool | LX-05 Plan | LX-06 Phase |
+|------|------------|-------------|
+| guard-ts | Phase 4 | Phase 1 (MVP) |
+| sig-ts | Phase 4 | Phase 2 (tree-sitter + @invar/ts-analyzer) |
+| map-ts | Phase 4 | Phase 2 |
+
+See [LX-06: TypeScript Tooling Support](LX-06-typescript-tooling.md) for hybrid architecture design.
+
+### ⚠️ Deferred (Phase 5 - Low Priority)
+
+| Task | Status | Notes |
+|------|--------|-------|
+| README.md update | Deferred | Add after LX-06 MVP |
+| CHANGELOG.md v1.9.0 | Deferred | Add after LX-06 MVP |
+| docs/adapters/*.md | Deferred | Create with LX-06 |
+
+---
 
 ## Executive Summary
 
@@ -857,18 +900,18 @@ Option B: TypeScript Compiler API
 
 ## Implementation Plan
 
-### Phase 1: Template Refactoring (Week 1-2)
+### Phase 1: Template Refactoring ✅ COMPLETE
 
-| Day | Task | Output |
-|-----|------|--------|
-| 1 | Split INVAR.md universal sections | `protocol/universal/*.md` (8 files) |
-| 2 | Create Python adapter fragments | `protocol/python/*.md` (5 files) |
-| 3 | Create INVAR.md.jinja template | Composition template |
-| 4 | Split CLAUDE.md into templates | `claude-md/universal/*.md` + `python/*.md` |
-| 5 | Convert skills to templates | `skills/*.jinja` (4 files) |
-| 6 | Update context.md.jinja | Add language parameter |
-| 7 | Template audit.md | Contract examples section |
-| 8 | Update template_sync.py | Render all templates with language |
+| Day | Task | Output | Status |
+|-----|------|--------|--------|
+| 1 | Split INVAR.md universal sections | `protocol/universal/*.md` (8 files) | ✅ |
+| 2 | Create Python adapter fragments | `protocol/python/*.md` (5 files) | ✅ |
+| 3 | Create INVAR.md.jinja template | Composition template | ✅ |
+| 4 | Split CLAUDE.md into templates | `claude-md/universal/*.md` + `python/*.md` | ✅ |
+| 5 | Convert skills to templates | `skills/*.jinja` (4 files) | ✅ |
+| 6 | Update context.md.jinja | Add language parameter | ✅ |
+| 7 | Template audit.md | Contract examples section | ✅ |
+| 8 | Update template_sync.py | Render all templates with language | ✅ |
 
 **Files Created (28 files):**
 ```
@@ -905,55 +948,69 @@ src/invar/shell/commands/template_sync.py    # Render all templates
 src/invar/core/sync_helpers.py               # SyncConfig.language
 ```
 
-### Phase 2: Init Enhancement (Week 2)
+### Phase 2: Init Enhancement ✅ COMPLETE
 
-| Day | Task | Output |
-|-----|------|--------|
-| 1 | Add `detect_language()` | Auto-detection logic |
-| 2 | Add `--language` parameter | CLI option |
-| 3 | Update SyncConfig | Language field |
-| 4 | Template rendering with language | Jinja context |
-| 5 | Tests + documentation | Test coverage |
+| Day | Task | Output | Status |
+|-----|------|--------|--------|
+| 1 | Add `detect_language()` | Auto-detection logic | ✅ |
+| 2 | Add `--language` parameter | CLI option | ✅ |
+| 3 | Update SyncConfig | Language field | ✅ |
+| 4 | Template rendering with language | Jinja context | ✅ |
+| 5 | Tests + documentation | Test coverage | ✅ |
 
 **Files Modified:**
-- `src/invar/shell/commands/init.py`
-- `src/invar/core/sync_helpers.py`
-- `src/invar/shell/commands/template_sync.py`
+- `src/invar/shell/commands/init.py` ✅
+- `src/invar/core/sync_helpers.py` ✅
+- `src/invar/shell/commands/template_sync.py` ✅
 
-### Phase 3: TypeScript Skeleton (Week 3)
+### Phase 3: TypeScript Skeleton ✅ COMPLETE
 
-| Day | Task | Output |
-|-----|------|--------|
-| 1-2 | Create TS protocol fragments | `protocol/typescript/*.md` |
-| 3-4 | Basic guard-ts implementation | Static + test runner |
-| 5 | Integration test | End-to-end verification |
+| Day | Task | Output | Status |
+|-----|------|--------|--------|
+| 1-2 | Create TS protocol fragments | `protocol/typescript/*.md` | ✅ |
+| 3-4 | Create TS example files | contracts.ts, core_shell.ts, functional.ts | ✅ |
+| 5 | Hotfix: copy_dir_lang | Language-aware examples | ✅ |
 
 **Files Created:**
 ```
-src/invar/templates/protocol/typescript/
-├── contracts.md
-├── core-shell.md
+src/invar/templates/protocol/typescript/   ✅
+├── architecture-examples.md
+├── contracts-syntax.md
+├── markers.md
 ├── tools.md
-└── examples.md
+└── troubleshooting.md
+
+src/invar/templates/examples/typescript/   ✅
+├── contracts.ts
+├── core_shell.ts
+├── functional.ts
+├── workflow.md
+└── README.md
 ```
 
-### Phase 4: TypeScript Tools (Week 4)
+### Phase 4: TypeScript Tools → MIGRATED TO LX-06
 
-| Day | Task | Output |
-|-----|------|--------|
-| 1-2 | Sig implementation | tree-sitter-typescript |
-| 3-4 | Map implementation | Symbol reference counting |
-| 5 | Polish + docs | README, examples |
+> **Note:** This phase has been migrated to [LX-06: TypeScript Tooling Support](LX-06-typescript-tooling.md).
+> LX-06 provides a more comprehensive hybrid architecture (Python orchestration + targeted Node components).
 
-### Phase 5: Validation (Week 5)
+| Original Task | LX-06 Location |
+|---------------|----------------|
+| guard-ts (tsc + eslint + vitest) | LX-06 Phase 1 |
+| sig-ts (tree-sitter) | LX-06 Phase 2 (@invar/ts-analyzer) |
+| map-ts (symbol references) | LX-06 Phase 2 |
 
-| Day | Task | Output |
-|-----|------|--------|
-| 1-2 | Test on real TS project | Validation |
-| 3 | Fix issues from testing | Bug fixes |
-| 4-5 | Documentation + release | v2.0.0-beta |
+### Phase 5: Validation ⚠️ DEFERRED
 
-**Total: 5 weeks**
+Deferred until LX-06 MVP completion:
+
+| Task | Status | Dependency |
+|------|--------|------------|
+| Test on real TS project | Pending | LX-06 Phase 1 |
+| README.md update | Pending | LX-06 Phase 1 |
+| CHANGELOG.md v1.9.0 | Pending | LX-06 Phase 1 |
+| docs/adapters/*.md | Pending | LX-06 Phase 2 |
+
+**LX-05 Protocol: Complete. LX-06 Tooling: In Progress.**
 
 ---
 
@@ -963,10 +1020,10 @@ src/invar/templates/protocol/typescript/
 |-------|--------|--------|--------|-------|
 | 1. Template Refactoring | 28 | 3 | 0 | 31 |
 | 2. Init Enhancement | 0 | 4 | 0 | 4 |
-| 3. TypeScript Skeleton | 10 | 2 | 0 | 12 |
+| 3. TypeScript Skeleton | 12 | 2 | 0 | 14 |
 | 4. TypeScript Tools | 3 | 2 | 0 | 5 |
 | 5. Validation | 4 | 1 | 1 | 6 |
-| **Total** | **45** | **12** | **1** | **58** |
+| **Total** | **47** | **12** | **1** | **60** |
 
 ### Detailed File List
 
@@ -1021,7 +1078,7 @@ src/invar/shell/commands/template_sync.py    # Render all templates with languag
 src/invar/core/sync_helpers.py               # SyncConfig.language field
 ```
 
-**Phase 3: Create (10 files):**
+**Phase 3: Create (12 files):**
 ```
 # TypeScript INVAR.md Adapter (5 files)
 src/invar/templates/protocol/typescript/architecture-examples.md
@@ -1034,10 +1091,12 @@ src/invar/templates/protocol/typescript/troubleshooting.md
 src/invar/templates/claude-md/typescript/critical-rules.md
 src/invar/templates/claude-md/typescript/quick-reference.md
 
-# TypeScript Examples (3 files)
-src/invar/templates/config/examples/typescript/contracts.ts
-src/invar/templates/config/examples/typescript/core_shell.ts
-src/invar/templates/config/examples/typescript/workflow.md
+# TypeScript Examples (5 files)
+src/invar/templates/examples/typescript/contracts.ts
+src/invar/templates/examples/typescript/core_shell.ts
+src/invar/templates/examples/typescript/functional.ts
+src/invar/templates/examples/typescript/workflow.md
+src/invar/templates/examples/typescript/README.md
 ```
 
 **Phase 4: Create (3 files):**
@@ -1115,22 +1174,26 @@ src/invar/templates/INVAR.md           # Replaced by INVAR.md.jinja
 
 ## Success Criteria
 
-### Phase 1-2 (v1.9.0)
-- [ ] Template refactoring produces identical INVAR.md output
-- [ ] `--language` parameter works for Python
-- [ ] No regressions in existing Python workflow
+### Phase 1-2 (v1.9.0) ✅ COMPLETE
+- [x] Template refactoring produces identical INVAR.md output
+- [x] `--language` parameter works for Python
+- [x] No regressions in existing Python workflow
 
-### Phase 3-4 (v2.0.0-beta)
-- [ ] TypeScript protocol docs readable without Python knowledge
-- [ ] guard-ts runs tsc + eslint + vitest successfully
-- [ ] sig-ts extracts Zod schemas as contracts
-- [ ] map-ts builds symbol reference counts
+### Phase 3 (TypeScript Protocol) ✅ COMPLETE
+- [x] TypeScript protocol docs readable without Python knowledge
+- [x] TypeScript example files (contracts.ts, core_shell.ts, functional.ts)
+- [x] Language-aware examples installation (copy_dir_lang)
 
-### Phase 5 (v2.0.0)
-- [ ] At least 1 real TypeScript project validates workflow
-- [ ] Documentation complete for both languages
-- [ ] Existing Python users see no breaking changes
-- [ ] Community feedback incorporated
+### Phase 4 (TypeScript Tools) → LX-06
+- [ ] guard-ts runs tsc + eslint + vitest successfully → LX-06 Phase 1
+- [ ] sig-ts extracts Zod schemas as contracts → LX-06 Phase 2
+- [ ] map-ts builds symbol reference counts → LX-06 Phase 2
+
+### Phase 5 (Validation) ⚠️ DEFERRED
+- [ ] At least 1 real TypeScript project validates workflow → After LX-06
+- [ ] Documentation complete for both languages → After LX-06
+- [x] Existing Python users see no breaking changes
+- [ ] Community feedback incorporated → After LX-06
 
 ---
 

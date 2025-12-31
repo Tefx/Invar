@@ -47,19 +47,31 @@ class NonEmptyDetector(BaseDetector):
     @property
     @post(lambda result: result == PatternID.NONEMPTY)
     def pattern_id(self) -> PatternID:
-        """Unique identifier for this pattern."""
+        """Unique identifier for this pattern.
+
+        >>> NonEmptyDetector().pattern_id
+        <PatternID.NONEMPTY: 'nonempty'>
+        """
         return PatternID.NONEMPTY
 
     @property
     @post(lambda result: result == Priority.P0)
     def priority(self) -> Priority:
-        """Priority tier."""
+        """Priority tier.
+
+        >>> NonEmptyDetector().priority
+        <Priority.P0: 'P0'>
+        """
         return Priority.P0
 
     @property
     @post(lambda result: len(result) > 0)
     def description(self) -> str:
-        """Human-readable description."""
+        """Human-readable description.
+
+        >>> len(NonEmptyDetector().description) > 0
+        True
+        """
         return "Use NonEmpty type for compile-time non-empty guarantees"
 
     @post(lambda result: all(isinstance(s, PatternSuggestion) for s in result))

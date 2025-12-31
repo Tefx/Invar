@@ -423,7 +423,9 @@ def _sync_create_only(
             dest_file.write_text(result.unwrap())
         elif template_type == "copy_dir":
             if src_file.is_dir():
-                shutil.copytree(src_file, dest_file)
+                # Ignore Python bytecode and cache directories
+                ignore = shutil.ignore_patterns("__pycache__", "*.pyc", "*.pyo")
+                shutil.copytree(src_file, dest_file, ignore=ignore)
             else:
                 return Failure(f"Expected directory: {src_rel}")
         elif template_type == "copy_dir_lang":
@@ -434,7 +436,9 @@ def _sync_create_only(
             if not lang_src_file.exists():
                 return Failure(f"Language-specific template not found: {lang_src_rel}")
             if lang_src_file.is_dir():
-                shutil.copytree(lang_src_file, dest_file)
+                # Ignore Python bytecode and cache directories
+                ignore = shutil.ignore_patterns("__pycache__", "*.pyc", "*.pyo")
+                shutil.copytree(lang_src_file, dest_file, ignore=ignore)
             else:
                 return Failure(f"Expected directory: {lang_src_rel}")
 

@@ -1,6 +1,6 @@
 # DX-67: Explicit Skill Tool Invocation
 
-**Status:** Proposed
+**Status:** ✅ Complete
 **Created:** 2024-12-29
 **Author:** Claude (via benchmark analysis)
 

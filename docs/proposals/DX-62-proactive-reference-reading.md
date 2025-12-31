@@ -1,8 +1,18 @@
 # DX-62: Proactive Reference Reading
 
-**Status:** Draft
+**Status:** Partial (Layer 1 Complete)
 **Created:** 2024-12-28
+**Updated:** 2025-12-31
 **Category:** Agent Behavior / Documentation
+
+## Implementation Status
+
+| Layer | Status | Evidence |
+|-------|--------|----------|
+| Layer 1: Task Router | ✅ Complete | `.invar/context.md` lines 22-32 |
+| Layer 2: Pre-Flight | ❌ Not started | No Pre-Flight block in SKILL.md |
+| Layer 3: Guard Suggestions | ❌ Not started | No pattern → file mapping in Guard |
+| Layer 4: Language Transform | ⚡ Partial | CLAUDE.md uses imperative language |
 
 ## Problem Statement
 

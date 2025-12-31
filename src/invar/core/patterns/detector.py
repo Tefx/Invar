@@ -19,6 +19,7 @@ from invar.core.patterns.types import (
 )
 
 
+# @invar:allow missing_doctest: Protocol abstract methods cannot have executable doctests
 class PatternDetector(Protocol):
     """
     Protocol for pattern detectors.

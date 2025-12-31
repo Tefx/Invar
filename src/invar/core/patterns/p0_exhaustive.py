@@ -51,19 +51,31 @@ class ExhaustiveMatchDetector(BaseDetector):
     @property
     @post(lambda result: result == PatternID.EXHAUSTIVE)
     def pattern_id(self) -> PatternID:
-        """Unique identifier for this pattern."""
+        """Unique identifier for this pattern.
+
+        >>> ExhaustiveMatchDetector().pattern_id
+        <PatternID.EXHAUSTIVE: 'exhaustive'>
+        """
         return PatternID.EXHAUSTIVE
 
     @property
     @post(lambda result: result == Priority.P0)
     def priority(self) -> Priority:
-        """Priority tier."""
+        """Priority tier.
+
+        >>> ExhaustiveMatchDetector().priority
+        <Priority.P0: 'P0'>
+        """
         return Priority.P0
 
     @property
     @post(lambda result: len(result) > 0)
     def description(self) -> str:
-        """Human-readable description."""
+        """Human-readable description.
+
+        >>> len(ExhaustiveMatchDetector().description) > 0
+        True
+        """
         return "Use assert_never for exhaustive enum matching"
 
     @post(lambda result: all(isinstance(s, PatternSuggestion) for s in result))

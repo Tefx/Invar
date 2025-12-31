@@ -8,6 +8,7 @@ Reference patterns for TypeScript projects using the Invar Protocol.
 |------|---------|
 | `contracts.ts` | Zod schema patterns for pre/postconditions |
 | `core_shell.ts` | Core/Shell separation with neverthrow |
+| `functional.ts` | Functional patterns (Branded Types, NonEmpty, Exhaustive Match) |
 | `workflow.md` | Complete USBV workflow example |
 
 ## Dependencies

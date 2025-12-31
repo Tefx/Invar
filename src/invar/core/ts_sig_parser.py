@@ -79,8 +79,8 @@ _JSDOC_PATTERN = re.compile(
 
 
 # @invar:allow function_size: Regex extraction inherently repetitive per TS construct type
-@pre(lambda source: isinstance(source, str))
-@post(lambda result: all(isinstance(s, TSSymbol) for s in result))
+@pre(lambda source: source is not None)  # Accepts any string including empty
+@post(lambda result: all(s.line > 0 for s in result))  # All symbols have valid line numbers
 def extract_ts_signatures(source: str) -> list[TSSymbol]:
     """Extract TypeScript symbols from source code.
 
@@ -238,7 +238,7 @@ def extract_ts_signatures(source: str) -> list[TSSymbol]:
     return symbols
 
 
-@pre(lambda symbols, file_path="": all(isinstance(s, TSSymbol) for s in symbols))
+@pre(lambda symbols, file_path="": all(s.line > 0 for s in symbols))  # All symbols have valid line numbers
 @post(lambda result: "file" in result and "symbols" in result)
 def format_ts_signatures_json(
     symbols: list[TSSymbol], file_path: str = ""
@@ -274,8 +274,8 @@ def format_ts_signatures_json(
     }
 
 
-@pre(lambda symbols, file_path="": all(isinstance(s, TSSymbol) for s in symbols))
-@post(lambda result: isinstance(result, str))
+@pre(lambda symbols, file_path="": all(s.line > 0 for s in symbols))  # All symbols have valid line numbers
+@post(lambda result: len(result) > 0)  # Always produces output (at least header)
 def format_ts_signatures_text(
     symbols: list[TSSymbol], file_path: str = ""
 ) -> str:

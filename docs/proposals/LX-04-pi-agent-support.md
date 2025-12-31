@@ -370,30 +370,36 @@ def calc(x: int, y: int = 0): ...
 
 **Actual Change:** +10 lines in CLAUDE.md, +1 line in SKILL.md develop
 
-### Phase 2: Pi Support (1.5 days) — PARTIAL COMPLETE
+### Phase 2: Pi Support (1.5 days) — ✅ COMPLETE (except testing)
 
 | Task | Output | Priority | Status |
 |------|--------|----------|--------|
-| 2.1 Create Pi TypeScript hook template | `templates/hooks/pi/invar.ts.jinja` | P0 | 🔄 Pending |
-| 2.2 Implement protocol injection (`pi.send()`) | Long conversation support | P0 | 🔄 Pending |
-| 2.3 Implement pytest/crosshair blocking | Tool call interception | P0 | 🔄 Pending |
-| 2.4 Add `escape_js` Jinja filter | Protocol escaping for JS | P1 | 🔄 Pending |
+| 2.1 Create Pi TypeScript hook template | `templates/hooks/pi/invar.ts.jinja` | P0 | ✅ Done |
+| 2.2 Implement protocol injection (`pi.send()`) | Long conversation support | P0 | ✅ Done |
+| 2.3 Implement pytest/crosshair blocking | Tool call interception | P0 | ✅ Done |
+| 2.4 Add `escape_js` Jinja filter | Protocol escaping for JS | P1 | ✅ Done |
 | 2.5 Extend interactive menu for Pi | Agent selection in init | P1 | ✅ Done |
 | 2.6 Test Pi integration | pytest blocking + protocol refresh | P1 | 🔄 Pending |
 | 2.7 Documentation | docs/guides/pi.md | P2 | ✅ Done |
 | 2.8 Fix Pi preview in init | FILE_CATEGORIES correction | P0 | ✅ Done |
 | 2.9 Add Pi to uninstall | .pi/hooks/ removal | P1 | ✅ Done |
 
-**Completed (2025-12-30):**
-- Interactive menu shows "Pi Coding Agent" option
-- Pi category installs CLAUDE.md + .claude/skills/ (shared with Claude Code)
-- Pi hooks removal added to `invar uninstall`
-- Documentation: README.md, docs/guides/multi-agent.md, docs/guides/pi.md
+**Implementation Details (2025-12-31 Audit):**
+- `templates/hooks/pi/invar.ts.jinja` — Full Pi hook template with:
+  - `pi.send()` protocol injection (msg 15, 25, 35...)
+  - `tool_call` pytest/crosshair blocking
+  - Session state management
+- `src/invar/shell/pi_hooks.py` (208 LOC) — Hook generation and installation:
+  - `generate_pi_hook_content()` — Template rendering with protocol escaping
+  - `install_pi_hooks()` — Creates `.pi/hooks/invar.ts`
+  - `sync_pi_hooks()` — Updates existing hooks
+  - `remove_pi_hooks()` — Cleanup for uninstall
+- `src/invar/core/template_helpers.py` — `escape_for_js_template()` filter
+- `init.py` line 492 calls `install_pi_hooks()`
+- `uninstall.py` handles `.pi/hooks/` removal
 
 **Remaining:**
-- Create Pi TypeScript hook template (`.pi/hooks/invar.ts.jinja`)
-- Implement actual hook installation (currently placeholder)
-- Test with real Pi agent
+- Test with real Pi agent (manual verification needed)
 
 **Key Changes from Original:**
 - ~~`--agent pi` flag~~ → Interactive menu (DX-70 aligned)

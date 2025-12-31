@@ -48,10 +48,10 @@ export function discountedPrice(
 
 /**
  * Precondition: items.length > 0
- * Postcondition: result >= 0
+ * Postcondition: result is finite (no NaN/Infinity)
  */
 const AverageInput = z.array(z.number()).nonempty();
-const AverageOutput = z.number().nonnegative();
+const AverageOutput = z.number().finite();
 
 /**
  * Calculate average of non-empty array.

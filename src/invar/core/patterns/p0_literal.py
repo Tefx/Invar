@@ -48,19 +48,31 @@ class LiteralDetector(BaseDetector):
     @property
     @post(lambda result: result == PatternID.LITERAL)
     def pattern_id(self) -> PatternID:
-        """Unique identifier for this pattern."""
+        """Unique identifier for this pattern.
+
+        >>> LiteralDetector().pattern_id
+        <PatternID.LITERAL: 'literal'>
+        """
         return PatternID.LITERAL
 
     @property
     @post(lambda result: result == Priority.P0)
     def priority(self) -> Priority:
-        """Priority tier."""
+        """Priority tier.
+
+        >>> LiteralDetector().priority
+        <Priority.P0: 'P0'>
+        """
         return Priority.P0
 
     @property
     @post(lambda result: len(result) > 0)
     def description(self) -> str:
-        """Human-readable description."""
+        """Human-readable description.
+
+        >>> len(LiteralDetector().description) > 0
+        True
+        """
         return "Use Literal type for finite value sets"
 
     @post(lambda result: all(isinstance(s, PatternSuggestion) for s in result))

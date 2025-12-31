@@ -50,19 +50,31 @@ class NewTypeDetector(BaseDetector):
     @property
     @post(lambda result: result == PatternID.NEWTYPE)
     def pattern_id(self) -> PatternID:
-        """Unique identifier for this pattern."""
+        """Unique identifier for this pattern.
+
+        >>> NewTypeDetector().pattern_id
+        <PatternID.NEWTYPE: 'newtype'>
+        """
         return PatternID.NEWTYPE
 
     @property
     @post(lambda result: result == Priority.P0)
     def priority(self) -> Priority:
-        """Priority tier."""
+        """Priority tier.
+
+        >>> NewTypeDetector().priority
+        <Priority.P0: 'P0'>
+        """
         return Priority.P0
 
     @property
     @post(lambda result: len(result) > 0)
     def description(self) -> str:
-        """Human-readable description."""
+        """Human-readable description.
+
+        >>> len(NewTypeDetector().description) > 0
+        True
+        """
         return "Use NewType for semantic clarity with multiple same-type parameters"
 
     @post(lambda result: all(isinstance(s, PatternSuggestion) for s in result))
