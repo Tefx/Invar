@@ -15,6 +15,8 @@ from typing import TYPE_CHECKING
 from jinja2 import Environment, FileSystemLoader
 from returns.result import Failure, Result, Success
 
+from invar.core.language import detect_language_from_markers
+
 if TYPE_CHECKING:
     from rich.console import Console
 
@@ -102,11 +104,16 @@ def generate_hook_content(
         syntax = detect_syntax(project_path)
         guard_cmd = "invar_guard" if syntax == "mcp" else "invar guard"
 
+        # Detect project language from marker files
+        markers = frozenset(f.name for f in project_path.iterdir() if f.is_file())
+        language = detect_language_from_markers(markers)
+
         # Build context for template
         context = {
             "protocol_version": PROTOCOL_VERSION,
             "generated_date": datetime.now().strftime("%Y-%m-%d"),
             "guard_cmd": guard_cmd,
+            "language": language,
         }
 
         # For UserPromptSubmit, add the full INVAR.md content

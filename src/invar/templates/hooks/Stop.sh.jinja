@@ -13,7 +13,7 @@ if [[ -f "$CHANGES_FILE" ]]; then
   if [[ $CHANGE_COUNT -gt 0 ]]; then
     echo ""
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo "⚠️  Invar: $CHANGE_COUNT Python files not verified"
+    echo "⚠️  Invar: $CHANGE_COUNT {{ language | capitalize }} files not verified"
     echo "   Run before commit: {{ guard_cmd }} --changed"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   fi

@@ -16,6 +16,7 @@ from typing import TYPE_CHECKING
 from jinja2 import Environment, FileSystemLoader
 from returns.result import Failure, Result, Success
 
+from invar.core.language import detect_language_from_markers
 from invar.core.template_helpers import escape_for_js_template
 from invar.shell.claude_hooks import detect_syntax, get_invar_md_content
 
@@ -52,6 +53,10 @@ def generate_pi_hook_content(project_path: Path) -> Result[str, str]:
         syntax = detect_syntax(project_path)
         guard_cmd = "invar_guard" if syntax == "mcp" else "invar guard"
 
+        # Detect project language from marker files
+        markers = frozenset(f.name for f in project_path.iterdir() if f.is_file())
+        language = detect_language_from_markers(markers)
+
         # Get and escape protocol content for JS template literal
         protocol_content = get_invar_md_content(project_path)
         protocol_escaped = escape_for_js_template(protocol_content)
@@ -61,6 +66,7 @@ def generate_pi_hook_content(project_path: Path) -> Result[str, str]:
             "protocol_version": PROTOCOL_VERSION,
             "generated_date": datetime.now().strftime("%Y-%m-%d"),
             "guard_cmd": guard_cmd,
+            "language": language,
             "invar_protocol_escaped": protocol_escaped,
         }
 
