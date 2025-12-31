@@ -64,8 +64,8 @@ extensions = { action = "preserve" }
 ".claude/skills/propose/SKILL.md" = { src = "skills/propose/SKILL.md.jinja", type = "jinja" }
 ".claude/skills/review/SKILL.md" = { src = "skills/review/SKILL.md.jinja", type = "jinja" }
 
-# Commands (direct copy)
-".claude/commands/audit.md" = { src = "commands/audit.md", type = "copy" }
+# Commands (Jinja2 templates for language-specific content)
+".claude/commands/audit.md" = { src = "commands/audit.md.jinja", type = "jinja" }
 ".claude/commands/guard.md" = { src = "commands/guard.md", type = "copy" }
 
 # Examples (directory copy)
