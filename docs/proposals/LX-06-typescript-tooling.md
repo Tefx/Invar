@@ -1,6 +1,6 @@
 # LX-06: TypeScript Tooling Support
 
-**Status:** In Progress — Phase 3 Complete ✅
+**Status:** In Progress — Source Complete, Build Pending ⚠️
 **Priority:** High
 **Category:** Language/Agent eXtensions
 **Created:** 2025-12-31
@@ -829,31 +829,35 @@ test('traces z.infer across files', async () => {
 - Graceful degradation when Node.js tools unavailable
 - 23 integration tests covering all TypeScript tooling
 
-### Phase 2 (Core Enhancement) ✅ Complete
+### Phase 2 (Core Enhancement) ⚠️ Source Complete, Build Pending
 
-- [x] Pre-commit < 1s with @invar/quick-check
-- [x] Cross-file contract tracing works
-- [x] Property test failures include causal analysis
-- [x] @invar/eslint-plugin published
+- [x] Pre-commit < 1s with @invar/quick-check — **Source written**
+- [x] Cross-file contract tracing works — **Source written**
+- [x] Property test failures include causal analysis — **Source written**
+- [ ] @invar/eslint-plugin published — **Not yet published to npm**
 
 **Implementation Notes:**
 - pnpm monorepo in `typescript/` subdirectory
 - 4 packages: quick-check, ts-analyzer, fc-runner, eslint-plugin
 - Python integration with graceful degradation
 - All packages use Zod for runtime validation
+- **Pending:** `pnpm install && pnpm build` to compile TypeScript
+- **Pending:** npm publish for production use
 
-### Phase 3 (Agent Optimization) ✅ Complete
+### Phase 3 (Agent Optimization) ⚠️ Source Complete, Build Pending
 
-- [x] All fixes include repair code snippets
-- [x] Contract quality assessment (strong/medium/weak)
-- [x] Blind spot detection for high-risk code
-- [x] Impact analysis for changed files
+- [x] All fixes include repair code snippets — **Source written**
+- [x] Contract quality assessment (strong/medium/weak) — **Source written**
+- [x] Blind spot detection for high-risk code — **Source written**
+- [x] Impact analysis for changed files — **Source written**
 
 **Implementation Notes:**
 - v2.0 JSON format with `fixes[]` array containing repair code
 - ESLint rules have `hasSuggestions: true` with auto-fix code
 - ts-analyzer provides contract quality scoring
 - `buildDependencyGraph()` and `analyzeImpact()` for change impact
+- **Current state:** Embedded tools are mocks for testing embed workflow
+- **To activate:** Run `pnpm build` in typescript/ then `python scripts/embed_node_tools.py`
 
 ### Acceptance Test
 

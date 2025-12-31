@@ -5,6 +5,10 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["src/invar"]
 
+# Include embedded Node.js tools (LX-05: TypeScript support without npm)
+# These are copied by scripts/embed_node_tools.py before build
+artifacts = ["src/invar/node_tools/**/*.js", "src/invar/node_tools/**/MANIFEST"]
+
 # Note: templates are included via packages = ["src/invar"]
 # force-include removed to avoid duplicate file errors in wheel
 
@@ -93,7 +97,7 @@ forbidden_imports = [
 ]
 
 # Paths to exclude from checking
-exclude_paths = ["tests", "scripts", ".venv", "__pycache__", "templates", ".invar/examples"]
+exclude_paths = ["tests", "scripts", ".venv", "__pycache__", "templates", ".invar/examples", "node_tools"]
 
 # Phase 3: Guard Enhancement
 strict_pure = true          # Detect internal imports and impure calls in Core

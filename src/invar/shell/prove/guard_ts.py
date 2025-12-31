@@ -14,12 +14,9 @@ import json
 import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal
+from typing import Literal
 
 from returns.result import Failure, Result, Success
-
-if TYPE_CHECKING:
-    from invar.core.ts_parsers import TSViolation
 
 
 @dataclass
@@ -86,7 +83,7 @@ class TypeScriptGuardResult:
     enhanced: EnhancedAnalysis | None = None
 
 
-# @shell_complexity: JSON assembly with multiple conditional sections
+# @shell_orchestration: Transforms TypeScriptGuardResult to JSON for agent consumption
 def format_typescript_guard_v2(result: TypeScriptGuardResult) -> dict:
     """Format TypeScript guard result as v2.0 JSON.
 
@@ -222,14 +219,14 @@ def format_typescript_guard_v2(result: TypeScriptGuardResult) -> dict:
     return output
 
 
-# @shell_complexity: Maps rule violations to repair code with pattern matching
-def _generate_fix_suggestions(violations: list[TSViolation]) -> list[dict]:
+# @shell_orchestration: Helper for format_typescript_guard_v2 output assembly
+def _generate_fix_suggestions(violations: list[TypeScriptViolation]) -> list[dict]:
     """Generate actionable fix suggestions from violations.
 
     LX-06 Phase 3: Maps ESLint rule violations to repair code snippets.
 
     Args:
-        violations: List of TSViolation from ESLint/tsc.
+        violations: List of TypeScriptViolation from ESLint/tsc.
 
     Returns:
         List of fix suggestions with repair code.
@@ -322,6 +319,259 @@ def check_tool_available(tool: str, check_args: list[str]) -> bool:
         return False
 
 
+# =============================================================================
+# @invar/* Node Component Integration (LX-06 Phase 2)
+# =============================================================================
+
+
+# @shell_complexity: Path discovery with fallback logic
+def _get_invar_package_cmd(package_name: str, project_path: Path) -> list[str]:
+    """Get command to run an @invar/* package.
+
+    Priority order:
+    1. Embedded tools (pip install invar-tools includes these)
+    2. Local development (typescript/packages/*/dist/ in Invar repo)
+    3. npx fallback (if published to npm)
+
+    Args:
+        package_name: Package name without @invar/ prefix (e.g., "ts-analyzer")
+        project_path: Project path to check for local installation
+
+    Returns:
+        Command list for subprocess.run
+    """
+    # Priority 1: Embedded tools (from pip install)
+    try:
+        from invar.node_tools import get_tool_path
+
+        if embedded := get_tool_path(package_name):
+            return ["node", str(embedded)]
+    except ImportError:
+        pass  # node_tools module not available
+
+    # Priority 2: Local development setup (Invar repo itself)
+    local_cli = project_path / f"typescript/packages/{package_name}/dist/cli.js"
+    if local_cli.exists():
+        return ["node", str(local_cli)]
+
+    # Priority 2b: Walk up to find the Invar root (monorepo setup)
+    check_path = project_path
+    for _ in range(5):  # Max 5 levels up
+        candidate = check_path / f"typescript/packages/{package_name}/dist/cli.js"
+        if candidate.exists():
+            return ["node", str(candidate)]
+        parent = check_path.parent
+        if parent == check_path:
+            break
+        check_path = parent
+
+    # Priority 3: npx fallback (requires package published to npm)
+    return ["npx", f"@invar/{package_name}"]
+
+
+# @shell_complexity: Error handling branches for subprocess/JSON parsing
+def run_ts_analyzer(project_path: Path) -> Result[dict, str]:
+    """Run @invar/ts-analyzer for contract coverage analysis.
+
+    Calls the Node component via npx with JSON output mode.
+    Gracefully degrades if the package is not installed.
+
+    Args:
+        project_path: Path to TypeScript project root.
+
+    Returns:
+        Result containing analysis dict or error message.
+    """
+    # Validate project path exists before subprocess call
+    if not project_path.exists():
+        return Failure(f"Project path does not exist: {project_path}")
+
+    try:
+        cmd = _get_invar_package_cmd("ts-analyzer", project_path)
+        result = subprocess.run(
+            [*cmd, str(project_path), "--json"],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            cwd=project_path,
+        )
+        if result.returncode == 0:
+            with contextlib.suppress(json.JSONDecodeError):
+                return Success(json.loads(result.stdout))
+            return Failure("Invalid JSON output from ts-analyzer")
+        # Non-zero return could mean package not installed or analysis error
+        if "not found" in result.stderr.lower() or "ENOENT" in result.stderr:
+            return Failure("@invar/ts-analyzer not installed")
+        return Failure(result.stderr or "ts-analyzer failed")
+    except FileNotFoundError:
+        return Failure("node/npx not available - is Node.js installed?")
+    except subprocess.TimeoutExpired:
+        return Failure("ts-analyzer timed out")
+
+
+# @shell_complexity: Error handling branches for subprocess/JSON parsing
+def run_fc_runner(
+    project_path: Path, *, seed: int = 42, num_runs: int = 100
+) -> Result[dict, str]:
+    """Run @invar/fc-runner for property-based testing.
+
+    Calls the Node component via npx with JSON output mode.
+    Gracefully degrades if the package is not installed.
+
+    Args:
+        project_path: Path to TypeScript project root.
+        seed: Random seed for reproducibility.
+        num_runs: Number of test iterations.
+
+    Returns:
+        Result containing test results dict or error message.
+    """
+    # Validate project path exists before subprocess call
+    if not project_path.exists():
+        return Failure(f"Project path does not exist: {project_path}")
+
+    try:
+        cmd = _get_invar_package_cmd("fc-runner", project_path)
+        result = subprocess.run(
+            [*cmd, "--json", "--seed", str(seed), "--num-runs", str(num_runs)],
+            capture_output=True,
+            text=True,
+            timeout=120,  # Property tests can take longer
+            cwd=project_path,
+        )
+        if result.returncode == 0:
+            with contextlib.suppress(json.JSONDecodeError):
+                return Success(json.loads(result.stdout))
+            return Failure("Invalid JSON output from fc-runner")
+        if "not found" in result.stderr.lower() or "ENOENT" in result.stderr:
+            return Failure("@invar/fc-runner not installed")
+        # Return code 1 might mean test failures - try to parse output
+        with contextlib.suppress(json.JSONDecodeError):
+            data = json.loads(result.stdout)
+            if "properties" in data:
+                return Success(data)  # Has results even if tests failed
+        return Failure(result.stderr or "fc-runner failed")
+    except FileNotFoundError:
+        return Failure("node/npx not available - is Node.js installed?")
+    except subprocess.TimeoutExpired:
+        return Failure("fc-runner timed out")
+
+
+# @shell_complexity: Error handling branches for subprocess/JSON parsing
+def run_quick_check(project_path: Path) -> Result[dict, str]:
+    """Run @invar/quick-check for fast smoke testing.
+
+    Calls the Node component via npx with JSON output mode.
+    Gracefully degrades if the package is not installed.
+
+    Args:
+        project_path: Path to TypeScript project root.
+
+    Returns:
+        Result containing check results dict or error message.
+    """
+    # Validate project path exists before subprocess call
+    if not project_path.exists():
+        return Failure(f"Project path does not exist: {project_path}")
+
+    try:
+        cmd = _get_invar_package_cmd("quick-check", project_path)
+        result = subprocess.run(
+            [*cmd, str(project_path), "--json"],
+            capture_output=True,
+            text=True,
+            timeout=30,  # Quick check should be fast
+            cwd=project_path,
+        )
+        if result.returncode == 0:
+            with contextlib.suppress(json.JSONDecodeError):
+                return Success(json.loads(result.stdout))
+            return Failure("Invalid JSON output from quick-check")
+        if "not found" in result.stderr.lower() or "ENOENT" in result.stderr:
+            return Failure("@invar/quick-check not installed")
+        return Failure(result.stderr or "quick-check failed")
+    except FileNotFoundError:
+        return Failure("node/npx not available - is Node.js installed?")
+    except subprocess.TimeoutExpired:
+        return Failure("quick-check timed out")
+
+
+# @shell_orchestration: Helper for run_ts_analyzer - processes subprocess output
+def _parse_ts_analyzer_result(
+    data: dict,
+) -> tuple[float | None, ContractQuality | None, list[BlindSpot]]:
+    """Parse ts-analyzer JSON output into typed structures.
+
+    Args:
+        data: Raw JSON dict from ts-analyzer.
+
+    Returns:
+        Tuple of (coverage, quality, blind_spots).
+    """
+    coverage = data.get("coverage")
+
+    quality = None
+    if q := data.get("quality"):
+        quality = ContractQuality(
+            strong=q.get("strong", 0),
+            medium=q.get("medium", 0),
+            weak=q.get("weak", 0),
+            useless=q.get("useless", 0),
+        )
+
+    blind_spots = []
+    for bs in data.get("blindSpots", []):
+        blind_spots.append(
+            BlindSpot(
+                function=bs.get("function", "unknown"),
+                file=bs.get("file", "unknown"),
+                line=bs.get("line", 0),
+                risk=bs.get("risk", "medium"),
+                reason=bs.get("reason", ""),
+                suggested_schema=bs.get("suggestedSchema"),
+            )
+        )
+
+    return coverage, quality, blind_spots
+
+
+# @shell_orchestration: Helper for run_fc_runner - processes subprocess output
+def _parse_fc_runner_result(data: dict) -> tuple[bool | None, list[dict]]:
+    """Parse fc-runner JSON output into typed structures.
+
+    Args:
+        data: Raw JSON dict from fc-runner.
+
+    Returns:
+        Tuple of (all_passed, failures).
+    """
+    if "properties" not in data:
+        return None, []
+
+    failures = []
+    all_passed = True
+
+    for prop in data.get("properties", []):
+        if prop.get("status") == "failed":
+            all_passed = False
+            failures.append(
+                {
+                    "name": prop.get("name", "unknown"),
+                    "counterexample": prop.get("counterexample"),
+                    "seed": prop.get("seed"),
+                    "shrunk": prop.get("shrunk", False),
+                }
+            )
+
+    return all_passed, failures
+
+
+# =============================================================================
+# Standard Tools (tsc, eslint, vitest)
+# =============================================================================
+
+
+# @shell_complexity: CLI tool integration with error handling and output parsing
 def run_tsc(project_path: Path) -> Result[list[TypeScriptViolation], str]:
     """Run TypeScript compiler for type checking.
 
@@ -331,6 +581,10 @@ def run_tsc(project_path: Path) -> Result[list[TypeScriptViolation], str]:
     Returns:
         Result containing list of violations or error message.
     """
+    # Validate project path exists before subprocess call
+    if not project_path.exists():
+        return Failure(f"Project path does not exist: {project_path}")
+
     tsconfig = project_path / "tsconfig.json"
     if not tsconfig.exists():
         return Failure("No tsconfig.json found")
@@ -361,6 +615,7 @@ def run_tsc(project_path: Path) -> Result[list[TypeScriptViolation], str]:
         return Failure("tsc timed out after 120 seconds")
 
 
+# @shell_orchestration: Parser helper for run_tsc subprocess output
 def _parse_tsc_line(line: str) -> TypeScriptViolation | None:
     """Parse a single tsc output line into a violation.
 
@@ -401,6 +656,7 @@ def _parse_tsc_line(line: str) -> TypeScriptViolation | None:
     )
 
 
+# @shell_complexity: CLI tool integration with JSON parsing and error handling
 def run_eslint(project_path: Path) -> Result[list[TypeScriptViolation], str]:
     """Run ESLint for code quality checks.
 
@@ -410,6 +666,10 @@ def run_eslint(project_path: Path) -> Result[list[TypeScriptViolation], str]:
     Returns:
         Result containing list of violations or error message.
     """
+    # Validate project path exists before subprocess call
+    if not project_path.exists():
+        return Failure(f"Project path does not exist: {project_path}")
+
     try:
         result = subprocess.run(
             ["npx", "eslint", ".", "--format", "json", "--ext", ".ts,.tsx"],
@@ -455,6 +715,7 @@ def run_eslint(project_path: Path) -> Result[list[TypeScriptViolation], str]:
         return Failure("eslint timed out after 120 seconds")
 
 
+# @shell_complexity: Test runner with JSON result parsing and failure extraction
 def run_vitest(project_path: Path) -> Result[list[TypeScriptViolation], str]:
     """Run Vitest for test execution.
 
@@ -464,6 +725,10 @@ def run_vitest(project_path: Path) -> Result[list[TypeScriptViolation], str]:
     Returns:
         Result containing list of violations (test failures) or error message.
     """
+    # Validate project path exists before subprocess call
+    if not project_path.exists():
+        return Failure(f"Project path does not exist: {project_path}")
+
     vitest_config = project_path / "vitest.config.ts"
     if not vitest_config.exists() and not (project_path / "vitest.config.js").exists():
         # Check if vitest is in package.json
@@ -521,19 +786,22 @@ def run_vitest(project_path: Path) -> Result[list[TypeScriptViolation], str]:
         return Failure("vitest timed out after 300 seconds")
 
 
+# @shell_complexity: Orchestrates multiple tools with graceful degradation
 def run_typescript_guard(
     project_path: Path,
     *,
     skip_tests: bool = False,
+    skip_enhanced: bool = False,
 ) -> Result[TypeScriptGuardResult, str]:
     """Run full TypeScript verification pipeline.
 
-    Orchestrates tsc, eslint, and vitest with graceful degradation
-    if tools are unavailable.
+    Orchestrates tsc, eslint, vitest, and @invar/* Node components
+    with graceful degradation if tools are unavailable.
 
     Args:
         project_path: Path to TypeScript project root.
         skip_tests: If True, skip vitest execution.
+        skip_enhanced: If True, skip @invar/* Node component analysis.
 
     Returns:
         Result containing guard result or error message.
@@ -575,6 +843,45 @@ def run_typescript_guard(
                 all_violations.extend(violations)
             case Failure(_):
                 pass  # Test errors are non-fatal
+
+    # =========================================================================
+    # Enhanced analysis via @invar/* Node components (LX-06 Phase 2)
+    # =========================================================================
+    if not skip_enhanced:
+        enhanced = EnhancedAnalysis()
+
+        # Run ts-analyzer for contract coverage and blind spots
+        ts_analyzer_result = run_ts_analyzer(project_path)
+        match ts_analyzer_result:
+            case Success(data):
+                enhanced.ts_analyzer_available = True
+                coverage, quality, blind_spots = _parse_ts_analyzer_result(data)
+                enhanced.contract_coverage = coverage
+                enhanced.contract_quality = quality
+                enhanced.blind_spots = blind_spots
+            case Failure(_):
+                enhanced.ts_analyzer_available = False
+
+        # Run fc-runner for property-based testing
+        fc_runner_result = run_fc_runner(project_path)
+        match fc_runner_result:
+            case Success(data):
+                enhanced.fc_runner_available = True
+                passed, failures = _parse_fc_runner_result(data)
+                enhanced.property_tests_passed = passed
+                enhanced.property_test_failures = failures
+            case Failure(_):
+                enhanced.fc_runner_available = False
+
+        # Run quick-check for fast smoke testing
+        quick_check_result = run_quick_check(project_path)
+        match quick_check_result:
+            case Success(_):
+                enhanced.quick_check_available = True
+            case Failure(_):
+                enhanced.quick_check_available = False
+
+        result.enhanced = enhanced
 
     # Aggregate results
     result.violations = all_violations
