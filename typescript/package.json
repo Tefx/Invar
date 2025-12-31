@@ -5,6 +5,8 @@
   "description": "Invar TypeScript tooling monorepo",
   "scripts": {
     "build": "pnpm -r build",
+    "bundle": "node scripts/bundle.mjs",
+    "build:all": "pnpm build && pnpm bundle",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint packages/*/src",
@@ -14,12 +16,15 @@
     "publish:all": "pnpm -r publish --access public"
   },
   "devDependencies": {
+    "@types/eslint": "^9.6.1",
+    "@types/estree": "^1.0.8",
     "@types/node": "^20.10.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "esbuild": "^0.27.2",
     "eslint": "^8.56.0",
     "typescript": "^5.3.0",
-    "vitest": "^1.0.0",
-    "@typescript-eslint/eslint-plugin": "^6.0.0",
-    "@typescript-eslint/parser": "^6.0.0"
+    "vitest": "^1.0.0"
   },
   "engines": {
     "node": ">=18.0.0",

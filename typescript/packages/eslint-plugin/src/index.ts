@@ -9,7 +9,7 @@
  * - @invar/require-jsdoc-example: Exported functions need @example
  */
 
-import type { ESLint, Linter, Rule } from 'eslint';
+import type { ESLint, Rule } from 'eslint';
 import { requireSchemaValidation } from './rules/require-schema-validation.js';
 import { noIoInCore } from './rules/no-io-in-core.js';
 import { shellResultType } from './rules/shell-result-type.js';
@@ -28,25 +28,26 @@ const rules: Record<string, Rule.RuleModule> = {
   'require-jsdoc-example': requireJsdocExample,
 };
 
-const configs: Record<string, Linter.Config> = {
+// ESLint legacy config format (for ESLint 8 compatibility)
+const configs = {
   recommended: {
     plugins: ['@invar'],
     rules: {
-      '@invar/require-schema-validation': 'error',
-      '@invar/no-io-in-core': 'error',
-      '@invar/shell-result-type': 'warn',
-      '@invar/no-any-in-schema': 'warn',
-      '@invar/require-jsdoc-example': 'warn',
+      '@invar/require-schema-validation': 'error' as const,
+      '@invar/no-io-in-core': 'error' as const,
+      '@invar/shell-result-type': 'warn' as const,
+      '@invar/no-any-in-schema': 'warn' as const,
+      '@invar/require-jsdoc-example': 'warn' as const,
     },
   },
   strict: {
     plugins: ['@invar'],
     rules: {
-      '@invar/require-schema-validation': 'error',
-      '@invar/no-io-in-core': 'error',
-      '@invar/shell-result-type': 'error',
-      '@invar/no-any-in-schema': 'error',
-      '@invar/require-jsdoc-example': 'error',
+      '@invar/require-schema-validation': 'error' as const,
+      '@invar/no-io-in-core': 'error' as const,
+      '@invar/shell-result-type': 'error' as const,
+      '@invar/no-any-in-schema': 'error' as const,
+      '@invar/require-jsdoc-example': 'error' as const,
     },
   },
 };

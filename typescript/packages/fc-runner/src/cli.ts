@@ -9,7 +9,7 @@
  *   npx @invar/fc-runner [config-file] [options]
  */
 
-import { runProperties, defineProperty, fc, type RunnerResult, type PropertyResult } from './index.js';
+import { runProperties, defineProperty, fc, type RunnerResult, type PropertyResult, type PropertyDefinition } from './index.js';
 
 function printHelp(): void {
   console.log(`
@@ -140,7 +140,8 @@ function main(): void {
 
   console.log('Running demo properties...\n');
 
-  const result = runProperties(demoProps, options);
+  // Cast needed because TypeScript infers specific types for each property definition
+  const result = runProperties(demoProps as unknown as PropertyDefinition<Record<string, unknown>>[], options);
   console.log(formatResult(result, options.json));
 
   process.exit(result.passed ? 0 : 1);

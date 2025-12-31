@@ -55,7 +55,7 @@ def check_prerequisites(ts_dir: Path) -> bool:
 
 # @invar:allow shell_result: Standalone script helper
 def build_typescript(ts_dir: Path) -> bool:
-    """Run pnpm install and build."""
+    """Run pnpm install, build, and bundle."""
     print("Building TypeScript packages...")
 
     # Install dependencies
@@ -70,16 +70,16 @@ def build_typescript(ts_dir: Path) -> bool:
         print(f"ERROR: pnpm install failed:\n{result.stderr}")
         return False
 
-    # Build all packages
-    print("  pnpm build...")
+    # Build and bundle all packages
+    print("  pnpm build:all (compile + bundle)...")
     result = subprocess.run(
-        ["pnpm", "build"],
+        ["pnpm", "build:all"],
         cwd=ts_dir,
         capture_output=True,
         text=True,
     )
     if result.returncode != 0:
-        print(f"ERROR: pnpm build failed:\n{result.stderr}")
+        print(f"ERROR: pnpm build:all failed:\n{result.stderr}")
         return False
 
     print("  Build complete.")
@@ -98,7 +98,10 @@ def clean_target(target: Path) -> None:
 # @invar:allow shell_result: Standalone script helper
 # @shell_complexity: File copy with validation and size reporting
 def copy_tool(ts_dir: Path, target: Path, tool_name: str) -> bool:
-    """Copy a single tool's dist/ to target."""
+    """Copy a single tool's bundled CLI to target.
+
+    Prefers bundle.js (standalone with deps) over cli.js (requires node_modules).
+    """
     src = ts_dir / "packages" / tool_name / "dist"
     dst = target / tool_name
 
@@ -106,26 +109,28 @@ def copy_tool(ts_dir: Path, target: Path, tool_name: str) -> bool:
         print(f"  WARNING: {tool_name}/dist not found, skipping")
         return False
 
-    # Check for cli.js
+    # Prefer bundle.js (standalone) over cli.js (needs deps)
+    bundle_js = src / "bundle.js"
     cli_js = src / "cli.js"
-    if not cli_js.exists():
-        print(f"  WARNING: {tool_name}/dist/cli.js not found, skipping")
+
+    if bundle_js.exists():
+        source_file = bundle_js
+    elif cli_js.exists():
+        source_file = cli_js
+        print(f"  WARNING: {tool_name} using unbundled cli.js (may need deps)")
+    else:
+        print(f"  WARNING: {tool_name}/dist has no cli.js or bundle.js, skipping")
         return False
 
     # Create target directory
     dst.mkdir(parents=True, exist_ok=True)
 
-    # Copy all files (preserving structure)
-    for f in src.rglob("*"):
-        if f.is_file():
-            rel = f.relative_to(src)
-            dest_file = dst / rel
-            dest_file.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(f, dest_file)
+    # Copy the CLI bundle as cli.js (standardized name)
+    dest_cli = dst / "cli.js"
+    shutil.copy2(source_file, dest_cli)
 
     # Get size for reporting
-    total_size = sum(f.stat().st_size for f in dst.rglob("*") if f.is_file())
-    size_kb = total_size / 1024
+    size_kb = dest_cli.stat().st_size / 1024
 
     print(f"  Embedded {tool_name} ({size_kb:.1f} KB)")
     return True

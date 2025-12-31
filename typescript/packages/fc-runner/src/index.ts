@@ -210,17 +210,18 @@ function runProperty<T extends Record<string, unknown>>(
   const recordArbitrary = fc.record(prop.arbitraries);
 
   try {
-    const result = fc.check(
-      fc.property(recordArbitrary, (input) => {
-        return prop.predicate(input);
-      }),
-      {
-        seed: options.seed,
-        numRuns: options.numRuns,
-        verbose: options.verbose,
-        endOnFailure: options.endOnFailure,
-      }
-    );
+    const checkParams: fc.Parameters<unknown[]> = {
+      numRuns: options.numRuns,
+      verbose: options.verbose ? fc.VerbosityLevel.Verbose : fc.VerbosityLevel.None,
+      endOnFailure: options.endOnFailure,
+    };
+    if (options.seed !== undefined) {
+      checkParams.seed = options.seed;
+    }
+    const property = fc.property(recordArbitrary, (input) => {
+      return prop.predicate(input);
+    });
+    const result = fc.check(property, checkParams) as fc.RunDetails<unknown[]>;
 
     if (result.failed) {
       const counterexampleValues = result.counterexample?.[0] as Record<string, unknown> ?? {};
