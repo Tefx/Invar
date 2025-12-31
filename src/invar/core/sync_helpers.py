@@ -29,12 +29,16 @@ class SyncConfig:
         >>> config = SyncConfig()
         >>> config.syntax
         'cli'
+        >>> config.language
+        'python'
         >>> config.inject_project_additions
         False
 
-        >>> config = SyncConfig(syntax="mcp", force=True)
+        >>> config = SyncConfig(syntax="mcp", language="typescript", force=True)
         >>> config.syntax
         'mcp'
+        >>> config.language
+        'typescript'
         >>> config.force
         True
 
@@ -44,6 +48,7 @@ class SyncConfig:
     """
 
     syntax: str = "cli"  # "cli" or "mcp"
+    language: str = "python"  # "python" or "typescript" (LX-05)
     inject_project_additions: bool = False
     force: bool = False
     check: bool = False  # Preview only

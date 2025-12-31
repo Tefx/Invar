@@ -70,8 +70,12 @@ def sync_templates(path: Path, config: SyncConfig) -> Result[SyncReport, str]:
     manifest = manifest_result.unwrap()
     report = SyncReport()
 
-    # Build variables for template rendering
-    variables = {**manifest.get("variables", {}), "syntax": config.syntax}
+    # Build variables for template rendering (LX-05: include language)
+    variables = {
+        **manifest.get("variables", {}),
+        "syntax": config.syntax,
+        "language": config.language,
+    }
 
     # Load project additions if enabled
     project_additions = _load_project_additions(path) if config.inject_project_additions else ""

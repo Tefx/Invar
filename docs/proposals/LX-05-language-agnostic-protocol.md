@@ -1,11 +1,12 @@
 # LX-05: Language-Agnostic Protocol Extraction
 
-**Status:** Draft
+**Status:** Draft (Revised)
 **Priority:** Medium
 **Category:** Language/Agent eXtensions
 **Created:** 2025-12-30
+**Revised:** 2025-12-31
 **Based on:** LX-01 (feasibility), LX-04 (multi-agent), INVAR.md v5.0
-**Depends on:** LX-04 completion
+**Depends on:** LX-04 completion ✅
 
 ## Executive Summary
 
@@ -99,6 +100,264 @@ invar-rust/                 # Future
 └── templates/
     └── examples/           # Rust examples
 ```
+
+## Template Splitting Boundaries
+
+### Current INVAR.md Structure Analysis
+
+```
+INVAR.md (~500 lines)
+├── Header + Motto                    # 5 lines, universal
+├── Six Laws                          # 15 lines, 90% universal
+├── Core/Shell Architecture           # 80 lines, 60% Python
+│   ├── Separation Principle          #   universal concept
+│   ├── Decision Tree                 #   universal concept
+│   ├── Examples                      #   Python code
+│   └── Size Guidelines               #   universal numbers
+├── Contract Rules                    # 100 lines, 95% Python
+│   ├── @pre/@post Syntax             #   Python lambda
+│   ├── Doctest Format                #   Python >>>
+│   ├── Self-Test Rule                #   universal concept
+│   └── Common Mistakes               #   Python-specific
+├── Session Protocol                  # 30 lines, 100% universal
+│   ├── Check-In                      #   universal
+│   └── Final                         #   universal
+├── USBV Workflow                     # 50 lines, 85% universal
+│   ├── Phase Definitions             #   universal
+│   └── Guard References              #   tool-specific
+├── Visible Workflow                  # 25 lines, 100% universal
+├── Task Completion                   # 20 lines, 100% universal
+├── Markers                           # 40 lines, 100% Python
+│   └── @escape_hatch, etc.           #   Python decorators
+├── Tools Reference                   # 30 lines, 100% Python
+│   └── guard, sig, map               #   Python CLI
+└── Troubleshooting                   # 50 lines, 100% Python
+```
+
+### Recommended Split Structure
+
+```
+src/invar/templates/
+├── protocol/                      # INVAR.md templates
+│   ├── universal/
+│   │   ├── header.md              # Motto, version
+│   │   ├── six-laws.md            # Principles only
+│   │   ├── architecture.md        # Concepts, decision tree (no code)
+│   │   ├── contracts-concept.md   # What pre/post mean, self-test rule
+│   │   ├── session.md             # Check-In/Final
+│   │   ├── usbv.md                # Phases with {verification_tool}
+│   │   ├── visible-workflow.md    # Progress tracking
+│   │   └── completion.md          # Done criteria
+│   ├── python/
+│   │   ├── architecture-examples.md
+│   │   ├── contracts-syntax.md
+│   │   ├── markers.md
+│   │   ├── tools.md
+│   │   └── troubleshooting.md
+│   ├── typescript/
+│   │   └── ... (same structure)
+│   └── INVAR.md.jinja
+│
+├── claude-md/                     # CLAUDE.md templates (NEW)
+│   ├── universal/
+│   │   ├── header.md
+│   │   ├── check-in.md
+│   │   └── workflow.md
+│   ├── python/
+│   │   ├── critical-rules.md      # @pre/@post examples
+│   │   └── quick-reference.md     # Result[T, E], etc.
+│   ├── typescript/
+│   │   ├── critical-rules.md      # Zod examples
+│   │   └── quick-reference.md
+│   └── CLAUDE.md.jinja
+│
+├── skills/                        # Skills as templates (NEW)
+│   ├── develop/SKILL.md.jinja     # {verification_tool} rendered
+│   ├── review/SKILL.md.jinja
+│   ├── investigate/SKILL.md.jinja
+│   └── propose/SKILL.md.jinja
+│
+├── config/                        # .invar/ templates (NEW)
+│   ├── context.md.jinja           # Already exists, needs language param
+│   └── examples/
+│       ├── python/
+│       │   ├── contracts.py
+│       │   ├── core_shell.py
+│       │   └── workflow.md
+│       └── typescript/
+│           ├── contracts.ts
+│           ├── core_shell.ts
+│           └── workflow.md
+│
+└── commands/                      # Command templates (NEW)
+    ├── audit.md.jinja             # Contract examples section
+    └── guard.md                   # No templating needed
+```
+
+### Boundary Classification Rules
+
+| Content Type | Belongs To | Example |
+|--------------|------------|---------|
+| Principles | Universal | "Separation means pure logic vs I/O" |
+| Decision trees | Universal | "Does this function read files? → Shell" |
+| Pseudocode | Universal | `PRECONDITION: x > 0` |
+| Language syntax | Adapter | `@pre(lambda x: x > 0)` |
+| Tool commands | Adapter | `invar_guard()` |
+| Error patterns | Adapter | `Result[T, E]` usage |
+| Numeric guidelines | Universal | 50 lines/500 lines limits |
+
+### Split Examples
+
+**Universal (architecture.md):**
+```markdown
+## Core/Shell Separation
+
+| Zone | Purpose | Characteristics |
+|------|---------|-----------------|
+| Core | Pure logic | No I/O, deterministic |
+| Shell | I/O operations | File/network access |
+
+### Decision Tree
+Does this function...
+├─ Read/write files? → Shell
+├─ Make network requests? → Shell
+└─ None of the above? → Core
+
+### Injection Pattern (Pseudocode)
+FUNCTION is_expired(expiry, current_time):
+    RETURN current_time > expiry
+```
+
+**Python Adapter (architecture-examples.md):**
+```python
+# core/validator.py - Pure logic
+@pre(lambda text: len(text) > 0)
+@post(lambda result: isinstance(result, bool))
+def is_valid_email(text: str) -> bool:
+    return "@" in text and "." in text.split("@")[1]
+
+# shell/reader.py - I/O operations
+def read_and_validate(path: Path) -> Result[bool, IOError]:
+    try:
+        text = path.read_text()
+        return Success(is_valid_email(text))
+    except IOError as e:
+        return Failure(e)
+```
+
+---
+
+## Code Examples Strategy
+
+### Three-Layer Example Architecture
+
+| Layer | Location | Content | Purpose |
+|-------|----------|---------|---------|
+| **L1: Pseudocode** | Universal files | Abstract patterns | Concept explanation |
+| **L2: Syntax snippets** | Adapter inline | 3-10 line examples | Syntax demonstration |
+| **L3: Complete implementations** | .invar/examples/ | Full files | Reference patterns |
+
+### Example Type Classification
+
+| Example Type | Lines | Current Location | Recommended |
+|--------------|-------|------------------|-------------|
+| Concept explanation | 1-3 | INVAR.md inline | → Universal pseudocode |
+| Syntax demo | 3-10 | INVAR.md inline | → Adapter inline |
+| Full implementation | 10-50 | .invar/examples/ | → Adapter examples/ |
+| Workflow demo | 50+ | .invar/examples/workflow.md | → Adapter examples/ |
+
+### .invar/examples/ Structure
+
+```
+.invar/examples/           # Installed based on language parameter
+├── core-example.md        # Language-specific Core patterns
+├── shell-example.md       # Language-specific Shell patterns
+└── workflow.md            # Language-specific USBV workflow
+
+# Template selection:
+# --language=python → copies from templates/examples/python/
+# --language=typescript → copies from templates/examples/typescript/
+```
+
+---
+
+## Other Documentation Analysis
+
+### Documentation Split Requirements (Revised after Audit)
+
+| Document | Split Needed | Reason |
+|----------|--------------|--------|
+| **CLAUDE.md** | 🔴 Yes | Critical Rules section has Python examples |
+| **Skills (SKILL.md)** | 🔴 Yes | Must be rendered templates, not runtime placeholders |
+| **.invar/context.md** | 🔴 Yes | Core/Shell rules, Task Router have Python syntax |
+| **.invar/examples/** | ✅ Yes | Fully language-specific |
+| **Commands (audit.md)** | ⚠️ Minor | Contract examples section only |
+| **Commands (guard.md)** | ✅ No | Tool name universal, internal dispatch |
+| **AGENT.md** | ✅ No | Generic agent instructions |
+
+### Detailed Audit Results
+
+#### CLAUDE.md Critical Section (Python-specific)
+```markdown
+<!--invar:critical-->
+| **Core** | `@pre/@post` + doctests, NO I/O imports |  ← Python
+| **Shell** | Returns `Result[T, E]` from `returns` library |  ← Python
+
+### Contract Rules (CRITICAL)
+@pre(lambda x: x >= 0)  ← Python lambda syntax
+```
+
+#### context.md.jinja (Python-specific content)
+```markdown
+### Core/Shell Separation
+- **Core**: @pre/@post + doctests  ← Python
+- **Shell**: Result[T, E]  ← Python
+
+## Task Router
+| Write code in `core/` | `.invar/examples/contracts.py` |  ← .py files
+| Add `@pre`/`@post` contracts | ...  ← Python decorators
+```
+
+#### audit.md (Contract examples only)
+```markdown
+## Review Checklist
+### A. Contract Semantic Value
+- Bad: `@pre(lambda x: isinstance(x, int))`  ← Python
+- Good: `@pre(lambda x: x > 0 and x < MAX_VALUE)`  ← Python
+```
+
+#### guard.md (No changes needed)
+- `invar_guard()` tool handles language detection internally
+- Rule names in report format are examples, not prescriptive
+
+### Skills Placeholder Strategy
+
+Current skills reference Python tools directly:
+
+```markdown
+# /develop SKILL.md (current)
+Run `invar_guard()` to verify...
+Use `invar_sig` to see contracts...
+```
+
+Universal skills with placeholders:
+
+```markdown
+# /develop SKILL.md (universal)
+Run `{verification_tool}` to verify...
+Use `{signature_tool}` to see contracts...
+```
+
+Template rendering replaces placeholders:
+
+| Placeholder | Python | TypeScript |
+|-------------|--------|------------|
+| `{verification_tool}` | `invar_guard()` | `guard-ts` |
+| `{signature_tool}` | `invar_sig` | `sig-ts` |
+| `{map_tool}` | `invar_map` | `map-ts` |
+| `{contract_decorator}` | `@pre/@post` | `Zod schema` |
+
+---
 
 ## Universal Protocol Content
 
@@ -322,92 +581,521 @@ LanguageAdapter:
   - patterns() → PatternDefs        # Core/Shell patterns
 ```
 
+## Critical Analysis: Agent Compliance
+
+### File Scattering Impact
+
+**Question:** Will splitting protocol into multiple files hurt agent compliance?
+
+**Analysis:**
+
+| Scenario | Agent Behavior | Risk |
+|----------|---------------|------|
+| Single INVAR.md (current) | Agent reads on Check-In | ✅ Low - always discovers |
+| Split into docs/protocol/*.md | Agent must navigate directory | ⚠️ Medium - may miss files |
+| 7+ scattered files | Agent reads selectively | ❌ High - incomplete context |
+
+**Key Insight:** Agents don't proactively explore file systems. They read what's referenced or what's in obvious locations (INVAR.md, CLAUDE.md).
+
+### Recommended Architecture
+
+**Source separation for maintainers, merged output for agents:**
+
+```
+Source (maintainer view):          Output (agent view):
+├── protocol/                      ├── INVAR.md  ← Single file
+│   ├── universal/                 │   (generated from template)
+│   │   ├── six-laws.md           └── ...
+│   │   ├── usbv.md
+│   │   └── session.md
+│   ├── python/
+│   │   ├── contracts.md
+│   │   └── tools.md
+│   └── INVAR.md.jinja  ← Composition template
+```
+
+**Template Composition:**
+
+```jinja
+{# INVAR.md.jinja #}
+{% include "protocol/universal/header.md" %}
+{% include "protocol/universal/six-laws.md" %}
+
+{% if language == "python" %}
+{% include "protocol/python/core-shell.md" %}
+{% include "protocol/python/contracts.md" %}
+{% elif language == "typescript" %}
+{% include "protocol/typescript/core-shell.md" %}
+{% include "protocol/typescript/contracts.md" %}
+{% endif %}
+
+{% include "protocol/universal/session.md" %}
+{% include "protocol/universal/usbv.md" %}
+
+{% if language == "python" %}
+{% include "protocol/python/tools.md" %}
+{% endif %}
+```
+
+**Benefits:**
+1. **Maintainers** edit focused, small files
+2. **Agents** get single, comprehensive INVAR.md
+3. **No compliance risk** - output identical to current structure
+
+---
+
+## Init Command Changes
+
+### Language Detection
+
+```python
+SUPPORTED_LANGUAGES = ["python"]
+FUTURE_LANGUAGES = ["typescript", "rust", "go"]
+
+def detect_language(path: Path) -> str:
+    """Auto-detect project language from marker files."""
+    if (path / "pyproject.toml").exists():
+        return "python"
+    if (path / "tsconfig.json").exists():
+        return "typescript"
+    if (path / "Cargo.toml").exists():
+        return "rust"
+    if (path / "go.mod").exists():
+        return "go"
+    return "python"  # default
+```
+
+### New CLI Parameter
+
+```python
+def init(
+    path: Path = typer.Argument(...),
+    claude: bool = typer.Option(False, "--claude"),
+    pi: bool = typer.Option(False, "--pi"),
+    language: str = typer.Option(
+        None,
+        "--language",
+        help="Target language (auto-detected if not specified)"
+    ),
+) -> None:
+    # Auto-detect if not specified
+    if language is None:
+        language = detect_language(path)
+    
+    if language in FUTURE_LANGUAGES:
+        console.print(f"[yellow]Warning:[/yellow] {language} support is experimental")
+```
+
+### Template Rendering
+
+```python
+sync_config = SyncConfig(
+    syntax="cli",
+    language=language,  # NEW: Pass to template
+    inject_project_additions=...,
+)
+```
+
+---
+
+## TypeScript Implementation Plan
+
+### Tool Stack
+
+| Layer | Tool | Purpose |
+|-------|------|---------|
+| Contracts | Zod | Runtime validation, schema inference |
+| Result Type | neverthrow | `Result<T, E>` for Shell functions |
+| Static | tsc + ESLint | Type checking + linting |
+| Tests | Vitest | Fast, ESM-native testing |
+| Property | fast-check | Property-based testing |
+| Doctest | vite-plugin-doctest | Inline examples |
+
+### Contract Syntax
+
+```typescript
+// Python equivalent:
+// @pre(lambda x: x > 0)
+// @post(lambda result: result >= 0)
+
+import { z } from 'zod';
+
+// TypeScript with Zod:
+const CalculateInput = z.object({
+  principal: z.number().positive(),
+  rate: z.number().min(0).max(1),
+  years: z.number().int().positive(),
+});
+
+const CalculateOutput = z.number().nonnegative();
+
+function calculate(input: z.infer<typeof CalculateInput>): number {
+  const validated = CalculateInput.parse(input);
+  const result = validated.principal * (1 + validated.rate) ** validated.years;
+  return CalculateOutput.parse(result);
+}
+```
+
+### Core/Shell Pattern
+
+```typescript
+// core/interest.ts - Pure logic
+export function compoundInterest(
+  principal: number,
+  rate: number,
+  years: number
+): number {
+  return principal * Math.pow(1 + rate, years);
+}
+
+// shell/calculator.ts - I/O operations
+import { Result, ok, err } from 'neverthrow';
+import { compoundInterest } from '../core/interest';
+
+export function calculateFromInput(
+  input: unknown
+): Result<number, ValidationError> {
+  const parsed = CalculateInput.safeParse(input);
+  if (!parsed.success) {
+    return err(new ValidationError(parsed.error));
+  }
+  return ok(compoundInterest(
+    parsed.data.principal,
+    parsed.data.rate,
+    parsed.data.years
+  ));
+}
+```
+
+### Guard Implementation
+
+```typescript
+// invar-guard-ts pseudocode
+async function guard(options: GuardOptions): Promise<GuardResult> {
+  const results = await Promise.all([
+    runTypeCheck(),      // tsc --noEmit
+    runLinter(),         // eslint with invar rules
+    runTests(),          // vitest run
+    runPropertyTests(),  // vitest with fast-check
+  ]);
+  
+  return aggregateResults(results);
+}
+```
+
+### Sig/Map Implementation
+
+```
+Option A: tree-sitter-typescript
+- Fast, battle-tested parser
+- Extract function signatures with Zod schemas
+- Build symbol reference map
+
+Option B: TypeScript Compiler API
+- Native AST access
+- More accurate type inference
+- Heavier dependency
+```
+
+**Recommendation:** Start with tree-sitter for speed, add TS Compiler API for advanced features.
+
+---
+
 ## Implementation Plan
 
-### Phase 1: Extract Universal Protocol (1 week)
+### Phase 1: Template Refactoring (Week 1-2)
 
-| Task | Output |
-|------|--------|
-| 1.1 Create PROTOCOL.md | Universal Six Laws, USBV, Session Protocol |
-| 1.2 Create ARCHITECTURE.md | Universal Core/Shell, Decision Tree |
-| 1.3 Create CONTRACTS.md | Concept definitions (not syntax) |
-| 1.4 Universalize skills | Remove Python-specific references |
+| Day | Task | Output |
+|-----|------|--------|
+| 1 | Split INVAR.md universal sections | `protocol/universal/*.md` (8 files) |
+| 2 | Create Python adapter fragments | `protocol/python/*.md` (5 files) |
+| 3 | Create INVAR.md.jinja template | Composition template |
+| 4 | Split CLAUDE.md into templates | `claude-md/universal/*.md` + `python/*.md` |
+| 5 | Convert skills to templates | `skills/*.jinja` (4 files) |
+| 6 | Update context.md.jinja | Add language parameter |
+| 7 | Template audit.md | Contract examples section |
+| 8 | Update template_sync.py | Render all templates with language |
 
-### Phase 2: Create Python Adapter Docs (0.5 week)
-
-| Task | Output |
-|------|--------|
-| 2.1 Create CONTRACTS-PYTHON.md | @pre/@post lambda syntax, deal specifics |
-| 2.2 Create TOOLS-PYTHON.md | guard, sig, map command details |
-| 2.3 Update INVAR.md | Reference universal + Python docs |
-
-### Phase 3: Validate with TypeScript Sketch (1 week)
-
-| Task | Output |
-|------|--------|
-| 3.1 Create CONTRACTS-TS.md | Zod/io-ts patterns, JSDoc conventions |
-| 3.2 Create TOOLS-TS.md | ESLint + fast-check integration sketch |
-| 3.3 Create TS examples | Core/Shell TypeScript examples |
-| 3.4 Validate universality | Can protocol apply without Python refs? |
-
-**Total: 2.5 weeks**
-
-## File Structure After Implementation
-
+**Files Created (28 files):**
 ```
-INVAR.md                    # Combines: Universal Protocol + Python Adapter
-                            # (Single file for backward compatibility)
-
-docs/protocol/              # NEW: Universal protocol (extracted)
-├── PROTOCOL-UNIVERSAL.md   # Six Laws, USBV, Session (no code examples)
-├── ARCHITECTURE-UNIVERSAL.md # Core/Shell concepts (no code examples)
-├── CONTRACTS-UNIVERSAL.md  # Contract concepts (no syntax)
-└── skills/
-    ├── develop-universal.md
-    ├── investigate-universal.md
-    ├── propose-universal.md
-    └── review-universal.md
-
-docs/adapters/              # NEW: Language-specific
-├── python/
-│   ├── CONTRACTS.md        # @pre/@post syntax, deal
-│   ├── TOOLS.md            # guard, sig, map
-│   └── EXAMPLES.md         # Python code examples
-└── typescript/             # Future
-    ├── CONTRACTS.md        # Zod, JSDoc
-    ├── TOOLS.md            # ESLint, fast-check
-    └── EXAMPLES.md         # TS code examples
+src/invar/templates/
+├── protocol/                          # INVAR.md (14 files)
+│   ├── universal/ (8 files)
+│   ├── python/ (5 files)
+│   └── INVAR.md.jinja
+│
+├── claude-md/                         # CLAUDE.md (8 files) - NEW
+│   ├── universal/
+│   │   ├── header.md
+│   │   ├── check-in.md
+│   │   └── workflow.md
+│   ├── python/
+│   │   ├── critical-rules.md
+│   │   └── quick-reference.md
+│   └── CLAUDE.md.jinja
+│
+├── skills/                            # Skills (4 files) - NEW
+│   ├── develop/SKILL.md.jinja
+│   ├── review/SKILL.md.jinja
+│   ├── investigate/SKILL.md.jinja
+│   └── propose/SKILL.md.jinja
+│
+└── commands/                          # Commands (1 file) - NEW
+    └── audit.md.jinja
 ```
+
+**Files Modified (3 files):**
+```
+src/invar/templates/config/context.md.jinja  # Add language conditionals
+src/invar/shell/commands/template_sync.py    # Render all templates
+src/invar/core/sync_helpers.py               # SyncConfig.language
+```
+
+### Phase 2: Init Enhancement (Week 2)
+
+| Day | Task | Output |
+|-----|------|--------|
+| 1 | Add `detect_language()` | Auto-detection logic |
+| 2 | Add `--language` parameter | CLI option |
+| 3 | Update SyncConfig | Language field |
+| 4 | Template rendering with language | Jinja context |
+| 5 | Tests + documentation | Test coverage |
+
+**Files Modified:**
+- `src/invar/shell/commands/init.py`
+- `src/invar/core/sync_helpers.py`
+- `src/invar/shell/commands/template_sync.py`
+
+### Phase 3: TypeScript Skeleton (Week 3)
+
+| Day | Task | Output |
+|-----|------|--------|
+| 1-2 | Create TS protocol fragments | `protocol/typescript/*.md` |
+| 3-4 | Basic guard-ts implementation | Static + test runner |
+| 5 | Integration test | End-to-end verification |
+
+**Files Created:**
+```
+src/invar/templates/protocol/typescript/
+├── contracts.md
+├── core-shell.md
+├── tools.md
+└── examples.md
+```
+
+### Phase 4: TypeScript Tools (Week 4)
+
+| Day | Task | Output |
+|-----|------|--------|
+| 1-2 | Sig implementation | tree-sitter-typescript |
+| 3-4 | Map implementation | Symbol reference counting |
+| 5 | Polish + docs | README, examples |
+
+### Phase 5: Validation (Week 5)
+
+| Day | Task | Output |
+|-----|------|--------|
+| 1-2 | Test on real TS project | Validation |
+| 3 | Fix issues from testing | Bug fixes |
+| 4-5 | Documentation + release | v2.0.0-beta |
+
+**Total: 5 weeks**
+
+---
+
+## File Change Summary
+
+| Phase | Create | Modify | Delete | Total |
+|-------|--------|--------|--------|-------|
+| 1. Template Refactoring | 28 | 3 | 0 | 31 |
+| 2. Init Enhancement | 0 | 4 | 0 | 4 |
+| 3. TypeScript Skeleton | 10 | 2 | 0 | 12 |
+| 4. TypeScript Tools | 3 | 2 | 0 | 5 |
+| 5. Validation | 4 | 1 | 1 | 6 |
+| **Total** | **45** | **12** | **1** | **58** |
+
+### Detailed File List
+
+**Phase 1: Create (28 files):**
+```
+# INVAR.md - Universal Protocol (8 files)
+src/invar/templates/protocol/universal/header.md
+src/invar/templates/protocol/universal/six-laws.md
+src/invar/templates/protocol/universal/architecture.md
+src/invar/templates/protocol/universal/contracts-concept.md
+src/invar/templates/protocol/universal/session.md
+src/invar/templates/protocol/universal/usbv.md
+src/invar/templates/protocol/universal/visible-workflow.md
+src/invar/templates/protocol/universal/completion.md
+
+# INVAR.md - Python Adapter (5 files)
+src/invar/templates/protocol/python/architecture-examples.md
+src/invar/templates/protocol/python/contracts-syntax.md
+src/invar/templates/protocol/python/markers.md
+src/invar/templates/protocol/python/tools.md
+src/invar/templates/protocol/python/troubleshooting.md
+
+# INVAR.md - Composition (1 file)
+src/invar/templates/protocol/INVAR.md.jinja
+
+# CLAUDE.md - Universal (3 files)
+src/invar/templates/claude-md/universal/header.md
+src/invar/templates/claude-md/universal/check-in.md
+src/invar/templates/claude-md/universal/workflow.md
+
+# CLAUDE.md - Python (2 files)
+src/invar/templates/claude-md/python/critical-rules.md
+src/invar/templates/claude-md/python/quick-reference.md
+
+# CLAUDE.md - Composition (1 file)
+src/invar/templates/claude-md/CLAUDE.md.jinja
+
+# Skills as Templates (4 files)
+src/invar/templates/skills/develop/SKILL.md.jinja
+src/invar/templates/skills/review/SKILL.md.jinja
+src/invar/templates/skills/investigate/SKILL.md.jinja
+src/invar/templates/skills/propose/SKILL.md.jinja
+
+# Commands (1 file)
+src/invar/templates/commands/audit.md.jinja
+```
+
+**Phase 1: Modify (3 files):**
+```
+src/invar/templates/config/context.md.jinja  # Add language conditionals
+src/invar/shell/commands/template_sync.py    # Render all templates with language
+src/invar/core/sync_helpers.py               # SyncConfig.language field
+```
+
+**Phase 3: Create (10 files):**
+```
+# TypeScript INVAR.md Adapter (5 files)
+src/invar/templates/protocol/typescript/architecture-examples.md
+src/invar/templates/protocol/typescript/contracts-syntax.md
+src/invar/templates/protocol/typescript/markers.md
+src/invar/templates/protocol/typescript/tools.md
+src/invar/templates/protocol/typescript/troubleshooting.md
+
+# TypeScript CLAUDE.md Adapter (2 files)
+src/invar/templates/claude-md/typescript/critical-rules.md
+src/invar/templates/claude-md/typescript/quick-reference.md
+
+# TypeScript Examples (3 files)
+src/invar/templates/config/examples/typescript/contracts.ts
+src/invar/templates/config/examples/typescript/core_shell.ts
+src/invar/templates/config/examples/typescript/workflow.md
+```
+
+**Phase 4: Create (3 files):**
+```
+# TypeScript Tools
+src/invar/adapters/typescript/guard.py
+src/invar/adapters/typescript/sig.py
+src/invar/adapters/typescript/map.py
+```
+
+**Phase 2: Modify (4 files):**
+```
+src/invar/shell/commands/init.py       # detect_language(), --language
+src/invar/core/sync_helpers.py         # SyncConfig.language field
+src/invar/shell/commands/template_sync.py  # Jinja context
+src/invar/shell/cli.py                 # CLI help text
+```
+
+**Phase 5: Create (4 files):**
+```
+docs/adapters/python.md
+docs/adapters/typescript.md
+docs/protocol/universal.md
+CHANGELOG.md (v2.0.0 section)
+```
+
+**Phase 5: Modify (1 file):**
+```
+README.md                              # Multi-language support
+```
+
+**Phase 5: Delete (1 file):**
+```
+src/invar/templates/INVAR.md           # Replaced by INVAR.md.jinja
+```
+
+---
+
+## Version Milestones
+
+| Version | Content | Timeline |
+|---------|---------|----------|
+| v1.8.1 | Template refactoring (INVAR.md, CLAUDE.md, skills) | Week 1-2 |
+| v1.9.0 | `--language` parameter, TS protocol docs | Week 3 |
+| v2.0.0-beta | TypeScript tools (guard, sig, map) | Week 4-5 |
+| v2.0.0 | Validated, documented release | Week 6 |
+
+**Total: 6 weeks** (extended from 5 due to additional template work)
 
 ## Benefits
 
-1. **Broader Applicability** — Protocol useful beyond Python
-2. **Clearer Separation** — What's universal vs what's tooling
-3. **Easier Onboarding** — Learn concepts first, then syntax
-4. **Community Adapters** — Others can create language support
-5. **Agent Portability** — Same workflow for any language
+| Benefit | Description |
+|---------|-------------|
+| **Broader Applicability** | Protocol useful beyond Python (TS, Rust, Go) |
+| **Clearer Separation** | Universal concepts vs language-specific tooling |
+| **Easier Onboarding** | Learn concepts first, then syntax |
+| **Community Adapters** | Others can create language support |
+| **Agent Portability** | Same USBV workflow for any language |
+| **No Compliance Risk** | Single INVAR.md output preserves agent behavior |
+| **Maintainer Experience** | Small, focused source files |
 
-## Risks
+---
 
-| Risk | Mitigation |
-|------|------------|
-| Over-abstraction | Keep concrete Python path as primary |
-| Maintenance burden | Universal docs are stable, adapters change |
-| Confusion | INVAR.md stays as combined "quick start" |
+## Risks and Mitigations
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| Over-abstraction | Medium | Keep Python path as primary; TS validates universality |
+| Maintenance burden | Low | Universal docs stable; only adapters change |
+| Template complexity | Medium | Comprehensive tests for template rendering |
+| Agent confusion | Low | Output identical to current INVAR.md structure |
+| TS tool quality | High | Phase 5 validation on real project before release |
+
+---
 
 ## Success Criteria
 
-- [ ] Universal protocol docs readable without Python knowledge
-- [ ] Python adapter docs add only Python-specific details
-- [ ] TypeScript sketch validates universality
+### Phase 1-2 (v1.9.0)
+- [ ] Template refactoring produces identical INVAR.md output
+- [ ] `--language` parameter works for Python
+- [ ] No regressions in existing Python workflow
+
+### Phase 3-4 (v2.0.0-beta)
+- [ ] TypeScript protocol docs readable without Python knowledge
+- [ ] guard-ts runs tsc + eslint + vitest successfully
+- [ ] sig-ts extracts Zod schemas as contracts
+- [ ] map-ts builds symbol reference counts
+
+### Phase 5 (v2.0.0)
+- [ ] At least 1 real TypeScript project validates workflow
+- [ ] Documentation complete for both languages
 - [ ] Existing Python users see no breaking changes
-- [ ] At least 1 non-Python project can use universal protocol
+- [ ] Community feedback incorporated
 
-## Open Questions
+---
 
-1. **Single file vs split?** Keep INVAR.md as combined, or split into multiple?
-2. **Skills:** Should skills reference verification tools generically?
-3. **Agent instructions:** Should CLAUDE.md have universal + adapter sections?
+## Decisions Made
+
+| Question | Decision | Rationale |
+|----------|----------|-----------|
+| Single file vs split? | **Single output, split source** | Agents need single INVAR.md; maintainers need focused files |
+| Skills generic? | **Yes, with tool placeholders** | `{verification_tool}` renders to `invar_guard` or `guard-ts` |
+| CLAUDE.md sections? | **No change needed** | CLAUDE.md references INVAR.md; adapts automatically |
+| Python migration? | **Yes, use template composition** | Consistency across languages; no user-facing changes |
+
+---
+
+## Open Questions (Remaining)
+
+1. **NPM package name?** `invar-ts`, `@invar/typescript`, or `invar-tools-ts`?
+2. **Monorepo or separate?** Keep TS tools in same repo or new `invar-typescript` repo?
+3. **ESLint plugin?** Create `eslint-plugin-invar` for contract linting rules?
 
 ## Appendix: Universal Contract Examples (Pseudocode)
 

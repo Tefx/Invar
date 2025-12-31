@@ -141,12 +141,21 @@ WARNING: review_suggested - Low contract coverage
 > **Principle:** Only items requiring semantic judgment. Mechanical checks are handled by Guard.
 
 ### A. Contract Semantic Value
+{% if language == "python" %}
 - [ ] Does @pre constrain inputs beyond type checking?
   - Bad: `@pre(lambda x: isinstance(x, int))`
   - Good: `@pre(lambda x: x > 0 and x < MAX_VALUE)`
 - [ ] Does @post verify meaningful output properties?
   - Bad: `@post(lambda result: result is not None)`
   - Good: `@post(lambda result: len(result) == len(input))`
+{% elif language == "typescript" %}
+- [ ] Does @pre constrain inputs beyond type checking?
+  - Bad: `// @pre: typeof x === 'number'`
+  - Good: `// @pre: x > 0 && x < MAX_VALUE`
+- [ ] Does @post verify meaningful output properties?
+  - Bad: `// @post: result !== null`
+  - Good: `// @post: result.length === input.length`
+{% endif %}
 - [ ] Could someone implement correctly from contracts alone?
 - [ ] Are boundary conditions explicit in contracts?
 
