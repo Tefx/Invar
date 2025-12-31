@@ -160,8 +160,16 @@ def format_typescript_guard_v2(result: TypeScriptGuardResult) -> dict:
 
         # Property tests section
         if enhanced.fc_runner_available:
+            # Handle None (not run) vs False (failed) vs True (passed)
+            if enhanced.property_tests_passed is None:
+                pt_status = "skipped"
+            elif enhanced.property_tests_passed:
+                pt_status = "passed"
+            else:
+                pt_status = "failed"
+
             property_tests: dict = {
-                "status": "passed" if enhanced.property_tests_passed else "failed",
+                "status": pt_status,
                 "confidence": "statistical",
                 "available": True,
             }
