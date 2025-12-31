@@ -73,10 +73,13 @@ export const requireSchemaValidation: Rule.RuleModule = {
       description: 'Require .parse() call for Zod-typed parameters',
       recommended: true,
     },
+    hasSuggestions: true,
     schema: [],
     messages: {
       missingValidation:
         'Parameter "{{name}}" has Zod type but no .parse() or .safeParse() call',
+      addParseCall:
+        'Add .parse() validation for "{{name}}"',
     },
   },
 
@@ -104,10 +107,31 @@ export const requireSchemaValidation: Rule.RuleModule = {
       for (const param of params) {
         if (param.typeAnnotation && isZodType(param.typeAnnotation)) {
           if (!hasParseCall(body as Node | null, param.name)) {
+            // Extract schema name from type annotation (e.g., "z.infer<typeof UserSchema>" -> "UserSchema")
+            const schemaMatch = param.typeAnnotation.match(/typeof\s+(\w+)/);
+            const schemaName = schemaMatch ? schemaMatch[1] : 'Schema';
+            const validatedVarName = `validated${param.name.charAt(0).toUpperCase()}${param.name.slice(1)}`;
+
             context.report({
               node: node as unknown as Rule.Node,
               messageId: 'missingValidation',
               data: { name: param.name },
+              suggest: [
+                {
+                  messageId: 'addParseCall',
+                  data: { name: param.name },
+                  fix(fixer) {
+                    // Find the opening brace of the function body
+                    if (!body || body.type !== 'BlockStatement') return null;
+                    const blockBody = body as unknown as { body: Node[] };
+                    if (!blockBody.body || blockBody.body.length === 0) return null;
+
+                    const firstStatement = blockBody.body[0];
+                    const parseCode = `const ${validatedVarName} = ${schemaName}.parse(${param.name});\n  `;
+                    return fixer.insertTextBefore(firstStatement as unknown as Rule.Node, parseCode);
+                  },
+                },
+              ],
             });
           }
         }

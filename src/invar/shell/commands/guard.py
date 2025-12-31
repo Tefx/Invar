@@ -181,30 +181,10 @@ def guard(
             case Success(result):
                 if json_output or agent:
                     import json as json_mod
-                    output = {
-                        "status": result.status,
-                        "language": "typescript",
-                        "static": {
-                            "errors": result.error_count,
-                            "warnings": result.warning_count,
-                        },
-                        "tools": {
-                            "tsc": result.tsc_available,
-                            "eslint": result.eslint_available,
-                            "vitest": result.vitest_available,
-                        },
-                        "violations": [
-                            {
-                                "file": v.file,
-                                "line": v.line,
-                                "rule": v.rule,
-                                "message": v.message,
-                                "severity": v.severity,
-                                "source": v.source,
-                            }
-                            for v in result.violations
-                        ],
-                    }
+
+                    from invar.shell.prove.guard_ts import format_typescript_guard_v2
+
+                    output = format_typescript_guard_v2(result)
                     console.print(json_mod.dumps(output, indent=2))
                 else:
                     console.print(f"[bold]TypeScript Guard[/bold] ({project_language})")

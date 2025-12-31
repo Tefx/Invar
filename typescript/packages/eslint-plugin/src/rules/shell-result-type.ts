@@ -51,6 +51,7 @@ export const shellResultType: Rule.RuleModule = {
       description: 'Shell functions must return Result<T, E> type',
       recommended: true,
     },
+    hasSuggestions: true,
     schema: [
       {
         type: 'object',
@@ -66,6 +67,8 @@ export const shellResultType: Rule.RuleModule = {
     messages: {
       missingResultType:
         'Shell function "{{name}}" should return Result<T, E> type for explicit error handling',
+      wrapWithResult:
+        'Wrap return type with Result<{{returnType}}, Error>',
     },
   },
 
@@ -107,10 +110,24 @@ export const shellResultType: Rule.RuleModule = {
 
       // Check return type
       if (!returnType || !isResultType(returnType)) {
+        const suggestedReturnType = returnType || 'void';
+        const typedNode = node as unknown as { returnType?: Rule.Node };
+
         context.report({
           node,
           messageId: 'missingResultType',
           data: { name },
+          suggest: typedNode.returnType ? [
+            {
+              messageId: 'wrapWithResult',
+              data: { returnType: suggestedReturnType },
+              fix(fixer) {
+                if (!typedNode.returnType) return null;
+                const newType = `Result<${suggestedReturnType}, Error>`;
+                return fixer.replaceText(typedNode.returnType, `: ${newType}`);
+              },
+            },
+          ] : [],
         });
       }
     }

@@ -82,14 +82,26 @@ export const AnalysisResultSchema = z.object({
     useless: z.number(),
   }),
   blindSpots: z.array(BlindSpotSchema),
+  dependencies: z.record(z.array(z.string())).optional(),
 });
 
 export type AnalysisResult = z.infer<typeof AnalysisResultSchema>;
+
+// LX-06 Phase 3: Impact Analysis
+export const ImpactAnalysisSchema = z.object({
+  file: z.string(),
+  directDependents: z.array(z.string()),
+  transitiveDependents: z.array(z.string()),
+  impactLevel: z.enum(['low', 'medium', 'high', 'critical']),
+});
+
+export type ImpactAnalysis = z.infer<typeof ImpactAnalysisSchema>;
 
 export const AnalyzerOptionsSchema = z.object({
   path: z.string().default('.'),
   includePrivate: z.boolean().default(false),
   verbose: z.boolean().default(false),
+  buildDependencyGraph: z.boolean().default(false),
 });
 
 export type AnalyzerOptions = z.infer<typeof AnalyzerOptionsSchema>;
@@ -357,6 +369,154 @@ function generateSuggestedSchema(func: FunctionAnalysis): string {
 }
 
 // ============================================================================
+// LX-06 Phase 3: Impact Analysis
+// ============================================================================
+
+/**
+ * Build a dependency graph from TypeScript program.
+ * Maps each file to the files it imports.
+ */
+function buildDependencyGraph(program: ts.Program): Record<string, string[]> {
+  const graph: Record<string, string[]> = {};
+
+  for (const sourceFile of program.getSourceFiles()) {
+    if (sourceFile.isDeclarationFile) continue;
+    if (sourceFile.fileName.includes('node_modules')) continue;
+
+    const imports: string[] = [];
+
+    const visit = (node: ts.Node): void => {
+      // Handle import declarations: import { x } from './file'
+      if (ts.isImportDeclaration(node)) {
+        const moduleSpecifier = node.moduleSpecifier;
+        if (ts.isStringLiteral(moduleSpecifier)) {
+          const importPath = moduleSpecifier.text;
+          // Only track relative imports (project files)
+          if (importPath.startsWith('.')) {
+            // Resolve to absolute path
+            const resolvedPath = resolveImportPath(sourceFile.fileName, importPath, program);
+            if (resolvedPath) {
+              imports.push(resolvedPath);
+            }
+          }
+        }
+      }
+      // Handle dynamic imports: import('./file')
+      if (ts.isCallExpression(node) && node.expression.kind === ts.SyntaxKind.ImportKeyword) {
+        const arg = node.arguments[0];
+        if (arg && ts.isStringLiteral(arg)) {
+          const importPath = arg.text;
+          if (importPath.startsWith('.')) {
+            const resolvedPath = resolveImportPath(sourceFile.fileName, importPath, program);
+            if (resolvedPath) {
+              imports.push(resolvedPath);
+            }
+          }
+        }
+      }
+      ts.forEachChild(node, visit);
+    };
+
+    visit(sourceFile);
+    graph[sourceFile.fileName] = [...new Set(imports)]; // Dedupe
+  }
+
+  return graph;
+}
+
+/**
+ * Resolve an import path relative to the importing file.
+ */
+function resolveImportPath(fromFile: string, importPath: string, program: ts.Program): string | null {
+  const compilerOptions = program.getCompilerOptions();
+  const result = ts.resolveModuleName(importPath, fromFile, compilerOptions, ts.sys);
+
+  if (result.resolvedModule) {
+    return result.resolvedModule.resolvedFileName;
+  }
+
+  // Fallback: manual resolution for common cases
+  const fromDir = dirname(fromFile);
+  const extensions = ['.ts', '.tsx', '.js', '.jsx', ''];
+
+  for (const ext of extensions) {
+    const candidate = resolve(fromDir, importPath + ext);
+    if (program.getSourceFile(candidate)) {
+      return candidate;
+    }
+    // Try index file
+    const indexCandidate = resolve(fromDir, importPath, 'index' + ext);
+    if (program.getSourceFile(indexCandidate)) {
+      return indexCandidate;
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Get files that depend on a given file (reverse dependency lookup).
+ */
+function getDependents(
+  file: string,
+  graph: Record<string, string[]>,
+  transitive: boolean = false
+): string[] {
+  const dependents: Set<string> = new Set();
+  const visited: Set<string> = new Set();
+
+  const findDependents = (target: string): void => {
+    if (visited.has(target)) return;
+    visited.add(target);
+
+    for (const [sourceFile, imports] of Object.entries(graph)) {
+      if (imports.includes(target)) {
+        dependents.add(sourceFile);
+        if (transitive) {
+          findDependents(sourceFile);
+        }
+      }
+    }
+  };
+
+  findDependents(file);
+  return [...dependents];
+}
+
+/**
+ * Analyze the impact of changing a specific file.
+ *
+ * @param file - The file being changed
+ * @param graph - Dependency graph from buildDependencyGraph
+ * @returns Impact analysis with dependents and severity
+ */
+export function analyzeImpact(file: string, graph: Record<string, string[]>): ImpactAnalysis {
+  const directDependents = getDependents(file, graph, false);
+  const transitiveDependents = getDependents(file, graph, true);
+
+  // Calculate impact level based on dependent count
+  let impactLevel: 'low' | 'medium' | 'high' | 'critical';
+  const total = transitiveDependents.length;
+
+  if (total === 0) {
+    impactLevel = 'low';
+  } else if (total <= 3) {
+    impactLevel = 'medium';
+  } else if (total <= 10) {
+    impactLevel = 'high';
+  } else {
+    impactLevel = 'critical';
+  }
+
+  return {
+    file,
+    directDependents,
+    transitiveDependents,
+    impactLevel,
+  };
+}
+
+// ============================================================================
 // Main API
 // ============================================================================
 
@@ -439,6 +599,11 @@ export function analyze(options: Partial<AnalyzerOptions> = {}): AnalysisResult 
 
   const blindSpots = detectBlindSpots(functions);
 
+  // LX-06 Phase 3: Build dependency graph if requested
+  const dependencies = opts.buildDependencyGraph
+    ? buildDependencyGraph(program)
+    : undefined;
+
   return {
     files: fileCount,
     functions,
@@ -449,7 +614,9 @@ export function analyze(options: Partial<AnalyzerOptions> = {}): AnalysisResult 
     },
     quality,
     blindSpots,
+    dependencies,
   };
 }
 
+export { buildDependencyGraph };
 export default analyze;
