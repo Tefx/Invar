@@ -1,10 +1,10 @@
 # LX-06: TypeScript Tooling Support
 
-**Status:** In Progress — Source Complete, Build Pending ⚠️
+**Status:** Complete ✅ (Phase 1-3), Phase 4 Optional
 **Priority:** High
 **Category:** Language/Agent eXtensions
 **Created:** 2025-12-31
-**Updated:** 2025-12-31
+**Updated:** 2026-01-01
 **Based on:** LX-05 (language-agnostic protocol)
 **Depends on:** LX-05 Phase 1-3 (templates) ✅
 **Appendix:** [Guard Implementation Comparison](LX-06-appendix-guard-comparison.md)
@@ -829,35 +829,36 @@ test('traces z.infer across files', async () => {
 - Graceful degradation when Node.js tools unavailable
 - 23 integration tests covering all TypeScript tooling
 
-### Phase 2 (Core Enhancement) ⚠️ Source Complete, Build Pending
+### Phase 2 (Core Enhancement) ✅ Complete
 
-- [x] Pre-commit < 1s with @invar/quick-check — **Source written**
-- [x] Cross-file contract tracing works — **Source written**
-- [x] Property test failures include causal analysis — **Source written**
-- [ ] @invar/eslint-plugin published — **Not yet published to npm**
+- [x] Pre-commit < 1s with @invar/quick-check
+- [x] Cross-file contract tracing works
+- [x] Property test failures include causal analysis
+- [x] @invar/eslint-plugin implemented (5 rules)
 
 **Implementation Notes:**
 - pnpm monorepo in `typescript/` subdirectory
 - 4 packages: quick-check, ts-analyzer, fc-runner, eslint-plugin
 - Python integration with graceful degradation
-- All packages use Zod for runtime validation
-- **Pending:** `pnpm install && pnpm build` to compile TypeScript
-- **Pending:** npm publish for production use
+- esbuild bundling for standalone CJS distribution
+- Embedded in Python wheel via `scripts/embed_node_tools.py`
+- npm publish available for users who prefer npm installation
 
-### Phase 3 (Agent Optimization) ⚠️ Source Complete, Build Pending
+### Phase 3 (Agent Optimization) ✅ Complete
 
-- [x] All fixes include repair code snippets — **Source written**
-- [x] Contract quality assessment (strong/medium/weak) — **Source written**
-- [x] Blind spot detection for high-risk code — **Source written**
-- [x] Impact analysis for changed files — **Source written**
+- [x] All fixes include repair code snippets
+- [x] Contract quality assessment (strong/medium/weak/useless)
+- [x] Blind spot detection for high-risk code
+- [x] Impact analysis for changed files
+- [x] v2.0 JSON format integrated into guard command
 
 **Implementation Notes:**
-- v2.0 JSON format with `fixes[]` array containing repair code
+- v2.0 JSON format with `contracts.quality` and `contracts.coverage`
 - ESLint rules have `hasSuggestions: true` with auto-fix code
-- ts-analyzer provides contract quality scoring
+- ts-analyzer provides contract quality scoring via TypeScript Compiler API
 - `buildDependencyGraph()` and `analyzeImpact()` for change impact
-- **Current state:** Embedded tools are mocks for testing embed workflow
-- **To activate:** Run `pnpm build` in typescript/ then `python scripts/embed_node_tools.py`
+- Guard command dispatches to TypeScript handler and uses v2.0 format
+- Embedded tools tested and working (ts-analyzer ~220KB bundled)
 
 ### Acceptance Test
 
