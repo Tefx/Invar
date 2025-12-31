@@ -15,7 +15,7 @@ from returns.result import Failure, Success
 from rich.console import Console
 from rich.panel import Panel
 
-from invar.core.sync_helpers import SyncConfig
+from invar.core.sync_helpers import VALID_LANGUAGES, SyncConfig
 from invar.shell.claude_hooks import install_claude_hooks
 from invar.shell.commands.template_sync import sync_templates
 from invar.shell.mcp_config import (
@@ -68,6 +68,54 @@ AGENT_CONFIGS: dict[str, dict[str, str]] = {
     "pi": {"name": "Pi Coding Agent", "category": "pi"},
     "generic": {"name": "Other (AGENT.md)", "category": "generic"},
 }
+
+
+# =============================================================================
+# Language Detection (LX-05)
+# =============================================================================
+
+# Supported languages for template rendering
+SUPPORTED_LANGUAGES = frozenset({"python", "typescript"})
+FUTURE_LANGUAGES = frozenset({"rust", "go"})
+
+
+# @shell_complexity: Multi-marker file detection for language auto-detect
+def detect_language(path: Path) -> str:
+    """Auto-detect project language from marker files.
+
+    Checks for common project configuration files to determine the primary
+    language. Returns a supported language or defaults to "python".
+
+    Examples:
+        >>> from pathlib import Path
+        >>> import tempfile
+        >>> with tempfile.TemporaryDirectory() as d:
+        ...     p = Path(d)
+        ...     (p / "pyproject.toml").touch()
+        ...     detect_language(p)
+        'python'
+
+        >>> with tempfile.TemporaryDirectory() as d:
+        ...     p = Path(d)
+        ...     (p / "tsconfig.json").touch()
+        ...     detect_language(p)
+        'typescript'
+
+        >>> with tempfile.TemporaryDirectory() as d:
+        ...     p = Path(d)
+        ...     detect_language(p)  # Empty dir defaults to python
+        'python'
+    """
+    # Detection order matters - first match wins
+    if (path / "pyproject.toml").exists() or (path / "setup.py").exists():
+        return "python"
+    if (path / "tsconfig.json").exists() or (path / "package.json").exists():
+        return "typescript"
+    if (path / "Cargo.toml").exists():
+        return "rust"  # Future
+    if (path / "go.mod").exists():
+        return "go"  # Future
+    return "python"  # Default
 
 
 # =============================================================================
@@ -255,6 +303,12 @@ def init(
         "--pi",
         help="Auto-select Pi Coding Agent, skip all prompts",
     ),
+    language: str | None = typer.Option(
+        None,
+        "--language",
+        "-l",
+        help="Target language (auto-detected if not specified): python, typescript",
+    ),
     preview: bool = typer.Option(
         False,
         "--preview",
@@ -293,6 +347,20 @@ def init(
         path = Path.cwd()
     path = path.resolve()
 
+    # LX-05: Language detection and validation
+    if language is None:
+        language = detect_language(path)
+    else:
+        # Validate provided language
+        if language not in VALID_LANGUAGES:
+            valid = ", ".join(sorted(VALID_LANGUAGES))
+            console.print(f"[red]Error:[/red] Invalid language '{language}'. Must be one of: {valid}")
+            raise typer.Exit(1)
+
+    # Warn for future languages
+    if language in FUTURE_LANGUAGES:
+        console.print(f"[yellow]Warning:[/yellow] {language} support is experimental")
+
     # Header
     if claude:
         console.print(f"\n[bold]Invar v{__version__} - Quick Setup (Claude Code)[/bold]")
@@ -301,7 +369,7 @@ def init(
     else:
         console.print(f"\n[bold]Invar v{__version__} - Project Setup[/bold]")
     console.print("=" * 45)
-    console.print("[dim]Existing files will be MERGED (your content preserved).[/dim]")
+    console.print(f"[dim]Language: {language} | Existing files will be MERGED.[/dim]")
 
     # Determine agents and files
     if claude:
@@ -371,9 +439,10 @@ def init(
     if not selected_files.get(".pre-commit-config.yaml", True):
         skip_patterns.append(".pre-commit-config.yaml")
 
-    # Run template sync
+    # Run template sync (LX-05: pass language for template rendering)
     sync_config = SyncConfig(
         syntax="cli",
+        language=language,
         inject_project_additions=(path / ".invar" / "project-additions.md").exists(),
         force=False,
         check=False,
