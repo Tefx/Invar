@@ -50,7 +50,7 @@ _ARROW_FUNCTION_PATTERN = re.compile(
 _CLASS_PATTERN = re.compile(
     r"^\s*(?:@\w+(?:\([^)]*\))?\s*\n\s*)*"  # Optional decorators
     r"(?:export\s+)?(?:abstract\s+)?class\s+(\w+)"
-    r"(?:<[^>]*>)?"  # Optional generics
+    r"(?:<[^{]*>)?"  # Optional generics (allow nested <> by stopping at {)
     r"(?:\s+extends\s+[^\s{]+)?"  # Optional extends
     r"(?:\s+implements\s+[^\s{]+)?"  # Optional implements
     r"\s*\{",
@@ -59,7 +59,7 @@ _CLASS_PATTERN = re.compile(
 
 _INTERFACE_PATTERN = re.compile(
     r"^\s*(?:export\s+)?interface\s+(\w+)"
-    r"(?:<[^>]*>)?"  # Optional generics
+    r"(?:<[^{]*>)?"  # Optional generics (allow nested <> by stopping at {)
     r"(?:\s+extends\s+[^\s{]+)?"  # Optional extends
     r"\s*\{",
     re.MULTILINE,
@@ -67,7 +67,7 @@ _INTERFACE_PATTERN = re.compile(
 
 _TYPE_ALIAS_PATTERN = re.compile(
     r"^\s*(?:export\s+)?type\s+(\w+)"
-    r"(?:<[^>]*>)?"  # Optional generics
+    r"(?:<[^=]*>)?"  # Optional generics (allow nested <> by stopping at =)
     r"\s*=",
     re.MULTILINE,
 )

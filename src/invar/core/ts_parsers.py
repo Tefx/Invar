@@ -262,13 +262,22 @@ def parse_vitest_json(output: str, base_path: str = "") -> list[TSViolation]:
             if not isinstance(assertion, dict):
                 continue
             if assertion.get("status") == "failed":
+                # Extract detailed failure message from failureMessages if available
+                title = str(assertion.get("title", "Test failed"))
+                failure_msgs = assertion.get("failureMessages", [])
+                if isinstance(failure_msgs, list) and failure_msgs:
+                    # Use first failure message, truncate if too long
+                    detail = str(failure_msgs[0])[:200]
+                    message = f"{title}: {detail}"
+                else:
+                    message = title
                 violations.append(
                     TSViolation(
                         file=str(file_path),
                         line=None,
                         column=None,
                         rule="test_failure",
-                        message=str(assertion.get("title", "Test failed")),
+                        message=message,
                         severity="error",
                         source="vitest",
                     )

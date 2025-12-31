@@ -9,6 +9,7 @@ installed, it reports the missing dependency rather than failing hard.
 
 from __future__ import annotations
 
+import json
 import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path  # noqa: TC003 (used at runtime)
@@ -138,8 +139,6 @@ def run_vitest(project_path: Path) -> Result[list[TSViolation], str]:
     Returns:
         Result containing list of violations (test failures) or error message.
     """
-    import json
-
     vitest_config = project_path / "vitest.config.ts"
     vitest_config_js = project_path / "vitest.config.js"
     pkg_json = project_path / "package.json"
