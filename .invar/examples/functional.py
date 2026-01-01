@@ -18,7 +18,13 @@ Patterns covered:
 
 Managed by Invar - do not edit directly.
 """
+# @invar:allow missing_contract: Educational file with intentional "bad" examples
+# @invar:allow partial_contract: Educational file with intentional "bad" examples
+# @invar:allow contract_quality_ratio: Educational file - coverage intentionally low
+# @invar:allow file_size: Educational file with comprehensive pattern examples
+# @invar:allow internal_import: Demo functions show self-contained examples
 
+import json
 from dataclasses import dataclass
 from enum import Enum
 from typing import Generic, Literal, NewType, TypeVar, assert_never
@@ -183,7 +189,7 @@ class NonEmpty(Generic[T]):
     @property
     def all(self) -> tuple[T, ...]:
         """Get all elements as tuple."""
-        return (self.head,) + self.tail
+        return (self.head, *self.tail)
 
     def __len__(self) -> int:
         """Length is always >= 1."""
@@ -436,6 +442,160 @@ def parse_good(text: str, line: int) -> Result[str, ParseError]:
 
 
 # =============================================================================
+# Pattern 8: Optional → Result Conversion
+# =============================================================================
+
+
+def find_user_bad(user_id: str) -> dict | None:
+    """
+    Bad: Optional return hides error reason.
+
+    Caller can't distinguish "not found" from "invalid id" from "db error".
+    """
+    # Demo: return None for missing
+    if not user_id:
+        return None
+    return {"id": user_id, "name": "Demo"}
+
+
+@dataclass(frozen=True)
+class UserNotFoundError:
+    """Specific error: user doesn't exist."""
+
+    user_id: str
+
+
+@dataclass(frozen=True)
+class InvalidUserIdError:
+    """Specific error: invalid ID format."""
+
+    user_id: str
+    reason: str
+
+
+UserError = UserNotFoundError | InvalidUserIdError
+
+
+def find_user_good(user_id: str) -> Result[dict, UserError]:
+    """
+    Good: Result with specific error types.
+
+    >>> find_user_good("")
+    Failure(InvalidUserIdError(user_id='', reason='empty id'))
+
+    >>> find_user_good("unknown")
+    Failure(UserNotFoundError(user_id='unknown'))
+
+    >>> find_user_good("user123")
+    Success({'id': 'user123', 'name': 'Demo'})
+    """
+    if not user_id:
+        return Failure(InvalidUserIdError(user_id=user_id, reason="empty id"))
+    if user_id == "unknown":
+        return Failure(UserNotFoundError(user_id=user_id))
+    return Success({"id": user_id, "name": "Demo"})
+
+
+# =============================================================================
+# Pattern 9: try/except → Result Conversion
+# =============================================================================
+
+
+def parse_json_bad(text: str) -> dict:
+    """
+    Bad: Exceptions for expected errors.
+
+    JSON parsing failure is expected (user input), not exceptional.
+    """
+    return json.loads(text)  # Raises JSONDecodeError
+
+
+@dataclass(frozen=True)
+class JsonParseError:
+    """Structured JSON parse error."""
+
+    message: str
+    position: int
+
+
+def parse_json_good(text: str) -> Result[dict, JsonParseError]:
+    """
+    Good: Result for expected failures.
+
+    >>> parse_json_good('{"a": 1}')
+    Success({'a': 1})
+
+    >>> result = parse_json_good('invalid')
+    >>> isinstance(result, Failure)
+    True
+    >>> result.failure().message
+    'Expecting value: line 1 column 1 (char 0)'
+    """
+    try:
+        return Success(json.loads(text))
+    except json.JSONDecodeError as e:
+        return Failure(JsonParseError(message=str(e), position=e.pos))
+
+
+# =============================================================================
+# Pattern 10: Result Chaining with bind/map
+# =============================================================================
+
+
+def process_pipeline_bad(raw: str) -> str:
+    """
+    Bad: Nested try/except for sequential operations.
+
+    Error handling scattered, hard to follow the happy path.
+    """
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError:
+        raise ValueError("Invalid JSON")
+
+    try:
+        name = data["user"]["name"]
+    except KeyError:
+        raise ValueError("Missing user.name")
+
+    return name.upper()
+
+
+def extract_name(data: dict) -> Result[str, str]:
+    """Extract user.name from dict."""
+    try:
+        return Success(data["user"]["name"])
+    except KeyError:
+        return Failure("Missing user.name")
+
+
+def process_pipeline_good(raw: str) -> Result[str, str]:
+    """
+    Good: Result chaining for sequential operations.
+
+    Happy path is clear: parse → extract → transform.
+    Errors propagate automatically.
+
+    >>> process_pipeline_good('{"user": {"name": "alice"}}')
+    Success('ALICE')
+
+    >>> process_pipeline_good('invalid json')
+    Failure('Expecting value: line 1 column 1 (char 0)')
+
+    >>> process_pipeline_good('{"other": 1}')
+    Failure('Missing user.name')
+    """
+    # Parse JSON → extract name → uppercase
+    # Each step returns Result, errors propagate automatically
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError as e:
+        return Failure(str(e))
+
+    return extract_name(data).map(lambda name: name.upper())
+
+
+# =============================================================================
 # Summary: When to Use Each Pattern
 # =============================================================================
 
@@ -448,3 +608,6 @@ def parse_good(text: str, line: int) -> Result[str, ParseError]:
 # | ExhaustiveMatch   | Matching on enums                           |
 # | SmartConstructor  | Types with invariants                       |
 # | StructuredError   | Errors with metadata (line, column, etc.)   |
+# | Optional→Result   | Functions returning None for failures       |
+# | try/except→Result | Wrapping exceptions as Result               |
+# | Result Chaining   | Sequential operations with error propagation|

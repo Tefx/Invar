@@ -296,7 +296,7 @@ require_doctests = true
 # I/O modules forbidden in Core (static import check only)
 forbidden_imports = [
     "os", "sys", "socket", "requests", "urllib",
-    "subprocess", "shutil", "io"
+    "subprocess", "shutil", "io", "pathlib"
 ]
 
 # Paths to exclude from checking
@@ -664,7 +664,7 @@ max_file_lines = 500
 max_function_lines = 50
 require_contracts = true
 require_doctests = true
-forbidden_imports = ["os", "sys", "socket", "requests"]
+forbidden_imports = ["os", "sys", "socket", "requests", "urllib", "subprocess", "shutil", "io", "pathlib"]
 exclude_paths = ["tests", ".venv"]
 
 # Pattern-based classification (optional)

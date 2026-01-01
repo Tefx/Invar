@@ -5,12 +5,14 @@ Invar Core/Shell Separation Examples
 Reference patterns for Core vs Shell architecture.
 Managed by Invar - do not edit directly.
 """
+# @invar:allow forbidden_import: Example file demonstrates Shell pattern with pathlib
+# @invar:allow missing_contract: Shell functions intentionally without contracts to show pattern
+# @invar:allow contract_quality_ratio: Educational file with Shell examples
 
 from pathlib import Path
 
-# For lambda-based contracts, use deal directly
-# invar_runtime.pre/post are for Contract objects (NonEmpty, IsInstance, etc.)
-from deal import post, pre
+# invar_runtime supports both lambda and Contract objects
+from invar_runtime import post, pre
 from returns.result import Failure, Result, Success
 
 # =============================================================================

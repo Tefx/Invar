@@ -1,6 +1,6 @@
 # Invar Project Context
 
-*Last updated: 2026-01-01*
+*Last updated: 2026-01-02*
 
 <!-- DX-58: Slimmed context for efficient Check-In (~150 lines) -->
 
@@ -51,7 +51,7 @@
 
 ## Current State
 
-- **PyPI:** `invar-tools` + `invar-runtime` v1.9.0
+- **PyPI:** `invar-tools` v1.10.0 + `invar-runtime` v1.3.0
 - **Protocol:** v5.0 (USBV workflow, DX-58 critical section)
 - **Status:** Feature complete, TypeScript support added
 - **Recent:** LX-05 (language-agnostic), LX-06 (TypeScript tooling), LX-07 (Extension Skills)

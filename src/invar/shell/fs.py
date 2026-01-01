@@ -19,6 +19,16 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 
+# @shell_orchestration: Helper for file discovery, co-located with I/O functions
+def _is_excluded(relative_str: str, exclude_patterns: list[str]) -> bool:
+    """Check if a relative path should be excluded."""
+    for pattern in exclude_patterns:
+        # Match whole path component, not prefix
+        if relative_str == pattern or relative_str.startswith(pattern + "/") or f"/{pattern}/" in f"/{relative_str}":
+            return True
+    return False
+
+
 # @shell_complexity: Recursive file discovery with gitignore and exclusions
 def discover_python_files(
     project_root: Path,
@@ -39,18 +49,9 @@ def discover_python_files(
         exclude_patterns = exclude_result.unwrap() if isinstance(exclude_result, Success) else []
 
     for py_file in project_root.rglob("*.py"):
-        # Check exclusions
-        relative = py_file.relative_to(project_root)
-        relative_str = str(relative)
-
-        excluded = False
-        for pattern in exclude_patterns:
-            # Match whole path component, not prefix
-            if relative_str == pattern or relative_str.startswith(pattern + "/") or f"/{pattern}/" in f"/{relative_str}":
-                excluded = True
-                break
-
-        if not excluded:
+        # Check exclusions using shared helper
+        relative_str = str(py_file.relative_to(project_root))
+        if not _is_excluded(relative_str, exclude_patterns):
             yield py_file
 
 
@@ -147,11 +148,21 @@ def scan_project(
     Yields:
         Result containing FileInfo or error message for each file
     """
+    # Get exclusion patterns once
+    exclude_result = get_exclude_paths(project_root)
+    exclude_patterns = exclude_result.unwrap() if isinstance(exclude_result, Success) else []
+
     if only_files is not None:
-        # Phase 8.1: --changed mode - only scan specified files
+        # Phase 8.1: --changed mode - only scan specified files (with exclusions)
         for py_file in only_files:
             if py_file.exists() and py_file.suffix == ".py":
-                yield read_and_parse_file(py_file, project_root)
+                # Apply exclusions even in --changed mode
+                try:
+                    relative_str = str(py_file.relative_to(project_root))
+                except ValueError:
+                    relative_str = str(py_file)
+                if not _is_excluded(relative_str, exclude_patterns):
+                    yield read_and_parse_file(py_file, project_root)
     else:
-        for py_file in discover_python_files(project_root):
+        for py_file in discover_python_files(project_root, exclude_patterns):
             yield read_and_parse_file(py_file, project_root)

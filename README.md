@@ -684,7 +684,34 @@ max_function_lines = 50
 # Requirements
 require_contracts = true
 require_doctests = true
+
+# Timeouts (seconds)
+timeout_doctest = 60           # Doctest execution timeout
+timeout_crosshair = 300        # CrossHair total timeout
+timeout_crosshair_per_condition = 30  # Per-function timeout
+timeout_hypothesis = 300       # Hypothesis total timeout
+
+# Excluded paths (not checked by guard)
+exclude_paths = ["tests", "scripts", ".venv", "node_modules", "dist", "build"]
 ```
+
+### Pattern Detection (DX-61)
+
+Guard can suggest functional programming patterns to improve code quality:
+
+```toml
+[tool.invar.guard]
+# Minimum confidence for suggestions (low | medium | high)
+pattern_min_confidence = "medium"
+
+# Priority levels to include (P0 = core, P1 = extended)
+pattern_priorities = ["P0"]
+
+# Patterns to exclude from suggestions
+pattern_exclude = []
+```
+
+Available patterns: `NewType`, `Validation`, `NonEmpty`, `Literal`, `ExhaustiveMatch`, `SmartConstructor`, `StructuredError`
 
 ### 🚪 Escape Hatches
 
@@ -713,16 +740,21 @@ rules = ["missing_contract", "shell_result"]
 | `invar guard` | Full verification (static + doctest + property + symbolic) |
 | `invar guard --changed` | Only git-modified files |
 | `invar guard --static` | Static analysis only (~0.5s) |
+| `invar guard --coverage` | Collect branch coverage from tests |
 | `invar init` | Initialize or update project (interactive) |
 | `invar init --claude` | Quick setup for Claude Code |
 | `invar uninstall` | Remove Invar from project (preserves user content) |
 | `invar sig <file>` | Show signatures and contracts |
 | `invar map` | Symbol map with reference counts |
-| `invar rules` | List all rules |
+| `invar rules` | List all rules with severity |
 | `invar test` | Property-based tests (Hypothesis) |
 | `invar verify` | Symbolic verification (CrossHair) |
+| `invar mutate` | Mutation testing (find gaps in tests) |
 | `invar hooks` | Manage Claude Code hooks |
-| `invar skill` | Manage extension skills (security, acceptance) |
+| `invar skill` | Manage extension skills |
+| `invar mcp` | Start MCP server for Claude Code |
+| `invar dev sync` | Sync Invar protocol updates |
+| `invar version` | Show version info |
 
 ### MCP Tools
 

@@ -19,6 +19,8 @@ Patterns covered:
 Managed by Invar - do not edit directly.
 """
 # @invar:allow missing_contract: Educational file with intentional "bad" examples
+# @invar:allow partial_contract: Educational file with intentional "bad" examples
+# @invar:allow contract_quality_ratio: Educational file - coverage intentionally low
 # @invar:allow file_size: Educational file with comprehensive pattern examples
 # @invar:allow internal_import: Demo functions show self-contained examples
 
@@ -27,7 +29,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Generic, Literal, NewType, TypeVar, assert_never
 
-from deal import post, pre
+from invar_runtime import post, pre
 from returns.result import Failure, Result, Success
 
 T = TypeVar("T")

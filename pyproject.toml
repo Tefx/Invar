@@ -150,7 +150,7 @@ rules = ["*"]  # LX-05: Template source files (language-specific examples)
 
 [tool.invar]
 # Protocol governance
-protocol_version = "3.20"
+protocol_version = "5.0"
 protocol_evolution = "human-approved"  # locked | human-approved | open
 
 # Test style: "inline" or "separate"

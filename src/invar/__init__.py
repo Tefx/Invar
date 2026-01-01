@@ -32,6 +32,7 @@ from invar_runtime import (
     NoNone,
     Percentage,
     Positive,
+    RelationViolation,
     ResourceWarning,
     Sorted,
     SortedNonEmpty,
@@ -42,8 +43,11 @@ from invar_runtime import (
     must_use,
     post,
     pre,
+    relates,
+    relates_multi,
     skip_property_test,
     strategy,
+    to_post_contract,
 )
 
 __all__ = [
@@ -60,6 +64,7 @@ __all__ = [
     "NonNegative",
     "Percentage",
     "Positive",
+    "RelationViolation",
     "ResourceWarning",
     "Sorted",
     "SortedNonEmpty",
@@ -70,6 +75,9 @@ __all__ = [
     "must_use",
     "post",
     "pre",
+    "relates",
+    "relates_multi",
     "skip_property_test",
     "strategy",
+    "to_post_contract",
 ]

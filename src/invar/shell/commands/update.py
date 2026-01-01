@@ -19,9 +19,7 @@ console = Console()
 
 def update(
     path: Path = typer.Argument(Path(), help="Project root directory"),
-    check: bool = typer.Option(False, "--check", help="Preview changes"),
-    force: bool = typer.Option(False, "--force", "-f", help="Update even if current"),
-    yes: bool = typer.Option(False, "--yes", "-y", help="Accept defaults without prompting"),
+    preview: bool = typer.Option(False, "--preview", "--check", help="Preview changes (dry run)"),
 ) -> None:
     """
     Alias for 'invar init' (DX-55).
@@ -29,20 +27,14 @@ def update(
     Maintained for backwards compatibility.
     Both commands are now idempotent and do the same thing.
 
-    Use 'invar init --check' to preview changes.
-    Use 'invar init --force' to refresh even if current.
+    Use 'invar init --preview' to preview changes.
     """
     console.print("[dim]Note: 'update' is now an alias for 'init'[/dim]")
-    # Pass all init parameters with explicit defaults to avoid typer.Option object issues
+    # Call init with matching parameters (DX-70 signature)
     return init_command(
         path=path,
         claude=False,
-        mcp_method=None,
-        dirs=None,
-        hooks=True,
-        skills=True,
-        yes=yes,
-        check=check,
-        force=force,
-        reset=False,
+        pi=False,
+        language=None,
+        preview=preview,
     )

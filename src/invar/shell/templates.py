@@ -15,12 +15,12 @@ _DEFAULT_PYPROJECT_CONFIG = """\n# Invar Configuration
 [tool.invar.guard]
 core_paths = ["src/core"]
 shell_paths = ["src/shell"]
-max_file_lines = 300
+max_file_lines = 500
 max_function_lines = 50
 require_contracts = true
 require_doctests = true
 forbidden_imports = ["os", "sys", "socket", "requests", "urllib", "subprocess", "shutil", "io", "pathlib"]
-exclude_paths = ["tests", "scripts", ".venv"]
+exclude_paths = ["tests", "test", "scripts", ".venv", "venv", "__pycache__", ".pytest_cache", "node_modules", "dist", "build"]
 """
 
 _DEFAULT_INVAR_TOML = """# Invar Configuration
@@ -29,12 +29,12 @@ _DEFAULT_INVAR_TOML = """# Invar Configuration
 [guard]
 core_paths = ["src/core"]
 shell_paths = ["src/shell"]
-max_file_lines = 300
+max_file_lines = 500
 max_function_lines = 50
 require_contracts = true
 require_doctests = true
 forbidden_imports = ["os", "sys", "socket", "requests", "urllib", "subprocess", "shutil", "io", "pathlib"]
-exclude_paths = ["tests", "scripts", ".venv"]
+exclude_paths = ["tests", "test", "scripts", ".venv", "venv", "__pycache__", ".pytest_cache", "node_modules", "dist", "build"]
 
 # Pattern-based classification (optional, takes priority over paths)
 # core_patterns = ["**/domain/**", "**/models/**"]
