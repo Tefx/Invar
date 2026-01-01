@@ -1,3 +1,4 @@
+# ruff: noqa: ERA001
 """
 Invar Contract Examples
 
@@ -80,7 +81,7 @@ def normalize_keys(data: dict[str, int]) -> dict[str, int]:
 # DON'T: Empty contract tells nothing
 # @pre(lambda: True)
 # @post(lambda result: True)
-# def process(x): ...  # noqa: ERA001
+# def process(x): ...
 
 # DON'T: Missing edge cases in doctests
 # def divide(a, b):
@@ -111,3 +112,79 @@ def range_size(start: int, end: int) -> int:
     1
     """
     return end - start
+
+
+# =============================================================================
+# CRITICAL: Default Parameters in Contracts
+# =============================================================================
+# Lambda signatures MUST include ALL parameters, including defaults!
+# This is a common mistake that causes silent contract failures.
+
+
+# DON'T: Missing default parameter in lambda
+# @pre(lambda x: x >= 0)  # BAD: 'y' is missing!
+# def calc_bad(x: int, y: int = 0) -> int:
+#     return x + y
+
+
+# DO: Include all parameters with their defaults
+@pre(lambda x, y=0: x >= 0 and y >= 0)
+@post(lambda result: result >= 0)
+def calculate_with_default(x: int, y: int = 0) -> int:
+    """
+    Calculate sum with optional y.
+
+    The lambda MUST include y=0 to match the function signature.
+
+    >>> calculate_with_default(5)
+    5
+    >>> calculate_with_default(5, 3)
+    8
+    >>> calculate_with_default(0, 0)  # Edge: both zero
+    0
+    """
+    return x + y
+
+
+# =============================================================================
+# CRITICAL: @post Cannot Access Parameters
+# =============================================================================
+# @post only receives the return value, not the original parameters!
+
+
+# DON'T: Reference parameters in @post
+# @post(lambda result: result > x)  # BAD: 'x' is not available!
+# def double_bad(x: int) -> int:
+#     return x * 2
+
+
+# DO: @post only validates the result itself
+@pre(lambda x: x >= 0)
+@post(lambda result: result >= 0)  # GOOD: only uses 'result'
+def double_positive(x: int) -> int:
+    """
+    Double a positive number.
+
+    @post can only validate result properties, not relationships to inputs.
+
+    >>> double_positive(5)
+    10
+    >>> double_positive(0)  # Edge: zero
+    0
+    """
+    return x * 2
+
+
+# =============================================================================
+# Decorator Order with @pre/@post
+# =============================================================================
+# When combining with other decorators, @pre/@post should be closest to function.
+
+
+# DO: @pre/@post closest to function
+# @other_decorator
+# @pre(lambda x: x > 0)
+# @post(lambda result: result > 0)
+# def my_func(x: int) -> int: ...
+
+# This ensures contracts run BEFORE other decorators modify behavior.

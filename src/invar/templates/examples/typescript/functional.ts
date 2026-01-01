@@ -405,6 +405,184 @@ export function parseGood(text: string, line: number): Result<string, ParseError
 }
 
 // =============================================================================
+// Pattern 8: Promise → ResultAsync Conversion
+// =============================================================================
+
+import { ResultAsync } from 'neverthrow';
+
+// BEFORE: Promise that throws
+async function fetchUserBad(id: string): Promise<{ id: string; name: string }> {
+  const response = await fetch(`/api/users/${id}`);
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}`);  // Throws!
+  }
+  return response.json();
+}
+
+// AFTER: ResultAsync for typed errors
+interface ApiError {
+  readonly code: string;
+  readonly message: string;
+  readonly status?: number;
+}
+
+/**
+ * Good: ResultAsync for async operations.
+ *
+ * Errors are typed and explicit, not thrown.
+ *
+ * @example
+ * const result = await fetchUserGood("123");
+ * if (result.isOk()) {
+ *   console.log(result.value.name);
+ * } else {
+ *   console.error(result.error.message);
+ * }
+ */
+function fetchUserGood(
+  id: string
+): ResultAsync<{ id: string; name: string }, ApiError> {
+  return ResultAsync.fromPromise(
+    fetch(`/api/users/${id}`).then(async (response) => {
+      if (!response.ok) {
+        throw { status: response.status };
+      }
+      return response.json();
+    }),
+    (error): ApiError => {
+      const e = error as { status?: number };
+      return {
+        code: 'fetch_failed',
+        message: `Failed to fetch user ${id}`,
+        status: e.status,
+      };
+    }
+  );
+}
+
+// =============================================================================
+// Pattern 9: null/undefined → Result Conversion
+// =============================================================================
+
+// BEFORE: Returns null, caller must check
+function findItemBad(
+  items: readonly { id: string }[],
+  id: string
+): { id: string } | null {
+  return items.find(item => item.id === id) ?? null;
+}
+
+// AFTER: Result with specific error
+interface NotFoundError {
+  readonly type: 'not_found';
+  readonly id: string;
+}
+
+/**
+ * Good: Result instead of null.
+ *
+ * @example
+ * const result = findItemGood([{ id: "1" }], "1");
+ * // => Ok({ id: "1" })
+ *
+ * @example
+ * const result = findItemGood([{ id: "1" }], "2");
+ * // => Err({ type: "not_found", id: "2" })
+ */
+export function findItemGood(
+  items: readonly { id: string }[],
+  id: string
+): Result<{ id: string }, NotFoundError> {
+  const item = items.find(i => i.id === id);
+  if (!item) {
+    return err({ type: 'not_found', id });
+  }
+  return ok(item);
+}
+
+// =============================================================================
+// Pattern 10: ResultAsync Chaining
+// =============================================================================
+
+interface User {
+  readonly id: string;
+  readonly name: string;
+  readonly profileId: string;
+}
+
+interface Profile {
+  readonly id: string;
+  readonly avatar: string;
+}
+
+// Mock async functions returning ResultAsync
+function getUser(id: string): ResultAsync<User, ApiError> {
+  return ResultAsync.fromPromise(
+    Promise.resolve({ id, name: 'Demo', profileId: 'p1' }),
+    (): ApiError => ({ code: 'user_error', message: 'Failed to get user' })
+  );
+}
+
+function getProfile(id: string): ResultAsync<Profile, ApiError> {
+  return ResultAsync.fromPromise(
+    Promise.resolve({ id, avatar: '/avatar.png' }),
+    (): ApiError => ({ code: 'profile_error', message: 'Failed to get profile' })
+  );
+}
+
+/**
+ * Good: ResultAsync chaining for sequential async operations.
+ *
+ * @example
+ * const result = await getUserWithAvatar("123");
+ * if (result.isOk()) {
+ *   console.log(result.value);
+ *   // => { userId: "123", userName: "Demo", avatar: "/avatar.png" }
+ * }
+ */
+export function getUserWithAvatar(
+  userId: string
+): ResultAsync<{ userId: string; userName: string; avatar: string }, ApiError> {
+  return getUser(userId).andThen((user) =>
+    getProfile(user.profileId).map((profile) => ({
+      userId: user.id,
+      userName: user.name,
+      avatar: profile.avatar,
+    }))
+  );
+}
+
+// =============================================================================
+// Pattern 11: Combining Multiple ResultAsync
+// =============================================================================
+
+interface CombinedData {
+  readonly user: User;
+  readonly profile: Profile;
+}
+
+/**
+ * Good: Parallel ResultAsync with combine.
+ *
+ * Both requests run in parallel, fails fast if either fails.
+ *
+ * @example
+ * const result = await fetchUserAndProfile("u1", "p1");
+ * if (result.isOk()) {
+ *   const [user, profile] = result.value;
+ * }
+ */
+export function fetchUserAndProfile(
+  userId: string,
+  profileId: string
+): ResultAsync<[User, Profile], ApiError> {
+  return ResultAsync.combine([
+    getUser(userId),
+    getProfile(profileId),
+  ]);
+}
+
+// =============================================================================
 // Summary: When to Use Each Pattern
 // =============================================================================
 
@@ -417,3 +595,7 @@ export function parseGood(text: string, line: number): Result<string, ParseError
 // | ExhaustiveMatch   | Matching on union types or const objects    |
 // | SmartConstructor  | Types with invariants (use Zod)             |
 // | StructuredError   | Errors with metadata (line, column, etc.)   |
+// | Promise→ResultAsync| Async operations with typed errors         |
+// | null→Result       | Functions returning null for "not found"    |
+// | ResultAsync Chain | Sequential async with error propagation     |
+// | ResultAsync.combine| Parallel async operations                  |

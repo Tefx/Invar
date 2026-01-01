@@ -179,3 +179,196 @@ export async function countLinesInFile(
 //     return err(error instanceof Error ? error : new Error(String(error)));
 //   }
 // }
+
+
+// =============================================================================
+// Next.js Integration Pattern
+// =============================================================================
+// Demonstrates how to use Result with Next.js API routes and Server Components.
+// Shell (API handler) → Core (business logic) → Shell (HTTP response)
+
+// NOTE: This is pseudocode - requires Next.js to be installed
+// import { NextRequest, NextResponse } from 'next/server';
+// import { ResultAsync } from 'neverthrow';
+
+// -----------------------------------------------------------------------------
+// Error Types
+// -----------------------------------------------------------------------------
+
+// interface ApiError {
+//   readonly code: string;
+//   readonly message: string;
+//   readonly status: number;
+// }
+//
+// const NotFoundError = (id: string): ApiError => ({
+//   code: 'not_found',
+//   message: `Resource ${id} not found`,
+//   status: 404,
+// });
+//
+// const ValidationError = (message: string): ApiError => ({
+//   code: 'validation_error',
+//   message,
+//   status: 400,
+// });
+//
+// const InternalError = (message: string): ApiError => ({
+//   code: 'internal_error',
+//   message,
+//   status: 500,
+// });
+
+// -----------------------------------------------------------------------------
+// CORE: Pure business logic (no Next.js imports)
+// -----------------------------------------------------------------------------
+
+// const UserSchema = z.object({
+//   id: z.string().min(1),
+//   name: z.string().min(1),
+//   email: z.string().email(),
+// });
+//
+// type User = z.infer<typeof UserSchema>;
+//
+// /**
+//  * Core: Validate user data (pure, no I/O).
+//  */
+// function validateUserData(data: unknown): Result<User, string> {
+//   const result = UserSchema.safeParse(data);
+//   if (!result.success) {
+//     return err(result.error.errors.map(e => e.message).join(', '));
+//   }
+//   return ok(result.data);
+// }
+
+// -----------------------------------------------------------------------------
+// SHELL: Database I/O layer
+// -----------------------------------------------------------------------------
+
+// /**
+//  * Shell: Fetch user from database.
+//  */
+// function fetchUserFromDb(id: string): ResultAsync<User, ApiError> {
+//   return ResultAsync.fromPromise(
+//     prisma.user.findUnique({ where: { id } }).then(user => {
+//       if (!user) throw new Error('not_found');
+//       return user;
+//     }),
+//     (error): ApiError => {
+//       if (error instanceof Error && error.message === 'not_found') {
+//         return NotFoundError(id);
+//       }
+//       return InternalError('Database error');
+//     }
+//   );
+// }
+
+// -----------------------------------------------------------------------------
+// SHELL: Next.js API Route (App Router)
+// -----------------------------------------------------------------------------
+
+// /**
+//  * Shell: API route handler.
+//  *
+//  * Pattern: Shell → Core → Shell
+//  * 1. Shell receives HTTP request
+//  * 2. Core validates/processes
+//  * 3. Shell converts Result to HTTP response
+//  */
+// export async function GET(
+//   request: NextRequest,
+//   { params }: { params: { id: string } }
+// ) {
+//   const result = await fetchUserFromDb(params.id);
+//
+//   // Convert Result to NextResponse
+//   return result.match(
+//     (user) => NextResponse.json(user),
+//     (error) => NextResponse.json(
+//       { error: error.message },
+//       { status: error.status }
+//     )
+//   );
+// }
+//
+// export async function POST(request: NextRequest) {
+//   const body = await request.json();
+//
+//   // Core: validate
+//   const validationResult = validateUserData(body);
+//   if (validationResult.isErr()) {
+//     return NextResponse.json(
+//       { error: validationResult.error },
+//       { status: 400 }
+//     );
+//   }
+//
+//   // Shell: save to DB
+//   const saveResult = await saveUserToDb(validationResult.value);
+//
+//   return saveResult.match(
+//     (user) => NextResponse.json(user, { status: 201 }),
+//     (error) => NextResponse.json(
+//       { error: error.message },
+//       { status: error.status }
+//     )
+//   );
+// }
+
+// -----------------------------------------------------------------------------
+// SHELL: React Server Component
+// -----------------------------------------------------------------------------
+
+// /**
+//  * Shell: Server Component with Result handling.
+//  *
+//  * Server Components can call Shell functions directly.
+//  * Use .match() to handle success/error rendering.
+//  */
+// export async function UserProfile({ userId }: { userId: string }) {
+//   const result = await fetchUserFromDb(userId);
+//
+//   return result.match(
+//     (user) => (
+//       <div>
+//         <h1>{user.name}</h1>
+//         <p>{user.email}</p>
+//       </div>
+//     ),
+//     (error) => (
+//       <div className="error">
+//         {error.code === 'not_found'
+//           ? <p>User not found</p>
+//           : <p>Something went wrong</p>
+//         }
+//       </div>
+//     )
+//   );
+// }
+
+// =============================================================================
+// Result → HTTP Response Mapping
+// =============================================================================
+// Common pattern for converting Result errors to HTTP status codes:
+//
+// | Error Type      | HTTP Status | When to Use                    |
+// |-----------------|-------------|--------------------------------|
+// | NotFoundError   | 404         | Resource doesn't exist         |
+// | ValidationError | 400         | Invalid input from client      |
+// | AuthError       | 401/403     | Authentication/authorization   |
+// | ConflictError   | 409         | Resource state conflict        |
+// | InternalError   | 500         | Unexpected server error        |
+//
+// Helper function:
+// function resultToResponse<T>(
+//   result: Result<T, ApiError>
+// ): NextResponse {
+//   return result.match(
+//     (value) => NextResponse.json(value),
+//     (error) => NextResponse.json(
+//       { code: error.code, message: error.message },
+//       { status: error.status }
+//     )
+//   );
+// }

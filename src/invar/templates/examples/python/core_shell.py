@@ -1,3 +1,4 @@
+# ruff: noqa: ERA001
 """
 Invar Core/Shell Separation Examples
 
@@ -107,21 +108,118 @@ def count_lines_in_file(path: Path) -> Result[dict[str, int], str]:
 
 # DON'T: I/O in Core
 # def parse_file(path: Path):  # BAD: Path in Core
-#     content = path.read_text()  # BAD: I/O in Core  # noqa: ERA001
-#     return parse_lines(content)  # noqa: ERA001
+#     content = path.read_text()  # BAD: I/O in Core
+#     return parse_lines(content)
 
 # DO: Core receives content, not paths
 # def parse_content(content: str):  # GOOD: receives data
-#     return parse_lines(content)  # noqa: ERA001
+#     return parse_lines(content)
 
 
 # DON'T: Missing Result in Shell
 # def load_config(path: Path) -> dict:  # BAD: no Result type
-#     return json.loads(path.read_text())  # Exceptions not handled  # noqa: ERA001
+#     return json.loads(path.read_text())  # Exceptions not handled
 
 # DO: Return Result[T, E]
 # def load_config(path: Path) -> Result[dict, str]:  # GOOD
-#     try:  # noqa: ERA001
-#         return Success(json.loads(path.read_text()))  # noqa: ERA001
-#     except Exception as e:  # noqa: ERA001
-#         return Failure(str(e))  # noqa: ERA001
+#     try:
+#         return Success(json.loads(path.read_text()))
+#     except Exception as e:
+#         return Failure(str(e))
+
+
+# =============================================================================
+# FastAPI Integration Pattern
+# =============================================================================
+# Demonstrates how to use Result with FastAPI endpoints.
+# Shell (API handler) → Core (business logic) → Shell (HTTP response)
+
+# NOTE: This is pseudocode - requires FastAPI to be installed
+# from fastapi import FastAPI, HTTPException
+# from pydantic import BaseModel
+
+# class UserResponse(BaseModel):
+#     id: str
+#     name: str
+
+# app = FastAPI()
+
+# CORE: Pure business logic
+# @pre(lambda user_id: len(user_id) > 0)
+# @post(lambda result: result.get("name") is not None)
+# def get_user_data(user_id: str) -> dict:
+#     """Core function - pure logic, receives string ID."""
+#     # Business logic here (no HTTP, no database I/O)
+#     return {"id": user_id, "name": "Demo User"}
+
+# SHELL: I/O layer - database
+# def fetch_user_from_db(user_id: str) -> Result[dict, str]:
+#     """Shell function - database I/O, returns Result."""
+#     try:
+#         # In real code: query database
+#         if user_id == "not-found":
+#             return Failure("User not found")
+#         return Success({"id": user_id, "name": "DB User"})
+#     except Exception as e:
+#         return Failure(f"Database error: {e}")
+
+# SHELL: I/O layer - HTTP endpoint
+# @app.get("/users/{user_id}", response_model=UserResponse)
+# def get_user_endpoint(user_id: str):
+#     """
+#     FastAPI endpoint - Shell layer.
+#
+#     Pattern: Shell → Core → Shell
+#     1. Shell receives HTTP request
+#     2. Core processes business logic
+#     3. Shell converts Result to HTTP response
+#     """
+#     result = fetch_user_from_db(user_id)
+#
+#     # Convert Result to HTTP response
+#     match result:
+#         case Success(user):
+#             return UserResponse(**user)
+#         case Failure(error):
+#             if "not found" in error.lower():
+#                 raise HTTPException(status_code=404, detail=error)
+#             raise HTTPException(status_code=500, detail=error)
+
+
+# =============================================================================
+# Result → HTTP Response Mapping
+# =============================================================================
+# Common pattern for converting Result errors to HTTP status codes:
+#
+# | Error Type      | HTTP Status | When to Use                    |
+# |-----------------|-------------|--------------------------------|
+# | NotFoundError   | 404         | Resource doesn't exist         |
+# | ValidationError | 400         | Invalid input from client      |
+# | AuthError       | 401/403     | Authentication/authorization   |
+# | ConflictError   | 409         | Resource state conflict        |
+# | InternalError   | 500         | Unexpected server error        |
+#
+# Example error types:
+# @dataclass(frozen=True)
+# class NotFoundError:
+#     resource: str
+#     id: str
+#
+# @dataclass(frozen=True)
+# class ValidationError:
+#     field: str
+#     message: str
+#
+# AppError = NotFoundError | ValidationError | str
+#
+# def result_to_response(result: Result[T, AppError]) -> T:
+#     """Convert Result to HTTP response or raise appropriate HTTPException."""
+#     match result:
+#         case Success(value):
+#             return value
+#         case Failure(NotFoundError(resource, id)):
+#             raise HTTPException(404, f"{resource} {id} not found")
+#         case Failure(ValidationError(field, message)):
+#             raise HTTPException(400, f"Invalid {field}: {message}")
+#         case Failure(error):
+#             raise HTTPException(500, str(error))
