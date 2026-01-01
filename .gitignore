@@ -55,3 +55,9 @@ Thumbs.db
 .claude/settings.local.json
 .hypothesis/
 src/invar/core/.invar/
+
+# TypeScript isolation (LX-06)
+typescript/node_modules/
+typescript/**/dist/
+typescript/**/*.tsbuildinfo
+typescript/pnpm-lock.yaml

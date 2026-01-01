@@ -27,6 +27,7 @@ class PatternDetector(Protocol):
     Detectors analyze AST nodes and return suggestions with confidence levels.
     """
 
+    # @invar:allow missing_doctest: Abstract property - no executable implementation
     @property
     @abstractmethod
     @post(lambda result: result in PatternID)
@@ -34,6 +35,7 @@ class PatternDetector(Protocol):
         """Unique identifier for this pattern."""
         ...
 
+    # @invar:allow missing_doctest: Abstract property - no executable implementation
     @property
     @abstractmethod
     @post(lambda result: result in Priority)
@@ -41,6 +43,7 @@ class PatternDetector(Protocol):
         """Priority tier (P0 or P1)."""
         ...
 
+    # @invar:allow missing_doctest: Abstract property - no executable implementation
     @property
     @abstractmethod
     @post(lambda result: len(result) > 0)
@@ -48,6 +51,7 @@ class PatternDetector(Protocol):
         """Human-readable description of the pattern."""
         ...
 
+    # @invar:allow missing_doctest: Abstract method - no executable implementation
     @abstractmethod
     @post(lambda result: all(isinstance(s, PatternSuggestion) for s in result))
     def detect(self, tree: ast.AST, file_path: str) -> list[PatternSuggestion]:
@@ -140,7 +144,8 @@ class BaseDetector:
             return f"{left} | {right}"
         else:
             # Python 3.9+ always has ast.unparse (project requires 3.11+)
-            return ast.unparse(annotation)
+            result = ast.unparse(annotation)
+            return result if result else "<unknown>"
 
     @pre(lambda self, params, type_name: len(type_name) > 0)
     @post(lambda result: result >= 0)

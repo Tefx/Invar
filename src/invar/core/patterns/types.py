@@ -149,7 +149,11 @@ class DetectionResult:
     @property
     @post(lambda result: isinstance(result, bool))
     def has_suggestions(self) -> bool:
-        """Check if any suggestions were found."""
+        """Check if any suggestions were found.
+
+        >>> DetectionResult(file="test.py", suggestions=[], patterns_checked=[]).has_suggestions
+        False
+        """
         return len(self.suggestions) > 0
 
     @pre(lambda self, min_confidence: min_confidence in Confidence)

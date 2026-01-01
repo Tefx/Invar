@@ -1,0 +1,93 @@
+# Invar Extension Skills Registry
+# This file defines available extension skills for `invar skill` commands
+
+version: "1.0"
+
+extensions:
+  invar-onboard:
+    name: "invar-onboard"
+    description: "Legacy project migration to Invar framework"
+    tier: T1
+    triggers:
+      - "onboard"
+      - "migrate to invar"
+      - "can this project use invar"
+      - "invar assessment"
+    isolation: false
+    files:
+      - "SKILL.md"
+      - "patterns"
+      - "templates"
+
+  acceptance:
+    name: "acceptance"
+    description: "Requirements acceptance review (PRD alignment)"
+    tier: T0
+    triggers:
+      - "acceptance"
+      - "check requirements"
+      - "PRD alignment"
+      - "acceptance review"
+      - "verify requirements"
+    isolation: true  # Uses context isolation by default
+    files:
+      - "SKILL.md"
+    
+  security:
+    name: "security"
+    description: "Security audit (OWASP Top 10)"
+    tier: T0
+    triggers:
+      - "security"
+      - "audit"
+      - "vulnerabilities"
+      - "OWASP"
+    isolation: true  # Uses context isolation by default
+    files:
+      - "SKILL.md"
+      - "patterns/_common.yaml"
+      - "patterns/python.yaml"
+      - "patterns/typescript.yaml"
+    
+  refactor:
+    name: "refactor"
+    description: "Refactoring strategy and execution"
+    tier: T1
+    status: pending_discussion
+    triggers:
+      - "refactor"
+      - "clean up"
+      - "simplify"
+      - "restructure"
+    isolation: false
+    files:
+      - "SKILL.md"
+    
+  debug:
+    name: "debug"
+    description: "Root cause analysis"
+    tier: T1
+    status: pending_discussion
+    triggers:
+      - "debug"
+      - "why does"
+      - "root cause"
+      - "error"
+      - "bug"
+    isolation: false
+    files:
+      - "SKILL.md"
+    
+  test-strategy:
+    name: "test-strategy"
+    description: "Test strategy design"
+    tier: T1
+    status: pending_discussion
+    triggers:
+      - "test strategy"
+      - "how to test"
+      - "what to test"
+      - "testing plan"
+    isolation: false
+    files:
+      - "SKILL.md"

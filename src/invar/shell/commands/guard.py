@@ -158,6 +158,8 @@ def guard(
     Use --suggest to get functional pattern suggestions (NewType, Validation, etc.).
     Use --contracts-only (-c) to check contract coverage without running tests (DX-63).
     """
+    # LX-06: Language detection and dispatch
+    from invar.shell.commands.init import detect_language
     from invar.shell.guard_helpers import (
         collect_files_to_check,
         handle_changed_mode,
@@ -168,7 +170,38 @@ def guard(
     )
     from invar.shell.testing import VerificationLevel
 
-    # DX-65: Handle single file mode
+    project_language = detect_language(path if path.is_dir() else find_project_root(path))
+
+    # Dispatch to language-specific guard if not Python
+    if project_language == "typescript":
+        from invar.shell.prove.guard_ts import run_typescript_guard
+
+        ts_result = run_typescript_guard(path if path.is_dir() else find_project_root(path))
+        match ts_result:
+            case Success(result):
+                if json_output or agent:
+                    import json as json_mod
+
+                    from invar.shell.prove.guard_ts import format_typescript_guard_v2
+
+                    output = format_typescript_guard_v2(result)
+                    console.print(json_mod.dumps(output, indent=2))
+                else:
+                    console.print(f"[bold]TypeScript Guard[/bold] ({project_language})")
+                    if result.status == "passed":
+                        console.print("[green]✓ PASSED[/green]")
+                    elif result.status == "skipped":
+                        console.print("[yellow]⚠ SKIPPED[/yellow] (no TypeScript tools available)")
+                    else:
+                        console.print(f"[red]✗ FAILED[/red] ({result.error_count} errors)")
+                        for v in result.violations[:10]:  # Show first 10
+                            console.print(f"  {v.file}:{v.line}: [{v.severity}] {v.message}")
+                raise typer.Exit(0 if result.status == "passed" else 1)
+            case Failure(err):
+                console.print(f"[red]Error:[/red] {err}")
+                raise typer.Exit(1)
+
+    # DX-65: Handle single file mode (Python only from here)
     single_file_mode = path.is_file()
     single_file: Path | None = None
     if single_file_mode:
@@ -519,6 +552,7 @@ def rules(
 from invar.shell.commands.hooks import app as hooks_app  # DX-57
 from invar.shell.commands.init import init
 from invar.shell.commands.mutate import mutate  # DX-28
+from invar.shell.commands.skill import app as skill_app  # LX-07
 from invar.shell.commands.sync_self import sync_self  # DX-49
 from invar.shell.commands.test import test, verify
 from invar.shell.commands.uninstall import uninstall  # DX-69
@@ -531,6 +565,7 @@ app.command()(test)
 app.command()(verify)
 app.command()(mutate)  # DX-28: Mutation testing
 app.add_typer(hooks_app, name="hooks")  # DX-57: Claude Code hooks management
+app.add_typer(skill_app, name="skill")  # LX-07: Extension skills management
 
 # DX-56: Create dev subcommand group for developer commands
 dev_app = typer.Typer(

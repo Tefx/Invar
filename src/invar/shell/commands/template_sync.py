@@ -70,8 +70,12 @@ def sync_templates(path: Path, config: SyncConfig) -> Result[SyncReport, str]:
     manifest = manifest_result.unwrap()
     report = SyncReport()
 
-    # Build variables for template rendering
-    variables = {**manifest.get("variables", {}), "syntax": config.syntax}
+    # Build variables for template rendering (LX-05: include language)
+    variables = {
+        **manifest.get("variables", {}),
+        "syntax": config.syntax,
+        "language": config.language,
+    }
 
     # Load project additions if enabled
     project_additions = _load_project_additions(path) if config.inject_project_additions else ""
@@ -83,7 +87,12 @@ def sync_templates(path: Path, config: SyncConfig) -> Result[SyncReport, str]:
     for dest_rel, src_rel in fully_managed:
         if should_skip_file(dest_rel, config.skip_patterns):
             continue
-        result = _sync_fully_managed(path, templates_dir, dest_rel, src_rel, config, report)
+        # Get template type from manifest (LX-05: support jinja for fully_managed)
+        template_config = manifest.get("templates", {}).get(dest_rel, {})
+        template_type = template_config.get("type", "copy")
+        result = _sync_fully_managed(
+            path, templates_dir, dest_rel, src_rel, template_type, variables, config, report
+        )
         if isinstance(result, Failure):
             report.errors.append(result.failure())
 
@@ -124,29 +133,44 @@ def _load_project_additions(path: Path) -> str:
     return ""
 
 
-# @shell_complexity: File I/O with multiple existence/content checks
+# @shell_complexity: File I/O with multiple existence/content checks and Jinja rendering
 def _sync_fully_managed(
     path: Path,
     templates_dir: Path,
     dest_rel: str,
     src_rel: str,
+    template_type: str,
+    variables: dict,
     config: SyncConfig,
     report: SyncReport,
 ) -> Result[str, str]:
-    """Sync a fully managed file (direct overwrite)."""
+    """Sync a fully managed file (direct overwrite).
+
+    LX-05: Now supports Jinja templates for composition.
+    """
     dest_file = path / dest_rel
     src_file = templates_dir / src_rel
 
     if not src_file.exists():
         return Failure(f"Template not found: {src_rel}")
 
-    try:
-        new_content = src_file.read_text()
-    except OSError as e:
-        return Failure(f"Failed to read template {src_rel}: {e}")
+    # LX-05: Render Jinja templates, copy plain files
+    if template_type == "jinja":
+        render_result = render_template_file(src_file, variables)
+        if isinstance(render_result, Failure):
+            return render_result
+        new_content = render_result.unwrap()
+    else:
+        try:
+            new_content = src_file.read_text()
+        except OSError as e:
+            return Failure(f"Failed to read template {src_rel}: {e}")
+
+    # Track if file exists BEFORE write (for correct created/updated reporting)
+    file_existed = dest_file.exists()
 
     # Check if update needed
-    if dest_file.exists() and not config.force:
+    if file_existed and not config.force:
         try:
             if dest_file.read_text() == new_content:
                 report.skipped.append(dest_rel)
@@ -162,7 +186,11 @@ def _sync_fully_managed(
         except OSError as e:
             return Failure(f"Failed to write {dest_rel}: {e}")
 
-    report.updated.append(dest_rel) if dest_file.exists() else report.created.append(dest_rel)
+    # Report based on pre-write existence
+    if file_existed:
+        report.updated.append(dest_rel)
+    else:
+        report.created.append(dest_rel)
     return Success("synced")
 
 
@@ -341,6 +369,14 @@ def _merge_region_content(
 
     else:
         # Missing: no Invar markers - preserve entire content as user content
+        # Handle empty content - just return fresh template
+        if not existing_content.strip():
+            if dest_rel == "CLAUDE.md" and project_additions:
+                parsed = parse_invar_regions(new_content)
+                if "project" in parsed.regions:
+                    return reconstruct_file(parsed, {"project": project_additions})
+            return new_content
+
         preserved = format_preserved_content(existing_content, date.today().isoformat())
         parsed = parse_invar_regions(new_content)
         if user_region in parsed.regions:
@@ -371,7 +407,8 @@ def _sync_create_only(
         report.skipped.append(dest_rel)
         return Success("skipped")
 
-    if not src_file.exists():
+    # LX-05: Skip existence check for copy_dir_lang (has {language} placeholder)
+    if template_type != "copy_dir_lang" and not src_file.exists():
         return Failure(f"Template not found: {src_rel}")
 
     try:
@@ -386,9 +423,24 @@ def _sync_create_only(
             dest_file.write_text(result.unwrap())
         elif template_type == "copy_dir":
             if src_file.is_dir():
-                shutil.copytree(src_file, dest_file)
+                # Ignore Python bytecode and cache directories
+                ignore = shutil.ignore_patterns("__pycache__", "*.pyc", "*.pyo")
+                shutil.copytree(src_file, dest_file, ignore=ignore)
             else:
                 return Failure(f"Expected directory: {src_rel}")
+        elif template_type == "copy_dir_lang":
+            # LX-05 hotfix: Language-aware directory copy
+            lang = variables.get("language", "python")
+            lang_src_rel = src_rel.replace("{language}", lang)
+            lang_src_file = templates_dir / lang_src_rel
+            if not lang_src_file.exists():
+                return Failure(f"Language-specific template not found: {lang_src_rel}")
+            if lang_src_file.is_dir():
+                # Ignore Python bytecode and cache directories
+                ignore = shutil.ignore_patterns("__pycache__", "*.pyc", "*.pyo")
+                shutil.copytree(lang_src_file, dest_file, ignore=ignore)
+            else:
+                return Failure(f"Expected directory: {lang_src_rel}")
 
         report.created.append(dest_rel)
         return Success("created")

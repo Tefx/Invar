@@ -49,8 +49,8 @@ extensions = { action = "preserve" }
 # =============================================================================
 
 [templates]
-# Protocol files (direct copy)
-"INVAR.md" = { src = "protocol/INVAR.md", type = "copy" }
+# Protocol files (Jinja2 composition - LX-05)
+"INVAR.md" = { src = "protocol/INVAR.md.jinja", type = "jinja" }
 
 # Config files (Jinja2 templates)
 "CLAUDE.md" = { src = "config/CLAUDE.md.jinja", type = "jinja" }
@@ -64,12 +64,12 @@ extensions = { action = "preserve" }
 ".claude/skills/propose/SKILL.md" = { src = "skills/propose/SKILL.md.jinja", type = "jinja" }
 ".claude/skills/review/SKILL.md" = { src = "skills/review/SKILL.md.jinja", type = "jinja" }
 
-# Commands (direct copy)
-".claude/commands/audit.md" = { src = "commands/audit.md", type = "copy" }
+# Commands (Jinja2 templates for language-specific content)
+".claude/commands/audit.md" = { src = "commands/audit.md.jinja", type = "jinja" }
 ".claude/commands/guard.md" = { src = "commands/guard.md", type = "copy" }
 
-# Examples (directory copy)
-".invar/examples/" = { src = "examples/", type = "copy_dir" }
+# Examples (language-aware directory copy - LX-05 hotfix)
+".invar/examples/" = { src = "examples/{language}/", type = "copy_dir_lang" }
 
 # =============================================================================
 # Variables
@@ -78,6 +78,7 @@ extensions = { action = "preserve" }
 [variables]
 # Available for Jinja2 templates
 syntax = "cli"          # "cli" or "mcp"
+language = "python"     # "python" or "typescript" (LX-05)
 version = "5.0"
 project_name = ""       # Set by init
 

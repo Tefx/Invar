@@ -12,7 +12,7 @@ This package provides the runtime components needed for projects using Invar:
 For development tools (guard, map, sig), install invar-tools instead.
 """
 
-__version__ = "1.0.0"
+__version__ = "1.3.0"
 
 from invar_runtime.contracts import (
     AllNonNegative,

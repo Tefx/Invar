@@ -28,6 +28,14 @@ agents write code that's correct by construction—not by accident.
 
 An AI agent, guided by Invar, writes code with formal contracts and built-in tests:
 
+<table>
+<tr>
+<th>Python</th>
+<th>TypeScript</th>
+</tr>
+<tr>
+<td>
+
 ```python
 from invar_runtime import pre, post
 
@@ -44,6 +52,33 @@ def average(items: list[float]) -> float:
     """
     return sum(items) / len(items)
 ```
+
+</td>
+<td>
+
+```typescript
+import { z } from 'zod';
+
+const ItemsSchema = z.array(z.number()).min(1);
+
+/**
+ * Calculate the average of a non-empty list.
+ * @pre items.length > 0
+ * @post result >= 0
+ *
+ * @example
+ * average([1.0, 2.0, 3.0]) // => 2.0
+ * average([10.0])          // => 10.0
+ */
+function average(items: number[]): number {
+  ItemsSchema.parse(items); // Runtime validation
+  return items.reduce((a, b) => a + b) / items.length;
+}
+```
+
+</td>
+</tr>
+</table>
 
 Invar's Guard automatically verifies the code—the agent sees results and fixes issues without human intervention:
 
@@ -67,6 +102,8 @@ Guard passed.
 ---
 
 ## 🚀 Quick Start
+
+> **Language Support:** Python (full), TypeScript (verification via Zod contracts).
 
 ### 📦 Two Packages, Different Purposes
 
@@ -162,16 +199,25 @@ Invar addresses each from the ground up.
 
 ### ✅ Solution 1: Contracts as Specification
 
-Contracts (`@pre`/`@post`) turn vague intent into verifiable specifications:
+Contracts (`@pre`/`@post` in Python, Zod schemas in TypeScript) turn vague intent into verifiable specifications:
+
+<table>
+<tr>
+<th>Python</th>
+<th>TypeScript</th>
+</tr>
+<tr>
+<td>
 
 ```python
-# Without contracts: "calculate average" is ambiguous
+# Without contracts: ambiguous
 def average(items):
-    return sum(items) / len(items)  # What if empty? What's the return type?
+    return sum(items) / len(items)
+    # What if empty? Return type?
 
-# With contracts: specification is explicit and verifiable
-@pre(lambda items: len(items) > 0)      # Precondition: non-empty input
-@post(lambda result: result >= 0)        # Postcondition: non-negative output
+# With contracts: explicit
+@pre(lambda items: len(items) > 0)
+@post(lambda result: result >= 0)
 def average(items: list[float]) -> float:
     """
     >>> average([1.0, 2.0, 3.0])
@@ -179,6 +225,32 @@ def average(items: list[float]) -> float:
     """
     return sum(items) / len(items)
 ```
+
+</td>
+<td>
+
+```typescript
+// Without contracts: ambiguous
+function average(items) {
+  return items.reduce((a,b) => a+b) / items.length;
+  // What if empty? Return type?
+}
+
+// With contracts: explicit
+const ItemsSchema = z.array(z.number()).min(1);
+
+/** @post result >= 0 */
+function average(items: number[]): number {
+  ItemsSchema.parse(items); // Precondition
+  const result = items.reduce((a,b) => a+b) / items.length;
+  console.assert(result >= 0); // Postcondition
+  return result;
+}
+```
+
+</td>
+</tr>
+</table>
 
 **Benefits:**
 - Agent knows exactly what to implement
@@ -241,7 +313,7 @@ Skill routing ensures agents enter through the correct workflow:
 | **Core/Shell** | Guard blocks I/O imports in Core | 100% testable business logic |
 | **Result[T, E]** | Guard warns if Shell returns bare values | Explicit error handling |
 
-### 🔮 Future: Quality Guidance (DX-61)
+### 🔮 Future: Quality Guidance
 
 Beyond "correct or not"—Invar will suggest improvements:
 
@@ -280,6 +352,14 @@ Separate pure logic from I/O for maximum testability:
                    ▼ Result[T, E]
 ```
 
+<table>
+<tr>
+<th>Python</th>
+<th>TypeScript</th>
+</tr>
+<tr>
+<td>
+
 ```python
 # Core: Pure, testable, provable
 def parse_config(content: str) -> Config:
@@ -292,6 +372,28 @@ def load_config(path: Path) -> Result[Config, str]:
     except FileNotFoundError:
         return Failure(f"Not found: {path}")
 ```
+
+</td>
+<td>
+
+```typescript
+// Core: Pure, testable, provable
+function parseConfig(content: string): Config {
+  return ConfigSchema.parse(JSON.parse(content));
+}
+
+// Shell: Handles I/O, returns ResultAsync
+function loadConfig(path: string): ResultAsync<Config, ConfigError> {
+  return ResultAsync.fromPromise(
+    fs.readFile(path, 'utf-8'),
+    () => ({ type: 'NOT_FOUND', path })
+  ).map(parseConfig);
+}
+```
+
+</td>
+</tr>
+</table>
 
 ### Session Protocol
 
@@ -382,7 +484,7 @@ Cursor users get full verification via MCP:
 | `.pre-commit-config.yaml` | Verification before commit | Optional |
 | `src/core/`, `src/shell/` | Recommended structure | Optional |
 | `CLAUDE.md` | Agent instructions | Claude Code |
-| `.claude/skills/` | Workflow automation | Claude Code |
+| `.claude/skills/` | Workflow + extension skills | Claude Code |
 | `.claude/commands/` | User commands (/audit, /guard) | Claude Code |
 | `.claude/hooks/` | Tool guidance | Claude Code |
 | `.mcp.json` | MCP server config | Claude Code |
@@ -397,6 +499,163 @@ src/{project}/
 ├── core/    # Pure logic (@pre/@post, doctests, no I/O)
 └── shell/   # I/O operations (Result[T, E] returns)
 ```
+
+---
+
+## 🧩 Extension Skills
+
+Beyond the core workflow skills (`/develop`, `/review`, `/investigate`, `/propose`), Invar provides optional extension skills for specialized tasks:
+
+| Skill | Purpose | Install |
+|-------|---------|---------|
+| `/security` | OWASP Top 10 security audit | `invar skill add security` |
+| `/acceptance` | Requirements acceptance review | `invar skill add acceptance` |
+| `/invar-onboard` | Legacy project migration | `invar skill add invar-onboard` |
+
+### Managing Skills
+
+```bash
+invar skill list                    # List available/installed skills
+invar skill add security            # Install (or update) a skill
+invar skill remove security         # Remove a skill
+invar skill remove security --force # Force remove (even with custom extensions)
+```
+
+**Idempotent:** `invar skill add` works for both install and update. User customizations in the `<!--invar:extensions-->` region are preserved on update.
+
+### Custom Extensions
+
+Each skill has an extensions region where you can add project-specific customizations:
+
+```markdown
+<!--invar:extensions-->
+## Project-Specific Security Checks
+
+- [ ] Check for hardcoded AWS credentials in config/
+- [ ] Verify JWT secret rotation policy
+<!--/invar:extensions-->
+```
+
+These customizations are preserved when updating skills via `invar skill add`.
+
+---
+
+## 🔄 Legacy Project Migration
+
+For existing projects that want to adopt Invar's patterns, use the `/invar-onboard` skill:
+
+```bash
+# Install the onboarding skill
+invar skill add invar-onboard
+
+# Run assessment on your project
+# (in Claude Code or Pi)
+> /invar-onboard
+```
+
+### Migration Workflow
+
+```
+/invar-onboard
+       │
+       ▼
+┌─────────────────────────────────────────┐
+│  Phase 1: ASSESS (Automatic)            │
+│  • Code metrics and architecture        │
+│  • Pattern detection (error handling)   │
+│  • Core/Shell separation assessment     │
+│  • Risk and effort estimation           │
+│                                         │
+│  Output: docs/invar-onboard-assessment.md
+└─────────────────────────────────────────┘
+       │
+       ▼
+┌─────────────────────────────────────────┐
+│  Phase 2: DISCUSS (With User)           │
+│  • Present findings                     │
+│  • Discuss risk mitigation              │
+│  • Confirm scope and priorities         │
+└─────────────────────────────────────────┘
+       │
+       ▼ (user confirms)
+┌─────────────────────────────────────────┐
+│  Phase 3: PLAN (Automatic)              │
+│  • Dependency analysis                  │
+│  • Phase decomposition                  │
+│  • Session planning                     │
+│                                         │
+│  Output: docs/invar-onboard-roadmap.md  │
+└─────────────────────────────────────────┘
+```
+
+### Language Support
+
+The onboarding skill includes language-specific pattern guides:
+
+<table>
+<tr>
+<th>Python</th>
+<th>TypeScript</th>
+</tr>
+<tr>
+<td>
+
+```python
+# Error handling: returns library
+from returns.result import Result, Success, Failure
+
+def get_user(id: str) -> Result[User, NotFoundError]:
+    user = db.find(id)
+    if not user:
+        return Failure(NotFoundError(f"User {id}"))
+    return Success(user)
+
+# Contracts: invar_runtime
+from invar_runtime import pre, post
+
+@pre(lambda amount: amount > 0)
+@post(lambda result: result >= 0)
+def calculate_tax(amount: float) -> float:
+    return amount * 0.1
+```
+
+</td>
+<td>
+
+```typescript
+// Error handling: neverthrow
+import { Result, ResultAsync, ok, err } from 'neverthrow';
+
+function getUser(id: string): ResultAsync<User, NotFoundError> {
+  return ResultAsync.fromPromise(
+    db.user.findUnique({ where: { id } }),
+    () => new DbError('query_failed')
+  ).andThen(user =>
+    user ? ok(user) : err(new NotFoundError(`User ${id}`))
+  );
+}
+
+// Contracts: Zod schemas
+import { z } from 'zod';
+
+const AmountSchema = z.number().positive();
+
+function calculateTax(amount: number): number {
+  AmountSchema.parse(amount);
+  return amount * 0.1;
+}
+```
+
+</td>
+</tr>
+</table>
+
+### When to Use `/invar-onboard` vs `/refactor`
+
+| Scenario | Skill | Purpose |
+|----------|-------|---------|
+| Existing project → Invar | `/invar-onboard` | One-time framework migration |
+| Already Invar project | `/refactor` (coming soon) | Continuous code improvement |
 
 ---
 
@@ -425,7 +684,34 @@ max_function_lines = 50
 # Requirements
 require_contracts = true
 require_doctests = true
+
+# Timeouts (seconds)
+timeout_doctest = 60           # Doctest execution timeout
+timeout_crosshair = 300        # CrossHair total timeout
+timeout_crosshair_per_condition = 30  # Per-function timeout
+timeout_hypothesis = 300       # Hypothesis total timeout
+
+# Excluded paths (not checked by guard)
+exclude_paths = ["tests", "scripts", ".venv", "node_modules", "dist", "build"]
 ```
+
+### Pattern Detection (DX-61)
+
+Guard can suggest functional programming patterns to improve code quality:
+
+```toml
+[tool.invar.guard]
+# Minimum confidence for suggestions (low | medium | high)
+pattern_min_confidence = "medium"
+
+# Priority levels to include (P0 = core, P1 = extended)
+pattern_priorities = ["P0"]
+
+# Patterns to exclude from suggestions
+pattern_exclude = []
+```
+
+Available patterns: `NewType`, `Validation`, `NonEmpty`, `Literal`, `ExhaustiveMatch`, `SmartConstructor`, `StructuredError`
 
 ### 🚪 Escape Hatches
 
@@ -454,15 +740,21 @@ rules = ["missing_contract", "shell_result"]
 | `invar guard` | Full verification (static + doctest + property + symbolic) |
 | `invar guard --changed` | Only git-modified files |
 | `invar guard --static` | Static analysis only (~0.5s) |
+| `invar guard --coverage` | Collect branch coverage from tests |
 | `invar init` | Initialize or update project (interactive) |
 | `invar init --claude` | Quick setup for Claude Code |
 | `invar uninstall` | Remove Invar from project (preserves user content) |
 | `invar sig <file>` | Show signatures and contracts |
 | `invar map` | Symbol map with reference counts |
-| `invar rules` | List all rules |
+| `invar rules` | List all rules with severity |
 | `invar test` | Property-based tests (Hypothesis) |
 | `invar verify` | Symbolic verification (CrossHair) |
+| `invar mutate` | Mutation testing (find gaps in tests) |
 | `invar hooks` | Manage Claude Code hooks |
+| `invar skill` | Manage extension skills |
+| `invar mcp` | Start MCP server for Claude Code |
+| `invar dev sync` | Sync Invar protocol updates |
+| `invar version` | Show version info |
 
 ### MCP Tools
 

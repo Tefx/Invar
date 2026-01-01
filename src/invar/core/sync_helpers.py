@@ -21,6 +21,10 @@ if TYPE_CHECKING:
 # =============================================================================
 
 
+# LX-05: Valid language values for template rendering
+VALID_LANGUAGES = frozenset({"python", "typescript"})
+
+
 @dataclass
 class SyncConfig:
     """Configuration for template sync operation.
@@ -29,12 +33,16 @@ class SyncConfig:
         >>> config = SyncConfig()
         >>> config.syntax
         'cli'
+        >>> config.language
+        'python'
         >>> config.inject_project_additions
         False
 
-        >>> config = SyncConfig(syntax="mcp", force=True)
+        >>> config = SyncConfig(syntax="mcp", language="typescript", force=True)
         >>> config.syntax
         'mcp'
+        >>> config.language
+        'typescript'
         >>> config.force
         True
 
@@ -44,11 +52,29 @@ class SyncConfig:
     """
 
     syntax: str = "cli"  # "cli" or "mcp"
+    language: str = "python"  # "python" or "typescript" (LX-05)
     inject_project_additions: bool = False
     force: bool = False
     check: bool = False  # Preview only
     reset: bool = False  # Discard user content
     skip_patterns: list[str] = field(default_factory=list)  # Glob patterns to skip
+
+    @post(lambda result: result is None)  # Void method, validates or raises
+    def __post_init__(self) -> None:
+        """Validate configuration values.
+
+        Examples:
+            >>> SyncConfig(language="python")  # Valid
+            SyncConfig(syntax='cli', language='python', inject_project_additions=False, force=False, check=False, reset=False, skip_patterns=[])
+
+            >>> SyncConfig(language="rust")  # doctest: +IGNORE_EXCEPTION_DETAIL
+            Traceback (most recent call last):
+            ValueError: Invalid language 'rust'. Must be one of: python, typescript
+        """
+        if self.language not in VALID_LANGUAGES:
+            valid = ", ".join(sorted(VALID_LANGUAGES))
+            msg = f"Invalid language '{self.language}'. Must be one of: {valid}"
+            raise ValueError(msg)
 
 
 @dataclass

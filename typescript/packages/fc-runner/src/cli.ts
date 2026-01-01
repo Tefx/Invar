@@ -1,0 +1,150 @@
+#!/usr/bin/env node
+/**
+ * CLI for @invar/fc-runner
+ *
+ * Note: This CLI is for running property tests defined in a config file.
+ * For programmatic use, import the library directly.
+ *
+ * Usage:
+ *   npx @invar/fc-runner [config-file] [options]
+ */
+
+import { runProperties, defineProperty, fc, type RunnerResult, type PropertyResult, type PropertyDefinition } from './index.js';
+
+function printHelp(): void {
+  console.log(`
+@invar/fc-runner - Property-based testing with rich failure analysis
+
+Usage:
+  npx @invar/fc-runner [options]
+
+Options:
+  --seed <n>        Reproducible seed for random generation
+  --num-runs <n>    Number of test runs per property (default: 100)
+  --verbose         Show detailed output
+  --json            Output JSON format
+  --help, -h        Show this help message
+
+Note:
+  This CLI provides a summary of capabilities. For full property testing,
+  import the library programmatically and define your properties in code.
+
+Example programmatic usage:
+  import { runProperties, defineProperty, fc } from '@invar/fc-runner';
+
+  const props = [
+    defineProperty({
+      name: 'array reverse is involutive',
+      arbitraries: { arr: fc.array(fc.integer()) },
+      predicate: ({ arr }) => {
+        const reversed = [...arr].reverse().reverse();
+        return JSON.stringify(reversed) === JSON.stringify(arr);
+      },
+    }),
+  ];
+
+  const result = runProperties(props, { numRuns: 1000 });
+`);
+}
+
+function formatPropertyResult(prop: PropertyResult): string {
+  const status = prop.passed ? '\u2713' : '\u2717';
+  let output = `${status} ${prop.name} (${prop.numRuns} runs, ${prop.duration_ms}ms)`;
+
+  if (!prop.passed && prop.counterexample) {
+    output += `\n    Counterexample: ${JSON.stringify(prop.counterexample.values)}`;
+    if (prop.counterexample.shrunk) {
+      output += ` (shrunk in ${prop.counterexample.shrinkSteps} steps)`;
+    }
+    if (prop.analysis) {
+      output += `\n    Root cause: ${prop.analysis.rootCause}`;
+      output += `\n    Suggested fix: ${prop.analysis.suggestedFix}`;
+    }
+  }
+
+  return output;
+}
+
+function formatResult(result: RunnerResult, json: boolean): string {
+  if (json) {
+    return JSON.stringify(result, null, 2);
+  }
+
+  const lines: string[] = [];
+  const status = result.passed ? '\u2713 ALL PASSED' : '\u2717 FAILED';
+
+  lines.push(`\n=== Property Test Results ===\n`);
+  lines.push(`Status: ${status}`);
+  lines.push(`Total: ${result.total}, Failed: ${result.failed}`);
+  lines.push(`Duration: ${result.duration_ms}ms`);
+  lines.push(`Confidence: ${result.confidence}`);
+  lines.push('');
+
+  for (const prop of result.properties) {
+    lines.push(formatPropertyResult(prop));
+  }
+
+  return lines.join('\n');
+}
+
+function main(): void {
+  const args = process.argv.slice(2);
+
+  const options = {
+    seed: undefined as number | undefined,
+    numRuns: 100,
+    verbose: false,
+    json: false,
+  };
+
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+
+    if (arg === '--help' || arg === '-h') {
+      printHelp();
+      process.exit(0);
+    } else if (arg === '--json') {
+      options.json = true;
+    } else if (arg === '--verbose') {
+      options.verbose = true;
+    } else if (arg === '--seed' && args[i + 1]) {
+      options.seed = parseInt(args[++i], 10);
+    } else if (arg === '--num-runs' && args[i + 1]) {
+      options.numRuns = parseInt(args[++i], 10);
+    }
+  }
+
+  // Demo: run a simple built-in property using already imported modules
+  const demoProps = [
+    defineProperty({
+      name: 'demo: array concatenation length',
+      arbitraries: {
+        a: fc.array(fc.integer()),
+        b: fc.array(fc.integer()),
+      },
+      predicate: ({ a, b }: { a: number[]; b: number[] }) => {
+        return a.concat(b).length === a.length + b.length;
+      },
+    }),
+    defineProperty({
+      name: 'demo: string repeat',
+      arbitraries: {
+        s: fc.string({ maxLength: 10 }),
+        n: fc.integer({ min: 0, max: 5 }),
+      },
+      predicate: ({ s, n }: { s: string; n: number }) => {
+        return s.repeat(n).length === s.length * n;
+      },
+    }),
+  ];
+
+  console.log('Running demo properties...\n');
+
+  // Cast needed because TypeScript infers specific types for each property definition
+  const result = runProperties(demoProps as unknown as PropertyDefinition<Record<string, unknown>>[], options);
+  console.log(formatResult(result, options.json));
+
+  process.exit(result.passed ? 0 : 1);
+}
+
+main();

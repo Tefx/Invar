@@ -15,6 +15,8 @@ from typing import TYPE_CHECKING
 from jinja2 import Environment, FileSystemLoader
 from returns.result import Failure, Result, Success
 
+from invar.core.language import detect_language_from_markers
+
 if TYPE_CHECKING:
     from rich.console import Console
 
@@ -31,6 +33,9 @@ DISABLED_MARKER = ".invar_disabled"
 
 # Marker for identifying Invar hooks in settings
 INVAR_HOOK_MARKER = ".claude/hooks/"
+
+# Regex pattern for extracting protocol version from hook files
+PROTOCOL_VERSION_PATTERN = r"Protocol: v([\d.]+)"
 
 
 # @shell_orchestration: Tightly coupled to Claude Code settings.local.json format
@@ -102,11 +107,16 @@ def generate_hook_content(
         syntax = detect_syntax(project_path)
         guard_cmd = "invar_guard" if syntax == "mcp" else "invar guard"
 
+        # Detect project language from marker files
+        markers = frozenset(f.name for f in project_path.iterdir() if f.is_file())
+        language = detect_language_from_markers(markers)
+
         # Build context for template
         context = {
             "protocol_version": PROTOCOL_VERSION,
             "generated_date": datetime.now().strftime("%Y-%m-%d"),
             "guard_cmd": guard_cmd,
+            "language": language,
         }
 
         # For UserPromptSubmit, add the full INVAR.md content
@@ -138,9 +148,11 @@ def _register_hooks_in_settings(project_path: Path) -> Result[bool, str]:
 
     def build_invar_hook(hook_type: str) -> dict:
         """Build Invar hook entry for a hook type."""
+        # Use $CLAUDE_PROJECT_DIR for portable paths that work regardless of cwd
+        # Claude Code provides this env var to all hooks (see code.claude.com/docs/hooks)
         hook_cmd = {
             "type": "command",
-            "command": f".claude/hooks/{hook_type}.sh",
+            "command": f'"$CLAUDE_PROJECT_DIR"/.claude/hooks/{hook_type}.sh',
         }
         if hook_type in ("PreToolUse", "PostToolUse"):
             # These need a matcher - use "*" to match all tools
@@ -239,20 +251,24 @@ def install_claude_hooks(
                 # Create merged wrapper
                 merged = f'''#!/bin/bash
 # Merged hook: User + Invar (DX-57)
-# User hooks run first (higher priority)
+# Ensure correct working directory regardless of where Claude Code invokes from
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+if ! cd "$PROJECT_ROOT" 2>/dev/null; then
+  echo "[invar] Warning: Could not cd to $PROJECT_ROOT" >&2
+  exit 0  # Don't block Claude Code
+fi
 
-HOOK_DIR="$(dirname "$0")"
-
-# Run user hook first
-if [[ -f "$HOOK_DIR/{hook_type}.sh.user_backup" ]]; then
-  source "$HOOK_DIR/{hook_type}.sh.user_backup" "$@"
+# Run user hook first (higher priority)
+if [[ -f "$SCRIPT_DIR/{hook_type}.sh.user_backup" ]]; then
+  source "$SCRIPT_DIR/{hook_type}.sh.user_backup" "$@"
   USER_EXIT=$?
   [[ $USER_EXIT -ne 0 ]] && exit $USER_EXIT
 fi
 
 # Run Invar hook
-if [[ -f "$HOOK_DIR/invar.{hook_type}.sh" ]]; then
-  source "$HOOK_DIR/invar.{hook_type}.sh" "$@"
+if [[ -f "$SCRIPT_DIR/invar.{hook_type}.sh" ]]; then
+  source "$SCRIPT_DIR/invar.{hook_type}.sh" "$@"
 fi
 '''
                 wrapper_hook.write_text(merged)
@@ -262,7 +278,14 @@ fi
             # No user hook, create simple wrapper
             wrapper = f'''#!/bin/bash
 # Invar hook wrapper (DX-57)
-source "$(dirname "$0")/invar.{hook_type}.sh" "$@"
+# Ensure correct working directory regardless of where Claude Code invokes from
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+if ! cd "$PROJECT_ROOT" 2>/dev/null; then
+  echo "[invar] Warning: Could not cd to $PROJECT_ROOT" >&2
+  exit 0  # Don't block Claude Code
+fi
+source "$SCRIPT_DIR/invar.{hook_type}.sh" "$@"
 '''
             wrapper_hook.write_text(wrapper)
             wrapper_hook.chmod(0o755)
@@ -311,7 +334,7 @@ def sync_claude_hooks(
     try:
         existing_content = check_hook.read_text()
         # Extract version from header comment
-        version_match = re.search(r"Protocol: v([\d.]+)", existing_content)
+        version_match = re.search(PROTOCOL_VERSION_PATTERN, existing_content)
         old_version = version_match.group(1) if version_match else "unknown"
 
         if old_version != PROTOCOL_VERSION:
@@ -456,7 +479,7 @@ def hooks_status(
             # Try to get version
             try:
                 content = invar_hook.read_text()
-                match = re.search(r"Protocol: v([\d.]+)", content)
+                match = re.search(PROTOCOL_VERSION_PATTERN, content)
                 if match:
                     status[f"{hook_type}_version"] = match.group(1)
             except OSError:

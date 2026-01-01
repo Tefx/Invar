@@ -1,0 +1,38 @@
+{
+  "name": "@invar/eslint-plugin",
+  "version": "0.1.0",
+  "description": "ESLint plugin with Invar-specific rules for TypeScript",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "prepublishOnly": "pnpm build"
+  },
+  "keywords": [
+    "invar",
+    "eslint",
+    "eslint-plugin",
+    "typescript",
+    "contracts",
+    "zod"
+  ],
+  "author": "Invar Team",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/invar.git",
+    "directory": "typescript/packages/eslint-plugin"
+  },
+  "peerDependencies": {
+    "eslint": ">=8.0.0",
+    "@typescript-eslint/parser": ">=6.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

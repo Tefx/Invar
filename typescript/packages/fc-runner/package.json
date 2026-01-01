@@ -1,0 +1,42 @@
+{
+  "name": "@invar/fc-runner",
+  "version": "0.1.0",
+  "description": "Programmatic fast-check runner with rich failure analysis",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "invar-fc-runner": "dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "prepublishOnly": "pnpm build"
+  },
+  "keywords": [
+    "invar",
+    "fast-check",
+    "property-testing",
+    "verification"
+  ],
+  "author": "Invar Team",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/invar.git",
+    "directory": "typescript/packages/fc-runner"
+  },
+  "dependencies": {
+    "fast-check": "^3.15.0",
+    "zod": "^3.22.0"
+  },
+  "peerDependencies": {
+    "typescript": ">=4.9.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

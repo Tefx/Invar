@@ -8,7 +8,7 @@ This directory contains design proposals for Invar development.
 - `LX-XX-name.md` — Language eXtension (multi-language evolution)
 - Completed/archived proposals in `completed/` subdirectory
 
-## Active Proposals (9)
+## Active Proposals (14)
 
 ### DX Series (Developer Experience)
 
@@ -29,10 +29,15 @@ This directory contains design proposals for Invar development.
 
 | ID | Name | Status | Description |
 |----|------|--------|-------------|
-| LX-05 | language-agnostic-protocol | Draft | Extract universal protocol from Python-specific content |
+| LX-10 | layered-size-limits | Draft | Language-aware layered size limits (Core/Shell/Tests × Python/TS) |
+| LX-09 | legacy-onboarding | Draft | Onboard existing projects to Invar (`/invar-onboard` skill) |
+| LX-08 | extension-skills-future | Deferred | Future extension skills (split from LX-07) |
+| LX-07 | extension-skills | ✅ T0 Complete | T0 skills implemented, T1 pending discussion |
+| LX-06 | typescript-tooling | ✅ Phase 1-3 Complete | TypeScript verification (Phase 4 optional) |
+| LX-05 | language-agnostic-protocol | ✅ Protocol Complete | Universal protocol extracted, tooling → LX-06 |
 | LX-04 | multi-agent-framework | ✅ Pi Complete | Pi native support (--pi flag, init/uninstall, docs) |
 | LX-02 | agent-portability-analysis | ✅ Complete | Research: 6 agents (Claude, Pi, Codex, Cursor, Cline, Aider) |
-| LX-01 | multi-language-feasibility | Draft | Feasibility assessment for multi-language Invar |
+| LX-01 | multi-language-feasibility | Defer | Strategic exploration for multi-language Invar |
 
 **LX Series Vision:** Evolve Invar from Python-specific tool to universal AI-assisted development protocol.
 
@@ -123,14 +128,13 @@ This directory contains design proposals for Invar development.
               ▼                               ▼
       Protocol enforcement via hooks    Critical section + slimmed context
 
-Completed: DX-47, DX-48, DX-49, DX-41, DX-42, DX-43, DX-39, DX-46, DX-23, DX-37, DX-51, DX-52, DX-53, DX-54, DX-57, DX-58
-Partial: DX-38 (Tier 1-2 done)
+Completed: DX-47, DX-48, DX-49, DX-41, DX-42, DX-43, DX-39, DX-46, DX-23, DX-37, DX-51, DX-52, DX-53, DX-54, DX-57, DX-58, DX-63
+Partial: DX-38 (Tier 1-2 done), DX-62 (Layer 1 done)
+Draft: DX-60 (optimizes DX-57), DX-61, LX-01 (multi-language)
 Dropped: DX-40 (contradicts Lesson #19)
 Deferred: DX-38 Tier 3-4, DX-25, DX-29
-Draft: DX-60 (optimizes DX-57), DX-61, DX-62, LX-01 (multi-language)
-Complete: DX-63 (contracts-first)
 
-      Draft: DX-61 ↔ DX-62 (Synergy)
+      DX-61 (Draft) ↔ DX-62 (Partial) — Synergy
               │
       DX-61 (Functional Pattern Guidance)
               │
@@ -149,16 +153,19 @@ Complete: DX-63 (contracts-first)
 
 | Status | Proposal | Description | Notes |
 |--------|----------|-------------|-------|
-| **New** | DX-67 | Explicit Skill tool invocation | Verified in benchmark, templates updated |
-| **Partial** | DX-62 | Proactive reference reading | Layer 1 (Task Router) ✅, Layers 2-4 pending |
+| **Draft** | LX-09 | Legacy project onboarding | `/invar-onboard` skill (Assess → Discuss → Plan) |
+| **Draft** | DX-68 | Agent behavior optimization | P3-P5, low priority |
+| **Partial** | DX-62 | Proactive reference reading | Layer 1 ✅, Layers 2-4 pending |
 | **Draft** | DX-61 | Functional pattern guidance | Teach agents functional patterns |
 | **Draft** | DX-60 | Structured rules SSOT | Optimize DX-57 token usage (1,800t → 600t) |
-| **Draft** | LX-01 | Multi-language feasibility | Strategic exploration for language extension |
-| **Partial** | DX-38 | Contract quality rules | Tier 1-2 ✅, Tier 3-4 deferred (high false-positive risk) |
+| **Partial** | DX-38 | Contract quality rules | Tier 1-2 ✅, Tier 3-4 deferred |
+| **Pending** | LX-07 T1 | Extension skills (T1) | /refactor, /debug, /test-strategy pending discussion |
+| **Deferred** | LX-08 | Future extension skills | Long-term skills split from LX-07 |
+| **Defer** | LX-01 | Multi-language feasibility | Strategic exploration |
 | **Defer** | DX-25 | Functional patterns | Non-essential major change |
 | **Defer** | DX-29 | Pure content detection | DX-22 sufficient |
 
-**All core proposals complete (47/52).** LX-04 active, DX-67 new, 2 draft + 2 partial + 2 deferred items remain.
+**All core proposals complete (56/66).** 4 draft + 2 partial + 1 pending + 4 deferred items remain.
 
 ## Execution History
 
@@ -175,6 +182,70 @@ Complete: DX-63 (contracts-first)
 | 8 | DX-53 | ✅ Complete |
 | 9 | DX-54 | ✅ Complete |
 | 10 | DX-57, DX-58 | ✅ Complete |
+
+## Recent Changes (2026-01-01)
+
+### LX-09 Proposal Created
+
+- **LX-09** — Legacy Project Onboarding **Draft**
+  - Single skill: `/invar-onboard` with three phases (Assess → Discuss → Plan)
+  - Deep analysis only (no quick scan mode)
+  - Human checkpoint after assessment before planning
+  - Language adapters: Python, TypeScript, Go pattern libraries
+  - Key insight: Claude as parser (no language-specific code needed)
+  - Completely independent from LX-07 `/refactor` (different concepts)
+  - Estimated implementation: 3-4 days
+
+### LX-05/06/07 Implementation Complete
+
+- **LX-05** — Language-Agnostic Protocol **✅ Complete**
+  - All 36 template files verified (protocol, claude-md, skills, examples)
+  - Language detection and `copy_dir_lang` manifest working
+
+- **LX-06** — TypeScript Tooling **✅ Phase 1-3 Complete**
+  - guard_ts.py (595 lines) with tsc/eslint/vitest integration
+  - 3 Node tools: quick-check, ts-analyzer, fc-runner
+  - v2.0 JSON format with contract metrics
+  - Phase 4 (daemon optimization) optional
+
+- **LX-07** — Extension Skills **✅ T0 Complete**
+  - `invar skill` CLI command implemented
+  - T0 skills: /acceptance, /security ready
+  - T1 skills: /refactor, /debug, /test-strategy pending discussion
+  - Future skills split to LX-08
+
+- **LX-08** — Extension Skills Future **Deferred**
+  - Created as split from LX-07
+  - Contains long-term skill ideas
+
+### Documentation Sync
+- Updated context.md (v1.3.0 → v1.9.0)
+- Updated README.md (added `invar skill`, TypeScript note)
+- Updated design.md (Phase 11-13 for LX work)
+- Updated index.md (this file)
+
+---
+
+## Recent Changes (2025-12-31)
+
+### LX-05 Protocol Complete + LX-06 Created
+- **LX-05** — Language-Agnostic Protocol **✅ Protocol Complete**
+  - Phases 1-3 implemented (template splitting, language detection, TypeScript examples)
+  - Phase 4 (tooling) migrated to LX-06
+  - Phase 5 (validation) deferred
+
+- **LX-06** — TypeScript Tooling Support **Draft v2**
+  - Hybrid architecture: Python orchestration + targeted Node components
+  - 6 npm packages designed: @invar/quick-check, @invar/ts-analyzer, @invar/fc-runner, @invar/eslint-plugin, @invar/vitest-reporter, @invar/daemon
+  - Agent-centric design (tools serve agents, not IDE users)
+  - 18 days MVP, 23 days complete
+
+### Status Audit
+- Updated 6 proposals with outdated status markers:
+  - DX-67, DX-42, DX-41, DX-51, DX-52, DX-39 → ✅ Complete
+- LX-01 status → Defer (strategic exploration)
+
+---
 
 ## Recent Changes (2025-12-30)
 

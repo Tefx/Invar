@@ -54,7 +54,9 @@ Execute `invar_guard()` and show this one-line summary.
 
 This is your sign-out. Completes the Check-In/Final pair.
 
+
 ---
+
 
 ## Project Structure
 
@@ -81,6 +83,8 @@ src/{project}/
 
 > Full decision tree: [INVAR.md#core-shell](./INVAR.md#decision-tree-core-vs-shell)
 
+
+
 ## Documentation Structure
 
 | File | Owner | Edit? | Purpose |
@@ -99,7 +103,7 @@ For complex tasks (3+ functions), show 3 checkpoints in TodoList:
 
 ```
 □ [UNDERSTAND] Task description, codebase context, constraints
-□ [SPECIFY] Contracts (@pre/@post) and design decomposition
+□ [SPECIFY] Contracts and design decomposition
 □ [VALIDATE] Guard results, Review Gate status, integration status
 ```
 
@@ -137,6 +141,7 @@ Re-read `.invar/context.md` when:
 **Refresh is transparent** — do not announce "I'm refreshing context."
 Only show routing announcements when entering workflows.
 
+
 ---
 
 ## Commands (User-Invokable)
@@ -172,7 +177,7 @@ When user message contains these triggers, you MUST use the **Skill tool** to in
 | "why", "explain", "investigate" | `Skill(skill="investigate")` | Research mode, no code changes |
 | "compare", "should we", "design" | `Skill(skill="propose")` | Decision facilitation |
 
-**⚠️ CRITICAL: You must call the Skill tool, not just follow the workflow mentally.**
+**CRITICAL: You must call the Skill tool, not just follow the workflow mentally.**
 
 The Skill tool reads `.claude/skills/<skill>/SKILL.md` which contains:
 - Detailed phase instructions (USBV breakdown)
@@ -212,6 +217,7 @@ Agent announces routing decision before entering any workflow:
 
 **Auto-review (DX-41):** When Guard outputs `review_suggested`, agent automatically
 enters /review. Say "skip" to bypass.
+
 <!--/invar:managed--><!--invar:project-->
 ## Invar Project Structure
 

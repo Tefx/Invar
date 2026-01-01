@@ -1,3 +1,4 @@
+# @invar:allow file_size: LX-10 added layer types and functions, extraction planned
 """
 Pydantic models for Invar.
 
@@ -7,6 +8,7 @@ No I/O operations allowed.
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from enum import Enum
 from typing import Literal
 
@@ -29,6 +31,47 @@ class Severity(str, Enum):
     WARNING = "warning"
     INFO = "info"  # Phase 7: For informational issues like redundant type contracts
     SUGGEST = "suggest"  # DX-61: Functional pattern suggestions
+
+
+class CodeLayer(str, Enum):
+    """Code layer for differentiated size limits (LX-10)."""
+
+    CORE = "core"
+    SHELL = "shell"
+    TESTS = "tests"
+    DEFAULT = "default"
+
+
+@dataclass(frozen=True)
+class LayerLimits:
+    """Size limits for a specific code layer (LX-10).
+
+    Examples:
+        >>> limits = LayerLimits(max_file_lines=500, max_function_lines=50)
+        >>> limits.max_file_lines
+        500
+        >>> limits.max_function_lines
+        50
+    """
+
+    max_file_lines: int
+    max_function_lines: int
+
+
+# LX-10: Hardcoded layer limits (no config needed)
+PYTHON_LAYER_LIMITS: dict[CodeLayer, LayerLimits] = {
+    CodeLayer.CORE: LayerLimits(500, 50),
+    CodeLayer.SHELL: LayerLimits(700, 100),
+    CodeLayer.TESTS: LayerLimits(1000, 200),
+    CodeLayer.DEFAULT: LayerLimits(600, 80),
+}
+
+TYPESCRIPT_LAYER_LIMITS: dict[CodeLayer, LayerLimits] = {
+    CodeLayer.CORE: LayerLimits(650, 65),
+    CodeLayer.SHELL: LayerLimits(910, 130),
+    CodeLayer.TESTS: LayerLimits(1300, 260),
+    CodeLayer.DEFAULT: LayerLimits(780, 104),
+}
 
 
 class Contract(BaseModel):
@@ -70,6 +113,69 @@ class FileInfo(BaseModel):
     is_core: bool = False
     is_shell: bool = False
     source: str = ""  # Original source code for advanced analysis
+
+
+# LX-10: Layer detection functions
+@pre(lambda file_info: file_info is not None and hasattr(file_info, "path"))
+@post(lambda result: result in CodeLayer)
+def get_layer(file_info: FileInfo) -> CodeLayer:
+    """
+    Determine code layer from FileInfo classification.
+
+    Uses existing is_core/is_shell fields. Tests detection via path.
+
+    Examples:
+        >>> get_layer(FileInfo(path="src/core/logic.py", lines=10, is_core=True))
+        <CodeLayer.CORE: 'core'>
+        >>> get_layer(FileInfo(path="src/shell/cli.py", lines=10, is_shell=True))
+        <CodeLayer.SHELL: 'shell'>
+        >>> get_layer(FileInfo(path="tests/test_foo.py", lines=10))
+        <CodeLayer.TESTS: 'tests'>
+        >>> get_layer(FileInfo(path="src/utils.py", lines=10))
+        <CodeLayer.DEFAULT: 'default'>
+        >>> # Edge: "test_" must be at filename start, not anywhere in path
+        >>> get_layer(FileInfo(path="src/contest_utils.py", lines=10))
+        <CodeLayer.DEFAULT: 'default'>
+        >>> get_layer(FileInfo(path="src/foo_test.py", lines=10))
+        <CodeLayer.TESTS: 'tests'>
+    """
+    # Tests: path-based (no is_tests field exists)
+    path_lower = file_info.path.replace("\\", "/").lower()
+    filename = path_lower.rsplit("/", 1)[-1]  # Extract filename
+    # Match: /tests/ dir, /test/ dir, test_*.py files, *_test.py files
+    if (
+        "/tests/" in path_lower
+        or "/test/" in path_lower
+        or filename.startswith("test_")
+        or filename.endswith("_test.py")
+    ):
+        return CodeLayer.TESTS
+
+    # Core/Shell: use existing classification
+    if file_info.is_core:
+        return CodeLayer.CORE
+    if file_info.is_shell:
+        return CodeLayer.SHELL
+
+    return CodeLayer.DEFAULT
+
+
+@pre(lambda layer, language="python": isinstance(layer, CodeLayer) and language in ("python", "typescript"))
+@post(lambda result: result.max_file_lines > 0 and result.max_function_lines > 0)
+def get_limits(layer: CodeLayer, language: str = "python") -> LayerLimits:
+    """
+    Get size limits for layer and language.
+
+    Examples:
+        >>> get_limits(CodeLayer.CORE).max_function_lines
+        50
+        >>> get_limits(CodeLayer.SHELL).max_function_lines
+        100
+        >>> get_limits(CodeLayer.CORE, "typescript").max_function_lines
+        65
+    """
+    limits = TYPESCRIPT_LAYER_LIMITS if language == "typescript" else PYTHON_LAYER_LIMITS
+    return limits[layer]
 
 
 class Violation(BaseModel):

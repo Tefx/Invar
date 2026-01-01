@@ -53,7 +53,11 @@ class PatternRegistry:
     @property
     @post(lambda result: len(result) > 0)
     def detectors(self) -> list[PatternDetector]:
-        """Get all registered detectors."""
+        """Get all registered detectors.
+
+        >>> len(PatternRegistry().detectors) >= 5
+        True
+        """
         return self._detectors
 
     @post(lambda result: result is not None)

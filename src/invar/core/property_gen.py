@@ -368,6 +368,7 @@ def _skip_result(name: str, reason: str) -> PropertyTestResult:
 _SKIP_PATTERNS = (
     "Nothing", "NoSuchExample", "filter_too_much", "Could not resolve",
     "validation error", "missing", "positional argument", "Unable to satisfy",
+    "has no attribute 'check'",  # invar_runtime contracts, not deal contracts
 )
 
 
@@ -377,6 +378,9 @@ def _handle_test_exception(
     err_str: str, func_name: str, max_examples: int
 ) -> PropertyTestResult:
     """Handle exception from property test, returning skip or failure result."""
+    # Check for invar_runtime contracts (deal.cases requires deal contracts)
+    if "has no attribute 'check'" in err_str:
+        return _skip_result(func_name, "Skipped: uses invar_runtime (deal.cases requires deal contracts)")
     if any(p in err_str for p in _SKIP_PATTERNS):
         return _skip_result(func_name, "Skipped: untestable types")
     seed = _extract_hypothesis_seed(err_str)

@@ -1,3 +1,4 @@
+
 <!--
   ┌─────────────────────────────────────────────────────────────┐
   │ INVAR-MANAGED FILE - DO NOT EDIT DIRECTLY                   │
@@ -16,25 +17,25 @@
 
 > **"Trade structure for safety."**
 
+
 ## Six Laws
 
 | Law | Principle |
 |-----|-----------|
 | 1. Separation | Core (pure logic) / Shell (I/O) physically separate |
-| 2. Contract Complete | @pre/@post + doctests uniquely determine implementation |
-| 3. Context Economy | map → sig → code (only read what's needed) |
+| 2. Contract Complete | Preconditions + Postconditions + Examples uniquely determine implementation |
+| 3. Context Economy | Overview → Signatures → Code (only read what's needed) |
 | 4. Decompose First | Break into sub-functions before implementing |
 | 5. Verify Reflectively | Fail → Reflect (why?) → Fix → Verify |
 | 6. Integrate Fully | Local correct ≠ Global correct; verify all paths |
+
 
 ## Core/Shell Architecture
 
 | Zone | Location | Requirements |
 |------|----------|--------------|
-| Core | `**/core/**` | @pre/@post, pure (no I/O), doctests |
-| Shell | `**/shell/**` | `Result[T, E]` return type |
-
-**Forbidden in Core:** `os`, `sys`, `subprocess`, `pathlib`, `open`, `requests`, `datetime.now`
+| Core | `**/core/**` | Contracts + Examples, pure (no I/O) |
+| Shell | `**/shell/**` | Error-handling return type |
 
 ### Decision Tree: Core vs Shell
 
@@ -43,7 +44,7 @@ Does this function...
 │
 ├─ Read or write files? ──────────────────→ Shell
 ├─ Make network requests? ─────────────────→ Shell
-├─ Access current time (datetime.now)? ────→ Shell OR inject as parameter
+├─ Access current time? ──────────────────→ Shell OR inject as parameter
 ├─ Generate random values? ────────────────→ Shell OR inject as parameter
 ├─ Print to console? ──────────────────────→ Shell (return data, Shell logs)
 ├─ Access environment variables? ──────────→ Shell
@@ -51,17 +52,24 @@ Does this function...
 └─ None of the above? ─────────────────────→ Core
 ```
 
-**Pattern:** Inject impure values as parameters:
-```python
-# Core: receives 'now' as parameter (pure)
-def is_expired(expiry: datetime, now: datetime) -> bool:
-    return now > expiry
+### Injection Pattern (Universal)
 
-# Shell calls with actual time
-expired = is_expired(token.expiry, datetime.now())
+Instead of accessing impure values directly, inject them as parameters:
+
+```
+# Core: receives 'current_time' as parameter (pure)
+FUNCTION is_expired(expiry, current_time):
+    RETURN current_time > expiry
+
+# Shell: calls with actual time
+expired = is_expired(token.expiry, get_current_time())
 ```
 
-## Core Example (Pure Logic)
+This keeps Core functions pure and testable.
+
+
+
+## Core Example (Python)
 
 ```python
 from deal import pre, post
@@ -80,7 +88,9 @@ def discounted_price(price: float, discount: float) -> float:
 
 **Self-test:** Can someone else write the exact same function from just @pre/@post + doctests?
 
-## Shell Example (I/O Operations)
+**Forbidden in Core:** `os`, `sys`, `subprocess`, `pathlib`, `open`, `requests`, `datetime.now`
+
+## Shell Example (Python)
 
 ```python
 from pathlib import Path
@@ -101,7 +111,10 @@ def read_config(path: Path) -> Result[dict, str]:
 
 More examples: `.invar/examples/`
 
-## Contract Rules
+
+
+
+## Contract Syntax (Python)
 
 ### Lambda Signature (Critical)
 
@@ -145,6 +158,21 @@ def calc(x: int) -> int: ...
 def calc(x: int) -> int: ...
 ```
 
+### Doctest Examples
+
+```python
+def calculate(x: int) -> int:
+    """
+    >>> calculate(5)
+    10
+    >>> calculate(0)      # Edge case
+    0
+    """
+    return x * 2
+```
+
+
+
 ## Check-In (Required)
 
 Your first message MUST display:
@@ -157,46 +185,48 @@ Actions:
 1. Read `.invar/context.md` (Key Rules + Current State + Lessons Learned)
 2. Show one-line status
 
-**Do NOT execute guard or map at Check-In.**
-Guard is for VALIDATE phase and Final only.
+**Do NOT execute verification at Check-In.**
+Verification is for VALIDATE phase and Final only.
 
 This is your sign-in. The user sees it immediately.
 No visible check-in = Session not started.
 
-## USBV Workflow (DX-32)
+
+## USBV Workflow
 
 **U**nderstand → **S**pecify → **B**uild → **V**alidate
 
 | Phase | Purpose | Activities |
 |-------|---------|------------|
-| UNDERSTAND | Know what and why | Intent, Inspect (invar sig/map), Constraints |
-| SPECIFY | Define boundaries | @pre/@post, Design decomposition, Doctests |
+| UNDERSTAND | Know what and why | Intent, Inspect existing code, Constraints |
+| SPECIFY | Define boundaries | Preconditions, Postconditions, Examples |
 | BUILD | Write code | Implement leaves, Compose |
-| VALIDATE | Confirm correctness | invar guard, Review Gate, Reflect |
+| VALIDATE | Confirm correctness | Run verification, Review if needed |
 
-**Key:** Inspect before Contract. Depth varies naturally. Iterate when needed.
+**Key:** Inspect before Contract. Contracts before Code. Depth varies naturally.
 
-**Review Gate:** When Guard triggers `review_suggested` (escape hatches ≥3, security paths, low coverage), invoke `/review` before completion.
+**Review Gate:** When verification triggers `review_suggested` (escape hatches ≥3, security paths, low coverage), invoke `/review` before completion.
 
-## Visible Workflow (DX-30)
+
+## Visible Workflow
 
 For complex tasks (3+ functions), show 3 checkpoints in TodoList:
 
 ```
 □ [UNDERSTAND] Task description, codebase context, constraints
-□ [SPECIFY] Contracts (@pre/@post) and design decomposition
-□ [VALIDATE] Guard results, Review Gate if triggered, integration status
+□ [SPECIFY] Contracts and design decomposition
+□ [VALIDATE] Verification results, Review Gate if triggered, integration status
 ```
 
 **BUILD is internal work** — not shown in TodoList.
 
 **Show contracts before code.** Example:
 
-```python
+```
 [SPECIFY] calculate_discount:
-@pre(lambda price, rate: price > 0 and 0 <= rate <= 1)
-@post(lambda result: result >= 0)
-def calculate_discount(price: float, rate: float) -> float: ...
+PRECONDITION: price > 0 AND 0 <= rate <= 1
+POSTCONDITION: result >= 0
+FUNCTION calculate_discount(price, rate): ...
 
 [BUILD] Now coding...
 ```
@@ -204,18 +234,25 @@ def calculate_discount(price: float, rate: float) -> float: ...
 **When to use:** New features (3+ functions), architectural changes, Core modifications.
 **Skip for:** Single-line fixes, documentation, trivial refactoring.
 
+
 ## Task Completion
 
 A task is complete only when ALL conditions are met:
 - Check-In displayed: `✓ Check-In: [project] | [branch] | [clean/dirty]`
 - Intent explicitly stated
 - Contract written before implementation
-- Final displayed: `✓ Final: guard PASS | <errors>, <warnings>`
+- Final displayed: `✓ Final: verification PASS | <errors>, <warnings>`
 - User requirement satisfied
 
 **Missing any = Task incomplete.**
 
-## Markers
+---
+
+*Protocol v5.0 — USBV workflow | [Examples](.invar/examples/)*
+
+
+
+## Markers (Python)
 
 ### Entry Points
 
@@ -260,7 +297,10 @@ def flask_handler(): ...
 
 Run `invar rules` for complete rule catalog with hints.
 
-## Commands
+
+
+
+## Commands (Python)
 
 ```bash
 invar guard              # Full: static + doctests + CrossHair + Hypothesis
@@ -273,7 +313,7 @@ invar map --top 10       # Most-referenced symbols
 invar rules              # List all rules with detection/hints (JSON)
 ```
 
-## Configuration
+## Configuration (Python)
 
 ```toml
 # pyproject.toml or invar.toml
@@ -285,7 +325,10 @@ max_function_lines = 50            # Default: 50
 # Doctest lines are excluded from size calculations
 ```
 
-## Troubleshooting
+
+
+
+## Troubleshooting (Python)
 
 ### Size Limits (Agent Quick Reference)
 
@@ -304,6 +347,27 @@ max_function_lines = 50            # Default: 50
 | `param_mismatch` error | Lambda missing params | Include ALL params (even defaults) |
 | `shell_result` error | Shell func no Result | Add Result[T,E] or @invar:allow |
 | `is_failure()` not found | Wrong Result check | Use `isinstance(result, Failure)` |
+
+### Result Type Usage
+
+```python
+from returns.result import Result, Success, Failure
+
+# Creating results
+return Success(value)
+return Failure(error)
+
+# Checking results
+if isinstance(result, Failure):
+    handle_error(result.failure())
+else:
+    use_value(result.unwrap())
+
+# Chaining
+result.map(transform).bind(next_operation)
+```
+
+
 
 ---
 

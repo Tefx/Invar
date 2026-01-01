@@ -5,12 +5,16 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["src/invar"]
 
+# Include embedded Node.js tools (LX-05: TypeScript support without npm)
+# These are copied by scripts/embed_node_tools.py before build
+artifacts = ["src/invar/node_tools/**/*.js", "src/invar/node_tools/**/MANIFEST"]
+
 # Note: templates are included via packages = ["src/invar"]
 # force-include removed to avoid duplicate file errors in wheel
 
 [project]
 name = "invar-tools"
-version = "1.8.0"
+version = "1.10.0"
 description = "AI-native software engineering tools with design-by-contract verification"
 readme = "README.md"
 license = "GPL-3.0-or-later"
@@ -93,7 +97,7 @@ forbidden_imports = [
 ]
 
 # Paths to exclude from checking
-exclude_paths = ["tests", "scripts", ".venv", "__pycache__", "templates", ".invar/examples"]
+exclude_paths = ["tests", "scripts", ".venv", "__pycache__", "templates", ".invar/examples", "node_tools"]
 
 # Phase 3: Guard Enhancement
 strict_pure = true          # Detect internal imports and impure calls in Core
@@ -140,9 +144,13 @@ rules = ["*"]  # Examples intentionally show "bad" patterns without contracts
 pattern = "**/examples/functional.py"
 rules = ["*"]  # Fallback: Examples intentionally show "bad" patterns
 
+[[tool.invar.guard.rule_exclusions]]
+pattern = "**/templates/examples/**"
+rules = ["*"]  # LX-05: Template source files (language-specific examples)
+
 [tool.invar]
 # Protocol governance
-protocol_version = "3.20"
+protocol_version = "5.0"
 protocol_evolution = "human-approved"  # locked | human-approved | open
 
 # Test style: "inline" or "separate"

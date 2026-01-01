@@ -107,45 +107,112 @@ class Contract:
         return f"Contract({self.description!r})"
 
 
-def pre(*contracts: Contract) -> Callable[[Callable], Callable]:
+def pre(*args: Contract | Callable) -> Callable[[Callable], Callable]:
     """
-    Decorator accepting Contract objects for preconditions.
+    Decorator for preconditions. Accepts lambda or Contract objects.
 
     Works with deal.pre under the hood.
 
     Examples:
-        >>> from invar_runtime.contracts import pre, NonEmpty
+        >>> from invar_runtime.contracts import pre, NonEmpty, Positive
+
+        Lambda usage (like deal.pre):
+        >>> @pre(lambda x: x > 0)
+        ... def double(x): return x * 2
+        >>> double(5)
+        10
+
+        Contract usage:
         >>> @pre(NonEmpty)
         ... def first(xs): return xs[0]
         >>> first([1, 2, 3])
         1
-    """
 
-    def combined(*args: Any, **kwargs: Any) -> bool:
-        if not args and not kwargs:
+        Combined Contract:
+        >>> @pre(Positive)
+        ... def sqrt(x): return x ** 0.5
+        >>> sqrt(4)
+        2.0
+
+        Multiple contracts:
+        >>> @pre(NonEmpty, Positive)  # doctest: +SKIP
+        ... def bounded(x): return x
+    """
+    # M4 fix: Reject empty args
+    if not args:
+        raise TypeError("pre() requires at least one Contract or callable")
+
+    # Single callable (not Contract) → delegate to deal.pre directly
+    if len(args) == 1 and callable(args[0]) and not isinstance(args[0], Contract):
+        return deal.pre(args[0])
+
+    # C1 fix: Handle mixed Contract and callable
+    def combined(*a: Any, **kw: Any) -> bool:
+        if not a and not kw:
             raise ValueError("Precondition requires at least one argument")
-        value = args[0] if args else next(iter(kwargs.values()))
-        return all(c.check(value) for c in contracts)
+        value = a[0] if a else next(iter(kw.values()))
+        results = []
+        for c in args:
+            if isinstance(c, Contract):
+                results.append(c.check(value))
+            elif callable(c):
+                results.append(c(value))
+            else:
+                raise TypeError(f"Expected Contract or callable, got {type(c)}")
+        return all(results)
 
     return deal.pre(combined)
 
 
-def post(*contracts: Contract) -> Callable[[Callable], Callable]:
+def post(*args: Contract | Callable) -> Callable[[Callable], Callable]:
     """
-    Decorator accepting Contract objects for postconditions.
+    Decorator for postconditions. Accepts lambda or Contract objects.
 
     Works with deal.post under the hood.
 
     Examples:
-        >>> from invar_runtime.contracts import post, NonEmpty
+        >>> from invar_runtime.contracts import post, NonEmpty, NonNegative
+
+        Lambda usage (like deal.post):
+        >>> @post(lambda result: result >= 0)
+        ... def abs_val(x): return abs(x)
+        >>> abs_val(-5)
+        5
+
+        Contract usage:
         >>> @post(NonEmpty)
         ... def get_list(): return [1]
         >>> get_list()
         [1]
-    """
 
+        >>> @post(NonNegative)
+        ... def square(x): return x * x
+        >>> square(-3)
+        9
+
+        Multiple contracts:
+        >>> @post(NonEmpty, NonNegative)  # doctest: +SKIP
+        ... def get_count(): return [1, 2]
+    """
+    # M4 fix: Reject empty args
+    if not args:
+        raise TypeError("post() requires at least one Contract or callable")
+
+    # Single callable (not Contract) → delegate to deal.post directly
+    if len(args) == 1 and callable(args[0]) and not isinstance(args[0], Contract):
+        return deal.post(args[0])
+
+    # C1 fix: Handle mixed Contract and callable
     def combined(result: Any) -> bool:
-        return all(c.check(result) for c in contracts)
+        results = []
+        for c in args:
+            if isinstance(c, Contract):
+                results.append(c.check(result))
+            elif callable(c):
+                results.append(c(result))
+            else:
+                raise TypeError(f"Expected Contract or callable, got {type(c)}")
+        return all(results)
 
     return deal.post(combined)
 
