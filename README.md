@@ -103,7 +103,7 @@ Guard passed.
 
 ## 🚀 Quick Start
 
-> **Language Support:** Python (full), TypeScript (verification via Zod contracts). See [LX-05](docs/proposals/LX-05-language-agnostic-protocol.md).
+> **Language Support:** Python (full), TypeScript (verification via Zod contracts).
 
 ### 📦 Two Packages, Different Purposes
 
@@ -313,7 +313,7 @@ Skill routing ensures agents enter through the correct workflow:
 | **Core/Shell** | Guard blocks I/O imports in Core | 100% testable business logic |
 | **Result[T, E]** | Guard warns if Shell returns bare values | Explicit error handling |
 
-### 🔮 Future: Quality Guidance (DX-61)
+### 🔮 Future: Quality Guidance
 
 Beyond "correct or not"—Invar will suggest improvements:
 
@@ -655,7 +655,7 @@ function calculateTax(amount: number): number {
 | Scenario | Skill | Purpose |
 |----------|-------|---------|
 | Existing project → Invar | `/invar-onboard` | One-time framework migration |
-| Already Invar project | `/refactor` (LX-07 T1) | Continuous code improvement |
+| Already Invar project | `/refactor` (coming soon) | Continuous code improvement |
 
 ---
 
