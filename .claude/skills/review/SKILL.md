@@ -106,7 +106,11 @@ When `--deep` is selected:
 ```
 MAX_ROUNDS = 5          # Maximum review-fix cycles
 AUTO_TRANSITION = true  # No human confirmation between roles
+ASK_USER = never        # NEVER ask user, just do it
 ```
+
+**CRITICAL: After finding issues, IMMEDIATELY switch to FIXER role and fix them.**
+**DO NOT ask "Proceed with fixes?" or similar — just fix and continue.**
 
 ## Prime Directive: Reject Until Proven Correct
 
@@ -367,11 +371,18 @@ These are checked by Guard or linters - don't duplicate:
 - Entry point thickness → Guard (entry_point_too_thick)
 - Escape hatch count → Guard (review_suggested)
 
-## Auto-Loop Workflow (NO HUMAN CONFIRMATION)
+## Auto-Loop Workflow (FULLY AUTOMATIC)
 
-**The loop runs AUTOMATICALLY until exit condition is met.**
+**The loop runs AUTOMATICALLY until exit condition is met. NO user interaction.**
 
 **Two-step cycle: Review → Fix → Review → Fix → ...**
+
+⚠️ **NEVER ask user:**
+- "Proceed with fixes?"
+- "Should I fix these?"
+- "Do you want me to continue?"
+
+**Just do it.** Find issues → Fix them → Review again → Repeat until done.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐

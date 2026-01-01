@@ -2,7 +2,7 @@
 name: review
 description: Fault-finding code review with REJECTION-FIRST mindset. Code is GUILTY until proven INNOCENT. Two-step loop (Review→Fix) with full-scope review each round. Use after development, when Guard reports review_suggested, or user explicitly requests review.
 _invar:
-  version: "{{ version }}"
+  version: "5.3"
   managed: skill
 ---
 <!--invar:skill-->
@@ -106,7 +106,11 @@ When `--deep` is selected:
 ```
 MAX_ROUNDS = 5          # Maximum review-fix cycles
 AUTO_TRANSITION = true  # No human confirmation between roles
+ASK_USER = never        # NEVER ask user, just do it
 ```
+
+**CRITICAL: After finding issues, IMMEDIATELY switch to FIXER role and fix them.**
+**DO NOT ask "Proceed with fixes?" or similar — just fix and continue.**
 
 ## Prime Directive: Reject Until Proven Correct
 
@@ -312,21 +316,14 @@ WARNING: review_suggested - Low contract coverage
 > **Principle:** Only items requiring semantic judgment. Mechanical checks are handled by Guard.
 
 ### A. Contract Semantic Value
-{% if language == "python" %}
+
 - [ ] Does @pre constrain inputs beyond type checking?
   - Bad: `@pre(lambda x: isinstance(x, int))`
   - Good: `@pre(lambda x: x > 0 and x < MAX_VALUE)`
 - [ ] Does @post verify meaningful output properties?
   - Bad: `@post(lambda result: result is not None)`
   - Good: `@post(lambda result: len(result) == len(input))`
-{% elif language == "typescript" %}
-- [ ] Does Zod schema constrain inputs beyond type checking?
-  - Bad: `z.number()` (type only)
-  - Good: `z.number().positive().max(MAX_VALUE)` (semantic constraints)
-- [ ] Does output schema verify meaningful properties?
-  - Bad: `z.string()` (type only)
-  - Good: `z.string().min(1).max(100)` (semantic constraints)
-{% endif %}
+
 - [ ] Could someone implement correctly from contracts alone?
 - [ ] Are boundary conditions explicit in contracts?
 
@@ -374,11 +371,18 @@ These are checked by Guard or linters - don't duplicate:
 - Entry point thickness → Guard (entry_point_too_thick)
 - Escape hatch count → Guard (review_suggested)
 
-## Auto-Loop Workflow (NO HUMAN CONFIRMATION)
+## Auto-Loop Workflow (FULLY AUTOMATIC)
 
-**The loop runs AUTOMATICALLY until exit condition is met.**
+**The loop runs AUTOMATICALLY until exit condition is met. NO user interaction.**
 
 **Two-step cycle: Review → Fix → Review → Fix → ...**
+
+⚠️ **NEVER ask user:**
+- "Proceed with fixes?"
+- "Should I fix these?"
+- "Do you want me to continue?"
+
+**Just do it.** Find issues → Fix them → Review again → Repeat until done.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -577,8 +581,7 @@ Produce structured Review Report with:
 5. Positive observations (what's done well)
 ```
 
-<!--/invar:skill-->
-<!--invar:extensions-->
+<!--/invar:skill--><!--invar:extensions-->
 <!-- ========================================================================
      EXTENSIONS REGION - USER EDITABLE
      Add project-specific extensions here. This section is preserved on update.
