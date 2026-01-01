@@ -1,6 +1,6 @@
 # Invar Project Context
 
-*Last updated: 2025-12-27*
+*Last updated: 2026-01-01*
 
 <!-- DX-58: Slimmed context for efficient Check-In (~150 lines) -->
 
@@ -51,17 +51,17 @@
 
 ## Current State
 
-- **PyPI:** `invar-tools` + `invar-runtime` v1.3.0
+- **PyPI:** `invar-tools` + `invar-runtime` v1.9.0
 - **Protocol:** v5.0 (USBV workflow, DX-58 critical section)
-- **Status:** Feature complete, zero technical debt
-- **Recent:** DX-57 (hooks proposal), DX-58 (document structure optimization)
+- **Status:** Feature complete, TypeScript support added
+- **Recent:** LX-05 (language-agnostic), LX-06 (TypeScript tooling), LX-07 (Extension Skills)
 - **Blockers:** None
 
 ## Active Work
 
 See [docs/proposals/](../docs/proposals/) for planned changes.
 
-**Current focus:** DX-57/DX-58 implementation
+**Current focus:** Extension Skills completion, TypeScript verification
 
 ---
 
@@ -136,11 +136,11 @@ gh release create vX.Y.Z --title "vX.Y.Z - Title" --notes "..."
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 1.9.0 | 2026-01 | Extension Skills (LX-07), TypeScript support (LX-05/06) |
+| 1.8.0 | 2025-12 | Claude hooks improvements, interactive init (DX-70) |
+| 1.5.0 | 2025-12 | Language-agnostic protocol templates |
 | 1.3.0 | 2025-12 | Rule detection, template sync (DX-56), protocol v5.0 |
-| 1.0.2 | 2025-12 | Dual licensing: Apache-2.0 + GPL-3.0 + CC-BY-4.0 |
 | 1.0.0 | 2025-12 | Package split (invar-runtime + invar-tools) |
-| 0.8.0 | 2025-12 | Simplified verification levels (4→2) |
-| 0.7.0 | 2025-12 | Zero technical debt (75→0 warnings) |
 
 ---
 

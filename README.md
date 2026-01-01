@@ -68,6 +68,8 @@ Guard passed.
 
 ## 🚀 Quick Start
 
+> **Language Support:** Python (full), TypeScript (verification via Zod contracts). See [LX-05](docs/proposals/LX-05-language-agnostic-protocol.md).
+
 ### 📦 Two Packages, Different Purposes
 
 ```
@@ -382,7 +384,7 @@ Cursor users get full verification via MCP:
 | `.pre-commit-config.yaml` | Verification before commit | Optional |
 | `src/core/`, `src/shell/` | Recommended structure | Optional |
 | `CLAUDE.md` | Agent instructions | Claude Code |
-| `.claude/skills/` | Workflow automation | Claude Code |
+| `.claude/skills/` | Workflow + extension skills | Claude Code |
 | `.claude/commands/` | User commands (/audit, /guard) | Claude Code |
 | `.claude/hooks/` | Tool guidance | Claude Code |
 | `.mcp.json` | MCP server config | Claude Code |
@@ -463,6 +465,7 @@ rules = ["missing_contract", "shell_result"]
 | `invar test` | Property-based tests (Hypothesis) |
 | `invar verify` | Symbolic verification (CrossHair) |
 | `invar hooks` | Manage Claude Code hooks |
+| `invar skill` | Manage extension skills (security, acceptance) |
 
 ### MCP Tools
 

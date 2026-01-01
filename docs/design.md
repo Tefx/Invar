@@ -891,6 +891,36 @@ invar uninstall --dry-run  # Preview what would be removed
 - Per-zone size limits (Core: 50, Shell: 80)
 - Transitive impurity detection
 
+### Phase 11: Language-Agnostic Protocol (LX-05) ✅ Complete
+
+**Goal:** Support multiple programming languages.
+
+**Deliverables:**
+- [x] Language-agnostic INVAR.md templates
+- [x] TypeScript contract examples (Zod schemas)
+- [x] Language detection in templates
+- [x] Template variables for language-specific content
+
+### Phase 12: TypeScript Tooling (LX-06) ✅ Complete
+
+**Goal:** Verification for TypeScript projects.
+
+**Deliverables:**
+- [x] TypeScript guard support (`guard_ts.py`)
+- [x] Zod schema verification
+- [x] JSDoc doctest extraction and execution
+- [x] Hypothesis/property testing for TypeScript
+
+### Phase 13: Extension Skills (LX-07) ✅ Complete
+
+**Goal:** Optional specialized skills for quality assurance.
+
+**Deliverables:**
+- [x] `invar skill` CLI command
+- [x] Skill registry and templates
+- [x] `/security` and `/acceptance` extension skills
+- [x] Skill isolation options (--quick, --standard, --deep)
+
 ---
 
 ## Dependencies

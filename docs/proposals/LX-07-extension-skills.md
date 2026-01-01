@@ -1,6 +1,6 @@
 # LX-07: Extension Skills Architecture
 
-**Status:** Draft
+**Status:** Phase 1-2 Complete (T0 Skills Implemented)
 **Priority:** Medium
 **Category:** Language/Agent eXtensions
 **Created:** 2026-01-01
