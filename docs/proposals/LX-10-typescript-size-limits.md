@@ -1,6 +1,6 @@
 # LX-10: Language-Aware Layered Size Limits
 
-> **Status:** Draft
+> **Status:** Implemented
 > **Created:** 2026-01-02
 > **Updated:** 2026-01-02
 > **Complexity:** Low (reuse existing classification + hardcoded defaults)
