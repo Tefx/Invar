@@ -1291,6 +1291,85 @@ cp -r /path/to/extensions/acceptance .claude/skills/
 
 ---
 
+## Open Questions
+
+### Q1: Remediation Plan Verification (Pending Discussion)
+
+**Problem:** After `/acceptance` generates a validation report, how should the agent generate and verify a remediation plan?
+
+**Current State:**
+- `/acceptance` Step 6 outputs "Suggested /develop Tasks"
+- No verification that plan actually covers all gaps
+- Same agent generates report and plan → confirmation bias risk
+
+**Proposed Enhancement:**
+
+```
+/acceptance --deep
+├── Phase 1: Validation (ISOLATED)
+│   → QA Reviewer persona
+│   → Generate validation report
+│   → Return to main context
+│
+├── Phase 2: Planning (SAME CONTEXT)
+│   → Read report, generate remediation plan
+│   → Build Gap Coverage Matrix (mechanical verification)
+│   → Flag any gaps without tasks
+│
+├── Phase 3: Plan Review (ISOLATED, DIFFERENT AGENT)
+│   → NEW agent with "Plan Critic" persona
+│   → Input: Report + Plan
+│   → Task: "Find flaws in this plan. Assume it has problems."
+│   → Output: Approved / Needs Revision / Rejected
+│
+└── Phase 4: User Confirmation
+    → Present verified plan
+    → User confirms or modifies
+```
+
+**Two Types of Verification:**
+
+| Type | Nature | Agent Self-Check? |
+|------|--------|-------------------|
+| Coverage | Mechanical: Gap → Task mapping | ✅ OK |
+| Quality | Subjective: Is plan correct? | ❌ Needs isolation |
+
+**Plan Critic Persona (Draft):**
+
+```markdown
+# Plan Critic
+
+You are reviewing a remediation plan against a validation report.
+
+## CRITICAL RULES
+
+1. ASSUME the plan has flaws — your job is to find them
+2. For each task, ask: "Will this ACTUALLY fix the gap?"
+3. Check for:
+   - Missing steps
+   - Wrong assumptions
+   - Dependencies not considered
+   - Edge cases not handled
+4. Be adversarial, not confirming
+
+## OUTPUT
+
+- List of issues found (or "None")
+- Verdict: APPROVED / NEEDS REVISION / REJECTED
+```
+
+**Alternative Approaches:**
+
+| Approach | Description | Trade-off |
+|----------|-------------|-----------|
+| A: Embedded phases | Add Phase 3-4 to /acceptance | Single skill, complex |
+| B: Separate /plan + /review-plan | New skills | Modular, more context switching |
+| C: User-only verification | Show matrix, user decides | Simple, requires user expertise |
+
+**Decision:** Pending discussion. Currently `/acceptance` outputs basic suggestions without verification.
+
+---
+
 ## References
 
 - LX-05: Language-Agnostic Protocol (skill templates)
@@ -1476,4 +1555,4 @@ Produce a structured Review Report with:
 
 ---
 
-*Proposal v2.1 — 5 Core Extension Skills with Context Isolation*
+*Proposal v2.2 — 5 Core Extension Skills with Context Isolation*
