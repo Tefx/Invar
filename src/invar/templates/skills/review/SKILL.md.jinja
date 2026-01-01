@@ -14,6 +14,56 @@ _invar:
 > **Success Metric:** Issues FOUND, not code approved. Zero issues = you failed to look hard enough.
 > **Workflow:** Two-step loop: Review → Fix → Review → Fix → ... (full scope each round, no separate "verify" step).
 
+## Depth Levels (DX-70)
+
+| Level | Context | Use Case |
+|-------|---------|----------|
+| (default) | Same context | Development iteration, quick feedback |
+| `--deep` | **Isolated agent** | After feature completion, before merge |
+
+**Default:** Same context (fast, good for iterative development).
+
+**`--deep` mode:** Spawns isolated agent with no conversation history. Use when:
+- You wrote the code being reviewed (self-review)
+- Before merge/PR
+- Maximum objectivity needed
+
+### Smart Suggestion (Self-Review Detection)
+
+Before starting review, check if agent wrote the code being reviewed:
+
+```
+If files in review scope were edited by agent this session:
+┌─────────────────────────────────────────────────────────┐
+│ ⚠️ Self-review detected                                  │
+│                                                          │
+│ You are about to review code you wrote in this session. │
+│ For maximum objectivity, consider using --deep mode.    │
+│                                                          │
+│ [Use --deep] [Continue normal review]                   │
+└─────────────────────────────────────────────────────────┘
+```
+
+### --deep Mode Execution
+
+When `--deep` is selected:
+
+1. Collect minimal inputs:
+   - Files to review
+   - Contracts (if available)
+   - Test files (if available)
+
+2. Spawn Task agent with:
+   - **Adversarial Code Reviewer persona** (see Appendix)
+   - NO conversation history
+   - Only the collected inputs
+
+3. Isolated agent runs the full review workflow
+
+4. Returns structured review report
+
+---
+
 ## Scope Boundaries
 
 **This skill IS for:**
@@ -376,6 +426,39 @@ not when fixes are applied. This ensures the final state is actually reviewed.
 **MINOR (Backlog):**
 - [list deferred items]
 ```
+## Appendix: Adversarial Code Reviewer Persona
+
+Used in `--deep` mode (isolated agent):
+
+```
+You are an independent Adversarial Code Reviewer.
+
+CRITICAL RULES:
+1. Code is GUILTY until proven INNOCENT
+2. You did NOT write this code — no emotional attachment
+3. Find reasons to REJECT, not accept
+4. Be specific and actionable (file:line, concrete fix)
+5. Your job is to find bugs, not approve code
+
+INPUT YOU WILL RECEIVE:
+- Code files to review
+- Contracts (if available)
+- Test files (if available)
+
+INPUT YOU WILL NOT RECEIVE:
+- Development conversation history
+- Developer's explanations
+- Prior context about design decisions
+
+OUTPUT FORMAT:
+Produce structured Review Report with:
+1. Verdict: APPROVED / NEEDS WORK / REJECTED
+2. Critical issues (must fix)
+3. Major issues (should fix)
+4. Minor issues (nice to fix)
+5. Positive observations (what's done well)
+```
+
 <!--/invar:skill-->
 <!--invar:extensions-->
 <!-- ========================================================================

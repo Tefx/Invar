@@ -1,0 +1,155 @@
+# Python Security Patterns
+# Extends _common.yaml with Python-specific patterns
+
+version: "1.0"
+extends: _common
+
+patterns:
+  # A03: Injection
+  sql_injection_fstring:
+    category: A03
+    severity: Critical
+    description: "SQL injection via f-string formatting"
+    regex:
+      - "f\"[^\"]*SELECT[^\"]*\\{[^}]+\\}\""
+      - "f'[^']*SELECT[^']*\\{[^}]+\\}'"
+      - "f\"[^\"]*INSERT[^\"]*\\{[^}]+\\}\""
+      - "f\"[^\"]*UPDATE[^\"]*\\{[^}]+\\}\""
+      - "f\"[^\"]*DELETE[^\"]*\\{[^}]+\\}\""
+    false_positive_hints:
+      - "Check if query uses ORM with proper parameterization"
+      - "Verify if variable is validated/sanitized before use"
+
+  sql_injection_format:
+    category: A03
+    severity: Critical
+    description: "SQL injection via .format() or % formatting"
+    regex:
+      - "\\.format\\([^)]*\\)[^\"]*SELECT"
+      - "SELECT[^\"]*\\.format\\("
+      - "%s[^\"]*SELECT|SELECT[^\"]*%s"
+      - "\"%.*SELECT.*%.*\"\\s*%"
+    false_positive_hints:
+      - "Check if parameterized queries are used"
+
+  command_injection:
+    category: A03
+    severity: Critical
+    description: "Command injection via shell execution"
+    regex:
+      - "os\\.system\\s*\\("
+      - "os\\.popen\\s*\\("
+      - "subprocess\\.call\\s*\\([^)]*shell\\s*=\\s*True"
+      - "subprocess\\.run\\s*\\([^)]*shell\\s*=\\s*True"
+      - "subprocess\\.Popen\\s*\\([^)]*shell\\s*=\\s*True"
+    false_positive_hints:
+      - "Check if command includes user input"
+      - "Prefer subprocess with list arguments (shell=False)"
+
+  code_execution:
+    category: A03
+    severity: Critical
+    description: "Dynamic code execution"
+    regex:
+      - "\\beval\\s*\\("
+      - "\\bexec\\s*\\("
+      - "compile\\s*\\([^)]+,[^)]+,[\"']exec[\"']\\)"
+    false_positive_hints:
+      - "Check if input is from trusted source"
+      - "Consider safer alternatives (ast.literal_eval)"
+
+  template_injection:
+    category: A03
+    severity: High
+    description: "Server-side template injection"
+    regex:
+      - "render_template_string\\s*\\("
+      - "Template\\s*\\(\\s*\\w+\\s*\\)"
+      - "Environment\\s*\\([^)]*\\)\\.from_string"
+    false_positive_hints:
+      - "Check if template content is user-controlled"
+
+  # A08: Data Integrity Failures
+  unsafe_pickle:
+    category: A08
+    severity: High
+    description: "Unsafe deserialization with pickle"
+    regex:
+      - "pickle\\.loads?\\s*\\("
+      - "cPickle\\.loads?\\s*\\("
+      - "_pickle\\.loads?\\s*\\("
+    false_positive_hints:
+      - "Check if data source is trusted"
+      - "Consider using JSON or other safe formats"
+
+  unsafe_yaml:
+    category: A08
+    severity: High
+    description: "Unsafe YAML loading"
+    regex:
+      - "yaml\\.load\\s*\\([^)]*\\)"
+      - "yaml\\.unsafe_load\\s*\\("
+    exclude_if_contains:
+      - "Loader=yaml.SafeLoader"
+      - "Loader=SafeLoader"
+    false_positive_hints:
+      - "Use yaml.safe_load() instead"
+
+  # A01: Broken Access Control
+  missing_auth_decorator:
+    category: A01
+    severity: Medium
+    description: "Route potentially missing authentication"
+    regex:
+      - "@app\\.route\\s*\\([^)]*\\)\\s*\\ndef\\s+\\w+\\s*\\([^)]*\\)\\s*:"
+      - "@router\\.(get|post|put|delete)\\s*\\([^)]*\\)\\s*\\n(?!.*@.*auth)"
+    false_positive_hints:
+      - "Check if route should be public"
+      - "Verify auth is handled in middleware"
+
+  # A02: Cryptographic Failures (Python-specific)
+  weak_password_hash:
+    category: A02
+    severity: High
+    description: "Weak password hashing"
+    regex:
+      - "hashlib\\.md5\\s*\\("
+      - "hashlib\\.sha1\\s*\\("
+      - "crypt\\.crypt\\s*\\("
+    false_positive_hints:
+      - "Use bcrypt, argon2, or scrypt for passwords"
+      - "MD5/SHA1 ok for non-password checksums"
+
+  # A05: Security Misconfiguration
+  flask_debug:
+    category: A05
+    severity: High
+    description: "Flask debug mode enabled"
+    regex:
+      - "app\\.run\\s*\\([^)]*debug\\s*=\\s*True"
+      - "FLASK_DEBUG\\s*=\\s*1"
+      - "FLASK_ENV\\s*=\\s*[\"']development[\"']"
+    false_positive_hints:
+      - "Ensure this is not production configuration"
+
+  django_debug:
+    category: A05
+    severity: High
+    description: "Django debug mode enabled"
+    regex:
+      - "DEBUG\\s*=\\s*True"
+    file_pattern: "settings*.py"
+    false_positive_hints:
+      - "Check if this is production settings file"
+
+  # A07: Authentication Failures
+  weak_jwt:
+    category: A07
+    severity: High
+    description: "Weak JWT configuration"
+    regex:
+      - "algorithm\\s*=\\s*[\"']none[\"']"
+      - "algorithms\\s*=\\s*\\[[\"']none[\"']\\]"
+      - "verify\\s*=\\s*False"
+    false_positive_hints:
+      - "JWT should use HS256 or RS256 minimum"

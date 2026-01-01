@@ -1,0 +1,194 @@
+# TypeScript/JavaScript Security Patterns
+# Extends _common.yaml with TS/JS-specific patterns
+
+version: "1.0"
+extends: _common
+
+patterns:
+  # A03: Injection
+  xss_innerhtml:
+    category: A03
+    severity: High
+    description: "Cross-site scripting via innerHTML"
+    regex:
+      - "\\.innerHTML\\s*="
+      - "\\.outerHTML\\s*="
+      - "document\\.write\\s*\\("
+      - "document\\.writeln\\s*\\("
+    false_positive_hints:
+      - "Check if content is from user input"
+      - "Use textContent or DOMPurify for sanitization"
+
+  xss_react:
+    category: A03
+    severity: High
+    description: "React XSS via dangerouslySetInnerHTML"
+    regex:
+      - "dangerouslySetInnerHTML"
+    false_positive_hints:
+      - "Ensure content is sanitized with DOMPurify"
+      - "Verify source of HTML content"
+
+  xss_vue:
+    category: A03
+    severity: High
+    description: "Vue XSS via v-html directive"
+    regex:
+      - "v-html\\s*="
+    false_positive_hints:
+      - "Sanitize content before using v-html"
+
+  xss_angular:
+    category: A03
+    severity: High
+    description: "Angular XSS via innerHTML binding"
+    regex:
+      - "\\[innerHTML\\]\\s*="
+      - "bypassSecurityTrustHtml"
+    false_positive_hints:
+      - "bypassSecurityTrust* should only be used with trusted content"
+
+  code_execution:
+    category: A03
+    severity: Critical
+    description: "Dynamic code execution"
+    regex:
+      - "\\beval\\s*\\("
+      - "new\\s+Function\\s*\\("
+      - "setTimeout\\s*\\(\\s*[\"'][^\"']*[\"']"
+      - "setInterval\\s*\\(\\s*[\"'][^\"']*[\"']"
+    false_positive_hints:
+      - "Avoid eval with user input"
+      - "Use JSON.parse for data parsing"
+
+  prototype_pollution:
+    category: A03
+    severity: High
+    description: "Prototype pollution vulnerability"
+    regex:
+      - "__proto__"
+      - "constructor\\s*\\[\\s*[\"']prototype[\"']\\s*\\]"
+      - "Object\\.assign\\s*\\(\\s*\\{\\s*\\}\\s*,"
+    false_positive_hints:
+      - "Check if object keys come from user input"
+      - "Use Object.create(null) for dictionaries"
+
+  sql_injection:
+    category: A03
+    severity: Critical
+    description: "SQL injection via string concatenation"
+    regex:
+      - "`[^`]*SELECT[^`]*\\$\\{[^}]+\\}`"
+      - "\"[^\"]*SELECT[^\"]*\"\\s*\\+"
+      - "'[^']*SELECT[^']*'\\s*\\+"
+    false_positive_hints:
+      - "Use parameterized queries or ORM"
+
+  nosql_injection:
+    category: A03
+    severity: High
+    description: "NoSQL injection (MongoDB)"
+    regex:
+      - "\\$where\\s*:"
+      - "\\$regex\\s*:\\s*\\w+"
+      - "find\\s*\\(\\s*\\{[^}]*\\$"
+    false_positive_hints:
+      - "Validate and sanitize query parameters"
+
+  command_injection:
+    category: A03
+    severity: Critical
+    description: "Command injection via child_process"
+    regex:
+      - "child_process\\.exec\\s*\\("
+      - "child_process\\.execSync\\s*\\("
+      - "exec\\s*\\(\\s*`"
+      - "execSync\\s*\\(\\s*`"
+    false_positive_hints:
+      - "Use execFile with array arguments instead"
+      - "Validate/sanitize command input"
+
+  # A01: Broken Access Control
+  cors_wildcard:
+    category: A01
+    severity: Medium
+    description: "CORS allows all origins"
+    regex:
+      - "Access-Control-Allow-Origin[\"']?\\s*:\\s*[\"']?\\*"
+      - "origin\\s*:\\s*[\"']?\\*"
+      - "cors\\s*\\(\\s*\\)"
+    false_positive_hints:
+      - "Specify allowed origins explicitly"
+      - "cors() without options allows all origins"
+
+  # A02: Cryptographic Failures (JS-specific)
+  weak_crypto:
+    category: A02
+    severity: Medium
+    description: "Weak cryptographic algorithm"
+    regex:
+      - "createHash\\s*\\([\"']md5[\"']\\)"
+      - "createHash\\s*\\([\"']sha1[\"']\\)"
+      - "createCipher\\s*\\([\"']des"
+    false_positive_hints:
+      - "Use SHA-256 or stronger for security"
+
+  jwt_none_algorithm:
+    category: A02
+    severity: Critical
+    description: "JWT with 'none' algorithm"
+    regex:
+      - "algorithm[\"']?\\s*:\\s*[\"']none[\"']"
+      - "algorithms\\s*:\\s*\\[[\"']none[\"']\\]"
+    false_positive_hints:
+      - "Never allow 'none' algorithm in production"
+
+  # A05: Security Misconfiguration
+  express_trust_proxy:
+    category: A05
+    severity: Low
+    description: "Express trust proxy configuration"
+    regex:
+      - "trust\\s+proxy[\"']?\\s*,\\s*true"
+    false_positive_hints:
+      - "Only enable if behind a trusted reverse proxy"
+
+  helmet_disabled:
+    category: A05
+    severity: Medium
+    description: "Security headers potentially disabled"
+    regex:
+      - "helmet\\s*\\(\\s*\\{\\s*[^}]*:\\s*false"
+    false_positive_hints:
+      - "Avoid disabling security headers"
+
+  # A08: Data Integrity Failures
+  unsafe_json_parse:
+    category: A08
+    severity: Low
+    description: "JSON.parse without error handling"
+    regex:
+      - "JSON\\.parse\\s*\\([^)]+\\)(?!\\s*\\.catch|\\s*\\)\\s*\\.catch)"
+    false_positive_hints:
+      - "Wrap in try-catch for untrusted input"
+
+  # A07: Authentication Failures
+  hardcoded_jwt_secret:
+    category: A07
+    severity: Critical
+    description: "Hardcoded JWT secret"
+    regex:
+      - "jwt\\.sign\\s*\\([^,]+,\\s*[\"'][^\"']+[\"']"
+      - "secret\\s*:\\s*[\"'][^\"']{8,}[\"']"
+    false_positive_hints:
+      - "Use environment variables for secrets"
+
+  session_insecure:
+    category: A07
+    severity: Medium
+    description: "Insecure session configuration"
+    regex:
+      - "secure\\s*:\\s*false"
+      - "httpOnly\\s*:\\s*false"
+    false_positive_hints:
+      - "Set secure: true and httpOnly: true in production"
