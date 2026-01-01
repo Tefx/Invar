@@ -1,3 +1,4 @@
+# @invar:allow file_size: LX-10 added layer types and functions, extraction planned
 """
 Pydantic models for Invar.
 
@@ -115,8 +116,8 @@ class FileInfo(BaseModel):
 
 
 # LX-10: Layer detection functions
-@pre(lambda file_info: file_info is not None)
-@post(lambda result: isinstance(result, CodeLayer))
+@pre(lambda file_info: file_info is not None and hasattr(file_info, "path"))
+@post(lambda result: result in CodeLayer)
 def get_layer(file_info: FileInfo) -> CodeLayer:
     """
     Determine code layer from FileInfo classification.
@@ -132,10 +133,22 @@ def get_layer(file_info: FileInfo) -> CodeLayer:
         <CodeLayer.TESTS: 'tests'>
         >>> get_layer(FileInfo(path="src/utils.py", lines=10))
         <CodeLayer.DEFAULT: 'default'>
+        >>> # Edge: "test_" must be at filename start, not anywhere in path
+        >>> get_layer(FileInfo(path="src/contest_utils.py", lines=10))
+        <CodeLayer.DEFAULT: 'default'>
+        >>> get_layer(FileInfo(path="src/foo_test.py", lines=10))
+        <CodeLayer.TESTS: 'tests'>
     """
     # Tests: path-based (no is_tests field exists)
     path_lower = file_info.path.replace("\\", "/").lower()
-    if "/tests/" in path_lower or "/test/" in path_lower or "test_" in path_lower:
+    filename = path_lower.rsplit("/", 1)[-1]  # Extract filename
+    # Match: /tests/ dir, /test/ dir, test_*.py files, *_test.py files
+    if (
+        "/tests/" in path_lower
+        or "/test/" in path_lower
+        or filename.startswith("test_")
+        or filename.endswith("_test.py")
+    ):
         return CodeLayer.TESTS
 
     # Core/Shell: use existing classification

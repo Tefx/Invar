@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from deal import post
+from deal import post, pre
 
 from invar.core.contracts import (
     check_empty_contracts,
@@ -77,6 +77,7 @@ def _get_func_hint(file_info: FileInfo) -> str:
     return f" Functions: {', '.join(f'{n}({sz}L)' for n, sz in funcs)}" if funcs else ""
 
 
+@pre(lambda file_info, rule: file_info is not None and len(rule) > 0)
 @post(lambda result: isinstance(result, bool))
 def _has_file_escape(file_info: FileInfo, rule: str) -> bool:
     """Check if file has escape hatch for given rule.
@@ -86,6 +87,9 @@ def _has_file_escape(file_info: FileInfo, rule: str) -> bool:
         >>> _has_file_escape(info, "file_size")
         True
         >>> _has_file_escape(info, "other_rule")
+        False
+        >>> # Edge: empty source returns False
+        >>> _has_file_escape(FileInfo(path="x.py", lines=1), "any")
         False
     """
     if not file_info.source:
@@ -183,6 +187,9 @@ def check_function_size(file_info: FileInfo, config: RuleConfig) -> list[Violati
 
     for symbol in file_info.symbols:
         if symbol.kind in (SymbolKind.FUNCTION, SymbolKind.METHOD):
+            # LX-10: Check for escape hatch on individual functions
+            if has_allow_marker(symbol, file_info.source, "function_size"):
+                continue
             total_lines = symbol.end_line - symbol.line + 1
             # DX-22: Always use code_lines when available (excluding docstring)
             if symbol.code_lines is not None:
