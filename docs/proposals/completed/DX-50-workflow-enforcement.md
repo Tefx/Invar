@@ -2,11 +2,14 @@
 
 > **"协议存在但执行依赖自觉，需要更强的强制机制。"**
 
-**Status:** Draft
+**Status:** ✅ Implemented
 **Created:** 2025-12-26
+**Updated:** 2026-01-02
 **Effort:** Medium
 **Risk:** Low
 **Breaking:** No
+
+> **Implementation Note:** Workflow Routing is now enforced in CLAUDE.md with mandatory Skill tool invocation. See "Workflow Routing (MANDATORY)" section in CLAUDE.md.
 
 ---
 

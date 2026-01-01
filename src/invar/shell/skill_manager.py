@@ -5,6 +5,8 @@ LX-07: Extension Skills Architecture
 - List available extension skills from registry
 - Add/remove skills to/from project
 - Update installed skills from templates
+
+DX-71: Simplified to idempotent `add` command with region merge.
 """
 
 from __future__ import annotations
@@ -17,6 +19,8 @@ from typing import TYPE_CHECKING
 import yaml
 from returns.result import Failure, Result, Success
 
+from invar.core.template_parser import parse_invar_regions, reconstruct_file
+
 if TYPE_CHECKING:
     from rich.console import Console
 
@@ -24,6 +28,56 @@ if TYPE_CHECKING:
 SKILLS_REGISTRY = "extensions/_registry.yaml"
 SKILLS_DIR = "extensions"
 PROJECT_SKILLS_DIR = ".claude/skills"
+
+# Core skills managed by Invar (shared with uninstall.py)
+CORE_SKILLS = {"develop", "review", "investigate", "propose", "guard", "audit"}
+
+
+# @shell_orchestration: Validation helper used only by shell add_skill/remove_skill
+def _is_valid_skill_name(name: str) -> bool:
+    """Validate skill name to prevent path traversal attacks."""
+    # Block path traversal characters
+    if ".." in name or "/" in name or "\\" in name:
+        return False
+    # Must be non-empty and not start with dot or underscore
+    return bool(name) and not name.startswith(".") and not name.startswith("_")
+
+
+def _merge_md_file(src: Path, dst: Path) -> tuple[bool, str]:
+    """
+    Merge .md file preserving user's extensions region.
+
+    DX-71: Only updates <!--invar:skill--> region, preserves <!--invar:extensions-->.
+
+    Returns:
+        (merged, message) - True if merged, False if copied fresh
+    """
+    if not dst.exists():
+        shutil.copy2(src, dst)
+        return False, "Copied"
+
+    try:
+        new_content = src.read_text()
+        old_content = dst.read_text()
+
+        parsed_new = parse_invar_regions(new_content)
+        parsed_old = parse_invar_regions(old_content)
+
+        # If old file has regions and new file has skill region, merge
+        if parsed_old.has_regions and "skill" in parsed_new.regions:
+            updates = {"skill": parsed_new.regions["skill"].content}
+            merged = reconstruct_file(parsed_old, updates)
+            dst.write_text(merged)
+            return True, "Merged (extensions preserved)"
+
+        # No regions to merge - overwrite file
+        shutil.copy2(src, dst)
+        return False, "Updated"
+
+    except Exception:
+        # On parse error, preserve existing file - don't silently lose user data
+        # Return warning message so caller can inform user
+        return False, "Skipped (merge failed, existing file preserved)"
 
 
 @dataclass
@@ -110,10 +164,17 @@ def add_skill(
     skill_name: str, project_path: Path, console: Console
 ) -> Result[str, str]:
     """
-    Add an extension skill to the project.
+    Add or update an extension skill to the project.
+
+    DX-71: Idempotent - installs if missing, updates if exists.
+    For .md files, preserves <!--invar:extensions--> region.
 
     Copies skill files from templates to .claude/skills/<name>/
     """
+    # Validate skill name (defense in depth against path traversal)
+    if not _is_valid_skill_name(skill_name):
+        return Failure(f"Invalid skill name: {skill_name}")
+
     # Load registry to validate skill exists
     registry_result = load_registry()
     if isinstance(registry_result, Failure):
@@ -142,13 +203,12 @@ def add_skill(
     if not source_dir.exists():
         return Failure(f"Skill template not found: {source_dir}")
 
-    if dest_dir.exists():
-        return Failure(
-            f"Skill already installed: {skill_name}. "
-            "Use 'invar skill update' to update or 'invar skill remove' first."
-        )
+    # DX-71: Determine if this is install or update
+    is_update = dest_dir.exists()
+    action = "Updating" if is_update else "Adding"
+    console.print(f"{action} skill: {skill_name}")
 
-    # Copy skill files
+    # Copy/merge skill files
     try:
         dest_dir.mkdir(parents=True, exist_ok=True)
 
@@ -158,41 +218,95 @@ def add_skill(
 
             if src.is_file():
                 dst.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copy2(src, dst)
-                console.print(f"  [dim]Copied: {file_path}[/dim]")
+
+                # DX-71: Use merge for .md files when updating
+                if is_update and file_path.endswith(".md"):
+                    _merged, msg = _merge_md_file(src, dst)
+                    console.print(f"  [dim]{msg}: {file_path}[/dim]")
+                else:
+                    shutil.copy2(src, dst)
+                    action_msg = "Updated" if is_update else "Copied"
+                    console.print(f"  [dim]{action_msg}: {file_path}[/dim]")
+
             elif src.is_dir():
                 # Handle directory (e.g., patterns/)
+                # Use dirs_exist_ok=True to avoid race condition
                 if dst.exists():
                     shutil.rmtree(dst)
-                shutil.copytree(src, dst)
-                console.print(f"  [dim]Copied: {file_path}/[/dim]")
+                shutil.copytree(src, dst, dirs_exist_ok=True)
+                action_msg = "Updated" if is_update else "Copied"
+                console.print(f"  [dim]{action_msg}: {file_path}/[/dim]")
 
-        return Success(f"Skill '{skill_name}' installed successfully")
+        result_msg = "updated" if is_update else "installed"
+        return Success(f"Skill '{skill_name}' {result_msg} successfully")
 
     except Exception as e:
-        # Clean up on failure
-        if dest_dir.exists():
+        # Clean up on failure (only for fresh install)
+        if not is_update and dest_dir.exists():
             shutil.rmtree(dest_dir)
-        return Failure(f"Failed to install skill: {e}")
+        return Failure(f"Failed to {'update' if is_update else 'install'} skill: {e}")
 
 
+def _has_user_extensions(skill_dir: Path) -> bool:
+    """Check if SKILL.md has user content in extensions region."""
+    import re
+
+    skill_md = skill_dir / "SKILL.md"
+    if not skill_md.exists():
+        return False
+
+    try:
+        content = skill_md.read_text()
+        parsed = parse_invar_regions(content)
+
+        if "extensions" in parsed.regions:
+            ext_content = parsed.regions["extensions"].content
+
+            # Remove HTML comment blocks (the template content is inside comments)
+            # This preserves user content like markdown lists (- item)
+            cleaned = re.sub(r"<!--.*?-->", "", ext_content, flags=re.DOTALL)
+
+            # Check if any non-whitespace content remains
+            return bool(cleaned.strip())
+    except Exception:
+        pass
+
+    return False
+
+
+# @shell_complexity: Validates core skill protection + user extensions check
 def remove_skill(
-    skill_name: str, project_path: Path, console: Console
+    skill_name: str, project_path: Path, console: Console, force: bool = False
 ) -> Result[str, str]:
     """
     Remove an extension skill from the project.
+
+    DX-71: Warns if user has custom extensions content.
     """
+    # Validate skill name (defense in depth against path traversal)
+    if not _is_valid_skill_name(skill_name):
+        return Failure(f"Invalid skill name: {skill_name}")
+
     dest_dir = project_path / PROJECT_SKILLS_DIR / skill_name
 
     if not dest_dir.exists():
         return Failure(f"Skill not installed: {skill_name}")
 
     # Protect core skills
-    core_skills = {"develop", "review", "investigate", "propose", "guard", "audit"}
-    if skill_name in core_skills:
+    if skill_name in CORE_SKILLS:
         return Failure(
             f"Cannot remove core skill: {skill_name}. "
             "Only extension skills can be removed."
+        )
+
+    # DX-71: Check for user extensions
+    if not force and _has_user_extensions(dest_dir):
+        console.print(
+            "[yellow]Warning:[/yellow] This skill has custom extensions content "
+            "that will be lost."
+        )
+        return Failure(
+            "Use --force to confirm removal, or backup your extensions first."
         )
 
     try:
@@ -202,60 +316,16 @@ def remove_skill(
         return Failure(f"Failed to remove skill: {e}")
 
 
-# @shell_complexity: Validates and copies multiple files/directories
 def update_skill(
     skill_name: str, project_path: Path, console: Console
 ) -> Result[str, str]:
     """
     Update an installed extension skill from templates.
 
-    Replaces skill files with latest versions from Invar templates.
+    DX-71: Deprecated - use `add_skill` instead (idempotent).
+    This function now delegates to add_skill with a deprecation notice.
     """
-    dest_dir = project_path / PROJECT_SKILLS_DIR / skill_name
-
-    if not dest_dir.exists():
-        return Failure(
-            f"Skill not installed: {skill_name}. "
-            "Use 'invar skill add' to install first."
-        )
-
-    # Load registry
-    registry_result = load_registry()
-    if isinstance(registry_result, Failure):
-        return registry_result
-
-    registry = registry_result.unwrap()
-    extensions = registry.get("extensions", {})
-
-    if skill_name not in extensions:
-        return Failure(
-            f"Skill '{skill_name}' is not an extension skill. "
-            "Only extension skills can be updated this way."
-        )
-
-    skill_info = extensions[skill_name]
-    source_dir = get_templates_path() / SKILLS_DIR / skill_name
-
-    if not source_dir.exists():
-        return Failure(f"Skill template not found: {source_dir}")
-
-    try:
-        # Update each file
-        for file_path in skill_info.get("files", ["SKILL.md"]):
-            src = source_dir / file_path
-            dst = dest_dir / file_path
-
-            if src.is_file():
-                dst.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copy2(src, dst)
-                console.print(f"  [dim]Updated: {file_path}[/dim]")
-            elif src.is_dir():
-                if dst.exists():
-                    shutil.rmtree(dst)
-                shutil.copytree(src, dst)
-                console.print(f"  [dim]Updated: {file_path}/[/dim]")
-
-        return Success(f"Skill '{skill_name}' updated successfully")
-
-    except Exception as e:
-        return Failure(f"Failed to update skill: {e}")
+    console.print(
+        "[dim]Note: 'skill update' is deprecated, use 'skill add' instead[/dim]"
+    )
+    return add_skill(skill_name, project_path, console)

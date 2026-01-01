@@ -1,10 +1,12 @@
 # DX-70: /review --deep Isolation Option
 
-**Status:** Draft
+**Status:** Implemented (evolved into DX-72)
 **Priority:** Low
 **Category:** Developer eXperience
 **Created:** 2026-01-01
+**Updated:** 2026-01-02
 **Depends on:** LX-07 (Context Isolation Architecture)
+**See also:** [DX-72](completed/DX-72-mandatory-self-review-detection.md) (mandatory self-review detection)
 
 ## Summary
 

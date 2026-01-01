@@ -1,10 +1,10 @@
 # LX-09: Legacy Project Onboarding
 
-**Status:** Draft
+**Status:** Implemented
 **Priority:** Medium
 **Category:** Language/Agent eXtensions
 **Created:** 2026-01-01
-**Updated:** 2026-01-01
+**Updated:** 2026-01-02
 **Depends on:** LX-05 (language-agnostic templates), LX-07 (extension skills architecture)
 
 ## Executive Summary
@@ -164,22 +164,26 @@ A structured skill could reduce this to ~1-2 hours.
 ### Directory Structure
 
 ```
-.invar/
-├── templates/
-│   ├── onboard-assessment.md       # Assessment report template
-│   ├── onboard-roadmap.md          # Roadmap template
-│   └── onboard-patterns/
-│       ├── python.md               # Python patterns
-│       ├── typescript.md           # TypeScript patterns
-│       └── go.md                   # Go patterns
-│
-└── examples/
-    └── onboard/
-        ├── assessment-example.md   # Example assessment (paralex)
-        └── roadmap-example.md      # Example roadmap (paralex)
-
 src/invar/templates/skills/extensions/
-└── invar-onboard/SKILL.md
+└── invar-onboard/
+    ├── SKILL.md                    # Skill instructions
+    ├── patterns/                   # Language-specific patterns
+    │   ├── python.md
+    │   └── typescript.md
+    └── templates/                  # Report templates
+        ├── assessment.md.jinja
+        └── roadmap.md.jinja
+
+# After `invar skill add invar-onboard`:
+.claude/skills/
+└── invar-onboard/
+    ├── SKILL.md
+    ├── patterns/
+    │   ├── python.md
+    │   └── typescript.md
+    └── templates/
+        ├── assessment.md.jinja
+        └── roadmap.md.jinja
 ```
 
 ---
@@ -1170,35 +1174,37 @@ export default async function OrderPage({ params }: { params: { id: string } }) 
 
 ## Implementation Plan
 
-### Phase 1: Templates (1 day)
+### Phase 1: Templates ✅ COMPLETE
 
 ```
-.invar/templates/
-├── onboard-assessment.md
-├── onboard-roadmap.md
-└── onboard-patterns/
-    ├── python.md      # ~200 lines (complete)
-    └── typescript.md  # ~250 lines (complete)
+src/invar/templates/skills/extensions/invar-onboard/
+├── patterns/
+│   ├── python.md      # ~350 lines
+│   └── typescript.md  # ~450 lines
+└── templates/
+    ├── assessment.md.jinja
+    └── roadmap.md.jinja
 ```
 
-### Phase 2: Skill (1 day)
+### Phase 2: Skill ✅ COMPLETE
 
 ```
-src/invar/templates/skills/extensions/
-└── invar-onboard/SKILL.md
+src/invar/templates/skills/extensions/invar-onboard/SKILL.md
 ```
+
+Registered in `_registry.yaml`. Install via: `invar skill add invar-onboard`
 
 ### Phase 3: Validation (1-2 days)
 
-- Test on paralex (TypeScript)
-- Test on a Python project
-- Iterate based on findings
+- [ ] Test on paralex (TypeScript)
+- [ ] Test on a Python project
+- [ ] Iterate based on findings
 
-### Phase 4: Documentation (0.5 day)
+### Phase 4: Documentation ✅ COMPLETE
 
-- Update proposal with learnings
-- Add to extension skill registry
-- Update examples with real output
+- [x] Update proposal with learnings
+- [x] Add to extension skill registry
+- [x] Update directory structure documentation
 
 **Total: 4-5 days** (increased due to comprehensive adapters)
 

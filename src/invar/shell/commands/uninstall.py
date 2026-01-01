@@ -16,6 +16,7 @@ import typer
 from rich.console import Console
 
 from invar.shell.claude_hooks import is_invar_hook
+from invar.shell.skill_manager import CORE_SKILLS, _has_user_extensions
 
 console = Console()
 
@@ -199,13 +200,19 @@ def remove_hooks_from_settings(path: Path) -> tuple[bool, str]:
 
 
 # @shell_complexity: Multi-file type detection requires comprehensive branching
-def collect_removal_targets(path: Path) -> dict:
-    """Collect files and directories to remove/modify."""
+def collect_removal_targets(path: Path, remove_extensions: bool = False) -> dict:
+    """Collect files and directories to remove/modify.
+
+    Args:
+        path: Project root path
+        remove_extensions: If True, also remove extension skills
+    """
     targets = {
         "delete_dirs": [],
         "delete_files": [],
         "modify_files": [],
         "skip": [],
+        "extensions_preserved": [],  # Extension skills that will be kept
     }
 
     # Directories to delete entirely
@@ -222,21 +229,45 @@ def collect_removal_targets(path: Path) -> dict:
         if file_path.exists():
             targets["delete_files"].append((file_name, description))
 
-    # Skills with _invar marker
+    # Skills - distinguish core vs extension
     skills_dir = path / ".claude" / "skills"
     if skills_dir.exists():
         for skill_dir in skills_dir.iterdir():
             if skill_dir.is_dir():
+                skill_name = skill_dir.name
                 skill_file = skill_dir / "SKILL.md"
-                if skill_file.exists():
-                    if has_invar_marker(skill_file):
+
+                if not skill_file.exists():
+                    continue
+
+                # Core skills are always removed
+                if skill_name in CORE_SKILLS:
+                    targets["delete_dirs"].append(
+                        (f".claude/skills/{skill_name}/", "core skill")
+                    )
+                elif has_invar_marker(skill_file):
+                    # Extension skill with Invar marker
+                    if remove_extensions:
+                        has_custom = _has_user_extensions(skill_dir)
+                        desc = "extension skill"
+                        if has_custom:
+                            desc += " (has custom content)"
                         targets["delete_dirs"].append(
-                            (f".claude/skills/{skill_dir.name}/", "skill, has _invar marker")
+                            (f".claude/skills/{skill_name}/", desc)
                         )
                     else:
-                        targets["skip"].append(
-                            (f".claude/skills/{skill_dir.name}/", "no _invar marker")
+                        # Preserve extension skill
+                        has_custom = _has_user_extensions(skill_dir)
+                        desc = "extension skill"
+                        if has_custom:
+                            desc += ", has custom content"
+                        targets["extensions_preserved"].append(
+                            (f".claude/skills/{skill_name}/", desc)
                         )
+                else:
+                    targets["skip"].append(
+                        (f".claude/skills/{skill_name}/", "no _invar marker")
+                    )
 
     # Commands with _invar marker
     commands_dir = path / ".claude" / "commands"
@@ -358,6 +389,14 @@ def show_preview(targets: dict) -> None:
         for item, desc in targets["modify_files"]:
             console.print(f"  {item:40} ({desc})")
 
+    if targets.get("extensions_preserved"):
+        console.print("\n[cyan]Will PRESERVE (extension skills):[/cyan]")
+        for item, desc in targets["extensions_preserved"]:
+            console.print(f"  {item:40} ({desc})")
+        console.print(
+            "\n[dim]Use --remove-extensions to also remove extension skills[/dim]"
+        )
+
     if targets["skip"]:
         console.print("\n[dim]Will SKIP:[/dim]")
         for item, desc in targets["skip"]:
@@ -446,16 +485,25 @@ def uninstall(
         "-f",
         help="Skip confirmation prompt",
     ),
+    remove_extensions: bool = typer.Option(
+        False,
+        "--remove-extensions",
+        help="Also remove extension skills (security, acceptance, etc.)",
+    ),
 ) -> None:
     """Remove Invar from a project.
 
     Safely removes Invar-generated files and configurations while
     preserving user content. Uses marker-based detection.
 
+    By default, extension skills are preserved. Use --remove-extensions
+    to also remove them.
+
     Examples:
-        invar uninstall --dry-run    # Preview changes
-        invar uninstall              # Remove with confirmation
-        invar uninstall --force      # Remove without confirmation
+        invar uninstall --dry-run           # Preview changes
+        invar uninstall                     # Remove with confirmation
+        invar uninstall --force             # Remove without confirmation
+        invar uninstall --remove-extensions # Also remove extension skills
     """
     # Check if this is an Invar project
     invar_toml = path / "invar.toml"
@@ -468,7 +516,7 @@ def uninstall(
         raise typer.Exit(1)
 
     # Collect targets
-    targets = collect_removal_targets(path)
+    targets = collect_removal_targets(path, remove_extensions=remove_extensions)
 
     # Check if there's anything to do
     if not any([targets["delete_dirs"], targets["delete_files"], targets["modify_files"]]):

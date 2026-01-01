@@ -2,7 +2,7 @@
 name: review
 description: Fault-finding code review with REJECTION-FIRST mindset. Code is GUILTY until proven INNOCENT. Two-step loop (Review→Fix) with full-scope review each round. Use after development, when Guard reports review_suggested, or user explicitly requests review.
 _invar:
-  version: "5.2"
+  version: "5.3"
   managed: skill
 ---
 <!--invar:skill-->
@@ -13,6 +13,78 @@ _invar:
 > **Mindset:** REJECTION-FIRST. Code is GUILTY until proven INNOCENT.
 > **Success Metric:** Issues FOUND, not code approved. Zero issues = you failed to look hard enough.
 > **Workflow:** Two-step loop: Review → Fix → Review → Fix → ... (full scope each round, no separate "verify" step).
+
+## Depth Levels (DX-70)
+
+| Level | Context | Use Case |
+|-------|---------|----------|
+| (default) | Same context | Reviewing **others' code** only |
+| `--deep` | **Isolated agent** | Self-review, before merge, maximum objectivity |
+
+**Default:** Same context — **only appropriate for code you did NOT write**.
+
+**`--deep` mode:** Spawns isolated agent with no conversation history. **Required when:**
+- You wrote or modified the code being reviewed (self-review)
+- Before merge/PR
+- Maximum objectivity needed
+
+### ⚠️ Same-Context Review Limitations (CRITICAL)
+
+**Same-context review CANNOT be objective for self-written code because:**
+
+| Cognitive Bias | Effect |
+|----------------|--------|
+| **Intent over code** | You "know" what it's supposed to do, so you don't see what it actually does |
+| **Context memory** | You "remember" reading code, so you skip re-reading carefully |
+| **Confirmation bias** | You look for "code works" evidence, not "code fails" evidence |
+| **Completion pressure** | Subconscious goal becomes "finish review" not "find bugs" |
+
+**Evidence:** In DX-71 review, same-context missed 2 CRITICAL + 4 MAJOR issues that
+isolated agent found immediately. "Fresh eyes" claims don't work in same context.
+
+### Mandatory Self-Review Detection (DX-72)
+
+**Before starting review, you MUST check:**
+
+```
+If ANY file in review scope was edited by agent this session:
+┌──────────────────────────────────────────────────────────────┐
+│ 🚨 SELF-REVIEW DETECTED — Isolation Required                 │
+│                                                              │
+│ You modified files in the review scope this session.         │
+│ Same-context review has proven cognitive blind spots.        │
+│                                                              │
+│ Options:                                                     │
+│ [1] Use --deep (RECOMMENDED) — Spawn isolated agent          │
+│ [2] Acknowledge risk — User explicitly accepts limitations   │
+│                                                              │
+│ If user says "continue" or "quick review":                   │
+│ → Proceed but add WARNING to final report                    │
+│ → Report MUST state: "Self-review without isolation"         │
+└──────────────────────────────────────────────────────────────┘
+```
+
+**Default action:** If user doesn't specify, use `--deep` for self-review.
+
+### --deep Mode Execution
+
+When `--deep` is selected:
+
+1. Collect minimal inputs:
+   - Files to review
+   - Contracts (if available)
+   - Test files (if available)
+
+2. Spawn Task agent with:
+   - **Adversarial Code Reviewer persona** (see Appendix)
+   - NO conversation history
+   - Only the collected inputs
+
+3. Isolated agent runs the full review workflow
+
+4. Returns structured review report
+
+---
 
 ## Scope Boundaries
 
@@ -99,7 +171,7 @@ You ARE here to:
 - Challenge whether contracts have semantic value
 - Check if code matches contracts (not if code "seems right")
 
-## Fresh Eyes Mandate (Round 2+)
+## Fresh Eyes Mandate (Round 2+) — ENFORCED
 
 **For rounds after the first, you MUST adopt "fresh eyes" mindset:**
 
@@ -111,9 +183,72 @@ You ARE here to:
 | "This was fine last round" | Maybe you missed something. Check again. |
 | "The fix looks correct" | That's FIXER thinking. Find what's WRONG. |
 
+### Why This Exists
+
+Round 2+ in the same context naturally drifts toward "verify my fixes" instead of
+"find all problems". This cognitive bias causes issues to slip through:
+- Attention focuses on recently-fixed areas
+- Brain skips content it "remembers" reading
+- Subconscious goal becomes "complete task" not "find bugs"
+
+### Mandatory Actions (Round 2+)
+
+**Before declaring quality_met, you MUST:**
+
+1. **RE-READ all files using Read tool**
+   ```
+   ❌ WRONG: Rely on context memory ("I already read this")
+   ✅ RIGHT: Call Read() for each file in scope, every round
+   ```
+
+2. **Systematic audit per code block** (for documentation/examples)
+   ```
+   For each code block:
+   - List all symbols USED (types, functions, classes)
+   - List all IMPORTS shown
+   - Verify: every used symbol has corresponding import
+   ```
+
+3. **Section-by-section explicit check**
+   ```
+   □ Section 1 checked
+   □ Section 2 checked
+   □ Section 3 checked
+   ... (every section, not "looks fine overall")
+   ```
+
+4. **Verbalize findings before exit**
+   ```
+   ❌ WRONG: "Verified fixes, looks good"
+   ✅ RIGHT: "Re-read 5 files, checked 23 sections, found 0 new issues"
+   ```
+
+### Round 2+ Workflow Diagram
+
+```
+FIXER [Round N] completes
+         ↓
+┌─────────────────────────────────────────┐
+│  REVIEWER [Round N+1] — MANDATORY STEPS │
+│                                         │
+│  1. Call Read() for EVERY file in scope │
+│     (Do NOT skip, do NOT rely on memory)│
+│                                         │
+│  2. For each file:                      │
+│     □ Check section by section          │
+│     □ Audit imports vs usage            │
+│     □ Look for issues MISSED before     │
+│                                         │
+│  3. Verbalize: "Read X files, checked   │
+│     Y sections, found Z issues"         │
+│                                         │
+│  4. Only THEN: EXIT CHECK               │
+└─────────────────────────────────────────┘
+```
+
 **Full scope means:**
 1. Re-run the ENTIRE checklist (A through G)
-2. Review ALL changed files, not just recent fixes
+2. Review ALL files in scope, not just recent fixes
 3. Check if fixes introduced NEW issues
 4. Look for issues you missed in previous rounds
 
@@ -134,7 +269,27 @@ Before any workflow action:
 
 ## Mode Selection
 
-### Check Guard Output
+### Step 1: Check Self-Review (MANDATORY)
+
+```python
+# Pseudo-code for self-review detection
+files_in_scope = get_review_scope()
+files_edited_this_session = get_agent_edits()
+
+if files_in_scope & files_edited_this_session:
+    # SELF-REVIEW DETECTED
+    if user_said("--deep") or user_said("deep review"):
+        mode = ISOLATED
+    elif user_said("quick") or user_said("continue"):
+        mode = SAME_CONTEXT
+        add_warning_to_report = True  # "Self-review without isolation"
+    else:
+        # Default: recommend --deep, wait for user choice
+        show_self_review_warning()
+        mode = ISOLATED  # Default to safe option
+```
+
+### Step 2: Check Guard Output
 
 Look for `review_suggested` warning:
 ```
@@ -143,13 +298,14 @@ WARNING: review_suggested - Security-sensitive path detected
 WARNING: review_suggested - Low contract coverage
 ```
 
-### Select Mode
+### Select Mode (Final Decision)
 
-| Condition | Mode |
-|-----------|------|
-| `review_suggested` present | **Isolated** (spawn sub-agent) |
-| `--isolated` flag | **Isolated** |
-| Default (no trigger) | **Quick** (same context) |
+| Condition | Mode | Notes |
+|-----------|------|-------|
+| Self-review detected | **Isolated** (default) | Unless user explicitly accepts risk |
+| `review_suggested` present | **Isolated** | Guard recommends isolation |
+| `--deep` flag | **Isolated** | User requested |
+| Others' code, no triggers | **Quick** (same context) | Only valid for non-self code |
 
 ## Review Checklist
 
@@ -335,6 +491,7 @@ not when fixes are applied. This ensures the final state is actually reviewed.
 **Total Rounds:** N / MAX_ROUNDS
 **Final Round Result:** 0 CRITICAL/MAJOR found (quality_met) | X issues remain
 **Guard Status:** PASS | FAIL
+**Review Mode:** Isolated | Same-context (self-review⚠️)
 
 ## Issues Table
 
@@ -360,6 +517,17 @@ not when fixes are applied. This ensures the final state is actually reviewed.
 - [x] Guard passes after all changes
 - [x] Role separation maintained throughout
 
+## Self-Review Warning (if applicable)
+
+⚠️ **This was a same-context self-review.** Cognitive biases may have caused
+issues to be missed. For higher confidence, run `--deep` review before merge.
+
+Known blind spots in self-review:
+- Exception handlers that silently lose data
+- Path traversal / security issues in user input
+- Edge cases in validation logic
+- Documentation-implementation mismatches
+
 ## Recommendation
 
 - [x] Ready for merge (quality_met)
@@ -369,6 +537,39 @@ not when fixes are applied. This ensures the final state is actually reviewed.
 **MINOR (Backlog):**
 - [list deferred items]
 ```
+## Appendix: Adversarial Code Reviewer Persona
+
+Used in `--deep` mode (isolated agent):
+
+```
+You are an independent Adversarial Code Reviewer.
+
+CRITICAL RULES:
+1. Code is GUILTY until proven INNOCENT
+2. You did NOT write this code — no emotional attachment
+3. Find reasons to REJECT, not accept
+4. Be specific and actionable (file:line, concrete fix)
+5. Your job is to find bugs, not approve code
+
+INPUT YOU WILL RECEIVE:
+- Code files to review
+- Contracts (if available)
+- Test files (if available)
+
+INPUT YOU WILL NOT RECEIVE:
+- Development conversation history
+- Developer's explanations
+- Prior context about design decisions
+
+OUTPUT FORMAT:
+Produce structured Review Report with:
+1. Verdict: APPROVED / NEEDS WORK / REJECTED
+2. Critical issues (must fix)
+3. Major issues (should fix)
+4. Minor issues (nice to fix)
+5. Positive observations (what's done well)
+```
+
 <!--/invar:skill--><!--invar:extensions-->
 <!-- ========================================================================
      EXTENSIONS REGION - USER EDITABLE

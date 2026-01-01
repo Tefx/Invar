@@ -1,6 +1,6 @@
 # LX-07: Extension Skills Architecture
 
-**Status:** Phase 1-2 Complete (T0 Skills Implemented)
+**Status:** Phase 1-2 Complete (T0 Skills Implemented, CLI Implemented)
 **Priority:** Medium
 **Category:** Language/Agent eXtensions
 **Created:** 2026-01-01
@@ -141,6 +141,8 @@ When `--deep` mode (default for `/acceptance`, `/security`):
 | `/test-strategy` | NO | Benefits from understanding codebase |
 
 #### Smart Suggestion (Self-Review Detection)
+
+> **Note:** For `/review`, this evolved into **Mandatory Self-Review Detection** (DX-72) based on empirical evidence that optional prompting was insufficient. See [DX-72](completed/DX-72-mandatory-self-review-detection.md).
 
 For skills with optional isolation (e.g., `/review`), detect when agent is reviewing its own code:
 
@@ -1211,15 +1213,16 @@ findings:
 
 ## Installation
 
-### CLI Commands
+### CLI Commands (DX-71)
 
 ```bash
-invar skill list              # List available extensions
-invar skill add acceptance    # Install single
-invar skill add --all         # Install all
-invar skill update acceptance # Update (overwrites)
-invar skill remove acceptance # Remove
+invar skill list              # List available/installed extensions
+invar skill add acceptance    # Install OR update (idempotent, preserves extensions region)
+invar skill remove acceptance # Remove (prompts if no custom extensions)
+invar skill remove acceptance --force  # Remove without prompt (even with custom extensions)
 ```
+
+**Note:** `invar skill update` is deprecated — use `invar skill add` instead (same behavior, idempotent).
 
 ### Manual Copy
 
@@ -1231,13 +1234,13 @@ cp -r /path/to/extensions/acceptance .claude/skills/
 
 ## Implementation Plan
 
-### Phase 1: Architecture (3 days)
+### Phase 1: Architecture (3 days) ✅ COMPLETE
 
-| Task | Deliverable |
-|------|-------------|
-| Create `extensions/` directory | Directory structure |
-| Implement `_registry.yaml` | Extension metadata |
-| Add `invar skill` CLI | list, add, remove, update |
+| Task | Deliverable | Status |
+|------|-------------|--------|
+| Create `extensions/` directory | Directory structure | ✅ |
+| Implement `_registry.yaml` | Extension metadata | ✅ |
+| Add `invar skill` CLI | list, add, remove, update | ✅ |
 
 ### Phase 2: T0 Extensions (6 days)
 
@@ -1272,10 +1275,10 @@ cp -r /path/to/extensions/acceptance .claude/skills/
 
 ## Success Criteria
 
-### Phase 1
-- [ ] `invar skill list` shows 5 extensions
-- [ ] `invar skill add acceptance` works
-- [ ] Manual copy installation works
+### Phase 1 ✅
+- [x] `invar skill list` shows 6 extensions (including invar-onboard)
+- [x] `invar skill add acceptance` works
+- [x] Manual copy installation works
 
 ### Phase 2
 - [ ] `/acceptance` produces coverage matrix

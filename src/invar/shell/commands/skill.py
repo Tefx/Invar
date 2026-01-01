@@ -20,6 +20,8 @@ from invar.shell.skill_manager import (
     update_skill,
 )
 
+PROJECT_SKILLS_DIR = ".claude/skills"
+
 console = Console()
 
 app = typer.Typer(help="Manage extension skills")
@@ -104,10 +106,10 @@ def add_cmd(
     name: str = typer.Argument(..., help="Skill name to add"),
     path: Path = typer.Option(Path(), "--path", "-p", help="Project root"),
 ) -> None:
-    """Add an extension skill to the project."""
+    """Add or update an extension skill (idempotent)."""
     path = path.resolve()
 
-    console.print(f"[bold]Adding skill:[/bold] {name}")
+    # DX-71: add_skill now prints its own status (Adding/Updating)
     result = add_skill(name, path, console)
 
     if isinstance(result, Failure):
@@ -124,19 +126,36 @@ def add_cmd(
 def remove_cmd(
     name: str = typer.Argument(..., help="Skill name to remove"),
     path: Path = typer.Option(Path(), "--path", "-p", help="Project root"),
-    force: bool = typer.Option(False, "--force", "-f", help="Skip confirmation"),
+    force: bool = typer.Option(False, "--force", "-f", help="Force removal"),
 ) -> None:
     """Remove an extension skill from the project."""
-    path = path.resolve()
+    from invar.shell.skill_manager import _has_user_extensions
 
+    path = path.resolve()
+    skill_dir = path / PROJECT_SKILLS_DIR / name
+
+    # DX-71: Check extensions FIRST to avoid confusing confirmation→failure flow
     if not force:
+        # If skill has user extensions, require --force (no confirmation dialog)
+        if skill_dir.exists() and _has_user_extensions(skill_dir):
+            console.print(
+                f"[yellow]Warning:[/yellow] Skill '{name}' has custom extensions "
+                "content that will be lost."
+            )
+            console.print(
+                "[dim]Use --force to confirm removal, or backup extensions first.[/dim]"
+            )
+            raise typer.Exit(1)
+
+        # No extensions - show simple confirmation dialog
         confirm = typer.confirm(f"Remove skill '{name}'?")
         if not confirm:
             console.print("[yellow]Cancelled[/yellow]")
             raise typer.Exit(0)
 
     console.print(f"[bold]Removing skill:[/bold] {name}")
-    result = remove_skill(name, path, console)
+    # force=True here because we've already done CLI-level checks
+    result = remove_skill(name, path, console, force=True)
 
     if isinstance(result, Failure):
         _handle_result(result)
@@ -150,10 +169,10 @@ def update_cmd(
     name: str = typer.Argument(..., help="Skill name to update"),
     path: Path = typer.Option(Path(), "--path", "-p", help="Project root"),
 ) -> None:
-    """Update an extension skill from Invar templates."""
+    """Update an extension skill (deprecated, use 'add' instead)."""
     path = path.resolve()
 
-    console.print(f"[bold]Updating skill:[/bold] {name}")
+    # DX-71: update_skill now shows deprecation notice and delegates to add_skill
     result = update_skill(name, path, console)
 
     if isinstance(result, Failure):

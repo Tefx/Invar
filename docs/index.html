@@ -342,6 +342,44 @@
             font-style: italic;
         }
 
+        /* Language tabs */
+        .lang-tabs {
+            display: flex;
+            gap: 4px;
+            margin-left: auto;
+        }
+
+        .lang-tab {
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 4px 12px;
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .lang-tab:hover {
+            border-color: var(--accent);
+            color: var(--text);
+        }
+
+        .lang-tab.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+        }
+
+        .terminal-body {
+            display: none;
+        }
+
+        .terminal-body.active {
+            display: block;
+        }
+
         /* Get Started */
         .quickstart {
             background: var(--bg-secondary);
@@ -633,8 +671,12 @@
                     <div class="terminal-dot red"></div>
                     <div class="terminal-dot yellow"></div>
                     <div class="terminal-dot green"></div>
+                    <div class="lang-tabs">
+                        <button class="lang-tab active" data-lang="python">Python</button>
+                        <button class="lang-tab" data-lang="typescript">TypeScript</button>
+                    </div>
                 </div>
-                <div class="terminal-body mono">
+                <div class="terminal-body mono active" data-lang="python">
                     <div class="terminal-line"><span class="success">✓ Check-In:</span> <span class="output">my-project | main | clean</span></div>
                     <div class="terminal-line"></div>
                     <div class="terminal-line"><span class="phase">━━ /develop → SPECIFY (2/4) ━━</span></div>
@@ -655,6 +697,31 @@
                     <div class="terminal-line"><span class="success">Guard passed.</span> <span class="output">(1 file, 0 errors)</span></div>
                     <div class="terminal-line"></div>
                     <div class="terminal-line"><span class="success">✓ Final:</span> <span class="output">guard PASS | 0 errors, 0 warnings</span></div>
+                </div>
+                <div class="terminal-body mono" data-lang="typescript">
+                    <div class="terminal-line"><span class="success">✓ Check-In:</span> <span class="output">my-project | main | clean</span></div>
+                    <div class="terminal-line"></div>
+                    <div class="terminal-line"><span class="phase">━━ /develop → SPECIFY (2/4) ━━</span></div>
+                    <div class="terminal-line"></div>
+                    <div class="terminal-line"><span class="comment">// Agent defines schema before implementation</span></div>
+                    <div class="terminal-line"><span class="output">const InterestInput = z.object({</span></div>
+                    <div class="terminal-line"><span class="output">  principal: z.number().positive(),</span></div>
+                    <div class="terminal-line"><span class="output">  rate: z.number().min(0),</span></div>
+                    <div class="terminal-line"><span class="output">  years: z.number().int().positive()</span></div>
+                    <div class="terminal-line"><span class="output">});</span></div>
+                    <div class="terminal-line"><span class="output">function compoundInterest(input: InterestInput): number { ... }</span></div>
+                    <div class="terminal-line"></div>
+                    <div class="terminal-line"><span class="phase">━━ /develop → VALIDATE (4/4) ━━</span></div>
+                    <div class="terminal-line"></div>
+                    <div class="terminal-line"><span class="prompt">$</span> <span class="command">npm run test</span></div>
+                    <div class="terminal-line"><span class="output">WARN: missing test case (compoundInterest)</span></div>
+                    <div class="terminal-line"></div>
+                    <div class="terminal-line"><span class="comment">// Agent adds tests, re-runs validation</span></div>
+                    <div class="terminal-line"></div>
+                    <div class="terminal-line"><span class="prompt">$</span> <span class="command">npm run test</span></div>
+                    <div class="terminal-line"><span class="success">All tests passed.</span> <span class="output">(3 tests)</span></div>
+                    <div class="terminal-line"></div>
+                    <div class="terminal-line"><span class="success">✓ Final:</span> <span class="output">tests PASS | 0 errors, 0 warnings</span></div>
                 </div>
             </div>
         </div>
@@ -776,5 +843,24 @@
             </p>
         </div>
     </footer>
+
+    <script>
+        // Language tab switching
+        document.querySelectorAll('.lang-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const lang = tab.dataset.lang;
+                const terminal = tab.closest('.terminal');
+
+                // Update tab states
+                terminal.querySelectorAll('.lang-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+
+                // Update body visibility
+                terminal.querySelectorAll('.terminal-body').forEach(body => {
+                    body.classList.toggle('active', body.dataset.lang === lang);
+                });
+            });
+        });
+    </script>
 </body>
 </html>

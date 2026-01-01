@@ -4,6 +4,21 @@
 version: "1.0"
 
 extensions:
+  invar-onboard:
+    name: "invar-onboard"
+    description: "Legacy project migration to Invar framework"
+    tier: T1
+    triggers:
+      - "onboard"
+      - "migrate to invar"
+      - "can this project use invar"
+      - "invar assessment"
+    isolation: false
+    files:
+      - "SKILL.md"
+      - "patterns"
+      - "templates"
+
   acceptance:
     name: "acceptance"
     description: "Requirements acceptance review (PRD alignment)"
