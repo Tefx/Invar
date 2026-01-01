@@ -8,7 +8,7 @@ This directory contains design proposals for Invar development.
 - `LX-XX-name.md` — Language eXtension (multi-language evolution)
 - Completed/archived proposals in `completed/` subdirectory
 
-## Active Proposals (13)
+## Active Proposals (14)
 
 ### DX Series (Developer Experience)
 
@@ -29,6 +29,7 @@ This directory contains design proposals for Invar development.
 
 | ID | Name | Status | Description |
 |----|------|--------|-------------|
+| LX-10 | typescript-size-limits | Draft | Adjust guard size limits for TypeScript (1.3x multiplier) |
 | LX-09 | legacy-onboarding | Draft | Onboard existing projects to Invar (`/invar-onboard` skill) |
 | LX-08 | extension-skills-future | Deferred | Future extension skills (split from LX-07) |
 | LX-07 | extension-skills | ✅ T0 Complete | T0 skills implemented, T1 pending discussion |
