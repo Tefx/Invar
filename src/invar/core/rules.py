@@ -1,3 +1,4 @@
+# @invar:allow file_size: LX-10 added doctests, consider extraction later
 """Rule engine for Guard. Rules check FileInfo and produce Violations. No I/O."""
 
 from __future__ import annotations
@@ -14,9 +15,22 @@ from invar.core.contracts import (
     check_semantic_tautology,
     check_skip_without_reason,
 )
-from invar.core.entry_points import get_symbol_lines, has_allow_marker, is_entry_point
+from invar.core.entry_points import (
+    extract_escape_hatches,
+    get_symbol_lines,
+    has_allow_marker,
+    is_entry_point,
+)
 from invar.core.extraction import format_extraction_hint
-from invar.core.models import FileInfo, RuleConfig, Severity, SymbolKind, Violation
+from invar.core.models import (
+    FileInfo,
+    RuleConfig,
+    Severity,
+    SymbolKind,
+    Violation,
+    get_layer,
+    get_limits,
+)
 from invar.core.must_use import check_must_use
 from invar.core.postcondition_scope import check_postcondition_scope
 from invar.core.purity import check_impure_calls, check_internal_imports
@@ -63,11 +77,29 @@ def _get_func_hint(file_info: FileInfo) -> str:
     return f" Functions: {', '.join(f'{n}({sz}L)' for n, sz in funcs)}" if funcs else ""
 
 
+@post(lambda result: isinstance(result, bool))
+def _has_file_escape(file_info: FileInfo, rule: str) -> bool:
+    """Check if file has escape hatch for given rule.
+
+    Examples:
+        >>> info = FileInfo(path="test.py", lines=10, source="# @invar:allow file_size: reason")
+        >>> _has_file_escape(info, "file_size")
+        True
+        >>> _has_file_escape(info, "other_rule")
+        False
+    """
+    if not file_info.source:
+        return False
+    escapes = extract_escape_hatches(file_info.source)
+    return any(r == rule for r, _, _ in escapes)
+
+
 @post(lambda result: all(v.rule in ("file_size", "file_size_warning") for v in result))
 def check_file_size(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
     """
     Check if file exceeds maximum line count or warning threshold.
 
+    LX-10: Uses layer-based limits (Core/Shell/Tests/Default).
     P18: Shows function groups in size warnings to help agents decide what to extract.
     P25: Shows extractable groups with dependencies for warnings.
 
@@ -75,30 +107,43 @@ def check_file_size(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
         >>> from invar.core.models import FileInfo, RuleConfig
         >>> check_file_size(FileInfo(path="ok.py", lines=100), RuleConfig())
         []
-        >>> len(check_file_size(FileInfo(path="big.py", lines=600), RuleConfig()))
+        >>> # Default layer: 600 lines max, error at 650
+        >>> len(check_file_size(FileInfo(path="big.py", lines=650), RuleConfig()))
         1
-        >>> # P8: Warning at 80% threshold (400 lines when max is 500)
-        >>> vs = check_file_size(FileInfo(path="growing.py", lines=420), RuleConfig())
-        >>> len(vs) == 1 and vs[0].rule == "file_size_warning"
-        True
+        >>> # Shell layer: 700 lines max, no error at 650
+        >>> vs = check_file_size(FileInfo(path="shell/cli.py", lines=550, is_shell=True), RuleConfig())
+        >>> any(v.rule == "file_size" for v in vs)
+        False
+        >>> # Core layer: 500 lines max (strict)
+        >>> len(check_file_size(FileInfo(path="core/calc.py", lines=550, is_core=True), RuleConfig()))
+        1
     """
+    # Check for escape hatch
+    if _has_file_escape(file_info, "file_size"):
+        return []
+
     violations: list[Violation] = []
     func_hint = _get_func_hint(file_info)
     extraction_hint = format_extraction_hint(file_info)
 
-    if file_info.lines > config.max_file_lines:
+    # LX-10: Get layer-based limits
+    layer = get_layer(file_info)
+    limits = get_limits(layer)
+    max_lines = limits.max_file_lines
+
+    if file_info.lines > max_lines:
         violations.append(Violation(
             rule="file_size", severity=Severity.ERROR, file=file_info.path, line=None,
-            message=f"File has {file_info.lines} lines (max: {config.max_file_lines})",
+            message=f"File has {file_info.lines} lines (max: {max_lines} for {layer.value})",
             suggestion=_build_size_suggestion("Split into smaller modules.", extraction_hint, func_hint),
         ))
     elif config.size_warning_threshold > 0:
-        threshold = int(config.max_file_lines * config.size_warning_threshold)
+        threshold = int(max_lines * config.size_warning_threshold)
         if file_info.lines >= threshold:
-            pct = int(file_info.lines / config.max_file_lines * 100)
+            pct = int(file_info.lines / max_lines * 100)
             violations.append(Violation(
                 rule="file_size_warning", severity=Severity.WARNING, file=file_info.path, line=None,
-                message=f"File has {file_info.lines} lines ({pct}% of {config.max_file_lines} limit)",
+                message=f"File has {file_info.lines} lines ({pct}% of {max_lines} limit)",
                 suggestion=_build_size_suggestion("Consider splitting before reaching limit.", extraction_hint, func_hint),
             ))
     return violations
@@ -109,18 +154,32 @@ def check_function_size(file_info: FileInfo, config: RuleConfig) -> list[Violati
     """
     Check if any function exceeds maximum line count.
 
+    LX-10: Uses layer-based limits (Core/Shell/Tests/Default).
     DX-22: Always uses code_lines (excluding docstring) and excludes doctest lines.
-    These behaviors were previously optional but are now the default.
 
     Examples:
         >>> from invar.core.models import FileInfo, Symbol, SymbolKind
         >>> sym = Symbol(name="foo", kind=SymbolKind.FUNCTION, line=1, end_line=10)
         >>> info = FileInfo(path="test.py", lines=20, symbols=[sym])
-        >>> cfg = RuleConfig(max_function_lines=50)
-        >>> check_function_size(info, cfg)
+        >>> check_function_size(info, RuleConfig())
         []
+        >>> # Shell layer: 100 lines max (more lenient)
+        >>> sym2 = Symbol(name="cli", kind=SymbolKind.FUNCTION, line=1, end_line=80)
+        >>> info2 = FileInfo(path="shell/cli.py", lines=100, symbols=[sym2], is_shell=True)
+        >>> check_function_size(info2, RuleConfig())
+        []
+        >>> # Core layer: 50 lines max (strict)
+        >>> sym3 = Symbol(name="calc", kind=SymbolKind.FUNCTION, line=1, end_line=60)
+        >>> info3 = FileInfo(path="core/calc.py", lines=100, symbols=[sym3], is_core=True)
+        >>> len(check_function_size(info3, RuleConfig()))
+        1
     """
     violations: list[Violation] = []
+
+    # LX-10: Get layer-based limits
+    layer = get_layer(file_info)
+    limits = get_limits(layer)
+    max_func_lines = limits.max_function_lines
 
     for symbol in file_info.symbols:
         if symbol.kind in (SymbolKind.FUNCTION, SymbolKind.METHOD):
@@ -137,14 +196,14 @@ def check_function_size(file_info: FileInfo, config: RuleConfig) -> list[Violati
                 func_lines -= symbol.doctest_lines
                 line_type = f"{line_type} (excl. doctest)"
 
-            if func_lines > config.max_function_lines:
+            if func_lines > max_func_lines:
                 violations.append(
                     Violation(
                         rule="function_size",
                         severity=Severity.WARNING,
                         file=file_info.path,
                         line=symbol.line,
-                        message=f"Function '{symbol.name}' has {func_lines} {line_type} (max: {config.max_function_lines})",
+                        message=f"Function '{symbol.name}' has {func_lines} {line_type} (max: {max_func_lines} for {layer.value})",
                         suggestion="Extract helper functions",
                     )
                 )
