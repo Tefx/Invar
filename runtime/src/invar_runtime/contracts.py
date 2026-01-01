@@ -107,45 +107,84 @@ class Contract:
         return f"Contract({self.description!r})"
 
 
-def pre(*contracts: Contract) -> Callable[[Callable], Callable]:
+def pre(*args: Contract | Callable) -> Callable[[Callable], Callable]:
     """
-    Decorator accepting Contract objects for preconditions.
+    Decorator for preconditions. Accepts lambda or Contract objects.
 
     Works with deal.pre under the hood.
 
     Examples:
-        >>> from invar_runtime.contracts import pre, NonEmpty
+        >>> from invar_runtime.contracts import pre, NonEmpty, Positive
+
+        Lambda usage (like deal.pre):
+        >>> @pre(lambda x: x > 0)
+        ... def double(x): return x * 2
+        >>> double(5)
+        10
+
+        Contract usage:
         >>> @pre(NonEmpty)
         ... def first(xs): return xs[0]
         >>> first([1, 2, 3])
         1
-    """
 
-    def combined(*args: Any, **kwargs: Any) -> bool:
-        if not args and not kwargs:
+        Combined Contract:
+        >>> @pre(Positive)
+        ... def sqrt(x): return x ** 0.5
+        >>> sqrt(4)
+        2.0
+    """
+    # Single callable (not Contract) → delegate to deal.pre directly
+    if len(args) == 1 and callable(args[0]) and not isinstance(args[0], Contract):
+        return deal.pre(args[0])
+
+    # Contract objects → combine with .check()
+    contracts = args
+
+    def combined(*a: Any, **kw: Any) -> bool:
+        if not a and not kw:
             raise ValueError("Precondition requires at least one argument")
-        value = args[0] if args else next(iter(kwargs.values()))
-        return all(c.check(value) for c in contracts)
+        value = a[0] if a else next(iter(kw.values()))
+        return all(c.check(value) for c in contracts)  # type: ignore[union-attr]
 
     return deal.pre(combined)
 
 
-def post(*contracts: Contract) -> Callable[[Callable], Callable]:
+def post(*args: Contract | Callable) -> Callable[[Callable], Callable]:
     """
-    Decorator accepting Contract objects for postconditions.
+    Decorator for postconditions. Accepts lambda or Contract objects.
 
     Works with deal.post under the hood.
 
     Examples:
-        >>> from invar_runtime.contracts import post, NonEmpty
+        >>> from invar_runtime.contracts import post, NonEmpty, NonNegative
+
+        Lambda usage (like deal.post):
+        >>> @post(lambda result: result >= 0)
+        ... def abs_val(x): return abs(x)
+        >>> abs_val(-5)
+        5
+
+        Contract usage:
         >>> @post(NonEmpty)
         ... def get_list(): return [1]
         >>> get_list()
         [1]
+
+        >>> @post(NonNegative)
+        ... def square(x): return x * x
+        >>> square(-3)
+        9
     """
+    # Single callable (not Contract) → delegate to deal.post directly
+    if len(args) == 1 and callable(args[0]) and not isinstance(args[0], Contract):
+        return deal.post(args[0])
+
+    # Contract objects → combine with .check()
+    contracts = args
 
     def combined(result: Any) -> bool:
-        return all(c.check(result) for c in contracts)
+        return all(c.check(result) for c in contracts)  # type: ignore[union-attr]
 
     return deal.post(combined)
 

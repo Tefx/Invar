@@ -52,7 +52,7 @@ Then implement (BUILD phase is internal, not shown in TodoList):
 # [BUILD] Now writing the code...
 
 import jwt
-from deal import pre, post
+from invar_runtime import pre, post
 
 @pre(lambda token: isinstance(token, str) and len(token) > 0)
 @post(lambda result: isinstance(result, dict) and 'sub' in result)
@@ -104,7 +104,7 @@ Edge cases:
 ### BUILD (Internal - Not Shown in TodoList)
 
 ```python
-from deal import pre, post
+from invar_runtime import pre, post
 
 @pre(lambda price, rate: price > 0 and 0 <= rate <= 1)
 @post(lambda result: result >= 0)

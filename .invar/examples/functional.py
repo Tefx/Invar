@@ -23,7 +23,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Generic, Literal, NewType, TypeVar, assert_never
 
-from deal import post, pre
+from invar_runtime import post, pre
 from returns.result import Failure, Result, Success
 
 T = TypeVar("T")
