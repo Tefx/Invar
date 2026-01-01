@@ -80,9 +80,27 @@ When `--deep` is selected:
    - NO conversation history
    - Only the collected inputs
 
-3. Isolated agent runs the full review workflow
+3. Isolated agent returns structured review report
 
-4. Returns structured review report
+4. Main agent fixes issues (if any)
+
+5. **CRITICAL: Spawn NEW isolated agent for Round 2+ Review**
+
+### --deep Mode Loop (MANDATORY)
+
+```
+while not quality_met:
+    report = spawn_NEW_isolated_reviewer(files)  # 每轮新 agent
+    if report.has_critical_or_major:
+        main_agent.fix(report.issues)            # 主 agent 修复
+    else:
+        quality_met = True
+```
+
+**Why new agent each round?**
+- Main agent has context contamination from fixing
+- "Fresh eyes" cannot be achieved in same context
+- Round 2 in same context drifts to "verify my fixes" not "find problems"
 
 ---
 
