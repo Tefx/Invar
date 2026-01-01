@@ -247,6 +247,10 @@ def add_skill(
 
     except Exception as e:
         # Clean up on failure (only for fresh install)
+        # M3 note: Updates that fail mid-way may leave directory in partial state.
+        # This is acceptable because: (1) user extensions are preserved via merge,
+        # (2) re-running add will complete the update. Full atomicity would require
+        # temp directory + rename, adding complexity for rare failure cases.
         if not is_update and dest_dir.exists():
             shutil.rmtree(dest_dir)
         return Failure(f"Failed to {'update' if is_update else 'install'} skill: {e}")
@@ -260,8 +264,14 @@ def has_user_extensions(skill_dir: Path) -> bool:
     if not skill_md.exists():
         return False
 
+    # M1 fix: Narrow exception scope for better error handling
     try:
         content = skill_md.read_text()
+    except (OSError, UnicodeDecodeError):
+        # Cannot read file - assume extensions exist (safe default)
+        return True
+
+    try:
         parsed = parse_invar_regions(content)
 
         if "extensions" in parsed.regions:
@@ -274,7 +284,7 @@ def has_user_extensions(skill_dir: Path) -> bool:
             # Check if any non-whitespace content remains
             return bool(cleaned.strip())
     except Exception:
-        # DX-71 review: Assume user has extensions on parse failure (safer default)
+        # Parse error - assume extensions exist (safe default)
         return True
 
     return False
@@ -316,8 +326,9 @@ def remove_skill(
             "[yellow]Warning:[/yellow] This skill has custom extensions content "
             "that will be lost."
         )
+        # M2 fix: API-appropriate message (not CLI --force)
         return Failure(
-            "Use --force to confirm removal, or backup your extensions first."
+            "Skill has user extensions. Pass force=True to confirm removal."
         )
 
     try:

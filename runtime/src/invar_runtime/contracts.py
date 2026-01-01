@@ -133,19 +133,33 @@ def pre(*args: Contract | Callable) -> Callable[[Callable], Callable]:
         ... def sqrt(x): return x ** 0.5
         >>> sqrt(4)
         2.0
+
+        Multiple contracts:
+        >>> @pre(NonEmpty, Positive)  # doctest: +SKIP
+        ... def bounded(x): return x
     """
+    # M4 fix: Reject empty args
+    if not args:
+        raise TypeError("pre() requires at least one Contract or callable")
+
     # Single callable (not Contract) → delegate to deal.pre directly
     if len(args) == 1 and callable(args[0]) and not isinstance(args[0], Contract):
         return deal.pre(args[0])
 
-    # Contract objects → combine with .check()
-    contracts = args
-
+    # C1 fix: Handle mixed Contract and callable
     def combined(*a: Any, **kw: Any) -> bool:
         if not a and not kw:
             raise ValueError("Precondition requires at least one argument")
         value = a[0] if a else next(iter(kw.values()))
-        return all(c.check(value) for c in contracts)  # type: ignore[union-attr]
+        results = []
+        for c in args:
+            if isinstance(c, Contract):
+                results.append(c.check(value))
+            elif callable(c):
+                results.append(c(value))
+            else:
+                raise TypeError(f"Expected Contract or callable, got {type(c)}")
+        return all(results)
 
     return deal.pre(combined)
 
@@ -175,16 +189,30 @@ def post(*args: Contract | Callable) -> Callable[[Callable], Callable]:
         ... def square(x): return x * x
         >>> square(-3)
         9
+
+        Multiple contracts:
+        >>> @post(NonEmpty, NonNegative)  # doctest: +SKIP
+        ... def get_count(): return [1, 2]
     """
+    # M4 fix: Reject empty args
+    if not args:
+        raise TypeError("post() requires at least one Contract or callable")
+
     # Single callable (not Contract) → delegate to deal.post directly
     if len(args) == 1 and callable(args[0]) and not isinstance(args[0], Contract):
         return deal.post(args[0])
 
-    # Contract objects → combine with .check()
-    contracts = args
-
+    # C1 fix: Handle mixed Contract and callable
     def combined(result: Any) -> bool:
-        return all(c.check(result) for c in contracts)  # type: ignore[union-attr]
+        results = []
+        for c in args:
+            if isinstance(c, Contract):
+                results.append(c.check(result))
+            elif callable(c):
+                results.append(c(result))
+            else:
+                raise TypeError(f"Expected Contract or callable, got {type(c)}")
+        return all(results)
 
     return deal.post(combined)
 
