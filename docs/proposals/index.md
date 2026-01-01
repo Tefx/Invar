@@ -8,7 +8,7 @@ This directory contains design proposals for Invar development.
 - `LX-XX-name.md` — Language eXtension (multi-language evolution)
 - Completed/archived proposals in `completed/` subdirectory
 
-## Active Proposals (12)
+## Active Proposals (13)
 
 ### DX Series (Developer Experience)
 
@@ -29,6 +29,7 @@ This directory contains design proposals for Invar development.
 
 | ID | Name | Status | Description |
 |----|------|--------|-------------|
+| LX-09 | legacy-onboarding | Draft | Onboard existing projects to Invar (`/invar-onboard` skill) |
 | LX-08 | extension-skills-future | Deferred | Future extension skills (split from LX-07) |
 | LX-07 | extension-skills | ✅ T0 Complete | T0 skills implemented, T1 pending discussion |
 | LX-06 | typescript-tooling | ✅ Phase 1-3 Complete | TypeScript verification (Phase 4 optional) |
@@ -151,6 +152,7 @@ Deferred: DX-38 Tier 3-4, DX-25, DX-29
 
 | Status | Proposal | Description | Notes |
 |--------|----------|-------------|-------|
+| **Draft** | LX-09 | Legacy project onboarding | `/invar-onboard` skill (Assess → Discuss → Plan) |
 | **Draft** | DX-68 | Agent behavior optimization | P3-P5, low priority |
 | **Partial** | DX-62 | Proactive reference reading | Layer 1 ✅, Layers 2-4 pending |
 | **Draft** | DX-61 | Functional pattern guidance | Teach agents functional patterns |
@@ -162,7 +164,7 @@ Deferred: DX-38 Tier 3-4, DX-25, DX-29
 | **Defer** | DX-25 | Functional patterns | Non-essential major change |
 | **Defer** | DX-29 | Pure content detection | DX-22 sufficient |
 
-**All core proposals complete (56/65).** 3 draft + 2 partial + 1 pending + 4 deferred items remain.
+**All core proposals complete (56/66).** 4 draft + 2 partial + 1 pending + 4 deferred items remain.
 
 ## Execution History
 
@@ -181,6 +183,17 @@ Deferred: DX-38 Tier 3-4, DX-25, DX-29
 | 10 | DX-57, DX-58 | ✅ Complete |
 
 ## Recent Changes (2026-01-01)
+
+### LX-09 Proposal Created
+
+- **LX-09** — Legacy Project Onboarding **Draft**
+  - Single skill: `/invar-onboard` with three phases (Assess → Discuss → Plan)
+  - Deep analysis only (no quick scan mode)
+  - Human checkpoint after assessment before planning
+  - Language adapters: Python, TypeScript, Go pattern libraries
+  - Key insight: Claude as parser (no language-specific code needed)
+  - Completely independent from LX-07 `/refactor` (different concepts)
+  - Estimated implementation: 3-4 days
 
 ### LX-05/06/07 Implementation Complete
 
