@@ -3,7 +3,7 @@
 > **Status:** Draft
 > **Created:** 2026-01-02
 > **Updated:** 2026-01-02
-> **Complexity:** Medium (config model + rules logic + templates)
+> **Complexity:** Low (reuse existing classification + config extension)
 
 ---
 
@@ -45,8 +45,8 @@ TypeScript code requires ~30% more lines than Python for equivalent functionalit
 
 Implement **language-aware layered size limits**:
 
-1. **Layer detection**: Determine if file is in core/shell/tests based on path
-2. **Per-layer limits**: Different limits for each layer
+1. **Layer detection**: Reuse existing `FileInfo.is_core`/`is_shell` (from `classify_file()`)
+2. **Per-layer limits**: Different limits for Core/Shell/Tests/Default
 3. **Per-language multiplier**: TypeScript gets 1.3x Python limits
 
 ### Proposed Limits
@@ -73,7 +73,11 @@ Implement **language-aware layered size limits**:
 
 ## Design
 
-### Layer Detection
+### Layer Detection (Reuse Existing)
+
+Guard already classifies files via `FileInfo.is_core` and `FileInfo.is_shell` (set by `classify_file()` in `shell/config.py`).
+
+**No new detection needed for Core/Shell.** Only tests detection requires path check:
 
 ```python
 class CodeLayer(Enum):
@@ -82,29 +86,32 @@ class CodeLayer(Enum):
     TESTS = "tests"
     DEFAULT = "default"
 
-def detect_layer(file_path: str) -> CodeLayer:
+def get_layer(file_info: FileInfo) -> CodeLayer:
     """
-    Detect code layer from file path patterns.
+    Determine layer from existing FileInfo classification.
 
-    >>> detect_layer("src/myapp/core/logic.py")
+    >>> file_info = FileInfo(path="src/core/logic.py", is_core=True)
+    >>> get_layer(file_info)
     <CodeLayer.CORE: 'core'>
-    >>> detect_layer("src/myapp/shell/cli.py")
-    <CodeLayer.SHELL: 'shell'>
-    >>> detect_layer("tests/test_foo.py")
-    <CodeLayer.TESTS: 'tests'>
-    >>> detect_layer("src/myapp/utils.py")
-    <CodeLayer.DEFAULT: 'default'>
     """
-    path_lower = file_path.replace("\\", "/").lower()
-
-    if "/core/" in path_lower:
-        return CodeLayer.CORE
-    if "/shell/" in path_lower:
-        return CodeLayer.SHELL
+    # Tests: path-based (no is_tests field exists)
+    path_lower = file_info.path.replace("\\", "/").lower()
     if "/tests/" in path_lower or "/test/" in path_lower or "test_" in path_lower:
         return CodeLayer.TESTS
+
+    # Core/Shell: use existing classification
+    if file_info.is_core:
+        return CodeLayer.CORE
+    if file_info.is_shell:
+        return CodeLayer.SHELL
+
     return CodeLayer.DEFAULT
 ```
+
+**Key insight:** `classify_file()` already handles Core/Shell detection via:
+- Path patterns (configurable in `pyproject.toml`)
+- Content analysis (imports like `from returns.result`)
+- Default classification rules
 
 ### Configuration Model
 
@@ -176,7 +183,7 @@ max_function_lines = 200
 
 ```python
 def check_file_size(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
-    layer = detect_layer(file_info.path)
+    layer = get_layer(file_info)  # Uses existing is_core/is_shell
     limits = config.get_limits(layer)
 
     if file_info.lines > limits.max_file_lines:
@@ -193,41 +200,35 @@ def check_file_size(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
 
 ## Implementation Plan
 
-### Phase 1: Core Infrastructure (2h)
+### Phase 1: Models & Config (1h)
 
 | Task | File | Changes |
 |------|------|---------|
 | Add `CodeLayer` enum | core/models.py | New enum |
-| Add `LayerLimits` model | core/models.py | New model |
-| Add `detect_layer()` | core/utils.py | New function |
-| Update `RuleConfig` | core/models.py | Add layer_limits field |
-| Update `parse_guard_config()` | core/utils.py | Parse layers config |
+| Add `LayerLimits` model | core/models.py | New dataclass |
+| Add `get_layer()` helper | core/models.py | Uses existing `is_core`/`is_shell` |
+| Update `RuleConfig` | core/models.py | Add `layer_limits` field |
+| Update `parse_guard_config()` | shell/config.py | Parse `layers` section |
 
-### Phase 2: Rules Integration (1.5h)
+### Phase 2: Rules Integration (1h)
 
 | Task | File | Changes |
 |------|------|---------|
 | Update `check_file_size()` | core/rules.py | Use layer limits |
 | Update `check_function_size()` | core/rules.py | Use layer limits |
-| Update violation messages | core/rules.py | Show layer in message |
+| Update violation messages | core/rules.py | Include layer in message |
 
-### Phase 3: Templates (1h)
+### Phase 3: Templates & Docs (1h)
 
 | Task | File | Changes |
 |------|------|---------|
 | Update Python template | templates/protocol/python/ | Default layer limits |
 | Update TypeScript template | templates/protocol/typescript/ | 1.3x layer limits |
-| Update invar.config.json schema | templates/ | Add layers section |
+| Add unit tests | tests/core/ | Test `get_layer()`, config parsing |
 
-### Phase 4: Documentation & Tests (1.5h)
+**Total: ~3 hours**
 
-| Task | File | Changes |
-|------|------|---------|
-| Update INVAR.md | INVAR.md | Document layered limits |
-| Update rules reference | docs/reference/rules/ | Document layer behavior |
-| Add unit tests | tests/core/ | Test layer detection, limits |
-
-**Total: ~6 hours (1 day)**
+**Why simpler?** Reuses existing `is_core`/`is_shell` from `classify_file()` instead of duplicate path detection.
 
 ---
 
@@ -249,7 +250,15 @@ def check_file_size(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
 
 ## Alternatives Considered
 
-### A. Pattern-Based Overrides
+### A. Path-Based Layer Detection (Rejected)
+
+Detect layer from path patterns (`/core/`, `/shell/`, `/tests/`).
+
+- **Con:** Duplicates `classify_file()` logic
+- **Con:** Path patterns already configurable in `pyproject.toml`
+- **Decision:** Use existing `is_core`/`is_shell` fields instead
+
+### B. Pattern-Based Overrides
 
 ```toml
 [tool.invar.guard.overrides]
@@ -260,21 +269,21 @@ def check_file_size(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
 - **Pro:** More flexible
 - **Con:** More complex config, harder to understand defaults
 
-### B. Uniform Increase
+### C. Uniform Increase
 
 Just raise limits to 600/80 for all code.
 
 - **Pro:** Simple
 - **Con:** Doesn't encourage Core purity
 
-### C. Per-Language Only (Original LX-10)
+### D. Per-Language Only
 
 Python 500/50, TypeScript 650/65.
 
 - **Pro:** Simpler
 - **Con:** Doesn't solve Shell layer issue
 
-**Decision:** Layer-based (Option A) provides right balance of simplicity and correctness.
+**Decision:** Reuse existing classification + per-layer limits.
 
 ---
 
