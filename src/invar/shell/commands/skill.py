@@ -129,15 +129,20 @@ def remove_cmd(
     force: bool = typer.Option(False, "--force", "-f", help="Force removal"),
 ) -> None:
     """Remove an extension skill from the project."""
-    from invar.shell.skill_manager import _has_user_extensions
+    from invar.shell.skill_manager import has_user_extensions
 
     path = path.resolve()
     skill_dir = path / PROJECT_SKILLS_DIR / name
 
+    # DX-71 review: Check existence before any user interaction
+    if not skill_dir.exists():
+        console.print(f"[red]Error:[/red] Skill not installed: {name}")
+        raise typer.Exit(1)
+
     # DX-71: Check extensions FIRST to avoid confusing confirmation→failure flow
     if not force:
         # If skill has user extensions, require --force (no confirmation dialog)
-        if skill_dir.exists() and _has_user_extensions(skill_dir):
+        if has_user_extensions(skill_dir):
             console.print(
                 f"[yellow]Warning:[/yellow] Skill '{name}' has custom extensions "
                 "content that will be lost."

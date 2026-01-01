@@ -16,7 +16,7 @@ import typer
 from rich.console import Console
 
 from invar.shell.claude_hooks import is_invar_hook
-from invar.shell.skill_manager import CORE_SKILLS, _has_user_extensions
+from invar.shell.skill_manager import CORE_SKILLS, has_user_extensions
 
 console = Console()
 
@@ -248,7 +248,7 @@ def collect_removal_targets(path: Path, remove_extensions: bool = False) -> dict
                 elif has_invar_marker(skill_file):
                     # Extension skill with Invar marker
                     if remove_extensions:
-                        has_custom = _has_user_extensions(skill_dir)
+                        has_custom = has_user_extensions(skill_dir)
                         desc = "extension skill"
                         if has_custom:
                             desc += " (has custom content)"
@@ -257,7 +257,7 @@ def collect_removal_targets(path: Path, remove_extensions: bool = False) -> dict
                         )
                     else:
                         # Preserve extension skill
-                        has_custom = _has_user_extensions(skill_dir)
+                        has_custom = has_user_extensions(skill_dir)
                         desc = "extension skill"
                         if has_custom:
                             desc += ", has custom content"

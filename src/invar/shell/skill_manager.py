@@ -173,7 +173,10 @@ def add_skill(
     """
     # Validate skill name (defense in depth against path traversal)
     if not _is_valid_skill_name(skill_name):
-        return Failure(f"Invalid skill name: {skill_name}")
+        return Failure(
+            f"Invalid skill name: {skill_name}. "
+            "Names cannot contain '.', '/', '\\' or start with '_'"
+        )
 
     # Load registry to validate skill exists
     registry_result = load_registry()
@@ -222,7 +225,11 @@ def add_skill(
                 # DX-71: Use merge for .md files when updating
                 if is_update and file_path.endswith(".md"):
                     _merged, msg = _merge_md_file(src, dst)
-                    console.print(f"  [dim]{msg}: {file_path}[/dim]")
+                    # DX-71 review: Show warning for merge failures
+                    if msg.startswith("Skipped"):
+                        console.print(f"  [yellow]Warning: {msg}: {file_path}[/yellow]")
+                    else:
+                        console.print(f"  [dim]{msg}: {file_path}[/dim]")
                 else:
                     shutil.copy2(src, dst)
                     action_msg = "Updated" if is_update else "Copied"
@@ -230,9 +237,7 @@ def add_skill(
 
             elif src.is_dir():
                 # Handle directory (e.g., patterns/)
-                # Use dirs_exist_ok=True to avoid race condition
-                if dst.exists():
-                    shutil.rmtree(dst)
+                # DX-71 review: Use dirs_exist_ok=True for atomic update (no rmtree race)
                 shutil.copytree(src, dst, dirs_exist_ok=True)
                 action_msg = "Updated" if is_update else "Copied"
                 console.print(f"  [dim]{action_msg}: {file_path}/[/dim]")
@@ -247,7 +252,7 @@ def add_skill(
         return Failure(f"Failed to {'update' if is_update else 'install'} skill: {e}")
 
 
-def _has_user_extensions(skill_dir: Path) -> bool:
+def has_user_extensions(skill_dir: Path) -> bool:
     """Check if SKILL.md has user content in extensions region."""
     import re
 
@@ -269,7 +274,8 @@ def _has_user_extensions(skill_dir: Path) -> bool:
             # Check if any non-whitespace content remains
             return bool(cleaned.strip())
     except Exception:
-        pass
+        # DX-71 review: Assume user has extensions on parse failure (safer default)
+        return True
 
     return False
 
@@ -285,7 +291,10 @@ def remove_skill(
     """
     # Validate skill name (defense in depth against path traversal)
     if not _is_valid_skill_name(skill_name):
-        return Failure(f"Invalid skill name: {skill_name}")
+        return Failure(
+            f"Invalid skill name: {skill_name}. "
+            "Names cannot contain '.', '/', '\\' or start with '_'"
+        )
 
     dest_dir = project_path / PROJECT_SKILLS_DIR / skill_name
 
@@ -300,7 +309,9 @@ def remove_skill(
         )
 
     # DX-71: Check for user extensions
-    if not force and _has_user_extensions(dest_dir):
+    # Note: CLI also checks this for UX ordering (warn before confirm dialog).
+    # This check remains for programmatic API callers.
+    if not force and has_user_extensions(dest_dir):
         console.print(
             "[yellow]Warning:[/yellow] This skill has custom extensions content "
             "that will be lost."
