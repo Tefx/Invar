@@ -111,6 +111,78 @@ def read_section(
     return Success(extracted)
 
 
+# @shell_complexity: Multiple I/O error types + batch section iteration
+def read_sections_batch(
+    path: Path,
+    section_paths: list[str],
+    include_children: bool = True
+) -> Result[list[dict[str, str]], str]:
+    """
+    Read multiple sections from a document in one operation.
+
+    Returns a list of dicts, each containing 'path' and 'content' keys.
+    If any section fails to read, returns Failure with error message.
+
+    Args:
+        path: Path to markdown file
+        section_paths: List of section paths (slug, fuzzy, index, or line anchor)
+        include_children: If True, include child sections in output
+
+    Returns:
+        Result containing list of section dicts or error message
+
+    Examples:
+        >>> from pathlib import Path
+        >>> import tempfile
+        >>> with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False) as f:
+        ...     _ = f.write("# A\\n\\nContent A\\n\\n# B\\n\\nContent B\\n\\n# C\\n\\nContent C")
+        ...     p = Path(f.name)
+        >>> result = read_sections_batch(p, ["a", "b"])
+        >>> isinstance(result, Success)
+        True
+        >>> sections = result.unwrap()
+        >>> len(sections)
+        2
+        >>> sections[0]['path']
+        'a'
+        >>> "Content A" in sections[0]['content']
+        True
+        >>> p.unlink()
+    """
+    # Read file once
+    try:
+        content = path.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return Failure(f"File not found: {path}")
+    except IsADirectoryError:
+        return Failure(f"Path is a directory, not a file: {path}")
+    except PermissionError:
+        return Failure(f"Permission denied: {path}")
+    except UnicodeDecodeError:
+        return Failure(f"Failed to decode file as UTF-8: {path}")
+    except OSError as e:
+        return Failure(f"OS error reading {path}: {e}")
+
+    # Parse TOC once
+    toc = parse_toc(content)
+
+    # Extract all requested sections
+    results = []
+    for section_path in section_paths:
+        section = find_section(toc.sections, section_path)
+
+        if section is None:
+            return Failure(f"Section not found: {section_path}")
+
+        extracted = extract_content(content, section, include_children=include_children)
+        results.append({
+            "path": section_path,
+            "content": extracted
+        })
+
+    return Success(results)
+
+
 # @shell_complexity: Pattern matching + content filtering orchestration
 def find_sections(
     path: Path,

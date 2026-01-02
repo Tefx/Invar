@@ -101,7 +101,7 @@ def _slugify(title: str) -> str:
     return slug
 
 
-@skip_property_test("crosshair_incompatible: Unicode character validation conflicts with symbolic execution")
+@skip_property_test("crosshair_incompatible: Unicode character validation conflicts with symbolic execution")  # type: ignore[untyped-decorator]
 @pre(lambda text: len(text) <= 1000)
 @post(lambda result: result == '' or all(c.isalnum() or c == '_' or ord(c) > 127 for c in result))
 def _normalize_for_fuzzy(text: str) -> str:
@@ -377,7 +377,7 @@ def _find_by_index(sections: list[Section], path: str) -> Section | None:
     return None
 
 
-@skip_property_test("crosshair_incompatible: Calls _normalize_for_fuzzy with Unicode validation")
+@skip_property_test("crosshair_incompatible: Calls _normalize_for_fuzzy with Unicode validation")  # type: ignore[untyped-decorator]
 @pre(lambda sections, path: len(path) > 0)
 @post(lambda result: result is None or isinstance(result, Section))
 def _find_by_slug_or_fuzzy(sections: list[Section], path: str) -> Section | None:
@@ -432,7 +432,7 @@ def _find_by_slug_or_fuzzy(sections: list[Section], path: str) -> Section | None
     return find_fuzzy(sections)
 
 
-@skip_property_test("crosshair_incompatible: Calls _find_by_slug_or_fuzzy with Unicode validation")
+@skip_property_test("crosshair_incompatible: Calls _find_by_slug_or_fuzzy with Unicode validation")  # type: ignore[untyped-decorator]
 @pre(lambda sections, path: len(path) > 0)
 @post(lambda result: result is None or isinstance(result, Section))
 def find_section(sections: list[Section], path: str) -> Section | None:
@@ -488,7 +488,7 @@ def find_section(sections: list[Section], path: str) -> Section | None:
         return _find_by_index(sections, path)
 
     # Slug path or fuzzy match
-    return _find_by_slug_or_fuzzy(sections, path)
+    return _find_by_slug_or_fuzzy(sections, path)  # type: ignore[no-any-return]
 
 
 @pre(lambda source, section, include_children=True: section.line_start >= 1)

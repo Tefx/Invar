@@ -193,6 +193,37 @@ async def _run_doc_read(args: dict[str, Any]) -> list[TextContent]:
         return [TextContent(type="text", text=f"Error: {result.failure()}")]
 
 
+# @shell_complexity: Multiple arg validation branches + error handling
+# @invar:allow shell_result: MCP handler for doc_read_many tool
+async def _run_doc_read_many(args: dict[str, Any]) -> list[TextContent]:
+    """Run invar_doc_read_many - read multiple sections."""
+    from invar.shell.doc_tools import read_sections_batch
+
+    file_path = args.get("file", "")
+    sections = args.get("sections", [])
+    include_children = args.get("include_children", True)
+
+    if not file_path:
+        return [TextContent(type="text", text="Error: file is required")]
+    if not sections:
+        return [TextContent(type="text", text="Error: sections list is required")]
+    if not isinstance(sections, list):
+        return [TextContent(type="text", text="Error: sections must be a list")]
+
+    is_valid, error = _validate_path(file_path)
+    if not is_valid:
+        return [TextContent(type="text", text=f"Error: {error}")]
+
+    path = Path(file_path)
+    result = read_sections_batch(path, sections, include_children)
+
+    if isinstance(result, Success):
+        sections_data = result.unwrap()
+        return [TextContent(type="text", text=json.dumps(sections_data, indent=2))]
+    else:
+        return [TextContent(type="text", text=f"Error: {result.failure()}")]
+
+
 # @shell_orchestration: MCP handler - calls shell layer directly
 # @shell_complexity: MCP input validation + result handling
 # @invar:allow shell_result: MCP handler for doc_find tool

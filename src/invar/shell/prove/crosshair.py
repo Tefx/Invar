@@ -164,6 +164,9 @@ def _verify_single_file(
                 "compile() arg 1 must be",  # ast.parse limitation
                 "ValueError: wrong parameter order",  # CrossHair signature bug
                 "ValueError: cannot determine truth",  # Symbolic execution limit
+                "RecursionError:",  # Infinite recursion in repr code
+                "maximum recursion depth exceeded",  # Stack overflow
+                "format_boundargs",  # CrossHair repr formatting bug
             ]
             is_execution_error = any(err in output for err in execution_errors)
 

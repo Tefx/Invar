@@ -21,6 +21,7 @@ from invar.mcp.handlers import (
     _run_doc_find,
     _run_doc_insert,
     _run_doc_read,
+    _run_doc_read_many,
     _run_doc_replace,
     _run_doc_toc,
     _run_guard,
@@ -57,6 +58,7 @@ Then read `.invar/examples/` and `.invar/context.md` for project context.
 | Find entry points | `Grep` for "def " | `invar_map` |
 | View document structure | `Read` entire .md file | `invar_doc_toc` |
 | Read document section | `Read` with manual line counting | `invar_doc_read` |
+| Read multiple sections | Multiple `invar_doc_read` calls | `invar_doc_read_many` |
 | Find sections by pattern | `Grep` in markdown files | `invar_doc_find` |
 
 ### Document Tools (DX-76)
@@ -65,6 +67,7 @@ Then read `.invar/examples/` and `.invar/context.md` for project context.
 |--------------|-----|
 | View document structure | `invar_doc_toc(file="path.md")` |
 | Read specific section | `invar_doc_read(file="path.md", section="slug")` |
+| Read multiple sections | `invar_doc_read_many(file="path.md", sections=["slug1", "slug2"])` |
 | Search sections by title | `invar_doc_find(file="path.md", pattern="*auth*")` |
 | Replace section content | `invar_doc_replace(file="path.md", section="slug", content="...")` |
 | Insert new section | `invar_doc_insert(file="path.md", anchor="slug", content="...")` |
@@ -250,6 +253,40 @@ def _get_doc_read_tool() -> Tool:
 
 
 # @shell_orchestration: MCP tool factory - creates Tool objects
+# @invar:allow shell_result: MCP tool factory for doc_read_many command
+def _get_doc_read_many_tool() -> Tool:
+    """Define the invar_doc_read_many tool."""
+    return Tool(
+        name="invar_doc_read_many",
+        title="Read Multiple Markdown Sections",
+        description=(
+            "Read multiple sections from a markdown document in one call. "
+            "Reduces tool calls by batching section reads. "
+            "Use this INSTEAD of multiple invar_doc_read() calls."
+        ),
+        inputSchema={
+            "type": "object",
+            "properties": {
+                "file": {"type": "string", "description": "Path to markdown file"},
+                "sections": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": (
+                        "List of section paths (slug, fuzzy, index, or line anchor)"
+                    ),
+                },
+                "include_children": {
+                    "type": "boolean",
+                    "description": "Include child sections in output",
+                    "default": True,
+                },
+            },
+            "required": ["file", "sections"],
+        },
+    )
+
+
+# @shell_orchestration: MCP tool factory - creates Tool objects
 # @invar:allow shell_result: MCP tool factory for doc_find command
 def _get_doc_find_tool() -> Tool:
     """Define the invar_doc_find tool."""
@@ -383,6 +420,7 @@ def create_server() -> Server:
             # DX-76: Document query tools
             _get_doc_toc_tool(),
             _get_doc_read_tool(),
+            _get_doc_read_many_tool(),  # DX-77: Batch section reading
             _get_doc_find_tool(),
             # DX-76 Phase A-2: Document editing tools
             _get_doc_replace_tool(),
@@ -399,6 +437,7 @@ def create_server() -> Server:
             # DX-76: Document query handlers
             "invar_doc_toc": _run_doc_toc,
             "invar_doc_read": _run_doc_read,
+            "invar_doc_read_many": _run_doc_read_many,  # DX-77: Batch reading
             "invar_doc_find": _run_doc_find,
             # DX-76 Phase A-2: Document editing handlers
             "invar_doc_replace": _run_doc_replace,
