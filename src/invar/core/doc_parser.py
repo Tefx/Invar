@@ -453,14 +453,15 @@ def find_section(sections: list[Section], path: str) -> Section | None:
     return _find_by_slug_or_fuzzy(sections, path)
 
 
-@pre(lambda source, section: isinstance(source, str) and isinstance(section, Section))
-@pre(lambda source, section: section.line_start >= 1)
-@pre(lambda source, section: section.line_end >= section.line_start)
+@pre(lambda source, section, include_children=True: isinstance(source, str) and isinstance(section, Section))
+@pre(lambda source, section, include_children=True: section.line_start >= 1)
+@pre(lambda source, section, include_children=True: section.line_end >= section.line_start)
 @post(lambda result: isinstance(result, str))
-def extract_content(source: str, section: Section) -> str:
+def extract_content(source: str, section: Section, include_children: bool = True) -> str:
     """Extract section content from source.
 
     Returns the content from line_start to line_end (1-indexed, inclusive).
+    When include_children=False, stops at first child heading.
 
     Examples:
         >>> source = "# Title\\n\\nParagraph one.\\n\\nParagraph two."
@@ -470,9 +471,23 @@ def extract_content(source: str, section: Section) -> str:
         True
         >>> "Paragraph one" in content
         True
+
+        >>> # Without children
+        >>> parent = Section("Parent", "parent", 1, 1, 5, 100, "parent", [
+        ...     Section("Child", "child", 2, 3, 5, 50, "parent/child", [])
+        ... ])
+        >>> src = "# Parent\\nIntro\\n## Child\\nBody"
+        >>> extract_content(src, parent, include_children=False)
+        '# Parent\\nIntro'
     """
     lines = source.split("\n")
-    # Convert to 0-indexed, inclusive range
     start_idx = section.line_start - 1
-    end_idx = section.line_end  # line_end is 1-indexed inclusive, so no -1 needed for slice
+
+    if include_children or not section.children:
+        end_idx = section.line_end
+    else:
+        # Stop before first child
+        first_child_line = section.children[0].line_start
+        end_idx = first_child_line - 1
+
     return "\n".join(lines[start_idx:end_idx])

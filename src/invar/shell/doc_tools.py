@@ -57,12 +57,15 @@ def read_toc(path: Path) -> Result[DocumentToc, str]:
 
 
 # @shell_complexity: Multiple I/O error types require separate handling
-def read_section(path: Path, section_path: str) -> Result[str, str]:
+def read_section(
+    path: Path, section_path: str, include_children: bool = True
+) -> Result[str, str]:
     """Read a specific section from a document.
 
     Args:
         path: Path to markdown file
         section_path: Section path (slug, fuzzy, index, or line anchor)
+        include_children: If True, include child sections in output
 
     Returns:
         Result containing section content or error message
@@ -95,12 +98,16 @@ def read_section(path: Path, section_path: str) -> Result[str, str]:
     if section is None:
         return Failure(f"Section not found: {section_path}")
 
-    return Success(extract_content(content, section))
+    extracted = extract_content(content, section, include_children=include_children)
+    return Success(extracted)
 
 
 # @shell_complexity: Pattern matching + content filtering orchestration
 def find_sections(
-    path: Path, pattern: str, content_pattern: str | None = None
+    path: Path,
+    pattern: str,
+    content_pattern: str | None = None,
+    level: int | None = None,
 ) -> Result[list[Section], str]:
     """Find sections matching a pattern.
 
@@ -108,6 +115,7 @@ def find_sections(
         path: Path to markdown file
         pattern: Title pattern (glob-style)
         content_pattern: Optional content search pattern
+        level: Optional filter by heading level (1-6)
 
     Returns:
         Result containing list of matching sections
@@ -150,6 +158,10 @@ def find_sections(
     import fnmatch
 
     matches = [s for s in all_sections if fnmatch.fnmatch(s.title.lower(), pattern.lower())]
+
+    # Filter by level if specified
+    if level is not None:
+        matches = [s for s in matches if s.level == level]
 
     # Filter by content if specified
     if content_pattern:
@@ -288,12 +300,14 @@ def insert_section_content(
 def delete_section_content(
     path: Path,
     section_path: str,
+    include_children: bool = True,
 ) -> Result[dict[str, str | int], str]:
     """Delete a section from a document.
 
     Args:
         path: Path to markdown file
         section_path: Section path (slug, fuzzy, index, or line anchor)
+        include_children: If True, delete child sections too
 
     Returns:
         Result containing info about the deletion or error message
@@ -326,8 +340,8 @@ def delete_section_content(
     if section is None:
         return Failure(f"Section not found: {section_path}")
 
-    deleted_content = extract_content(source, section)
-    new_source = core_delete_section(source, section)
+    deleted_content = extract_content(source, section, include_children=include_children)
+    new_source = core_delete_section(source, section, include_children=include_children)
 
     try:
         path.write_text(new_source, encoding="utf-8")

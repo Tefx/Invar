@@ -36,6 +36,11 @@ app = typer.Typer(
 )
 console = Console()
 
+# DX-76: Register doc subcommand
+from invar.shell.commands.doc import doc_app
+
+app.add_typer(doc_app, name="doc")
+
 
 # @shell_orchestration: Statistics helper for CLI guard output
 # @shell_complexity: Iterates symbols checking kind and contracts (4 branches minimal)

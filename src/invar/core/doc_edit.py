@@ -131,18 +131,20 @@ def insert_section(
     return "\n".join(result_lines)
 
 
-@pre(lambda source, section: isinstance(source, str) and isinstance(section, Section))
-@pre(lambda source, section: section.line_start >= 1)
-@pre(lambda source, section: section.line_end >= section.line_start)
+@pre(lambda source, section, include_children=True: isinstance(source, str) and isinstance(section, Section))
+@pre(lambda source, section, include_children=True: section.line_start >= 1)
+@pre(lambda source, section, include_children=True: section.line_end >= section.line_start)
 @post(lambda result: isinstance(result, str))
-def delete_section(source: str, section: Section) -> str:
+def delete_section(source: str, section: Section, include_children: bool = True) -> str:
     """Delete a section from the document.
 
     Removes content from line_start to line_end inclusive.
+    When include_children=False, preserves child sections.
 
     Args:
         source: Original document source
         section: Section to delete
+        include_children: If True, delete children too (default)
 
     Returns:
         Modified document source
@@ -158,12 +160,27 @@ def delete_section(source: str, section: Section) -> str:
         True
         >>> "# Also Keep" in result
         True
+
+        >>> # Without children - preserves child sections
+        >>> parent = Section("Parent", "parent", 1, 1, 4, 100, "parent", [
+        ...     Section("Child", "child", 2, 3, 4, 50, "parent/child", [])
+        ... ])
+        >>> src = "# Parent\\nIntro\\n## Child\\nBody"
+        >>> result = delete_section(src, parent, include_children=False)
+        >>> "# Parent" not in result
+        True
+        >>> "## Child" in result
+        True
     """
     lines = source.split("\n")
-
-    # Remove lines from line_start-1 to line_end (0-indexed)
     start_idx = section.line_start - 1
-    end_idx = section.line_end
+
+    if include_children or not section.children:
+        end_idx = section.line_end
+    else:
+        # Stop before first child
+        first_child_line = section.children[0].line_start
+        end_idx = first_child_line - 1
 
     result_lines = lines[:start_idx] + lines[end_idx:]
 
