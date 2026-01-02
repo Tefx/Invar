@@ -202,7 +202,7 @@ def _get_doc_toc_tool() -> Tool:
         description=(
             "Extract document structure (Table of Contents) from markdown files. "
             "Shows headings hierarchy with line numbers and character counts. "
-            "Use this to understand document structure before reading sections."
+            "Use this INSTEAD of Read() to understand markdown structure."
         ),
         inputSchema={
             "type": "object",
@@ -230,7 +230,7 @@ def _get_doc_read_tool() -> Tool:
             "Read a specific section from a markdown document. "
             "Supports multiple addressing formats: slug path, fuzzy match, "
             "index (#0/#1), or line anchor (@48). "
-            "Use after invar_doc_toc to read specific sections."
+            "Use this INSTEAD of Read() with manual line counting."
         ),
         inputSchema={
             "type": "object",
@@ -259,7 +259,7 @@ def _get_doc_find_tool() -> Tool:
         description=(
             "Find sections in markdown documents matching a pattern. "
             "Supports glob patterns for titles and optional content search. "
-            "Returns matching sections with paths and line numbers."
+            "Use this INSTEAD of Grep in markdown files."
         ),
         inputSchema={
             "type": "object",
@@ -289,7 +289,7 @@ def _get_doc_replace_tool() -> Tool:
         title="Replace Markdown Section",
         description=(
             "Replace a section's content in a markdown document. "
-            "Use after invar_doc_toc to identify the target section."
+            "Use this INSTEAD of Edit()/Write() for section replacement."
         ),
         inputSchema={
             "type": "object",
@@ -320,7 +320,7 @@ def _get_doc_insert_tool() -> Tool:
         title="Insert Markdown Section",
         description=(
             "Insert new content relative to a section in a markdown document. "
-            "Content should include heading if adding a new section."
+            "Use this INSTEAD of Edit()/Write() for section insertion."
         ),
         inputSchema={
             "type": "object",
@@ -352,7 +352,7 @@ def _get_doc_delete_tool() -> Tool:
         title="Delete Markdown Section",
         description=(
             "Delete a section from a markdown document. "
-            "Removes the heading and all content until the next same-level heading."
+            "Use this INSTEAD of Edit()/Write() for section deletion."
         ),
         inputSchema={
             "type": "object",
