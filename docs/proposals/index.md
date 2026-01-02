@@ -31,7 +31,7 @@ This directory contains design proposals for Invar development.
 | ID | Name | Status | Description |
 |----|------|--------|-------------|
 | LX-10 | layered-size-limits | Draft | Language-aware layered size limits (Core/Shell/Tests × Python/TS) |
-| LX-09 | legacy-onboarding | Draft | Onboard existing projects to Invar (`/invar-onboard` skill) |
+| LX-09 | [legacy-onboarding](LX-09-legacy-onboarding.md) | Draft | Update `/invar-onboard` skill for --mcp-only path (v1.11.0) |
 | LX-08 | extension-skills-future | Deferred | Future extension skills (split from LX-07) |
 | LX-07 | extension-skills | ✅ T0 Complete | T0 skills implemented, T1 pending discussion |
 | LX-06 | typescript-tooling | ✅ Phase 1-3 Complete | TypeScript verification (Phase 4 optional) |
@@ -154,7 +154,7 @@ Deferred: DX-38 Tier 3-4, DX-25, DX-29
 
 | Status | Proposal | Description | Notes |
 |--------|----------|-------------|-------|
-| **Draft** | LX-09 | Legacy project onboarding | `/invar-onboard` skill (Assess → Discuss → Plan) |
+| **Draft** | LX-09 | Legacy project onboarding | Update skill for --mcp-only lightweight path + type checking |
 | **Draft** | DX-68 | Agent behavior optimization | P3-P5, low priority |
 | **Partial** | DX-62 | Proactive reference reading | Layer 1 ✅, Layers 2-4 pending |
 | **Draft** | DX-61 | Functional pattern guidance | Teach agents functional patterns |
