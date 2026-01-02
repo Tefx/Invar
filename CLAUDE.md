@@ -83,7 +83,18 @@ src/{project}/
 
 > Full decision tree: [INVAR.md#core-shell](./INVAR.md#decision-tree-core-vs-shell)
 
+### Document Tools (DX-76)
 
+| I want to... | Use |
+|--------------|-----|
+| View document structure | `invar doc toc <file> [--format text]` |
+| Read specific section | `invar doc read <file> <section>` |
+| Search sections by title | `invar doc find <pattern> <files...>` |
+| Replace section content | `invar doc replace <file> <section>` |
+| Insert new section | `invar doc insert <file> <anchor>` |
+| Delete section | `invar doc delete <file> <section>` |
+
+**Section addressing:** slug path (`requirements/auth`), fuzzy (`auth`), index (`#0/#1`), line (`@48`)
 
 ## Documentation Structure
 
