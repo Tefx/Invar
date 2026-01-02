@@ -130,6 +130,7 @@ def _get_guard_tool() -> Tool:
     """Define the invar_guard tool."""
     return Tool(
         name="invar_guard",
+        title="Smart Guard",
         description=(
             "Smart Guard: Verify code quality with static analysis + doctests. "
             "Use this INSTEAD of Bash('pytest ...') or Bash('crosshair ...'). "
@@ -154,6 +155,7 @@ def _get_sig_tool() -> Tool:
     """Define the invar_sig tool."""
     return Tool(
         name="invar_sig",
+        title="Show Signatures",
         description=(
             "Show function signatures and contracts (@pre/@post). "
             "Use this INSTEAD of Read('file.py') when you want to understand structure."
@@ -174,6 +176,7 @@ def _get_map_tool() -> Tool:
     """Define the invar_map tool."""
     return Tool(
         name="invar_map",
+        title="Symbol Map",
         description=(
             "Symbol map with reference counts. "
             "Use this INSTEAD of Grep for 'def ' to find functions."
@@ -195,6 +198,7 @@ def _get_doc_toc_tool() -> Tool:
     """Define the invar_doc_toc tool."""
     return Tool(
         name="invar_doc_toc",
+        title="Document Structure",
         description=(
             "Extract document structure (Table of Contents) from markdown files. "
             "Shows headings hierarchy with line numbers and character counts. "
@@ -221,6 +225,7 @@ def _get_doc_read_tool() -> Tool:
     """Define the invar_doc_read tool."""
     return Tool(
         name="invar_doc_read",
+        title="Read Section",
         description=(
             "Read a specific section from a markdown document. "
             "Supports multiple addressing formats: slug path, fuzzy match, "
@@ -250,6 +255,7 @@ def _get_doc_find_tool() -> Tool:
     """Define the invar_doc_find tool."""
     return Tool(
         name="invar_doc_find",
+        title="Find Sections",
         description=(
             "Find sections in markdown documents matching a pattern. "
             "Supports glob patterns for titles and optional content search. "
@@ -280,6 +286,7 @@ def _get_doc_replace_tool() -> Tool:
     """Define the invar_doc_replace tool."""
     return Tool(
         name="invar_doc_replace",
+        title="Replace Section",
         description=(
             "Replace a section's content in a markdown document. "
             "Use after invar_doc_toc to identify the target section."
@@ -310,6 +317,7 @@ def _get_doc_insert_tool() -> Tool:
     """Define the invar_doc_insert tool."""
     return Tool(
         name="invar_doc_insert",
+        title="Insert Section",
         description=(
             "Insert new content relative to a section in a markdown document. "
             "Content should include heading if adding a new section."
@@ -341,6 +349,7 @@ def _get_doc_delete_tool() -> Tool:
     """Define the invar_doc_delete tool."""
     return Tool(
         name="invar_doc_delete",
+        title="Delete Section",
         description=(
             "Delete a section from a markdown document. "
             "Removes the heading and all content until the next same-level heading."
