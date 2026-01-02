@@ -301,7 +301,11 @@ class ScopeProfile:
 │  │     - Spawn focused Explore subagent                │   │
 │  │     - Limit to specific question/area               │   │
 │  │  3. Synthesize findings                             │   │
-│  │  4. Ask user if more exploration needed             │   │
+│  │  4. AUTO-COMPLETE CHECK:                            │   │
+│  │     - Did findings answer original question?        │   │
+│  │     - If YES → auto-complete                        │   │
+│  │     - If NO → auto-expand scope (up to 2x)          │   │
+│  │     - If still NO → report partial + gaps           │   │
 │  └─────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -327,9 +331,13 @@ class ScopeProfile:
 │                                                             │
 │  3. Main Agent: Synthesize                                  │
 │     - Merge challenger's additions                          │
-│     - Present unified options to user                       │
+│     - AUTO-RECOMMEND based on:                              │
+│       * Trade-off analysis                                  │
+│       * Project context (.invar/context.md)                 │
+│       * Complexity vs benefit                               │
+│     - Present: "Recommended: X, Alternatives: Y, Z"         │
 │                                                             │
-│  4. User decides                                            │
+│  4. User decides (or accepts recommendation)                │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -415,6 +423,147 @@ class ScopeProfile:
 │  - Each chunk gets fresh validation                         │
 │  - Early detection of issues                                │
 │  - Prevents "sunk cost" continuation                        │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Part 4.5: Agent 自动化机制 (新增)
+
+### 4.5.1 Skill 自动路由
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  AUTO-ROUTER                                                │
+│  ───────────────────────────────────────────────────────────│
+│                                                             │
+│  Input: User message                                        │
+│  Output: Skill invocation (automatic, no user command)      │
+│                                                             │
+│  Detection Rules:                                           │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │  IF message contains:                               │   │
+│  │    "implement", "add", "fix", "create", "build"     │   │
+│  │  AND requires code changes                          │   │
+│  │  → AUTO-INVOKE /develop                             │   │
+│  ├─────────────────────────────────────────────────────┤   │
+│  │  IF message contains:                               │   │
+│  │    "review", "check", "audit", "verify"             │   │
+│  │  AND references existing code                       │   │
+│  │  → AUTO-INVOKE /review                              │   │
+│  ├─────────────────────────────────────────────────────┤   │
+│  │  IF message contains:                               │   │
+│  │    "why", "how does", "explain", "understand"       │   │
+│  │  → AUTO-INVOKE /investigate                         │   │
+│  ├─────────────────────────────────────────────────────┤   │
+│  │  IF message contains:                               │   │
+│  │    "should we", "compare", "which", "design"        │   │
+│  │  → AUTO-INVOKE /propose                             │   │
+│  └─────────────────────────────────────────────────────┘   │
+│                                                             │
+│  Announcement (transparent):                                │
+│  "📍 Auto-routing: /develop — detected implementation task" │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 4.5.2 成本感知降级
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  COST-AWARE DEGRADATION                                     │
+│  ───────────────────────────────────────────────────────────│
+│                                                             │
+│  Context Budget Estimation:                                 │
+│  - Remaining context window                                 │
+│  - Estimated tokens per subagent                            │
+│  - Number of planned subagent calls                         │
+│                                                             │
+│  Auto-Degradation Rules:                                    │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │  Budget Level    │ Strategy Adjustment              │   │
+│  │  ─────────────────────────────────────────────────  │   │
+│  │  HIGH (>50%)     │ Full strategy (HYBRID/PARALLEL)  │   │
+│  │  MEDIUM (20-50%) │ ENUMERATION_GUIDED only          │   │
+│  │  LOW (10-20%)    │ THOROUGH_BASELINE (no subagent)  │   │
+│  │  CRITICAL (<10%) │ Quick check + warn user          │   │
+│  └─────────────────────────────────────────────────────┘   │
+│                                                             │
+│  Transparency:                                              │
+│  "⚡ Budget: MEDIUM — Using ENUMERATION_GUIDED strategy"    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 4.5.3 失败自动恢复
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  AUTO-RECOVERY                                              │
+│  ───────────────────────────────────────────────────────────│
+│                                                             │
+│  Failure Types and Auto-Actions:                            │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │  Failure                │ Auto-Action               │   │
+│  │  ─────────────────────────────────────────────────  │   │
+│  │  Subagent timeout       │ Retry 1x, then degrade    │   │
+│  │  Subagent empty result  │ Re-prompt with examples   │   │
+│  │  Subagent error         │ Fallback to main agent    │   │
+│  │  Inconsistent findings  │ Spawn tiebreaker agent    │   │
+│  │  Max rounds reached     │ Report partial + continue │   │
+│  └─────────────────────────────────────────────────────┘   │
+│                                                             │
+│  Recovery Chain:                                            │
+│  1. Retry same strategy (1x)                                │
+│  2. Degrade to simpler strategy                             │
+│  3. Fallback to main agent                                  │
+│  4. Report failure + partial results                        │
+│                                                             │
+│  Never: Silently fail or lose progress                      │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 4.5.4 并行执行决策
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  PARALLEL EXECUTION CONTROLLER                              │
+│  ───────────────────────────────────────────────────────────│
+│                                                             │
+│  Auto-Parallel Conditions:                                  │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │  Condition                    │ Parallel?           │   │
+│  │  ─────────────────────────────────────────────────  │   │
+│  │  Multiple files, no deps      │ YES - chunk review  │   │
+│  │  Sequential fix loop          │ NO - must serialize │   │
+│  │  Multiple questions           │ YES - parallel inv. │   │
+│  │  Cross-file analysis          │ NO - needs context  │   │
+│  └─────────────────────────────────────────────────────┘   │
+│                                                             │
+│  Merge Strategy:                                            │
+│  - Deduplicate findings by (file, line, issue_type)         │
+│  - Preserve highest severity rating                         │
+│  - Combine evidence from multiple sources                   │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 4.5.5 复杂度自动阈值
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  COMPLEXITY THRESHOLDS (Auto-Trigger)                       │
+│  ───────────────────────────────────────────────────────────│
+│                                                             │
+│  When to spawn additional agents:                           │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │  Trigger                      │ Auto-Action          │   │
+│  │  ─────────────────────────────────────────────────  │   │
+│  │  >5 contracts in SPECIFY      │ Contract Reviewer    │   │
+│  │  >10 functions to implement   │ Chunked BUILD        │   │
+│  │  >3 security-sensitive files  │ Security Reviewer    │   │
+│  │  >50% escape hatches          │ Escape Hatch Auditor │   │
+│  │  Circular dependencies found  │ Architecture Review  │   │
+│  └─────────────────────────────────────────────────────┘   │
+│                                                             │
+│  All thresholds are automatic - no user configuration       │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -662,6 +811,7 @@ class IsolationManager:
 | Version | Date | Changes |
 |---------|------|---------|
 | 0.1 | 2026-01-02 | Initial draft from DX-74 findings |
+| 0.2 | 2026-01-02 | Added Part 4.5: Agent automation mechanisms (auto-routing, cost degradation, failure recovery, parallel execution, complexity thresholds) |
 
 ---
 
