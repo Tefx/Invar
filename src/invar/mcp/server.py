@@ -29,7 +29,7 @@ from invar.mcp.handlers import (
 )
 from invar.shell.subprocess_env import should_respawn
 
-# Strong instructions for agent behavior (DX-16 + DX-17 + DX-26)
+# Strong instructions for agent behavior (DX-16 + DX-17 + DX-26 + DX-76)
 INVAR_INSTRUCTIONS = """
 ## Invar Tool Usage (MANDATORY)
 
@@ -55,6 +55,24 @@ Then read `.invar/examples/` and `.invar/context.md` for project context.
 | Symbolic verification | `Bash("crosshair ...")` | `invar_guard` (included by default) |
 | Understand file structure | `Read` entire .py file | `invar_sig` |
 | Find entry points | `Grep` for "def " | `invar_map` |
+| View document structure | `Read` entire .md file | `invar_doc_toc` |
+| Read document section | `Read` with manual line counting | `invar_doc_read` |
+| Find sections by pattern | `Grep` in markdown files | `invar_doc_find` |
+
+### Document Tools (DX-76)
+
+| I want to... | Use |
+|--------------|-----|
+| View document structure | `invar_doc_toc(file="path.md")` |
+| Read specific section | `invar_doc_read(file="path.md", section="slug")` |
+| Search sections by title | `invar_doc_find(file="path.md", pattern="*auth*")` |
+| Replace section content | `invar_doc_replace(file="path.md", section="slug", content="...")` |
+| Insert new section | `invar_doc_insert(file="path.md", anchor="slug", content="...")` |
+| Delete section | `invar_doc_delete(file="path.md", section="slug")` |
+
+**Section addressing:** slug path (`requirements/auth`), fuzzy (`auth`), index (`#0/#1`), line (`@48`)
+
+**Workflow:** ALWAYS call `invar_doc_toc` first to understand document structure before editing.
 
 ### Common Mistakes to AVOID
 
@@ -64,6 +82,8 @@ Then read `.invar/examples/` and `.invar/context.md` for project context.
 ❌ `Read("src/foo.py")` just to see signatures - Use invar_sig instead
 ❌ `Grep` for function definitions - Use invar_map instead
 ❌ `Bash("invar guard ...")` - Use invar_guard MCP tool instead
+❌ `Read("docs/file.md")` to understand structure - Use invar_doc_toc instead
+❌ `Grep` in markdown files - Use invar_doc_find instead
 
 ### Task Completion
 
@@ -77,6 +97,7 @@ A task is complete ONLY when:
 1. **invar_guard** = Smart Guard (static + doctests + CrossHair + Hypothesis)
 2. **invar_sig** shows @pre/@post contracts that Read misses
 3. **invar_map** includes reference counts for importance ranking
+4. **invar_doc_toc** shows document structure that Read doesn't parse
 
 ### Correct Usage Examples
 
@@ -90,6 +111,12 @@ invar_guard(changed=true)
 
 # Understand a file's structure
 invar_sig(target="src/invar/core/parser.py")
+
+# Understand a document's structure
+invar_doc_toc(file="docs/proposals/DX-76.md")
+
+# Read specific section
+invar_doc_read(file="docs/proposals/DX-76.md", section="phase-a")
 ```
 
 IMPORTANT: Using Bash commands for Invar operations bypasses
