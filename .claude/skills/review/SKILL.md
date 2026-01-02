@@ -1,3 +1,10 @@
+---
+name: review
+description: Adversarial code review. Code is GUILTY until proven INNOCENT. Every round spawns isolated subagent reviewing FULL scope.
+_invar:
+  version: "7.0"
+  managed: skill
+---
 <!--invar:skill-->
 
 # Review Skill (Adversarial)
