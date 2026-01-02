@@ -307,6 +307,11 @@ def init(
         "--pi",
         help="Auto-select Pi Coding Agent, skip all prompts",
     ),
+    mcp_only: bool = typer.Option(
+        False,
+        "--mcp-only",
+        help="Install MCP tools only (no framework files, just .mcp.json)",
+    ),
     language: str | None = typer.Option(
         None,
         "--language",
@@ -326,8 +331,9 @@ def init(
 
     \b
     Quick setup options:
-    - --claude  Auto-select Claude Code (MCP + hooks + skills)
-    - --pi      Auto-select Pi (shares CLAUDE.md + skills, adds Pi hooks)
+    - --claude     Auto-select Claude Code (MCP + hooks + skills)
+    - --pi         Auto-select Pi (shares CLAUDE.md + skills, adds Pi hooks)
+    - --mcp-only   Install MCP tools only (minimal, no framework files)
 
     \b
     This command is safe - it always MERGES with existing files:
@@ -346,10 +352,30 @@ def init(
         console.print("[red]Error:[/red] Cannot use --claude and --pi together.")
         raise typer.Exit(1)
 
+    if mcp_only and (claude or pi):
+        console.print("[red]Error:[/red] --mcp-only cannot be combined with --claude or --pi.")
+        raise typer.Exit(1)
+
     # Resolve path
     if path == Path():
         path = Path.cwd()
     path = path.resolve()
+
+    # MCP-only mode: minimal setup, just create .mcp.json
+    if mcp_only:
+        console.print(f"\n[bold]Invar v{__version__} - MCP Tools Only[/bold]")
+        console.print("=" * 45)
+        console.print("[dim]Installing MCP server configuration only.[/dim]\n")
+
+        console.print("[bold]Creating .mcp.json...[/bold]")
+        if _configure_mcp(path):
+            console.print("[green]✓[/green] Created .mcp.json")
+            console.print("\n[bold]Setup complete![/bold]")
+            console.print("MCP tools available: invar_doc_*, invar_sig, invar_map, invar_guard")
+        else:
+            console.print("[yellow]○[/yellow] .mcp.json already configured")
+
+        return  # Early exit, skip all framework setup
 
     # LX-05: Language detection and validation
     if language is None:
