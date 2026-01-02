@@ -45,6 +45,7 @@ dependencies = [
     "pydantic>=2.0",
     "returns>=0.20",
     "pre-commit>=3.0",
+    "markdown-it-py>=3.0",  # DX-76: Markdown document parsing
     # Verification (DX-12: Hypothesis as CrossHair fallback)
     "hypothesis>=6.0",
     "crosshair-tool>=0.0.60",
