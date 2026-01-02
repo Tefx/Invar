@@ -260,14 +260,17 @@ function average(items: number[]): number {
 
 ### ✅ Solution 2: Multi-Layer Verification
 
-Guard provides fast feedback. Agent sees errors, fixes immediately:
+Guard provides fast feedback **on top of standard type checking**. Agent sees errors, fixes immediately:
 
 | Layer | Tool | Speed | What It Catches |
 |-------|------|-------|-----------------|
+| **Type Check*** | mypy (Python) / tsc (TypeScript) | ~1s | Type errors, missing annotations |
 | **Static** | Guard rules | ~0.5s | Architecture violations, missing contracts |
-| **Doctest** | pytest | ~2s | Example correctness |
-| **Property** | Hypothesis | ~10s | Edge cases via random inputs |
-| **Symbolic** | CrossHair | ~30s | Mathematical proof of contracts |
+| **Doctest** | pytest / vitest | ~2s | Example correctness |
+| **Property** | Hypothesis / fast-check | ~10s | Edge cases via random inputs |
+| **Symbolic** | CrossHair / (TS: N/A) | ~30s | Mathematical proof of contracts |
+
+<sup>* Requires separate installation: `pip install mypy` or configure TypeScript in your project</sup>
 
 ```
 ┌──────────┐   ┌───────────┐   ┌───────────┐   ┌────────────┐
@@ -482,7 +485,7 @@ Cursor users get full verification via MCP:
 |----------------|---------|----------|
 | `INVAR.md` | Protocol for AI agents | Required |
 | `.invar/` | Config, context, examples | Required |
-| `.pre-commit-config.yaml` | Verification before commit | Optional |
+| `.pre-commit-config.yaml` | Verification before commit (Ruff, mypy*, Guard) | Optional |
 | `src/core/`, `src/shell/` | Recommended structure | Optional |
 | `CLAUDE.md` | Agent instructions | Claude Code |
 | `.claude/skills/` | Workflow + extension skills | Claude Code |
@@ -490,6 +493,8 @@ Cursor users get full verification via MCP:
 | `.claude/hooks/` | Tool guidance | Claude Code |
 | `.mcp.json` | MCP server config | Claude Code |
 | `AGENT.md` | Universal agent instructions | Other agents |
+
+<sup>* mypy hook included in `.pre-commit-config.yaml` but requires: `pip install mypy`</sup>
 
 **Note:** If `pyproject.toml` exists, Guard configuration goes there as `[tool.invar.guard]` instead of `.invar/config.toml`.
 
