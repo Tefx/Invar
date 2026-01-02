@@ -1,7 +1,8 @@
 # DX-74: Agent-Native Attention Management
 
-**Status:** Draft
+**Status:** ✅ Superseded by DX-75 (Archived 2026-01-03)
 **Created:** 2026-01-02
+**Superseded By:** [DX-75-attention-aware-framework.md](./DX-75-attention-aware-framework.md)
 **Context:** Review skill deep analysis revealed attention drift as fundamental LLM limitation
 
 ## Problem Statement
