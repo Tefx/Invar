@@ -381,6 +381,7 @@ def delete_section_content(
 
     return Success({
         "deleted_content": deleted_content,
-        "deleted_lines": [section.line_start, section.line_end],
+        "deleted_line_start": section.line_start,
+        "deleted_line_end": section.line_end,
         "new_line_count": len(new_source.split("\n")),
     })

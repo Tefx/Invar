@@ -409,7 +409,7 @@ def run_server() -> None:
             )
 
     # Phase 1 fallback: Continue with uvx + PYTHONPATH injection
-    async def main():
+    async def main() -> None:
         server = create_server()
         async with stdio_server() as (read_stream, write_stream):
             await server.run(

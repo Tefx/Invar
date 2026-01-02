@@ -300,7 +300,7 @@ async def _run_doc_insert(args: dict[str, Any]) -> list[TextContent]:
 
     path = Path(file_path)
     # Cast position to Literal type for type safety
-    pos: Literal["before", "after", "first_child", "last_child"] = position  # type: ignore[assignment]
+    pos: Literal["before", "after", "first_child", "last_child"] = position
     result = insert_section_content(path, anchor_path, content, pos)
 
     if isinstance(result, Success):

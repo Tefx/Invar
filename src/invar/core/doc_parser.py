@@ -146,7 +146,7 @@ def _build_section_tree(sections: list[Section]) -> list[Section]:
     return result
 
 
-@skip_property_test("external_io: hypothesis inspect module incompatibility with Python 3.14")
+@skip_property_test("external_io: hypothesis inspect module incompatibility with Python 3.14")  # type: ignore[untyped-decorator]
 @pre(lambda source: len(source) <= 10_000_000)  # Max 10MB document
 @post(lambda result: all(s.line_start >= 1 for s in result.sections))
 @post(lambda result: all(s.line_end >= s.line_start for s in result.sections))

@@ -26,6 +26,15 @@ repos:
         stages: [pre-commit]
         types: [python]
 
+      # Mypy - Static type checker (checks critical modules only)
+      - id: mypy
+        name: Type Check (mypy)
+        entry: bash -c 'source .venv/bin/activate && mypy src/invar/mcp/handlers.py src/invar/core/doc_parser.py src/invar/core/doc_edit.py src/invar/shell/doc_tools.py --ignore-missing-imports --follow-imports=silent'
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
+        types: [python]
+
       # Smart Invar Guard - Full verification (static + doctests)
       # Runs full guard when rule files are modified, --changed otherwise
       # Note: invar guard already includes doctests, no separate pytest needed
