@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 from mcp.types import TextContent
+from returns.result import Success
 
 
 # @invar:allow shell_result: Pure validation helper, no I/O, returns tuple not Result
@@ -134,7 +135,7 @@ async def _run_doc_toc(args: dict[str, Any]) -> list[TextContent]:
     path = Path(file_path)
     result = read_toc(path)
 
-    if result.is_success():
+    if isinstance(result, Success):
         toc = result.unwrap()
         # Convert to JSON-serializable format
         output = {
@@ -184,7 +185,7 @@ async def _run_doc_read(args: dict[str, Any]) -> list[TextContent]:
     path = Path(file_path)
     result = read_section(path, section_path)
 
-    if result.is_success():
+    if isinstance(result, Success):
         content = result.unwrap()
         output = {"path": section_path, "content": content}
         return [TextContent(type="text", text=json.dumps(output, indent=2))]
@@ -215,7 +216,7 @@ async def _run_doc_find(args: dict[str, Any]) -> list[TextContent]:
     path = Path(file_path)
     result = find_sections(path, pattern, content_pattern)
 
-    if result.is_success():
+    if isinstance(result, Success):
         sections = result.unwrap()
         output = {
             "matches": [
@@ -262,7 +263,7 @@ async def _run_doc_replace(args: dict[str, Any]) -> list[TextContent]:
     path = Path(file_path)
     result = replace_section_content(path, section_path, content, keep_heading)
 
-    if result.is_success():
+    if isinstance(result, Success):
         info = result.unwrap()
         output = {"success": True, **info}
         return [TextContent(type="text", text=json.dumps(output, indent=2))]
@@ -302,7 +303,7 @@ async def _run_doc_insert(args: dict[str, Any]) -> list[TextContent]:
     pos: Literal["before", "after", "first_child", "last_child"] = position  # type: ignore[assignment]
     result = insert_section_content(path, anchor_path, content, pos)
 
-    if result.is_success():
+    if isinstance(result, Success):
         info = result.unwrap()
         output = {"success": True, **info}
         return [TextContent(type="text", text=json.dumps(output, indent=2))]
@@ -332,7 +333,7 @@ async def _run_doc_delete(args: dict[str, Any]) -> list[TextContent]:
     path = Path(file_path)
     result = delete_section_content(path, section_path)
 
-    if result.is_success():
+    if isinstance(result, Success):
         info = result.unwrap()
         output = {"success": True, **info}
         return [TextContent(type="text", text=json.dumps(output, indent=2))]
