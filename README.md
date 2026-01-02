@@ -136,6 +136,7 @@ uvx invar-tools init
 # Or quick setup (skip prompts)
 uvx invar-tools init --claude    # Claude Code
 uvx invar-tools init --pi        # Pi Coding Agent
+uvx invar-tools init --mcp-only  # MCP tools only (legacy projects)
 
 # Add runtime contracts to your project
 pip install invar-runtime
@@ -542,7 +543,22 @@ These customizations are preserved when updating skills via `invar skill add`.
 
 ## 🔄 Legacy Project Migration
 
-For existing projects that want to adopt Invar's patterns, use the `/invar-onboard` skill:
+### Quick Start: MCP Tools Only
+
+For projects that want Invar's MCP tools **without adopting the framework**:
+
+```bash
+uvx invar-tools init --mcp-only
+```
+
+This creates only `.mcp.json` — no INVAR.md, CLAUDE.md, or Core/Shell structure. Your AI agent gets access to:
+- **Document tools** (`invar_doc_toc`, `invar_doc_read`, etc.)
+- **Code navigation** (`invar_sig`, `invar_map`)
+- **Basic verification** (`invar_guard` with minimal rules)
+
+### Full Adoption: `/invar-onboard`
+
+For projects that want to fully adopt Invar's patterns, use the `/invar-onboard` skill:
 
 ```bash
 # Install the onboarding skill
@@ -743,9 +759,17 @@ rules = ["missing_contract", "shell_result"]
 | `invar guard --coverage` | Collect branch coverage from tests |
 | `invar init` | Initialize or update project (interactive) |
 | `invar init --claude` | Quick setup for Claude Code |
+| `invar init --pi` | Quick setup for Pi agent |
+| `invar init --mcp-only` | MCP tools only (no framework files) |
 | `invar uninstall` | Remove Invar from project (preserves user content) |
 | `invar sig <file>` | Show signatures and contracts |
 | `invar map` | Symbol map with reference counts |
+| `invar doc toc <file>` | View document structure (headings) |
+| `invar doc read <file> <section>` | Read specific section by slug/fuzzy/index |
+| `invar doc find <pattern> <files>` | Search sections by title pattern |
+| `invar doc replace <file> <section>` | Replace section content |
+| `invar doc insert <file> <anchor>` | Insert content relative to section |
+| `invar doc delete <file> <section>` | Delete section |
 | `invar rules` | List all rules with severity |
 | `invar test` | Property-based tests (Hypothesis) |
 | `invar verify` | Symbolic verification (CrossHair) |
@@ -763,6 +787,13 @@ rules = ["missing_contract", "shell_result"]
 | `invar_guard` | Smart multi-layer verification |
 | `invar_sig` | Extract signatures and contracts |
 | `invar_map` | Symbol map with reference counts |
+| `invar_doc_toc` | Extract document structure (TOC) |
+| `invar_doc_read` | Read specific section |
+| `invar_doc_read_many` | Read multiple sections (batch) |
+| `invar_doc_find` | Search sections by title pattern |
+| `invar_doc_replace` | Replace section content |
+| `invar_doc_insert` | Insert content relative to section |
+| `invar_doc_delete` | Delete section |
 
 ---
 
