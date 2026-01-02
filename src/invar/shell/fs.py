@@ -21,7 +21,18 @@ if TYPE_CHECKING:
 
 # @shell_orchestration: Helper for file discovery, co-located with I/O functions
 def _is_excluded(relative_str: str, exclude_patterns: list[str]) -> bool:
-    """Check if a relative path should be excluded."""
+    """Check if a relative path should be excluded.
+
+    Matches patterns as whole path components, not as prefixes:
+    - "dist" matches "dist", "dist/file.py", "src/dist/file.py"
+    - "dist" does NOT match "distribute" or "mydist" (prefix/suffix matching)
+
+    Note: A file literally named "some/dist" (not a directory) would not match
+    pattern "dist" - this is intentional as patterns target directory names.
+
+    Unix path assumption: Uses "/" separator. On Windows, paths should be
+    normalized before calling (Python's pathlib handles this).
+    """
     for pattern in exclude_patterns:
         # Match whole path component, not prefix
         if relative_str == pattern or relative_str.startswith(pattern + "/") or f"/{pattern}/" in f"/{relative_str}":
@@ -80,19 +91,9 @@ def discover_typescript_files(
 
     for ext in ("*.ts", "*.tsx"):
         for ts_file in project_root.rglob(ext):
-            # Check exclusions
-            relative = ts_file.relative_to(project_root)
-            relative_str = str(relative)
-
-            excluded = False
-            for pattern in all_excludes:
-                # Match whole path component, not prefix
-                # e.g., "dist" should exclude "dist/file.ts" but NOT "dist_backup/file.ts"
-                if relative_str == pattern or relative_str.startswith(pattern + "/") or f"/{pattern}/" in f"/{relative_str}":
-                    excluded = True
-                    break
-
-            if not excluded:
+            # Check exclusions using shared helper (DX review: deduplicate)
+            relative_str = str(ts_file.relative_to(project_root))
+            if not _is_excluded(relative_str, all_excludes):
                 yield ts_file
 
 

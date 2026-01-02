@@ -28,7 +28,9 @@ class TSSymbol:
 
 
 # Regex patterns for TypeScript constructs
-# Note: These are simplified patterns suitable for common cases
+# Note: These are simplified patterns suitable for common cases.
+# Known limitation: Multiline parameter lists are truncated to first line.
+# Phase 2 can upgrade to tree-sitter for full multiline support.
 _FUNCTION_PATTERN = re.compile(
     r"^\s*(?:@\w+(?:\([^)]*\))?\s*\n\s*)*"  # Optional decorators
     r"(?:export\s+)?(?:async\s+)?function\s+(\w+)\s*"
@@ -79,8 +81,9 @@ _JSDOC_PATTERN = re.compile(
 
 
 # @invar:allow function_size: Regex extraction inherently repetitive per TS construct type
-@pre(lambda source: source is not None)  # Accepts any string including empty
-@post(lambda result: all(s.line > 0 for s in result))  # All symbols have valid line numbers
+# @invar:allow redundant_type_contract: Defense-in-depth for dynamic callers
+@pre(lambda source: isinstance(source, str) and len(source) < 10_000_000)  # ~10MB DoS limit
+@post(lambda result: all(s.line > 0 and s.name for s in result))  # Valid line numbers and names
 def extract_ts_signatures(source: str) -> list[TSSymbol]:
     """Extract TypeScript symbols from source code.
 

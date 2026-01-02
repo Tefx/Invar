@@ -11,6 +11,7 @@ DX-71: Simplified to idempotent `add` command with region merge.
 
 from __future__ import annotations
 
+import re
 import shutil
 from dataclasses import dataclass
 from pathlib import Path
@@ -35,12 +36,15 @@ CORE_SKILLS = {"develop", "review", "investigate", "propose", "guard", "audit"}
 
 # @shell_orchestration: Validation helper used only by shell add_skill/remove_skill
 def _is_valid_skill_name(name: str) -> bool:
-    """Validate skill name to prevent path traversal attacks."""
-    # Block path traversal characters
-    if ".." in name or "/" in name or "\\" in name:
+    """Validate skill name to prevent path traversal and filesystem attacks."""
+    # Block path traversal characters and null bytes
+    if ".." in name or "/" in name or "\\" in name or "\x00" in name:
         return False
-    # Must be non-empty and not start with dot or underscore
-    return bool(name) and not name.startswith(".") and not name.startswith("_")
+    # Block special names that could cause issues
+    if name in (".", ""):
+        return False
+    # Must not start with dot or underscore
+    return not name.startswith(".") and not name.startswith("_")
 
 
 def _merge_md_file(src: Path, dst: Path) -> tuple[bool, str]:
@@ -74,10 +78,10 @@ def _merge_md_file(src: Path, dst: Path) -> tuple[bool, str]:
         shutil.copy2(src, dst)
         return False, "Updated"
 
-    except Exception:
-        # On parse error, preserve existing file - don't silently lose user data
-        # Return warning message so caller can inform user
-        return False, "Skipped (merge failed, existing file preserved)"
+    except (OSError, UnicodeDecodeError, ValueError, KeyError) as e:
+        # On I/O or parse error, preserve existing file - don't silently lose user data
+        # Include error details for debugging
+        return False, f"Skipped (merge failed: {type(e).__name__}: {e})"
 
 
 @dataclass
@@ -109,7 +113,7 @@ def load_registry() -> Result[dict, str]:
         content = registry_path.read_text()
         data = yaml.safe_load(content)
         return Success(data)
-    except Exception as e:
+    except (yaml.YAMLError, OSError, UnicodeDecodeError) as e:
         return Failure(f"Failed to parse registry: {e}")
 
 
@@ -245,7 +249,7 @@ def add_skill(
         result_msg = "updated" if is_update else "installed"
         return Success(f"Skill '{skill_name}' {result_msg} successfully")
 
-    except Exception as e:
+    except (OSError, shutil.Error) as e:
         # Clean up on failure (only for fresh install)
         # M3 note: Updates that fail mid-way may leave directory in partial state.
         # This is acceptable because: (1) user extensions are preserved via merge,
@@ -258,8 +262,6 @@ def add_skill(
 
 def has_user_extensions(skill_dir: Path) -> bool:
     """Check if SKILL.md has user content in extensions region."""
-    import re
-
     skill_md = skill_dir / "SKILL.md"
     if not skill_md.exists():
         return False
@@ -283,7 +285,7 @@ def has_user_extensions(skill_dir: Path) -> bool:
 
             # Check if any non-whitespace content remains
             return bool(cleaned.strip())
-    except Exception:
+    except (ValueError, KeyError):
         # Parse error - assume extensions exist (safe default)
         return True
 
@@ -334,7 +336,7 @@ def remove_skill(
     try:
         shutil.rmtree(dest_dir)
         return Success(f"Skill '{skill_name}' removed successfully")
-    except Exception as e:
+    except (OSError, shutil.Error) as e:
         return Failure(f"Failed to remove skill: {e}")
 
 

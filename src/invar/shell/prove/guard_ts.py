@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import contextlib
 import json
+import re
 import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -265,9 +266,9 @@ def _generate_fix_suggestions(violations: list[TypeScriptViolation]) -> list[dic
 
         # Customize code based on rule
         if rule == "@invar/require-schema-validation":
-            # Extract param name from message
-            import re as re_module
-            param_match = re_module.search(r'"(\w+)"', v.message)
+            # Extract param name from message (fragile: depends on ESLint message format)
+            # Falls back to "input" if extraction fails - user can adjust in fix suggestion
+            param_match = re.search(r'"(\w+)"', v.message)
             param = param_match.group(1) if param_match else "input"
             code = code.replace("{param}", param)
         elif rule == "@invar/shell-result-type":
@@ -298,16 +299,20 @@ def _generate_fix_suggestions(violations: list[TypeScriptViolation]) -> list[dic
     return fixes
 
 
-def check_tool_available(tool: str, check_args: list[str]) -> bool:
+def _check_tool_available(tool: str, check_args: list[str]) -> bool:
     """Check if a tool is available in PATH.
 
     Args:
-        tool: Tool name (e.g., "npx", "tsc")
+        tool: Tool name (e.g., "npx", "tsc") - must be alphanumeric/dash/underscore
         check_args: Arguments for version check
 
     Returns:
         True if tool is available and responds to check.
     """
+    # Security: validate tool name to prevent command injection
+    if not tool or not all(c.isalnum() or c in "-_" for c in tool):
+        return False
+
     try:
         result = subprocess.run(
             [tool, *check_args],
@@ -637,8 +642,6 @@ def _parse_tsc_line(line: str) -> TypeScriptViolation | None:
         >>> v.rule if v else None
         'TS2322'
     """
-    import re
-
     # Pattern: file(line,col): severity TSxxxx: message
     pattern = r"^(.+?)\((\d+),(\d+)\): (error|warning) (TS\d+): (.+)$"
     match = re.match(pattern, line)
@@ -812,9 +815,9 @@ def run_typescript_guard(
     result = TypeScriptGuardResult(status="passed")
 
     # Check tool availability
-    result.tsc_available = check_tool_available("npx", ["tsc", "--version"])
-    result.eslint_available = check_tool_available("npx", ["eslint", "--version"])
-    result.vitest_available = check_tool_available("npx", ["vitest", "--version"])
+    result.tsc_available = _check_tool_available("npx", ["tsc", "--version"])
+    result.eslint_available = _check_tool_available("npx", ["eslint", "--version"])
+    result.vitest_available = _check_tool_available("npx", ["vitest", "--version"])
 
     all_violations: list[TypeScriptViolation] = []
 

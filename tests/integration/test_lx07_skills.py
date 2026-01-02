@@ -181,13 +181,14 @@ class TestAddSkill:
         assert isinstance(result, Failure)
         assert "pending discussion" in result.failure().lower()
 
-    def test_add_already_installed_blocked(self, test_project: Path, mock_console):
-        """Cannot add skill that's already installed."""
+    def test_add_already_installed_is_idempotent(self, test_project: Path, mock_console):
+        """DX-71: Adding already-installed skill updates it (idempotent)."""
         add_skill("acceptance", test_project, mock_console)
         result = add_skill("acceptance", test_project, mock_console)
 
-        assert isinstance(result, Failure)
-        assert "already installed" in result.failure().lower()
+        # DX-71: add_skill is idempotent - updates if exists
+        assert isinstance(result, Success)
+        assert "updated" in result.unwrap().lower()
 
     def test_add_unknown_skill_error(self, test_project: Path, mock_console):
         """Unknown skill name returns error."""
@@ -244,11 +245,14 @@ class TestUpdateSkill:
         # Should be restored to original
         assert skill_file.read_text() == original_content
 
-    def test_update_not_installed_error(self, test_project: Path, mock_console):
-        """Error when updating skill that's not installed."""
+    def test_update_not_installed_installs(self, test_project: Path, mock_console):
+        """DX-71: Updating not-installed skill installs it (delegates to add)."""
         result = update_skill("acceptance", test_project, mock_console)
-        assert isinstance(result, Failure)
-        assert "not installed" in result.failure().lower()
+        # DX-71: update_skill delegates to add_skill, which installs if missing
+        assert isinstance(result, Success)
+        assert "installed" in result.unwrap().lower()
+        # Verify skill was actually installed
+        assert (test_project / ".claude" / "skills" / "acceptance" / "SKILL.md").exists()
 
 
 # =============================================================================
