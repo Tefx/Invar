@@ -29,51 +29,63 @@ DX-76 (文档阅读):  注意力漂移  →  遗漏需求    →  影响完整�
 
 ### 命名规范
 
-使用 `doc_*` 前缀，简短、清晰、类 Unix 风格：
+使用 `invar_doc_*` 前缀，与现有 `invar_guard`, `invar_sig`, `invar_map` 保持一致：
 
 | 工具 | 用途 | 类比 |
 |------|------|------|
-| `doc_toc` | 提取结构 | `invar_sig` |
-| `doc_read` | 读取章节 | `find_symbol --include_body` |
-| `doc_find` | 查找章节 | `grep` (结构感知) |
-| `doc_replace` | 替换章节 | `replace_symbol_body` |
-| `doc_insert` | 插入章节 | `insert_after_symbol` |
-| `doc_delete` | 删除章节 | - |
+| `invar_doc_toc` | 提取结构 | `invar_sig` |
+| `invar_doc_read` | 读取章节 | `find_symbol --include_body` |
+| `invar_doc_find` | 查找章节 | `invar_map` + grep |
+| `invar_doc_replace` | 替换章节 | `replace_symbol_body` |
+| `invar_doc_insert` | 插入章节 | `insert_after_symbol` |
+| `invar_doc_delete` | 删除章节 | - |
+
+**CLI 别名:** `invar doc toc`, `invar doc read`, etc.
 
 ### 核心工具 (Phase A-1)
 
-#### doc_toc
+#### invar_doc_toc
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  doc_toc                                                    │
+│  invar_doc_toc                                              │
 │  ───────────────────────────────────────────────────────────│
 │  Purpose: 展示文档结构 (Table of Contents)                   │
 │                                                             │
 │  Input:                                                     │
-│    file: Path                                               │
+│    file: Path | glob pattern (支持多文件)                    │
 │    depth: int = None (all levels)                           │
-│    show_size: bool = True                                   │
+│    format: "json" | "text" = "json"                         │
 │                                                             │
-│  Output:                                                    │
-│    # Introduction (1-45, 1.2K)                              │
-│      ## Background (5-20, 400B)                             │
+│  Output (JSON, 默认):                                       │
+│    {                                                        │
+│      "sections": [                                          │
+│        {"title": "Introduction", "slug": "introduction",    │
+│         "level": 1, "line_start": 1, "line_end": 45,        │
+│         "char_count": 1200, "path": "introduction",         │
+│         "children": [...]},                                 │
+│        ...                                                  │
+│      ],                                                     │
+│      "frontmatter": {"line_start": 1, "line_end": 5}        │
+│    }                                                        │
+│                                                             │
+│  Output (text, --format=text):                              │
+│    [frontmatter] (1-5, 120B)                                │
+│    # Introduction (6-45, 1.2K)                              │
+│      ## Background (10-20, 400B)                            │
 │      ## Goals (21-45, 800B)                                 │
 │    # Requirements (46-200, 8.5K)                            │
 │      ## Functional (47-150, 5.2K)                           │
-│        ### Auth (48-80, 1.5K)                               │
-│        ### Data (81-150, 3.7K)                              │
-│      ## Non-Functional (151-200, 3.3K)                      │
 │                                                             │
 │  Value: 快速了解结构，决定读取策略                            │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-#### doc_read
+#### invar_doc_read
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  doc_read                                                   │
+│  invar_doc_read                                             │
 │  ───────────────────────────────────────────────────────────│
 │  Purpose: 读取指定章节内容                                   │
 │                                                             │
@@ -87,32 +99,39 @@ DX-76 (文档阅读):  注意力漂移  →  遗漏需求    →  影响完整�
 │    • Fuzzy: "auth" (自动匹配最相关)                          │
 │    • Index: "#1/#0/#2" (按顺序索引)                          │
 │    • Line: "@48" (行号)                                     │
+│    • Frontmatter: "@frontmatter"                            │
 │                                                             │
-│  Output: 章节原始内容                                        │
+│  Output (JSON):                                             │
+│    {"path": "requirements/auth", "content": "...",          │
+│     "line_start": 48, "line_end": 80}                       │
 │                                                             │
 │  Value: 精确获取，避免全量读取                               │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-#### doc_find
+#### invar_doc_find
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  doc_find                                                   │
+│  invar_doc_find                                             │
 │  ───────────────────────────────────────────────────────────│
 │  Purpose: 查找匹配的章节                                     │
 │                                                             │
 │  Input:                                                     │
-│    file: Path                                               │
+│    file: Path | glob pattern (支持多文件)                    │
 │    pattern: str (标题 glob 模式)                             │
 │    content: str = None (内容搜索)                            │
 │    level: int = None (限定层级)                              │
 │                                                             │
-│  Output:                                                    │
-│    Matches for "auth*":                                     │
-│    - Requirements/Functional/Authentication (48-80, 1.5K)   │
-│    - Security/Authorization (180-195, 800B)                 │
-│    - Appendix/Auth-Flow (220-235, 1.2K)                     │
+│  Output (JSON):                                             │
+│    {"matches": [                                            │
+│      {"file": "spec.md",                                    │
+│       "path": "requirements/functional/authentication",     │
+│       "title": "Authentication",                            │
+│       "line_start": 48, "line_end": 80, "char_count": 1500},│
+│      {"file": "spec.md",                                    │
+│       "path": "security/authorization", ...}                │
+│    ]}                                                       │
 │                                                             │
 │  Value: 结构感知的搜索，优于纯 grep                          │
 └─────────────────────────────────────────────────────────────┘
@@ -120,11 +139,11 @@ DX-76 (文档阅读):  注意力漂移  →  遗漏需求    →  影响完整�
 
 ### 扩展工具 (Phase A-2, if needed)
 
-#### doc_replace
+#### invar_doc_replace
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  doc_replace                                                │
+│  invar_doc_replace                                          │
 │  ───────────────────────────────────────────────────────────│
 │  Purpose: 替换章节内容                                       │
 │                                                             │
@@ -139,14 +158,18 @@ DX-76 (文档阅读):  注意力漂移  →  遗漏需求    →  影响完整�
 │    • 替换从当前 heading 到下一个同级 heading 之间的内容       │
 │    • keep_heading=True 保留原标题行                          │
 │    • include_children=True 替换整个子树                      │
+│                                                             │
+│  Output (JSON):                                             │
+│    {"success": true, "old_content": "...",                  │
+│     "new_line_start": 48, "new_line_end": 85}               │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-#### doc_insert
+#### invar_doc_insert
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  doc_insert                                                 │
+│  invar_doc_insert                                           │
 │  ───────────────────────────────────────────────────────────│
 │  Purpose: 插入新章节                                         │
 │                                                             │
@@ -155,14 +178,18 @@ DX-76 (文档阅读):  注意力漂移  →  遗漏需求    →  影响完整�
 │    anchor: str (参考章节)                                    │
 │    content: str (新章节，含 heading)                         │
 │    position: "before" | "after" | "first_child" | "last_child"│
+│                                                             │
+│  Output (JSON):                                             │
+│    {"success": true, "inserted_at": 85,                     │
+│     "new_section_path": "requirements/new-feature"}         │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-#### doc_delete
+#### invar_doc_delete
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  doc_delete                                                 │
+│  invar_doc_delete                                           │
 │  ───────────────────────────────────────────────────────────│
 │  Purpose: 删除章节                                           │
 │                                                             │
@@ -171,7 +198,9 @@ DX-76 (文档阅读):  注意力漂移  →  遗漏需求    →  影响完整�
 │    section: str                                             │
 │    include_children: bool = True                            │
 │                                                             │
-│  Output: 确认删除的内容 (可撤销)                             │
+│  Output (JSON):                                             │
+│    {"success": true, "deleted_content": "...",              │
+│     "deleted_lines": [48, 80]}                              │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -200,10 +229,14 @@ DX-76 (文档阅读):  注意力漂移  →  遗漏需求    →  影响完整�
 │                                                             │
 │  Line Anchor:                                               │
 │    "@48" → 第48行开始的章节                                  │
-│    - 从 doc_toc 输出直接使用                                 │
+│    - 从 invar_doc_toc 输出直接使用                           │
+│                                                             │
+│  Frontmatter:                                               │
+│    "@frontmatter" → YAML front matter 块                    │
+│    - 特殊保留路径                                            │
 │                                                             │
 │  歧义处理:                                                   │
-│    doc_read file.md "overview"                              │
+│    invar_doc_read file.md "overview"                        │
 │    → Error: Ambiguous "overview" matches:                   │
 │         1. introduction/overview (@5)                       │
 │         2. summary/overview (@180)                          │
@@ -358,9 +391,15 @@ Phase B (立即): 添加文档处理协议到 skill 提示词
 |------|------|------|
 | Parser | markdown-it-py | 内置行号，CommonMark 兼容 |
 | 架构 | Core + Shell 分层 | 符合 Invar 规范 |
-| 命名 | doc_* 前缀 | 简短清晰 |
+| 命名 | `invar_doc_*` 前缀 | 与 `invar_guard`, `invar_sig`, `invar_map` 一致 |
 | 格式 | 仅 Markdown | 现阶段足够，可扩展 |
 | 缓存 | 不需要 | 工具不消耗 token |
+| 输出格式 | JSON 默认，可选 text | Agent native (更易解析) |
+| 多文件 | 支持 glob pattern | toc/find 支持批量操作 |
+| Setext headings | 支持 | `===` 和 `---` 下划线标题 |
+| Front matter | 显示 + 可查询 | toc 显示位置，`@frontmatter` 可访问 |
+| 结构校验 | 静默 (A) | 不校验层级跳跃，与 markdown 容忍度一致 |
+| 内部链接 | 延后 | 后续版本考虑 `[text](#anchor)` 导航 |
 
 ---
 
@@ -391,6 +430,7 @@ Content
 - ✅ Fenced code blocks — 正确识别为代码
 - ✅ Tables — 正确处理
 - ✅ HTML blocks — 正确跳过
+- ✅ Setext headings — `===` (H1) 和 `---` (H2) 原生支持
 - ⚠️ Front matter — 需要 `mdit-py-plugins` 扩展
 
 ---
@@ -401,6 +441,7 @@ Content
 |---------|------|---------|
 | 0.1 | 2026-01-02 | Initial draft for discussion |
 | 0.2 | 2026-01-02 | 完整工具设计、架构决策 (markdown-it-py)、章节寻址语法 |
+| 0.3 | 2026-01-02 | 最终设计决策: `invar_doc_*` 命名、JSON 默认输出、多文件支持、Setext/Frontmatter 处理 |
 
 ---
 
