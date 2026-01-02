@@ -17,6 +17,7 @@ from invar.mcp.handlers import (
     _run_doc_find,
     _run_doc_insert,
     _run_doc_read,
+    _run_doc_read_many,
     _run_doc_replace,
     _run_doc_toc,
 )
@@ -320,3 +321,216 @@ class TestErrorHandling:
 
         # Verify it's a contract error about size
         assert "len(source) <= 10_000_000" in str(exc_info.value) or "PreContractError" in str(exc_info.type)
+
+
+class TestUnicodeFuzzyMatching:
+    """Test DX-77 Phase A: Unicode-aware fuzzy matching."""
+
+    @pytest.fixture
+    def unicode_markdown_file(self, tmp_path: Path) -> Path:
+        """Create markdown file with Unicode (Chinese/Japanese) section titles."""
+        content = """# Main Title
+
+Introduction paragraph.
+
+## Phase A 实现计划
+
+Chinese section content about implementation plan.
+
+### 验证计划
+
+Nested verification plan.
+
+## Phase B テスト
+
+Japanese section content about testing.
+
+## Phase C Проверка
+
+Cyrillic section content about verification.
+"""
+        md_file = tmp_path / "unicode_test.md"
+        md_file.write_text(content, encoding="utf-8")
+        return md_file
+
+    async def test_fuzzy_match_chinese(self, unicode_markdown_file: Path):
+        """Test fuzzy matching with Chinese characters."""
+        import json
+
+        args = {
+            "file": str(unicode_markdown_file),
+            "section": "实现计划"  # Should match "Phase A 实现计划"
+        }
+        result = await _run_doc_read(args)
+
+        assert len(result) == 1
+        data = json.loads(result[0].text)
+        assert "Phase A 实现计划" in data["content"]
+        assert "Chinese section content" in data["content"]
+
+    async def test_fuzzy_match_japanese(self, unicode_markdown_file: Path):
+        """Test fuzzy matching with Japanese characters."""
+        import json
+
+        args = {
+            "file": str(unicode_markdown_file),
+            "section": "テスト"  # Should match "Phase B テスト"
+        }
+        result = await _run_doc_read(args)
+
+        assert len(result) == 1
+        data = json.loads(result[0].text)
+        assert "Phase B テスト" in data["content"]
+        assert "Japanese section content" in data["content"]
+
+    async def test_fuzzy_match_cyrillic(self, unicode_markdown_file: Path):
+        """Test fuzzy matching with Cyrillic characters."""
+        import json
+
+        args = {
+            "file": str(unicode_markdown_file),
+            "section": "Проверка"  # Should match "Phase C Проверка"
+        }
+        result = await _run_doc_read(args)
+
+        assert len(result) == 1
+        data = json.loads(result[0].text)
+        assert "Phase C Проверка" in data["content"]
+        assert "Cyrillic section content" in data["content"]
+
+    async def test_fuzzy_match_mixed_ascii_chinese(self, unicode_markdown_file: Path):
+        """Test fuzzy matching with mixed ASCII and Chinese."""
+        import json
+
+        args = {
+            "file": str(unicode_markdown_file),
+            "section": "phasea"  # Should match "Phase A 实现计划" (case-insensitive, no spaces)
+        }
+        result = await _run_doc_read(args)
+
+        assert len(result) == 1
+        data = json.loads(result[0].text)
+        assert "Phase A 实现计划" in data["content"]
+
+
+class TestDocReadMany:
+    """Test DX-77 Phase A: Batch section reading."""
+
+    @pytest.fixture
+    def multi_section_file(self, tmp_path: Path) -> Path:
+        """Create markdown file with multiple sections for batch reading."""
+        content = """# Main Title
+
+Introduction.
+
+## Section A
+
+Content A.
+
+## Section B
+
+Content B.
+
+## Section C
+
+Content C.
+
+### Subsection C.1
+
+Nested content.
+"""
+        md_file = tmp_path / "multi_test.md"
+        md_file.write_text(content)
+        return md_file
+
+    async def test_read_many_sections(self, multi_section_file: Path):
+        """Test reading multiple sections in one call."""
+        args = {
+            "file": str(multi_section_file),
+            "sections": ["section-a", "section-b", "section-c"]
+        }
+        result = await _run_doc_read_many(args)
+
+        assert len(result) == 1
+        # Result should be JSON array of section dicts
+        import json
+        sections = json.loads(result[0].text)
+
+        assert len(sections) == 3
+        assert sections[0]["path"] == "section-a"
+        assert "Content A" in sections[0]["content"]
+        assert sections[1]["path"] == "section-b"
+        assert "Content B" in sections[1]["content"]
+        assert sections[2]["path"] == "section-c"
+        assert "Content C" in sections[2]["content"]
+
+    async def test_read_many_with_children(self, multi_section_file: Path):
+        """Test reading section with children included."""
+        args = {
+            "file": str(multi_section_file),
+            "sections": ["section-c"],
+            "include_children": True
+        }
+        result = await _run_doc_read_many(args)
+
+        assert len(result) == 1
+        import json
+        sections = json.loads(result[0].text)
+
+        assert len(sections) == 1
+        # Should include subsection content
+        assert "Subsection C.1" in sections[0]["content"]
+        assert "Nested content" in sections[0]["content"]
+
+    async def test_read_many_without_children(self, multi_section_file: Path):
+        """Test reading section without children."""
+        args = {
+            "file": str(multi_section_file),
+            "sections": ["section-c"],
+            "include_children": False
+        }
+        result = await _run_doc_read_many(args)
+
+        assert len(result) == 1
+        import json
+        sections = json.loads(result[0].text)
+
+        assert len(sections) == 1
+        # Should NOT include subsection content
+        assert "Subsection C.1" not in sections[0]["content"]
+
+    async def test_read_many_section_not_found(self, multi_section_file: Path):
+        """Test batch reading with non-existent section."""
+        args = {
+            "file": str(multi_section_file),
+            "sections": ["section-a", "nonexistent", "section-b"]
+        }
+        result = await _run_doc_read_many(args)
+
+        assert len(result) == 1
+        assert "Error" in result[0].text
+        assert "not found" in result[0].text.lower()
+
+    async def test_read_many_empty_sections_list(self, multi_section_file: Path):
+        """Test batch reading with empty sections list."""
+        args = {
+            "file": str(multi_section_file),
+            "sections": []
+        }
+        result = await _run_doc_read_many(args)
+
+        assert len(result) == 1
+        assert "Error" in result[0].text
+        assert "required" in result[0].text.lower()
+
+    async def test_read_many_missing_file(self):
+        """Test batch reading with missing file."""
+        args = {
+            "file": "/nonexistent/file.md",
+            "sections": ["section-a"]
+        }
+        result = await _run_doc_read_many(args)
+
+        assert len(result) == 1
+        assert "Error" in result[0].text
+        assert "not found" in result[0].text.lower()

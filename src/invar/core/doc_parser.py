@@ -491,6 +491,30 @@ def find_section(sections: list[Section], path: str) -> Section | None:
     return _find_by_slug_or_fuzzy(sections, path)  # type: ignore[no-any-return]
 
 
+@pre(lambda section: section.line_end >= section.line_start)
+@pre(lambda section: section.line_start >= 1)
+@post(lambda result: result >= 1)
+def _get_last_line(section: Section) -> int:
+    """Get the last line number of a section, including all descendants.
+
+    Examples:
+        >>> s = Section("Title", "title", 1, 1, 5, 100, "title", [])
+        >>> _get_last_line(s)
+        5
+        >>> parent = Section("Parent", "parent", 1, 1, 4, 100, "parent", [
+        ...     Section("Child", "child", 2, 5, 8, 50, "parent/child", [])
+        ... ])
+        >>> _get_last_line(parent)
+        8
+    """
+    if not section.children:
+        return section.line_end
+
+    # Recursively find the last line of the last child
+    last_child = section.children[-1]
+    return _get_last_line(last_child)
+
+
 @pre(lambda source, section, include_children=True: section.line_start >= 1)
 @pre(lambda source, section, include_children=True: section.line_end >= section.line_start)
 @pre(lambda source, section, include_children=True: section.line_end <= len(source.split("\n")))  # Bounds check
@@ -499,6 +523,7 @@ def extract_content(source: str, section: Section, include_children: bool = True
 
     Returns the content from line_start to line_end (1-indexed, inclusive).
     When include_children=False, stops at first child heading.
+    When include_children=True, includes all descendant sections.
 
     Examples:
         >>> source = "# Title\\n\\nParagraph one.\\n\\nParagraph two."
@@ -516,11 +541,19 @@ def extract_content(source: str, section: Section, include_children: bool = True
         >>> src = "# Parent\\nIntro\\n## Child\\nBody"
         >>> extract_content(src, parent, include_children=False)
         '# Parent\\nIntro'
+
+        >>> # With children
+        >>> extract_content(src, parent, include_children=True)
+        '# Parent\\nIntro\\n## Child\\nBody'
     """
     lines = source.split("\n")
     start_idx = section.line_start - 1
 
-    if include_children or not section.children:
+    if include_children:
+        # Include all descendants
+        end_idx = _get_last_line(section)
+    elif not section.children:
+        # No children to exclude
         end_idx = section.line_end
     else:
         # Stop before first child
