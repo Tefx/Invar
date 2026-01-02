@@ -1,13 +1,16 @@
 # DX-77: MCP Document Tools Enhancements
 
+**Status:** ✅ Phase A Completed (Archived 2026-01-03)
+**Created:** 2026-01-02
+**Completed:** Unicode fuzzy (0d6b721), Batch read (9f888b6), Tests (641a772)
+**Dependencies:** DX-76 Phase A-2 (completed)
+
 ## Executive Summary
 
 Based on real-world usage of DX-76 document tools, this proposal identifies improvement opportunities to enhance usability, efficiency, and agent adoption. Focus areas: fuzzy matching, batch operations, workflow optimization, and error handling.
 
-**Status**: Draft
 **Priority**: Medium
-**Effort**: Small-Medium (1-2 weeks)
-**Dependencies**: DX-76 Phase A-2 (completed)
+**Effort**: 1 week (Phase A completed)
 
 ---
 
@@ -396,4 +399,6 @@ assert len(results) == 3
 
 ## Document History
 
-- **2025-01-03**: Initial draft based on real usage feedback
+- **2026-01-03**: Initial draft based on real usage feedback
+- **2026-01-03**: Phase A implementation completed (Unicode fuzzy + batch read)
+- **2026-01-03**: ✅ Archived - All deliverables completed, tests passing

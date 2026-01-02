@@ -1,8 +1,9 @@
 # DX-76: Structured Document Query Tools
 
-**Status:** Discussion
+**Status:** ✅ Completed (Archived 2026-01-03)
 **Created:** 2026-01-02
-**Related:** DX-75 (Attention-Aware Framework)
+**Completed:** Phase A-1 (d256a37), Phase A-2 (9ec8f9d), Phase B (d42161b)
+**Related:** DX-75 (Attention-Aware Framework), DX-77 (Enhancements)
 
 ## Problem Statement
 
@@ -442,7 +443,9 @@ Content
 | 0.1 | 2026-01-02 | Initial draft for discussion |
 | 0.2 | 2026-01-02 | 完整工具设计、架构决策 (markdown-it-py)、章节寻址语法 |
 | 0.3 | 2026-01-02 | 最终设计决策: `invar_doc_*` 命名、JSON 默认输出、多文件支持、Setext/Frontmatter 处理 |
+| 1.0 | 2026-01-02 | ✅ Phase A-1 实施完成 (d256a37): doc_toc, doc_read, doc_find + doc_parser |
+| 1.1 | 2026-01-02 | ✅ Phase A-2 实施完成 (9ec8f9d): doc_replace, doc_insert, doc_delete |
+| 1.2 | 2026-01-02 | ✅ Phase B 实施完成 (d42161b): INVAR.md protocol updates |
+| 2.0 | 2026-01-03 | ✅ Archived - All phases complete, enhanced by DX-77 |
 
 ---
-
-*Discussion phase - not yet approved for implementation.*

@@ -1,7 +1,8 @@
 # DX-75: Attention-Aware Framework Architecture
 
-**Status:** Draft
+**Status:** Phase B Complete (Phase A deferred pending validation)
 **Created:** 2026-01-02
+**Phase B Completed:** 2026-01-02 (review v7.0, develop v5.1)
 **Supersedes:** DX-74-tiered-attention-defense.md (merged)
 **References:** [DX-74-experiment-report.md](./DX-74-experiment-report.md)
 
@@ -951,6 +952,7 @@ class IsolationManager:
 | 0.2 | 2026-01-02 | Added Part 4.5: Agent automation mechanisms |
 | 0.3 | 2026-01-02 | **Phase B 实施完成**: 轻量级提示词方案，重构 Part 6 路线图 |
 | 0.4 | 2026-01-02 | 添加详细验证计划 (6.2): V4/V7 验证步骤、记录模板、失败处理 |
+| 1.0 | 2026-01-03 | **Phase B Complete**: Archived DX-76, DX-77 (100% complete) |
 
 ---
 
