@@ -6,9 +6,19 @@ Returns Result[T, E] for error handling.
 """
 
 from pathlib import Path
+from typing import Literal
 
 from returns.result import Failure, Result, Success
 
+from invar.core.doc_edit import (
+    delete_section as core_delete_section,
+)
+from invar.core.doc_edit import (
+    insert_section as core_insert_section,
+)
+from invar.core.doc_edit import (
+    replace_section as core_replace_section,
+)
 from invar.core.doc_parser import (
     DocumentToc,
     Section,
@@ -151,3 +161,181 @@ def find_sections(
         matches = content_matches
 
     return Success(matches)
+
+
+# DX-76 Phase A-2: Extended editing tools
+
+# @shell_complexity: Read + find + edit + write orchestration
+def replace_section_content(
+    path: Path,
+    section_path: str,
+    new_content: str,
+    keep_heading: bool = True,
+) -> Result[dict[str, str | int], str]:
+    """Replace a section's content in a document.
+
+    Args:
+        path: Path to markdown file
+        section_path: Section path (slug, fuzzy, index, or line anchor)
+        new_content: New content to replace the section with
+        keep_heading: If True, preserve the original heading line
+
+    Returns:
+        Result containing info about the replacement or error message
+
+    Examples:
+        >>> from pathlib import Path
+        >>> import tempfile
+        >>> with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False) as f:
+        ...     _ = f.write("# Title\\n\\nOld content\\n\\n# Next")
+        ...     p = Path(f.name)
+        >>> result = replace_section_content(p, "title", "New content\\n")
+        >>> isinstance(result, Success)
+        True
+        >>> "New content" in p.read_text()
+        True
+        >>> p.unlink()
+    """
+    try:
+        content = path.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return Failure(f"File not found: {path}")
+    except PermissionError:
+        return Failure(f"Permission denied: {path}")
+    except UnicodeDecodeError:
+        return Failure(f"Failed to decode file as UTF-8: {path}")
+
+    toc = parse_toc(content)
+    section = find_section(toc.sections, section_path)
+
+    if section is None:
+        return Failure(f"Section not found: {section_path}")
+
+    old_content = extract_content(content, section)
+    new_source = core_replace_section(content, section, new_content, keep_heading)
+
+    try:
+        path.write_text(new_source, encoding="utf-8")
+    except PermissionError:
+        return Failure(f"Permission denied: {path}")
+
+    return Success({
+        "old_content": old_content,
+        "new_line_count": len(new_source.split("\n")),
+    })
+
+
+# @shell_complexity: Read + find + insert + write orchestration
+def insert_section_content(
+    path: Path,
+    anchor_path: str,
+    content: str,
+    position: Literal["before", "after", "first_child", "last_child"] = "after",
+) -> Result[dict[str, str | int], str]:
+    """Insert new content relative to a section.
+
+    Args:
+        path: Path to markdown file
+        anchor_path: Section path for the anchor
+        content: Content to insert (should include heading if adding a section)
+        position: Where to insert relative to anchor
+
+    Returns:
+        Result containing info about the insertion or error message
+
+    Examples:
+        >>> from pathlib import Path
+        >>> import tempfile
+        >>> with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False) as f:
+        ...     _ = f.write("# Title\\n\\nContent")
+        ...     p = Path(f.name)
+        >>> result = insert_section_content(p, "title", "\\n## Subsection\\n\\nNew text", "after")
+        >>> isinstance(result, Success)
+        True
+        >>> "## Subsection" in p.read_text()
+        True
+        >>> p.unlink()
+    """
+    try:
+        source = path.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return Failure(f"File not found: {path}")
+    except PermissionError:
+        return Failure(f"Permission denied: {path}")
+    except UnicodeDecodeError:
+        return Failure(f"Failed to decode file as UTF-8: {path}")
+
+    toc = parse_toc(source)
+    anchor = find_section(toc.sections, anchor_path)
+
+    if anchor is None:
+        return Failure(f"Section not found: {anchor_path}")
+
+    new_source = core_insert_section(source, anchor, content, position)
+
+    try:
+        path.write_text(new_source, encoding="utf-8")
+    except PermissionError:
+        return Failure(f"Permission denied: {path}")
+
+    return Success({
+        "inserted_at": anchor.line_end if position == "after" else anchor.line_start,
+        "new_line_count": len(new_source.split("\n")),
+    })
+
+
+# @shell_complexity: Read + find + delete + write orchestration
+def delete_section_content(
+    path: Path,
+    section_path: str,
+) -> Result[dict[str, str | int], str]:
+    """Delete a section from a document.
+
+    Args:
+        path: Path to markdown file
+        section_path: Section path (slug, fuzzy, index, or line anchor)
+
+    Returns:
+        Result containing info about the deletion or error message
+
+    Examples:
+        >>> from pathlib import Path
+        >>> import tempfile
+        >>> with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False) as f:
+        ...     _ = f.write("# Keep\\n\\n# Delete\\n\\nContent\\n\\n# Also Keep")
+        ...     p = Path(f.name)
+        >>> result = delete_section_content(p, "delete")
+        >>> isinstance(result, Success)
+        True
+        >>> "# Delete" not in p.read_text()
+        True
+        >>> p.unlink()
+    """
+    try:
+        source = path.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return Failure(f"File not found: {path}")
+    except PermissionError:
+        return Failure(f"Permission denied: {path}")
+    except UnicodeDecodeError:
+        return Failure(f"Failed to decode file as UTF-8: {path}")
+
+    toc = parse_toc(source)
+    section = find_section(toc.sections, section_path)
+
+    if section is None:
+        return Failure(f"Section not found: {section_path}")
+
+    deleted_content = extract_content(source, section)
+    new_source = core_delete_section(source, section)
+
+    try:
+        path.write_text(new_source, encoding="utf-8")
+    except PermissionError:
+        return Failure(f"Permission denied: {path}")
+
+    return Success({
+        "deleted_content": deleted_content,
+        "deleted_lines": [section.line_start, section.line_end],
+        "new_line_count": len(new_source.split("\n")),
+    })

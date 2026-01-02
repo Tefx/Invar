@@ -4,52 +4,30 @@ Invar MCP Server implementation.
 Exposes invar guard, sig, and map as first-class MCP tools.
 Part of DX-16: Agent Tool Enforcement.
 DX-52: Added Phase 2 smart re-spawn for project Python compatibility.
+DX-76: Added doc_toc, doc_read, doc_find for structured document queries.
 """
 
 from __future__ import annotations
 
-import json
 import os
-import subprocess
-import sys
 from pathlib import Path
 from typing import Any
 
 from mcp.server import Server
 from mcp.types import TextContent, Tool
 
+from invar.mcp.handlers import (
+    _run_doc_delete,
+    _run_doc_find,
+    _run_doc_insert,
+    _run_doc_read,
+    _run_doc_replace,
+    _run_doc_toc,
+    _run_guard,
+    _run_map,
+    _run_sig,
+)
 from invar.shell.subprocess_env import should_respawn
-
-
-# @invar:allow shell_result: Pure validation helper, no I/O, returns tuple not Result
-# @shell_complexity: Security validation requires multiple checks
-def _validate_path(path: str) -> tuple[bool, str]:
-    """Validate path argument for safety.
-
-    Returns (is_valid, error_message).
-    Rejects paths that could be interpreted as shell commands or flags.
-    """
-    if not path:
-        return True, ""  # Empty path defaults to "." in handlers
-
-    # Reject if looks like a flag (starts with -)
-    if path.startswith("-"):
-        return False, f"Invalid path: cannot start with '-': {path}"
-
-    # Reject shell metacharacters that could cause issues
-    dangerous_chars = [";", "&", "|", "$", "`", "\n", "\r"]
-    for char in dangerous_chars:
-        if char in path:
-            return False, f"Invalid path: contains forbidden character: {char!r}"
-
-    # Try to resolve path - this catches malformed paths
-    try:
-        Path(path).resolve()
-    except (OSError, ValueError) as e:
-        return False, f"Invalid path: {e}"
-
-    return True, ""
-
 
 # Strong instructions for agent behavior (DX-16 + DX-17 + DX-26)
 INVAR_INSTRUCTIONS = """
@@ -183,6 +161,177 @@ def _get_map_tool() -> Tool:
     )
 
 
+# DX-76: Document query tools
+# @shell_orchestration: MCP tool factory - creates Tool objects
+# @invar:allow shell_result: MCP tool factory for doc_toc command
+def _get_doc_toc_tool() -> Tool:
+    """Define the invar_doc_toc tool."""
+    return Tool(
+        name="invar_doc_toc",
+        description=(
+            "Extract document structure (Table of Contents) from markdown files. "
+            "Shows headings hierarchy with line numbers and character counts. "
+            "Use this to understand document structure before reading sections."
+        ),
+        inputSchema={
+            "type": "object",
+            "properties": {
+                "file": {"type": "string", "description": "Path to markdown file"},
+                "depth": {
+                    "type": "integer",
+                    "description": "Maximum heading depth to include (1-6)",
+                    "default": 6,
+                },
+            },
+            "required": ["file"],
+        },
+    )
+
+
+# @shell_orchestration: MCP tool factory - creates Tool objects
+# @invar:allow shell_result: MCP tool factory for doc_read command
+def _get_doc_read_tool() -> Tool:
+    """Define the invar_doc_read tool."""
+    return Tool(
+        name="invar_doc_read",
+        description=(
+            "Read a specific section from a markdown document. "
+            "Supports multiple addressing formats: slug path, fuzzy match, "
+            "index (#0/#1), or line anchor (@48). "
+            "Use after invar_doc_toc to read specific sections."
+        ),
+        inputSchema={
+            "type": "object",
+            "properties": {
+                "file": {"type": "string", "description": "Path to markdown file"},
+                "section": {
+                    "type": "string",
+                    "description": (
+                        "Section path: slug ('requirements/auth'), "
+                        "fuzzy ('auth'), index ('#0/#1'), or line ('@48')"
+                    ),
+                },
+            },
+            "required": ["file", "section"],
+        },
+    )
+
+
+# @shell_orchestration: MCP tool factory - creates Tool objects
+# @invar:allow shell_result: MCP tool factory for doc_find command
+def _get_doc_find_tool() -> Tool:
+    """Define the invar_doc_find tool."""
+    return Tool(
+        name="invar_doc_find",
+        description=(
+            "Find sections in markdown documents matching a pattern. "
+            "Supports glob patterns for titles and optional content search. "
+            "Returns matching sections with paths and line numbers."
+        ),
+        inputSchema={
+            "type": "object",
+            "properties": {
+                "file": {"type": "string", "description": "Path to markdown file"},
+                "pattern": {
+                    "type": "string",
+                    "description": "Title pattern (glob-style, e.g., '*auth*')",
+                },
+                "content": {
+                    "type": "string",
+                    "description": "Optional content search pattern",
+                },
+            },
+            "required": ["file", "pattern"],
+        },
+    )
+
+
+# DX-76 Phase A-2: Extended editing tools
+# @shell_orchestration: MCP tool factory - creates Tool objects
+# @invar:allow shell_result: MCP tool factory for doc_replace command
+def _get_doc_replace_tool() -> Tool:
+    """Define the invar_doc_replace tool."""
+    return Tool(
+        name="invar_doc_replace",
+        description=(
+            "Replace a section's content in a markdown document. "
+            "Use after invar_doc_toc to identify the target section."
+        ),
+        inputSchema={
+            "type": "object",
+            "properties": {
+                "file": {"type": "string", "description": "Path to markdown file"},
+                "section": {
+                    "type": "string",
+                    "description": "Section path to replace (slug, fuzzy, index, or line anchor)",
+                },
+                "content": {"type": "string", "description": "New content to replace the section with"},
+                "keep_heading": {
+                    "type": "boolean",
+                    "description": "If true, preserve the original heading line",
+                    "default": True,
+                },
+            },
+            "required": ["file", "section", "content"],
+        },
+    )
+
+
+# @shell_orchestration: MCP tool factory - creates Tool objects
+# @invar:allow shell_result: MCP tool factory for doc_insert command
+def _get_doc_insert_tool() -> Tool:
+    """Define the invar_doc_insert tool."""
+    return Tool(
+        name="invar_doc_insert",
+        description=(
+            "Insert new content relative to a section in a markdown document. "
+            "Content should include heading if adding a new section."
+        ),
+        inputSchema={
+            "type": "object",
+            "properties": {
+                "file": {"type": "string", "description": "Path to markdown file"},
+                "anchor": {
+                    "type": "string",
+                    "description": "Section path for the anchor (slug, fuzzy, index, or line anchor)",
+                },
+                "content": {"type": "string", "description": "Content to insert (include heading if new section)"},
+                "position": {
+                    "type": "string",
+                    "description": "Where to insert: 'before', 'after', 'first_child', 'last_child'",
+                    "default": "after",
+                    "enum": ["before", "after", "first_child", "last_child"],
+                },
+            },
+            "required": ["file", "anchor", "content"],
+        },
+    )
+
+
+# @shell_orchestration: MCP tool factory - creates Tool objects
+# @invar:allow shell_result: MCP tool factory for doc_delete command
+def _get_doc_delete_tool() -> Tool:
+    """Define the invar_doc_delete tool."""
+    return Tool(
+        name="invar_doc_delete",
+        description=(
+            "Delete a section from a markdown document. "
+            "Removes the heading and all content until the next same-level heading."
+        ),
+        inputSchema={
+            "type": "object",
+            "properties": {
+                "file": {"type": "string", "description": "Path to markdown file"},
+                "section": {
+                    "type": "string",
+                    "description": "Section path to delete (slug, fuzzy, index, or line anchor)",
+                },
+            },
+            "required": ["file", "section"],
+        },
+    )
+
+
 # @shell_orchestration: MCP server setup - registers handlers with framework
 # @invar:allow shell_result: MCP framework API returns Server
 def create_server() -> Server:
@@ -191,120 +340,41 @@ def create_server() -> Server:
 
     @server.list_tools()
     async def list_tools() -> list[Tool]:
-        return [_get_guard_tool(), _get_sig_tool(), _get_map_tool()]
+        return [
+            _get_guard_tool(),
+            _get_sig_tool(),
+            _get_map_tool(),
+            # DX-76: Document query tools
+            _get_doc_toc_tool(),
+            _get_doc_read_tool(),
+            _get_doc_find_tool(),
+            # DX-76 Phase A-2: Document editing tools
+            _get_doc_replace_tool(),
+            _get_doc_insert_tool(),
+            _get_doc_delete_tool(),
+        ]
 
     @server.call_tool()
     async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
-        handlers = {"invar_guard": _run_guard, "invar_sig": _run_sig, "invar_map": _run_map}
+        handlers = {
+            "invar_guard": _run_guard,
+            "invar_sig": _run_sig,
+            "invar_map": _run_map,
+            # DX-76: Document query handlers
+            "invar_doc_toc": _run_doc_toc,
+            "invar_doc_read": _run_doc_read,
+            "invar_doc_find": _run_doc_find,
+            # DX-76 Phase A-2: Document editing handlers
+            "invar_doc_replace": _run_doc_replace,
+            "invar_doc_insert": _run_doc_insert,
+            "invar_doc_delete": _run_doc_delete,
+        }
         handler = handlers.get(name)
         if handler:
             return await handler(arguments)
         return [TextContent(type="text", text=f"Unknown tool: {name}")]
 
     return server
-
-
-# @shell_orchestration: MCP handler - subprocess is called inside
-# @shell_complexity: Guard command with multiple optional flags
-# @invar:allow shell_result: MCP handler for guard tool
-async def _run_guard(args: dict[str, Any]) -> list[TextContent]:
-    """Run invar guard command."""
-    path = args.get("path", ".")
-    is_valid, error = _validate_path(path)
-    if not is_valid:
-        return [TextContent(type="text", text=f"Error: {error}")]
-
-    cmd = [sys.executable, "-m", "invar.shell.commands.guard", "guard"]
-    cmd.append(path)
-
-    if args.get("changed", True):
-        cmd.append("--changed")
-    if args.get("strict", False):
-        cmd.append("--strict")
-    # DX-37: Optional coverage collection
-    if args.get("coverage", False):
-        cmd.append("--coverage")
-    # DX-63: Contract coverage check only
-    if args.get("contracts_only", False):
-        cmd.append("--contracts-only")
-
-    # DX-26: TTY auto-detection - MCP runs in non-TTY, so agent JSON output is automatic
-    # No explicit flag needed
-
-    return await _execute_command(cmd)
-
-
-# @shell_orchestration: MCP handler - subprocess is called inside
-# @invar:allow shell_result: MCP handler for sig tool
-async def _run_sig(args: dict[str, Any]) -> list[TextContent]:
-    """Run invar sig command."""
-    target = args.get("target", "")
-    if not target:
-        return [TextContent(type="text", text="Error: target is required")]
-
-    # Validate target (can be file path or file::symbol)
-    target_path = target.split("::")[0] if "::" in target else target
-    is_valid, error = _validate_path(target_path)
-    if not is_valid:
-        return [TextContent(type="text", text=f"Error: {error}")]
-
-    cmd = [sys.executable, "-m", "invar.shell.commands.guard", "sig", target, "--json"]
-    return await _execute_command(cmd)
-
-
-# @shell_orchestration: MCP handler - subprocess is called inside
-# @invar:allow shell_result: MCP handler for map tool
-async def _run_map(args: dict[str, Any]) -> list[TextContent]:
-    """Run invar map command."""
-    path = args.get("path", ".")
-    is_valid, error = _validate_path(path)
-    if not is_valid:
-        return [TextContent(type="text", text=f"Error: {error}")]
-
-    cmd = [sys.executable, "-m", "invar.shell.commands.guard", "map"]
-    cmd.append(path)
-
-    top = args.get("top", 10)
-    cmd.extend(["--top", str(top)])
-
-    cmd.append("--json")
-    return await _execute_command(cmd)
-
-
-# @shell_complexity: Command execution with error handling branches
-# @invar:allow shell_result: MCP subprocess wrapper utility
-async def _execute_command(cmd: list[str], timeout: int = 600) -> list[TextContent]:
-    """Execute a command and return the result.
-
-    Args:
-        cmd: Command to execute
-        timeout: Maximum time in seconds (default: 600, accommodates full Guard cycle)
-    """
-    try:
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-        )
-
-        output = result.stdout
-        if result.stderr:
-            output += f"\n\nStderr:\n{result.stderr}"
-
-        # Try to parse as JSON for better formatting
-        try:
-            parsed = json.loads(result.stdout)
-            output = json.dumps(parsed, indent=2)
-        except json.JSONDecodeError:
-            pass
-
-        return [TextContent(type="text", text=output)]
-
-    except subprocess.TimeoutExpired:
-        return [TextContent(type="text", text=f"Error: Command timed out ({timeout}s)")]
-    except Exception as e:
-        return [TextContent(type="text", text=f"Error: {e}")]
 
 
 # @shell_orchestration: MCP server entry point - runs async server
@@ -315,6 +385,8 @@ def run_server() -> None:
     to ensure C extensions are compatible with project's Python version.
     """
     import asyncio
+    import subprocess
+    import sys
 
     from mcp.server.stdio import stdio_server
 
@@ -324,8 +396,6 @@ def run_server() -> None:
 
     if do_respawn and project_python is not None:
         # Re-spawn with project Python (has both invar AND project deps)
-        import subprocess
-        import sys
 
         if os.name == "nt":
             # Windows: execv doesn't replace process, use subprocess + exit
