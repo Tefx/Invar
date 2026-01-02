@@ -76,7 +76,7 @@ class DocumentToc:
     frontmatter: FrontMatter | None
 
 
-@pre(lambda title: isinstance(title, str))
+@pre(lambda title: len(title) <= 1000)  # Reasonable max title length
 @post(lambda result: result == "" or re.match(r"^[a-z0-9]+(-[a-z0-9]+)*$", result))
 def _slugify(title: str) -> str:
     """Convert title to URL-friendly slug.
@@ -100,8 +100,8 @@ def _slugify(title: str) -> str:
     return slug
 
 
-@pre(lambda sections: all(isinstance(s, Section) for s in sections))
-@post(lambda result: all(isinstance(s, Section) for s in result))
+@pre(lambda sections: all(1 <= s.level <= 6 for s in sections))  # Valid heading levels
+@post(lambda result: all(1 <= s.level <= 6 for s in result))
 def _build_section_tree(sections: list[Section]) -> list[Section]:
     """Build hierarchical tree from flat section list.
 
@@ -147,7 +147,7 @@ def _build_section_tree(sections: list[Section]) -> list[Section]:
 
 
 @skip_property_test("external_io: hypothesis inspect module incompatibility with Python 3.14")
-@pre(lambda source: isinstance(source, str))  # Accepts empty string
+@pre(lambda source: len(source) <= 10_000_000)  # Max 10MB document
 @post(lambda result: all(s.line_start >= 1 for s in result.sections))
 @post(lambda result: all(s.line_end >= s.line_start for s in result.sections))
 @post(lambda result: all(1 <= s.level <= 6 for s in result.sections))
@@ -453,10 +453,9 @@ def find_section(sections: list[Section], path: str) -> Section | None:
     return _find_by_slug_or_fuzzy(sections, path)
 
 
-@pre(lambda source, section, include_children=True: isinstance(source, str) and isinstance(section, Section))
 @pre(lambda source, section, include_children=True: section.line_start >= 1)
 @pre(lambda source, section, include_children=True: section.line_end >= section.line_start)
-@post(lambda result: isinstance(result, str))
+@pre(lambda source, section, include_children=True: section.line_end <= len(source.split("\n")))  # Bounds check
 def extract_content(source: str, section: Section, include_children: bool = True) -> str:
     """Extract section content from source.
 
@@ -473,8 +472,8 @@ def extract_content(source: str, section: Section, include_children: bool = True
         True
 
         >>> # Without children
-        >>> parent = Section("Parent", "parent", 1, 1, 5, 100, "parent", [
-        ...     Section("Child", "child", 2, 3, 5, 50, "parent/child", [])
+        >>> parent = Section("Parent", "parent", 1, 1, 4, 100, "parent", [
+        ...     Section("Child", "child", 2, 3, 4, 50, "parent/child", [])
         ... ])
         >>> src = "# Parent\\nIntro\\n## Child\\nBody"
         >>> extract_content(src, parent, include_children=False)

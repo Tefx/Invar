@@ -28,6 +28,7 @@ from invar.core.doc_parser import (
 )
 
 
+# @shell_complexity: Multiple I/O error types (OSError, IsADirectoryError, etc.) require separate handling
 def read_toc(path: Path) -> Result[DocumentToc, str]:
     """Read and parse document table of contents.
 
@@ -50,10 +51,14 @@ def read_toc(path: Path) -> Result[DocumentToc, str]:
         return Success(toc)
     except FileNotFoundError:
         return Failure(f"File not found: {path}")
+    except IsADirectoryError:
+        return Failure(f"Path is a directory, not a file: {path}")
     except PermissionError:
         return Failure(f"Permission denied: {path}")
     except UnicodeDecodeError:
         return Failure(f"Failed to decode file as UTF-8: {path}")
+    except OSError as e:
+        return Failure(f"OS error reading {path}: {e}")
 
 
 # @shell_complexity: Multiple I/O error types require separate handling
@@ -87,10 +92,14 @@ def read_section(
         content = path.read_text(encoding="utf-8")
     except FileNotFoundError:
         return Failure(f"File not found: {path}")
+    except IsADirectoryError:
+        return Failure(f"Path is a directory, not a file: {path}")
     except PermissionError:
         return Failure(f"Permission denied: {path}")
     except UnicodeDecodeError:
         return Failure(f"Failed to decode file as UTF-8: {path}")
+    except OSError as e:
+        return Failure(f"OS error reading {path}: {e}")
 
     toc = parse_toc(content)
     section = find_section(toc.sections, section_path)
@@ -137,10 +146,14 @@ def find_sections(
         content = path.read_text(encoding="utf-8")
     except FileNotFoundError:
         return Failure(f"File not found: {path}")
+    except IsADirectoryError:
+        return Failure(f"Path is a directory, not a file: {path}")
     except PermissionError:
         return Failure(f"Permission denied: {path}")
     except UnicodeDecodeError:
         return Failure(f"Failed to decode file as UTF-8: {path}")
+    except OSError as e:
+        return Failure(f"OS error reading {path}: {e}")
 
     toc = parse_toc(content)
 
@@ -212,10 +225,14 @@ def replace_section_content(
         content = path.read_text(encoding="utf-8")
     except FileNotFoundError:
         return Failure(f"File not found: {path}")
+    except IsADirectoryError:
+        return Failure(f"Path is a directory, not a file: {path}")
     except PermissionError:
         return Failure(f"Permission denied: {path}")
     except UnicodeDecodeError:
         return Failure(f"Failed to decode file as UTF-8: {path}")
+    except OSError as e:
+        return Failure(f"OS error reading {path}: {e}")
 
     toc = parse_toc(content)
     section = find_section(toc.sections, section_path)
@@ -230,6 +247,8 @@ def replace_section_content(
         path.write_text(new_source, encoding="utf-8")
     except PermissionError:
         return Failure(f"Permission denied: {path}")
+    except OSError as e:
+        return Failure(f"OS error writing {path}: {e}")
 
     return Success({
         "old_content": old_content,
@@ -272,10 +291,14 @@ def insert_section_content(
         source = path.read_text(encoding="utf-8")
     except FileNotFoundError:
         return Failure(f"File not found: {path}")
+    except IsADirectoryError:
+        return Failure(f"Path is a directory, not a file: {path}")
     except PermissionError:
         return Failure(f"Permission denied: {path}")
     except UnicodeDecodeError:
         return Failure(f"Failed to decode file as UTF-8: {path}")
+    except OSError as e:
+        return Failure(f"OS error reading {path}: {e}")
 
     toc = parse_toc(source)
     anchor = find_section(toc.sections, anchor_path)
@@ -289,6 +312,8 @@ def insert_section_content(
         path.write_text(new_source, encoding="utf-8")
     except PermissionError:
         return Failure(f"Permission denied: {path}")
+    except OSError as e:
+        return Failure(f"OS error writing {path}: {e}")
 
     return Success({
         "inserted_at": anchor.line_end if position == "after" else anchor.line_start,
@@ -329,10 +354,14 @@ def delete_section_content(
         source = path.read_text(encoding="utf-8")
     except FileNotFoundError:
         return Failure(f"File not found: {path}")
+    except IsADirectoryError:
+        return Failure(f"Path is a directory, not a file: {path}")
     except PermissionError:
         return Failure(f"Permission denied: {path}")
     except UnicodeDecodeError:
         return Failure(f"Failed to decode file as UTF-8: {path}")
+    except OSError as e:
+        return Failure(f"OS error reading {path}: {e}")
 
     toc = parse_toc(source)
     section = find_section(toc.sections, section_path)
@@ -347,6 +376,8 @@ def delete_section_content(
         path.write_text(new_source, encoding="utf-8")
     except PermissionError:
         return Failure(f"Permission denied: {path}")
+    except OSError as e:
+        return Failure(f"OS error writing {path}: {e}")
 
     return Success({
         "deleted_content": deleted_content,

@@ -23,12 +23,34 @@ from invar.shell.doc_tools import (
     replace_section_content,
 )
 
+# Max content size for stdin reading (10MB) - matches parse_toc limit
+MAX_STDIN_SIZE = 10_000_000
+
 # Create doc subcommand app
 doc_app = typer.Typer(
     name="doc",
     help="Structured document query and editing tools.",
     no_args_is_help=True,
 )
+
+
+def _read_stdin_limited() -> str:
+    """Read from stdin with size limit to prevent OOM."""
+    content = sys.stdin.read(MAX_STDIN_SIZE + 1)
+    if len(content) > MAX_STDIN_SIZE:
+        raise typer.BadParameter(f"Input exceeds maximum size of {MAX_STDIN_SIZE} bytes")
+    return content
+
+
+def _read_file_limited(path: Path) -> str:
+    """Read file with size limit to prevent OOM.
+
+    Uses single read to avoid TOCTOU race between stat and read.
+    """
+    content = path.read_text(encoding="utf-8")
+    if len(content) > MAX_STDIN_SIZE:
+        raise typer.BadParameter(f"File {path} exceeds maximum size of {MAX_STDIN_SIZE} bytes")
+    return content
 
 
 # @shell_orchestration: CLI helper for glob pattern resolution
@@ -303,11 +325,11 @@ def replace_command(
     # Read content from file or stdin
     if content_file is None:
         typer.echo("Reading content from stdin (Ctrl+D to end)...", err=True)
-        new_content = sys.stdin.read()
+        new_content = _read_stdin_limited()
     elif str(content_file) == "-":
-        new_content = sys.stdin.read()
+        new_content = _read_stdin_limited()
     else:
-        new_content = content_file.read_text(encoding="utf-8")
+        new_content = _read_file_limited(content_file)
 
     result = replace_section_content(file, section, new_content, keep_heading)
 
@@ -345,11 +367,11 @@ def insert_command(
     # Read content from file or stdin
     if content_file is None:
         typer.echo("Reading content from stdin (Ctrl+D to end)...", err=True)
-        content = sys.stdin.read()
+        content = _read_stdin_limited()
     elif str(content_file) == "-":
-        content = sys.stdin.read()
+        content = _read_stdin_limited()
     else:
-        content = content_file.read_text(encoding="utf-8")
+        content = _read_file_limited(content_file)
 
     from typing import Literal
     pos: Literal["before", "after", "first_child", "last_child"] = position  # type: ignore[assignment]
