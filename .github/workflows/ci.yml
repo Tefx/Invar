@@ -48,9 +48,15 @@ jobs:
 
       - name: Check types with mypy
         run: |
-          mypy src/invar/ --ignore-missing-imports
-          mypy runtime/src/invar_runtime/ --ignore-missing-imports
-        continue-on-error: true
+          # Type check critical modules (MCP handlers, doc tools)
+          # Using --follow-imports=silent to check only specified files, not transitive deps
+          # Gradually expanding coverage. Templates excluded as example code.
+          mypy src/invar/mcp/handlers.py \
+               src/invar/core/doc_parser.py \
+               src/invar/core/doc_edit.py \
+               src/invar/shell/doc_tools.py \
+               --ignore-missing-imports \
+               --follow-imports=silent
 
   lint:
     runs-on: ubuntu-latest
