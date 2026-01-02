@@ -1,0 +1,239 @@
+# V7 Scenario Ground Truth
+# Design principles:
+# - NO BUG markers or hints
+# - NO explanatory comments about issues
+# - NO Focus declarations
+# - NO section headers by issue category
+# - 10:1 legitimate-to-buggy code ratio
+# - ~500 lines per file
+# - Issues naturally embedded in realistic code
+
+scenario: v7
+design: production-realistic
+noise_ratio: "10:1"
+total_lines: ~2600
+total_issues: 25
+
+files:
+  - name: auth_manager.py
+    lines: 520
+    is_control: false
+    issues:
+      - id: V7-01
+        type: security
+        category: hardcoded_secret
+        line: 35
+        description: "Hardcoded API key in class constant"
+        code: 'API_KEY = "sk_live_a1b2c3d4e5f6g7h8i9j0"'
+
+      - id: V7-02
+        type: security
+        category: hardcoded_secret
+        line: 36
+        description: "Hardcoded JWT secret in class constant"
+        code: 'JWT_SECRET = "super_secret_jwt_key_do_not_share_2024"'
+
+      - id: V7-03
+        type: security
+        category: weak_crypto
+        line: 87
+        description: "SHA1 used for password hashing"
+        code: "hashlib.sha1(salted.encode()).hexdigest()"
+
+      - id: V7-04
+        type: security
+        category: timing_attack
+        line: 196
+        description: "String comparison vulnerable to timing attack"
+        code: "return stored_token == provided_token"
+
+      - id: V7-05
+        type: security
+        category: info_leak
+        line: 139
+        description: "Password logged in plaintext"
+        code: 'f"Login attempt for {username} with password {password}"'
+
+  - name: data_processor.py
+    lines: 540
+    is_control: false
+    issues:
+      - id: V7-06
+        type: contract
+        category: trivial_pre
+        line: 51
+        description: "Trivial @pre only checks isinstance"
+        code: "@pre(lambda value: isinstance(value, str))"
+
+      - id: V7-07
+        type: contract
+        category: trivial_pre
+        line: 92
+        description: "Trivial @pre only checks isinstance"
+        code: "@pre(lambda text: isinstance(text, str))"
+
+      - id: V7-08
+        type: error_handling
+        category: bare_except
+        line: 74
+        description: "Bare except silently returns None"
+        code: "except:\n            return None"
+
+      - id: V7-09
+        type: error_handling
+        category: bare_except
+        line: 114
+        description: "Bare except silently returns empty dict"
+        code: "except:\n            return {}"
+
+      - id: V7-10
+        type: logic
+        category: missing_validation
+        line: 267
+        description: "Phone validation accepts any format"
+        code: "return bool(re.match(r'^[0-9+\\-\\s()]+$', phone))"
+
+  - name: api_service.py
+    lines: 530
+    is_control: false
+    issues:
+      - id: V7-11
+        type: security
+        category: hardcoded_secret
+        line: 260
+        description: "Hardcoded webhook secret key"
+        code: 'secret_key: str = "webhook_secret_key_2024"'
+
+      - id: V7-12
+        type: security
+        category: weak_auth
+        line: 290
+        description: "Weak signature verification (prefix match)"
+        code: "return signature == expected[:len(signature)]"
+
+      - id: V7-13
+        type: security
+        category: sql_injection
+        line: 370
+        description: "SQL injection via direct string interpolation"
+        code: "self.conditions.append(f\"{column} = '{value}'\")"
+
+      - id: V7-14
+        type: security
+        category: command_injection
+        line: 420
+        description: "Command injection via shell=True"
+        code: "subprocess.run(full_command, shell=True, ...)"
+
+      - id: V7-15
+        type: error_handling
+        category: bare_except
+        line: 170
+        description: "Bare except returns None"
+        code: "except:\n            return None"
+
+  - name: storage_handler.py
+    lines: 580
+    is_control: false
+    issues:
+      - id: V7-16
+        type: security
+        category: path_traversal
+        line: 57
+        description: "Path traversal not prevented in resolve"
+        code: "return os.path.join(self.base_directory, path)"
+
+      - id: V7-17
+        type: security
+        category: weak_crypto
+        line: 135
+        description: "MD5 used for checksums"
+        code: "return hashlib.md5(data).hexdigest()"
+
+      - id: V7-18
+        type: security
+        category: insecure_deserialization
+        line: 335
+        description: "Pickle load on untrusted data"
+        code: "data = pickle.load(f)"
+
+      - id: V7-19
+        type: security
+        category: path_traversal
+        line: 275
+        description: "No filename validation in save_file"
+        code: "filepath = os.path.join(self.base_path, filename)"
+
+      - id: V7-20
+        type: error_handling
+        category: bare_except
+        line: 347
+        description: "Bare except returns None"
+        code: "except:\n            return None"
+
+  - name: report_engine.py
+    lines: 560
+    is_control: false
+    issues:
+      - id: V7-21
+        type: security
+        category: xss
+        line: 399
+        description: "No HTML escaping in render_html"
+        code: "return str(value)"
+
+      - id: V7-22
+        type: contract
+        category: trivial_pre
+        line: 250
+        description: "Trivial @pre only checks isinstance"
+        code: "@pre(lambda self, text: isinstance(text, str))"
+
+      - id: V7-23
+        type: contract
+        category: trivial_pre
+        line: 315
+        description: "Trivial @pre only checks isinstance"
+        code: "@pre(lambda self, value: isinstance(value, str))"
+
+      - id: V7-24
+        type: logic
+        category: no_validation
+        line: 218
+        description: "Raw HTML added without sanitization"
+        code: "self.content.append(html_content)"
+
+      - id: V7-25
+        type: logic
+        category: no_validation
+        line: 227
+        description: "Image src not validated for XSS"
+        code: 'f\'<img src="{src}" alt="{alt}">\''
+
+  - name: utils.py
+    lines: 280
+    is_control: true
+    issues: []
+
+summary:
+  total_issues: 25
+  by_type:
+    security: 13
+    contract: 4
+    error_handling: 4
+    logic: 4
+  by_category:
+    hardcoded_secret: 3
+    weak_crypto: 2
+    timing_attack: 1
+    info_leak: 1
+    weak_auth: 1
+    sql_injection: 1
+    command_injection: 1
+    path_traversal: 2
+    insecure_deserialization: 1
+    xss: 1
+    trivial_pre: 4
+    bare_except: 4
+    missing_validation: 1
+    no_validation: 2

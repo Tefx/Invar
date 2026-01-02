@@ -1,0 +1,282 @@
+# DX-74 Experiment V2 - Ground Truth
+# DO NOT share with review agents during experiments
+#
+# This file documents all intentionally embedded bugs for validation.
+# Total: 31 bugs across 6 files (~3100 lines)
+# Density: 1 bug per 100 lines
+
+version: 2
+total_bugs: 31
+total_lines: ~3100
+density: "1 per 100 lines"
+
+files:
+  user_service.py:
+    lines: ~670
+    bugs:
+      - id: US-01
+        line: 666
+        type: exception_handling
+        severity: medium
+        pattern: "except Exception:"
+        description: "Bare exception handler swallows all errors silently"
+
+      - id: US-02
+        line: 165
+        type: exception_handling
+        severity: low
+        pattern: "except (ValueError, AttributeError):"
+        description: "Returns False on password validation error - potential timing leak"
+
+      - id: US-03
+        line: 449
+        type: logic_error
+        severity: medium
+        pattern: "return False"
+        description: "Silent failure when session not found - should log"
+
+      - id: US-04
+        line: 366
+        type: security
+        severity: low
+        pattern: "rate_key = f\"auth:{ip_address}\""
+        description: "Rate limiting uses only IP - can be bypassed via proxies"
+
+  order_processor.py:
+    lines: ~700
+    bugs:
+      - id: OP-01
+        line: 334
+        type: exception_handling
+        severity: medium
+        pattern: "except Exception:"
+        description: "Generic exception swallows address parsing errors"
+
+      - id: OP-02
+        line: 342
+        type: exception_handling
+        severity: medium
+        pattern: "except Exception:"
+        description: "Generic exception swallows billing address errors"
+
+      - id: OP-03
+        line: 446
+        type: exception_handling
+        severity: high
+        pattern: "except Exception:"
+        description: "Payment processing error silently fails"
+
+      - id: OP-04
+        line: 486
+        type: exception_handling
+        severity: high
+        pattern: "except Exception:"
+        description: "Payment capture error handling loses context"
+
+      - id: OP-05
+        line: 527
+        type: exception_handling
+        severity: medium
+        pattern: "except Exception:"
+        description: "Refund failure only logs, no error propagation"
+
+      - id: OP-06
+        line: 624
+        type: exception_handling
+        severity: low
+        pattern: "except Exception:"
+        description: "Address validation error swallowed"
+
+      - id: OP-07
+        line: 649
+        type: exception_handling
+        severity: low
+        pattern: "except Exception:"
+        description: "Shipping calculation failure loses context"
+
+  payment_gateway.py:
+    lines: ~550
+    bugs:
+      - id: PG-01
+        line: 30
+        type: hardcoded_secret
+        severity: critical
+        pattern: "PAYMENT_API_KEY = \"pk_live_xxxx..."
+        description: "Hardcoded payment API key in source code"
+
+      - id: PG-02
+        line: 31
+        type: insecure_default
+        severity: high
+        pattern: "os.getenv(..., \"default_secret\")"
+        description: "Fallback to weak default secret if env var not set"
+
+      - id: PG-03
+        line: 32
+        type: insecure_default
+        severity: high
+        pattern: "os.getenv(..., \"webhook_default\")"
+        description: "Fallback to weak default webhook secret"
+
+      - id: PG-04
+        line: 368
+        type: exception_handling
+        severity: medium
+        pattern: "except Exception:"
+        description: "Payment authorization error swallowed"
+
+      - id: PG-05
+        line: 430
+        type: exception_handling
+        severity: medium
+        pattern: "except Exception:"
+        description: "Payment capture error swallowed"
+
+      - id: PG-06
+        line: 466
+        type: exception_handling
+        severity: medium
+        pattern: "except Exception:"
+        description: "Refund processing error swallowed"
+
+  inventory_manager.py:
+    lines: ~680
+    bugs:
+      - id: IM-01
+        line: 22
+        type: hardcoded_secret
+        severity: critical
+        pattern: "DB_CONNECTION_STRING = \"postgresql://...password..."
+        description: "Hardcoded database credentials in source code"
+
+      - id: IM-02
+        line: 251
+        type: sql_injection
+        severity: critical
+        pattern: "f\"SELECT ... WHERE product_id = '{product_id}'..."
+        description: "SQL injection via f-string - not using parameterized query"
+
+      - id: IM-03
+        line: 631
+        type: exception_handling
+        severity: medium
+        pattern: "except:"
+        description: "Bare except swallows all errors in report export"
+
+      - id: IM-04
+        line: 64
+        type: logic_error
+        severity: low
+        pattern: "if self.unit_cost == 0:"
+        description: "Division by zero handled but returns 0% margin silently"
+
+  notification_service.py:
+    lines: ~570
+    bugs:
+      - id: NS-01
+        line: 32
+        type: hardcoded_secret
+        severity: critical
+        pattern: "SMTP_PASSWORD = \"N0t1f1c4t10n$_2024!\""
+        description: "Hardcoded SMTP password"
+
+      - id: NS-02
+        line: 35
+        type: hardcoded_secret
+        severity: critical
+        pattern: "SMS_API_KEY = \"sk_sms_live_..."
+        description: "Hardcoded SMS API key"
+
+      - id: NS-03
+        line: 39
+        type: hardcoded_secret
+        severity: high
+        pattern: "PUSH_API_KEY = \"push_key_prod_..."
+        description: "Hardcoded push notification API key"
+
+      - id: NS-04
+        line: 239
+        type: exception_handling
+        severity: low
+        pattern: "except:"
+        description: "Bare except in SMTP disconnect"
+
+      - id: NS-05
+        line: 427
+        type: timing_attack
+        severity: high
+        pattern: "return signature == expected"
+        description: "Timing attack vulnerability - should use hmac.compare_digest()"
+
+      - id: NS-06
+        line: 570
+        type: exception_handling
+        severity: medium
+        pattern: "except:"
+        description: "Bare except in callback trigger swallows errors"
+
+  analytics_engine.py:
+    lines: ~700
+    bugs:
+      - id: AE-01
+        line: 30
+        type: hardcoded_secret
+        severity: critical
+        pattern: "ANALYTICS_DB_PASSWORD = \"an4lyt1cs_pr0d_2024\""
+        description: "Hardcoded analytics database password"
+
+      - id: AE-02
+        line: 32
+        type: hardcoded_secret
+        severity: critical
+        pattern: "DW_CONNECTION_STRING = \"redshift://admin:dw_s3cr3t_key@..."
+        description: "Hardcoded data warehouse connection string with password"
+
+      - id: AE-03
+        line: 203
+        type: sql_injection
+        severity: critical
+        pattern: "f\"SELECT ... WHERE metric_name = '{metric_name}'..."
+        description: "SQL injection via f-string in query method"
+
+      - id: AE-04
+        line: 447
+        type: exception_handling
+        severity: medium
+        pattern: "except:"
+        description: "Bare except in JSON export swallows all errors"
+
+summary:
+  by_severity:
+    critical: 9   # hardcoded secrets + SQL injection
+    high: 5       # insecure defaults, timing attack, push key
+    medium: 13    # exception handling issues
+    low: 5        # minor logic issues, logging gaps
+
+  by_type:
+    hardcoded_secret: 8
+    sql_injection: 2
+    exception_handling: 14
+    timing_attack: 1
+    insecure_default: 2
+    logic_error: 2
+    security: 1
+
+  by_file:
+    user_service.py: 4
+    order_processor.py: 7
+    payment_gateway.py: 6
+    inventory_manager.py: 4
+    notification_service.py: 6
+    analytics_engine.py: 4
+
+expected_detection:
+  obvious:
+    - "All hardcoded secrets (look for password, secret, key patterns)"
+    - "All bare except: handlers"
+  moderate:
+    - "SQL injection (f-string in SQL)"
+    - "Timing attack (== comparison for signatures)"
+  subtle:
+    - "Insecure defaults in os.getenv()"
+    - "Logic errors (rate limiting, velocity checks)"

@@ -1,0 +1,105 @@
+# DX-74 Experiment - Strategy Prompts
+
+strategy_a_baseline: |
+  You are a code reviewer. Review the following 6 files for security
+  and code quality issues:
+
+  1. auth_service.py
+  2. data_processor.py
+  3. api_client.py
+  4. file_handler.py
+  5. config_manager.py
+  6. utils.py
+
+  Report all issues found in this format:
+  | File | Line | Issue | Severity |
+
+strategy_b_enumerate_first: |
+  You are a code reviewer using the ENUMERATE-FIRST technique.
+
+  BEFORE reading each file in detail, you MUST:
+  1. Use grep to find ALL occurrences of each pattern
+  2. Create explicit count: "Found N instances of X in file Y"
+  3. Review each instance explicitly by location
+  4. Confirm: "Reviewed N/N instances"
+
+  Patterns to enumerate:
+  - "except Exception" and "except:"
+  - Strings containing "password", "secret", "key", "token"
+  - os.path.join, f-string path construction
+  - SQL-like strings with user input
+
+  Files to review:
+  1. auth_service.py
+  2. data_processor.py
+  3. api_client.py
+  4. file_handler.py
+  5. config_manager.py
+  6. utils.py
+
+  Report format:
+  ## File: {name}
+  Enumerated: {pattern} = {count} instances
+
+  | Line | Pattern | Issue | Severity |
+
+  Summary: Reviewed {N}/{N} enumerated instances
+
+strategy_c_multi_round: |
+  You are an INDEPENDENT code reviewer for Round {round}.
+
+  IMPORTANT: You have NOT seen previous rounds. Review with FRESH EYES.
+
+  Review ALL 6 files completely:
+  1. auth_service.py
+  2. data_processor.py
+  3. api_client.py
+  4. file_handler.py
+  5. config_manager.py
+  6. utils.py
+
+  Find security and code quality issues.
+  Previous rounds may have MISSED issues - be thorough!
+
+  Report format:
+  | File | Line | Issue | Severity |
+
+  Verdict: APPROVED | NEEDS_WORK
+
+strategy_d_combined: |
+  You are an INDEPENDENT code reviewer for Round {round}.
+  You use the ENUMERATE-FIRST technique with FRESH EYES.
+
+  IMPORTANT:
+  - You have NOT seen previous rounds
+  - Previous rounds may have MISJUDGED some issues
+  - Enumerate first, then judge with fresh perspective
+
+  BEFORE reading each file in detail:
+  1. Use grep to find ALL occurrences of each pattern
+  2. Create explicit count: "Found N instances of X"
+  3. Review each instance with YOUR judgment (ignore prior rounds)
+
+  Patterns to enumerate:
+  - "except Exception" and "except:"
+  - Strings containing "password", "secret", "key", "token"
+  - os.path.join, f-string path construction
+  - SQL-like strings with user input
+
+  Files:
+  1. auth_service.py
+  2. data_processor.py
+  3. api_client.py
+  4. file_handler.py
+  5. config_manager.py
+  6. utils.py
+
+  Report format:
+  ## File: {name}
+  Enumerated: {pattern} = {count} instances
+
+  | Line | Pattern | Issue | Severity |
+
+  Summary: {N}/{N} reviewed
+
+  Verdict: APPROVED | NEEDS_WORK

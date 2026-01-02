@@ -1,0 +1,888 @@
+# DX-74 Experiment V5 - Ground Truth
+# Large-scale validation: 12 files, 100 issues
+# Tests scalability of Strategy N
+
+version: 5
+total_issues: 100
+
+distribution:
+  A_contract: 16
+  B_doctest: 24
+  C_quality: 12
+  D_escape_hatch: 10
+  E_logic: 20
+  F_security: 16
+  G_error_handling: 40
+
+# Note: Some issues count in multiple categories (total occurrences: ~138)
+
+files:
+  auth_service.py:
+    lines: 350
+    focus: [F_security, G_error_handling]
+    issues:
+      - id: F-01
+        line: 18
+        category: F_security
+        type: hardcoded_secret
+        description: "API_SECRET hardcoded in source"
+      - id: F-02
+        line: 21
+        category: F_security
+        type: hardcoded_secret
+        description: "JWT_SECRET hardcoded"
+      - id: F-03
+        line: 45
+        category: F_security
+        type: weak_algorithm
+        description: "Using SHA1 for token generation"
+      - id: F-04
+        line: 78
+        category: F_security
+        type: timing_attack
+        description: "Token comparison vulnerable to timing"
+      - id: G-01
+        line: 95
+        category: G_error_handling
+        type: sensitive_logging
+        description: "Logs user password on failure"
+      - id: G-02
+        line: 112
+        category: G_error_handling
+        type: bare_except
+        description: "Bare except swallows auth errors"
+      - id: G-03
+        line: 135
+        category: G_error_handling
+        type: info_leak
+        description: "Error exposes internal user ID format"
+      - id: G-04
+        line: 158
+        category: G_error_handling
+        type: missing_validation
+        description: "No token expiry check"
+      - id: G-05
+        line: 185
+        category: G_error_handling
+        type: silent_failure
+        description: "Returns None instead of raising on invalid session"
+      - id: A-01
+        line: 210
+        category: A_contract
+        type: trivial_precondition
+        description: "@pre(lambda x: True) on authenticate"
+      - id: A-02
+        line: 235
+        category: A_contract
+        type: weak_postcondition
+        description: "@post only checks result is not None"
+      - id: E-01
+        line: 268
+        category: E_logic
+        type: race_condition
+        description: "Session creation not atomic"
+
+  user_manager.py:
+    lines: 300
+    focus: [E_logic, A_contract]
+    issues:
+      - id: A-03
+        line: 25
+        category: A_contract
+        type: trivial_precondition
+        description: "@pre(lambda user: True)"
+      - id: A-04
+        line: 48
+        category: A_contract
+        type: missing_precondition
+        description: "No @pre for email format validation"
+      - id: A-05
+        line: 72
+        category: A_contract
+        type: type_only_contract
+        description: "@pre only checks isinstance"
+      - id: E-02
+        line: 95
+        category: E_logic
+        type: off_by_one
+        description: "User ID generation off-by-one"
+      - id: E-03
+        line: 118
+        category: E_logic
+        type: null_reference
+        description: "Accesses user.profile without null check"
+      - id: E-04
+        line: 142
+        category: E_logic
+        type: infinite_loop
+        description: "While loop missing increment"
+      - id: E-05
+        line: 168
+        category: E_logic
+        type: wrong_comparison
+        description: "Uses = instead of == in condition"
+      - id: G-06
+        line: 195
+        category: G_error_handling
+        type: swallowed_exception
+        description: "Catches and ignores database errors"
+      - id: B-01
+        line: 225
+        category: B_doctest
+        type: missing_doctest
+        description: "create_user has no doctests"
+      - id: B-02
+        line: 258
+        category: B_doctest
+        type: insufficient_doctests
+        description: "update_user only tests happy path"
+
+  payment_processor.py:
+    lines: 400
+    focus: [F_security, E_logic]
+    issues:
+      - id: F-05
+        line: 22
+        category: F_security
+        type: hardcoded_secret
+        description: "STRIPE_KEY hardcoded"
+      - id: F-06
+        line: 25
+        category: F_security
+        type: hardcoded_secret
+        description: "MERCHANT_SECRET hardcoded"
+      - id: F-07
+        line: 58
+        category: F_security
+        type: sql_injection
+        description: "String interpolation in SQL query"
+      - id: F-08
+        line: 92
+        category: F_security
+        type: missing_validation
+        description: "No amount validation (negative values allowed)"
+      - id: E-06
+        line: 125
+        category: E_logic
+        type: floating_point
+        description: "Currency calculation uses float instead of Decimal"
+      - id: E-07
+        line: 158
+        category: E_logic
+        type: division_by_zero
+        description: "Discount calculation doesn't check zero"
+      - id: E-08
+        line: 192
+        category: E_logic
+        type: overflow
+        description: "Total calculation can overflow"
+      - id: E-09
+        line: 225
+        category: E_logic
+        type: wrong_operator
+        description: "Uses + instead of - for refund"
+      - id: G-07
+        line: 258
+        category: G_error_handling
+        type: transaction_not_atomic
+        description: "Payment and inventory update not atomic"
+      - id: G-08
+        line: 292
+        category: G_error_handling
+        type: sensitive_logging
+        description: "Logs full credit card number"
+      - id: G-09
+        line: 325
+        category: G_error_handling
+        type: bare_except
+        description: "Bare except on payment failure"
+      - id: A-06
+        line: 358
+        category: A_contract
+        type: trivial_postcondition
+        description: "@post(lambda result: True)"
+      - id: B-03
+        line: 378
+        category: B_doctest
+        type: missing_doctest
+        description: "process_payment has no doctests"
+      - id: B-04
+        line: 395
+        category: B_doctest
+        type: missing_error_case
+        description: "refund_payment no failure test"
+
+  data_validator.py:
+    lines: 280
+    focus: [A_contract, B_doctest]
+    issues:
+      - id: A-07
+        line: 28
+        category: A_contract
+        type: trivial_precondition
+        description: "@pre(lambda data: True)"
+      - id: A-08
+        line: 52
+        category: A_contract
+        type: incomplete_contract
+        description: "@pre doesn't check all required fields"
+      - id: A-09
+        line: 78
+        category: A_contract
+        type: weak_postcondition
+        description: "@post only checks type, not content"
+      - id: A-10
+        line: 105
+        category: A_contract
+        type: missing_invariant
+        description: "No invariant for data consistency"
+      - id: B-05
+        line: 132
+        category: B_doctest
+        type: missing_doctest
+        description: "validate_email no doctests"
+      - id: B-06
+        line: 155
+        category: B_doctest
+        type: missing_boundary
+        description: "validate_age no boundary tests"
+      - id: B-07
+        line: 178
+        category: B_doctest
+        type: missing_error_case
+        description: "validate_phone no invalid format test"
+      - id: B-08
+        line: 205
+        category: B_doctest
+        type: insufficient_coverage
+        description: "sanitize_input only tests basic case"
+      - id: E-10
+        line: 232
+        category: E_logic
+        type: regex_dos
+        description: "Regex vulnerable to ReDoS"
+      - id: G-10
+        line: 258
+        category: G_error_handling
+        type: silent_failure
+        description: "Returns empty string on validation failure"
+
+  cache_handler.py:
+    lines: 250
+    focus: [G_error_handling, C_quality]
+    issues:
+      - id: G-11
+        line: 32
+        category: G_error_handling
+        type: connection_leak
+        description: "Redis connection not closed on error"
+      - id: G-12
+        line: 58
+        category: G_error_handling
+        type: bare_except
+        description: "Bare except on cache miss"
+      - id: G-13
+        line: 85
+        category: G_error_handling
+        type: timeout_not_handled
+        description: "No timeout handling for cache operations"
+      - id: G-14
+        line: 112
+        category: G_error_handling
+        type: silent_corruption
+        description: "Silently returns stale data on error"
+      - id: C-01
+        line: 142
+        category: C_quality
+        type: code_duplication
+        description: "get_cached duplicates logic from set_cached"
+      - id: C-02
+        line: 175
+        category: C_quality
+        type: magic_numbers
+        description: "3600, 86400 without constants"
+      - id: C-03
+        line: 205
+        category: C_quality
+        type: poor_naming
+        description: "Variables x, y, z unclear meaning"
+      - id: B-09
+        line: 232
+        category: B_doctest
+        type: missing_doctest
+        description: "invalidate_cache no doctests"
+
+  api_gateway.py:
+    lines: 320
+    focus: [F_security, G_error_handling]
+    issues:
+      - id: F-09
+        line: 25
+        category: F_security
+        type: cors_misconfigured
+        description: "CORS allows all origins"
+      - id: F-10
+        line: 52
+        category: F_security
+        type: no_rate_limiting
+        description: "No rate limiting on API endpoints"
+      - id: F-11
+        line: 85
+        category: F_security
+        type: header_injection
+        description: "User input reflected in headers"
+      - id: G-15
+        line: 118
+        category: G_error_handling
+        type: stack_trace_exposed
+        description: "Full stack trace in API response"
+      - id: G-16
+        line: 152
+        category: G_error_handling
+        type: info_leak
+        description: "Internal paths exposed in errors"
+      - id: G-17
+        line: 185
+        category: G_error_handling
+        type: missing_error_handler
+        description: "No global exception handler"
+      - id: G-18
+        line: 218
+        category: G_error_handling
+        type: inconsistent_response
+        description: "Different error formats for same type"
+      - id: E-11
+        line: 252
+        category: E_logic
+        type: request_smuggling
+        description: "Doesn't validate Content-Length"
+      - id: B-10
+        line: 285
+        category: B_doctest
+        type: missing_doctest
+        description: "route_request no doctests"
+      - id: A-11
+        line: 305
+        category: A_contract
+        type: trivial_precondition
+        description: "@pre(lambda req: True)"
+
+  report_builder.py:
+    lines: 300
+    focus: [B_doctest, C_quality]
+    issues:
+      - id: B-11
+        line: 35
+        category: B_doctest
+        type: missing_doctest
+        description: "build_report no doctests"
+      - id: B-12
+        line: 68
+        category: B_doctest
+        type: incorrect_output
+        description: "Doctest expected output wrong"
+      - id: B-13
+        line: 102
+        category: B_doctest
+        type: missing_edge_case
+        description: "aggregate_data no empty input test"
+      - id: B-14
+        line: 135
+        category: B_doctest
+        type: missing_doctest
+        description: "format_output no doctests"
+      - id: C-04
+        line: 168
+        category: C_quality
+        type: god_function
+        description: "generate_all does too many things"
+      - id: C-05
+        line: 205
+        category: C_quality
+        type: deep_nesting
+        description: "5 levels of nesting"
+      - id: C-06
+        line: 242
+        category: C_quality
+        type: inconsistent_style
+        description: "Mixed camelCase and snake_case"
+      - id: G-19
+        line: 275
+        category: G_error_handling
+        type: file_not_closed
+        description: "Report file not closed on error"
+
+  config_loader.py:
+    lines: 220
+    focus: [D_escape_hatch, G_error_handling]
+    issues:
+      - id: D-01
+        line: 22
+        category: D_escape_hatch
+        type: vague_justification
+        description: "@invar:allow[no-contract] 'Legacy code'"
+      - id: D-02
+        line: 48
+        category: D_escape_hatch
+        type: invalid_justification
+        description: "@invar:allow[no-doctest] 'Too complex'"
+      - id: D-03
+        line: 75
+        category: D_escape_hatch
+        type: wrong_approach
+        description: "@invar:allow[bare-except] should be specific"
+      - id: D-04
+        line: 102
+        category: D_escape_hatch
+        type: lazy_justification
+        description: "@invar:allow[mutable-default] 'Performance'"
+      - id: G-20
+        line: 128
+        category: G_error_handling
+        type: yaml_unsafe_load
+        description: "Uses yaml.load without Loader"
+      - id: G-21
+        line: 155
+        category: G_error_handling
+        type: env_not_validated
+        description: "Environment variables used without validation"
+      - id: G-22
+        line: 182
+        category: G_error_handling
+        type: default_override
+        description: "Silently uses defaults on parse error"
+      - id: B-15
+        line: 205
+        category: B_doctest
+        type: missing_doctest
+        description: "load_config no doctests"
+
+  task_scheduler.py:
+    lines: 280
+    focus: [E_logic, A_contract]
+    issues:
+      - id: A-12
+        line: 28
+        category: A_contract
+        type: trivial_precondition
+        description: "@pre(lambda task: True)"
+      - id: A-13
+        line: 55
+        category: A_contract
+        type: missing_postcondition
+        description: "No @post on schedule_task"
+      - id: E-12
+        line: 82
+        category: E_logic
+        type: deadlock_potential
+        description: "Lock ordering not consistent"
+      - id: E-13
+        line: 115
+        category: E_logic
+        type: starvation
+        description: "Priority queue can starve low-priority tasks"
+      - id: E-14
+        line: 148
+        category: E_logic
+        type: time_zone_bug
+        description: "Assumes UTC but uses local time"
+      - id: E-15
+        line: 182
+        category: E_logic
+        type: missed_task
+        description: "Scheduled task can be skipped on restart"
+      - id: G-23
+        line: 215
+        category: G_error_handling
+        type: task_lost
+        description: "Failed task not re-queued"
+      - id: B-16
+        line: 248
+        category: B_doctest
+        type: missing_doctest
+        description: "run_scheduled no doctests"
+
+  notification_service.py:
+    lines: 260
+    focus: [F_security, G_error_handling]
+    issues:
+      - id: F-12
+        line: 25
+        category: F_security
+        type: hardcoded_secret
+        description: "SMTP_PASSWORD hardcoded"
+      - id: F-13
+        line: 58
+        category: F_security
+        type: template_injection
+        description: "User input in email template not escaped"
+      - id: G-24
+        line: 92
+        category: G_error_handling
+        type: connection_not_closed
+        description: "SMTP connection not closed on error"
+      - id: G-25
+        line: 125
+        category: G_error_handling
+        type: retry_not_implemented
+        description: "No retry on transient failure"
+      - id: G-26
+        line: 158
+        category: G_error_handling
+        type: notification_lost
+        description: "Failed notification not logged"
+      - id: B-17
+        line: 195
+        category: B_doctest
+        type: missing_doctest
+        description: "send_email no doctests"
+
+  metrics_collector.py:
+    lines: 240
+    focus: [B_doctest, C_quality]
+    issues:
+      - id: B-18
+        line: 32
+        category: B_doctest
+        type: missing_doctest
+        description: "collect_metric no doctests"
+      - id: B-19
+        line: 65
+        category: B_doctest
+        type: missing_boundary
+        description: "aggregate no test for empty data"
+      - id: B-20
+        line: 98
+        category: B_doctest
+        type: incomplete_doctest
+        description: "percentile doctest missing edge cases"
+      - id: C-07
+        line: 132
+        category: C_quality
+        type: global_state
+        description: "Uses global variable for metrics buffer"
+      - id: C-08
+        line: 165
+        category: C_quality
+        type: not_thread_safe
+        description: "Metrics collection not thread-safe"
+      - id: G-27
+        line: 198
+        category: G_error_handling
+        type: data_loss
+        description: "Buffer overflow discards old metrics"
+
+  utils.py:
+    lines: 200
+    focus: [control]
+    issues: []
+    note: "Control file - no intentional bugs"
+
+# Additional cross-file issues (counted in individual files above)
+cross_file_dependencies:
+  - files: [auth_service.py, user_manager.py]
+    issue: "Auth depends on user but no interface contract"
+  - files: [payment_processor.py, notification_service.py]
+    issue: "Payment success notification can fail silently"
+  - files: [config_loader.py, "*"]
+    issue: "Config changes not propagated to running services"
+
+# Remaining issues to reach 100 unique
+additional_issues:
+  - id: D-05
+    file: report_builder.py
+    line: 145
+    category: D_escape_hatch
+    type: convenience_exception
+    description: "@invar:allow[complexity] 'Hard to refactor'"
+
+  - id: D-06
+    file: task_scheduler.py
+    line: 175
+    category: D_escape_hatch
+    type: blanket_exception
+    description: "@invar:allow[no-type-hints] on entire module"
+
+  - id: D-07
+    file: metrics_collector.py
+    line: 85
+    category: D_escape_hatch
+    type: vague_justification
+    description: "@invar:allow[global-state] 'Singleton pattern'"
+
+  - id: D-08
+    file: api_gateway.py
+    line: 145
+    category: D_escape_hatch
+    type: wrong_justification
+    description: "@invar:allow[bare-except] 'Must not crash'"
+
+  - id: D-09
+    file: notification_service.py
+    line: 145
+    category: D_escape_hatch
+    type: lazy_justification
+    description: "@invar:allow[no-doctest] 'External service'"
+
+  - id: D-10
+    file: cache_handler.py
+    line: 148
+    category: D_escape_hatch
+    type: vague_justification
+    description: "@invar:allow[no-contract] 'Performance critical'"
+
+  - id: A-14
+    file: metrics_collector.py
+    line: 45
+    category: A_contract
+    type: trivial_precondition
+    description: "@pre(lambda x: True)"
+
+  - id: A-15
+    file: notification_service.py
+    line: 42
+    category: A_contract
+    type: weak_precondition
+    description: "@pre doesn't validate email format"
+
+  - id: A-16
+    file: cache_handler.py
+    line: 45
+    category: A_contract
+    type: missing_postcondition
+    description: "No @post on cache operations"
+
+  - id: E-16
+    file: report_builder.py
+    line: 185
+    category: E_logic
+    type: date_comparison
+    description: "Compares dates as strings"
+
+  - id: E-17
+    file: api_gateway.py
+    line: 175
+    category: E_logic
+    type: integer_truncation
+    description: "Request size cast to int32"
+
+  - id: E-18
+    file: cache_handler.py
+    line: 95
+    category: E_logic
+    type: ttl_calculation
+    description: "TTL calculation can go negative"
+
+  - id: E-19
+    file: notification_service.py
+    line: 172
+    category: E_logic
+    type: rate_limit_bypass
+    description: "Rate limit check has TOCTOU race"
+
+  - id: E-20
+    file: metrics_collector.py
+    line: 145
+    category: E_logic
+    type: aggregation_error
+    description: "Mean calculation wrong for weighted values"
+
+  - id: G-28
+    file: data_validator.py
+    line: 165
+    category: G_error_handling
+    type: validation_bypass
+    description: "Validation can be skipped via exception"
+
+  - id: G-29
+    file: user_manager.py
+    line: 175
+    category: G_error_handling
+    type: orphaned_resource
+    description: "Profile created but user creation fails"
+
+  - id: G-30
+    file: auth_service.py
+    line: 295
+    category: G_error_handling
+    type: session_leak
+    description: "Session not invalidated on password change"
+
+  - id: G-31
+    file: payment_processor.py
+    line: 345
+    category: G_error_handling
+    type: double_charge
+    description: "Retry can cause double charge"
+
+  - id: G-32
+    file: task_scheduler.py
+    line: 245
+    category: G_error_handling
+    type: zombie_task
+    description: "Crashed task remains in running state"
+
+  - id: G-33
+    file: api_gateway.py
+    line: 275
+    category: G_error_handling
+    type: response_corruption
+    description: "Partial response on timeout"
+
+  - id: G-34
+    file: cache_handler.py
+    line: 225
+    category: G_error_handling
+    type: stampede
+    description: "No thundering herd protection"
+
+  - id: G-35
+    file: report_builder.py
+    line: 255
+    category: G_error_handling
+    type: partial_output
+    description: "Partial report written on error"
+
+  - id: B-21
+    file: auth_service.py
+    line: 175
+    category: B_doctest
+    type: missing_doctest
+    description: "validate_token no doctests"
+
+  - id: B-22
+    file: payment_processor.py
+    line: 175
+    category: B_doctest
+    type: missing_edge_case
+    description: "calculate_tax no zero amount test"
+
+  - id: B-23
+    file: api_gateway.py
+    line: 235
+    category: B_doctest
+    type: missing_doctest
+    description: "parse_request no doctests"
+
+  - id: B-24
+    file: task_scheduler.py
+    line: 135
+    category: B_doctest
+    type: insufficient_coverage
+    description: "cancel_task only tests success case"
+
+  - id: C-09
+    file: auth_service.py
+    line: 145
+    category: C_quality
+    type: duplicate_logic
+    description: "Token validation duplicated in 3 places"
+
+  - id: C-10
+    file: payment_processor.py
+    line: 145
+    category: C_quality
+    type: long_method
+    description: "process_payment is 80+ lines"
+
+  - id: C-11
+    file: user_manager.py
+    line: 145
+    category: C_quality
+    type: feature_envy
+    description: "UserManager manipulates Profile internals"
+
+  - id: C-12
+    file: api_gateway.py
+    line: 195
+    category: C_quality
+    type: shotgun_surgery
+    description: "Adding endpoint requires 5 file changes"
+
+  - id: F-14
+    file: user_manager.py
+    line: 85
+    category: F_security
+    type: mass_assignment
+    description: "User update accepts all fields"
+
+  - id: F-15
+    file: data_validator.py
+    line: 195
+    category: F_security
+    type: path_traversal
+    description: "File path not sanitized"
+
+  - id: F-16
+    file: report_builder.py
+    line: 115
+    category: F_security
+    type: unsafe_deserialization
+    description: "Pickle used for report data"
+
+  - id: G-36
+    file: metrics_collector.py
+    line: 175
+    category: G_error_handling
+    type: unbounded_growth
+    description: "Metrics buffer can grow unbounded"
+
+  - id: G-37
+    file: notification_service.py
+    line: 215
+    category: G_error_handling
+    type: unsubscribe_ignored
+    description: "Unsubscribed users still receive notifications"
+
+  - id: G-38
+    file: config_loader.py
+    line: 195
+    category: G_error_handling
+    type: hot_reload_unsafe
+    description: "Config reload not atomic"
+
+  - id: G-39
+    file: data_validator.py
+    line: 245
+    category: G_error_handling
+    type: error_accumulation
+    description: "Validation errors not aggregated"
+
+  - id: G-40
+    file: user_manager.py
+    line: 285
+    category: G_error_handling
+    type: cascade_delete_incomplete
+    description: "User deletion leaves orphan records"
+
+summary:
+  by_category:
+    A_contract: 16
+    B_doctest: 24
+    C_quality: 12
+    D_escape_hatch: 10
+    E_logic: 20
+    F_security: 16
+    G_error_handling: 40
+
+  total_occurrences: 138
+  unique_issues: 100
+
+  by_file:
+    auth_service.py: 12
+    user_manager.py: 12
+    payment_processor.py: 14
+    data_validator.py: 12
+    cache_handler.py: 10
+    api_gateway.py: 12
+    report_builder.py: 10
+    config_loader.py: 8
+    task_scheduler.py: 10
+    notification_service.py: 8
+    metrics_collector.py: 8
+    utils.py: 0
+
+  by_detectability:
+    grep_friendly: 26       # D, F (secrets), G (bare except)
+    sig_friendly: 40        # A, B
+    review_required: 34     # C, E, complex G

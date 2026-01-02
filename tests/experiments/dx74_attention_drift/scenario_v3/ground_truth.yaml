@@ -1,0 +1,454 @@
+# DX-74 Experiment V3 - Ground Truth
+# DO NOT share with review agents during experiments
+#
+# This file documents all intentionally embedded bugs for validation.
+# Total: 30 bugs across 5 files
+# Distribution: 33% syntactic, 50% semantic, 17% edge cases
+
+version: 3
+total_bugs: 30
+total_lines: ~1550
+density: "1 per 50 lines"
+
+distribution:
+  syntactic_pattern: 10  # Grep-friendly
+  semantic_logic: 15     # Requires understanding
+  edge_case: 5           # Missing checks
+
+files:
+  data_processor.py:
+    lines: ~400
+    bugs:
+      - id: DP-01
+        line: 47
+        type: semantic_logic
+        subtype: off_by_one
+        severity: medium
+        description: "validate_record checks value > 0, should be >= 0 (zero is valid)"
+
+      - id: DP-02
+        line: 60
+        type: semantic_logic
+        subtype: off_by_one
+        severity: high
+        description: "validate_batch loops range(len-1), misses last record"
+
+      - id: DP-03
+        line: 80
+        type: semantic_logic
+        subtype: wrong_variable
+        severity: medium
+        description: "apply_multiplier checks value != 0, should check multiplier != 0"
+
+      - id: DP-04
+        line: 86
+        type: edge_case
+        subtype: missing_check
+        severity: high
+        description: "normalize_value doesn't handle min_val == max_val (division by zero)"
+
+      - id: DP-05
+        line: 110
+        type: semantic_logic
+        subtype: side_effect
+        severity: medium
+        description: "transform_batch modifies input list in place"
+
+      - id: DP-06
+        line: 121
+        type: edge_case
+        subtype: missing_check
+        severity: high
+        description: "calculate_average doesn't handle empty list"
+
+      - id: DP-07
+        line: 134
+        type: semantic_logic
+        subtype: wrong_algorithm
+        severity: medium
+        description: "calculate_median wrong for even-length lists"
+
+      - id: DP-08
+        line: 145
+        type: semantic_logic
+        subtype: off_by_one
+        severity: low
+        description: "calculate_percentile index calculation off by one"
+
+      - id: DP-09
+        line: 193
+        type: syntactic_pattern
+        subtype: hardcoded_secret
+        severity: critical
+        description: "Hardcoded API_KEY in BatchProcessor"
+
+      - id: DP-10
+        line: 220
+        type: semantic_logic
+        subtype: wrong_logic
+        severity: medium
+        description: "process_with_retry retries validation failures"
+
+      - id: DP-11
+        line: 248
+        type: semantic_logic
+        subtype: wrong_operator
+        severity: low
+        description: "add_record uses > instead of >= for buffer check"
+
+      - id: DP-12
+        line: 283
+        type: semantic_logic
+        subtype: wrong_return
+        severity: high
+        description: "parse_timestamp returns None instead of raising exception"
+
+      - id: DP-13
+        line: 304
+        type: syntactic_pattern
+        subtype: bare_except
+        severity: medium
+        description: "Bare except in process_file"
+
+  user_manager.py:
+    lines: ~350
+    bugs:
+      - id: UM-01
+        line: 46
+        type: syntactic_pattern
+        subtype: hardcoded_secret
+        severity: critical
+        description: "Hardcoded DEFAULT_SALT in PasswordHasher"
+
+      - id: UM-02
+        line: 60
+        type: syntactic_pattern
+        subtype: timing_attack
+        severity: high
+        description: "verify_password uses == instead of secrets.compare_digest"
+
+      - id: UM-03
+        line: 80
+        type: semantic_logic
+        subtype: wrong_return
+        severity: medium
+        description: "get_user returns None but type hint says User"
+
+      - id: UM-04
+        line: 87
+        type: semantic_logic
+        subtype: wrong_return
+        severity: medium
+        description: "get_user_by_email implicit None return"
+
+      - id: UM-05
+        line: 96
+        type: semantic_logic
+        subtype: missing_update
+        severity: high
+        description: "update_user doesn't update email_index when email changes"
+
+      - id: UM-06
+        line: 106
+        type: semantic_logic
+        subtype: memory_leak
+        severity: medium
+        description: "delete_user doesn't remove from email_index"
+
+      - id: UM-07
+        line: 131
+        type: semantic_logic
+        subtype: missing_check
+        severity: high
+        description: "get_session doesn't check expiration"
+
+      - id: UM-08
+        line: 165
+        type: semantic_logic
+        subtype: wrong_logic
+        severity: medium
+        description: "has_permission only returns True for superadmin, not admin"
+
+      - id: UM-09
+        line: 172
+        type: semantic_logic
+        subtype: wrong_operator
+        severity: high
+        description: "has_role_level uses > instead of >="
+
+      - id: UM-10
+        line: 200
+        type: semantic_logic
+        subtype: wrong_return
+        severity: medium
+        description: "register_user returns None instead of raising exception"
+
+      - id: UM-11
+        line: 234
+        type: semantic_logic
+        subtype: security
+        severity: high
+        description: "change_password doesn't invalidate existing sessions"
+
+  calculator.py:
+    lines: ~300
+    bugs:
+      - id: CA-01
+        line: 52
+        type: semantic_logic
+        subtype: wrong_variable
+        severity: high
+        description: "divide checks a == 0 instead of b == 0"
+
+      - id: CA-02
+        line: 70
+        type: edge_case
+        subtype: missing_check
+        severity: high
+        description: "mean doesn't check for empty list"
+
+      - id: CA-03
+        line: 75
+        type: edge_case
+        subtype: missing_check
+        severity: medium
+        description: "weighted_mean doesn't check same length"
+
+      - id: CA-04
+        line: 87
+        type: semantic_logic
+        subtype: wrong_formula
+        severity: medium
+        description: "variance uses n instead of n-1 for sample variance"
+
+      - id: CA-05
+        line: 109
+        type: edge_case
+        subtype: missing_check
+        severity: high
+        description: "correlation doesn't check for zero denominator"
+
+      - id: CA-06
+        line: 132
+        type: semantic_logic
+        subtype: wrong_formula
+        severity: high
+        description: "present_value formula is inverted"
+
+      - id: CA-07
+        line: 150
+        type: edge_case
+        subtype: missing_check
+        severity: medium
+        description: "roi doesn't check for zero initial investment"
+
+      - id: CA-08
+        line: 158
+        type: edge_case
+        subtype: missing_check
+        severity: low
+        description: "circle_area doesn't check for negative radius"
+
+      - id: CA-09
+        line: 192
+        type: semantic_logic
+        subtype: wrong_logic
+        severity: medium
+        description: "evaluate_chain ignores operator precedence"
+
+      - id: CA-10
+        line: 224
+        type: semantic_logic
+        subtype: wrong_return
+        severity: medium
+        description: "convert_temperature returns None for unsupported conversions"
+
+      - id: CA-11
+        line: 234
+        type: edge_case
+        subtype: missing_check
+        severity: medium
+        description: "factorial doesn't check for negative numbers"
+
+      - id: CA-12
+        line: 242
+        type: semantic_logic
+        subtype: off_by_one
+        severity: medium
+        description: "fibonacci returns wrong values (1-indexed instead of 0-indexed)"
+
+      - id: CA-13
+        line: 250
+        type: semantic_logic
+        subtype: wrong_logic
+        severity: medium
+        description: "is_prime returns True for n=1 (1 is not prime)"
+
+  validator.py:
+    lines: ~250
+    bugs:
+      - id: VA-01
+        line: 42
+        type: semantic_logic
+        subtype: wrong_operator
+        severity: low
+        description: "validate_length uses >= instead of > for max"
+
+      - id: VA-02
+        line: 59
+        type: semantic_logic
+        subtype: wrong_operator
+        severity: medium
+        description: "validate_phone requires exactly 10 digits, should be 10-15"
+
+      - id: VA-03
+        line: 72
+        type: semantic_logic
+        subtype: wrong_logic
+        severity: high
+        description: "validate_range logic error with 'or' instead of proper checks"
+
+      - id: VA-04
+        line: 85
+        type: semantic_logic
+        subtype: wrong_logic
+        severity: medium
+        description: "validate_positive allows 0 (zero is not positive)"
+
+      - id: VA-05
+        line: 95
+        type: edge_case
+        subtype: missing_check
+        severity: medium
+        description: "validate_percentage doesn't check upper bound 100"
+
+      - id: VA-06
+        line: 108
+        type: semantic_logic
+        subtype: wrong_operator
+        severity: medium
+        description: "validate_not_past uses <= instead of <"
+
+      - id: VA-07
+        line: 126
+        type: semantic_logic
+        subtype: logic_inversion
+        severity: high
+        description: "validate_weekday logic inverted"
+
+      - id: VA-08
+        line: 154
+        type: edge_case
+        subtype: type_error
+        severity: medium
+        description: "validate_unique doesn't handle unhashable elements"
+
+      - id: VA-09
+        line: 180
+        type: semantic_logic
+        subtype: early_exit
+        severity: medium
+        description: "CompositeValidator breaks on first failure, missing other errors"
+
+  cache_service.py:
+    lines: ~300
+    bugs:
+      - id: CS-01
+        line: 38
+        type: semantic_logic
+        subtype: missing_check
+        severity: high
+        description: "SimpleCache.get doesn't check expiration"
+
+      - id: CS-02
+        line: 83
+        type: semantic_logic
+        subtype: off_by_one
+        severity: medium
+        description: "LRUCache.set uses > instead of >= for max_size"
+
+      - id: CS-03
+        line: 111
+        type: semantic_logic
+        subtype: race_condition
+        severity: high
+        description: "ThreadSafeCache.get_or_set has race condition"
+
+      - id: CS-04
+        line: 122
+        type: edge_case
+        subtype: null_handling
+        severity: medium
+        description: "ThreadSafeCache.update doesn't handle missing key"
+
+      - id: CS-05
+        line: 136
+        type: edge_case
+        subtype: type_error
+        severity: medium
+        description: "CacheDecorator._make_key can't handle unhashable args"
+
+      - id: CS-06
+        line: 159
+        type: syntactic_pattern
+        subtype: hardcoded_secret
+        severity: critical
+        description: "DistributedCache hardcoded connection string with password"
+
+      - id: CS-07
+        line: 180
+        type: syntactic_pattern
+        subtype: bare_except
+        severity: medium
+        description: "DistributedCache.set bare except"
+
+      - id: CS-08
+        line: 214
+        type: semantic_logic
+        subtype: incomplete_logic
+        severity: high
+        description: "CacheManager.invalidate_pattern only invalidates L2, not L1"
+
+summary:
+  by_severity:
+    critical: 3    # hardcoded secrets
+    high: 12       # logic errors, security issues
+    medium: 12     # various bugs
+    low: 3         # minor issues
+
+  by_type:
+    syntactic_pattern: 6    # grep-able (secrets, except, timing)
+    semantic_logic: 19      # requires understanding
+    edge_case: 5            # missing checks
+
+  by_subtype:
+    off_by_one: 4
+    wrong_operator: 5
+    wrong_logic: 5
+    missing_check: 7
+    wrong_return: 4
+    hardcoded_secret: 3
+    race_condition: 1
+    bare_except: 2
+    timing_attack: 1
+    other: 8
+
+  by_file:
+    data_processor.py: 13
+    user_manager.py: 11
+    calculator.py: 13
+    validator.py: 9
+    cache_service.py: 8
+
+expected_detection:
+  grep_friendly:
+    - "Hardcoded secrets (3) - look for password, secret, key patterns"
+    - "Bare except (2) - look for except: pattern"
+    - "Timing attack (1) - look for == with secret/hash/signature"
+
+  semantic_understanding_required:
+    - "Off-by-one errors (4) - requires understanding loop bounds"
+    - "Wrong operator (5) - requires understanding intended logic"
+    - "Missing checks (7) - requires understanding preconditions"
+    - "Wrong return type (4) - requires type analysis"
+    - "Race conditions (1) - requires concurrency understanding"

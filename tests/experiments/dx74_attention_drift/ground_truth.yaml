@@ -1,0 +1,428 @@
+# DX-74 Attention Drift Experiment - Ground Truth
+# Total: 50 bugs across 6 files
+
+metadata:
+  experiment: DX-74
+  version: "1.0"
+  total_bugs: 50
+  files: 6
+  categories:
+    security: 8
+    exception_handling: 9
+    input_validation: 8
+    path_traversal: 8
+    logic_errors: 8
+    mixed: 9
+
+bugs:
+  # File 1: auth_service.py (8 bugs)
+  - id: BUG-01
+    file: auth_service.py
+    line: 12
+    category: security
+    pattern: hardcoded_secret
+    description: "Hardcoded secret key"
+    severity: critical
+
+  - id: BUG-02
+    file: auth_service.py
+    line: 15
+    category: security
+    pattern: hardcoded_secret
+    description: "Hardcoded database password"
+    severity: critical
+
+  - id: BUG-03
+    file: auth_service.py
+    line: 20
+    category: security
+    pattern: weak_crypto
+    description: "Using weak MD5 hashing"
+    severity: critical
+
+  - id: BUG-04
+    file: auth_service.py
+    line: 29
+    category: security
+    pattern: sql_injection
+    description: "SQL injection via string formatting"
+    severity: critical
+
+  - id: BUG-05
+    file: auth_service.py
+    line: 35
+    category: exception_handling
+    pattern: bare_except
+    description: "Bare except swallows all errors"
+    severity: major
+
+  - id: BUG-06
+    file: auth_service.py
+    line: 45
+    category: security
+    pattern: predictable_token
+    description: "Predictable token generation"
+    severity: major
+
+  - id: BUG-07
+    file: auth_service.py
+    line: 53
+    category: exception_handling
+    pattern: bare_except
+    description: "Bare except hides validation errors"
+    severity: major
+
+  - id: BUG-08
+    file: auth_service.py
+    line: 57
+    category: security
+    pattern: hardcoded_secret
+    description: "API key exposed in code"
+    severity: critical
+
+  # File 2: data_processor.py (9 bugs)
+  - id: BUG-09
+    file: data_processor.py
+    line: 17
+    category: exception_handling
+    pattern: bare_except
+    description: "Bare except catches KeyboardInterrupt"
+    severity: major
+
+  - id: BUG-10
+    file: data_processor.py
+    line: 27
+    category: exception_handling
+    pattern: bare_except
+    description: "Bare except silently swallows errors"
+    severity: major
+
+  - id: BUG-11
+    file: data_processor.py
+    line: 39
+    category: exception_handling
+    pattern: bare_except
+    description: "Bare except hides file errors"
+    severity: major
+
+  - id: BUG-12
+    file: data_processor.py
+    line: 49
+    category: exception_handling
+    pattern: bare_except
+    description: "Bare except with generic handling"
+    severity: minor
+
+  - id: BUG-13
+    file: data_processor.py
+    line: 58
+    category: exception_handling
+    pattern: bare_except
+    description: "Bare except for validation"
+    severity: major
+
+  - id: BUG-14
+    file: data_processor.py
+    line: 66
+    category: exception_handling
+    pattern: bare_except
+    description: "Overly broad exception handling"
+    severity: major
+
+  - id: BUG-15
+    file: data_processor.py
+    line: 77
+    category: exception_handling
+    pattern: bare_except
+    description: "Bare except in filter loop"
+    severity: major
+
+  - id: BUG-16
+    file: data_processor.py
+    line: 87
+    category: exception_handling
+    pattern: bare_except
+    description: "Bare except for type conversion"
+    severity: minor
+
+  - id: BUG-17
+    file: data_processor.py
+    line: 97
+    category: exception_handling
+    pattern: bare_except
+    description: "Bare except for batch processing"
+    severity: major
+
+  # File 3: api_client.py (8 bugs)
+  - id: BUG-18
+    file: api_client.py
+    line: 14
+    category: input_validation
+    pattern: missing_validation
+    description: "No validation of base URL format"
+    severity: minor
+
+  - id: BUG-19
+    file: api_client.py
+    line: 20
+    category: input_validation
+    pattern: missing_validation
+    description: "No validation of HTTP method"
+    severity: minor
+
+  - id: BUG-20
+    file: api_client.py
+    line: 28
+    category: input_validation
+    pattern: dos_vulnerability
+    description: "No input length validation"
+    severity: major
+
+  - id: BUG-21
+    file: api_client.py
+    line: 36
+    category: input_validation
+    pattern: weak_validation
+    description: "Weak email validation regex"
+    severity: minor
+
+  - id: BUG-22
+    file: api_client.py
+    line: 44
+    category: security
+    pattern: incomplete_sanitization
+    description: "Incomplete XSS sanitization"
+    severity: critical
+
+  - id: BUG-23
+    file: api_client.py
+    line: 52
+    category: input_validation
+    pattern: missing_encoding
+    description: "No URL encoding for special chars"
+    severity: major
+
+  - id: BUG-24
+    file: api_client.py
+    line: 60
+    category: input_validation
+    pattern: missing_validation
+    description: "No validation of negative values"
+    severity: minor
+
+  - id: BUG-25
+    file: api_client.py
+    line: 68
+    category: input_validation
+    pattern: weak_validation
+    description: "No format validation for phone"
+    severity: minor
+
+  # File 4: file_handler.py (8 bugs)
+  - id: BUG-26
+    file: file_handler.py
+    line: 18
+    category: path_traversal
+    pattern: path_injection
+    description: "No path traversal prevention"
+    severity: critical
+
+  - id: BUG-27
+    file: file_handler.py
+    line: 28
+    category: path_traversal
+    pattern: path_injection
+    description: "Path traversal via filename"
+    severity: critical
+
+  - id: BUG-28
+    file: file_handler.py
+    line: 38
+    category: path_traversal
+    pattern: missing_validation
+    description: "No validation of filename"
+    severity: major
+
+  - id: BUG-29
+    file: file_handler.py
+    line: 48
+    category: path_traversal
+    pattern: path_injection
+    description: "No path validation on copy"
+    severity: critical
+
+  - id: BUG-30
+    file: file_handler.py
+    line: 58
+    category: path_traversal
+    pattern: directory_traversal
+    description: "Can list any directory"
+    severity: major
+
+  - id: BUG-31
+    file: file_handler.py
+    line: 76
+    category: path_traversal
+    pattern: path_injection
+    description: "No validation of user_id"
+    severity: critical
+
+  - id: BUG-32
+    file: file_handler.py
+    line: 86
+    category: path_traversal
+    pattern: path_injection
+    description: "No path validation on move"
+    severity: critical
+
+  - id: BUG-33
+    file: file_handler.py
+    line: 96
+    category: path_traversal
+    pattern: path_injection
+    description: "Path traversal via config_name"
+    severity: critical
+
+  # File 5: config_manager.py (8 bugs)
+  - id: BUG-34
+    file: config_manager.py
+    line: 18
+    category: logic_errors
+    pattern: global_mutable_state
+    description: "Global mutable state"
+    severity: major
+
+  - id: BUG-35
+    file: config_manager.py
+    line: 22
+    category: logic_errors
+    pattern: missing_validation
+    description: "No validation that key exists in schema"
+    severity: minor
+
+  - id: BUG-36
+    file: config_manager.py
+    line: 30
+    category: logic_errors
+    pattern: missing_validation
+    description: "No type validation for value"
+    severity: minor
+
+  - id: BUG-37
+    file: config_manager.py
+    line: 38
+    category: logic_errors
+    pattern: incomplete_validation
+    description: "Incomplete validation"
+    severity: major
+
+  - id: BUG-38
+    file: config_manager.py
+    line: 46
+    category: logic_errors
+    pattern: shallow_copy
+    description: "Shallow merge doesn't handle nested dicts"
+    severity: major
+
+  - id: BUG-39
+    file: config_manager.py
+    line: 54
+    category: logic_errors
+    pattern: missing_sanitization
+    description: "No sanitization of env values"
+    severity: major
+
+  - id: BUG-40
+    file: config_manager.py
+    line: 64
+    category: logic_errors
+    pattern: incomplete_handling
+    description: "Missing handling for some types"
+    severity: minor
+
+  - id: BUG-41
+    file: config_manager.py
+    line: 77
+    category: logic_errors
+    pattern: missing_validation
+    description: "No handling for non-dict intermediate"
+    severity: minor
+
+  # File 6: utils.py (9 bugs)
+  - id: BUG-42
+    file: utils.py
+    line: 14
+    category: security
+    pattern: weak_random
+    description: "Using weak random"
+    severity: major
+
+  - id: BUG-43
+    file: utils.py
+    line: 22
+    category: mixed
+    pattern: missing_backoff
+    description: "No exponential backoff"
+    severity: minor
+
+  - id: BUG-44
+    file: utils.py
+    line: 34
+    category: security
+    pattern: info_exposure
+    description: "May expose sensitive info in stack trace"
+    severity: major
+
+  - id: BUG-45
+    file: utils.py
+    line: 42
+    category: mixed
+    pattern: incomplete_handling
+    description: "Incomplete boolean parsing"
+    severity: minor
+
+  - id: BUG-46
+    file: utils.py
+    line: 50
+    category: mixed
+    pattern: memory_leak
+    description: "Unbounded cache growth"
+    severity: major
+
+  - id: BUG-47
+    file: utils.py
+    line: 62
+    category: input_validation
+    pattern: missing_validation
+    description: "No validation of negative max_length"
+    severity: minor
+
+  - id: BUG-48
+    file: utils.py
+    line: 72
+    category: mixed
+    pattern: incomplete_handling
+    description: "Doesn't handle list values properly"
+    severity: minor
+
+  - id: BUG-49
+    file: utils.py
+    line: 84
+    category: mixed
+    pattern: thread_safety
+    description: "Not thread-safe"
+    severity: major
+
+  - id: BUG-50
+    file: utils.py
+    line: 100
+    category: mixed
+    pattern: shallow_validation
+    description: "Only validates top-level keys"
+    severity: minor
+
+# Summary by severity
+severity_counts:
+  critical: 12
+  major: 26
+  minor: 12

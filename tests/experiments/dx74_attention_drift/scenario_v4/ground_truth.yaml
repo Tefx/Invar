@@ -1,0 +1,530 @@
+# DX-74 Experiment V4 - Ground Truth
+# Full checklist coverage (A-G)
+# Total: 50 issues
+
+version: 4
+total_issues: 50
+
+distribution:
+  A_contract: 8
+  B_doctest: 14
+  C_quality: 6
+  D_escape_hatch: 6
+  E_logic: 12
+  F_security: 8
+  G_error_handling: 23
+
+# Note: Some issues count in multiple categories
+
+files:
+  math_utils.py:
+    issues:
+      # A. Contract Issues
+      - id: A-01
+        line: 28
+        category: A_contract
+        type: trivial_precondition
+        description: "@pre(lambda x: True) - always True, no constraint"
+
+      - id: A-02
+        line: 29
+        category: A_contract
+        type: trivial_postcondition
+        description: "@post(result is not None) - doesn't verify meaningful property"
+
+      - id: A-03
+        line: 43
+        category: A_contract
+        type: type_only_contract
+        description: "@pre only checks isinstance, no semantic constraint"
+
+      - id: A-04
+        line: 55
+        category: A_contract
+        type: missing_precondition
+        description: "No @pre to validate non-empty list input"
+
+      - id: A-05
+        line: 69
+        category: A_contract
+        type: weak_precondition
+        description: "@pre doesn't constrain b != 0 for division"
+
+      - id: A-06
+        line: 70
+        category: A_contract
+        type: trivial_postcondition
+        description: "@post(lambda result: True) - always passes"
+
+      # E. Logic Issues
+      - id: E-01
+        line: 50
+        category: E_logic
+        type: missing_edge_case
+        description: "calculate_mean doesn't handle empty list"
+
+      - id: E-02
+        line: 78
+        category: E_logic
+        type: missing_validation
+        description: "safe_divide doesn't check b != 0"
+
+      - id: E-03
+        line: 96
+        category: E_logic
+        type: correct_code
+        description: "Actually correct - not a bug (control)"
+
+      - id: E-04
+        line: 97
+        category: E_logic
+        type: dead_code
+        description: "Duplicate elif condition - never reached"
+
+      - id: E-05
+        line: 117
+        category: E_logic
+        type: potential_overflow
+        description: "(left + right) // 2 can overflow in some languages"
+
+      - id: E-06
+        line: 135
+        category: E_logic
+        type: implicit_assumption
+        description: "Assumes rate is decimal (0.05) not percentage (5)"
+
+      - id: E-07
+        line: 149
+        category: E_logic
+        type: floating_point
+        description: "sqrt() precision may cause false negatives"
+
+      - id: E-08
+        line: 188
+        category: E_logic
+        type: division_by_zero
+        description: "interpolate doesn't check x1 == x2"
+
+      - id: E-09
+        line: 200
+        category: E_logic
+        type: questionable_logic
+        description: "Modulo behavior for negative angles"
+
+      - id: E-10
+        line: 224
+        category: E_logic
+        type: division_by_zero
+        description: "normalize() doesn't check zero vector"
+
+      # B. Doctest Issues
+      - id: B-01
+        line: 162
+        category: B_doctest
+        type: missing_doctest
+        description: "calculate_gcd has no doctests"
+
+      - id: B-02
+        line: 172
+        category: B_doctest
+        type: insufficient_doctests
+        description: "calculate_lcm only has one test, missing edge cases"
+
+      - id: B-03
+        line: 186
+        category: B_doctest
+        type: missing_error_case
+        description: "fibonacci_sequence no test for n < 0"
+
+      - id: B-04
+        line: 200
+        category: B_doctest
+        type: missing_boundary
+        description: "prime_factors no test for n=1, n=0"
+
+  user_auth.py:
+    issues:
+      # F. Security Issues
+      - id: F-01
+        line: 19
+        category: F_security
+        type: hardcoded_secret
+        description: "SECRET_KEY hardcoded"
+
+      - id: F-02
+        line: 22
+        category: F_security
+        type: hardcoded_secret
+        description: "DB_PASSWORD hardcoded"
+
+      - id: F-03
+        line: 43
+        category: F_security
+        type: weak_algorithm
+        description: "Using MD5 for password hashing"
+
+      - id: F-04
+        line: 54
+        category: F_security
+        type: timing_attack
+        description: "Password comparison vulnerable to timing attack"
+
+      - id: F-05
+        line: 70
+        category: F_security
+        type: missing_validation
+        description: "No password strength validation"
+
+      - id: F-06
+        line: 161
+        category: F_security
+        type: predictable_token
+        description: "Reset token uses predictable email+timestamp"
+
+      # G. Error Handling Issues
+      - id: G-01
+        line: 79
+        category: G_error_handling
+        type: timing_leak
+        description: "User enumeration via timing difference"
+
+      - id: G-02
+        line: 111
+        category: G_error_handling
+        type: sensitive_logging
+        description: "Logs full token value"
+
+      - id: G-03
+        line: 122
+        category: G_error_handling
+        type: sensitive_logging
+        description: "Logs full exception with sensitive data"
+
+      - id: G-04
+        line: 141
+        category: G_error_handling
+        type: bare_except
+        description: "Bare except returns False silently"
+
+      - id: G-05
+        line: 147
+        category: G_error_handling
+        type: missing_check
+        description: "No actual ownership check"
+
+      - id: G-06
+        line: 151
+        category: G_error_handling
+        type: silent_catch
+        description: "Catches exception but no recovery"
+
+      - id: G-07
+        line: 171
+        category: G_error_handling
+        type: mutable_return
+        description: "Returns internal dict reference"
+
+      - id: G-08
+        line: 193
+        category: G_error_handling
+        type: sensitive_storage
+        description: "Exception stores sensitive user_email"
+
+      - id: G-09
+        line: 200
+        category: G_error_handling
+        type: info_leak
+        description: "Error response exposes internal details"
+
+      - id: G-10
+        line: 209
+        category: G_error_handling
+        type: info_leak
+        description: "Exposes exception type and message"
+
+  data_service.py:
+    issues:
+      # B. Doctest Issues
+      - id: B-05
+        line: 21
+        category: B_doctest
+        type: missing_doctest
+        description: "parse_json_data has no doctests"
+
+      - id: B-06
+        line: 27
+        category: B_doctest
+        type: missing_doctest
+        description: "format_currency has no doctests"
+
+      - id: B-07
+        line: 35
+        category: B_doctest
+        type: missing_edge_case
+        description: "calculate_percentage no test for total=0"
+
+      - id: B-08
+        line: 47
+        category: B_doctest
+        type: missing_conflict_case
+        description: "merge_dicts no test for key conflict"
+
+      - id: B-09
+        line: 131
+        category: B_doctest
+        type: missing_edge_case
+        description: "filter_records no test for missing field"
+
+      - id: B-10
+        line: 139
+        category: B_doctest
+        type: missing_doctest
+        description: "group_by has no doctests"
+
+      - id: B-11
+        line: 153
+        category: B_doctest
+        type: missing_edge_case
+        description: "flatten_dict no test for deep nesting"
+
+      - id: B-12
+        line: 167
+        category: B_doctest
+        type: insufficient_coverage
+        description: "safe_get only tests happy path"
+
+      # C. Code Quality Issues
+      - id: C-01
+        line: 62
+        category: C_quality
+        type: code_duplication
+        description: "process_single duplicates process_batch logic"
+
+      - id: C-02
+        line: 84
+        category: C_quality
+        type: code_duplication
+        description: "process_batch duplicates process_single logic"
+
+      - id: C-03
+        line: 109
+        category: C_quality
+        type: poor_naming
+        description: "v, d, r are unclear names"
+
+      - id: C-04
+        line: 122
+        category: C_quality
+        type: excessive_complexity
+        description: "transform_complex does too many things"
+
+      - id: C-05
+        line: 174
+        category: C_quality
+        type: magic_numbers
+        description: "90, 80, 70, 60 without constants"
+
+      - id: C-06
+        line: 188
+        category: C_quality
+        type: inconsistent_naming
+        description: "camelCase mixed with snake_case"
+
+  config_manager.py:
+    issues:
+      # D. Escape Hatch Issues
+      - id: D-01
+        line: 21
+        category: D_escape_hatch
+        type: vague_justification
+        description: "@invar:allow[no-contract] - 'Legacy code' is not a valid reason"
+
+      - id: D-02
+        line: 35
+        category: D_escape_hatch
+        type: invalid_justification
+        description: "@invar:allow[no-doctest] - 'Too complex' should mean MORE testing"
+
+      - id: D-03
+        line: 49
+        category: D_escape_hatch
+        type: wrong_approach
+        description: "@invar:allow[bare-except] - should catch specific exceptions"
+
+      - id: D-04
+        line: 57
+        category: D_escape_hatch
+        type: bug_not_feature
+        description: "@invar:allow[mutable-default] - caching doesn't justify bug"
+
+      # G. Error Handling Issues
+      - id: G-11
+        line: 85
+        category: G_error_handling
+        type: over_catching
+        description: "Catches all exceptions, masks real errors"
+
+      - id: G-12
+        line: 104
+        category: G_error_handling
+        type: silent_failure
+        description: "Creates empty config silently"
+
+      - id: G-13
+        line: 113
+        category: G_error_handling
+        type: missing_error_handling
+        description: "No handling for write failures"
+
+      - id: G-14
+        line: 122
+        category: G_error_handling
+        type: incomplete_handling
+        description: "Logs error but doesn't re-raise"
+
+      - id: G-15
+        line: 140
+        category: G_error_handling
+        type: silent_failure
+        description: "Returns default on parse error"
+
+      - id: G-16
+        line: 149
+        category: G_error_handling
+        type: inconsistent_behavior
+        description: "Boolean parsing inconsistent"
+
+      - id: G-17
+        line: 156
+        category: G_error_handling
+        type: info_leak
+        description: "Error exposes internal key format"
+
+      - id: G-18
+        line: 184
+        category: G_error_handling
+        type: incomplete_validation
+        description: "Doesn't check for extra keys"
+
+      - id: G-19
+        line: 197
+        category: G_error_handling
+        type: silent_failure
+        description: "Returns empty dict on FileNotFoundError"
+
+      - id: G-20
+        line: 200
+        category: G_error_handling
+        type: bare_except
+        description: "Bare except with no logging"
+
+  report_generator.py:
+    issues:
+      # A. Contract Issues
+      - id: A-07
+        line: 32
+        category: A_contract
+        type: trivial_precondition
+        description: "@pre(lambda data: True)"
+
+      - id: A-08
+        line: 51
+        category: A_contract
+        type: trivial_postcondition
+        description: "@post only checks isinstance(result, str)"
+
+      # B. Doctest Issues
+      - id: B-13
+        line: 70
+        category: B_doctest
+        type: missing_doctest
+        description: "aggregate_reports has no doctests"
+
+      - id: B-14
+        line: 96
+        category: B_doctest
+        type: incomplete_doctest
+        description: "filter_by_date doctest output incorrect"
+
+      # C. Code Quality Issues (via D justification issues)
+      # Already counted in D
+
+      # D. Escape Hatch Issues
+      - id: D-05
+        line: 175
+        category: D_escape_hatch
+        type: vague_justification
+        description: "@invar:allow[complexity] - 'Business requirement' is vague"
+
+      - id: D-06
+        line: 212
+        category: D_escape_hatch
+        type: wrong_justification
+        description: "@invar:allow[no-type-hints] - type hints help dynamic code"
+
+      # E. Logic Issues
+      - id: E-11
+        line: 117
+        category: E_logic
+        type: division_by_zero
+        description: "calculate_growth doesn't check previous=0"
+
+      - id: E-12
+        line: 132
+        category: E_logic
+        type: wrong_logic
+        description: "get_trend returns 'stable' for volatile data"
+
+      # F. Security Issues
+      - id: F-07
+        line: 142
+        category: F_security
+        type: hardcoded_secret
+        description: "REPORT_API_KEY hardcoded"
+
+      - id: F-08
+        line: 147
+        category: F_security
+        type: missing_validation
+        description: "No validation of recipient"
+
+      # G. Error Handling Issues
+      - id: G-21
+        line: 156
+        category: G_error_handling
+        type: info_leak
+        description: "Error includes raw input data"
+
+      - id: G-22
+        line: 169
+        category: G_error_handling
+        type: silent_error
+        description: "Catches exception but loses details"
+
+      - id: G-23
+        line: 175
+        category: G_error_handling
+        type: opaque_failure
+        description: "Returns None without exposing errors"
+
+summary:
+  by_category:
+    A_contract: 8
+    B_doctest: 14
+    C_quality: 6
+    D_escape_hatch: 6
+    E_logic: 12
+    F_security: 8
+    G_error_handling: 23
+
+  by_detectability:
+    grep_friendly: 12      # F (secrets), G (bare except)
+    sig_friendly: 22       # A, B, some E
+    review_required: 16    # C, D, complex E, complex G
+
+  by_file:
+    math_utils.py: 16
+    user_auth.py: 16
+    data_service.py: 14
+    config_manager.py: 14
+    report_generator.py: 17
