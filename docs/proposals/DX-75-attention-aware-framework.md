@@ -657,34 +657,76 @@ Combine findings from both passes, deduplicate.
 
 ## Part 6: 实现路线图
 
-### 6.1 Phase 1: Core Components (Week 1-2)
+### 6.0 实现策略选择
 
-| Component | Location | Priority |
+**核心洞察:** DX-74 的大部分收益可以通过提示词更新获得，无需新增代码模块。
+
+| 方案 | 开发成本 | 预期收益 | ROI |
+|------|---------|---------|-----|
+| **Phase B (轻量级)** | ~300 行提示词 | +10-15% 检测率 | **高** |
+| Phase A (完整) | ~1700 行代码 | +16-20% 检测率 | 中等 |
+
+**推荐路径:** 先实施 Phase B，验证效果后再决定是否需要 Phase A。
+
+---
+
+### 6.1 Phase B: 轻量级实施 (✅ 已完成)
+
+**仅提示词更新，无新增代码模块。**
+
+| 更新 | 文件 | 状态 |
+|------|------|------|
+| /review 规模感知策略 | `skills/review/SKILL.md` | ✅ v7.0 |
+| /develop VALIDATE 隔离 | `skills/develop/SKILL.md` | ✅ v5.1 |
+| 规模分类规则 | Agent 自行判断 | ✅ 内嵌 |
+
+**关键变更:**
+
+1. **/review 添加规模分类:**
+   - SMALL (<5 files, <1500 lines): THOROUGH 策略 (不预枚举)
+   - MEDIUM (5-10 files, 1500-5000 lines): HYBRID 策略 (枚举 + 开放发现)
+   - LARGE (>10 files, >5000 lines): CHUNKED 策略 (分块并行)
+
+2. **/develop VALIDATE 阶段隔离:**
+   - 非简单实现 (>3 functions OR >200 lines) 需 spawn 隔离 validator
+   - 隔离 validator 不接收开发对话上下文
+
+3. **策略选择由 Agent 判断:**
+   - 无需 ScopeAnalyzer 代码模块
+   - 提示词中嵌入分类规则
+
+---
+
+### 6.2 Phase B 验证
+
+| 测试 | 方法 | 成功标准 |
+|------|------|---------|
+| V4 scenario | 运行新 /review | >90% 检测率 (原 84%) |
+| V7 scenario | 运行新 /review | 发现变种边缘案例 |
+| 规模判断准确性 | 多场景测试 | Agent 正确选择策略 |
+
+---
+
+### 6.3 Phase A: 完整实施 (延后)
+
+**仅在 Phase B 效果不足时实施。**
+
+| Component | Location | 触发条件 |
 |-----------|----------|----------|
-| ScopeAnalyzer | `src/invar/core/scope_analyzer.py` | P0 |
-| StrategySelector | `src/invar/core/strategy_selector.py` | P0 |
-| IsolationManager | `src/invar/shell/isolation.py` | P0 |
-| AttentionRefreshController | `src/invar/core/attention.py` | P1 |
+| ScopeAnalyzer | `src/invar/core/scope_analyzer.py` | Agent 规模判断不准 |
+| StrategySelector | `src/invar/core/strategy_selector.py` | 策略选择需要更复杂逻辑 |
+| IsolationManager | `src/invar/shell/isolation.py` | 隔离 spawn 需要封装 |
+| AttentionRefreshController | `src/invar/core/attention.py` | 自动刷新需要代码支持 |
 
-### 6.2 Phase 2: Skill Updates (Week 2-3)
+### 6.4 Phase A Skill Updates (延后)
 
-| Skill | Changes | Priority |
+| Skill | Changes | 触发条件 |
 |-------|---------|----------|
-| /review | Complete rewrite with new architecture | P0 |
-| /develop | Add isolated VALIDATE phase | P0 |
-| /investigate | Add chunked exploration | P1 |
-| /propose | Add Devil's Advocate pass | P2 |
-| /audit | Merge into /review --readonly | P1 |
+| /investigate | 分块探索 | 大规模探索效果不佳 |
+| /propose | Devil's Advocate | 选项遗漏问题 |
+| /audit | 合并到 /review --readonly | 简化 skill 数量 |
 
-### 6.3 Phase 3: Protocol Updates (Week 3-4)
-
-| Update | Location | Priority |
-|--------|----------|----------|
-| USBV attention refresh | `INVAR.md` | P0 |
-| Skill routing rules | `CLAUDE.md` | P0 |
-| Isolation requirements | Skill SKILL.md files | P0 |
-
-### 6.4 Phase 4: Testing & Validation (Week 4-5)
+### 6.5 验证与回归
 
 | Test | Method | Success Criteria |
 |------|--------|------------------|
@@ -811,7 +853,8 @@ class IsolationManager:
 | Version | Date | Changes |
 |---------|------|---------|
 | 0.1 | 2026-01-02 | Initial draft from DX-74 findings |
-| 0.2 | 2026-01-02 | Added Part 4.5: Agent automation mechanisms (auto-routing, cost degradation, failure recovery, parallel execution, complexity thresholds) |
+| 0.2 | 2026-01-02 | Added Part 4.5: Agent automation mechanisms |
+| 0.3 | 2026-01-02 | **Phase B 实施完成**: 轻量级提示词方案，重构 Part 6 路线图 |
 
 ---
 

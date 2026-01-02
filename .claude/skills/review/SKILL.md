@@ -1,337 +1,151 @@
----
-name: review
-description: Fault-finding code review with REJECTION-FIRST mindset. Code is GUILTY until proven INNOCENT. Two-step loop (Review→Fix) with full-scope review each round. Use after development, when Guard reports review_suggested, or user explicitly requests review.
-_invar:
-  version: "5.3"
-  managed: skill
----
 <!--invar:skill-->
 
-# Review Mode (Fault-Finding with Auto-Loop)
+# Review Skill (Adversarial)
 
-> **Purpose:** Find problems that Guard, doctests, and property tests missed.
-> **Mindset:** REJECTION-FIRST. Code is GUILTY until proven INNOCENT.
-> **Success Metric:** Issues FOUND, not code approved. Zero issues = you failed to look hard enough.
-> **Workflow:** Two-step loop: Review → Fix → Review → Fix → ... (full scope each round, no separate "verify" step).
+## Mandatory Rules (MUST follow, NO exceptions)
 
-## Depth Levels (DX-70)
+1. **EVERY round MUST spawn isolated subagent** (Task tool with model=opus)
+2. **EVERY round reviews FULL scope** (all files, not just changes)
+3. **Code is GUILTY until proven INNOCENT**
+4. **NO user confirmation between rounds** — just do it
+5. **MAX_ROUNDS = 5**
 
-| Level | Context | Use Case |
-|-------|---------|----------|
-| (default) | Same context | Reviewing **others' code** only |
-| `--deep` | **Isolated agent** | Self-review, before merge, maximum objectivity |
-
-**Default:** Same context — **only appropriate for code you did NOT write**.
-
-**`--deep` mode:** Spawns isolated agent with no conversation history. **Required when:**
-- You wrote or modified the code being reviewed (self-review)
-- Before merge/PR
-- Maximum objectivity needed
-
-### ⚠️ Same-Context Review Limitations (CRITICAL)
-
-**Same-context review CANNOT be objective for self-written code because:**
-
-| Cognitive Bias | Effect |
-|----------------|--------|
-| **Intent over code** | You "know" what it's supposed to do, so you don't see what it actually does |
-| **Context memory** | You "remember" reading code, so you skip re-reading carefully |
-| **Confirmation bias** | You look for "code works" evidence, not "code fails" evidence |
-| **Completion pressure** | Subconscious goal becomes "finish review" not "find bugs" |
-
-**Evidence:** In DX-71 review, same-context missed 2 CRITICAL + 4 MAJOR issues that
-isolated agent found immediately. "Fresh eyes" claims don't work in same context.
-
-### Mandatory Self-Review Detection (DX-72)
-
-**Before starting review, you MUST check:**
-
-```
-If ANY file in review scope was edited by agent this session:
-┌──────────────────────────────────────────────────────────────┐
-│ 🚨 SELF-REVIEW DETECTED — Isolation Required                 │
-│                                                              │
-│ You modified files in the review scope this session.         │
-│ Same-context review has proven cognitive blind spots.        │
-│                                                              │
-│ Options:                                                     │
-│ [1] Use --deep (RECOMMENDED) — Spawn isolated agent          │
-│ [2] Acknowledge risk — User explicitly accepts limitations   │
-│                                                              │
-│ If user says "continue" or "quick review":                   │
-│ → Proceed but add WARNING to final report                    │
-│ → Report MUST state: "Self-review without isolation"         │
-└──────────────────────────────────────────────────────────────┘
-```
-
-**Default action:** If user doesn't specify, use `--deep` for self-review.
-
-### --deep Mode Execution
-
-When `--deep` is selected:
-
-1. Collect minimal inputs:
-   - Files to review
-   - Contracts (if available)
-   - Test files (if available)
-
-2. Spawn Task agent with:
-   - **Adversarial Code Reviewer persona** (see Appendix)
-   - NO conversation history
-   - Only the collected inputs
-
-3. Isolated agent returns structured review report
-
-4. Main agent fixes issues (if any)
-
-5. **CRITICAL: Spawn NEW isolated agent for Round 2+ Review**
-
-### --deep Mode Loop (MANDATORY)
-
-```
-while not quality_met:
-    report = spawn_NEW_isolated_reviewer(files)  # 每轮新 agent
-    if report.has_critical_or_major:
-        main_agent.fix(report.issues)            # 主 agent 修复
-    else:
-        quality_met = True
-```
-
-**Why new agent each round?**
-- Main agent has context contamination from fixing
-- "Fresh eyes" cannot be achieved in same context
-- Round 2 in same context drifts to "verify my fixes" not "find problems"
+**Violation = Review Invalid.** If you skip subagent or review only changes, the review is worthless.
 
 ---
 
-## Scope Boundaries
+## Scope Classification (DX-75)
 
-**This skill IS for:**
-- Finding bugs and logic errors in existing code
-- Verifying contract semantic value
-- Auditing escape hatches
-- Security review
+**Before starting, classify the scope:**
 
-**This skill is NOT for:**
-- Implementing new features → switch to `/develop`
-- Understanding how code works → switch to `/investigate`
-- Deciding on architecture → switch to `/propose`
+| Classification | Criteria | Strategy |
+|----------------|----------|----------|
+| **SMALL** | <5 files AND <1500 lines | THOROUGH (no enumeration) |
+| **MEDIUM** | 5-10 files OR 1500-5000 lines | HYBRID (enum + open) |
+| **LARGE** | >10 files OR >5000 lines | CHUNKED (parallel subagents) |
 
-**Drift detection:** If you're writing significant new code (not fixes) → STOP, you're in wrong skill.
+**Why different strategies?**
+- SMALL: Pre-enumeration causes "checklist mentality" — you only verify listed items, miss variants
+- LARGE: Without enumeration, attention drifts — later files get less scrutiny
 
-## Auto-Loop Configuration
+---
 
-```
-MAX_ROUNDS = 5          # Maximum review-fix cycles
-AUTO_TRANSITION = true  # No human confirmation between roles
-ASK_USER = never        # NEVER ask user, just do it
-```
-
-**CRITICAL: After finding issues, IMMEDIATELY switch to FIXER role and fix them.**
-**DO NOT ask "Proceed with fixes?" or similar — just fix and continue.**
-
-## Prime Directive: Reject Until Proven Correct
-
-**You are the PROSECUTOR, not the defense attorney.**
-
-| Trap | Reality Check |
-|------|---------------|
-| "Seems fine" | You failed to find the bug |
-| "Makes sense" | You're rationalizing, not reviewing |
-| "Edge case is unlikely" | Edge cases ARE bugs |
-| "Comment explains it" | Comments don't fix code |
-| "Assessed as acceptable" | "Assessed" ≠ "Fixed" |
-
-## Role Separation (CRITICAL)
-
-**You play TWO distinct roles that cycle AUTOMATICALLY:**
-
-| Role | Allowed Actions | Forbidden |
-|------|-----------------|-----------|
-| **REVIEWER** | Find issues (full scope), declare quality_met | Write code, rationalize issues |
-| **FIXER** | Implement fixes only | Declare quality_met, dismiss issues |
-
-**Role Transition Markers (REQUIRED):**
+## Strategy: THOROUGH (SMALL scope)
 
 ```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🔍 REVIEWER [Round N] — Full scope review
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🔧 FIXER [Round N] — Implementing fixes
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+┌─────────────────────────────────────────────────────────────┐
+│  THOROUGH STRATEGY (for SMALL scope)                        │
+│  ───────────────────────────────────────────────────────────│
+│                                                             │
+│  ⚠️ DO NOT pre-enumerate issues or patterns                 │
+│  ⚠️ DO NOT use grep/sig to "find issues first"              │
+│                                                             │
+│  Instead:                                                   │
+│  1. Read each file COMPLETELY, line by line                 │
+│  2. Apply checklist A-G as you read                         │
+│  3. Trust your judgment to find issues                      │
+│  4. Look for VARIANTS and EDGE CASES                        │
+│                                                             │
+│  Why: Pre-enumeration narrows focus to known patterns.      │
+│  Small scope = you CAN read everything thoroughly.          │
+│  This finds issues that pattern matching misses.            │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-**NO separate "Verify" step.** After Fix, go directly to next round's Review.
-
-## Quality Gate Authority
-
-**ONLY the Reviewer role can declare `quality_met`.**
-
-Before declaring exit:
-1. Re-read EVERY issue found
-2. For each issue, verify: "Is this ACTUALLY fixed, or did I rationalize it?"
-3. Ask: "Would I accept this excuse from someone else's code?"
-
-**Self-Check Questions:**
-- Did I write code AND declare quality_met? → Role confusion detected
-- Did I say "assessed" instead of "fixed"? → Rationalization detected
-- Did any MAJOR become a comment instead of code? → Fix failed
-
-## Fault-Finding Persona
-
-Assume:
-- The code has bugs until proven otherwise
-- The contracts may be meaningless ceremony
-- The implementer may have rationalized poor decisions
-- Escape hatches may be abused
-- **Your own fixes may introduce new bugs**
-
-You ARE here to:
-- Find bugs, logic errors, edge cases
-- Challenge whether contracts have semantic value
-- Check if code matches contracts (not if code "seems right")
-
-## Fresh Eyes Mandate (Round 2+) — ENFORCED
-
-**For rounds after the first, you MUST adopt "fresh eyes" mindset:**
-
-> "I am a different reviewer who has never seen this code or the previous fixes."
-
-| Trap | Correction |
-|------|------------|
-| "I just fixed this" | Irrelevant. Review it like new code. |
-| "This was fine last round" | Maybe you missed something. Check again. |
-| "The fix looks correct" | That's FIXER thinking. Find what's WRONG. |
-
-### Why This Exists
-
-Round 2+ in the same context naturally drifts toward "verify my fixes" instead of
-"find all problems". This cognitive bias causes issues to slip through:
-- Attention focuses on recently-fixed areas
-- Brain skips content it "remembers" reading
-- Subconscious goal becomes "complete task" not "find bugs"
-
-### Mandatory Actions (Round 2+)
-
-**Before declaring quality_met, you MUST:**
-
-1. **RE-READ all files using Read tool**
-   ```
-   ❌ WRONG: Rely on context memory ("I already read this")
-   ✅ RIGHT: Call Read() for each file in scope, every round
-   ```
-
-2. **Systematic audit per code block** (for documentation/examples)
-   ```
-   For each code block:
-   - List all symbols USED (types, functions, classes)
-   - List all IMPORTS shown
-   - Verify: every used symbol has corresponding import
-   ```
-
-3. **Section-by-section explicit check**
-   ```
-   □ Section 1 checked
-   □ Section 2 checked
-   □ Section 3 checked
-   ... (every section, not "looks fine overall")
-   ```
-
-4. **Verbalize findings before exit**
-   ```
-   ❌ WRONG: "Verified fixes, looks good"
-   ✅ RIGHT: "Re-read 5 files, checked 23 sections, found 0 new issues"
-   ```
-
-### Round 2+ Workflow Diagram
+## Strategy: HYBRID (MEDIUM scope)
 
 ```
-FIXER [Round N] completes
-         ↓
-┌─────────────────────────────────────────┐
-│  REVIEWER [Round N+1] — MANDATORY STEPS │
-│                                         │
-│  1. Call Read() for EVERY file in scope │
-│     (Do NOT skip, do NOT rely on memory)│
-│                                         │
-│  2. For each file:                      │
-│     □ Check section by section          │
-│     □ Audit imports vs usage            │
-│     □ Look for issues MISSED before     │
-│                                         │
-│  3. Verbalize: "Read X files, checked   │
-│     Y sections, found Z issues"         │
-│                                         │
-│  4. Only THEN: EXIT CHECK               │
-└─────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│  HYBRID STRATEGY (for MEDIUM scope)                         │
+│  ───────────────────────────────────────────────────────────│
+│                                                             │
+│  Phase 0: ENUMERATE (Main Agent)                            │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │  Use grep/invar_sig to find:                        │   │
+│  │  - All @pre/@post contracts                         │   │
+│  │  - All @invar:allow escape hatches                  │   │
+│  │  - Hardcoded strings (secrets?)                     │   │
+│  │  - subprocess/exec/eval calls                       │   │
+│  │  - bare except clauses                              │   │
+│  │  Create issue_map with file:line for each           │   │
+│  └─────────────────────────────────────────────────────┘   │
+│                                                             │
+│  Phase 1: GUIDED REVIEW (Isolated Subagent)                 │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │  Pass issue_map to subagent                         │   │
+│  │  Subagent verifies each item                        │   │
+│  │  Reports: "Checked N/M items from issue_map"        │   │
+│  └─────────────────────────────────────────────────────┘   │
+│                                                             │
+│  Phase 2: OPEN DISCOVERY (Same Subagent)                    │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │  "Now forget the issue_map.                         │   │
+│  │   Look for issues NOT in the map:                   │   │
+│  │   - Variants of listed patterns                     │   │
+│  │   - Logic errors                                    │   │
+│  │   - Edge cases"                                     │   │
+│  │  Reports: "Found N additional issues"               │   │
+│  └─────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-**Full scope means:**
-1. Re-run the ENTIRE checklist (A through G)
-2. Review ALL files in scope, not just recent fixes
-3. Check if fixes introduced NEW issues
-4. Look for issues you missed in previous rounds
-
-## Entry Actions
-
-### Context Refresh (DX-54)
-
-Before any workflow action:
-1. Read `.invar/context.md` (especially Key Rules section)
-2. Display routing announcement
-
-### Routing Announcement
+## Strategy: CHUNKED (LARGE scope)
 
 ```
-📍 Routing: /review — [trigger, e.g. "review_suggested", "user requested review"]
-   Task: [review scope summary]
+┌─────────────────────────────────────────────────────────────┐
+│  CHUNKED STRATEGY (for LARGE scope)                         │
+│  ───────────────────────────────────────────────────────────│
+│                                                             │
+│  1. Split files into chunks of ~3-5 files each              │
+│                                                             │
+│  2. For each chunk (can be parallel):                       │
+│     - Spawn isolated subagent                               │
+│     - Use HYBRID strategy within chunk                      │
+│                                                             │
+│  3. Cross-chunk analysis:                                   │
+│     - Check cross-file dependencies                         │
+│     - Check API consistency                                 │
+│                                                             │
+│  4. Merge all findings, deduplicate                         │
+│                                                             │
+│  Why: Prevents "attention fatigue" on file 8+ of 15.        │
+│  Each chunk gets fresh attention.                           │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-## Mode Selection
+---
 
-### Step 1: Check Self-Review (MANDATORY)
+## 2-Step Loop (MANDATORY workflow)
 
-```python
-# Pseudo-code for self-review detection
-files_in_scope = get_review_scope()
-files_edited_this_session = get_agent_edits()
-
-if files_in_scope & files_edited_this_session:
-    # SELF-REVIEW DETECTED
-    if user_said("--deep") or user_said("deep review"):
-        mode = ISOLATED
-    elif user_said("quick") or user_said("continue"):
-        mode = SAME_CONTEXT
-        add_warning_to_report = True  # "Self-review without isolation"
-    else:
-        # Default: recommend --deep, wait for user choice
-        show_self_review_warning()
-        mode = ISOLATED  # Default to safe option
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Round N:                                                   │
+│                                                             │
+│  1. REVIEWER [Subagent] ─────────────────────────────────── │
+│     • Spawn NEW isolated agent (Task tool)                  │
+│     • Use strategy based on scope classification            │
+│     • Review ALL files in scope (full checklist A-G)        │
+│     • Return: issues[] or APPROVED                          │
+│                                                             │
+│  2. FIXER [Main Agent] ──────────────────────────────────── │
+│     • Fix CRITICAL/MAJOR issues with CODE                   │
+│     • Run invar_guard()                                     │
+│     • Cannot declare quality_met                            │
+│                                                             │
+│  → Loop until: APPROVED OR max_rounds OR no_progress        │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-### Step 2: Check Guard Output
+**Why new subagent each round?**
+- Main agent has context contamination from fixing
+- "Fresh eyes" impossible in same context
+- Round 2+ drifts to "verify my fixes" not "find problems"
 
-Look for `review_suggested` warning:
-```
-WARNING: review_suggested - High escape hatch count
-WARNING: review_suggested - Security-sensitive path detected
-WARNING: review_suggested - Low contract coverage
-```
+---
 
-### Select Mode (Final Decision)
+## Review Checklist (apply to ALL files)
 
-| Condition | Mode | Notes |
-|-----------|------|-------|
-| Self-review detected | **Isolated** (default) | Unless user explicitly accepts risk |
-| `review_suggested` present | **Isolated** | Guard recommends isolation |
-| `--deep` flag | **Isolated** | User requested |
-| Others' code, no triggers | **Quick** (same context) | Only valid for non-self code |
-
-## Review Checklist
-
-> **Principle:** Only items requiring semantic judgment. Mechanical checks are handled by Guard.
+> **Principle:** Only items requiring semantic judgment. Mechanical checks handled by Guard.
 
 ### A. Contract Semantic Value
 
@@ -341,273 +155,164 @@ WARNING: review_suggested - Low contract coverage
 - [ ] Does @post verify meaningful output properties?
   - Bad: `@post(lambda result: result is not None)`
   - Good: `@post(lambda result: len(result) == len(input))`
-
 - [ ] Could someone implement correctly from contracts alone?
 - [ ] Are boundary conditions explicit in contracts?
 
 ### B. Doctest Coverage
-- [ ] Do doctests cover normal cases?
-- [ ] Do doctests cover boundary cases?
-- [ ] Do doctests cover error cases?
+
+- [ ] Do doctests cover normal, boundary, and error cases?
 - [ ] Are doctests testing behavior, not just syntax?
 
 ### C. Code Quality
+
 - [ ] Is duplicated code worth extracting?
 - [ ] Is naming consistent and clear?
 - [ ] Is complexity justified?
 
 ### D. Escape Hatch Audit
+
 - [ ] Is each @invar:allow justification valid?
 - [ ] Could refactoring eliminate the need?
-- [ ] Is there a pattern suggesting systematic issues?
 
 ### E. Logic Verification
+
 - [ ] Do contracts correctly capture intended behavior?
 - [ ] Are there paths that bypass contract checks?
 - [ ] Are there implicit assumptions not in contracts?
-- [ ] Is there dead code or unreachable branches?
 
 ### F. Security
+
 - [ ] Are inputs validated against security threats (injection, XSS)?
 - [ ] No hardcoded secrets (API keys, passwords, tokens)?
 - [ ] Are authentication/authorization checks correct?
-- [ ] Is sensitive data properly protected?
 
-### G. Error Handling & Observability
+### G. Error Handling
+
 - [ ] Are exceptions caught at appropriate level?
 - [ ] Are error messages clear without leaking sensitive info?
-- [ ] Are critical operations logged for debugging?
 - [ ] Is there graceful degradation on failure?
 
-## Excluded (Covered by Guard)
+---
 
-These are checked by Guard or linters - don't duplicate:
-- Core/Shell separation → Guard (forbidden_import, impure_call)
-- Shell returns Result[T,E] → Guard (shell_result)
-- Missing contracts → Guard (missing_contract)
-- File/function size limits → Guard (file_size, function_size)
-- Entry point thickness → Guard (entry_point_too_thick)
-- Escape hatch count → Guard (review_suggested)
+## Subagent Prompt Templates
 
-## Auto-Loop Workflow (FULLY AUTOMATIC)
-
-**The loop runs AUTOMATICALLY until exit condition is met. NO user interaction.**
-
-**Two-step cycle: Review → Fix → Review → Fix → ...**
-
-⚠️ **NEVER ask user:**
-- "Proceed with fixes?"
-- "Should I fix these?"
-- "Do you want me to continue?"
-
-**Just do it.** Find issues → Fix them → Review again → Repeat until done.
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  START: round = 1, issues = []                                  │
-│                                                                 │
-│  ┌─────────────────────────────────────────────────────────┐    │
-│  │  🔍 REVIEWER [Round N] — Full Scope Review              │    │
-│  │    1. Apply FULL checklist (A-G) to ENTIRE scope       │    │
-│  │    2. Find ALL issues (don't stop at first)            │    │
-│  │    3. Classify: CRITICAL / MAJOR / MINOR               │    │
-│  │    4. Check previous fixes: CODE or just COMMENT?      │    │
-│  │    5. Check if fixes introduced NEW issues             │    │
-│  │    6. Update issues table                              │    │
-│  │                                                         │    │
-│  │    EXIT CHECK:                                          │    │
-│  │    - IF no CRITICAL/MAJOR found → quality_met, EXIT    │    │
-│  │    - IF round >= MAX_ROUNDS → max_rounds, EXIT         │    │
-│  │    - IF no progress (same issues 2 rounds) → EXIT      │    │
-│  │    - ELSE → AUTO-TRANSITION to FIXER                   │    │
-│  └─────────────────────────────────────────────────────────┘    │
-│                         ↓ (automatic)                           │
-│  ┌─────────────────────────────────────────────────────────┐    │
-│  │  🔧 FIXER [Round N]                                     │    │
-│  │    1. Fix EACH CRITICAL/MAJOR issue with CODE          │    │
-│  │    2. Run invar_guard() after fixes                    │    │
-│  │    3. NO declaring quality_met (forbidden)             │    │
-│  │    4. round++                                           │    │
-│  │    5. AUTO-TRANSITION to REVIEWER [Round N+1]          │    │
-│  └─────────────────────────────────────────────────────────┘    │
-│                         ↓ (automatic, fresh eyes)               │
-│                    [LOOP BACK TO REVIEWER]                      │
-│                                                                 │
-│  EXIT: Generate final report                                    │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-**Key change from v5.1:** No separate "Verify" step. Each round's Review is a
-full-scope audit with the same rigor as Round 1. This prevents the "verification
-mindset" trap where standards unconsciously lower after fixing.
-
-## Loop State Tracking
-
-**Maintain this state throughout the loop:**
-
-```markdown
-## Review State
-- **Round:** N / MAX_ROUNDS
-- **Role:** REVIEWER | FIXER
-- **Issues Found:** [count]
-- **Issues Fixed:** [count]
-- **Guard Status:** PASS | FAIL
-```
-
-## Issues Table (Updated Each Round)
-
-| Issue ID | Severity | Round Found | Round Fixed | Status | Evidence |
-|----------|----------|-------------|-------------|--------|----------|
-| MAJOR-1 | MAJOR | 1 | 1 | ✅ Fixed | Code change at file.py:123 |
-| MAJOR-2 | MAJOR | 1 | - | ❌ Unfixed | Fix was comment, not code |
-| MAJOR-3 | MAJOR | 2 | - | 🆕 New | Found in Round 2 review |
-| MINOR-1 | MINOR | 1 | - | ⏭️ Backlog | Deferred (non-blocking) |
-
-**Status Legend:**
-- ✅ Fixed — Actually fixed with CODE (not comments)
-- ❌ Unfixed — Fix failed, was just a comment, or not addressed
-- 🆕 New — Found in a later round (fix may have introduced it, or missed earlier)
-- ⏭️ Backlog — MINOR, deferred to later (non-blocking)
-
-**Round 2+ Review MUST check:**
-1. Are previous ✅ Fixed items ACTUALLY fixed? (Re-verify with fresh eyes)
-2. Did fixes introduce NEW issues?
-3. Did we miss anything in earlier rounds?
-
-If ANY ❌ exists for CRITICAL/MAJOR after MAX_ROUNDS → quality_not_met
-
-## Severity Definitions
-
-| Level | Meaning | Examples | Exit Blocker? |
-|-------|---------|----------|---------------|
-| CRITICAL | Security, data loss, crash | SQL injection, unhandled null | **YES** |
-| MAJOR | Logic error, missing validation | Wrong calculation, no bounds | **YES** |
-| MINOR | Style, documentation | Naming, missing docstring | No (backlog) |
-
-## Exit Conditions (Auto-Loop)
-
-**Exit is checked at the START of each REVIEWER phase (before finding issues):**
-
-| Condition | Exit Reason | Result |
-|-----------|-------------|--------|
-| Round N Review finds 0 CRITICAL/MAJOR | `quality_met` | ✅ Ready for merge |
-| Round >= MAX_ROUNDS | `max_rounds` | ⚠️ Manual review needed |
-| No progress (same issues 2 rounds) | `no_improvement` | ❌ Architectural issue |
-
-**quality_met requires ALL of:**
-1. Current round's FULL SCOPE review found zero CRITICAL/MAJOR
-2. All previous issues verified as fixed (with code, not comments)
-3. Guard passes
-4. Issues table complete with evidence
-
-**Automatic quality_not_met:**
-- Any MAJOR "fixed" with comment instead of code
-- Any issue marked "assessed" or "acceptable"
-- Fixer role declared quality_met (role violation)
-- Same CRITICAL/MAJOR persists for 2+ rounds
-
-**Important:** quality_met is declared when a Review round finds NO new issues,
-not when fixes are applied. This ensures the final state is actually reviewed.
-
-## Exit Report (Generated Automatically)
-
-```markdown
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📋 REVIEW COMPLETE
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-**Exit Reason:** quality_met | max_rounds | no_improvement
-**Total Rounds:** N / MAX_ROUNDS
-**Final Round Result:** 0 CRITICAL/MAJOR found (quality_met) | X issues remain
-**Guard Status:** PASS | FAIL
-**Review Mode:** Isolated | Same-context (self-review⚠️)
-
-## Issues Table
-
-| Issue | Severity | Found | Fixed | Status | Evidence |
-|-------|----------|-------|-------|--------|----------|
-| MAJOR-1 | MAJOR | R1 | R1 | ✅ Fixed | Code at file.py:123 |
-| MAJOR-2 | MAJOR | R2 | R2 | ✅ Fixed | Added validation |
-| ... | ... | ... | ... | ... | ... |
-
-## Round Summary
-
-| Round | Issues Found | Issues Fixed | New from Fixes |
-|-------|--------------|--------------|----------------|
-| 1 | 3 | 3 | 0 |
-| 2 | 1 | 1 | 0 |
-| 3 | 0 | - | - | ← quality_met
-
-## Self-Check (Final Review Round)
-
-- [x] Applied FULL checklist (A-G) with fresh eyes
-- [x] All fixes are CODE, not comments
-- [x] No "assessed as acceptable" rationalizations
-- [x] Guard passes after all changes
-- [x] Role separation maintained throughout
-
-## Self-Review Warning (if applicable)
-
-⚠️ **This was a same-context self-review.** Cognitive biases may have caused
-issues to be missed. For higher confidence, run `--deep` review before merge.
-
-Known blind spots in self-review:
-- Exception handlers that silently lose data
-- Path traversal / security issues in user input
-- Edge cases in validation logic
-- Documentation-implementation mismatches
-
-## Recommendation
-
-- [x] Ready for merge (quality_met)
-- [ ] Needs manual review (max_rounds)
-- [ ] Architectural refactor needed (no_improvement)
-
-**MINOR (Backlog):**
-- [list deferred items]
-```
-## Appendix: Adversarial Code Reviewer Persona
-
-Used in `--deep` mode (isolated agent):
+### THOROUGH (SMALL scope)
 
 ```
 You are an independent Adversarial Code Reviewer.
 
-CRITICAL RULES:
+RULES:
 1. Code is GUILTY until proven INNOCENT
 2. You did NOT write this code — no emotional attachment
 3. Find reasons to REJECT, not accept
-4. Be specific and actionable (file:line, concrete fix)
-5. Your job is to find bugs, not approve code
+4. Be specific: file:line + concrete fix
 
-INPUT YOU WILL RECEIVE:
-- Code files to review
-- Contracts (if available)
-- Test files (if available)
+STRATEGY: THOROUGH READING
+- Read each file COMPLETELY, line by line
+- DO NOT pre-scan for patterns — just READ
+- Look for VARIANTS and EDGE CASES
+- Trust your judgment
 
-INPUT YOU WILL NOT RECEIVE:
-- Development conversation history
-- Developer's explanations
-- Prior context about design decisions
+SCOPE: [list all files]
+
+Apply checklist A-G to each file.
 
 OUTPUT FORMAT:
-Produce structured Review Report with:
-1. Verdict: APPROVED / NEEDS WORK / REJECTED
-2. Critical issues (must fix)
-3. Major issues (should fix)
-4. Minor issues (nice to fix)
-5. Positive observations (what's done well)
+## Verdict: APPROVED | NEEDS WORK | REJECTED
+## Critical Issues (must fix)
+| ID | File:Line | Issue | Fix |
+## Major Issues (should fix)
+| ID | File:Line | Issue | Fix |
+## Minor Issues (backlog)
+| ID | File:Line | Issue | Fix |
 ```
 
-<!--/invar:skill--><!--invar:extensions-->
-<!-- ========================================================================
-     EXTENSIONS REGION - USER EDITABLE
-     Add project-specific extensions here. This section is preserved on update.
+### HYBRID (MEDIUM scope)
 
-     Examples of what to add:
-     - Project-specific security review checklists
-     - Custom severity definitions
-     - Domain-specific code patterns to check
-     - Team code review standards
-     ======================================================================== -->
+```
+You are an independent Adversarial Code Reviewer.
+
+RULES:
+1. Code is GUILTY until proven INNOCENT
+2. You did NOT write this code — no emotional attachment
+3. Find reasons to REJECT, not accept
+4. Be specific: file:line + concrete fix
+
+STRATEGY: HYBRID (two passes)
+
+PASS 1 - GUIDED:
+Using this issue_map, verify each potential issue:
+[issue_map from Phase 0]
+
+Report: "Verified X/Y items from issue_map"
+
+PASS 2 - OPEN DISCOVERY:
+Now FORGET the issue_map. Read the code fresh.
+Look for issues NOT in the map:
+- Variants of listed patterns
+- Logic errors
+- Edge cases
+
+Report: "Found N additional issues not in issue_map"
+
+SCOPE: [list all files]
+
+OUTPUT FORMAT:
+## Verdict: APPROVED | NEEDS WORK | REJECTED
+## From Issue Map (Pass 1)
+| ID | File:Line | Issue | Fix |
+## Additional Findings (Pass 2)
+| ID | File:Line | Issue | Fix |
+```
+
+---
+
+## Exit Conditions
+
+| Condition | Exit Reason | Result |
+|-----------|-------------|--------|
+| Subagent returns APPROVED | `quality_met` | Ready for merge |
+| round >= 5 | `max_rounds` | Manual review needed |
+| Same issues 2 rounds | `no_improvement` | Architectural issue |
+
+---
+
+## Exit Report
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 REVIEW COMPLETE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Scope:** SMALL | MEDIUM | LARGE
+**Strategy:** THOROUGH | HYBRID | CHUNKED
+**Exit:** quality_met | max_rounds | no_improvement
+**Rounds:** N / 5
+**Guard:** PASS | FAIL
+
+## Issues Table
+| Issue | Severity | Round | Status | Evidence |
+
+## Round Summary
+| Round | Found | Fixed |
+
+✓ Final: guard PASS | X errors, Y warnings
+```
+
+---
+
+## Scope Boundaries
+
+**IS for:** Finding bugs, verifying contracts, security review
+**NOT for:** New features → /develop | Understanding → /investigate
+
+## Excluded (Covered by Guard)
+
+Don't duplicate mechanical checks:
+- Core/Shell separation → Guard
+- Missing contracts → Guard
+- File/function size → Guard
+
+<!--/invar:skill--><!--invar:extensions-->
+<!-- User extensions preserved on update -->
 <!--/invar:extensions-->

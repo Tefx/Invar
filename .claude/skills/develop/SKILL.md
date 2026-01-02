@@ -2,7 +2,7 @@
 name: develop
 description: Implementation phase following USBV workflow. Use when task is clear and actionable - "add", "implement", "create", "fix", "update", "build", "write". Requires Check-In at start and Final at end.
 _invar:
-  version: "5.0"
+  version: "5.1"
   managed: skill
 ---
 <!--invar:skill-->
@@ -189,6 +189,52 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 - All TodoWrite items complete
 - Integration works (if applicable)
 
+#### Isolation Requirement (DX-75)
+
+**For non-trivial implementations (>3 functions OR >200 lines), VALIDATE requires isolation:**
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  VALIDATE with Isolation                                    │
+│  ───────────────────────────────────────────────────────────│
+│                                                             │
+│  Why: You (the builder) have context contamination.         │
+│  You "know" what the code is supposed to do.                │
+│  You cannot objectively verify your own work.               │
+│                                                             │
+│  Steps:                                                     │
+│  1. Main Agent: Run invar_guard() — mechanical checks       │
+│                                                             │
+│  2. Spawn Isolated VALIDATOR (Task tool, model=opus):       │
+│     ┌─────────────────────────────────────────────────┐    │
+│     │  RECEIVES:                                      │    │
+│     │  - Implementation files                         │    │
+│     │  - Contracts (@pre/@post)                       │    │
+│     │  - Original task description                    │    │
+│     │                                                 │    │
+│     │  DOES NOT RECEIVE:                              │    │
+│     │  - Development conversation                     │    │
+│     │  - Your reasoning or decisions                  │    │
+│     │  - Previous iterations                          │    │
+│     │                                                 │    │
+│     │  TASK: "Does this implementation satisfy the    │    │
+│     │  contracts? Are there gaps or edge cases?"      │    │
+│     └─────────────────────────────────────────────────┘    │
+│                                                             │
+│  3. If VALIDATOR finds issues:                              │
+│     - Main agent fixes                                      │
+│     - Spawn NEW validator (never reuse)                     │
+│     - Repeat until PASS                                     │
+│                                                             │
+│  Exit: Guard PASS + Isolated Validator PASS                 │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Skip isolation when:**
+- Simple changes (<3 functions AND <200 lines)
+- Pure refactoring (no behavior change)
+- Documentation-only changes
+
 ## Task Batching
 
 For multiple tasks:
@@ -374,7 +420,8 @@ Agent:
 
 ✓ Final: guard PASS | 0 errors, 1 warning
 ```
-<!--/invar:skill--><!--invar:extensions-->
+<!--/invar:skill-->
+<!--invar:extensions-->
 <!-- ========================================================================
      EXTENSIONS REGION - USER EDITABLE
      Add project-specific extensions here. This section is preserved on update.

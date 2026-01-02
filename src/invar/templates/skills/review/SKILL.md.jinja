@@ -2,7 +2,7 @@
 name: review
 description: Adversarial code review. Code is GUILTY until proven INNOCENT. Every round spawns isolated subagent reviewing FULL scope.
 _invar:
-  version: "6.0"
+  version: "7.0"
   managed: skill
 ---
 <!--invar:skill-->
@@ -21,24 +21,126 @@ _invar:
 
 ---
 
+## Scope Classification (DX-75)
+
+**Before starting, classify the scope:**
+
+| Classification | Criteria | Strategy |
+|----------------|----------|----------|
+| **SMALL** | <5 files AND <1500 lines | THOROUGH (no enumeration) |
+| **MEDIUM** | 5-10 files OR 1500-5000 lines | HYBRID (enum + open) |
+| **LARGE** | >10 files OR >5000 lines | CHUNKED (parallel subagents) |
+
+**Why different strategies?**
+- SMALL: Pre-enumeration causes "checklist mentality" — you only verify listed items, miss variants
+- LARGE: Without enumeration, attention drifts — later files get less scrutiny
+
+---
+
+## Strategy: THOROUGH (SMALL scope)
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  THOROUGH STRATEGY (for SMALL scope)                        │
+│  ───────────────────────────────────────────────────────────│
+│                                                             │
+│  ⚠️ DO NOT pre-enumerate issues or patterns                 │
+│  ⚠️ DO NOT use grep/sig to "find issues first"              │
+│                                                             │
+│  Instead:                                                   │
+│  1. Read each file COMPLETELY, line by line                 │
+│  2. Apply checklist A-G as you read                         │
+│  3. Trust your judgment to find issues                      │
+│  4. Look for VARIANTS and EDGE CASES                        │
+│                                                             │
+│  Why: Pre-enumeration narrows focus to known patterns.      │
+│  Small scope = you CAN read everything thoroughly.          │
+│  This finds issues that pattern matching misses.            │
+└─────────────────────────────────────────────────────────────┘
+```
+
+## Strategy: HYBRID (MEDIUM scope)
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  HYBRID STRATEGY (for MEDIUM scope)                         │
+│  ───────────────────────────────────────────────────────────│
+│                                                             │
+│  Phase 0: ENUMERATE (Main Agent)                            │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │  Use grep/invar_sig to find:                        │   │
+│  │  - All @pre/@post contracts                         │   │
+│  │  - All @invar:allow escape hatches                  │   │
+│  │  - Hardcoded strings (secrets?)                     │   │
+│  │  - subprocess/exec/eval calls                       │   │
+│  │  - bare except clauses                              │   │
+│  │  Create issue_map with file:line for each           │   │
+│  └─────────────────────────────────────────────────────┘   │
+│                                                             │
+│  Phase 1: GUIDED REVIEW (Isolated Subagent)                 │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │  Pass issue_map to subagent                         │   │
+│  │  Subagent verifies each item                        │   │
+│  │  Reports: "Checked N/M items from issue_map"        │   │
+│  └─────────────────────────────────────────────────────┘   │
+│                                                             │
+│  Phase 2: OPEN DISCOVERY (Same Subagent)                    │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │  "Now forget the issue_map.                         │   │
+│  │   Look for issues NOT in the map:                   │   │
+│  │   - Variants of listed patterns                     │   │
+│  │   - Logic errors                                    │   │
+│  │   - Edge cases"                                     │   │
+│  │  Reports: "Found N additional issues"               │   │
+│  └─────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────┘
+```
+
+## Strategy: CHUNKED (LARGE scope)
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  CHUNKED STRATEGY (for LARGE scope)                         │
+│  ───────────────────────────────────────────────────────────│
+│                                                             │
+│  1. Split files into chunks of ~3-5 files each              │
+│                                                             │
+│  2. For each chunk (can be parallel):                       │
+│     - Spawn isolated subagent                               │
+│     - Use HYBRID strategy within chunk                      │
+│                                                             │
+│  3. Cross-chunk analysis:                                   │
+│     - Check cross-file dependencies                         │
+│     - Check API consistency                                 │
+│                                                             │
+│  4. Merge all findings, deduplicate                         │
+│                                                             │
+│  Why: Prevents "attention fatigue" on file 8+ of 15.        │
+│  Each chunk gets fresh attention.                           │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
 ## 2-Step Loop (MANDATORY workflow)
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│  Round N:                                               │
-│                                                         │
-│  1. REVIEWER [Subagent] ─────────────────────────────── │
-│     • Spawn NEW isolated agent (Task tool)              │
-│     • Review ALL files in scope (full checklist A-G)    │
-│     • Return: issues[] or APPROVED                      │
-│                                                         │
-│  2. FIXER [Main Agent] ──────────────────────────────── │
-│     • Fix CRITICAL/MAJOR issues with CODE               │
-│     • Run invar_guard()                                 │
-│     • Cannot declare quality_met                        │
-│                                                         │
-│  → Loop until: APPROVED OR max_rounds OR no_progress    │
-└─────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│  Round N:                                                   │
+│                                                             │
+│  1. REVIEWER [Subagent] ─────────────────────────────────── │
+│     • Spawn NEW isolated agent (Task tool)                  │
+│     • Use strategy based on scope classification            │
+│     • Review ALL files in scope (full checklist A-G)        │
+│     • Return: issues[] or APPROVED                          │
+│                                                             │
+│  2. FIXER [Main Agent] ──────────────────────────────────── │
+│     • Fix CRITICAL/MAJOR issues with CODE                   │
+│     • Run invar_guard()                                     │
+│     • Cannot declare quality_met                            │
+│                                                             │
+│  → Loop until: APPROVED OR max_rounds OR no_progress        │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 **Why new subagent each round?**
@@ -48,7 +150,7 @@ _invar:
 
 ---
 
-## Review Checklist (COMPLETE — apply to ALL files)
+## Review Checklist (apply to ALL files)
 
 > **Principle:** Only items requiring semantic judgment. Mechanical checks handled by Guard.
 
@@ -65,9 +167,7 @@ _invar:
 
 ### B. Doctest Coverage
 
-- [ ] Do doctests cover normal cases?
-- [ ] Do doctests cover boundary cases?
-- [ ] Do doctests cover error cases?
+- [ ] Do doctests cover normal, boundary, and error cases?
 - [ ] Are doctests testing behavior, not just syntax?
 
 ### C. Code Quality
@@ -80,133 +180,97 @@ _invar:
 
 - [ ] Is each @invar:allow justification valid?
 - [ ] Could refactoring eliminate the need?
-- [ ] Is there a pattern suggesting systematic issues?
 
 ### E. Logic Verification
 
 - [ ] Do contracts correctly capture intended behavior?
 - [ ] Are there paths that bypass contract checks?
 - [ ] Are there implicit assumptions not in contracts?
-- [ ] Is there dead code or unreachable branches?
 
 ### F. Security
 
 - [ ] Are inputs validated against security threats (injection, XSS)?
 - [ ] No hardcoded secrets (API keys, passwords, tokens)?
 - [ ] Are authentication/authorization checks correct?
-- [ ] Is sensitive data properly protected?
 
-### G. Error Handling & Observability
+### G. Error Handling
 
 - [ ] Are exceptions caught at appropriate level?
 - [ ] Are error messages clear without leaking sensitive info?
-- [ ] Are critical operations logged for debugging?
 - [ ] Is there graceful degradation on failure?
 
 ---
 
-## Subagent Prompt Template
+## Subagent Prompt Templates
+
+### THOROUGH (SMALL scope)
 
 ```
 You are an independent Adversarial Code Reviewer.
 
-RULES (MUST follow):
+RULES:
 1. Code is GUILTY until proven INNOCENT
 2. You did NOT write this code — no emotional attachment
 3. Find reasons to REJECT, not accept
 4. Be specific: file:line + concrete fix
-5. Review ALL files in scope, not just recent changes
-6. Apply COMPLETE checklist (A-G) to EVERY file
 
-SCOPE: [list all files to review]
+STRATEGY: THOROUGH READING
+- Read each file COMPLETELY, line by line
+- DO NOT pre-scan for patterns — just READ
+- Look for VARIANTS and EDGE CASES
+- Trust your judgment
 
-CHECKLIST (apply to ALL files):
+SCOPE: [list all files]
 
-A. Contract Semantic Value
-   - @pre constrains beyond type? (not just isinstance)
-   - @post verifies meaningful properties? (not just "not None")
-   - Could implement correctly from contracts alone?
-   - Boundary conditions explicit?
-
-B. Doctest Coverage
-   - Normal cases tested?
-   - Boundary cases tested?
-   - Error cases tested?
-
-C. Code Quality
-   - Duplication worth extracting?
-   - Naming clear?
-   - Complexity justified?
-
-D. Escape Hatch Audit
-   - Each @invar:allow justified?
-   - Could refactor to eliminate?
-
-E. Logic Verification
-   - Contracts capture intent?
-   - Paths bypass validation?
-   - Implicit assumptions?
-   - Dead code?
-
-F. Security
-   - Input validation (injection, XSS)?
-   - No hardcoded secrets?
-   - Auth checks correct?
-
-G. Error Handling
-   - Exceptions at right level?
-   - Error messages safe?
-   - Graceful degradation?
+Apply checklist A-G to each file.
 
 OUTPUT FORMAT:
 ## Verdict: APPROVED | NEEDS WORK | REJECTED
-
 ## Critical Issues (must fix)
 | ID | File:Line | Issue | Fix |
-
 ## Major Issues (should fix)
 | ID | File:Line | Issue | Fix |
-
 ## Minor Issues (backlog)
 | ID | File:Line | Issue | Fix |
-
-## Positive Observations
 ```
 
----
+### HYBRID (MEDIUM scope)
 
-## Main Agent Workflow (MANDATORY)
-
-```python
-def review(scope: list[Path]):
-    round = 1
-    while round <= MAX_ROUNDS:
-        # Step 1: MUST spawn isolated reviewer
-        report = Task(
-            subagent_type="general-purpose",
-            model="opus",
-            prompt=SUBAGENT_PROMPT.format(files=scope)  # ALL files
-        )
-
-        # Check exit
-        if report.verdict == "APPROVED":
-            return EXIT_REPORT(quality_met=True)
-        if round >= MAX_ROUNDS:
-            return EXIT_REPORT(max_rounds=True)
-
-        # Step 2: Fix issues (main agent)
-        for issue in report.critical + report.major:
-            fix(issue)  # CODE, not comments
-        invar_guard()
-
-        round += 1  # Next round spawns NEW subagent
 ```
+You are an independent Adversarial Code Reviewer.
 
-**DO NOT:**
-- Skip subagent and review in same context
-- Review only changed files in Round 2+
-- Ask user "should I continue?"
-- Declare quality_met as FIXER
+RULES:
+1. Code is GUILTY until proven INNOCENT
+2. You did NOT write this code — no emotional attachment
+3. Find reasons to REJECT, not accept
+4. Be specific: file:line + concrete fix
+
+STRATEGY: HYBRID (two passes)
+
+PASS 1 - GUIDED:
+Using this issue_map, verify each potential issue:
+[issue_map from Phase 0]
+
+Report: "Verified X/Y items from issue_map"
+
+PASS 2 - OPEN DISCOVERY:
+Now FORGET the issue_map. Read the code fresh.
+Look for issues NOT in the map:
+- Variants of listed patterns
+- Logic errors
+- Edge cases
+
+Report: "Found N additional issues not in issue_map"
+
+SCOPE: [list all files]
+
+OUTPUT FORMAT:
+## Verdict: APPROVED | NEEDS WORK | REJECTED
+## From Issue Map (Pass 1)
+| ID | File:Line | Issue | Fix |
+## Additional Findings (Pass 2)
+| ID | File:Line | Issue | Fix |
+```
 
 ---
 
@@ -227,6 +291,8 @@ def review(scope: list[Path]):
 📋 REVIEW COMPLETE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+**Scope:** SMALL | MEDIUM | LARGE
+**Strategy:** THOROUGH | HYBRID | CHUNKED
 **Exit:** quality_met | max_rounds | no_improvement
 **Rounds:** N / 5
 **Guard:** PASS | FAIL
