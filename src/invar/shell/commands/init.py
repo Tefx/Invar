@@ -260,8 +260,12 @@ def _show_execution_output(
 
 
 # @shell_complexity: MCP config merge with existing file handling
-def _configure_mcp(path: Path) -> bool:
-    """Configure MCP server with recommended method."""
+def _configure_mcp(path: Path) -> tuple[bool, str]:
+    """Configure MCP server with recommended method.
+
+    Returns:
+        (success, message): (True, "created") | (True, "merged") | (False, "already_configured") | (False, error_message)
+    """
     import json
 
     config = get_recommended_method()
@@ -271,19 +275,24 @@ def _configure_mcp(path: Path) -> bool:
     if mcp_json_path.exists():
         try:
             existing = json.loads(mcp_json_path.read_text())
-            if "mcpServers" in existing and "invar" in existing.get("mcpServers", {}):
-                return False  # Already configured
+            if existing.get("mcpServers", {}).get("invar"):
+                return (False, "already_configured")
             # Add invar to existing config
             if "mcpServers" not in existing:
                 existing["mcpServers"] = {}
             existing["mcpServers"]["invar"] = mcp_content["mcpServers"]["invar"]
             mcp_json_path.write_text(json.dumps(existing, indent=2))
-            return True
-        except (json.JSONDecodeError, OSError):
-            return False
+            return (True, "merged")
+        except json.JSONDecodeError as e:
+            return (False, f"Invalid JSON in .mcp.json: {e}")
+        except OSError as e:
+            return (False, f"Failed to read/write .mcp.json: {e}")
     else:
-        mcp_json_path.write_text(json.dumps(mcp_content, indent=2))
-        return True
+        try:
+            mcp_json_path.write_text(json.dumps(mcp_content, indent=2))
+            return (True, "created")
+        except OSError as e:
+            return (False, f"Failed to create .mcp.json: {e}")
 
 
 # =============================================================================
@@ -356,6 +365,10 @@ def init(
         console.print("[red]Error:[/red] --mcp-only cannot be combined with --claude or --pi.")
         raise typer.Exit(1)
 
+    if mcp_only and language is not None:
+        console.print("[red]Error:[/red] --language is not needed with --mcp-only (MCP tools work for all languages).")
+        raise typer.Exit(1)
+
     # Resolve path
     if path == Path():
         path = Path.cwd()
@@ -367,13 +380,27 @@ def init(
         console.print("=" * 45)
         console.print("[dim]Installing MCP server configuration only.[/dim]\n")
 
+        # Preview mode
+        if preview:
+            console.print("[bold]Preview - Would create:[/bold]")
+            console.print("  [green]✓[/green] .mcp.json")
+            console.print("\n[dim]Run without --preview to apply.[/dim]")
+            return
+
         console.print("[bold]Creating .mcp.json...[/bold]")
-        if _configure_mcp(path):
-            console.print("[green]✓[/green] Created .mcp.json")
+        success, message = _configure_mcp(path)
+        if success:
+            if message == "created":
+                console.print("[green]✓[/green] Created .mcp.json")
+            elif message == "merged":
+                console.print("[green]✓[/green] Merged into existing .mcp.json")
             console.print("\n[bold]Setup complete![/bold]")
             console.print("MCP tools available: invar_doc_*, invar_sig, invar_map, invar_guard")
-        else:
+        elif message == "already_configured":
             console.print("[yellow]○[/yellow] .mcp.json already configured")
+        else:
+            console.print(f"[red]Error:[/red] {message}")
+            raise typer.Exit(1)
 
         return  # Early exit, skip all framework setup
 
@@ -502,8 +529,14 @@ def init(
 
     # Configure MCP if Claude selected
     if "claude" in agents and selected_files.get(".mcp.json", True):
-        if _configure_mcp(path):
-            created.append(".mcp.json")
+        success, message = _configure_mcp(path)
+        if success:
+            if message == "created":
+                created.append(".mcp.json")
+            elif message == "merged":
+                merged.append(".mcp.json")
+        elif message != "already_configured":
+            console.print(f"[yellow]Warning:[/yellow] MCP configuration failed: {message}")
 
     # Create directories if selected
     if selected_files.get("src/core/", True):
