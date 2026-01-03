@@ -7,7 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-
+### Fixed
+- **init: Language-specific config.toml (LX-05)** - Generate correct config for TypeScript
+  - TypeScript projects now get TypeScript-specific `forbidden_imports`: `fs`, `path`, `http`, etc.
+  - TypeScript projects get `require_doctests = false` (uses JSDoc instead)
+  - TypeScript-specific `exclude_paths`: `node_modules`, `.next`, `coverage`
+  - Python projects unaffected (still get Python-specific config)
 
 ## [1.15.6] - 2026-01-03
 

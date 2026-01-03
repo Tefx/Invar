@@ -553,7 +553,8 @@ def init(
     skipped: list[str] = []
 
     # Add config file (.invar/config.toml or pyproject.toml)
-    config_result = add_config(path, console)
+    # LX-05: Pass language for language-specific config generation
+    config_result = add_config(path, console, language)
     if isinstance(config_result, Failure):
         console.print(f"[red]Error:[/red] {config_result.failure()}")
         raise typer.Exit(1)

@@ -11,7 +11,12 @@ from pathlib import Path
 
 from returns.result import Failure, Result, Success
 
-_DEFAULT_PYPROJECT_CONFIG = """\n# Invar Configuration
+# =============================================================================
+# Language-Specific Configurations (LX-05)
+# =============================================================================
+
+# Python configuration
+_PYTHON_PYPROJECT_CONFIG = """\n# Invar Configuration
 [tool.invar.guard]
 core_paths = ["src/core"]
 shell_paths = ["src/shell"]
@@ -23,7 +28,7 @@ forbidden_imports = ["os", "sys", "socket", "requests", "urllib", "subprocess", 
 exclude_paths = ["tests", "test", "scripts", ".venv", "venv", "__pycache__", ".pytest_cache", "node_modules", "dist", "build"]
 """
 
-_DEFAULT_INVAR_TOML = """# Invar Configuration
+_PYTHON_INVAR_TOML = """# Invar Configuration (Python)
 # For projects without pyproject.toml
 
 [guard]
@@ -40,6 +45,37 @@ exclude_paths = ["tests", "test", "scripts", ".venv", "venv", "__pycache__", ".p
 # core_patterns = ["**/domain/**", "**/models/**"]
 # shell_patterns = ["**/api/**", "**/cli/**"]
 """
+
+# TypeScript configuration (LX-05)
+_TYPESCRIPT_INVAR_TOML = """# Invar Configuration (TypeScript)
+# For TypeScript/JavaScript projects
+
+[guard]
+core_paths = ["src/core"]
+shell_paths = ["src/shell"]
+max_file_lines = 500
+max_function_lines = 50
+require_contracts = true
+require_doctests = false  # TypeScript uses JSDoc examples instead
+# TypeScript/Node.js I/O modules to forbid in Core
+forbidden_imports = ["fs", "path", "http", "https", "net", "child_process", "os", "process"]
+exclude_paths = ["tests", "test", "scripts", "node_modules", "dist", "build", ".next", "coverage"]
+
+# Pattern-based classification (optional, takes priority over paths)
+# core_patterns = ["**/domain/**", "**/models/**"]
+# shell_patterns = ["**/api/**", "**/cli/**"]
+"""
+
+# Backward compatibility alias
+_DEFAULT_PYPROJECT_CONFIG = _PYTHON_PYPROJECT_CONFIG
+_DEFAULT_INVAR_TOML = _PYTHON_INVAR_TOML
+
+
+def _get_invar_config(language: str) -> str:
+    """Get the appropriate config content for the language."""
+    if language == "typescript":
+        return _TYPESCRIPT_INVAR_TOML
+    return _PYTHON_INVAR_TOML
 
 
 def get_template_path(name: str) -> Result[Path, str]:
@@ -75,10 +111,11 @@ def copy_template(
 
 
 # @shell_complexity: Config addition with existing file detection
-def add_config(path: Path, console) -> Result[bool, str]:
+def add_config(path: Path, console, language: str = "python") -> Result[bool, str]:
     """Add configuration to project. Returns Success(True) if added, Success(False) if skipped.
 
     DX-70: Creates .invar/config.toml instead of invar.toml for cleaner organization.
+    LX-05: Now generates language-specific config (Python vs TypeScript).
     Backward compatible: still reads from invar.toml if it exists.
     """
     pyproject = path / "pyproject.toml"
@@ -87,8 +124,8 @@ def add_config(path: Path, console) -> Result[bool, str]:
     legacy_invar_toml = path / "invar.toml"
 
     try:
-        # Priority 1: Add to pyproject.toml if it exists
-        if pyproject.exists():
+        # Priority 1: Add to pyproject.toml if it exists (Python projects only)
+        if pyproject.exists() and language == "python":
             content = pyproject.read_text()
             if "[tool.invar]" not in content:
                 with pyproject.open("a") as f:
@@ -102,9 +139,10 @@ def add_config(path: Path, console) -> Result[bool, str]:
             return Success(False)
 
         # Create .invar/config.toml (DX-70: new default location)
+        # LX-05: Use language-specific config
         if not invar_config.exists():
             invar_dir.mkdir(exist_ok=True)
-            invar_config.write_text(_DEFAULT_INVAR_TOML)
+            invar_config.write_text(_get_invar_config(language))
             console.print("[green]Created[/green] .invar/config.toml")
             return Success(True)
 
