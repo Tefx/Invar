@@ -7,6 +7,8 @@
 
 import { Type } from "@sinclair/typebox";
 import type { CustomToolFactory } from "@mariozechner/pi-coding-agent";
+import * as fs from "fs";
+import * as path from "path";
 
 const factory: CustomToolFactory = (pi) => {
   // Helper to resolve invar command (with uvx fallback)
@@ -400,8 +402,6 @@ const factory: CustomToolFactory = (pi) => {
         }
 
         // Write content to temporary file to avoid shell injection
-        const fs = require("fs");
-        const path = require("path");
         const tmpFile = path.join(pi.cwd, `.invar-tmp-${Date.now()}.txt`);
 
         try {
@@ -483,8 +483,6 @@ const factory: CustomToolFactory = (pi) => {
         }
 
         // Write content to temporary file
-        const fs = require("fs");
-        const path = require("path");
         const tmpFile = path.join(pi.cwd, `.invar-tmp-${Date.now()}.txt`);
 
         try {
