@@ -26,6 +26,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Team collaboration (different members use different agents)
     - Agent switching (both configured, use either)
     - Open source projects (contributors have agent choice)
+- **DX-79: Message Count Auto-Trigger for /invar-reflect** - Cross-platform feedback automation
+  - Automatic feedback reminder at configurable message threshold (default: 30)
+  - **Claude Code implementation**: UserPromptSubmit hook with jq config parsing
+  - **Pi implementation**: TypeScript hook with fs config reading
+  - **Shared configuration**: Both read `.claude/settings.local.json` feedback section
+  - **User control**: Disable via `feedback.enabled=false` or adjust `min_messages` threshold
+  - Replaces unimplemented PostTaskCompletion hook with simpler, universally-supported approach
 
 ### Changed
 - Agent selection prompt now uses checkbox instead of radio buttons
