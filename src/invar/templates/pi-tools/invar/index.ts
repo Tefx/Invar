@@ -141,7 +141,9 @@ const factory: CustomToolFactory = (pi) => {
           throw new Error("Sig command was cancelled");
         }
 
-        if (result.exitCode !== 0) {
+        // Only treat as error if exitCode is explicitly non-zero
+        // (Pi's exec may return undefined/null for success)
+        if (result.exitCode && result.exitCode !== 0) {
           const errorMsg = result.stderr || result.stdout || "Unknown error";
           throw new Error(`Failed to get signatures: ${errorMsg}`);
         }
@@ -200,7 +202,8 @@ const factory: CustomToolFactory = (pi) => {
           throw new Error("Map command was cancelled");
         }
 
-        if (result.exitCode !== 0) {
+        // Only treat as error if exitCode is explicitly non-zero
+        if (result.exitCode && result.exitCode !== 0) {
           const errorMsg = result.stderr || result.stdout || "Unknown error";
           throw new Error(`Failed to generate map: ${errorMsg}`);
         }
@@ -263,7 +266,8 @@ const factory: CustomToolFactory = (pi) => {
           throw new Error("Doc toc command was cancelled");
         }
 
-        if (result.exitCode !== 0) {
+        // Only treat as error if exitCode is explicitly non-zero
+        if (result.exitCode && result.exitCode !== 0) {
           const errorMsg = result.stderr || result.stdout || "Unknown error";
           throw new Error(`Failed to extract TOC: ${errorMsg}`);
         }
@@ -330,7 +334,8 @@ const factory: CustomToolFactory = (pi) => {
           throw new Error("Doc read command was cancelled");
         }
 
-        if (result.exitCode !== 0) {
+        // Only treat as error if exitCode is explicitly non-zero
+        if (result.exitCode && result.exitCode !== 0) {
           const errorMsg = result.stderr || result.stdout || "Unknown error";
           throw new Error(`Failed to read section: ${errorMsg}`);
         }
@@ -403,7 +408,8 @@ const factory: CustomToolFactory = (pi) => {
           throw new Error("Doc find command was cancelled");
         }
 
-        if (result.exitCode !== 0) {
+        // Only treat as error if exitCode is explicitly non-zero
+        if (result.exitCode && result.exitCode !== 0) {
           const errorMsg = result.stderr || result.stdout || "Unknown error";
           throw new Error(`Failed to find sections: ${errorMsg}`);
         }
@@ -490,7 +496,8 @@ const factory: CustomToolFactory = (pi) => {
             throw new Error("Doc replace command was cancelled");
           }
 
-          if (result.exitCode !== 0) {
+          // Only treat as error if exitCode is explicitly non-zero
+          if (result.exitCode && result.exitCode !== 0) {
             const errorMsg = result.stderr || result.stdout || "Unknown error";
             throw new Error(`Failed to replace section: ${errorMsg}`);
           }
@@ -586,7 +593,8 @@ const factory: CustomToolFactory = (pi) => {
             throw new Error("Doc insert command was cancelled");
           }
 
-          if (result.exitCode !== 0) {
+          // Only treat as error if exitCode is explicitly non-zero
+          if (result.exitCode && result.exitCode !== 0) {
             const errorMsg = result.stderr || result.stdout || "Unknown error";
             throw new Error(`Failed to insert content: ${errorMsg}`);
           }
@@ -662,7 +670,8 @@ const factory: CustomToolFactory = (pi) => {
           throw new Error("Doc delete command was cancelled");
         }
 
-        if (result.exitCode !== 0) {
+        // Only treat as error if exitCode is explicitly non-zero
+        if (result.exitCode && result.exitCode !== 0) {
           const errorMsg = result.stderr || result.stdout || "Unknown error";
           throw new Error(`Failed to delete section: ${errorMsg}`);
         }

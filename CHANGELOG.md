@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [1.15.5] - 2026-01-03
+
+### Fixed
+- **Pi Custom Tools: Exit Code Handling** - Fixed false positive failures
+  - Changed exit code check from `!== 0` to `&& !== 0` (truthy check)
+  - Prevents treating undefined/null/0 as failure
+  - **Solves critical issue** where successful commands were marked as failed:
+    - Root cause: Pi's exec() may return undefined/null/0 for successful commands
+    - Symptom: Tools returned correct JSON data but status showed as "Failed"
+    - Example: `Failed to extract TOC: {correct JSON data}`
+  - All 8 tools now correctly identify success vs failure
+  - Fixed in: invar_sig, invar_map, invar_doc_toc, invar_doc_read, invar_doc_find, invar_doc_replace, invar_doc_insert, invar_doc_delete
+  - Note: invar_guard intentionally doesn't check exit code (warnings are valid output)
+
 ## [1.15.4] - 2026-01-03
 
 ### Fixed
@@ -391,7 +405,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[Unreleased]: https://github.com/yourusername/invar/compare/v1.15.4...HEAD
+[Unreleased]: https://github.com/yourusername/invar/compare/v1.15.5...HEAD
+[1.15.5]: https://github.com/yourusername/invar/compare/v1.15.4...v1.15.5
 [1.15.4]: https://github.com/yourusername/invar/compare/v1.15.3...v1.15.4
 [1.15.3]: https://github.com/yourusername/invar/compare/v1.15.2...v1.15.3
 [1.15.2]: https://github.com/yourusername/invar/compare/v1.15.1...v1.15.2
