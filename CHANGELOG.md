@@ -7,7 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-
+### Fixed
+- **invar map: File Handle Management (DX-82)** - Fixed "Too many open files" error
+  - Convert `discover_python_files()` generator to list to release directory handles immediately
+  - Explicitly delete file list after processing to free memory
+  - Prevents exhausting system file descriptor limit on large projects
+  - **Solves system error** on macOS and other systems with low default limits:
+    - Root cause: `rglob()` generator keeps directory handles open during iteration
+    - Symptom: "OSError: [Errno 1] Too many open files in system" 
+    - macOS default limit: 256 file descriptors
+  - Recommendation: Users can also increase system limits with `ulimit -n 4096`
 
 ## [1.15.5] - 2026-01-03
 

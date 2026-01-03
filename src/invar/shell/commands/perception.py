@@ -213,7 +213,10 @@ def _run_map_python(path: Path, top_n: int, json_output: bool) -> Result[None, s
     file_infos: list[FileInfo] = []
     sources: dict[str, str] = {}
 
-    for py_file in discover_python_files(path):
+    # Convert generator to list to release directory handles immediately (DX-82)
+    python_files = list(discover_python_files(path))
+
+    for py_file in python_files:
         try:
             content = py_file.read_text(encoding="utf-8")
             rel_path = str(py_file.relative_to(path))
@@ -227,6 +230,9 @@ def _run_map_python(path: Path, top_n: int, json_output: bool) -> Result[None, s
         except (OSError, UnicodeDecodeError) as e:
             console.print(f"[yellow]Warning:[/yellow] {py_file}: {e}")
             continue
+
+    # Release file list to free memory (DX-82)
+    del python_files
 
     if not file_infos:
         return Failure(
