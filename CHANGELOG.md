@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.15.0] - 2026-01-03
+
+### Added
+- **DX-81: Multi-Agent Init Support** - Complete implementation
+  - Remove mutual exclusivity between `--claude` and `--pi` flags
+  - Support combined flags: `invar init --claude --pi`
+  - Install both `.claude/hooks/` and `.pi/hooks/` simultaneously
+  - **Interactive mode enhancement**:
+    - Changed from single-select to checkbox multi-select
+    - Allow selecting multiple agents with Space key
+    - Claude Code pre-checked as default
+  - **Backward compatibility maintained**:
+    - `invar init --claude` works as before (Claude only)
+    - `invar init --pi` works as before (Pi only)
+    - Sequential init (`--claude` then `--pi`) still works
+  - **Use cases enabled**:
+    - Team collaboration (different members use different agents)
+    - Agent switching (both configured, use either)
+    - Open source projects (contributors have agent choice)
+
+### Changed
+- Agent selection prompt now uses checkbox instead of radio buttons
+- Header shows "Claude Code + Pi" when both flags used
+- File selection logic builds from all selected agents' categories
+
+### Documentation
+- Updated README.md with multi-agent examples
+- Added Multi-Agent Support section to CLAUDE.md
+- Updated context.md to reflect DX-81 completion
+
 ## [1.14.0] - 2026-01-03
 
 ### Added

@@ -51,17 +51,17 @@
 
 ## Current State
 
-- **PyPI:** `invar-tools` v1.12.0 + `invar-runtime` v1.3.0
+- **PyPI:** `invar-tools` v1.14.0 + `invar-runtime` v1.3.0
 - **Protocol:** v5.0 (USBV workflow, DX-58 critical section)
-- **Status:** Feature complete, TypeScript support added (DX-78)
-- **Recent:** DX-78 (TypeScript Compiler API integration), LX-05 (language-agnostic), LX-06 (TypeScript tooling), LX-07 (Extension Skills)
+- **Status:** Feature complete, multi-agent support added (DX-81)
+- **Recent:** DX-81 (Multi-agent init support), DX-79 (Feedback collection), DX-78 (TypeScript Compiler API)
 - **Blockers:** None
 
 ## Active Work
 
 See [docs/proposals/](../docs/proposals/) for planned changes.
 
-**Current focus:** Extension Skills completion, TypeScript verification
+**Current focus:** DX-81 (Multi-agent init) completed, ready for v1.15.0 release
 
 ---
 
@@ -185,6 +185,8 @@ gh release create vX.Y.Z --title "vX.Y.Z - Title" --notes "..."
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 1.15.0 | 2026-01 | Multi-agent init support (DX-81), checkbox selection UI |
+| 1.14.0 | 2026-01 | Invar usage feedback collection (DX-79), anonymization tools |
 | 1.12.0 | 2026-01 | TypeScript Compiler API integration (DX-78), multi-language refs |
 | 1.9.0 | 2026-01 | Extension Skills (LX-07), TypeScript support (LX-05/06) |
 | 1.8.0 | 2025-12 | Claude hooks improvements, interactive init (DX-70) |

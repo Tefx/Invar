@@ -146,8 +146,9 @@ cd your-project
 uvx invar-tools init
 
 # Or quick setup (skip prompts)
-uvx invar-tools init --claude    # Claude Code
-uvx invar-tools init --pi        # Pi Coding Agent
+uvx invar-tools init --claude    # Claude Code only
+uvx invar-tools init --pi        # Pi only
+uvx invar-tools init --claude --pi  # Both agents (DX-81)
 uvx invar-tools init --mcp-only  # MCP tools only (legacy projects)
 
 # Add runtime contracts to your project
@@ -448,6 +449,7 @@ AlphaCodium · Parsel · Reflexion · Clover
 |-------|--------|-------|
 | **Claude Code** | ✅ Full | `invar init --claude` |
 | **[Pi](https://shittycodingagent.ai/)** | ✅ Full | `invar init --pi` |
+| **Multi-Agent** | ✅ Full | `invar init --claude --pi` (DX-81) |
 | **Cursor** | ✅ MCP | `invar init` → select Other, add MCP config |
 | **Other** | 📝 Manual | `invar init` → select Other, include `AGENT.md` in prompt |
 
@@ -777,6 +779,7 @@ rules = ["missing_contract", "shell_result"]
 | `invar init` | Initialize or update project (interactive) |
 | `invar init --claude` | Quick setup for Claude Code |
 | `invar init --pi` | Quick setup for Pi agent |
+| `invar init --claude --pi` | Setup for both agents (DX-81) |
 | `invar init --mcp-only` | MCP tools only (no framework files) |
 | `invar uninstall` | Remove Invar from project (preserves user content) |
 | `invar sig <file>` | Show signatures and contracts |

@@ -363,6 +363,34 @@ pip install -e runtime/    # Runtime in dev mode
 
 Run `ruff check --fix` frequently after changing code to fix lint issues before commit.
 
+## Multi-Agent Support (DX-81)
+
+**Status:** ✅ Implemented (v1.15.0)
+
+Invar now supports initializing projects for multiple agents simultaneously:
+
+```bash
+# Single agent (backward compatible)
+invar init --claude
+invar init --pi
+
+# Multiple agents (DX-81)
+invar init --claude --pi
+
+# Interactive mode with checkbox selection
+invar init  # Select multiple agents with Space key
+```
+
+**File Structure:**
+- Shared: CLAUDE.md, .claude/skills/, .invar/
+- Isolated: .claude/hooks/ (Claude Code), .pi/hooks/ (Pi)
+- No conflicts: All files designed for coexistence
+
+**Use Cases:**
+- Team collaboration (different members use different agents)
+- Agent switching (have both configured, use either)
+- Open source projects (contributors have agent choice)
+
 ## Session Restore
 
 When continuing from a previous session summary:
