@@ -2,14 +2,17 @@
 
 ```bash
 # Verification (Python CLI - works for TypeScript)
-invar guard                  # Full: tsc + eslint + vitest + ts-analyzer
+invar guard                  # Check git-modified files (fast, default)
+invar guard --all            # Check entire project (CI, release)
 invar guard --json           # Agent-friendly v2.0 JSON output
-invar guard --changed        # Modified files only
 
 # Analysis
 invar sig <file>             # Show function signatures
 invar map --top 10           # Most-referenced symbols
 ```
+
+**Default behavior**: Checks git-modified files for fast feedback during development.
+Use `--all` for comprehensive checks before release.
 
 ## Guard Output (v2.0 JSON)
 

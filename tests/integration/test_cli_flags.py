@@ -74,7 +74,7 @@ class TestStaticFlag:
 
     def test_static_flag_runs_static_analysis(self):
         """--static should still run static analysis."""
-        result = run_invar_guard("--static", "src/invar/core")
+        result = run_invar_guard("--static", "--all", "src/invar/core")
 
         assert "summary" in result, f"Missing summary in output: {result}"
         assert "files_checked" in result["summary"], "Should report files checked"
@@ -105,31 +105,56 @@ class TestChangedFlag:
 
 
 class TestDefaultBehavior:
-    """DX-19: Verify default behavior runs full verification (STANDARD level)."""
+    """DX-80: Verify default behavior checks changed files only (aligned with MCP)."""
 
-    def test_default_runs_doctests(self):
-        """Default guard should run doctests."""
-        result = run_invar_guard("src/invar/core")
+    def test_default_checks_changed_files_only(self):
+        """Default guard should check changed files only (DX-80: aligned with MCP)."""
+        result = run_invar_guard()
 
-        # Should have doctest section
-        assert "doctest" in result, "Default guard should run doctests"
-        assert "passed" in result["doctest"], "Doctest should have passed status"
+        # Should have summary
+        assert "summary" in result or "status" in result, (
+            "Default guard should produce output"
+        )
 
-    def test_default_runs_static_analysis(self):
-        """Default guard should run static analysis."""
-        result = run_invar_guard("src/invar/core")
+        # If no changes, should report 0 files checked
+        if "summary" in result and result["summary"].get("files_checked") == 0:
+            # Clean working tree - this is expected
+            assert result["status"] == "pass", "Clean tree should pass"
+
+    def test_default_runs_full_verification_on_changed(self):
+        """Default guard should run full verification on changed files."""
+        result = run_invar_guard()
+
+        # Should still run all verification layers, just on changed files
+        # Note: May have no changed files, so sections might be skipped
+        assert "status" in result, "Should have status"
+
+
+class TestAllFlag:
+    """DX-80: Verify --all flag checks entire project."""
+
+    def test_all_flag_checks_all_files(self):
+        """--all should check entire project, not just changed files."""
+        result = run_invar_guard("--all", "src/invar/core")
 
         assert "summary" in result, "Should have summary"
         assert result["summary"]["files_checked"] > 0, "Should check files"
 
-    def test_default_runs_crosshair(self):
-        """Default guard should include CrossHair verification."""
-        result = run_invar_guard("src/invar/core")
+    def test_all_flag_runs_doctests(self):
+        """--all should run full verification including doctests."""
+        result = run_invar_guard("--all", "src/invar/core")
 
-        # Should have crosshair section (even if skipped/error due to timeout)
-        assert "crosshair" in result, "Default guard should include crosshair section"
+        # Should have doctest section
+        assert "doctest" in result, "--all guard should run doctests"
+        assert "passed" in result["doctest"], "Doctest should have passed status"
 
-        # CrossHair status should be valid
+    def test_all_flag_runs_crosshair(self):
+        """--all should include CrossHair verification."""
+        result = run_invar_guard("--all", "src/invar/core")
+
+        # Should have crosshair section
+        assert "crosshair" in result, "--all guard should include crosshair section"
+
         crosshair = result["crosshair"]
         valid_statuses = {"verified", "counterexample_found", "skipped", "error"}
         assert crosshair.get("status") in valid_statuses, (

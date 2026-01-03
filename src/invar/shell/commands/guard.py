@@ -122,7 +122,7 @@ def guard(
     ),
     strict: bool = typer.Option(False, "--strict", help="Treat warnings as errors"),
     changed: bool = typer.Option(
-        False, "--changed", help="Only check git-modified files"
+        True, "--changed/--all", help="Check git-modified files only (use --all for full check)"
     ),
     static: bool = typer.Option(
         False, "--static", help="Static analysis only, skip all runtime tests"
@@ -159,6 +159,9 @@ def guard(
     """Check project against Invar architecture rules.
 
     Smart Guard: Runs static analysis + doctests + CrossHair + Hypothesis by default.
+
+    By default, checks only git-modified files for fast feedback during development.
+    Use --all to check the entire project (useful for CI/release).
     Use --static for quick static-only checks (~0.5s vs ~5s full).
     Use --suggest to get functional pattern suggestions (NewType, Validation, etc.).
     Use --contracts-only (-c) to check contract coverage without running tests (DX-63).

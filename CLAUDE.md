@@ -85,6 +85,94 @@ src/{project}/
 
 
 
+### Document Tools (DX-76)
+
+| I want to... | Use |
+|--------------|-----|
+| View document structure | `invar_doc_toc(file="<file>")` |
+| Read specific section | `invar_doc_read(file="<file>", section="<section>")` |
+| Search sections by title | `invar_doc_find(file="<file>", pattern="<pattern>")` |
+| Replace section content | `invar_doc_replace(file="<file>", section="<section>")` |
+| Insert new section | `invar_doc_insert(file="<file>", anchor="<anchor>")` |
+| Delete section | `invar_doc_delete(file="<file>", section="<section>")` |
+
+**Section addressing:** slug path (`requirements/auth`), fuzzy (`auth`), index (`#0/#1`), line (`@48`)
+
+## Tool Selection
+
+### Calling Methods (Priority Order)
+
+Invar tools can be called in 3 ways. **Try in order:**
+
+1. **MCP tools** (Claude Code with MCP enabled)
+   - Direct function calls: `invar_guard()`, `invar_sig()`, etc.
+   - No Bash wrapper needed
+
+2. **CLI command** (if `invar` installed in PATH)
+   - Via Bash: `invar guard`, `invar sig`, etc.
+   - Install: `pip install invar-tools`
+
+3. **uvx fallback** (always available, no install needed)
+   - Via Bash: `uvx invar-tools guard`, `uvx invar-tools sig`, etc.
+
+---
+
+### Parameter Reference
+
+**guard** - Verify code quality
+```python
+# MCP
+invar_guard()                    # Check changed files (default)
+invar_guard(changed=False)       # Check all files
+```
+
+**sig** - Show function signatures and contracts
+```python
+# MCP
+invar_sig(target="src/foo.py")
+```
+
+**map** - Find entry points
+```python
+# MCP
+invar_map(path=".", top=10)
+```
+
+**refs** - Find all references to a symbol
+```python
+# MCP
+invar_refs(target="src/foo.py::MyClass")
+```
+
+**doc*** - Document tools
+```python
+# MCP
+invar_doc_toc(file="docs/spec.md")
+invar_doc_read(file="docs/spec.md", section="intro")
+```
+
+---
+
+### Quick Examples
+
+```python
+# Verify after changes (all three methods identical)
+invar_guard()                        # MCP
+bash("invar guard")                  # CLI
+bash("uvx invar-tools guard")        # uvx
+
+# Full project check
+invar_guard(changed=False)           # MCP
+bash("invar guard --all")            # CLI
+
+# See function contracts
+invar_sig(target="src/core/parser.py")
+bash("invar sig src/core/parser.py")
+```
+
+**Note**: All three methods now have identical default behavior.
+
+
 ## Documentation Structure
 
 | File | Owner | Edit? | Purpose |
