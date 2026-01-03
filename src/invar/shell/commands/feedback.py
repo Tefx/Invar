@@ -7,7 +7,6 @@ Shell module: handles feedback file operations.
 
 from __future__ import annotations
 
-import re
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Annotated
@@ -16,6 +15,8 @@ import typer
 from returns.result import Failure, Result, Success
 from rich.console import Console
 from rich.table import Table
+
+from invar.core.feedback import anonymize_feedback_content
 
 console = Console()
 
@@ -66,51 +67,6 @@ def _get_feedback_files(
 
     except OSError as e:
         return Failure(f"Failed to read feedback directory: {e}")
-
-
-# @shell_orchestration: String transformation for CLI output (regex-based anonymization)
-def _anonymize_content(content: str) -> str:
-    """
-    Anonymize feedback content by removing identifying information.
-
-    Removes:
-    - Project names
-    - File paths
-    - Function/symbol names
-    - Specific error messages
-
-    Args:
-        content: Original feedback content
-
-    Returns:
-        Anonymized content
-    """
-    # Replace project name
-    content = re.sub(r"\*\*Project\*\*: .*", "**Project**: [redacted]", content)
-
-    # Replace file paths
-    content = re.sub(r"File: [^\s]+", "File: [path redacted]", content, flags=re.IGNORECASE)
-    content = re.sub(r"src/[\w/\.]+", "[path redacted]", content)
-
-    # Replace function names
-    content = re.sub(
-        r"function ['\"][\w_]+['\"]",
-        "function [name redacted]",
-        content,
-        flags=re.IGNORECASE,
-    )
-
-    # Replace symbol references
-    content = re.sub(r"`[\w\.]+\([\w,\s]*\)`", "`[symbol redacted]`", content)
-
-    # Replace error messages (in code blocks)
-    content = re.sub(
-        r"Error: .+",
-        "Error: [message redacted]",
-        content,
-    )
-
-    return content
 
 
 # @invar:allow entry_point_too_thick: CLI display with table formatting and help text
@@ -287,7 +243,7 @@ def anonymize_feedback(
     # Read and anonymize
     try:
         content = input_file.read_text(encoding="utf-8")
-        anonymized = _anonymize_content(content)
+        anonymized = anonymize_feedback_content(content)
 
         # Output
         if output:

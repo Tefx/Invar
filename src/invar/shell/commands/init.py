@@ -478,6 +478,8 @@ def init(
                 selected_files[file] = True
         # DX-79: Default feedback enabled for quick mode
         feedback_enabled = True
+        console.print("\n[dim]📊 Feedback collection enabled by default (stored locally in .invar/feedback/)[/dim]")
+        console.print("[dim]   To disable: Set feedback.enabled=false in .claude/settings.local.json[/dim]")
     elif pi:
         # Quick mode: Pi defaults
         agents = ["pi"]
@@ -487,6 +489,8 @@ def init(
                 selected_files[file] = True
         # DX-79: Default feedback enabled for quick mode
         feedback_enabled = True
+        console.print("\n[dim]📊 Feedback collection enabled by default (stored locally in .invar/feedback/)[/dim]")
+        console.print("[dim]   To disable: Set feedback.enabled=false in .claude/settings.local.json[/dim]")
     else:
         # Interactive mode
         if not _is_interactive():
