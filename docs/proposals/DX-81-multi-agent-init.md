@@ -788,6 +788,7 @@ fi
 ---
 
 ## Decision
+## Decision
 
 **推荐：** 方案 A（移除互斥 + 支持组合标志）
 
@@ -797,13 +798,40 @@ fi
 3. ✅ 可扩展，支持未来更多 agent
 4. ✅ 用户友好，交互式多选体验好
 
-**实施优先级：** Medium（非紧急，但有明确需求）
+**实施优先级：** ~~Medium（非紧急，但有明确需求）~~ → **Completed**
 
-**下一步：**
-1. 征求社区反馈（GitHub Discussion）
-2. 如无异议，开始 Phase A 实现
-3. 集成测试后发布 v1.15.0
+**实施记录：**
+
+**Phase A (Completed 2026-01-03):**
+- ✅ 移除互斥检查（lines 394-396）
+- ✅ 重构 agent 选择逻辑支持多 agent
+- ✅ 更新 header 显示双 agent 模式
+- ✅ Hooks 安装已支持多 agent（无需修改）
+
+**Phase B (Completed 2026-01-03):**
+- ✅ 更新 `_prompt_agent_selection()` 为 checkbox
+- ✅ 支持 Space 键多选
+- ✅ Claude Code 默认选中
+
+**Phase C (Completed 2026-01-03):**
+- ✅ 更新 README.md 示例
+- ✅ 更新 CLAUDE.md 说明
+- ✅ 更新 .invar/context.md 状态
+- ✅ 更新 CHANGELOG.md v1.15.0
+
+**集成测试结果：**
+- ✅ `invar init --claude --pi` 创建双 hooks 目录
+- ✅ `invar init --claude` 单 agent 正常工作
+- ✅ `invar init --pi` 单 agent 正常工作
+- ✅ Preview 模式正确显示所有文件
+- ✅ Guard: 0 errors, 0 warnings
+
+**发布：** v1.15.0 (2026-01-03)
+
+**Commits:**
+- c5893d7: feat(dx-81): Add multi-agent init support
+- 7b497b5: docs(dx-81): Update documentation for multi-agent support
 
 ---
 
-**Status**: Awaiting Review
+**Status**: ✅ Implemented (v1.15.0)
