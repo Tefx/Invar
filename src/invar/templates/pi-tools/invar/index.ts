@@ -201,6 +201,415 @@ const factory: CustomToolFactory = (pi) => {
         };
       },
     },
+
+    // =========================================================================
+    // invar_doc_toc - Extract document structure (Table of Contents)
+    // =========================================================================
+    {
+      name: "invar_doc_toc",
+      label: "Invar Doc TOC",
+      description: "Extract document structure (Table of Contents) from markdown files. Shows headings hierarchy with line numbers and character counts. Use this INSTEAD of Read() to understand markdown structure.",
+      parameters: Type.Object({
+        file: Type.String({
+          description: "Path to markdown file",
+        }),
+        depth: Type.Optional(Type.Number({
+          description: "Maximum heading depth to include (1-6)",
+          default: 6,
+          minimum: 1,
+          maximum: 6,
+        })),
+      }),
+      async execute(toolCallId, params, onUpdate, ctx, signal) {
+        const installed = await checkInvarInstalled();
+        if (!installed) {
+          throw new Error("Invar not installed. Run: pip install invar-tools");
+        }
+
+        if (!isValidPath(params.file)) {
+          throw new Error("Invalid file path: contains unsafe characters or path traversal");
+        }
+
+        const args = ["doc", "toc", params.file];
+
+        if (params.depth && params.depth !== 6) {
+          args.push("--depth", params.depth.toString());
+        }
+
+        const result = await pi.exec("invar", args, {
+          cwd: pi.cwd,
+          signal,
+        });
+
+        if (result.killed) {
+          throw new Error("Doc toc command was cancelled");
+        }
+
+        if (result.exitCode !== 0) {
+          throw new Error(`Failed to extract TOC: ${result.stderr}`);
+        }
+
+        return {
+          content: [{ type: "text", text: result.stdout }],
+          details: {
+            file: params.file,
+            depth: params.depth || 6,
+          },
+        };
+      },
+    },
+
+    // =========================================================================
+    // invar_doc_read - Read a specific section from a document
+    // =========================================================================
+    {
+      name: "invar_doc_read",
+      label: "Invar Doc Read",
+      description: "Read a specific section from a markdown document. Supports multiple addressing formats: slug path, fuzzy match, index (#0/#1), or line anchor (@48). Use this INSTEAD of Read() with manual line counting.",
+      parameters: Type.Object({
+        file: Type.String({
+          description: "Path to markdown file",
+        }),
+        section: Type.String({
+          description: "Section path: slug ('requirements/auth'), fuzzy ('auth'), index ('#0/#1'), or line ('@48')",
+        }),
+        children: Type.Optional(Type.Boolean({
+          description: "Include child sections in output",
+          default: true,
+        })),
+      }),
+      async execute(toolCallId, params, onUpdate, ctx, signal) {
+        const installed = await checkInvarInstalled();
+        if (!installed) {
+          throw new Error("Invar not installed. Run: pip install invar-tools");
+        }
+
+        if (!isValidPath(params.file) || !isValidPath(params.section)) {
+          throw new Error("Invalid file or section path: contains unsafe characters or path traversal");
+        }
+
+        const args = ["doc", "read", params.file, params.section, "--json"];
+
+        if (params.children === false) {
+          args.push("--no-children");
+        }
+
+        const result = await pi.exec("invar", args, {
+          cwd: pi.cwd,
+          signal,
+        });
+
+        if (result.killed) {
+          throw new Error("Doc read command was cancelled");
+        }
+
+        if (result.exitCode !== 0) {
+          throw new Error(`Failed to read section: ${result.stderr}`);
+        }
+
+        return {
+          content: [{ type: "text", text: result.stdout }],
+          details: {
+            file: params.file,
+            section: params.section,
+          },
+        };
+      },
+    },
+
+    // =========================================================================
+    // invar_doc_find - Find sections matching a pattern
+    // =========================================================================
+    {
+      name: "invar_doc_find",
+      label: "Invar Doc Find",
+      description: "Find sections in markdown documents matching a pattern. Supports glob patterns for titles and optional content search. Use this INSTEAD of Grep in markdown files.",
+      parameters: Type.Object({
+        file: Type.String({
+          description: "Path to markdown file",
+        }),
+        pattern: Type.String({
+          description: "Title pattern (glob-style, e.g., '*auth*')",
+        }),
+        content: Type.Optional(Type.String({
+          description: "Optional content search pattern",
+        })),
+        level: Type.Optional(Type.Number({
+          description: "Filter by heading level (1-6)",
+          minimum: 1,
+          maximum: 6,
+        })),
+      }),
+      async execute(toolCallId, params, onUpdate, ctx, signal) {
+        const installed = await checkInvarInstalled();
+        if (!installed) {
+          throw new Error("Invar not installed. Run: pip install invar-tools");
+        }
+
+        if (!isValidPath(params.file)) {
+          throw new Error("Invalid file path: contains unsafe characters or path traversal");
+        }
+
+        const args = ["doc", "find", params.pattern, params.file, "--json"];
+
+        if (params.content) {
+          args.push("--content", params.content);
+        }
+
+        if (params.level) {
+          args.push("--level", params.level.toString());
+        }
+
+        const result = await pi.exec("invar", args, {
+          cwd: pi.cwd,
+          signal,
+        });
+
+        if (result.killed) {
+          throw new Error("Doc find command was cancelled");
+        }
+
+        if (result.exitCode !== 0) {
+          throw new Error(`Failed to find sections: ${result.stderr}`);
+        }
+
+        return {
+          content: [{ type: "text", text: result.stdout }],
+          details: {
+            file: params.file,
+            pattern: params.pattern,
+          },
+        };
+      },
+    },
+
+    // =========================================================================
+    // invar_doc_replace - Replace a section's content
+    // =========================================================================
+    {
+      name: "invar_doc_replace",
+      label: "Invar Doc Replace",
+      description: "Replace a section's content in a markdown document. Use this INSTEAD of Edit()/Write() for section replacement.",
+      parameters: Type.Object({
+        file: Type.String({
+          description: "Path to markdown file",
+        }),
+        section: Type.String({
+          description: "Section path to replace (slug, fuzzy, index, or line anchor)",
+        }),
+        content: Type.String({
+          description: "New content to replace the section with",
+        }),
+        keep_heading: Type.Optional(Type.Boolean({
+          description: "If true, preserve the original heading line",
+          default: true,
+        })),
+      }),
+      async execute(toolCallId, params, onUpdate, ctx, signal) {
+        const installed = await checkInvarInstalled();
+        if (!installed) {
+          throw new Error("Invar not installed. Run: pip install invar-tools");
+        }
+
+        if (!isValidPath(params.file) || !isValidPath(params.section)) {
+          throw new Error("Invalid file or section path: contains unsafe characters or path traversal");
+        }
+
+        // Write content to temporary file to avoid shell injection
+        const fs = require("fs");
+        const path = require("path");
+        const tmpFile = path.join(pi.cwd, `.invar-tmp-${Date.now()}.txt`);
+
+        try {
+          fs.writeFileSync(tmpFile, params.content, "utf-8");
+
+          const args = [
+            "doc",
+            "replace",
+            params.file,
+            params.section,
+            "--content",
+            tmpFile,
+          ];
+
+          if (params.keep_heading === false) {
+            args.push("--no-keep-heading");
+          }
+
+          const result = await pi.exec("invar", args, {
+            cwd: pi.cwd,
+            signal,
+          });
+
+          if (result.killed) {
+            throw new Error("Doc replace command was cancelled");
+          }
+
+          if (result.exitCode !== 0) {
+            throw new Error(`Failed to replace section: ${result.stderr}`);
+          }
+
+          return {
+            content: [{ type: "text", text: result.stdout || "Section replaced successfully" }],
+            details: {
+              file: params.file,
+              section: params.section,
+            },
+          };
+        } finally {
+          // Clean up temp file
+          try {
+            fs.unlinkSync(tmpFile);
+          } catch {
+            // Ignore cleanup errors
+          }
+        }
+      },
+    },
+
+    // =========================================================================
+    // invar_doc_insert - Insert new content relative to a section
+    // =========================================================================
+    {
+      name: "invar_doc_insert",
+      label: "Invar Doc Insert",
+      description: "Insert new content relative to a section in a markdown document. Use this INSTEAD of Edit()/Write() for section insertion.",
+      parameters: Type.Object({
+        file: Type.String({
+          description: "Path to markdown file",
+        }),
+        anchor: Type.String({
+          description: "Section path for the anchor (slug, fuzzy, index, or line anchor)",
+        }),
+        content: Type.String({
+          description: "Content to insert (include heading if new section)",
+        }),
+        position: Type.Optional(Type.String({
+          description: "Where to insert: 'before', 'after', 'first_child', 'last_child'",
+          default: "after",
+          enum: ["before", "after", "first_child", "last_child"],
+        })),
+      }),
+      async execute(toolCallId, params, onUpdate, ctx, signal) {
+        const installed = await checkInvarInstalled();
+        if (!installed) {
+          throw new Error("Invar not installed. Run: pip install invar-tools");
+        }
+
+        if (!isValidPath(params.file) || !isValidPath(params.anchor)) {
+          throw new Error("Invalid file or anchor path: contains unsafe characters or path traversal");
+        }
+
+        // Write content to temporary file
+        const fs = require("fs");
+        const path = require("path");
+        const tmpFile = path.join(pi.cwd, `.invar-tmp-${Date.now()}.txt`);
+
+        try {
+          fs.writeFileSync(tmpFile, params.content, "utf-8");
+
+          const args = [
+            "doc",
+            "insert",
+            params.file,
+            params.anchor,
+            "--content",
+            tmpFile,
+          ];
+
+          if (params.position && params.position !== "after") {
+            args.push("--position", params.position);
+          }
+
+          const result = await pi.exec("invar", args, {
+            cwd: pi.cwd,
+            signal,
+          });
+
+          if (result.killed) {
+            throw new Error("Doc insert command was cancelled");
+          }
+
+          if (result.exitCode !== 0) {
+            throw new Error(`Failed to insert content: ${result.stderr}`);
+          }
+
+          return {
+            content: [{ type: "text", text: result.stdout || "Content inserted successfully" }],
+            details: {
+              file: params.file,
+              anchor: params.anchor,
+              position: params.position || "after",
+            },
+          };
+        } finally {
+          // Clean up temp file
+          try {
+            fs.unlinkSync(tmpFile);
+          } catch {
+            // Ignore cleanup errors
+          }
+        }
+      },
+    },
+
+    // =========================================================================
+    // invar_doc_delete - Delete a section from a document
+    // =========================================================================
+    {
+      name: "invar_doc_delete",
+      label: "Invar Doc Delete",
+      description: "Delete a section from a markdown document. Use this INSTEAD of Edit()/Write() for section deletion.",
+      parameters: Type.Object({
+        file: Type.String({
+          description: "Path to markdown file",
+        }),
+        section: Type.String({
+          description: "Section path to delete (slug, fuzzy, index, or line anchor)",
+        }),
+        children: Type.Optional(Type.Boolean({
+          description: "Include child sections in deletion",
+          default: true,
+        })),
+      }),
+      async execute(toolCallId, params, onUpdate, ctx, signal) {
+        const installed = await checkInvarInstalled();
+        if (!installed) {
+          throw new Error("Invar not installed. Run: pip install invar-tools");
+        }
+
+        if (!isValidPath(params.file) || !isValidPath(params.section)) {
+          throw new Error("Invalid file or section path: contains unsafe characters or path traversal");
+        }
+
+        const args = ["doc", "delete", params.file, params.section];
+
+        if (params.children === false) {
+          args.push("--no-children");
+        }
+
+        const result = await pi.exec("invar", args, {
+          cwd: pi.cwd,
+          signal,
+        });
+
+        if (result.killed) {
+          throw new Error("Doc delete command was cancelled");
+        }
+
+        if (result.exitCode !== 0) {
+          throw new Error(`Failed to delete section: ${result.stderr}`);
+        }
+
+        return {
+          content: [{ type: "text", text: result.stdout || "Section deleted successfully" }],
+          details: {
+            file: params.file,
+            section: params.section,
+          },
+        };
+      },
+    },
   ];
 };
 

@@ -35,6 +35,12 @@ def install_pi_tools(
     - invar_guard: Wrapper for invar guard command
     - invar_sig: Wrapper for invar sig command
     - invar_map: Wrapper for invar map command
+    - invar_doc_toc: Extract document structure
+    - invar_doc_read: Read specific section
+    - invar_doc_find: Find sections by pattern
+    - invar_doc_replace: Replace section content
+    - invar_doc_insert: Insert content relative to section
+    - invar_doc_delete: Delete section
     """
     tools_dir = project_path / PI_TOOLS_DIR
     tools_dir.mkdir(parents=True, exist_ok=True)
@@ -44,6 +50,7 @@ def install_pi_tools(
     console.print("    ✓ invar_guard - Smart verification (static + doctests + symbolic)")
     console.print("    ✓ invar_sig - Show function signatures and contracts")
     console.print("    ✓ invar_map - Symbol map with reference counts")
+    console.print("    ✓ 6 doc tools - Structured markdown editing (toc, read, find, replace, insert, delete)")
     console.print("")
 
     template_path = get_pi_tools_template_path()

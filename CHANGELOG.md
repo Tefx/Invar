@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Pi Custom Tools: Document Tools** - Added 6 doc tools for structured markdown editing
+  - `invar_doc_toc`: Extract document structure (Table of Contents)
+  - `invar_doc_read`: Read specific section from a document
+  - `invar_doc_find`: Find sections matching a pattern
+  - `invar_doc_replace`: Replace section content
+  - `invar_doc_insert`: Insert content relative to a section
+  - `invar_doc_delete`: Delete a section
+  - All tools follow the same security patterns as core tools (path validation, temp file handling)
+  - Brings Pi custom tools to parity with MCP server capabilities
+
 ## [1.15.0] - 2026-01-03
 
 ### Added
