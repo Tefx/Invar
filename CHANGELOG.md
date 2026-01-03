@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [1.15.4] - 2026-01-03
+
+### Fixed
+- **Pi Custom Tools: Error Message Capture** - Improved error diagnostics
+  - Enhanced error message capture to include both stderr and stdout
+  - Prevents empty error messages like "Failed to extract TOC: "
+  - Fallback to "Unknown error" if both streams are empty
+  - **Solves diagnostic issue** where error details were missing:
+    - Root cause: Some errors may output to stdout instead of stderr
+    - Pi's exec() stderr might be empty even when command fails
+  - All 9 tools now provide clear error messages for debugging
+  - Fixed in: invar_sig, invar_map, invar_doc_toc, invar_doc_read, invar_doc_find, invar_doc_replace, invar_doc_insert, invar_doc_delete
+
 ## [1.15.3] - 2026-01-03
 
 ### Fixed
@@ -378,7 +391,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[Unreleased]: https://github.com/yourusername/invar/compare/v1.15.3...HEAD
+[Unreleased]: https://github.com/yourusername/invar/compare/v1.15.4...HEAD
+[1.15.4]: https://github.com/yourusername/invar/compare/v1.15.3...v1.15.4
 [1.15.3]: https://github.com/yourusername/invar/compare/v1.15.2...v1.15.3
 [1.15.2]: https://github.com/yourusername/invar/compare/v1.15.1...v1.15.2
 [1.15.1]: https://github.com/yourusername/invar/compare/v1.15.0...v1.15.1

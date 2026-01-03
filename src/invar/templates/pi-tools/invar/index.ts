@@ -142,7 +142,8 @@ const factory: CustomToolFactory = (pi) => {
         }
 
         if (result.exitCode !== 0) {
-          throw new Error(`Failed to get signatures: ${result.stderr}`);
+          const errorMsg = result.stderr || result.stdout || "Unknown error";
+          throw new Error(`Failed to get signatures: ${errorMsg}`);
         }
 
         return {
@@ -200,7 +201,8 @@ const factory: CustomToolFactory = (pi) => {
         }
 
         if (result.exitCode !== 0) {
-          throw new Error(`Failed to generate map: ${result.stderr}`);
+          const errorMsg = result.stderr || result.stdout || "Unknown error";
+          throw new Error(`Failed to generate map: ${errorMsg}`);
         }
 
         return {
@@ -262,7 +264,8 @@ const factory: CustomToolFactory = (pi) => {
         }
 
         if (result.exitCode !== 0) {
-          throw new Error(`Failed to extract TOC: ${result.stderr}`);
+          const errorMsg = result.stderr || result.stdout || "Unknown error";
+          throw new Error(`Failed to extract TOC: ${errorMsg}`);
         }
 
         return {
@@ -328,7 +331,8 @@ const factory: CustomToolFactory = (pi) => {
         }
 
         if (result.exitCode !== 0) {
-          throw new Error(`Failed to read section: ${result.stderr}`);
+          const errorMsg = result.stderr || result.stdout || "Unknown error";
+          throw new Error(`Failed to read section: ${errorMsg}`);
         }
 
         return {
@@ -400,7 +404,8 @@ const factory: CustomToolFactory = (pi) => {
         }
 
         if (result.exitCode !== 0) {
-          throw new Error(`Failed to find sections: ${result.stderr}`);
+          const errorMsg = result.stderr || result.stdout || "Unknown error";
+          throw new Error(`Failed to find sections: ${errorMsg}`);
         }
 
         return {
@@ -486,7 +491,8 @@ const factory: CustomToolFactory = (pi) => {
           }
 
           if (result.exitCode !== 0) {
-            throw new Error(`Failed to replace section: ${result.stderr}`);
+            const errorMsg = result.stderr || result.stdout || "Unknown error";
+            throw new Error(`Failed to replace section: ${errorMsg}`);
           }
 
           return {
@@ -581,7 +587,8 @@ const factory: CustomToolFactory = (pi) => {
           }
 
           if (result.exitCode !== 0) {
-            throw new Error(`Failed to insert content: ${result.stderr}`);
+            const errorMsg = result.stderr || result.stdout || "Unknown error";
+            throw new Error(`Failed to insert content: ${errorMsg}`);
           }
 
           return {
@@ -656,7 +663,8 @@ const factory: CustomToolFactory = (pi) => {
         }
 
         if (result.exitCode !== 0) {
-          throw new Error(`Failed to delete section: ${result.stderr}`);
+          const errorMsg = result.stderr || result.stdout || "Unknown error";
+          throw new Error(`Failed to delete section: ${errorMsg}`);
         }
 
         return {
