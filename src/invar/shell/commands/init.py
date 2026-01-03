@@ -23,6 +23,7 @@ from invar.shell.mcp_config import (
     get_recommended_method,
 )
 from invar.shell.pi_hooks import install_pi_hooks
+from invar.shell.pi_tools import install_pi_tools
 from invar.shell.templates import (
     add_config,
     create_directories,
@@ -60,6 +61,7 @@ FILE_CATEGORIES: dict[str, list[tuple[str, str]]] = {
         ("CLAUDE.md", "Agent instructions (Pi compatible)"),
         (".claude/skills/", "Workflow automation (Pi compatible)"),
         (".pi/hooks/", "Pi-specific hooks"),
+        (".pi/tools/", "Pi custom tools (invar_guard, invar_sig, invar_map)"),
     ],
 }
 
@@ -621,6 +623,10 @@ def init(
     # Install Pi hooks if selected
     if "pi" in agents and selected_files.get(".pi/hooks/", True):
         install_pi_hooks(path, console)
+
+    # Install Pi custom tools if selected
+    if "pi" in agents and selected_files.get(".pi/tools/", True):
+        install_pi_tools(path, console)
 
     # Add feedback configuration (DX-79 Phase C)
     if "claude" in agents or "pi" in agents:
