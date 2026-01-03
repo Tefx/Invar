@@ -9,6 +9,9 @@
  * - @invar/require-jsdoc-example: Exported functions need @example
  * - @invar/max-file-lines: Enforce max file length (layer-based)
  * - @invar/max-function-lines: Enforce max function length (layer-based)
+ * - @invar/no-empty-schema: Forbid empty or permissive Zod schemas
+ * - @invar/no-redundant-type-schema: Forbid schemas that only repeat TypeScript types
+ * - @invar/require-complete-validation: All function params must be validated, or none
  */
 
 import type { ESLint, Rule } from 'eslint';
@@ -19,6 +22,9 @@ import { noAnyInSchema } from './rules/no-any-in-schema.js';
 import { requireJsdocExample } from './rules/require-jsdoc-example.js';
 import { maxFileLines } from './rules/max-file-lines.js';
 import { maxFunctionLines } from './rules/max-function-lines.js';
+import { noEmptySchema } from './rules/no-empty-schema.js';
+import { noRedundantTypeSchema } from './rules/no-redundant-type-schema.js';
+import { requireCompleteValidation } from './rules/require-complete-validation.js';
 
 // ============================================================================
 // Plugin Definition
@@ -32,6 +38,9 @@ const rules: Record<string, Rule.RuleModule> = {
   'require-jsdoc-example': requireJsdocExample,
   'max-file-lines': maxFileLines,
   'max-function-lines': maxFunctionLines,
+  'no-empty-schema': noEmptySchema,
+  'no-redundant-type-schema': noRedundantTypeSchema,
+  'require-complete-validation': requireCompleteValidation,
 };
 
 // ESLint legacy config format (for ESLint 8 compatibility)
@@ -46,6 +55,9 @@ const configs = {
       '@invar/require-jsdoc-example': 'error' as const,
       '@invar/max-file-lines': 'error' as const,
       '@invar/max-function-lines': 'error' as const,
+      '@invar/no-empty-schema': 'error' as const,
+      '@invar/no-redundant-type-schema': 'warn' as const,
+      '@invar/require-complete-validation': 'warn' as const,
     },
   },
   strict: {
@@ -58,6 +70,9 @@ const configs = {
       '@invar/require-jsdoc-example': 'error' as const,
       '@invar/max-file-lines': 'error' as const,
       '@invar/max-function-lines': 'error' as const,
+      '@invar/no-empty-schema': 'error' as const,
+      '@invar/no-redundant-type-schema': 'error' as const,
+      '@invar/require-complete-validation': 'error' as const,
     },
   },
 };

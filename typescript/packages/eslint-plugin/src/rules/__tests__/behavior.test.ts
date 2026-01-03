@@ -12,6 +12,9 @@ import { maxFileLines } from '../max-file-lines.js';
 import { maxFunctionLines } from '../max-function-lines.js';
 import { requireJsdocExample } from '../require-jsdoc-example.js';
 import { noIoInCore } from '../no-io-in-core.js';
+import { noEmptySchema } from '../no-empty-schema.js';
+import { noRedundantTypeSchema } from '../no-redundant-type-schema.js';
+import { requireCompleteValidation } from '../require-complete-validation.js';
 import { getLayer, getLimits } from '../../utils/layer-detection.js';
 
 // Create RuleTester with modern JS configuration
@@ -357,5 +360,161 @@ describe('Integration: Cross-platform path normalization', () => {
     expect(getLayer('core/parser.ts')).toBe('core');
     expect(getLayer('shell/io.ts')).toBe('shell');
     expect(getLayer('src/core/parser.ts')).toBe('core');
+  });
+});
+
+describe('no-empty-schema', () => {
+  it('should detect empty z.object({})', () => {
+    ruleTester.run('no-empty-schema', noEmptySchema, {
+      valid: [
+        { code: `const Schema = z.object({ id: z.string() });` },
+        { code: `const Schema = z.object({ name: z.string(), age: z.number() });` },
+      ],
+      invalid: [
+        {
+          code: `const Schema = z.object({});`,
+          errors: [{ messageId: 'emptyObject' }],
+        },
+      ],
+    });
+  });
+
+  it('should detect .passthrough() calls', () => {
+    ruleTester.run('no-empty-schema', noEmptySchema, {
+      valid: [
+        { code: `const Schema = z.object({ id: z.string() }).strict();` },
+      ],
+      invalid: [
+        {
+          code: `const Schema = z.object({ id: z.string() }).passthrough();`,
+          errors: [{ messageId: 'passthrough' }],
+        },
+      ],
+    });
+  });
+
+  it('should detect .loose() calls', () => {
+    ruleTester.run('no-empty-schema', noEmptySchema, {
+      valid: [
+        { code: `const Schema = z.object({ id: z.string() });` },
+      ],
+      invalid: [
+        {
+          code: `const Schema = z.object({ id: z.string() }).loose();`,
+          errors: [{ messageId: 'loose' }],
+        },
+      ],
+    });
+  });
+});
+
+describe('no-redundant-type-schema', () => {
+  it('should detect z.string() without constraints', () => {
+    ruleTester.run('no-redundant-type-schema', noRedundantTypeSchema, {
+      valid: [
+        { code: `const Schema = z.string().min(1);` },
+        { code: `const Schema = z.string().max(100);` },
+        { code: `const Schema = z.string().email();` },
+        { code: `const Schema = z.string().regex(/^[a-z]+$/);` },
+      ],
+      invalid: [
+        {
+          code: `const Schema = z.string();`,
+          errors: [{ messageId: 'redundantString' }],
+        },
+      ],
+    });
+  });
+
+  it('should detect z.number() without constraints', () => {
+    ruleTester.run('no-redundant-type-schema', noRedundantTypeSchema, {
+      valid: [
+        { code: `const Schema = z.number().min(0);` },
+        { code: `const Schema = z.number().max(100);` },
+        { code: `const Schema = z.number().int();` },
+        { code: `const Schema = z.number().positive();` },
+      ],
+      invalid: [
+        {
+          code: `const Schema = z.number();`,
+          errors: [{ messageId: 'redundantNumber' }],
+        },
+      ],
+    });
+  });
+
+  it('should detect z.boolean() (always redundant)', () => {
+    ruleTester.run('no-redundant-type-schema', noRedundantTypeSchema, {
+      valid: [],
+      invalid: [
+        {
+          code: `const Schema = z.boolean();`,
+          errors: [{ messageId: 'redundantBoolean' }],
+        },
+      ],
+    });
+  });
+});
+
+describe('require-complete-validation', () => {
+  // Create RuleTester with TypeScript parser for this suite
+  const tsRuleTester = new RuleTester({
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: 'module',
+      parser: require('@typescript-eslint/parser'),
+    },
+  });
+
+  it('should detect mixed validated/unvalidated parameters', () => {
+    tsRuleTester.run('require-complete-validation', requireCompleteValidation, {
+      valid: [
+        {
+          code: `function transfer(
+            user: z.infer<typeof UserSchema>,
+            amount: z.infer<typeof AmountSchema>
+          ) {}`,
+        },
+        {
+          code: `function calculate(x: number, y: number) {}`,
+        },
+        {
+          code: `function greet() {}`,
+        },
+      ],
+      invalid: [
+        {
+          code: `function transfer(
+            user: z.infer<typeof UserSchema>,
+            amount: number
+          ) {}`,
+          errors: [{ messageId: 'partialValidation' }],
+        },
+        {
+          code: `function process(
+            data: z.infer<typeof DataSchema>,
+            count: number,
+            name: string
+          ) {}`,
+          errors: [{ messageId: 'partialValidation' }],
+        },
+      ],
+    });
+  });
+
+  it('should handle arrow functions', () => {
+    tsRuleTester.run('require-complete-validation', requireCompleteValidation, {
+      valid: [
+        {
+          code: `const fn = (user: z.infer<typeof UserSchema>, id: z.infer<typeof IdSchema>) => {};`,
+        },
+      ],
+      invalid: [
+        {
+          code: `const fn = (user: z.infer<typeof UserSchema>, id: number) => {};`,
+          errors: [{ messageId: 'partialValidation' }],
+        },
+      ],
+    });
   });
 });
