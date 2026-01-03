@@ -126,7 +126,7 @@ See "Feedback Document Structure" below.
 - ❌ 50 轮仍频繁 - 中等项目一天仍有多个文件
 - ❌ 无视任务边界 - 可能在任务中间打断
 
-**Recommended: Task completion + Threshold**
+**Recommended: Task completion + Threshold (No hard frequency cap)**
 
 | Condition | Description | Example |
 |-----------|-------------|---------|
@@ -134,7 +134,8 @@ See "Feedback Document Structure" below.
 | AND message count >= 30 | Sufficient context | Avoid trivial tasks |
 | AND time elapsed >= 2 hours | Non-trivial session | Avoid quick fixes |
 
-**Frequency Cap**: Max 1 reflection per day per project (avoid spam)
+**Natural Filtering**: Thresholds naturally limit frequency without arbitrary daily caps.
+**File Merging**: Same-day feedback merged into single file (see below).
 
 #### Hook Configuration
 
@@ -146,19 +147,20 @@ See "Feedback Document Structure" below.
       "action": "skill:invar-reflect",
       "conditions": {
         "min_messages": 30,
-        "min_duration_hours": 2,
-        "max_per_day": 1
+        "min_duration_hours": 2
       },
       "mode": "silent"
     }
   },
   "feedback": {
-    "enabled": true,  // User can disable
-    "auto_trigger": true,  // Separate toggle for auto-trigger
-    "retention_days": 90  // Auto-cleanup old feedback
+    "enabled": true,          // User can disable
+    "auto_trigger": true,     // Separate toggle for auto-trigger
+    "retention_days": 90      // Auto-cleanup old feedback
   }
 }
 ```
+
+**Note**: No `max_per_day` limit. Same-day sessions automatically merge into one file.
 
 **Mode**: `silent` - 不打断当前对话，后台生成反馈
 
@@ -479,7 +481,179 @@ You control what (if anything) to share with Invar maintainers.
 
 ---
 
-### 4. Init-Time Configuration
+### 4. File Merging & Intelligent Aggregation
+
+#### Same-Day Merging Strategy
+
+**Core Principle**: Same-day sessions merge into single file, leveraging agent intelligence.
+
+**File Naming**:
+```bash
+.invar/feedback/
+├── feedback-2026-01-03.md  # All sessions from Jan 3
+├── feedback-2026-01-04.md  # All sessions from Jan 4
+└── feedback-2026-01-10.md  # Jan 10 (gaps are OK)
+```
+
+**Note**: Each project has independent `.invar/feedback/` directory. No cross-project awareness.
+
+#### Agent-Driven Intelligent Merging
+
+**Why NOT mechanical similarity matching**:
+- ❌ Keyword-based similarity (e.g., Jaccard index) is too simplistic
+- ❌ Arbitrary thresholds (70%?) have no principled basis
+- ❌ Misses semantic equivalence: "Guard slow" ≈ "Guard timeout"
+- ❌ Wastes agent's natural language understanding capability
+
+**Why agent intelligence**:
+- ✅ Semantic understanding: Recognizes "Guard performance" ≈ "Guard timeout"
+- ✅ Context-aware: Differentiates "Core confusion" ≠ "Shell confusion"
+- ✅ Tracks evolution: "No idea" → "Still unsure" → "Now confident"
+- ✅ Flexible: No hard-coded rules to maintain
+
+#### Merge Workflow
+
+```
+1. Check if today's file exists
+   ├─ YES → Read existing content
+   │        Agent analyzes:
+   │        - What issues were already recorded?
+   │        - Is current issue duplicate or new?
+   │        - How has problem evolved?
+   │
+   └─ NO  → Create new file
+
+2. Agent generates merged output
+   - Updates occurrence counts
+   - Adds new observations
+   - Tracks resolution progress
+   - Generates daily summary
+
+3. Save to feedback-{today}.md
+```
+
+#### Merged Document Structure
+
+```markdown
+# Invar Usage Feedback - 2026-01-03
+
+**Sessions**: 3 sessions today
+**Total Duration**: 7.5 hours
+**Total Messages**: 107
+
+---
+
+## Session Timeline
+
+### Session 1: 08:30-11:30 (Implement Authentication)
+**Messages**: 40 | **Duration**: 3h
+
+[Brief summary or full details...]
+
+### Session 2: 13:00-15:30 (Add Tests)
+**Messages**: 35 | **Duration**: 2.5h
+
+[Brief summary or full details...]
+
+### Session 3: 16:00-18:00 (Fix Bugs)
+**Messages**: 32 | **Duration**: 2h
+
+[Brief summary or full details...]
+
+---
+
+## 😫 Aggregated Pain Points
+
+### P1: [Critical] Guard Performance Issues
+
+**First seen**: Session 1 (08:30)
+**Last seen**: Session 3 (16:45)
+**Total occurrences**: 12 times across 3 sessions
+
+**Session breakdown**:
+- Session 1: 4 times → "Takes 5 minutes to run"
+- Session 2: 5 times → "Timeout on CrossHair verification"
+- Session 3: 3 times → "Still slow even with --changed"
+
+**Evolution**:
+> Session 1: "5 minutes breaks my flow, totally blocking"
+> Session 3: "Found workaround but still annoying"
+
+**Current status**: Unresolved, workaround reduces impact
+
+**Workaround**:
+```bash
+invar guard --changed --skip-crosshair
+```
+
+### P2: [High] Contract Syntax Confusion
+
+**First seen**: Session 1 (08:45)
+**Last seen**: Session 2 (14:20)
+**Total occurrences**: 7 times across 2 sessions
+
+**Session breakdown**:
+- Session 1: 5 errors → Learning phase
+- Session 2: 2 errors → Improving
+- Session 3: 0 errors → Learned! ✓
+
+**Evolution**: **RESOLVED** through practice
+
+---
+
+## 📈 Daily Summary
+
+### High-Frequency Issues (Top 3)
+1. **Guard performance** - 12 occurrences, still blocking
+2. **Contract syntax** - 7 occurrences, now resolved ✓
+3. **Core/Shell decision** - 3 occurrences, ongoing learning
+
+### Learning Progress
+| Issue | Session 1 | Session 2 | Session 3 | Trend |
+|-------|-----------|-----------|-----------|-------|
+| Contract syntax | 5 errors | 2 errors | 0 errors | ✅ Learned |
+| Core/Shell | Confused | Still unsure | Clearer | 📈 Improving |
+| Guard usage | Blocked | Found workaround | Using workaround | ⚠️ Not fixed |
+
+### Sentiment Evolution
+- **Morning**: Frustrated (Guard blocks progress)
+- **Afternoon**: Adapting (workarounds found)
+- **Evening**: Productive (main friction remains but manageable)
+
+---
+
+*Generated by `/invar-reflect` v1.12.0*
+*Last updated: 2026-01-03 18:15*
+```
+
+#### Agent Skill Prompt (Key Points)
+
+```markdown
+## When appending to existing file:
+
+1. **Read and understand** what was recorded earlier today
+2. **Semantic matching** (not keyword matching):
+   - "Guard slow" ≈ "Guard timeout" → Same issue
+   - "Missing @pre" ≠ "Missing @post" → Different issues
+3. **Update intelligently**:
+   - Increment counts
+   - Track evolution ("5 errors" → "2 errors" → "0 errors")
+   - Note resolution status
+4. **Add new issues** not previously recorded
+5. **Regenerate daily summary** with updated stats
+
+## Intelligence guidelines:
+
+- Use your judgment, not mechanical rules
+- Recognize synonyms and variations
+- Track learning curves and progress
+- Differentiate by context and impact
+- Aggregate statistics meaningfully
+```
+
+---
+
+### 5. Init-Time Configuration
 
 #### User Consent Flow
 
@@ -695,10 +869,10 @@ invar feedback cleanup --older-than 90days
 - 50 messages: Still 1-2 files/day (accumulates quickly)
 - 100 messages: Might miss short sessions
 
-**Why task-based is better**:
-- Aligns with natural work units
-- Frequency cap prevents spam
-- More meaningful context
+**Why task-based + same-day merging is better**:
+- Aligns with natural work units (task completion)
+- Same-day merging consolidates multiple sessions
+- More meaningful context (full task scope)
 
 ---
 
@@ -717,7 +891,28 @@ invar feedback cleanup --older-than 90days
 
 ---
 
-### 3. Central Collection Server
+### 3. Mechanical Similarity Matching (e.g., Keyword Jaccard Index)
+
+**Rejected**: Too simplistic, wastes agent intelligence
+
+**Why mechanical matching fails**:
+- Keyword-based similarity (Jaccard, cosine) misses semantics
+  - "Guard slow" vs "Guard timeout" → Low keyword overlap but same issue
+  - "Core confusion" vs "Shell confusion" → High keyword overlap but different issues
+- Arbitrary thresholds (70%? 80%?) lack principled basis
+- Cannot track evolution: "No idea" → "Still learning" → "Now confident"
+- Requires maintenance as patterns change
+
+**Why agent intelligence is better**:
+- Natural language understanding recognizes synonyms and variations
+- Context-aware differentiation (blocking vs annoying)
+- Tracks learning curves automatically
+- No hard-coded rules to maintain
+- Generates richer insights (sentiment, trends, resolution status)
+
+---
+
+### 4. Central Collection Server
 
 **Rejected**: Privacy concerns, trust issues
 
@@ -819,7 +1014,8 @@ invar feedback cleanup --older-than 90days
 
 2. **Feedback detail level**: How verbose should the generated document be?
    - Minimal (1 page): Easy to review, might miss nuance
-   - Detailed (3-5 pages): Comprehensive, might be overwhelming
+   - **Detailed (3-5 pages): Recommended** - Reveals hidden patterns and edge cases
+   - Rationale: Purpose is to uncover implicit issues, not just count errors
 
 3. **Sharing mechanism**: Should we provide built-in sharing?
    - Option A: Manual (user emails or GitHub issue)
@@ -905,7 +1101,14 @@ invar feedback cleanup --older-than 90days
 - [ ] Implementation priority (versus other DX work)
 - [ ] Timeline confirmation (3-week effort reasonable?)
 
+**Design decisions resolved**:
+1. ✅ Skill name: `/invar-reflect` (includes "invar" to avoid conflicts)
+2. ✅ No hard frequency cap (same-day merging prevents spam)
+3. ✅ Agent-driven merging (not mechanical similarity matching)
+4. ✅ Detailed feedback format (3-5 pages to reveal patterns)
+5. ✅ Opt-out by default (maximize coverage, easy to disable)
+
 **Questions for team**:
-1. Is opt-out (default enabled) acceptable?
-2. Should we start with Phase A only and iterate?
-3. Any privacy concerns not addressed?
+1. Should we start with Phase A only (skill) and iterate before hooks/init?
+2. Any privacy concerns not addressed?
+3. Timeline: 3-week implementation reasonable for all phases?
