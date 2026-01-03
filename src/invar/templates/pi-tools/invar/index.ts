@@ -21,8 +21,8 @@ const factory: CustomToolFactory = (pi) => {
 
   // Helper to validate path/target parameters (defense-in-depth)
   function isValidPath(p: string): boolean {
-    // Reject shell metacharacters and path traversal
-    if (/[;&|`$"'\\<>]/.test(p)) {
+    // Reject shell metacharacters (including newline injection) and path traversal
+    if (/[;&|`$"'\\<>\n\r\0]/.test(p)) {
       return false;
     }
     if (p.includes('..')) {

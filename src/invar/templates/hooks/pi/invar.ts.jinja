@@ -11,6 +11,7 @@
  */
 
 import type { HookAPI } from "@mariozechner/pi-coding-agent/hooks";
+import * as fs from "fs";
 
 // Blocked commands (same as Claude Code)
 {% if language == "python" -%}
@@ -27,7 +28,6 @@ const INVAR_PROTOCOL = `{{ invar_protocol_escaped }}`;
 // DX-79: Helper to read feedback configuration
 function readFeedbackConfig() {
   try {
-    const fs = require("fs");
     const settingsPath = ".claude/settings.local.json";
     const settings = JSON.parse(fs.readFileSync(settingsPath, "utf-8"));
     return {
