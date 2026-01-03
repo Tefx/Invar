@@ -1,0 +1,7 @@
+{
+  "include": ["packages/*/src/**/*.ts"],
+  "exclude": ["**/*.test.ts", "**/__doctest__/**", "**/node_modules/**", "**/*.d.ts"],
+  "outputDir": "__doctest__",
+  "framework": "vitest",
+  "clean": true
+}

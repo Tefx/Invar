@@ -748,6 +748,23 @@ def run_vitest(project_path: Path) -> Result[list[TypeScriptViolation], str]:
             except json.JSONDecodeError:
                 pass
 
+    # LX-15 Phase 1: Generate doctests before running vitest
+    try:
+        doctest_result = subprocess.run(
+            ["node", "scripts/generate-doctests.mjs", "doctest.config.json"],
+            cwd=project_path,
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        # Doctest generation failure is not fatal - continue with regular tests
+        if doctest_result.returncode != 0:
+            # Log warning but don't fail
+            pass
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        # Doctest generation not available or timed out - continue with regular tests
+        pass
+
     try:
         result = subprocess.run(
             ["npx", "vitest", "run", "--reporter=json"],

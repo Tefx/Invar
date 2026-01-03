@@ -25,3 +25,6 @@ Thumbs.db
 
 # Test coverage
 coverage/
+
+# Generated doctest files
+__doctest__/
