@@ -9,14 +9,20 @@ import { Type } from "@sinclair/typebox";
 import type { CustomToolFactory } from "@mariozechner/pi-coding-agent";
 
 const factory: CustomToolFactory = (pi) => {
-  // Helper to check if invar is available
-  async function checkInvarInstalled(): Promise<boolean> {
+  // Helper to resolve invar command (with uvx fallback)
+  async function resolveInvarCommand(): Promise<{ command: string; args: string[] }> {
+    // Try direct invar command first
     try {
       const result = await pi.exec("which", ["invar"]);
-      return result.exitCode === 0;
+      if (result.exitCode === 0) {
+        return { command: "invar", args: [] };
+      }
     } catch {
-      return false;
+      // Fall through to uvx
     }
+
+    // Fallback to uvx invar-tools
+    return { command: "uvx", args: ["invar-tools"] };
   }
 
   // Helper to validate path/target parameters (defense-in-depth)
@@ -58,12 +64,8 @@ const factory: CustomToolFactory = (pi) => {
         })),
       }),
       async execute(toolCallId, params, onUpdate, ctx, signal) {
-        const installed = await checkInvarInstalled();
-        if (!installed) {
-          throw new Error("Invar not installed. Run: pip install invar-tools");
-        }
-
-        const args = ["guard"];
+        const cmd = await resolveInvarCommand();
+        const args = [...cmd.args, "guard"];
 
         // Default is --changed (check modified files)
         if (params.changed === false) {
@@ -80,7 +82,7 @@ const factory: CustomToolFactory = (pi) => {
           args.push("--strict");
         }
 
-        const result = await pi.exec("invar", args, { cwd: pi.cwd, signal });
+        const result = await pi.exec(cmd.command, args, { cwd: pi.cwd, signal });
 
         if (result.killed) {
           throw new Error("Guard verification was cancelled");
@@ -111,16 +113,13 @@ const factory: CustomToolFactory = (pi) => {
         }),
       }),
       async execute(toolCallId, params, onUpdate, ctx, signal) {
-        const installed = await checkInvarInstalled();
-        if (!installed) {
-          throw new Error("Invar not installed. Run: pip install invar-tools");
-        }
+        const cmd = await resolveInvarCommand();
 
         if (!isValidPath(params.target)) {
           throw new Error("Invalid target path: contains unsafe characters or path traversal");
         }
 
-        const result = await pi.exec("invar", ["sig", params.target], {
+        const result = await pi.exec(cmd.command, [...cmd.args, "sig", params.target], {
           cwd: pi.cwd,
           signal,
         });
@@ -160,16 +159,13 @@ const factory: CustomToolFactory = (pi) => {
         })),
       }),
       async execute(toolCallId, params, onUpdate, ctx, signal) {
-        const installed = await checkInvarInstalled();
-        if (!installed) {
-          throw new Error("Invar not installed. Run: pip install invar-tools");
-        }
+        const cmd = await resolveInvarCommand();
 
         if (params.path && params.path !== "." && !isValidPath(params.path)) {
           throw new Error("Invalid path: contains unsafe characters or path traversal");
         }
 
-        const args = ["map"];
+        const args = [...cmd.args, "map"];
 
         if (params.path && params.path !== ".") {
           args.push(params.path);
@@ -179,7 +175,7 @@ const factory: CustomToolFactory = (pi) => {
           args.push("--top", params.top.toString());
         }
 
-        const result = await pi.exec("invar", args, {
+        const result = await pi.exec(cmd.command, args, {
           cwd: pi.cwd,
           signal,
         });
@@ -221,22 +217,19 @@ const factory: CustomToolFactory = (pi) => {
         })),
       }),
       async execute(toolCallId, params, onUpdate, ctx, signal) {
-        const installed = await checkInvarInstalled();
-        if (!installed) {
-          throw new Error("Invar not installed. Run: pip install invar-tools");
-        }
+        const cmd = await resolveInvarCommand();
 
         if (!isValidPath(params.file)) {
           throw new Error("Invalid file path: contains unsafe characters or path traversal");
         }
 
-        const args = ["doc", "toc", params.file];
+        const args = [...cmd.args, "doc", "toc", params.file];
 
         if (params.depth && params.depth !== 6) {
           args.push("--depth", params.depth.toString());
         }
 
-        const result = await pi.exec("invar", args, {
+        const result = await pi.exec(cmd.command, args, {
           cwd: pi.cwd,
           signal,
         });
@@ -279,22 +272,19 @@ const factory: CustomToolFactory = (pi) => {
         })),
       }),
       async execute(toolCallId, params, onUpdate, ctx, signal) {
-        const installed = await checkInvarInstalled();
-        if (!installed) {
-          throw new Error("Invar not installed. Run: pip install invar-tools");
-        }
+        const cmd = await resolveInvarCommand();
 
         if (!isValidPath(params.file) || !isValidPath(params.section)) {
           throw new Error("Invalid file or section path: contains unsafe characters or path traversal");
         }
 
-        const args = ["doc", "read", params.file, params.section, "--json"];
+        const args = [...cmd.args, "doc", "read", params.file, params.section, "--json"];
 
         if (params.children === false) {
           args.push("--no-children");
         }
 
-        const result = await pi.exec("invar", args, {
+        const result = await pi.exec(cmd.command, args, {
           cwd: pi.cwd,
           signal,
         });
@@ -341,16 +331,13 @@ const factory: CustomToolFactory = (pi) => {
         })),
       }),
       async execute(toolCallId, params, onUpdate, ctx, signal) {
-        const installed = await checkInvarInstalled();
-        if (!installed) {
-          throw new Error("Invar not installed. Run: pip install invar-tools");
-        }
+        const cmd = await resolveInvarCommand();
 
         if (!isValidPath(params.file)) {
           throw new Error("Invalid file path: contains unsafe characters or path traversal");
         }
 
-        const args = ["doc", "find", params.pattern, params.file, "--json"];
+        const args = [...cmd.args, "doc", "find", params.pattern, params.file, "--json"];
 
         if (params.content) {
           args.push("--content", params.content);
@@ -360,7 +347,7 @@ const factory: CustomToolFactory = (pi) => {
           args.push("--level", params.level.toString());
         }
 
-        const result = await pi.exec("invar", args, {
+        const result = await pi.exec(cmd.command, args, {
           cwd: pi.cwd,
           signal,
         });
@@ -406,10 +393,7 @@ const factory: CustomToolFactory = (pi) => {
         })),
       }),
       async execute(toolCallId, params, onUpdate, ctx, signal) {
-        const installed = await checkInvarInstalled();
-        if (!installed) {
-          throw new Error("Invar not installed. Run: pip install invar-tools");
-        }
+        const cmd = await resolveInvarCommand();
 
         if (!isValidPath(params.file) || !isValidPath(params.section)) {
           throw new Error("Invalid file or section path: contains unsafe characters or path traversal");
@@ -424,6 +408,7 @@ const factory: CustomToolFactory = (pi) => {
           fs.writeFileSync(tmpFile, params.content, "utf-8");
 
           const args = [
+            ...cmd.args,
             "doc",
             "replace",
             params.file,
@@ -436,7 +421,7 @@ const factory: CustomToolFactory = (pi) => {
             args.push("--no-keep-heading");
           }
 
-          const result = await pi.exec("invar", args, {
+          const result = await pi.exec(cmd.command, args, {
             cwd: pi.cwd,
             signal,
           });
@@ -491,10 +476,7 @@ const factory: CustomToolFactory = (pi) => {
         })),
       }),
       async execute(toolCallId, params, onUpdate, ctx, signal) {
-        const installed = await checkInvarInstalled();
-        if (!installed) {
-          throw new Error("Invar not installed. Run: pip install invar-tools");
-        }
+        const cmd = await resolveInvarCommand();
 
         if (!isValidPath(params.file) || !isValidPath(params.anchor)) {
           throw new Error("Invalid file or anchor path: contains unsafe characters or path traversal");
@@ -509,6 +491,7 @@ const factory: CustomToolFactory = (pi) => {
           fs.writeFileSync(tmpFile, params.content, "utf-8");
 
           const args = [
+            ...cmd.args,
             "doc",
             "insert",
             params.file,
@@ -521,7 +504,7 @@ const factory: CustomToolFactory = (pi) => {
             args.push("--position", params.position);
           }
 
-          const result = await pi.exec("invar", args, {
+          const result = await pi.exec(cmd.command, args, {
             cwd: pi.cwd,
             signal,
           });
@@ -573,22 +556,19 @@ const factory: CustomToolFactory = (pi) => {
         })),
       }),
       async execute(toolCallId, params, onUpdate, ctx, signal) {
-        const installed = await checkInvarInstalled();
-        if (!installed) {
-          throw new Error("Invar not installed. Run: pip install invar-tools");
-        }
+        const cmd = await resolveInvarCommand();
 
         if (!isValidPath(params.file) || !isValidPath(params.section)) {
           throw new Error("Invalid file or section path: contains unsafe characters or path traversal");
         }
 
-        const args = ["doc", "delete", params.file, params.section];
+        const args = [...cmd.args, "doc", "delete", params.file, params.section];
 
         if (params.children === false) {
           args.push("--no-children");
         }
 
-        const result = await pi.exec("invar", args, {
+        const result = await pi.exec(cmd.command, args, {
           cwd: pi.cwd,
           signal,
         });
