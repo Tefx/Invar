@@ -16,6 +16,46 @@ The `/invar-reflect` skill can be triggered:
 
 ## Proposed Hook Schema
 
+
+### Message Count Trigger (Implemented - DX-79)
+
+**Status**: ✅ Implemented in v1.15.0
+
+Both Claude Code and Pi now support automatic feedback triggering via **message count threshold**.
+
+**Configuration in `.claude/settings.local.json`**:
+
+```json
+{
+  "feedback": {
+    "enabled": true,
+    "min_messages": 30
+  }
+}
+```
+
+**Hook Parameters**:
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `enabled` | boolean | true | Enable feedback collection |
+| `min_messages` | number | 30 | Minimum messages before trigger |
+
+**How it works**:
+
+1. **Message counting**: Both hooks track message count per session
+2. **Threshold trigger**: At `min_messages`, hook displays reminder
+3. **User action**: Agent sees reminder and can run `/invar-reflect`
+
+**Cross-platform implementation**:
+
+| Platform | Hook File | Mechanism |
+|----------|-----------|-----------|
+| **Claude Code** | `.claude/hooks/invar.UserPromptSubmit.sh` | Bash script with jq config parsing |
+| **Pi** | `.pi/hooks/invar.ts` | TypeScript with fs config reading |
+
+Both read the same `.claude/settings.local.json` configuration file.
+
 ### PostTaskCompletion Hook (Waiting for Claude Code Support)
 
 **Proposed configuration in `.claude/settings.json`**:
@@ -69,24 +109,46 @@ The `/invar-reflect` skill can be triggered:
 
 ## Triggering Conditions
 
-The hook triggers when **ALL** conditions are met:
 
-1. ✅ **Task completed** - User finished major work (natural stopping point)
-2. ✅ **Message count >= 30** - Sufficient context for meaningful feedback
-3. ✅ **Duration >= 2 hours** - Non-trivial session (avoids quick fixes)
+The hook triggers when the message count reaches the configured threshold (default: 30).
 
-**No hard frequency cap**: Same-day sessions merge into single file (see SKILL.md for merge logic).
+**Conditions**:
 
----
+1. ✅ **Message count >= min_messages** (default: 30)
+2. ✅ **Feedback enabled** (`feedback.enabled = true`)
+
+**No hard frequency cap**: Users can run `/invar-reflect` manually at any time.
+
+**Customizing threshold**:
+
+```json
+{
+  "feedback": {
+    "enabled": true,
+    "min_messages": 50  // Trigger at 50 messages instead of 30
+  }
+}
+```
 
 ## Silent Mode
 
-When `mode: "silent"`:
-- Feedback generation runs in background
-- No interruption to current conversation
-- User sees notification only: `✓ Feedback saved to .invar/feedback/feedback-{date}.md`
 
----
+The hook displays a **reminder** when the threshold is reached:
+
+```
+<system-reminder>
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 Invar: Auto-triggering usage feedback (30 messages)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Session has reached 30 messages. Consider running /invar-reflect
+to generate usage feedback.
+
+To disable: Set feedback.enabled=false in .claude/settings.local.json
+</system-reminder>
+```
+
+**Note**: The agent sees this reminder and can choose to invoke `/invar-reflect` or continue working.
 
 ## User Control
 
@@ -144,7 +206,68 @@ rm .invar/feedback/feedback-2026-01-03.md
 
 ## Workaround: Using Stop Hook (Until PostTaskCompletion is Available)
 
-Since Claude Code doesn't yet support `PostTaskCompletion` hook, you can use the `Stop` hook as a temporary workaround.
+
+### Implementation Details
+
+**Claude Code Hook** (`.claude/hooks/invar.UserPromptSubmit.sh`):
+
+```bash
+# DX-79: Feedback trigger at threshold
+FEEDBACK_ENABLED=true
+MIN_MESSAGES=30
+
+if [[ -f ".claude/settings.local.json" ]]; then
+  if command -v jq &> /dev/null; then
+    FEEDBACK_ENABLED=$(jq -r '.feedback.enabled // true' .claude/settings.local.json)
+    MIN_MESSAGES=$(jq -r '.feedback.min_messages // 30' .claude/settings.local.json)
+  fi
+fi
+
+if [[ "$FEEDBACK_ENABLED" == "true" && $COUNT -eq $MIN_MESSAGES ]]; then
+  echo "<system-reminder>"
+  echo "📊 Invar: Auto-triggering usage feedback ($COUNT messages)"
+  echo "Consider running /invar-reflect to generate usage feedback."
+  echo "</system-reminder>"
+fi
+```
+
+**Pi Hook** (`.pi/hooks/invar.ts`):
+
+```typescript
+// DX-79: Helper to read feedback configuration
+function readFeedbackConfig() {
+  try {
+    const fs = require("fs");
+    const settingsPath = ".claude/settings.local.json";
+    if (fs.existsSync(settingsPath)) {
+      const settings = JSON.parse(fs.readFileSync(settingsPath, "utf-8"));
+      return {
+        enabled: settings.feedback?.enabled ?? true,
+        min_messages: settings.feedback?.min_messages ?? 30,
+      };
+    }
+  } catch {
+    // Ignore errors, use defaults
+  }
+  return { enabled: true, min_messages: 30 };
+}
+
+pi.on("agent_start", async () => {
+  msgCount++;
+  
+  // ... protocol refresh logic ...
+  
+  const feedbackConfig = readFeedbackConfig();
+  if (msgCount === feedbackConfig.min_messages && feedbackConfig.enabled) {
+    pi.send(`<system-reminder>
+📊 Invar: Auto-triggering usage feedback (${msgCount} messages)
+Consider running /invar-reflect to generate usage feedback.
+</system-reminder>`);
+  }
+});
+```
+
+**Installation**: Hooks are automatically installed via `invar init --claude` or `invar init --pi`.
 
 ### Stop Hook Implementation
 
@@ -332,24 +455,26 @@ Enable automatic feedback collection? [Y/n]:
 
 ## Phase B Status
 
-**Completed**:
-- ✅ Hook schema designed
-- ✅ Configuration structure defined
-- ✅ User control mechanism specified
-- ✅ Stop hook workaround documented
 
-**Waiting for Claude Code Support**:
-- ⏸️ PostTaskCompletion hook type
-- ⏸️ Skill invocation from hooks
-- ⏸️ Session state tracking (message count, duration)
+**Completed** (v1.15.0):
+- ✅ Message Count trigger strategy designed
+- ✅ Cross-platform implementation (Claude Code + Pi)
+- ✅ Shared configuration structure
+- ✅ Hook templates updated
+- ✅ Installation via `invar init`
+
+**Replaced PostTaskCompletion with Message Count** because:
+- PostTaskCompletion hook not supported by Claude Code or Pi
+- Message count is universally implementable
+- Simpler, more predictable trigger mechanism
+- User has full control via config
+
+**Testing**:
+- Manual `/invar-reflect` invocation: Works
+- Hook trigger at threshold: Implemented
+- Config disable: Honored by both hooks
+- Multi-agent setup: Both hooks installed
 
 **Next Steps**:
-- Implement Phase C: Init Integration (can be done independently)
-- Submit feature request to Claude Code for PostTaskCompletion hook
-- Test manual `/invar-reflect` invocation thoroughly
-
----
-
-**Version**: 1.0 (Phase B - Proposed)
-**Updated**: 2026-01-03
-**Related**: DX-79 Invar Usage Feedback Collection
+- Monitor user feedback on threshold defaults
+- Consider adding reminder messages at other checkpoints (e.g., 60, 90 messages)

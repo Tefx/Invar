@@ -2,6 +2,7 @@
 # Invar UserPromptSubmit Hook
 # Protocol: v{{ protocol_version }} | Generated: {{ generated_date }}
 # DX-57: Protocol refresh with full INVAR.md injection
+# DX-79: Automatic feedback trigger via message count
 
 USER_MESSAGE="$1"
 
@@ -80,5 +81,35 @@ if [[ $COUNT -ge 25 && $((COUNT % 10)) -eq 0 ]]; then
   cat << 'INVAR_EOF'
 {{ invar_protocol }}
 INVAR_EOF
+  echo "</system-reminder>"
+fi
+
+# ============================================
+# DX-79: Feedback trigger at threshold
+# ============================================
+
+# Read feedback configuration
+FEEDBACK_ENABLED=true
+MIN_MESSAGES=30
+
+if [[ -f ".claude/settings.local.json" ]]; then
+  # Try to parse with jq if available, otherwise use defaults
+  if command -v jq &> /dev/null; then
+    FEEDBACK_ENABLED=$(jq -r '.feedback.enabled // true' .claude/settings.local.json 2>/dev/null)
+    MIN_MESSAGES=$(jq -r '.feedback.min_messages // 30' .claude/settings.local.json 2>/dev/null)
+  fi
+fi
+
+# Trigger feedback prompt at threshold
+if [[ "$FEEDBACK_ENABLED" == "true" && $COUNT -eq $MIN_MESSAGES ]]; then
+  echo "<system-reminder>"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo "📊 Invar: Auto-triggering usage feedback ($COUNT messages)"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo ""
+  echo "Session has reached $COUNT messages. Consider running /invar-reflect"
+  echo "to generate usage feedback."
+  echo ""
+  echo "To disable: Set feedback.enabled=false in .claude/settings.local.json"
   echo "</system-reminder>"
 fi

@@ -2,10 +2,12 @@
  * Invar Pi Hook
  * Protocol: v{{ protocol_version }} | Generated: {{ generated_date }}
  * LX-04: Full feature parity with Claude Code hooks
+ * DX-79: Automatic feedback trigger via message count
  *
  * Features:
  * - pytest/crosshair blocking via tool_call
  * - Protocol injection via pi.send() for long conversations
+ * - Automatic /invar-reflect trigger at message threshold
  */
 
 import type { HookAPI } from "@mariozechner/pi-coding-agent/hooks";
@@ -21,6 +23,24 @@ const ALLOWED_FLAGS = [/--inspect/, /--coverage/, /--debug/];
 
 // Protocol content for injection (escaped for JS)
 const INVAR_PROTOCOL = `{{ invar_protocol_escaped }}`;
+
+// DX-79: Helper to read feedback configuration
+function readFeedbackConfig() {
+  try {
+    const fs = require("fs");
+    const settingsPath = ".claude/settings.local.json";
+    if (fs.existsSync(settingsPath)) {
+      const settings = JSON.parse(fs.readFileSync(settingsPath, "utf-8"));
+      return {
+        enabled: settings.feedback?.enabled ?? true,
+        min_messages: settings.feedback?.min_messages ?? 30,
+      };
+    }
+  } catch {
+    // Ignore errors, use defaults
+  }
+  return { enabled: true, min_messages: 30 };
+}
 
 export default function (pi: HookAPI) {
   let msgCount = 0;
@@ -53,6 +73,21 @@ export default function (pi: HookAPI) {
       pi.send(`<system-reminder>
 === Protocol Refresh (message ${msgCount}) ===
 ${INVAR_PROTOCOL}
+</system-reminder>`);
+    }
+
+    // DX-79: Feedback trigger at threshold
+    const feedbackConfig = readFeedbackConfig();
+    if (msgCount === feedbackConfig.min_messages && feedbackConfig.enabled) {
+      pi.send(`<system-reminder>
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 Invar: Auto-triggering usage feedback (${msgCount} messages)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Session has reached ${msgCount} messages. Consider running /invar-reflect
+to generate usage feedback.
+
+To disable: Set feedback.enabled=false in .claude/settings.local.json
 </system-reminder>`);
     }
   });
