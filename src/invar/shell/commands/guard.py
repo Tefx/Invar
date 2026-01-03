@@ -41,6 +41,11 @@ from invar.shell.commands.doc import doc_app
 
 app.add_typer(doc_app, name="doc")
 
+# DX-79: Register feedback subcommand
+from invar.shell.commands.feedback import feedback_app
+
+app.add_typer(feedback_app, name="feedback")
+
 
 # @shell_orchestration: Statistics helper for CLI guard output
 # @shell_complexity: Iterates symbols checking kind and contracts (4 branches minimal)
