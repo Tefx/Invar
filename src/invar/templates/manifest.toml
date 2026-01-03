@@ -64,6 +64,11 @@ extensions = { action = "preserve" }
 ".claude/skills/propose/SKILL.md" = { src = "skills/propose/SKILL.md.jinja", type = "jinja" }
 ".claude/skills/review/SKILL.md" = { src = "skills/review/SKILL.md.jinja", type = "jinja" }
 
+# DX-79: Invar usage feedback skill
+".claude/skills/invar-reflect/SKILL.md" = { src = "skills/invar-reflect/SKILL.md", type = "copy" }
+".claude/skills/invar-reflect/template.md" = { src = "skills/invar-reflect/template.md", type = "copy" }
+".claude/skills/invar-reflect/CONFIG.md" = { src = "skills/invar-reflect/CONFIG.md", type = "copy" }
+
 # Commands (Jinja2 templates for language-specific content)
 ".claude/commands/audit.md" = { src = "commands/audit.md.jinja", type = "jinja" }
 ".claude/commands/guard.md" = { src = "commands/guard.md", type = "copy" }
@@ -136,4 +141,7 @@ create_only = [
     ".pre-commit-config.yaml",
     ".claude/commands/audit.md",
     ".claude/commands/guard.md",
+    ".claude/skills/invar-reflect/SKILL.md",
+    ".claude/skills/invar-reflect/template.md",
+    ".claude/skills/invar-reflect/CONFIG.md",
 ]
