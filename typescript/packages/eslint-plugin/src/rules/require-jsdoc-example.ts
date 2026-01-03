@@ -19,7 +19,7 @@ function isExported(node: Rule.Node): boolean {
 
 export const requireJsdocExample: Rule.RuleModule = {
   meta: {
-    type: 'suggestion',
+    type: 'problem',
     docs: {
       description: 'Exported functions must have @example in JSDoc',
       recommended: true,
@@ -27,7 +27,7 @@ export const requireJsdocExample: Rule.RuleModule = {
     schema: [],
     messages: {
       missingExample:
-        'Exported function "{{name}}" should have @example in JSDoc for documentation',
+        'Exported function "{{name}}" must have @example in JSDoc (required for doctest)',
     },
   },
 
