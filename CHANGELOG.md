@@ -33,6 +33,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Shared configuration**: Both read `.claude/settings.local.json` feedback section
   - **User control**: Disable via `feedback.enabled=false` or adjust `min_messages` threshold
   - Replaces unimplemented PostTaskCompletion hook with simpler, universally-supported approach
+- **Pi Custom Tools for Invar** - Native tool integration without CLI dependency
+  - `invar_guard`: Smart verification wrapper (static + doctests + symbolic)
+  - `invar_sig`: Show function signatures and contracts
+  - `invar_map`: Symbol map with reference counts
+  - Auto-installed via `invar init --pi` in `.pi/tools/invar/index.ts`
+  - Pi auto-discovers tools, no configuration needed
+  - Solves problem of Pi agents not actively using invar tools (falling back to pytest/grep)
 
 ### Changed
 - Agent selection prompt now uses checkbox instead of radio buttons
