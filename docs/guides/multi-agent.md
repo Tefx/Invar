@@ -8,6 +8,7 @@ Invar's core value—USBV workflow, contract-driven development, and automated v
 |-------|--------|-------|
 | **Claude Code** | ✅ Full | `invar init --claude` |
 | **Pi** | ✅ Full | `invar init --pi` |
+| **Multi-Agent** | ✅ Full | `invar init --claude --pi` (DX-81) |
 | **Cursor** | ✅ MCP | `invar init` → select Other, add MCP |
 | **Other** | 📝 Manual | `invar init` → select Other, include `AGENT.md` in prompt |
 
@@ -203,14 +204,69 @@ Or if installed in a virtual environment:
 
 ---
 
+## Multi-Agent Setup (DX-81)
+
+**Use multiple agents in the same project**
+
+```bash
+# Setup both Claude Code and Pi
+invar init --claude --pi
+
+# Or interactive mode (select multiple with Space key)
+invar init  # Choose both "Claude Code" and "Pi Coding Agent"
+```
+
+**What gets installed:**
+- `.claude/hooks/` — Claude Code hooks (4 files)
+- `.pi/hooks/` — Pi hooks (1 file)
+- Shared files: `CLAUDE.md`, `.claude/skills/`, `.invar/`
+
+**Use cases:**
+- **Team collaboration** — Different team members use different agents
+- **Agent switching** — Have both configured, use either
+- **Open source** — Contributors can choose their preferred agent
+
+**File structure:**
+```
+project/
+├── CLAUDE.md              # Shared by both agents
+├── .claude/
+│   ├── skills/            # Shared by both agents
+│   └── hooks/             # Claude Code only
+├── .pi/
+│   └── hooks/             # Pi only
+└── .mcp.json              # Claude Code MCP config
+```
+
+**No conflicts:** All files designed for coexistence. Shared files (CLAUDE.md, skills) work identically for both agents. Isolated files (.claude/hooks/, .pi/hooks/) never interfere.
+
+---
+
 ## Migration Path
+
+### Adding a Second Agent
+
+Already using Claude Code or Pi? Add the other agent:
+
+```bash
+# Already have Claude Code, add Pi
+invar init --pi
+
+# Already have Pi, add Claude Code
+invar init --claude
+
+# Or use combined command (safe, no duplicates)
+invar init --claude --pi
+```
+
+All shared files (CLAUDE.md, skills) are safely merged. Only agent-specific hooks are added.
 
 ### From Claude Code to Pi
 
 No migration needed! Pi reads the same files:
 - CLAUDE.md → works in Pi
 - .claude/skills/ → works in Pi
-- Just run `invar init` → select Pi to add hooks
+- Just run `invar init --pi` to add Pi hooks
 
 ### From Claude Code to Others
 
@@ -220,7 +276,7 @@ No migration needed! Pi reads the same files:
 
 ### From Others to Claude Code
 
-1. Run `invar init` → select Claude Code
+1. Run `invar init --claude`
 2. All features auto-configured (skills, hooks, MCP)
 
 ---
