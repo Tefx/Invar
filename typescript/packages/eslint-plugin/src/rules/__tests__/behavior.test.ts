@@ -16,6 +16,11 @@ import { noEmptySchema } from '../no-empty-schema.js';
 import { noRedundantTypeSchema } from '../no-redundant-type-schema.js';
 import { requireCompleteValidation } from '../require-complete-validation.js';
 import { requireSchemaValidation } from '../require-schema-validation.js';
+import { noRuntimeImports } from '../no-runtime-imports.js';
+import { noImpureCallsInCore } from '../no-impure-calls-in-core.js';
+import { noPureLogicInShell } from '../no-pure-logic-in-shell.js';
+import { shellComplexity } from '../shell-complexity.js';
+import { thinEntryPoints } from '../thin-entry-points.js';
 import { getLayer, getLimits } from '../../utils/layer-detection.js';
 
 // Create RuleTester with modern JS configuration
@@ -664,5 +669,458 @@ describe('require-schema-validation modes', () => {
         },
       ],
     });
+  });
+});
+
+describe('no-runtime-imports', () => {
+  it('should detect require() inside functions', () => {
+    ruleTester.run('no-runtime-imports', noRuntimeImports, {
+      valid: [
+        {
+          code: `const fs = require('fs');`, // Top-level require is OK
+        },
+        {
+          code: `import fs from 'fs';`, // Top-level import is OK
+        },
+      ],
+      invalid: [
+        {
+          code: `
+            function loadModule() {
+              const fs = require('fs');
+            }
+          `,
+          errors: [{ messageId: 'runtimeRequire' }],
+        },
+        {
+          code: `
+            const handler = () => {
+              const path = require('path');
+            };
+          `,
+          errors: [{ messageId: 'runtimeRequire' }],
+        },
+      ],
+    });
+  });
+
+  it('should detect dynamic import() inside functions', () => {
+    ruleTester.run('no-runtime-imports', noRuntimeImports, {
+      valid: [],
+      invalid: [
+        {
+          code: `
+            async function loadModule() {
+              const mod = await import('./module');
+            }
+          `,
+          errors: [{ messageId: 'runtimeImport' }],
+        },
+        {
+          code: `
+            const handler = async () => {
+              const { foo } = await import('./foo');
+            };
+          `,
+          errors: [{ messageId: 'runtimeImport' }],
+        },
+      ],
+    });
+  });
+});
+
+describe('no-impure-calls-in-core', () => {
+  it('should detect Core importing from Shell', () => {
+    ruleTester.run('no-impure-calls-in-core', noImpureCallsInCore, {
+      valid: [
+        {
+          code: `import { helper } from '../utils';`,
+          filename: '/project/core/logic.js',
+        },
+        {
+          code: `import { ioFunc } from '../shell/io';`,
+          filename: '/project/shell/handler.js', // OK in shell
+        },
+      ],
+      invalid: [
+        {
+          code: `import { ioFunc } from '../shell/io';`,
+          filename: '/project/core/logic.js',
+          errors: [{ messageId: 'shellImportInCore' }],
+        },
+        {
+          code: `import { readData } from '../../shell/data';`,
+          filename: '/project/src/core/parser.js',
+          errors: [{ messageId: 'shellImportInCore' }],
+        },
+        {
+          code: `import { handler } from 'shell/handler';`,
+          filename: '/project/core/logic.js',
+          errors: [{ messageId: 'shellImportInCore' }],
+        },
+      ],
+    });
+  });
+
+  it('should handle Windows-style paths', () => {
+    ruleTester.run('no-impure-calls-in-core', noImpureCallsInCore, {
+      valid: [],
+      invalid: [
+        {
+          code: `import { ioFunc } from '..\\\\shell\\\\io';`,
+          filename: 'C:\\\\Project\\\\core\\\\logic.js',
+          errors: [{ messageId: 'shellImportInCore' }],
+        },
+      ],
+    });
+  });
+});
+
+describe('no-pure-logic-in-shell', () => {
+  it('should warn when Shell function has no I/O indicators', () => {
+    ruleTester.run('no-pure-logic-in-shell', noPureLogicInShell, {
+      valid: [
+        {
+          // Async function - has I/O indicator
+          code: `
+            async function fetchData() {
+              const x = 1;
+              const y = 2;
+              const z = 3;
+              const w = 4;
+              return x + y + z + w;
+            }
+          `,
+          filename: '/project/shell/data.js',
+        },
+        {
+          // Uses fs - has I/O indicator
+          code: `
+            function readConfig() {
+              const x = 1;
+              const y = 2;
+              const z = 3;
+              const w = 4;
+              return fs.readFileSync('config.json');
+            }
+          `,
+          filename: '/project/shell/config.js',
+        },
+        {
+          // Returns Result - has I/O indicator
+          code: `
+            function loadData() {
+              const x = 1;
+              const y = 2;
+              const z = 3;
+              const w = 4;
+              return Success(data);
+            }
+          `,
+          filename: '/project/shell/loader.js',
+        },
+        {
+          // Small function - not substantial logic
+          code: `
+            function helper() {
+              const x = 1;
+              return x;
+            }
+          `,
+          filename: '/project/shell/utils.js',
+        },
+      ],
+      invalid: [
+        {
+          // Pure logic in Shell - no I/O, substantial statements
+          code: `
+            function calculateTotal() {
+              const a = 1;
+              const b = 2;
+              const c = 3;
+              const d = 4;
+              return a + b + c + d;
+            }
+          `,
+          filename: '/project/shell/calculator.js',
+          errors: [{ messageId: 'pureLogicInShell' }],
+        },
+      ],
+    });
+  });
+
+  it('should not check non-shell files', () => {
+    ruleTester.run('no-pure-logic-in-shell', noPureLogicInShell, {
+      valid: [
+        {
+          // Core file - rule should skip it
+          code: `
+            function pureCalculation() {
+              const a = 1;
+              const b = 2;
+              const c = 3;
+              const d = 4;
+              return a + b + c + d;
+            }
+          `,
+          filename: '/project/core/logic.js',
+        },
+      ],
+      invalid: [],
+    });
+  });
+});
+
+describe('shell-complexity', () => {
+  it('should detect functions with too many statements', () => {
+    ruleTester.run('shell-complexity', shellComplexity, {
+      valid: [
+        {
+          code: `
+            function simpleHandler() {
+              ${'const x = 1;\n'.repeat(19)}
+            }
+          `,
+          filename: '/project/shell/handler.js',
+        },
+      ],
+      invalid: [
+        {
+          code: `
+            function complexHandler() {
+              ${'const x = 1;\n'.repeat(21)}
+            }
+          `,
+          filename: '/project/shell/handler.js',
+          errors: [{ messageId: 'tooManyStatements' }],
+        },
+      ],
+    });
+  });
+
+  it('should detect functions with high cyclomatic complexity', () => {
+    ruleTester.run('shell-complexity', shellComplexity, {
+      valid: [
+        {
+          code: `
+            function lowComplexity() {
+              if (a) return 1;
+              if (b) return 2;
+              if (c) return 3;
+              return 0;
+            }
+          `,
+          filename: '/project/shell/handler.js',
+        },
+      ],
+      invalid: [
+        {
+          code: `
+            function highComplexity() {
+              if (a) return 1;
+              else if (b) return 2;
+              else if (c) return 3;
+              else if (d) return 4;
+              else if (e) return 5;
+              else if (f) return 6;
+              else if (g) return 7;
+              else if (h) return 8;
+              else if (i) return 9;
+              else if (j) return 10;
+              else return 0;
+            }
+          `,
+          filename: '/project/shell/handler.js',
+          errors: [{ messageId: 'tooComplex' }],
+        },
+      ],
+    });
+  });
+
+  it('should use custom thresholds', () => {
+    ruleTester.run('shell-complexity', shellComplexity, {
+      valid: [
+        {
+          code: `
+            function handler() {
+              ${'const x = 1;\n'.repeat(6)}
+            }
+          `,
+          filename: '/project/shell/handler.js',
+          options: [{ maxStatements: 5 }],
+        },
+      ],
+      invalid: [
+        {
+          code: `
+            function handler() {
+              ${'const x = 1;\n'.repeat(6)}
+            }
+          `,
+          filename: '/project/shell/handler.js',
+          options: [{ maxStatements: 5 }],
+          errors: [{ messageId: 'tooManyStatements' }],
+        },
+      ],
+    });
+  });
+
+  it('should not check non-shell files', () => {
+    ruleTester.run('shell-complexity', shellComplexity, {
+      valid: [
+        {
+          code: `
+            function complexCore() {
+              ${'const x = 1;\n'.repeat(30)}
+            }
+          `,
+          filename: '/project/core/logic.js',
+        },
+      ],
+      invalid: [],
+    });
+  });
+});
+
+describe('thin-entry-points', () => {
+  it('should detect entry point files with too much logic', () => {
+    ruleTester.run('thin-entry-points', thinEntryPoints, {
+      valid: [
+        {
+          // Simple index.ts with imports and exports
+          code: `
+            import { foo } from './foo';
+            import { bar } from './bar';
+            export { foo, bar };
+            export default foo;
+          `,
+          filename: '/project/index.ts',
+        },
+        {
+          // Few config statements are OK
+          code: `
+            import express from 'express';
+            const app = express();
+            const PORT = 3000;
+            export { app, PORT };
+          `,
+          filename: '/project/main.ts',
+        },
+      ],
+      invalid: [
+        {
+          // Too many statements
+          code: `
+            import express from 'express';
+            const app = express();
+            const x1 = 1;
+            const x2 = 2;
+            const x3 = 3;
+            const x4 = 4;
+            const x5 = 5;
+            const x6 = 6;
+            const x7 = 7;
+            const x8 = 8;
+            const x9 = 9;
+            const x10 = 10;
+            const x11 = 11;
+            export { app };
+          `,
+          filename: '/project/index.ts',
+          errors: [{ messageId: 'tooMuchLogic' }],
+        },
+      ],
+    });
+  });
+
+  it('should detect complex logic in entry points', () => {
+    ruleTester.run('thin-entry-points', thinEntryPoints, {
+      valid: [
+        {
+          code: `
+            import { handler } from './handler';
+            export { handler };
+          `,
+          filename: '/project/cli.ts',
+        },
+      ],
+      invalid: [
+        {
+          // Function definition in entry point
+          code: `
+            function processData() {
+              return 42;
+            }
+            export { processData };
+          `,
+          filename: '/project/index.ts',
+          errors: [{ messageId: 'hasComplexLogic' }],
+        },
+        {
+          // Class definition in entry point
+          code: `
+            class App {
+              run() { return 'running'; }
+            }
+            export { App };
+          `,
+          filename: '/project/main.ts',
+          errors: [{ messageId: 'hasComplexLogic' }],
+        },
+        {
+          // Control flow in entry point
+          code: `
+            import { config } from './config';
+            if (config.enabled) {
+              console.log('enabled');
+            }
+            export { config };
+          `,
+          filename: '/project/app.ts',
+          errors: [{ messageId: 'hasComplexLogic' }],
+        },
+      ],
+    });
+  });
+
+  it('should only check entry point files', () => {
+    ruleTester.run('thin-entry-points', thinEntryPoints, {
+      valid: [
+        {
+          // Non-entry point file can have complex logic
+          code: `
+            function complexFunction() {
+              if (a) return 1;
+              if (b) return 2;
+              if (c) return 3;
+              return 0;
+            }
+            export { complexFunction };
+          `,
+          filename: '/project/utils/helper.ts',
+        },
+      ],
+      invalid: [],
+    });
+  });
+
+  it('should detect all entry point patterns', () => {
+    const patterns = ['index.ts', 'main.ts', 'cli.ts', 'app.ts', 'server.ts'];
+    
+    for (const pattern of patterns) {
+      ruleTester.run('thin-entry-points', thinEntryPoints, {
+        valid: [],
+        invalid: [
+          {
+            code: `
+              function logic() { return 42; }
+              export { logic };
+            `,
+            filename: `/project/${pattern}`,
+            errors: [{ messageId: 'hasComplexLogic' }],
+          },
+        ],
+      });
+    }
   });
 });

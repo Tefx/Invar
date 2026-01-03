@@ -12,6 +12,11 @@
  * - @invar/no-empty-schema: Forbid empty or permissive Zod schemas
  * - @invar/no-redundant-type-schema: Forbid schemas that only repeat TypeScript types
  * - @invar/require-complete-validation: All function params must be validated, or none
+ * - @invar/no-runtime-imports: Forbid require()/import() inside functions
+ * - @invar/no-impure-calls-in-core: Forbid Core importing from Shell
+ * - @invar/no-pure-logic-in-shell: Warn when Shell contains pure logic
+ * - @invar/shell-complexity: Warn when Shell functions are too complex
+ * - @invar/thin-entry-points: Warn when entry points contain substantial logic
  */
 
 import type { ESLint, Rule } from 'eslint';
@@ -25,6 +30,11 @@ import { maxFunctionLines } from './rules/max-function-lines.js';
 import { noEmptySchema } from './rules/no-empty-schema.js';
 import { noRedundantTypeSchema } from './rules/no-redundant-type-schema.js';
 import { requireCompleteValidation } from './rules/require-complete-validation.js';
+import { noRuntimeImports } from './rules/no-runtime-imports.js';
+import { noImpureCallsInCore } from './rules/no-impure-calls-in-core.js';
+import { noPureLogicInShell } from './rules/no-pure-logic-in-shell.js';
+import { shellComplexity } from './rules/shell-complexity.js';
+import { thinEntryPoints } from './rules/thin-entry-points.js';
 
 // ============================================================================
 // Plugin Definition
@@ -41,6 +51,11 @@ const rules: Record<string, Rule.RuleModule> = {
   'no-empty-schema': noEmptySchema,
   'no-redundant-type-schema': noRedundantTypeSchema,
   'require-complete-validation': requireCompleteValidation,
+  'no-runtime-imports': noRuntimeImports,
+  'no-impure-calls-in-core': noImpureCallsInCore,
+  'no-pure-logic-in-shell': noPureLogicInShell,
+  'shell-complexity': shellComplexity,
+  'thin-entry-points': thinEntryPoints,
 };
 
 // ESLint legacy config format (for ESLint 8 compatibility)
@@ -58,6 +73,11 @@ const configs = {
       '@invar/no-empty-schema': 'error' as const,
       '@invar/no-redundant-type-schema': 'warn' as const,
       '@invar/require-complete-validation': 'warn' as const,
+      '@invar/no-runtime-imports': 'error' as const,
+      '@invar/no-impure-calls-in-core': 'error' as const,
+      '@invar/no-pure-logic-in-shell': 'warn' as const,
+      '@invar/shell-complexity': 'warn' as const,
+      '@invar/thin-entry-points': 'warn' as const,
     },
   },
   strict: {
@@ -73,6 +93,11 @@ const configs = {
       '@invar/no-empty-schema': 'error' as const,
       '@invar/no-redundant-type-schema': 'error' as const,
       '@invar/require-complete-validation': 'error' as const,
+      '@invar/no-runtime-imports': 'error' as const,
+      '@invar/no-impure-calls-in-core': 'error' as const,
+      '@invar/no-pure-logic-in-shell': 'error' as const,
+      '@invar/shell-complexity': 'error' as const,
+      '@invar/thin-entry-points': 'error' as const,
     },
   },
 };
