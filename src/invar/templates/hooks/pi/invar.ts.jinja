@@ -29,15 +29,13 @@ function readFeedbackConfig() {
   try {
     const fs = require("fs");
     const settingsPath = ".claude/settings.local.json";
-    if (fs.existsSync(settingsPath)) {
-      const settings = JSON.parse(fs.readFileSync(settingsPath, "utf-8"));
-      return {
-        enabled: settings.feedback?.enabled ?? true,
-        min_messages: settings.feedback?.min_messages ?? 30,
-      };
-    }
+    const settings = JSON.parse(fs.readFileSync(settingsPath, "utf-8"));
+    return {
+      enabled: settings.feedback?.enabled ?? true,
+      min_messages: settings.feedback?.min_messages ?? 30,
+    };
   } catch {
-    // Ignore errors, use defaults
+    // File doesn't exist or other error, use defaults
   }
   return { enabled: true, min_messages: 30 };
 }
@@ -97,7 +95,8 @@ To disable: Set feedback.enabled=false in .claude/settings.local.json
   // ============================================
   pi.on("tool_call", async (event) => {
     if (event.toolName !== "bash") return;
-    const cmd = ((event.input as Record<string, unknown>).command as string || "").trim();
+    const input = event.input as Record<string, unknown>;
+    const cmd = (typeof input?.command === "string" ? input.command : "").trim();
 
     // Skip if not a blocked command
     if (!BLOCKED_CMDS.some((p) => p.test(cmd))) return;

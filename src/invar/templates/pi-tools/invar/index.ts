@@ -19,6 +19,18 @@ const factory: CustomToolFactory = (pi) => {
     }
   }
 
+  // Helper to validate path/target parameters (defense-in-depth)
+  function isValidPath(p: string): boolean {
+    // Reject shell metacharacters and path traversal
+    if (/[;&|`$"'\\<>]/.test(p)) {
+      return false;
+    }
+    if (p.includes('..')) {
+      return false;
+    }
+    return true;
+  }
+
   return [
     // =========================================================================
     // invar_guard - Smart verification (static + doctests + symbolic)
@@ -104,6 +116,10 @@ const factory: CustomToolFactory = (pi) => {
           throw new Error("Invar not installed. Run: pip install invar-tools");
         }
 
+        if (!isValidPath(params.target)) {
+          throw new Error("Invalid target path: contains unsafe characters or path traversal");
+        }
+
         const result = await pi.exec("invar", ["sig", params.target], {
           cwd: pi.cwd,
           signal,
@@ -147,6 +163,10 @@ const factory: CustomToolFactory = (pi) => {
         const installed = await checkInvarInstalled();
         if (!installed) {
           throw new Error("Invar not installed. Run: pip install invar-tools");
+        }
+
+        if (params.path && params.path !== "." && !isValidPath(params.path)) {
+          throw new Error("Invalid path: contains unsafe characters or path traversal");
         }
 
         const args = ["map"];
