@@ -7,6 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.14.0] - 2026-01-03
+
+### Added
+- **DX-79: Invar Usage Feedback Collection** - Complete implementation of automatic feedback generation system
+  - `/invar-reflect` skill: Generate structured feedback on Invar tool usage
+    - Analyzes tool usage patterns and pain points
+    - Tracks learning curves and confusion points
+    - Produces detailed markdown reports in `.invar/feedback/`
+  - **CLI tools** for feedback management:
+    - `invar feedback list` - Display all feedback files with timestamps
+    - `invar feedback cleanup` - Remove old feedback files (default: >90 days)
+    - `invar feedback anonymize` - Strip sensitive data for safe sharing
+  - **Core anonymization logic** (`src/invar/core/feedback.py`):
+    - Removes 8 types of sensitive data (emails, IPs, paths, tokens, etc.)
+    - Contract-verified with `@pre`/`@post` and doctests
+    - CrossHair symbolic verification passed
+  - **Init integration**:
+    - Automatic feedback configuration in `.claude/settings.local.json`
+    - Interactive consent prompt (opt-out design, default: enabled)
+    - Visible notifications in quick modes (`--claude`, `--pi`)
+  - **Template integration**: New projects get `/invar-reflect` skill out-of-box
+    - Added to `manifest.toml` with 3 files (SKILL.md, template.md, CONFIG.md)
+    - Installed automatically via `invar init --claude`
+
+### Fixed
+- **Round 2 review fixes**:
+  - Moved anonymization logic from Shell to Core (proper separation)
+  - Removed redundant type contracts (guard warning resolved)
+  - Fixed Pi notification path mismatch
+  - Expanded anonymization patterns (comprehensive coverage)
+
+### Security
+- Privacy-first design: All feedback stored locally, never sent automatically
+- Comprehensive anonymization for safe sharing with maintainers
+- User controls what (if anything) to share
+
 ## [1.13.0] - 2026-01-03
 
 ### Fixed
