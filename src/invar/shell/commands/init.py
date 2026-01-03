@@ -153,29 +153,43 @@ def _get_prompt_style():
 
 # @shell_complexity: Interactive prompt with cursor selection
 def _prompt_agent_selection() -> list[str]:
-    """Prompt user to select code agent using cursor navigation."""
+    """Prompt user to select agent(s) using checkbox (DX-81: multi-agent support)."""
     import questionary
 
-    console.print("\n[bold]Select code agent:[/bold]")
-    console.print("[dim]Use arrow keys to move, enter to select[/dim]\n")
+    console.print("\n[bold]Select agent(s) to configure:[/bold]")
+    console.print("[dim]Space to toggle, Enter to confirm (can select multiple)[/dim]\n")
 
     choices = [
-        questionary.Choice("Claude Code (recommended)", value="claude"),
-        questionary.Choice("Pi Coding Agent", value="pi"),
-        questionary.Choice("Other (AGENT.md)", value="generic"),
+        questionary.Choice(
+            "Claude Code (recommended)",
+            value="claude",
+            checked=True  # Default selection
+        ),
+        questionary.Choice(
+            "Pi Coding Agent",
+            value="pi",
+            checked=False
+        ),
+        questionary.Choice(
+            "Other (AGENT.md)",
+            value="generic",
+            checked=False
+        ),
     ]
 
-    selected = questionary.select(
+    selected = questionary.checkbox(
         "",
         choices=choices,
         instruction="",
         style=_get_prompt_style(),
     ).ask()
 
-    # Handle Ctrl+C
+    # Handle Ctrl+C or empty selection
     if not selected:
-        return ["claude"]  # Default to Claude Code
-    return [selected]
+        console.print("[yellow]No agents selected, using Claude Code as default.[/yellow]")
+        return ["claude"]
+
+    return selected
 
 
 # @shell_complexity: Interactive file selection with cursor navigation
@@ -390,10 +404,7 @@ def init(
     """
     from invar import __version__
 
-    # Mutual exclusivity check
-    if claude and pi:
-        console.print("[red]Error:[/red] Cannot use --claude and --pi together.")
-        raise typer.Exit(1)
+    # DX-81: Multi-agent support - removed mutual exclusivity check
 
     if mcp_only and (claude or pi):
         console.print("[red]Error:[/red] --mcp-only cannot be combined with --claude or --pi.")
@@ -458,8 +469,10 @@ def init(
             console.print(f"[red]Error:[/red] Invalid language '{language}'. Must be one of: {valid}")
             raise typer.Exit(1)
 
-    # Header
-    if claude:
+    # Header (DX-81: Support multi-agent display)
+    if claude and pi:
+        console.print(f"\n[bold]Invar v{__version__} - Quick Setup (Claude Code + Pi)[/bold]")
+    elif claude:
         console.print(f"\n[bold]Invar v{__version__} - Quick Setup (Claude Code)[/bold]")
     elif pi:
         console.print(f"\n[bold]Invar v{__version__} - Quick Setup (Pi)[/bold]")
@@ -468,27 +481,30 @@ def init(
     console.print("=" * 45)
     console.print(f"[dim]Language: {language} | Existing files will be MERGED.[/dim]")
 
-    # Determine agents and files
-    if claude:
-        # Quick mode: Claude Code defaults
-        agents = ["claude"]
+    # DX-81: Determine agents and files (multi-agent support)
+    if claude or pi:
+        # Quick mode: Build agent list from flags
+        agents = []
+        if claude:
+            agents.append("claude")
+        if pi:
+            agents.append("pi")
+
+        # Build selected_files from all agents' categories
         selected_files: dict[str, bool] = {}
-        for category in ["optional", "claude"]:
+        for agent in agents:
+            category = AGENT_CONFIGS[agent]["category"]
             for file, _ in FILE_CATEGORIES.get(category, []):
                 selected_files[file] = True
+
+        # Add optional files
+        for file, _ in FILE_CATEGORIES["optional"]:
+            selected_files[file] = True
+
         # DX-79: Default feedback enabled for quick mode
         feedback_enabled = True
-        console.print("\n[dim]📊 Feedback collection enabled by default (stored locally in .invar/feedback/)[/dim]")
-        console.print("[dim]   To disable: Set feedback.enabled=false in .claude/settings.local.json[/dim]")
-    elif pi:
-        # Quick mode: Pi defaults
-        agents = ["pi"]
-        selected_files = {}
-        for category in ["optional", "pi"]:
-            for file, _ in FILE_CATEGORIES.get(category, []):
-                selected_files[file] = True
-        # DX-79: Default feedback enabled for quick mode
-        feedback_enabled = True
+        if len(agents) > 1:
+            console.print(f"\n[dim]📊 Configuring for {len(agents)} agents: {', '.join(agents)}[/dim]")
         console.print("\n[dim]📊 Feedback collection enabled by default (stored locally in .invar/feedback/)[/dim]")
         console.print("[dim]   To disable: Set feedback.enabled=false in .claude/settings.local.json[/dim]")
     else:
