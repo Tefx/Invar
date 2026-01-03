@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [1.15.2] - 2026-01-03
+
+### Fixed
+- **Pi Custom Tools: ESLint Compatibility** - Removed CommonJS require() calls
+  - Moved `fs` and `path` imports to top-level ES module imports
+  - Removed internal `require("fs")` and `require("path")` calls in doc tools
+  - Fixed in `doc_replace` and `doc_insert` execute methods
+  - **Resolves critical bug** where custom tools failed to load:
+    - `invar_map()`: "Failed to generate map"
+    - `invar_sig()`: "Failed to get signatures"
+    - `invar_guard()`: Tool calls hanging without response
+  - Root cause: ESLint prohibited CommonJS require() in ES modules
+  - Pi custom tools now load and execute correctly
+
 ## [1.15.1] - 2026-01-03
 
 ### Added
@@ -350,7 +365,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[Unreleased]: https://github.com/yourusername/invar/compare/v1.15.1...HEAD
+[Unreleased]: https://github.com/yourusername/invar/compare/v1.15.2...HEAD
+[1.15.2]: https://github.com/yourusername/invar/compare/v1.15.1...v1.15.2
 [1.15.1]: https://github.com/yourusername/invar/compare/v1.15.0...v1.15.1
 [1.15.0]: https://github.com/yourusername/invar/compare/v1.14.0...v1.15.0
 [1.14.0]: https://github.com/yourusername/invar/compare/v1.13.0...v1.14.0
