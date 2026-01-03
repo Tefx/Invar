@@ -219,9 +219,10 @@ def _prompt_file_selection(agents: list[str]) -> dict[str, bool]:
     console.print()
     console.print("[dim]Use arrow keys to move, space to toggle, enter to confirm[/dim]\n")
 
-    # Build choices with categories as separators
+    # Build choices with categories as separators (DX-81: deduplicate shared files)
     choices: list[questionary.Choice | questionary.Separator] = []
     file_list: list[str] = []
+    seen_files: set[str] = set()
 
     for category, files in available.items():
         if category == "required":
@@ -231,12 +232,19 @@ def _prompt_file_selection(agents: list[str]) -> dict[str, bool]:
             category_name = "Claude Code"
         elif category == "pi":
             category_name = "Pi Coding Agent"
-        choices.append(questionary.Separator(f"── {category_name} ──"))
-        for file, desc in files:
-            choices.append(
-                questionary.Choice(f"{file:28} {desc}", value=file, checked=True)
-            )
-            file_list.append(file)
+
+        # Filter out files already seen (shared between categories)
+        unique_files = [(f, d) for f, d in files if f not in seen_files]
+
+        # Only add separator if there are unique files to show
+        if unique_files:
+            choices.append(questionary.Separator(f"── {category_name} ──"))
+            for file, desc in unique_files:
+                choices.append(
+                    questionary.Choice(f"{file:28} {desc}", value=file, checked=True)
+                )
+                file_list.append(file)
+                seen_files.add(file)
 
     selected = questionary.checkbox(
         "Select files to install:",
@@ -638,7 +646,7 @@ def init(
     # Completion message
     console.print(f"\n[bold green]✓ Initialized Invar v{__version__}[/bold green]")
 
-    # Show agent-specific tips
+    # Show agent-specific tips (DX-81: show all relevant tips)
     if "claude" in agents:
         console.print()
         console.print(
@@ -649,7 +657,7 @@ def init(
                 border_style="dim",
             )
         )
-    elif "pi" in agents:
+    if "pi" in agents:
         console.print()
         console.print(
             Panel(
