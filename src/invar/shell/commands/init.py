@@ -16,7 +16,7 @@ from rich.console import Console
 from rich.panel import Panel
 
 from invar.core.sync_helpers import VALID_LANGUAGES, SyncConfig
-from invar.shell.claude_hooks import install_claude_hooks
+from invar.shell.claude_hooks import add_feedback_config, install_claude_hooks
 from invar.shell.commands.template_sync import sync_templates
 from invar.shell.mcp_config import (
     generate_mcp_json,
@@ -239,6 +239,40 @@ def _prompt_file_selection(agents: list[str]) -> dict[str, bool]:
     return {f: f in selected for f in file_list}
 
 
+# @shell_complexity: Interactive consent prompt for feedback collection
+def _prompt_feedback_consent() -> bool:
+    """
+    Prompt user for consent to enable automatic feedback collection.
+
+    DX-79 Phase C: Opt-out consent flow (default: enabled).
+
+    Returns:
+        True if user consents (or accepts default), False otherwise
+    """
+    from rich import print as rprint
+    from rich.prompt import Confirm
+
+    rprint()
+    rprint("[bold]━" * 40)
+    rprint("[bold]📊 Usage Feedback (Optional)")
+    rprint("[bold]━" * 40)
+    rprint()
+    rprint("Invar can automatically reflect on tool usage to help improve")
+    rprint("the framework. Feedback is:")
+    rprint("  • Stored locally in [cyan].invar/feedback/[/cyan]")
+    rprint("  • Never sent automatically")
+    rprint("  • You decide what (if anything) to share")
+    rprint()
+
+    # Opt-out: default is True (Y)
+    consent = Confirm.ask(
+        "Enable automatic feedback collection?",
+        default=True,
+    )
+
+    return consent
+
+
 def _show_execution_output(
     created: list[str],
     merged: list[str],
@@ -442,6 +476,8 @@ def init(
         for category in ["optional", "claude"]:
             for file, _ in FILE_CATEGORIES.get(category, []):
                 selected_files[file] = True
+        # DX-79: Default feedback enabled for quick mode
+        feedback_enabled = True
     elif pi:
         # Quick mode: Pi defaults
         agents = ["pi"]
@@ -449,6 +485,8 @@ def init(
         for category in ["optional", "pi"]:
             for file, _ in FILE_CATEGORIES.get(category, []):
                 selected_files[file] = True
+        # DX-79: Default feedback enabled for quick mode
+        feedback_enabled = True
     else:
         # Interactive mode
         if not _is_interactive():
@@ -457,6 +495,8 @@ def init(
 
         agents = _prompt_agent_selection()
         selected_files = _prompt_file_selection(agents)
+        # DX-79: Prompt for feedback consent (opt-out, default: enabled)
+        feedback_enabled = _prompt_feedback_consent()
 
     # Preview mode
     if preview:
@@ -553,6 +593,12 @@ def init(
     # Install Pi hooks if selected
     if "pi" in agents and selected_files.get(".pi/hooks/", True):
         install_pi_hooks(path, console)
+
+    # Add feedback configuration (DX-79 Phase C)
+    if "claude" in agents or "pi" in agents:
+        feedback_result = add_feedback_config(path, feedback_enabled, console)
+        if isinstance(feedback_result, Failure):
+            console.print(f"[yellow]Warning:[/yellow] {feedback_result.failure()}")
 
     # Create MCP setup guide
     mcp_setup = invar_dir / "mcp-setup.md"

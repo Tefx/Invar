@@ -193,6 +193,55 @@ def _register_hooks_in_settings(project_path: Path) -> Result[bool, str]:
         return Failure(f"Failed to update settings: {e}")
 
 
+# @shell_complexity: Feedback config management in settings.local.json
+def add_feedback_config(
+    project_path: Path,
+    enabled: bool = True,
+    console: Console | None = None,
+) -> Result[bool, str]:
+    """
+    Add feedback configuration to .claude/settings.local.json.
+
+    DX-79 Phase C: Init Integration for /invar-reflect skill.
+
+    Args:
+        project_path: Path to project root
+        enabled: Whether to enable feedback collection (default: True)
+        console: Optional Rich console for output
+
+    Returns:
+        Success(True) if config added/updated, Failure with error message otherwise
+    """
+    import json
+
+    settings_path = project_path / ".claude" / "settings.local.json"
+
+    try:
+        existing = json.loads(settings_path.read_text()) if settings_path.exists() else {}
+
+        # Add feedback configuration
+        existing["feedback"] = {
+            "enabled": enabled,
+            "auto_trigger": enabled,  # Same as enabled
+            "retention_days": 90,
+        }
+
+        # Ensure .claude directory exists
+        settings_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # Write with indentation for readability
+        settings_path.write_text(json.dumps(existing, indent=2) + "\n")
+
+        if console:
+            status = "enabled" if enabled else "disabled"
+            console.print(f"  [green]✓[/green] Feedback collection {status}")
+
+        return Success(True)
+
+    except (OSError, json.JSONDecodeError) as e:
+        return Failure(f"Failed to update settings: {e}")
+
+
 # @shell_complexity: Multi-file installation with backup/merge logic for user hooks
 def install_claude_hooks(
     project_path: Path,
