@@ -291,6 +291,7 @@ def run_refs_typescript(file_path: Path, line: int, col: int) -> Result[list, st
 from dataclasses import dataclass
 from pathlib import Path
 from returns.result import Result, Success, Failure
+import jedi  # Required dependency of invar-tools
 
 
 @dataclass
@@ -319,18 +320,8 @@ def find_references(
     Returns:
         List of references or error message
 
-    >>> # Requires jedi installed
     >>> refs = find_references(Path("test.py"), 1, 0)
     """
-    try:
-        import jedi
-    except ImportError:
-        return Failure(
-            "jedi not installed.\n"
-            "Install with: pip install jedi\n"
-            "Or: pip install invar-tools[refs]"
-        )
-
     try:
         source = file_path.read_text()
 
@@ -439,13 +430,16 @@ def refs(
 - Falls back to regex if unavailable
 
 **Python refs:**
-- jedi as optional dependency
-- `pip install invar-tools[refs]` for full support
+- jedi as required dependency of invar-tools
+- No fallback needed
 
 **pyproject.toml:**
 ```toml
-[project.optional-dependencies]
-refs = ["jedi>=0.19"]
+[project]
+dependencies = [
+    # ... existing deps
+    "jedi>=0.19",
+]
 ```
 
 ### 4.3 Why Not Serena for Python?
@@ -489,7 +483,7 @@ def run_sig_typescript(file_path: Path) -> Result:
 - [ ] `invar map` shows reference counts for TypeScript
 - [ ] `invar refs file.py::symbol` works (jedi)
 - [ ] `invar refs file.ts::symbol` works (TS Compiler)
-- [ ] Graceful fallback when Node.js/jedi unavailable
+- [ ] Graceful fallback to regex when Node.js unavailable (TypeScript only)
 
 ---
 
@@ -550,8 +544,8 @@ AuthService (src/auth/service.ts:10)
 |------|--------|------------|
 | ts-query.js errors | Medium | Comprehensive error handling |
 | Node.js not installed | Low | Fallback to regex + clear message |
-| jedi not installed | Low | Optional dependency + clear message |
 | Large project slowness | Low | 30s timeout, can optimize later |
+| jedi adds ~5MB to package | Low | Acceptable for refs functionality |
 
 ---
 
