@@ -1,48 +1,64 @@
 # DX-78: MCP Protocol Sync & TypeScript Support
 
-**Status:** Draft
+**Status:** Draft (Revised)
 **Created:** 2026-01-03
-**Priority:** P0 (Critical) for Phase A/B, P1 for Phase C
+**Revised:** 2026-01-03
+**Priority:** P0 (Phase A), P1 (Phase B/C)
 **Source:** Paralex project feedback analysis
 
 ## Executive Summary
 
-Two feedback documents from the Paralex project (TypeScript) revealed critical issues with Invar's MCP server instructions and TypeScript support. This proposal addresses:
+Feedback from Paralex (TypeScript) project revealed:
 
-1. **Phase A (P0):** MCP server provides outdated "Session Start" protocol contradicting INVAR.md v5.0 "Check-In"
-2. **Phase B (P1):** Missing TypeScript documentation and examples
-3. **Phase C (P1):** Agents lack code navigation tools for TypeScript (no IDE = blind)
+1. **Protocol mismatch:** MCP instructions contradict INVAR.md v5.0
+2. **Documentation error:** Language matrix says TypeScript sig/map don't exist — **they do!**
+3. **Enhancement needed:** Existing TS tools lack Zod detection and method signatures
 
-**Key insight:** Agents don't have IDE access. Without `invar_sig` and `invar_map` for TypeScript, agents cannot navigate TS codebases effectively.
+**Key discovery:** `invar sig` and `invar map` already support TypeScript (LX-06). Phase C is about **enhancement**, not building from scratch.
 
 ---
 
 ## Part 1: Problem Analysis
 
-### 1.1 Issue Catalog (12 issues, 2 root causes)
+### 1.1 Issue Catalog (Revised)
 
-| ID | Category | Severity | Issue |
-|----|----------|----------|-------|
-| #1 | Protocol | Critical | MCP "Session Start" contradicts v5.0 "Check-In" |
-| #2 | Protocol | Critical | MCP says "MUST run guard first", v5.0 says "Do NOT" |
-| #3 | Language | Critical | `invar_map` error causes agent to skip ALL tools |
-| #4 | Protocol | High | USBV workflow not enforced in MCP |
-| #5 | Protocol | High | No Check-In/Final pair enforcement |
-| #6 | Tooling | High | Guard usage instructions outdated |
-| #7 | Language | Medium | No language support matrix |
-| #8 | Language | Medium | TypeScript examples missing |
-| #9 | Language | Medium | Zod patterns don't match TS idioms |
-| #10 | Cognitive | Medium | Too many tools to learn at once |
-| #11 | Docs | Low | Scattered documentation |
-| #12 | Docs | Low | No quick-start for non-Python |
+| ID | Category | Severity | Issue | Status |
+|----|----------|----------|-------|--------|
+| #1 | Protocol | Critical | MCP "Session Start" contradicts v5.0 "Check-In" | Open |
+| #2 | Protocol | Critical | MCP says "MUST run guard first", v5.0 says "Do NOT" | Open |
+| #3 | Docs | High | Language matrix incorrectly says TS sig/map unavailable | Open |
+| #4 | Tooling | Medium | TS sig misses method signatures | Open |
+| #5 | Tooling | Medium | TS sig/map don't detect Zod schemas | Open |
+| #6 | Tooling | Low | TS map has no reference counting | Open |
 
-### 1.2 Root Cause Analysis
+### 1.2 Key Discovery: TypeScript Tools Already Exist!
 
-#### Root Cause 1: MCP Server Not Synced to v5.0
+```python
+# src/invar/shell/commands/perception.py
 
-**Current MCP instructions (outdated):**
+# Line 48-49: Map supports TypeScript
+if project_language == "typescript":
+    return _run_map_typescript(path, top_n, json_output)
+
+# Line 82-84: Sig supports TypeScript
+if suffix in (".ts", ".tsx"):
+    return _run_sig_typescript(content, file_path, symbol_name, json_output)
+```
+
+**Current capabilities (LX-06):**
+- `invar sig file.ts` — Extracts function/class signatures ✅
+- `invar map` (in TS project) — Lists symbols by kind ✅
+- Zod schema detection — ❌
+- Method signatures in classes — ❌
+- Reference counting — ❌
+
+### 1.3 Root Cause: MCP Not Synced to v5.0
+
+**Location:** `src/invar/mcp/server.py` lines 40-49
+
+**Current (outdated):**
 ```markdown
-## Session Start (REQUIRED)
+### Session Start (REQUIRED)
 Before writing ANY code, you MUST execute:
 1. `invar_guard(changed=true)` — Check existing violations
 2. `invar_map(top=10)` — Understand code structure
@@ -58,39 +74,27 @@ Actions: Read `.invar/context.md`, then show status.
 Do NOT run guard at Check-In.
 ```
 
-**Impact:** Agent receives contradictory instructions, behavior unpredictable.
-
-#### Root Cause 2: Python-Centric Design Without Declaration
-
-**Current `invar_map` error:**
-```
-No Python files found in /path/to/project
-```
-
-**Agent's (incorrect) inference:**
-```
-"Invar tools are not usable for this TypeScript project"
-→ Skip ALL invar_* tools, including document tools
-```
-
-**Reality:** `invar_doc_*` tools are language-agnostic and fully functional.
-
 ---
 
 ## Part 2: Proposed Solutions
 
-### 2.1 P0: Sync MCP Server to v5.0 Protocol
+### 2.1 Phase A: MCP Protocol Sync (P0)
 
-**File:** `src/invar/templates/mcp-instructions.md` (or equivalent)
+**File:** `src/invar/mcp/server.py`
 
 **Changes:**
 
-1. Remove "Session Start" section entirely
-2. Add "Check-In" section matching INVAR.md v5.0:
+1. Replace "Session Start" with "Check-In":
 
-```markdown
-## Check-In (REQUIRED)
+```python
+# Before (lines 40-49):
+### Session Start (REQUIRED)
+Before writing ANY code, you MUST execute:
+1. `invar_guard(changed=true)` — Check existing violations
+2. `invar_map(top=10)` — Understand code structure
 
+# After:
+### Check-In (REQUIRED)
 Your first message MUST display:
 ✓ Check-In: [project] | [branch] | [clean/dirty]
 
@@ -103,258 +107,253 @@ Run guard only when:
 - After making code changes
 ```
 
-3. Update tool usage table to remove mandatory guard-first:
+2. Update "Task Completion" section (line 94):
 
-```markdown
-### Tool Usage (Session Start)
+```python
+# Before:
+- Session Start executed (invar_guard + invar_map)
 
-| Step | Tool | When |
-|------|------|------|
-| 1 | Read `.invar/context.md` | Always first |
-| 2 | `invar_map` | If exploring codebase |
-| 3 | `invar_guard` | Only in VALIDATE phase |
+# After:
+- Check-In displayed
 ```
 
 **Effort:** 1 hour
 
 ---
 
-### 2.2 P0: Add Language Support Matrix
+### 2.2 Phase A: Fix Language Support Matrix (P0)
 
 **Files:** README.md, MCP instructions
 
-**Content:**
+**Current (incorrect):**
+```markdown
+| `invar_sig` | ✅ Full | ⚠️ Limited | TS: Type signatures via LSP |
+| `invar_map` | ✅ Full | ❌ N/A | Python symbol analysis only |
+```
 
+**Corrected:**
 ```markdown
 ## Tool × Language Support
 
 | Tool | Python | TypeScript | Notes |
 |------|--------|------------|-------|
-| `invar_guard` | ✅ Full | ⚠️ Partial | TS: Static rules only, no contract verification |
-| `invar_sig` | ✅ Full | ⚠️ Limited | TS: Type signatures via LSP |
-| `invar_map` | ✅ Full | ❌ N/A | Python symbol analysis only |
-| `invar_doc_*` | ✅ Full | ✅ Full | Language-agnostic markdown tools |
+| `invar_guard` | ✅ Full | ⚠️ Partial | TS: tsc + eslint + vitest |
+| `invar_sig` | ✅ Full | ✅ Basic | TS: Regex parser (LX-06) |
+| `invar_map` | ✅ Full | ✅ Basic | TS: Symbol list, no ref counts |
+| `invar_doc_*` | ✅ Full | ✅ Full | Language-agnostic |
 
-### TypeScript Projects
+### TypeScript Limitations
 
-Use these tools:
-- `invar_doc_*` — Document navigation (fully supported)
-- `invar_guard` — Static rule checking (architecture only)
-- `invar_sig` — Type signatures (limited, via LSP)
+- **sig:** Function/class signatures only (no method details)
+- **map:** No reference counting (symbol list only)
+- **guard:** Static rules only, no @pre/@post contracts
 
-Skip these tools:
-- `invar_map` — Python-only
+### Planned Enhancements (Phase C)
+
+- Zod schema detection
+- Method signatures in classes
+- Import/export relationship tracking
 ```
 
 **Effort:** 1 hour
 
 ---
 
-### 2.3 P1: Improve `invar_map` Error Message
+### 2.3 Phase B: Error Message Improvement (P1)
 
-**File:** `src/invar/shell/commands/map.py`
+**File:** `src/invar/shell/commands/perception.py`
 
-**Current:**
+**Current (line 216):**
 ```python
-if not python_files:
-    return "No Python files found in {path}"
+return Failure("No TypeScript symbols found (files may be empty...)")
 ```
 
 **Proposed:**
 ```python
-if not python_files:
-    return """No Python files found in {path}.
+return Failure("""No TypeScript symbols found.
 
-Note: invar_map analyzes Python symbols only.
+Possible causes:
+- Files contain only type definitions (no functions/classes)
+- Files are empty or contain only comments
 
-For TypeScript/other projects, these tools are available:
-- invar_doc_* — Document navigation (fully supported)
-- invar_sig — Type signatures (limited, via LSP)
-- invar_guard — Static architecture rules
-"""
+Available tools for TypeScript:
+- invar_doc_* — Document navigation (full support)
+- invar_sig <file.ts> — Extract signatures from specific file
+- invar_guard — Static verification (tsc + eslint)
+""")
 ```
 
 **Effort:** 30 minutes
 
 ---
 
-### 2.4 P1: Add TypeScript Examples
+### 2.4 Phase B: TypeScript Examples (P1)
 
-**File:** New `.invar/examples/typescript-patterns.md`
+**File:** `.invar/examples/typescript-patterns.md`
 
 **Content outline:**
-1. Zod schema as contracts
-2. neverthrow Result<T, E> for Shell
-3. Guard static rules (no @pre/@post)
-4. Document-first workflow
+1. Available tools for TypeScript
+2. Zod schema as contracts (concept)
+3. neverthrow Result<T, E> for Shell
+4. Guard verification (tsc + eslint)
+5. Document-first workflow
 
 **Effort:** 2 hours
 
 ---
 
-### 2.5 P2: USBV Enforcement in MCP
+### 2.5 Phase C: TypeScript Tool Enhancements (P1)
 
-**File:** MCP instructions
+#### C1: Add Method Signature Extraction
 
-**Add workflow checkpoints:**
-```markdown
-## USBV Workflow (MANDATORY)
+**File:** `src/invar/core/ts_sig_parser.py`
 
-When implementing features, you MUST follow:
-
-1. **UNDERSTAND** — Read context, analyze requirements
-2. **SPECIFY** — Write contracts/types BEFORE code
-3. **BUILD** — Implement following specifications
-4. **VALIDATE** — Run `invar_guard`, verify completeness
-
-**Violation check:** Before writing ANY implementation code:
-- "Have I shown the contract/type for THIS function?"
-- "Have I completed SPECIFY phase?"
+**Current output:**
+```
+class: AuthService
+  export class AuthService
 ```
 
-**Effort:** 1 hour
+**Enhanced output:**
+```
+class: AuthService
+  export class AuthService
+  └─ constructor(config: AuthConfig)
+  └─ async login(credentials: Credentials): Promise<Result<Session, AuthError>>
+```
+
+**Implementation:** Extend regex patterns to capture method signatures.
+
+**Effort:** 3 hours
+
+#### C2: Add Zod Schema Detection
+
+**File:** `src/invar/core/ts_sig_parser.py`
+
+**Detection heuristics:**
+```typescript
+// Pattern 1: Variable assignment
+const userSchema = z.object({ ... })  // Detect "Schema" suffix
+
+// Pattern 2: Export
+export const CreateUserSchema = z.object({ ... })
+
+// Pattern 3: Type inference
+type User = z.infer<typeof userSchema>  // Link to schema
+```
+
+**Output:**
+```
+schema: userSchema
+  z.object({ name: z.string(), email: z.string().email() })
+  └─ infers: User (line 15)
+```
+
+**Effort:** 4 hours
+
+#### C3: Add Import Tracking (Optional)
+
+**File:** `src/invar/shell/commands/perception.py`
+
+**Current:** Symbol list only
+**Enhanced:** Track which files import each symbol
+
+```
+Symbol Map (src/)
+  AuthService    class    src/auth/service.ts:10
+    imported by: src/routes/login.ts, src/middleware/auth.ts
+```
+
+**Note:** This is NOT reference counting (no usage analysis). Just import statements.
+
+**Effort:** 4 hours
 
 ---
 
 ## Part 3: Implementation Plan
 
-| Phase | Tasks | Priority | Effort |
-|-------|-------|----------|--------|
-| A | Sync MCP to v5.0 protocol | P0 | 1h |
-| A | Add language support matrix | P0 | 1h |
-| B | Improve `invar_map` error message | P1 | 30m |
-| B | Add TypeScript examples | P1 | 2h |
-| B | Add USBV enforcement | P1 | 1h |
-| C | TypeScript `invar_sig` (tree-sitter) | P1 | 8h |
-| C | TypeScript `invar_map` (tree-sitter) | P1 | 8h |
-| C | Zod schema detection | P2 | 4h |
+| Phase | Task | Priority | Effort | Deliverable |
+|-------|------|----------|--------|-------------|
+| A | Sync MCP to v5.0 | P0 | 1h | v1.11.1 |
+| A | Fix language matrix | P0 | 1h | v1.11.1 |
+| B | Improve error messages | P1 | 30m | v1.11.2 |
+| B | TypeScript examples | P1 | 2h | v1.11.2 |
+| C | Method signatures | P1 | 3h | v1.12.0 |
+| C | Zod detection | P1 | 4h | v1.12.0 |
+| C | Import tracking | P2 | 4h | v1.12.0 |
 
-**Phase A+B:** ~5.5 hours (quick fixes + docs)
-**Phase C:** ~20 hours (TypeScript symbol tools)
-**Total:** ~25.5 hours
+**Phase A:** 2 hours — Ship immediately
+**Phase B:** 2.5 hours — Ship this week
+**Phase C:** 11 hours — Separate PR
+
+**Total:** ~15.5 hours (down from 25.5h — no new tools needed!)
 
 ---
 
-## Part 4: TypeScript Symbol Tools (Phase C)
+## Part 4: Technical Details
 
-### 4.1 Why Agent Needs sig/map
+### 4.1 Current TypeScript Parser (ts_sig_parser.py)
 
-**Key insight:** Agents don't have IDE access. They can't:
-- Hover to see type signatures
-- "Go to Definition"
-- Browse code structure visually
+**Approach:** Regex-based parsing
+**Pros:** Pure Python, no dependencies, fast
+**Cons:** Limited accuracy, can't handle complex syntax
 
-Without sig/map, TypeScript agents are **blind**:
+**Current capabilities:**
+```python
+# Detected:
+- export function name(params): ReturnType
+- export class ClassName
+- export interface InterfaceName
+- export type TypeName = ...
+- export const CONSTANT = ...
 
-```
-Current flow (broken):
-Agent → invar_map → "No Python files" → Skip ALL tools → Blind grep/read
-
-With TypeScript sig/map:
-Agent → invar_map → Symbol list + refs → Locate key files
-Agent → invar_sig → Type signatures + Zod → Understand interfaces
-```
-
-### 4.2 Value Assessment (Agent Perspective)
-
-| Feature | Agent Value | Reason |
-|---------|-------------|--------|
-| Symbol list | 🔴 Critical | Only way to "see" code structure |
-| Reference counts | 🔴 Critical | Identify core vs edge modules |
-| Type signatures | 🔴 Critical | No hover, no IDE hints |
-| Zod schemas | 🟡 High | Contracts for TypeScript |
-| Export graph | 🟡 High | Module dependencies |
-
-### 4.3 Implementation Approach
-
-**Recommended: tree-sitter**
-
-| Aspect | tree-sitter | LSP | TS Compiler API |
-|--------|-------------|-----|-----------------|
-| Speed | ✅ ~10ms | ❌ ~500ms startup | ❌ ~1s |
-| Dependencies | ✅ Python only | ❌ Node.js | ❌ Node.js |
-| Multi-language | ✅ Go, Rust, etc. | ❌ Per-language | ❌ TS only |
-| Semantic depth | ⚠️ AST only | ✅ Full | ✅ Full |
-
-**Trade-off:** tree-sitter lacks cross-file type resolution, but sufficient for:
-- Function/class signatures (explicit types)
-- Export/import relationships
-- Symbol listing with locations
-
-### 4.4 Scope
-
-#### `invar_sig` for TypeScript
-
-```typescript
-// Input: src/auth/validator.ts
-
-// Output:
-export function validateToken(token: string): Result<User, AuthError>
-  @zod: tokenSchema (line 15)
-
-export class AuthService
-  constructor(config: AuthConfig)
-  async login(credentials: Credentials): Promise<Result<Session, AuthError>>
-    @zod: credentialsSchema (line 42)
+# Not detected:
+- Method signatures inside classes
+- Zod schema patterns
+- Private/protected members
 ```
 
-**Features:**
-- Function/method signatures with types
-- Class structure (properties, methods)
-- Zod schema associations (by naming convention or JSDoc)
-- Export visibility
+### 4.2 Why Not tree-sitter?
 
-#### `invar_map` for TypeScript
+| Factor | Regex (Current) | tree-sitter |
+|--------|-----------------|-------------|
+| Dependencies | None | C compiler required |
+| uvx install | ✅ Works | ⚠️ May break |
+| Accuracy | 80% | 95% |
+| Maintenance | Low | Medium |
 
-```typescript
-// Output:
-Symbol Map (src/)
-  AuthService          class    src/auth/service.ts:10    refs: 15
-  validateToken        function src/auth/validator.ts:5   refs: 8
-  UserRepository       class    src/data/user.ts:20       refs: 12
-  ...
+**Decision:** Enhance regex parser for now. Consider tree-sitter if accuracy becomes critical.
 
-Top 10 by references (entry points likely)
-```
+### 4.3 Why Not LSP?
 
-**Features:**
-- Symbol enumeration (functions, classes, types)
-- Reference counting (within-file + import tracking)
-- Sorted by importance
+| Factor | Regex | LSP (typescript-language-server) |
+|--------|-------|----------------------------------|
+| Dependencies | None | Node.js + npm |
+| Startup time | ~10ms | ~500ms |
+| Accuracy | 80% | 100% |
+| Cross-file refs | ❌ | ✅ |
 
-### 4.5 Effort Estimate
-
-| Task | Effort | Notes |
-|------|--------|-------|
-| tree-sitter setup | 2h | py-tree-sitter + TypeScript grammar |
-| `invar_sig` TS parser | 6h | Signatures, classes, Zod detection |
-| `invar_map` TS parser | 6h | Symbols, imports, ref counting |
-| Integration + tests | 4h | MCP tools, CLI |
-| Documentation | 2h | Examples, language matrix update |
-
-**Total Phase C:** ~20 hours
+**Decision:** LSP is better but requires Node.js. Keep as future option (LX-10?).
 
 ---
 
 ## Part 5: Acceptance Criteria
 
-### Phase A (P0) — Quick Fixes
-- [ ] MCP instructions match INVAR.md v5.0 Check-In protocol
-- [ ] Language support matrix in README and MCP
-- [ ] No "Session Start" or "MUST run guard first" in MCP
+### Phase A (P0) — Must Ship Immediately
+- [ ] MCP server.py uses Check-In, not Session Start
+- [ ] MCP server.py does NOT require guard at startup
+- [ ] Language matrix correctly shows TS sig/map as "Basic"
+- [ ] README updated with accurate tool support
 
-### Phase B (P1) — Documentation
-- [ ] `invar_map` provides helpful message for non-Python projects
+### Phase B (P1) — This Week
+- [ ] Error messages guide users to available tools
 - [ ] TypeScript examples document exists
-- [ ] USBV checkpoints in MCP instructions
+- [ ] USBV checkpoints in MCP (optional)
 
-### Phase C (P1) — TypeScript Symbol Tools
-- [ ] `invar_sig` parses TypeScript files and shows signatures
-- [ ] `invar_sig` detects Zod schemas and associates with functions
-- [ ] `invar_map` lists TypeScript symbols with reference counts
-- [ ] `invar_map` tracks import/export relationships
-- [ ] MCP tools expose TypeScript sig/map functionality
-- [ ] Language support matrix updated: sig/map → ✅ Full for TypeScript
+### Phase C (P1) — Separate PR
+- [ ] `invar sig` shows method signatures for TS classes
+- [ ] `invar sig` detects Zod schemas (by naming convention)
+- [ ] `invar map` shows import relationships (optional)
 
 ---
 
@@ -362,9 +361,25 @@ Top 10 by references (entry points likely)
 
 | Risk | Impact | Mitigation |
 |------|--------|------------|
-| Existing users depend on old MCP | Medium | Version note in changelog |
-| TypeScript users expect full support | Medium | Clear matrix + "partial" labels |
-| Protocol changes confuse agents | Low | Single source of truth (INVAR.md) |
+| Regex parser misses edge cases | Medium | Document limitations clearly |
+| Zod detection false positives | Low | Use strict naming conventions |
+| Breaking existing behavior | Low | Additive changes only |
+
+---
+
+## Part 7: Alternatives Considered
+
+### A1: Build New Tools with tree-sitter
+- **Rejected:** TypeScript tools already exist (LX-06)
+- **Rejected:** tree-sitter adds native dependencies
+
+### A2: Use LSP for Full Semantic Analysis
+- **Deferred:** Requires Node.js runtime
+- **Future:** Consider for LX-10 if accuracy demands increase
+
+### A3: Don't Enhance, Just Fix Docs
+- **Partial:** Phase A+B take this approach
+- **Rejected for C:** Agent experience still suboptimal without method sigs
 
 ---
 
@@ -375,7 +390,29 @@ Top 10 by references (entry points likely)
 
 ---
 
+## Appendix: Existing TypeScript Support (LX-06)
+
+**Files:**
+- `src/invar/core/ts_sig_parser.py` — Signature extraction
+- `src/invar/core/ts_parsers.py` — tsc/eslint/vitest output parsing
+- `src/invar/shell/prove/guard_ts.py` — TypeScript guard orchestration
+- `src/invar/shell/commands/perception.py` — sig/map CLI integration
+
+**Test:**
+```bash
+# Already works!
+invar sig path/to/file.ts
+invar map  # (in TypeScript project)
+```
+
+---
+
 ## Document History
 
-- **2026-01-03**: Initial draft from Paralex feedback analysis
-- **2026-01-03**: Merged TypeScript sig/map tools as Phase C (agent perspective: no IDE = blind)
+- **2026-01-03**: Initial draft from Paralex feedback
+- **2026-01-03**: Merged TypeScript sig/map as Phase C
+- **2026-01-03**: **Major revision** — Discovered TS tools already exist (LX-06)
+  - Reduced scope from 25.5h to 15.5h
+  - Phase C: Enhancement, not new build
+  - Removed tree-sitter approach (unnecessary)
+  - Fixed language matrix accuracy
