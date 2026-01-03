@@ -1,9 +1,19 @@
 # LX-14: TypeScript Doctest Execution Integration
 
-**Status:** Planned
+**Status:** Archived (Merged into LX-15)
 **Created:** 2026-01-04
-**Priority:** Medium (Phase A complete, this is Phase B)
-**Depends On:** LX-06 (TypeScript Tooling)
+**Archived:** 2026-01-04
+**Superseded By:** [LX-15: TypeScript Guard Parity](../LX-15-typescript-guard-parity.md)
+
+> **Note:** This proposal has been merged into LX-15 for unified tracking.
+> - Layer 1 (ESLint enforcement): ✅ Complete
+> - Layer 2 (Doctest execution) → LX-15 Phase 1.1-1.2
+> - Layer 3 (Coverage tracking) → LX-15 Phase 1.3
+
+---
+
+**Original Priority:** Medium (Phase A complete, this is Phase B)
+**Original Depends On:** LX-06 (TypeScript Tooling)
 
 ## Executive Summary
 

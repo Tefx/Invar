@@ -31,10 +31,10 @@ This directory contains design proposals for Invar development.
 
 | ID | Name | Status | Description |
 |----|------|--------|-------------|
+| LX-15 | [typescript-guard-parity](LX-15-typescript-guard-parity.md) | Active | Unified roadmap for TS Guard parity with Python (37%→84%) |
 | LX-13 | [typescript-runtime-optimization](LX-13-typescript-runtime-optimization.md) | Draft | Reduce Zod validation overhead by 80-90% via boundary patterns |
-| LX-12 | [typescript-contract-enforcement](LX-12-typescript-contract-enforcement.md) | Draft | TypeScript contract enforcement strategy (strict vs recommended) |
 | LX-11 | [cursor-support](LX-11-cursor-support.md) | Draft | Cursor IDE native support with MDC rules, 6-type hooks, and commands |
-| LX-10 | layered-size-limits | Draft | Language-aware layered size limits (Core/Shell/Tests × Python/TS) |
+| LX-10 | layered-size-limits | ✅ TS Complete | Layered size limits implemented in @invar/eslint-plugin |
 | LX-09 | [legacy-onboarding](LX-09-legacy-onboarding.md) | Draft | Update `/invar-onboard` skill for --mcp-only path (v1.11.0) |
 | LX-08 | extension-skills-future | Deferred | Future extension skills (split from LX-07) |
 | LX-07 | extension-skills | ✅ T0 Complete | T0 skills implemented, T1 pending discussion |
@@ -56,10 +56,12 @@ This directory contains design proposals for Invar development.
 - **Pi reads .claude/skills/** — Skill sharing works!
 - **Pi fully supported** — `invar init --pi` for quick setup
 
-## Archived Proposals (47)
+## Archived Proposals (49)
 
 | ID | Name | Status | Description |
 |----|------|--------|-------------|
+| LX-14 | typescript-doctest-execution | Merged → LX-15 | Doctest execution (Layer 2-3) merged into LX-15 |
+| LX-12 | typescript-contract-enforcement | Merged → LX-15 | Contract enforcement strategy merged into LX-15 |
 | LX-03 | multi-agent-support | ✅ Complete | docs/guides/ created, implementation → LX-04 |
 | DX-66 | escape-hatch-visibility | ✅ Complete | Guard shows escape hatch summary in output |
 | DX-65 | single-file-guard | ✅ Complete | `invar guard file.py` support |

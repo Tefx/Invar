@@ -1,10 +1,18 @@
 # LX-12: TypeScript Contract Enforcement Strategy
 
-**Status:** Draft
+**Status:** Archived (Merged into LX-15)
 **Created:** 2026-01-04
-**Updated:** 2026-01-04
-**Priority:** Medium (Strategic decision affecting TS adoption)
-**Depends On:** LX-06 (TypeScript Tooling Support)
+**Archived:** 2026-01-04
+**Superseded By:** [LX-15: TypeScript Guard Parity](../LX-15-typescript-guard-parity.md)
+
+> **Note:** This proposal has been merged into LX-15 for unified tracking.
+> - Phase 2 (Strict Mode) → LX-15 Phase 3.1
+> - Phase 3 (Risk-Based Intelligence) → LX-15 Phase 3.2
+
+---
+
+**Original Priority:** Medium (Strategic decision affecting TS adoption)
+**Original Depends On:** LX-06 (TypeScript Tooling Support)
 
 ## Executive Summary
 
