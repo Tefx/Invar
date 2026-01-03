@@ -1,13 +1,19 @@
-# DX-78: MCP Protocol Sync & Multi-Language Support
+# DX-78: MCP Protocol Sync & TypeScript Support
 
 **Status:** Draft
 **Created:** 2026-01-03
-**Priority:** P0 (Critical)
+**Priority:** P0 (Critical) for Phase A/B, P1 for Phase C
 **Source:** Paralex project feedback analysis
 
 ## Executive Summary
 
-Two feedback documents from the Paralex project (TypeScript) revealed critical issues with Invar's MCP server instructions and multi-language support. The MCP server provides outdated "Session Start" protocol that contradicts INVAR.md v5.0 "Check-In" protocol, causing unpredictable agent behavior.
+Two feedback documents from the Paralex project (TypeScript) revealed critical issues with Invar's MCP server instructions and TypeScript support. This proposal addresses:
+
+1. **Phase A (P0):** MCP server provides outdated "Session Start" protocol contradicting INVAR.md v5.0 "Check-In"
+2. **Phase B (P1):** Missing TypeScript documentation and examples
+3. **Phase C (P1):** Agents lack code navigation tools for TypeScript (no IDE = blind)
+
+**Key insight:** Agents don't have IDE access. Without `invar_sig` and `invar_map` for TypeScript, agents cannot navigate TS codebases effectively.
 
 ---
 
@@ -218,55 +224,137 @@ When implementing features, you MUST follow:
 | A | Add language support matrix | P0 | 1h |
 | B | Improve `invar_map` error message | P1 | 30m |
 | B | Add TypeScript examples | P1 | 2h |
-| C | Add USBV enforcement | P2 | 1h |
+| B | Add USBV enforcement | P1 | 1h |
+| C | TypeScript `invar_sig` (tree-sitter) | P1 | 8h |
+| C | TypeScript `invar_map` (tree-sitter) | P1 | 8h |
+| C | Zod schema detection | P2 | 4h |
 
-**Total:** ~5.5 hours
+**Phase A+B:** ~5.5 hours (quick fixes + docs)
+**Phase C:** ~20 hours (TypeScript symbol tools)
+**Total:** ~25.5 hours
 
 ---
 
-## Part 4: Open Questions
+## Part 4: TypeScript Symbol Tools (Phase C)
 
-### Q1: Should we implement `invar_sig` for TypeScript?
+### 4.1 Why Agent Needs sig/map
 
-**Current state:** Limited TypeScript support via LSP
+**Key insight:** Agents don't have IDE access. They can't:
+- Hover to see type signatures
+- "Go to Definition"
+- Browse code structure visually
 
-**Options:**
-| Option | Pros | Cons |
-|--------|------|------|
-| A: LSP-only (current) | No new code | Limited functionality |
-| B: TypeScript parser | Full signatures, Zod detection | 8-16h effort, maintenance |
-| C: tree-sitter | Fast, multi-language | Learning curve, less semantic |
+Without sig/map, TypeScript agents are **blind**:
 
-**Recommendation:** Defer to separate proposal (LX-10?)
+```
+Current flow (broken):
+Agent → invar_map → "No Python files" → Skip ALL tools → Blind grep/read
 
-### Q2: Should we implement `invar_map` for TypeScript?
+With TypeScript sig/map:
+Agent → invar_map → Symbol list + refs → Locate key files
+Agent → invar_sig → Type signatures + Zod → Understand interfaces
+```
 
-**Current state:** Python-only
+### 4.2 Value Assessment (Agent Perspective)
 
-**Options:**
-| Option | Pros | Cons |
-|--------|------|------|
-| A: Skip (current) | No effort | TS users lack orientation tool |
-| B: TypeScript parser | Full support | 16-24h effort |
-| C: LSP symbols | Uses existing infra | May miss some patterns |
+| Feature | Agent Value | Reason |
+|---------|-------------|--------|
+| Symbol list | 🔴 Critical | Only way to "see" code structure |
+| Reference counts | 🔴 Critical | Identify core vs edge modules |
+| Type signatures | 🔴 Critical | No hover, no IDE hints |
+| Zod schemas | 🟡 High | Contracts for TypeScript |
+| Export graph | 🟡 High | Module dependencies |
 
-**Recommendation:** Defer to separate proposal (LX-10?)
+### 4.3 Implementation Approach
+
+**Recommended: tree-sitter**
+
+| Aspect | tree-sitter | LSP | TS Compiler API |
+|--------|-------------|-----|-----------------|
+| Speed | ✅ ~10ms | ❌ ~500ms startup | ❌ ~1s |
+| Dependencies | ✅ Python only | ❌ Node.js | ❌ Node.js |
+| Multi-language | ✅ Go, Rust, etc. | ❌ Per-language | ❌ TS only |
+| Semantic depth | ⚠️ AST only | ✅ Full | ✅ Full |
+
+**Trade-off:** tree-sitter lacks cross-file type resolution, but sufficient for:
+- Function/class signatures (explicit types)
+- Export/import relationships
+- Symbol listing with locations
+
+### 4.4 Scope
+
+#### `invar_sig` for TypeScript
+
+```typescript
+// Input: src/auth/validator.ts
+
+// Output:
+export function validateToken(token: string): Result<User, AuthError>
+  @zod: tokenSchema (line 15)
+
+export class AuthService
+  constructor(config: AuthConfig)
+  async login(credentials: Credentials): Promise<Result<Session, AuthError>>
+    @zod: credentialsSchema (line 42)
+```
+
+**Features:**
+- Function/method signatures with types
+- Class structure (properties, methods)
+- Zod schema associations (by naming convention or JSDoc)
+- Export visibility
+
+#### `invar_map` for TypeScript
+
+```typescript
+// Output:
+Symbol Map (src/)
+  AuthService          class    src/auth/service.ts:10    refs: 15
+  validateToken        function src/auth/validator.ts:5   refs: 8
+  UserRepository       class    src/data/user.ts:20       refs: 12
+  ...
+
+Top 10 by references (entry points likely)
+```
+
+**Features:**
+- Symbol enumeration (functions, classes, types)
+- Reference counting (within-file + import tracking)
+- Sorted by importance
+
+### 4.5 Effort Estimate
+
+| Task | Effort | Notes |
+|------|--------|-------|
+| tree-sitter setup | 2h | py-tree-sitter + TypeScript grammar |
+| `invar_sig` TS parser | 6h | Signatures, classes, Zod detection |
+| `invar_map` TS parser | 6h | Symbols, imports, ref counting |
+| Integration + tests | 4h | MCP tools, CLI |
+| Documentation | 2h | Examples, language matrix update |
+
+**Total Phase C:** ~20 hours
 
 ---
 
 ## Part 5: Acceptance Criteria
 
-### Phase A (P0)
+### Phase A (P0) — Quick Fixes
 - [ ] MCP instructions match INVAR.md v5.0 Check-In protocol
 - [ ] Language support matrix in README and MCP
 - [ ] No "Session Start" or "MUST run guard first" in MCP
 
-### Phase B (P1)
+### Phase B (P1) — Documentation
 - [ ] `invar_map` provides helpful message for non-Python projects
 - [ ] TypeScript examples document exists
-
-### Phase C (P2)
 - [ ] USBV checkpoints in MCP instructions
+
+### Phase C (P1) — TypeScript Symbol Tools
+- [ ] `invar_sig` parses TypeScript files and shows signatures
+- [ ] `invar_sig` detects Zod schemas and associates with functions
+- [ ] `invar_map` lists TypeScript symbols with reference counts
+- [ ] `invar_map` tracks import/export relationships
+- [ ] MCP tools expose TypeScript sig/map functionality
+- [ ] Language support matrix updated: sig/map → ✅ Full for TypeScript
 
 ---
 
@@ -290,3 +378,4 @@ When implementing features, you MUST follow:
 ## Document History
 
 - **2026-01-03**: Initial draft from Paralex feedback analysis
+- **2026-01-03**: Merged TypeScript sig/map tools as Phase C (agent perspective: no IDE = blind)
