@@ -31,6 +31,8 @@ This directory contains design proposals for Invar development.
 
 | ID | Name | Status | Description |
 |----|------|--------|-------------|
+| LX-13 | [typescript-runtime-optimization](LX-13-typescript-runtime-optimization.md) | Draft | Reduce Zod validation overhead by 80-90% via boundary patterns |
+| LX-12 | [typescript-contract-enforcement](LX-12-typescript-contract-enforcement.md) | Draft | TypeScript contract enforcement strategy (strict vs recommended) |
 | LX-11 | [cursor-support](LX-11-cursor-support.md) | Draft | Cursor IDE native support with MDC rules, 6-type hooks, and commands |
 | LX-10 | layered-size-limits | Draft | Language-aware layered size limits (Core/Shell/Tests × Python/TS) |
 | LX-09 | [legacy-onboarding](LX-09-legacy-onboarding.md) | Draft | Update `/invar-onboard` skill for --mcp-only path (v1.11.0) |
