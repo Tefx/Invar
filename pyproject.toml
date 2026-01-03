@@ -14,7 +14,7 @@ artifacts = ["src/invar/node_tools/**/*.js", "src/invar/node_tools/**/MANIFEST"]
 
 [project]
 name = "invar-tools"
-version = "1.15.5"
+version = "1.15.6"
 description = "AI-native software engineering tools with design-by-contract verification"
 readme = "README.md"
 license = "GPL-3.0-or-later"

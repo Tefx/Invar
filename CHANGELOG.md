@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+
+
+## [1.15.6] - 2026-01-03
+
 ### Fixed
 - **invar map: File Handle Management (DX-82)** - Fixed "Too many open files" error
   - Convert `discover_python_files()` generator to list to release directory handles immediately
