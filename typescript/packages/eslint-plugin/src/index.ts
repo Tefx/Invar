@@ -48,7 +48,7 @@ const configs = {
   recommended: {
     plugins: ['@invar'],
     rules: {
-      '@invar/require-schema-validation': 'error' as const,
+      '@invar/require-schema-validation': ['error', { mode: 'recommended' }] as const,
       '@invar/no-io-in-core': 'error' as const,
       '@invar/shell-result-type': 'warn' as const,
       '@invar/no-any-in-schema': 'warn' as const,
@@ -63,7 +63,7 @@ const configs = {
   strict: {
     plugins: ['@invar'],
     rules: {
-      '@invar/require-schema-validation': 'error' as const,
+      '@invar/require-schema-validation': ['error', { mode: 'strict' }] as const,
       '@invar/no-io-in-core': 'error' as const,
       '@invar/shell-result-type': 'error' as const,
       '@invar/no-any-in-schema': 'error' as const,

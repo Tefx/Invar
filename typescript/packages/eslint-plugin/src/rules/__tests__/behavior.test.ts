@@ -15,6 +15,7 @@ import { noIoInCore } from '../no-io-in-core.js';
 import { noEmptySchema } from '../no-empty-schema.js';
 import { noRedundantTypeSchema } from '../no-redundant-type-schema.js';
 import { requireCompleteValidation } from '../require-complete-validation.js';
+import { requireSchemaValidation } from '../require-schema-validation.js';
 import { getLayer, getLimits } from '../../utils/layer-detection.js';
 
 // Create RuleTester with modern JS configuration
@@ -513,6 +514,153 @@ describe('require-complete-validation', () => {
         {
           code: `const fn = (user: z.infer<typeof UserSchema>, id: number) => {};`,
           errors: [{ messageId: 'partialValidation' }],
+        },
+      ],
+    });
+  });
+});
+
+describe('require-schema-validation modes', () => {
+  const tsRuleTester = new RuleTester({
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: 'module',
+      parser: require('@typescript-eslint/parser'),
+    },
+  });
+
+  it('should check all functions in recommended mode (default)', () => {
+    tsRuleTester.run('require-schema-validation', requireSchemaValidation, {
+      valid: [
+        {
+          code: `
+            function process(user: z.infer<typeof UserSchema>) {
+              const validated = UserSchema.parse(user);
+            }
+          `,
+        },
+      ],
+      invalid: [
+        {
+          code: `
+            function process(user: z.infer<typeof UserSchema>) {
+              console.log(user);
+            }
+          `,
+          errors: [{ messageId: 'missingValidation' }],
+        },
+      ],
+    });
+  });
+
+  it('should check all functions in strict mode', () => {
+    tsRuleTester.run('require-schema-validation', requireSchemaValidation, {
+      valid: [
+        {
+          code: `
+            function process(user: z.infer<typeof UserSchema>) {
+              const validated = UserSchema.parse(user);
+            }
+          `,
+          options: [{ mode: 'strict' }],
+        },
+      ],
+      invalid: [
+        {
+          code: `
+            function process(user: z.infer<typeof UserSchema>) {
+              console.log(user);
+            }
+          `,
+          options: [{ mode: 'strict' }],
+          errors: [{ messageId: 'missingValidation' }],
+        },
+      ],
+    });
+  });
+
+  it('should only check high-risk functions in risk-based mode', () => {
+    tsRuleTester.run('require-schema-validation', requireSchemaValidation, {
+      valid: [
+        {
+          // Non-risk function should pass even without validation
+          code: `
+            function getData(user: z.infer<typeof UserSchema>) {
+              console.log(user);
+            }
+          `,
+          options: [{ mode: 'risk-based' }],
+        },
+        {
+          // Risk function with validation should pass
+          code: `
+            function processPayment(user: z.infer<typeof UserSchema>) {
+              const validated = UserSchema.parse(user);
+            }
+          `,
+          options: [{ mode: 'risk-based' }],
+        },
+      ],
+      invalid: [
+        {
+          // Risk function without validation should fail
+          code: `
+            function processPayment(user: z.infer<typeof UserSchema>) {
+              console.log(user);
+            }
+          `,
+          options: [{ mode: 'risk-based' }],
+          errors: [{ messageId: 'missingValidationRisk' }],
+        },
+        {
+          code: `
+            function authenticateUser(token: z.infer<typeof TokenSchema>) {
+              console.log(token);
+            }
+          `,
+          options: [{ mode: 'risk-based' }],
+          errors: [{ messageId: 'missingValidationRisk' }],
+        },
+      ],
+    });
+  });
+
+  it('should enforce for specific paths when enforceFor is set', () => {
+    tsRuleTester.run('require-schema-validation', requireSchemaValidation, {
+      valid: [
+        {
+          // File outside enforceFor paths should pass
+          code: `
+            function process(user: z.infer<typeof UserSchema>) {
+              console.log(user);
+            }
+          `,
+          filename: '/project/src/utils/helper.ts',
+          options: [{ mode: 'risk-based', enforceFor: ['**/payment/**', '**/auth/**'] }],
+        },
+      ],
+      invalid: [
+        {
+          // File in payment path should fail
+          code: `
+            function process(user: z.infer<typeof UserSchema>) {
+              console.log(user);
+            }
+          `,
+          filename: '/project/src/payment/processor.ts',
+          options: [{ mode: 'risk-based', enforceFor: ['**/payment/**', '**/auth/**'] }],
+          errors: [{ messageId: 'missingValidation' }],
+        },
+        {
+          // File in auth path should fail
+          code: `
+            function process(user: z.infer<typeof UserSchema>) {
+              console.log(user);
+            }
+          `,
+          filename: '/project/src/auth/login.ts',
+          options: [{ mode: 'risk-based', enforceFor: ['**/payment/**', '**/auth/**'] }],
+          errors: [{ messageId: 'missingValidation' }],
         },
       ],
     });
