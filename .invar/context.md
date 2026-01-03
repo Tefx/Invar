@@ -51,7 +51,7 @@
 
 ## Current State
 
-- **PyPI:** `invar-tools` v1.10.0 + `invar-runtime` v1.3.0
+- **PyPI:** `invar-tools` v1.12.0 + `invar-runtime` v1.3.0
 - **Protocol:** v5.0 (USBV workflow, DX-58 critical section)
 - **Status:** Feature complete, TypeScript support added (DX-78)
 - **Recent:** DX-78 (TypeScript Compiler API integration), LX-05 (language-agnostic), LX-06 (TypeScript tooling), LX-07 (Extension Skills)
@@ -185,6 +185,7 @@ gh release create vX.Y.Z --title "vX.Y.Z - Title" --notes "..."
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 1.12.0 | 2026-01 | TypeScript Compiler API integration (DX-78), multi-language refs |
 | 1.9.0 | 2026-01 | Extension Skills (LX-07), TypeScript support (LX-05/06) |
 | 1.8.0 | 2025-12 | Claude hooks improvements, interactive init (DX-70) |
 | 1.5.0 | 2025-12 | Language-agnostic protocol templates |
