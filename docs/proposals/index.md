@@ -31,6 +31,7 @@ This directory contains design proposals for Invar development.
 
 | ID | Name | Status | Description |
 |----|------|--------|-------------|
+| LX-11 | [cursor-support](LX-11-cursor-support.md) | Draft | Cursor IDE native support with MDC rules, 6-type hooks, and commands |
 | LX-10 | layered-size-limits | Draft | Language-aware layered size limits (Core/Shell/Tests × Python/TS) |
 | LX-09 | [legacy-onboarding](LX-09-legacy-onboarding.md) | Draft | Update `/invar-onboard` skill for --mcp-only path (v1.11.0) |
 | LX-08 | extension-skills-future | Deferred | Future extension skills (split from LX-07) |
