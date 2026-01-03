@@ -1,3 +1,10 @@
+---
+name: security
+description: Identify security vulnerabilities using OWASP Top 10 as baseline. Performs systematic security audits with evidence-based reporting.
+_invar:
+  version: "1.0"
+  managed: skill
+---
 <!--invar:skill-->
 # /security — Security Audit
 

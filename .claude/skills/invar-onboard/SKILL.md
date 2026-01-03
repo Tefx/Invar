@@ -1,3 +1,10 @@
+---
+name: invar-onboard
+description: Evaluate and plan migration of existing (legacy) projects to the Invar framework. Provides structured assessment, discussion, and planning workflow.
+_invar:
+  version: "1.0"
+  managed: skill
+---
 <!--invar:skill-->
 # /invar-onboard — Legacy Project Onboarding
 

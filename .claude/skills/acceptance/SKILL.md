@@ -1,3 +1,10 @@
+---
+name: acceptance
+description: Verify implementation satisfies requirements with adversarial rigor. PRD alignment review, checking that all requirements are implemented and edge cases are handled.
+_invar:
+  version: "1.0"
+  managed: skill
+---
 <!--invar:skill-->
 # /acceptance — Requirements Acceptance Review
 
