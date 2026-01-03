@@ -8,12 +8,13 @@ This directory contains design proposals for Invar development.
 - `LX-XX-name.md` — Language eXtension (multi-language evolution)
 - Completed/archived proposals in `completed/` subdirectory
 
-## Active Proposals (15)
+## Active Proposals (16)
 
 ### DX Series (Developer Experience)
 
 | ID | Name | Status | Description |
 |----|------|--------|-------------|
+| DX-78 | [mcp-protocol-sync](DX-78-mcp-protocol-sync.md) | Draft | Sync MCP to v5.0 protocol + multi-language support matrix |
 | DX-74 | tiered-attention-defense | Draft | Multi-tier defense against LLM attention drift in skills |
 | DX-70 | init-simplification | ✅ Complete | Simplified init with interactive menus and safe merge |
 | DX-69 | project-uninstall | ✅ Complete | `invar uninstall` command with marker-based detection |
@@ -154,6 +155,7 @@ Deferred: DX-38 Tier 3-4, DX-25, DX-29
 
 | Status | Proposal | Description | Notes |
 |--------|----------|-------------|-------|
+| **Draft** | DX-78 | MCP protocol sync | P0: Sync MCP to v5.0, add language support matrix |
 | **Draft** | LX-09 | Legacy project onboarding | Update skill for --mcp-only lightweight path + type checking |
 | **Draft** | DX-68 | Agent behavior optimization | P3-P5, low priority |
 | **Partial** | DX-62 | Proactive reference reading | Layer 1 ✅, Layers 2-4 pending |
