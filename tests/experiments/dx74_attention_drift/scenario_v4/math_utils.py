@@ -2,10 +2,9 @@
 Mathematical utility functions with contracts.
 Focus: Contract quality (A), Logic verification (E)
 """
-from dataclasses import dataclass
-from decimal import Decimal
-from typing import List, Optional, Tuple
 import math
+from dataclasses import dataclass
+
 
 # Simulated Invar runtime imports
 def pre(condition):
@@ -42,7 +41,7 @@ def calculate_factorial(x: int) -> int:
 
 
 @pre(lambda values: isinstance(values, list))  # BUG A-03: Type check only, no semantic constraint
-def calculate_mean(values: List[float]) -> float:
+def calculate_mean(values: list[float]) -> float:
     """
     Calculate arithmetic mean.
 
@@ -55,7 +54,7 @@ def calculate_mean(values: List[float]) -> float:
 
 # BUG A-04: Missing @pre entirely - no input validation
 @post(lambda result: result >= 0)
-def calculate_variance(values: List[float]) -> float:
+def calculate_variance(values: list[float]) -> float:
     """
     Calculate population variance.
 
@@ -85,7 +84,7 @@ def safe_divide(a: float, b: float) -> float:
 # E. LOGIC ISSUES - Errors, dead code, implicit assumptions
 # =============================================================================
 
-def find_maximum(values: List[float]) -> float:
+def find_maximum(values: list[float]) -> float:
     """
     Find the maximum value in a list.
 
@@ -98,15 +97,13 @@ def find_maximum(values: List[float]) -> float:
     max_val = values[0]
     for i in range(1, len(values)):
         # BUG E-03: Wrong comparison operator
-        if values[i] > max_val:
-            max_val = values[i]
-        elif values[i] > max_val:  # BUG E-04: Dead code - duplicate condition
+        if values[i] > max_val or values[i] > max_val:
             max_val = values[i]
 
     return max_val
 
 
-def binary_search(arr: List[int], target: int) -> int:
+def binary_search(arr: list[int], target: int) -> int:
     """
     Binary search for target in sorted array.
 
@@ -193,7 +190,7 @@ def calculate_lcm(a: int, b: int) -> int:
     return abs(a * b) // calculate_gcd(a, b)
 
 
-def fibonacci_sequence(n: int) -> List[int]:
+def fibonacci_sequence(n: int) -> list[int]:
     """
     Generate first n Fibonacci numbers.
 
@@ -212,7 +209,7 @@ def fibonacci_sequence(n: int) -> List[int]:
     return seq
 
 
-def prime_factors(n: int) -> List[int]:
+def prime_factors(n: int) -> list[int]:
     """
     Find all prime factors of n.
 

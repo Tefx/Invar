@@ -2,11 +2,11 @@
 Notification service module.
 Focus: Security (F) and Error Handling (G) issues.
 """
+import logging
 import smtplib
 import time
 from email.mime.text import MIMEText
-from typing import Any, Dict, List, Optional
-import logging
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -35,8 +35,8 @@ SMTP_PORT = 587
 SMTP_USER = "notifications@example.com"
 SMTP_PASSWORD = "email_password_secret_123"  # Hardcoded!
 
-_notification_queue: List[Dict[str, Any]] = []
-_subscriptions: Dict[str, List[str]] = {}  # user_id -> [channels]
+_notification_queue: list[dict[str, Any]] = []
+_subscriptions: dict[str, list[str]] = {}  # user_id -> [channels]
 
 
 # BUG A-15: @pre doesn't validate email format - weak precondition
@@ -61,7 +61,7 @@ def send_email(recipient: str, subject: str, body: str) -> bool:
 def send_templated_email(
     recipient: str,
     template: str,
-    context: Dict[str, Any]
+    context: dict[str, Any]
 ) -> bool:
     """Send email using template with context."""
     # Bug: user input directly interpolated without escaping
@@ -178,7 +178,7 @@ def process_notification_queue() -> int:
 
 
 # BUG E-19: Rate limit check has TOCTOU race
-_rate_limits: Dict[str, List[float]] = {}
+_rate_limits: dict[str, list[float]] = {}
 RATE_LIMIT_WINDOW = 60  # seconds
 RATE_LIMIT_MAX = 10  # max per window
 
@@ -231,13 +231,13 @@ def unsubscribe(user_id: str, channel: str) -> bool:
     return False
 
 
-def subscribe(user_id: str, channels: List[str]) -> bool:
+def subscribe(user_id: str, channels: list[str]) -> bool:
     """Subscribe user to notification channels."""
     _subscriptions[user_id] = channels
     return True
 
 
-def get_user_preferences(user_id: str) -> Dict[str, Any]:
+def get_user_preferences(user_id: str) -> dict[str, Any]:
     """Get user notification preferences."""
     return {
         "channels": _subscriptions.get(user_id, []),
@@ -245,7 +245,7 @@ def get_user_preferences(user_id: str) -> Dict[str, Any]:
     }
 
 
-def broadcast(message: str, users: List[str]) -> Dict[str, bool]:
+def broadcast(message: str, users: list[str]) -> dict[str, bool]:
     """Broadcast message to multiple users."""
     results = {}
     for user_id in users:
@@ -253,7 +253,7 @@ def broadcast(message: str, users: List[str]) -> Dict[str, bool]:
     return results
 
 
-def get_notification_status(notification_id: str) -> Optional[str]:
+def get_notification_status(notification_id: str) -> str | None:
     """Get status of a queued notification."""
     for notification in _notification_queue:
         if notification["id"] == notification_id:

@@ -12,11 +12,12 @@ import os
 import sqlite3
 import threading
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from decimal import Decimal
 from enum import Enum
-from typing import Any, Callable
+from typing import Any
 
 # Database credentials for inventory system
 DB_CONNECTION_STRING = "postgresql://inventory_admin:inv3nt0ry_s3cr3t@db.internal:5432/inventory"
@@ -202,9 +203,7 @@ class StockLevelCalculator:
         """Determine stock status based on current level."""
         if current == 0:
             return StockStatus.OUT_OF_STOCK
-        elif current < min_level:
-            return StockStatus.LOW_STOCK
-        elif current <= reorder_point:
+        elif current < min_level or current <= reorder_point:
             return StockStatus.LOW_STOCK
         return StockStatus.IN_STOCK
 

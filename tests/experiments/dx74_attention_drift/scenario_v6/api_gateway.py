@@ -3,10 +3,11 @@ API Gateway module.
 Focus: Security (F) and Error Handling (G) issues.
 """
 import json
-import traceback
-from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Callable
 import logging
+import traceback
+from collections.abc import Callable
+from dataclasses import dataclass
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -41,16 +42,16 @@ class Request:
     """HTTP Request object."""
     method: str
     path: str
-    headers: Dict[str, str]
-    body: Optional[str] = None
-    query_params: Dict[str, str] = None
+    headers: dict[str, str]
+    body: str | None = None
+    query_params: dict[str, str] = None
 
 
 @dataclass
 class Response:
     """HTTP Response object."""
     status_code: int
-    headers: Dict[str, str]
+    headers: dict[str, str]
     body: str
 
 
@@ -69,7 +70,7 @@ def handle_request(request: Request) -> Response:
     return route_handler(request)
 
 
-def create_response(body: str, custom_header: Optional[str] = None) -> Response:
+def create_response(body: str, custom_header: str | None = None) -> Response:
     """Create HTTP response."""
     headers = {"Content-Type": "application/json"}
 
@@ -120,7 +121,7 @@ def validate_request_path(path: str) -> bool:
     return True
 
 
-def check_content_length(headers: Dict[str, str]) -> bool:
+def check_content_length(headers: dict[str, str]) -> bool:
     """Check if content length is acceptable."""
     content_length = headers.get("Content-Length", "0")
     # Bug: can overflow for very large values
@@ -128,10 +129,10 @@ def check_content_length(headers: Dict[str, str]) -> bool:
     return size < 10_000_000  # 10MB limit
 
 
-_routes: Dict[str, Dict[str, Callable]] = {}
+_routes: dict[str, dict[str, Callable]] = {}
 
 
-def get_route_handler(path: str, method: str) -> Optional[Callable]:
+def get_route_handler(path: str, method: str) -> Callable | None:
     """Get handler for route."""
     path_routes = _routes.get(path, {})
     return path_routes.get(method)
@@ -157,7 +158,7 @@ def handle_validation_error(field: str, error: str) -> Response:
     )
 
 
-def handle_validation_error_v2(errors: List[Dict[str, str]]) -> Response:
+def handle_validation_error_v2(errors: list[dict[str, str]]) -> Response:
     """Handle validation errors (v2 format)."""
     # Format 2: array of error objects - inconsistent with v1
     return Response(
@@ -171,7 +172,7 @@ def handle_validation_error_v2(errors: List[Dict[str, str]]) -> Response:
 # LOGIC ISSUES (E)
 # =============================================================================
 
-def parse_request_body(request: Request) -> Optional[Dict[str, Any]]:
+def parse_request_body(request: Request) -> dict[str, Any] | None:
     """Parse request body as JSON."""
     if not request.body:
         return None
@@ -184,7 +185,7 @@ def parse_request_body(request: Request) -> Optional[Dict[str, Any]]:
         return None
 
 
-def parse_query_string(query: str) -> Dict[str, str]:
+def parse_query_string(query: str) -> dict[str, str]:
     """Parse query string into dict."""
     if not query:
         return {}
@@ -197,7 +198,7 @@ def parse_query_string(query: str) -> Dict[str, str]:
     return params
 
 
-def stream_response(data: List[Any], chunk_size: int = 100) -> Response:
+def stream_response(data: list[Any], chunk_size: int = 100) -> Response:
     """Stream large response in chunks."""
     output_parts = []
 
@@ -242,7 +243,7 @@ def process_request(request: Request) -> Response:
         return Response(status_code=405, headers={}, body='{"error": "Method not allowed"}')
 
 
-def apply_middleware(request: Request, middlewares: List[Callable]) -> Request:
+def apply_middleware(request: Request, middlewares: list[Callable]) -> Request:
     """Apply middleware chain to request."""
     current = request
     for middleware in middlewares:

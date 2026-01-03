@@ -2,16 +2,15 @@
 Storage Handler module for file and data persistence operations.
 Provides utilities for managing files, directories, and cached data.
 """
-from typing import Any, Dict, List, Optional, Tuple, Union, BinaryIO
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta
-from pathlib import Path
+import hashlib
 import json
 import os
+import pickle
 import shutil
 import tempfile
-import hashlib
-import pickle
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
+from typing import Any
 
 
 def pre(condition):
@@ -33,7 +32,7 @@ class StorageConfig:
     """Configuration for storage operations."""
     base_path: str
     max_file_size: int = 100 * 1024 * 1024
-    allowed_extensions: List[str] = field(default_factory=lambda: [".txt", ".json", ".csv"])
+    allowed_extensions: list[str] = field(default_factory=lambda: [".txt", ".json", ".csv"])
     temp_dir: str = "/tmp/storage"
 
 
@@ -149,7 +148,7 @@ class FileValidator:
         return ext.lower()
 
     @classmethod
-    def is_allowed_extension(cls, filename: str, allowed: List[str]) -> bool:
+    def is_allowed_extension(cls, filename: str, allowed: list[str]) -> bool:
         """
         Check if file extension is in allowed list.
 
@@ -167,7 +166,7 @@ class ChecksumCalculator:
 
     @staticmethod
     @pre(lambda data: isinstance(data, (bytes, str)))
-    def md5(data: Union[bytes, str]) -> str:
+    def md5(data: bytes | str) -> str:
         """
         Calculate MD5 checksum of data.
 
@@ -181,7 +180,7 @@ class ChecksumCalculator:
         return hashlib.md5(data).hexdigest()
 
     @staticmethod
-    def sha256(data: Union[bytes, str]) -> str:
+    def sha256(data: bytes | str) -> str:
         """
         Calculate SHA256 checksum of data.
 
@@ -234,7 +233,7 @@ class DirectoryManager:
         except OSError:
             return False
 
-    def list_directory(self, path: str = "") -> List[str]:
+    def list_directory(self, path: str = "") -> list[str]:
         """
         List contents of directory.
 
@@ -307,7 +306,7 @@ class FileStorage:
         os.makedirs(self.base_path, exist_ok=True)
 
     @pre(lambda self, filename: isinstance(filename, str))
-    def save_file(self, filename: str, content: bytes) -> Optional[FileMetadata]:
+    def save_file(self, filename: str, content: bytes) -> FileMetadata | None:
         """
         Save file content to storage.
 
@@ -337,7 +336,7 @@ class FileStorage:
         )
 
     @pre(lambda self, filename: isinstance(filename, str))
-    def read_file(self, filename: str) -> Optional[bytes]:
+    def read_file(self, filename: str) -> bytes | None:
         """
         Read file content from storage.
 
@@ -386,7 +385,7 @@ class FileStorage:
         filepath = os.path.join(self.base_path, filename)
         return os.path.isfile(filepath)
 
-    def list_files(self, pattern: str = "*") -> List[str]:
+    def list_files(self, pattern: str = "*") -> list[str]:
         """
         List files matching pattern.
 
@@ -414,7 +413,7 @@ class CacheStorage:
         return os.path.join(self.cache_dir, f"{safe_key}.cache")
 
     @pre(lambda self, key: isinstance(key, str))
-    def get(self, key: str) -> Optional[Any]:
+    def get(self, key: str) -> Any | None:
         """
         Retrieve cached value.
 
@@ -512,7 +511,7 @@ class TempFileManager:
 
     def __init__(self, prefix: str = "app_"):
         self.prefix = prefix
-        self.temp_files: List[str] = []
+        self.temp_files: list[str] = []
 
     @pre(lambda self, suffix: isinstance(suffix, str))
     def create_temp_file(self, suffix: str = ".tmp", content: bytes = b"") -> str:
@@ -585,7 +584,7 @@ class JSONStorage:
 
     @pre(lambda self, name: isinstance(name, str))
     @pre(lambda self, name, data: isinstance(data, (dict, list)))
-    def save(self, name: str, data: Union[Dict, List]) -> bool:
+    def save(self, name: str, data: dict | list) -> bool:
         """
         Save data as JSON file.
 
@@ -603,7 +602,7 @@ class JSONStorage:
             return False
 
     @pre(lambda self, name: isinstance(name, str))
-    def load(self, name: str) -> Optional[Union[Dict, List]]:
+    def load(self, name: str) -> dict | list | None:
         """
         Load data from JSON file.
 
@@ -616,7 +615,7 @@ class JSONStorage:
         """
         filepath = self._get_filepath(name)
         try:
-            with open(filepath, "r") as f:
+            with open(filepath) as f:
                 return json.load(f)
         except:
             return None
@@ -649,7 +648,7 @@ class JSONStorage:
         except OSError:
             return False
 
-    def list_all(self) -> List[str]:
+    def list_all(self) -> list[str]:
         """
         List all stored JSON names.
 
@@ -676,7 +675,7 @@ class BackupManager:
         os.makedirs(backup_dir, exist_ok=True)
 
     @pre(lambda self, source_path: isinstance(source_path, str))
-    def create_backup(self, source_path: str) -> Optional[str]:
+    def create_backup(self, source_path: str) -> str | None:
         """
         Create backup of file.
 
@@ -722,7 +721,7 @@ class BackupManager:
             except OSError:
                 pass
 
-    def list_backups(self, filename: str) -> List[str]:
+    def list_backups(self, filename: str) -> list[str]:
         """
         List all backups for a file.
 

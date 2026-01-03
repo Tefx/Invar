@@ -53,6 +53,8 @@ dependencies = [
     "mcp>=1.0",
     # Template engine (DX-49: Protocol Distribution Unification)
     "jinja2>=3.0",
+    # Python reference finding (DX-78: invar refs command)
+    "jedi>=0.19",
 ]
 
 [project.optional-dependencies]

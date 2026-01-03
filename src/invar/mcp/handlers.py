@@ -114,6 +114,34 @@ async def _run_map(args: dict[str, Any]) -> list[TextContent]:
     return await _execute_command(cmd)
 
 
+# @shell_orchestration: MCP handler - orchestrates refs command execution
+# @invar:allow shell_result: MCP handler for refs tool
+async def _run_refs(args: dict[str, Any]) -> list[TextContent]:
+    """Run invar refs command.
+
+    DX-78: Find all references to a symbol.
+    Target format: "path/to/file.py::symbol" or "path/to/file.ts::symbol"
+    """
+    target = args.get("target", "")
+    if not target:
+        return [TextContent(type="text", text="Error: 'target' parameter is required")]
+
+    # Parse target to validate file path
+    if "::" not in target:
+        return [TextContent(type="text", text="Error: Invalid target format. Use 'file::symbol'")]
+
+    file_part, _symbol = target.rsplit("::", 1)
+    is_valid, error = _validate_path(file_part)
+    if not is_valid:
+        return [TextContent(type="text", text=f"Error: {error}")]
+
+    cmd = [sys.executable, "-m", "invar.shell.commands.guard", "refs"]
+    cmd.append(target)
+    cmd.append("--json")
+
+    return await _execute_command(cmd)
+
+
 # DX-76: Document query handlers
 # @shell_orchestration: MCP handler - calls shell layer directly
 # @shell_complexity: MCP input validation + result handling

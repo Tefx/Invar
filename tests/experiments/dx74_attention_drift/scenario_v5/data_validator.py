@@ -2,9 +2,9 @@
 Data validation module.
 Focus: Contract (A) and Doctest (B) issues.
 """
-import re
-from typing import Any, Dict, List, Optional, Tuple
 import logging
+import re
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +29,7 @@ def post(condition):
 
 # BUG A-07: @pre(lambda data: True) - trivial precondition
 @pre(lambda data: True)
-def validate_data(data: Dict[str, Any]) -> Tuple[bool, List[str]]:
+def validate_data(data: dict[str, Any]) -> tuple[bool, list[str]]:
     """
     Validate data dictionary.
 
@@ -46,7 +46,7 @@ def validate_data(data: Dict[str, Any]) -> Tuple[bool, List[str]]:
 
 # BUG A-08: @pre doesn't check all required fields - incomplete contract
 @pre(lambda user: "email" in user)  # Missing: name, age checks
-def validate_user(user: Dict[str, Any]) -> bool:
+def validate_user(user: dict[str, Any]) -> bool:
     """Validate user data."""
     required = ["email", "name", "age"]
     for field in required:
@@ -71,12 +71,12 @@ def sanitize_text(text: str) -> str:
 class DataValidator:
     """Validates data against schema."""
 
-    def __init__(self, schema: Dict[str, type]):
+    def __init__(self, schema: dict[str, type]):
         self.schema = schema
         self.validated_count = 0
         self.error_count = 0
 
-    def validate(self, data: Dict[str, Any]) -> bool:
+    def validate(self, data: dict[str, Any]) -> bool:
         """Validate data against schema."""
         for field, field_type in self.schema.items():
             if field not in data:
@@ -119,7 +119,7 @@ def validate_age(age: int) -> bool:
 
 
 # BUG G-28: Validation can be skipped via exception
-def validate_required_fields(data: Dict[str, Any], required: List[str]) -> bool:
+def validate_required_fields(data: dict[str, Any], required: list[str]) -> bool:
     """Validate all required fields are present."""
     try:
         for field in required:
@@ -190,7 +190,7 @@ def validate_complex_pattern(text: str) -> bool:
 
 
 # BUG G-39: Validation errors not aggregated
-def validate_form(form_data: Dict[str, Any]) -> Tuple[bool, Optional[str]]:
+def validate_form(form_data: dict[str, Any]) -> tuple[bool, str | None]:
     """Validate form data."""
     if "email" not in form_data:
         return (False, "Missing email")  # Returns on first error
@@ -218,7 +218,7 @@ def safe_sanitize(text: str) -> str:
         return ""
 
 
-def validate_json_schema(data: Dict[str, Any], schema: Dict[str, Any]) -> bool:
+def validate_json_schema(data: dict[str, Any], schema: dict[str, Any]) -> bool:
     """Validate data against JSON schema."""
     for field, requirements in schema.items():
         if requirements.get("required", False):
@@ -237,7 +237,7 @@ def validate_json_schema(data: Dict[str, Any], schema: Dict[str, Any]) -> bool:
     return True
 
 
-def validate_list_items(items: List[Any], item_validator) -> List[Tuple[int, str]]:
+def validate_list_items(items: list[Any], item_validator) -> list[tuple[int, str]]:
     """Validate each item in list."""
     errors = []
     for i, item in enumerate(items):
@@ -249,7 +249,7 @@ def validate_list_items(items: List[Any], item_validator) -> List[Tuple[int, str
     return errors
 
 
-def validate_nested_dict(data: Dict[str, Any], path: str = "") -> List[str]:
+def validate_nested_dict(data: dict[str, Any], path: str = "") -> list[str]:
     """Validate nested dictionary structure."""
     errors = []
 
@@ -268,7 +268,7 @@ def validate_nested_dict(data: Dict[str, Any], path: str = "") -> List[str]:
     return errors
 
 
-def normalize_data(data: Dict[str, Any]) -> Dict[str, Any]:
+def normalize_data(data: dict[str, Any]) -> dict[str, Any]:
     """Normalize data values."""
     normalized = {}
     for key, value in data.items():

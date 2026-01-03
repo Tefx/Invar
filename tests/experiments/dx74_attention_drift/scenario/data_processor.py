@@ -5,7 +5,6 @@ Bugs: 9 exception handling issues
 """
 
 import json
-from typing import Any
 
 
 def parse_json_data(data: str) -> dict:

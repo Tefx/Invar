@@ -53,8 +53,8 @@
 
 - **PyPI:** `invar-tools` v1.10.0 + `invar-runtime` v1.3.0
 - **Protocol:** v5.0 (USBV workflow, DX-58 critical section)
-- **Status:** Feature complete, TypeScript support added
-- **Recent:** LX-05 (language-agnostic), LX-06 (TypeScript tooling), LX-07 (Extension Skills)
+- **Status:** Feature complete, TypeScript support added (DX-78)
+- **Recent:** DX-78 (TypeScript Compiler API integration), LX-05 (language-agnostic), LX-06 (TypeScript tooling), LX-07 (Extension Skills)
 - **Blockers:** None
 
 ## Active Work
@@ -114,6 +114,55 @@ Smart Guard (`invar guard`) runs multiple verification layers:
 | Find entry points | `invar map --top` | — |
 | Find specific symbol | Serena `find_symbol` | `invar map` + grep |
 | Verify | `invar guard` | — |
+
+---
+
+## TypeScript Integration (DX-78)
+
+**Status:** Complete and reviewed (2026-01-03)
+
+### Architecture
+
+- **Python wrapper:** `src/invar/shell/ts_compiler.py` (uses subprocess to call Node.js)
+- **TypeScript tool:** `src/invar/node_tools/ts-query.js` (TypeScript Compiler API)
+- **Python refs:** `src/invar/shell/py_refs.py` (jedi library)
+- **CLI integration:** `perception.py`, `guard.py` (multi-language routing)
+- **MCP integration:** `handlers.py`, `server.py` (invar_refs tool)
+
+### Supported Commands
+
+| Command | Python | TypeScript |
+|---------|--------|------------|
+| `invar sig <file>` | ✅ | ✅ |
+| `invar map <path>` | ✅ | ✅ |
+| `invar refs <file>::<symbol>` | ✅ (jedi) | ✅ (TS Compiler API) |
+
+### Security Model
+
+- **Single-shot subprocess:** Process starts, runs query, outputs JSON, exits
+- **No orphan risk:** No persistent Node.js processes
+- **Path validation:** All file paths validated before subprocess execution
+- **JSON parsing:** Input validation with error handling
+
+### Dependencies
+
+- **Runtime:** Node.js + TypeScript package (peer dependency)
+- **Python:** jedi library (required for Python refs)
+- **Detection:** Automatic via tsconfig.json presence
+
+### Known Limitations
+
+- Requires tsconfig.json in project root
+- TypeScript project must be compilable
+- No support for decorator metadata yet
+
+### Review History
+
+- **2026-01-03:** Adversarial review completed
+  - Fixed 4 critical TypeScript bugs (JSON parsing, null checks, I/O error handling, TOCTOU)
+  - Fixed 5 major Python bugs (column hardcoding, missing markers, weak tests, dynamic types)
+  - 32 integration tests passing
+  - Guard: 0 errors, 0 warnings
 
 ---
 

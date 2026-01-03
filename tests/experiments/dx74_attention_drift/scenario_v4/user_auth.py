@@ -2,12 +2,12 @@
 User authentication module.
 Focus: Security (F), Error Handling (G)
 """
+import hashlib
+import logging
+import secrets
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Optional, Dict, Any
-import hashlib
-import secrets
-import logging
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -74,9 +74,9 @@ class AuthService:
 
     def __init__(self):
         self.password_manager = PasswordManager()
-        self.users: Dict[str, User] = {}
-        self.tokens: Dict[str, AuthToken] = {}
-        self.failed_attempts: Dict[str, int] = {}
+        self.users: dict[str, User] = {}
+        self.tokens: dict[str, AuthToken] = {}
+        self.failed_attempts: dict[str, int] = {}
 
     def register(self, username: str, email: str, password: str) -> User:
         """Register a new user."""
@@ -95,7 +95,7 @@ class AuthService:
         self.users[user_id] = user
         return user
 
-    def login(self, email: str, password: str) -> Optional[AuthToken]:
+    def login(self, email: str, password: str) -> AuthToken | None:
         """Authenticate user and return token."""
         user = self._find_user_by_email(email)
 
@@ -113,7 +113,7 @@ class AuthService:
 
         return self._create_token(user.id)
 
-    def _find_user_by_email(self, email: str) -> Optional[User]:
+    def _find_user_by_email(self, email: str) -> User | None:
         """Find user by email."""
         for user in self.users.values():
             if user.email == email:
@@ -145,7 +145,7 @@ class TokenValidator:
     def __init__(self, auth_service: AuthService):
         self.auth_service = auth_service
 
-    def validate_token(self, token_str: str) -> Optional[User]:
+    def validate_token(self, token_str: str) -> User | None:
         """Validate token and return user."""
         try:
             token = self.auth_service.tokens.get(token_str)
@@ -208,9 +208,9 @@ class SessionManager:
     """Manages user sessions."""
 
     def __init__(self):
-        self.sessions: Dict[str, Dict[str, Any]] = {}
+        self.sessions: dict[str, dict[str, Any]] = {}
 
-    def create_session(self, user_id: str, metadata: Dict = None) -> str:
+    def create_session(self, user_id: str, metadata: dict = None) -> str:
         """Create a new session."""
         session_id = secrets.token_urlsafe(24)
 
@@ -222,7 +222,7 @@ class SessionManager:
 
         return session_id
 
-    def get_session(self, session_id: str) -> Optional[Dict]:
+    def get_session(self, session_id: str) -> dict | None:
         """Get session data."""
         session = self.sessions.get(session_id)
 

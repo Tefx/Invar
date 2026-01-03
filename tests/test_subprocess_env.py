@@ -10,8 +10,6 @@ import sys
 from pathlib import Path
 from unittest.mock import patch
 
-import pytest
-
 from invar.shell.subprocess_env import (
     build_subprocess_env,
     check_version_mismatch,
@@ -22,7 +20,6 @@ from invar.shell.subprocess_env import (
     should_respawn,
     should_suppress_prompt,
 )
-
 
 # =============================================================================
 # Phase 1: PYTHONPATH Injection Tests

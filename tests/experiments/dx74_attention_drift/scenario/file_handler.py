@@ -6,8 +6,6 @@ Bugs: 8 path/file handling issues
 
 import os
 import shutil
-from pathlib import Path
-
 
 UPLOAD_DIR = "/var/uploads"
 ALLOWED_EXTENSIONS = {".txt", ".pdf", ".jpg", ".png"}

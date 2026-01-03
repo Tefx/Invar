@@ -1,14 +1,13 @@
 """
 Cache service module for caching operations.
 """
+import hashlib
+import threading
+from collections import OrderedDict
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Any, Callable, Optional, TypeVar, Generic
-from collections import OrderedDict
-import threading
-import hashlib
-import json
-
+from typing import Any, Generic, TypeVar
 
 T = TypeVar('T')
 
@@ -19,7 +18,7 @@ class CacheEntry(Generic[T]):
     key: str
     value: T
     created_at: datetime
-    expires_at: Optional[datetime]
+    expires_at: datetime | None
     access_count: int = 0
     last_accessed: datetime = field(default_factory=datetime.now)
 

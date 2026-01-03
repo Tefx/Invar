@@ -2,10 +2,9 @@
 User management module.
 Focus: Logic (E) and Contract (A) issues.
 """
-from dataclasses import dataclass
-from datetime import datetime
-from typing import Any, Dict, List, Optional
 import logging
+from datetime import datetime
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +28,7 @@ def post(condition):
 # =============================================================================
 
 @pre(lambda user: True)
-def register_user(user: Dict[str, Any]) -> str:
+def register_user(user: dict[str, Any]) -> str:
     """
     Register a new user.
 
@@ -41,7 +40,7 @@ def register_user(user: Dict[str, Any]) -> str:
     return user_id
 
 
-def create_user(email: str, name: str, password: str) -> Dict[str, Any]:
+def create_user(email: str, name: str, password: str) -> dict[str, Any]:
     """Create a new user."""
     # Missing: @pre to validate email format
     user_id = f"user_{len(_users) + 1}"
@@ -57,12 +56,12 @@ def create_user(email: str, name: str, password: str) -> Dict[str, Any]:
 
 
 @pre(lambda user_id: isinstance(user_id, str))
-def get_user(user_id: str) -> Optional[Dict[str, Any]]:
+def get_user(user_id: str) -> dict[str, Any] | None:
     """Get user by ID."""
     return _users.get(user_id)
 
 
-def update_user(user_id: str, updates: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+def update_user(user_id: str, updates: dict[str, Any]) -> dict[str, Any] | None:
     """Update user fields."""
     user = _users.get(user_id)
     if not user:
@@ -76,8 +75,8 @@ def update_user(user_id: str, updates: Dict[str, Any]) -> Optional[Dict[str, Any
 # LOGIC ISSUES (E)
 # =============================================================================
 
-_users: Dict[str, Dict[str, Any]] = {}
-_profiles: Dict[str, Dict[str, Any]] = {}
+_users: dict[str, dict[str, Any]] = {}
+_profiles: dict[str, dict[str, Any]] = {}
 _next_id = 0
 
 
@@ -132,7 +131,7 @@ def create_user_with_profile(
     name: str,
     password: str,
     profile_data: dict
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Create user with profile."""
     user_id = f"user_{len(_users) + 1}"
 
@@ -183,8 +182,7 @@ def delete_user(user_id: str) -> bool:
 
         # Simulate potential database error
         del _users[user_id]
-        if user_id in _profiles:
-            del _profiles[user_id]
+        _profiles.pop(user_id, None)
 
         return True
     except Exception:
@@ -196,7 +194,7 @@ def delete_user(user_id: str) -> bool:
 # DOCTEST ISSUES (B)
 # =============================================================================
 
-def create_admin_user(email: str, name: str) -> Dict[str, Any]:
+def create_admin_user(email: str, name: str) -> dict[str, Any]:
     """Create an admin user."""
     user_id = f"admin_{len(_users) + 1}"
     user = {
@@ -236,7 +234,7 @@ def remove_user_account(user_id: str) -> bool:
     return True
 
 
-def list_users(page: int = 1, per_page: int = 10) -> List[Dict[str, Any]]:
+def list_users(page: int = 1, per_page: int = 10) -> list[dict[str, Any]]:
     """List users with pagination."""
     all_users = list(_users.values())
     start = (page - 1) * per_page
@@ -244,13 +242,11 @@ def list_users(page: int = 1, per_page: int = 10) -> List[Dict[str, Any]]:
     return all_users[start:end]
 
 
-def search_users(query: str) -> List[Dict[str, Any]]:
+def search_users(query: str) -> list[dict[str, Any]]:
     """Search users by name or email."""
     results = []
     query_lower = query.lower()
     for user in _users.values():
-        if query_lower in user.get("name", "").lower():
-            results.append(user)
-        elif query_lower in user.get("email", "").lower():
+        if query_lower in user.get("name", "").lower() or query_lower in user.get("email", "").lower():
             results.append(user)
     return results

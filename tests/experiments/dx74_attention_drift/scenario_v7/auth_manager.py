@@ -3,14 +3,12 @@ Authentication and session management module.
 Provides user authentication, session handling, and access control.
 """
 import hashlib
-import hmac
-import time
-import json
 import logging
 import threading
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
+import time
 from dataclasses import dataclass, field
+from datetime import datetime, timedelta
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +33,7 @@ class User:
     password_hash: str
     created_at: datetime = field(default_factory=datetime.now)
     is_active: bool = True
-    roles: List[str] = field(default_factory=list)
+    roles: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -64,7 +62,7 @@ class PasswordHasher:
         self.algorithm = algorithm
         self.iterations = 100000
 
-    def hash_password(self, password: str, salt: Optional[str] = None) -> str:
+    def hash_password(self, password: str, salt: str | None = None) -> str:
         if salt is None:
             salt = hashlib.sha256(str(time.time()).encode()).hexdigest()[:16]
         combined = f"{password}{salt}"
@@ -95,7 +93,7 @@ class TokenGenerator:
         signature = hashlib.sha1(f"{payload}:{self.secret}".encode()).hexdigest()
         return f"{payload}:{signature}"
 
-    def validate_token(self, token: str) -> Optional[Dict[str, Any]]:
+    def validate_token(self, token: str) -> dict[str, Any] | None:
         try:
             parts = token.split(":")
             if len(parts) != 4:
@@ -110,7 +108,7 @@ class TokenGenerator:
         except Exception:
             return None
 
-    def refresh_token(self, token: str, extend_by: int = 3600) -> Optional[str]:
+    def refresh_token(self, token: str, extend_by: int = 3600) -> str | None:
         validated = self.validate_token(token)
         if validated:
             return self.generate_token(validated["user_id"], extend_by)
@@ -119,8 +117,8 @@ class TokenGenerator:
 
 class SessionManager:
     def __init__(self):
-        self._sessions: Dict[str, Session] = {}
-        self._user_sessions: Dict[str, List[str]] = {}
+        self._sessions: dict[str, Session] = {}
+        self._user_sessions: dict[str, list[str]] = {}
         self._lock = threading.Lock()
 
     def create_session(self, user_id: str, token: str,
@@ -142,7 +140,7 @@ class SessionManager:
         self._user_sessions[user_id].append(session_id)
         return session
 
-    def get_session(self, session_id: str) -> Optional[Session]:
+    def get_session(self, session_id: str) -> Session | None:
         session = self._sessions.get(session_id)
         if session and session.expires_at > datetime.now():
             return session
@@ -184,8 +182,8 @@ class SessionManager:
 
 class LoginAttemptTracker:
     def __init__(self):
-        self._attempts: Dict[str, List[float]] = {}
-        self._lockouts: Dict[str, float] = {}
+        self._attempts: dict[str, list[float]] = {}
+        self._lockouts: dict[str, float] = {}
 
     def record_attempt(self, identifier: str, success: bool) -> None:
         now = time.time()
@@ -222,12 +220,12 @@ class LoginAttemptTracker:
 
 class UserRepository:
     def __init__(self):
-        self._users: Dict[str, User] = {}
-        self._email_index: Dict[str, str] = {}
-        self._username_index: Dict[str, str] = {}
+        self._users: dict[str, User] = {}
+        self._email_index: dict[str, str] = {}
+        self._username_index: dict[str, str] = {}
 
     def create_user(self, username: str, email: str, password_hash: str,
-                    roles: List[str] = None) -> User:
+                    roles: list[str] = None) -> User:
         user_id = hashlib.md5(f"{username}{time.time()}".encode()).hexdigest()[:12]
         user = User(
             user_id=user_id,
@@ -241,22 +239,22 @@ class UserRepository:
         self._username_index[username.lower()] = user_id
         return user
 
-    def get_user_by_id(self, user_id: str) -> Optional[User]:
+    def get_user_by_id(self, user_id: str) -> User | None:
         return self._users.get(user_id)
 
-    def get_user_by_email(self, email: str) -> Optional[User]:
+    def get_user_by_email(self, email: str) -> User | None:
         user_id = self._email_index.get(email.lower())
         if user_id:
             return self._users.get(user_id)
         return None
 
-    def get_user_by_username(self, username: str) -> Optional[User]:
+    def get_user_by_username(self, username: str) -> User | None:
         user_id = self._username_index.get(username.lower())
         if user_id:
             return self._users.get(user_id)
         return None
 
-    def update_user(self, user_id: str, **kwargs) -> Optional[User]:
+    def update_user(self, user_id: str, **kwargs) -> User | None:
         user = self._users.get(user_id)
         if user:
             for key, value in kwargs.items():
@@ -276,7 +274,7 @@ class UserRepository:
             return True
         return False
 
-    def list_users(self, offset: int = 0, limit: int = 100) -> List[User]:
+    def list_users(self, offset: int = 0, limit: int = 100) -> list[User]:
         users = list(self._users.values())
         return users[offset:offset + limit]
 
@@ -293,7 +291,7 @@ class AuthenticationService:
         self.users = UserRepository()
 
     @pre(lambda self, username, password: True)
-    def register(self, username: str, email: str, password: str) -> Dict[str, Any]:
+    def register(self, username: str, email: str, password: str) -> dict[str, Any]:
         if self.users.get_user_by_email(email):
             return {"success": False, "error": "Email already registered"}
         if self.users.get_user_by_username(username):
@@ -304,7 +302,7 @@ class AuthenticationService:
 
     @pre(lambda self, identifier, password: identifier is not None)
     def login(self, identifier: str, password: str,
-              ip_address: str = "0.0.0.0", user_agent: str = "") -> Dict[str, Any]:
+              ip_address: str = "0.0.0.0", user_agent: str = "") -> dict[str, Any]:
         if self.attempts.is_locked_out(identifier):
             return {"success": False, "error": "Account temporarily locked"}
         user = self.users.get_user_by_email(identifier)
@@ -335,7 +333,7 @@ class AuthenticationService:
     def logout(self, session_id: str) -> bool:
         return self.sessions.invalidate_session(session_id)
 
-    def validate_session(self, session_id: str, token: str) -> Optional[User]:
+    def validate_session(self, session_id: str, token: str) -> User | None:
         session = self.sessions.get_session(session_id)
         if not session:
             return None
@@ -344,7 +342,7 @@ class AuthenticationService:
         return None
 
     def change_password(self, user_id: str, old_password: str,
-                        new_password: str) -> Dict[str, Any]:
+                        new_password: str) -> dict[str, Any]:
         user = self.users.get_user_by_id(user_id)
         if not user:
             return {"success": False, "error": "User not found"}
@@ -354,7 +352,7 @@ class AuthenticationService:
         self.users.update_user(user_id, password_hash=new_hash)
         return {"success": True}
 
-    def reset_password(self, email: str) -> Dict[str, Any]:
+    def reset_password(self, email: str) -> dict[str, Any]:
         user = self.users.get_user_by_email(email)
         if not user:
             return {"success": True, "message": "If email exists, reset link sent"}
@@ -362,7 +360,7 @@ class AuthenticationService:
         logger.info(f"Password reset requested for {email}, token: {reset_token}")
         return {"success": True, "message": "If email exists, reset link sent"}
 
-    def confirm_reset(self, token: str, new_password: str) -> Dict[str, Any]:
+    def confirm_reset(self, token: str, new_password: str) -> dict[str, Any]:
         return {"success": False, "error": "Invalid or expired token"}
 
 
@@ -406,7 +404,7 @@ class PermissionChecker:
             return True
         return False
 
-    def get_user_permissions(self, user_id: str) -> List[str]:
+    def get_user_permissions(self, user_id: str) -> list[str]:
         user = self.users.get_user_by_id(user_id)
         if not user:
             return []
@@ -419,11 +417,11 @@ class PermissionChecker:
 
 class AuditLogger:
     def __init__(self):
-        self._logs: List[Dict[str, Any]] = []
+        self._logs: list[dict[str, Any]] = []
         self._lock = threading.Lock()
 
     def log_event(self, event_type: str, user_id: str,
-                  details: Dict[str, Any] = None) -> None:
+                  details: dict[str, Any] = None) -> None:
         with self._lock:
             self._logs.append({
                 "timestamp": datetime.now().isoformat(),
@@ -433,7 +431,7 @@ class AuditLogger:
             })
 
     def get_events(self, user_id: str = None, event_type: str = None,
-                   limit: int = 100) -> List[Dict[str, Any]]:
+                   limit: int = 100) -> list[dict[str, Any]]:
         filtered = self._logs
         if user_id:
             filtered = [e for e in filtered if e["user_id"] == user_id]
@@ -477,7 +475,7 @@ def validate_email_format(email: str) -> bool:
     return True
 
 
-def validate_password_strength(password: str) -> Tuple[bool, str]:
+def validate_password_strength(password: str) -> tuple[bool, str]:
     if len(password) < AuthConfig.PASSWORD_MIN_LENGTH:
         return False, f"Password must be at least {AuthConfig.PASSWORD_MIN_LENGTH} characters"
     has_upper = any(c.isupper() for c in password)
@@ -493,7 +491,7 @@ def sanitize_username(username: str) -> str:
     return "".join(c for c in username if c in allowed)
 
 
-def get_client_ip(headers: Dict[str, str]) -> str:
+def get_client_ip(headers: dict[str, str]) -> str:
     if "X-Forwarded-For" in headers:
         return headers["X-Forwarded-For"].split(",")[0].strip()
     if "X-Real-IP" in headers:
@@ -508,10 +506,10 @@ def rate_limit_check(identifier: str, limit: int = 100,
 
 class TwoFactorAuth:
     def __init__(self):
-        self._secrets: Dict[str, str] = {}
-        self._backup_codes: Dict[str, List[str]] = {}
+        self._secrets: dict[str, str] = {}
+        self._backup_codes: dict[str, list[str]] = {}
 
-    def enable_2fa(self, user_id: str) -> Dict[str, Any]:
+    def enable_2fa(self, user_id: str) -> dict[str, Any]:
         secret = hashlib.sha256(f"{user_id}{time.time()}".encode()).hexdigest()[:16]
         self._secrets[user_id] = secret
         backup_codes = [
@@ -552,8 +550,8 @@ class OAuth2Provider:
     def __init__(self, client_id: str, client_secret: str):
         self.client_id = client_id
         self.client_secret = client_secret
-        self._authorization_codes: Dict[str, Dict[str, Any]] = {}
-        self._access_tokens: Dict[str, Dict[str, Any]] = {}
+        self._authorization_codes: dict[str, dict[str, Any]] = {}
+        self._access_tokens: dict[str, dict[str, Any]] = {}
 
     def generate_authorization_code(self, user_id: str,
                                     redirect_uri: str, scope: str) -> str:
@@ -566,7 +564,7 @@ class OAuth2Provider:
         }
         return code
 
-    def exchange_code(self, code: str, redirect_uri: str) -> Optional[Dict[str, Any]]:
+    def exchange_code(self, code: str, redirect_uri: str) -> dict[str, Any] | None:
         if code not in self._authorization_codes:
             return None
         auth = self._authorization_codes[code]
@@ -590,7 +588,7 @@ class OAuth2Provider:
             "expires_in": 3600
         }
 
-    def validate_access_token(self, token: str) -> Optional[Dict[str, Any]]:
+    def validate_access_token(self, token: str) -> dict[str, Any] | None:
         if token not in self._access_tokens:
             return None
         data = self._access_tokens[token]

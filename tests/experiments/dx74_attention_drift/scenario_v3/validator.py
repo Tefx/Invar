@@ -1,11 +1,11 @@
 """
 Validation module for various data types.
 """
-from dataclasses import dataclass
-from datetime import datetime, date
-from typing import Any, Callable, TypeVar, Generic
 import re
-
+from collections.abc import Callable
+from dataclasses import dataclass
+from datetime import date
+from typing import Any, Generic, TypeVar
 
 T = TypeVar('T')
 

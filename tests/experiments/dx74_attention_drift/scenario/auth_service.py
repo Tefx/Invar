@@ -5,8 +5,6 @@ Bugs: 8 security-related issues
 """
 
 import hashlib
-import os
-
 
 # BUG-01: Hardcoded secret key
 SECRET_KEY = "super_secret_key_12345"

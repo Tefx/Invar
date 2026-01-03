@@ -26,27 +26,42 @@ from invar.mcp.handlers import (
     _run_doc_toc,
     _run_guard,
     _run_map,
+    _run_refs,
     _run_sig,
 )
 from invar.shell.subprocess_env import should_respawn
 
-# Strong instructions for agent behavior (DX-16 + DX-17 + DX-26 + DX-76)
+# Strong instructions for agent behavior (DX-16 + DX-17 + DX-26 + DX-76 + DX-78)
 INVAR_INSTRUCTIONS = """
 ## Invar Tool Usage (MANDATORY)
 
 This project uses Invar for all code verification and analysis.
 The following rules are MANDATORY, not suggestions.
 
-### Session Start (REQUIRED)
+### Check-In (REQUIRED)
 
-Before writing ANY code, you MUST execute:
+Your first message MUST display:
+```
+✓ Check-In: [project] | [branch] | [clean/dirty]
+```
 
-1. `invar_guard(changed=true)` — Check existing violations
-2. `invar_map(top=10)` — Understand code structure
+**Actions:** Read `.invar/context.md`, then show status.
+**Do NOT run guard at Check-In.**
 
-Then read `.invar/examples/` and `.invar/context.md` for project context.
+Run guard only when:
+- Entering VALIDATE phase of USBV workflow
+- User explicitly requests verification
+- After making code changes
 
-**Skipping Session Start → Non-compliant code → Task failure.**
+### Tool x Language Support
+
+| Tool | Python | TypeScript | Notes |
+|------|--------|------------|-------|
+| `invar_guard` | ✅ Full | ⚠️ Partial | TS: tsc + eslint + vitest |
+| `invar_sig` | ✅ Full | ✅ Full | TS: TS Compiler API |
+| `invar_map` | ✅ Full | ✅ Full | TS: With reference counts |
+| `invar_refs` | ✅ Full | ✅ Full | Cross-file reference finding |
+| `invar_doc_*` | ✅ Full | ✅ Full | Language-agnostic |
 
 ### Tool Substitution Rules (ENFORCED)
 
@@ -56,6 +71,7 @@ Then read `.invar/examples/` and `.invar/context.md` for project context.
 | Symbolic verification | `Bash("crosshair ...")` | `invar_guard` (included by default) |
 | Understand file structure | `Read` entire .py file | `invar_sig` |
 | Find entry points | `Grep` for "def " | `invar_map` |
+| Find symbol references | Manual grep | `invar_refs` |
 | View document structure | `Read` entire .md file | `invar_doc_toc` |
 | Read document section | `Read` with manual line counting | `invar_doc_read` |
 | Read multiple sections | Multiple `invar_doc_read` calls | `invar_doc_read_many` |
@@ -91,8 +107,8 @@ Then read `.invar/examples/` and `.invar/context.md` for project context.
 ### Task Completion
 
 A task is complete ONLY when:
-- Session Start executed (invar_guard + invar_map)
-- Final `invar_guard` passed
+- Check-In displayed at session start
+- Final `invar_guard` passed (in VALIDATE phase)
 - User requirement satisfied
 
 ### Why This Matters
@@ -105,12 +121,12 @@ A task is complete ONLY when:
 ### Correct Usage Examples
 
 ```
-# Session Start (REQUIRED before any code)
-invar_guard(changed=true)
-invar_map(top=10)
+# Check-In (REQUIRED at session start)
+# Display: ✓ Check-In: Invar | main | clean
+# Then read .invar/context.md
 
-# Verify code after changes (full verification by default)
-invar_guard(changed=true)
+# Explore codebase (when needed)
+invar_map(top=10)
 
 # Understand a file's structure
 invar_sig(target="src/invar/core/parser.py")
@@ -120,6 +136,9 @@ invar_doc_toc(file="docs/proposals/DX-76.md")
 
 # Read specific section
 invar_doc_read(file="docs/proposals/DX-76.md", section="phase-a")
+
+# VALIDATE phase: Verify code after changes
+invar_guard(changed=true)
 ```
 
 IMPORTANT: Using Bash commands for Invar operations bypasses
@@ -190,6 +209,35 @@ def _get_map_tool() -> Tool:
                 "path": {"type": "string", "description": "Project path", "default": "."},
                 "top": {"type": "integer", "description": "Show top N symbols", "default": 10},
             },
+        },
+    )
+
+
+
+# @shell_orchestration: MCP tool factory - creates tool definition for framework
+# @invar:allow shell_result: MCP tool factory for refs command
+def _get_refs_tool() -> Tool:
+    """Define the invar_refs tool.
+
+    DX-78: Cross-file reference finding.
+    """
+    return Tool(
+        name="invar_refs",
+        title="Find References",
+        description=(
+            "Find all references to a symbol. "
+            "Supports Python (via jedi) and TypeScript (via TS Compiler API). "
+            "Use this to understand symbol usage across the codebase."
+        ),
+        inputSchema={
+            "type": "object",
+            "properties": {
+                "target": {
+                    "type": "string",
+                    "description": "Target format: 'file.py::symbol' or 'file.ts::symbol'",
+                },
+            },
+            "required": ["target"],
         },
     )
 
@@ -417,6 +465,7 @@ def create_server() -> Server:
             _get_guard_tool(),
             _get_sig_tool(),
             _get_map_tool(),
+            _get_refs_tool(),  # DX-78: Reference finding
             # DX-76: Document query tools
             _get_doc_toc_tool(),
             _get_doc_read_tool(),
@@ -434,6 +483,7 @@ def create_server() -> Server:
             "invar_guard": _run_guard,
             "invar_sig": _run_sig,
             "invar_map": _run_map,
+            "invar_refs": _run_refs,  # DX-78: Reference finding
             # DX-76: Document query handlers
             "invar_doc_toc": _run_doc_toc,
             "invar_doc_read": _run_doc_read,

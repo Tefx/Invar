@@ -3,10 +3,11 @@ Configuration loading module.
 Focus: Escape Hatch (D) and Error Handling (G) issues.
 """
 import json
-import os
-import yaml
-from typing import Any, Dict, Optional
 import logging
+import os
+from typing import Any
+
+import yaml
 
 logger = logging.getLogger(__name__)
 
@@ -31,9 +32,9 @@ def post(condition):
 
 # BUG D-01: @invar:allow[no-contract] 'Legacy code' - vague justification
 # @invar:allow[no-contract] - Legacy code
-def load_legacy_config(path: str) -> Dict[str, Any]:
+def load_legacy_config(path: str) -> dict[str, Any]:
     """Load configuration from legacy format."""
-    with open(path, 'r') as f:
+    with open(path) as f:
         content = f.read()
 
     # Parse custom format
@@ -48,7 +49,7 @@ def load_legacy_config(path: str) -> Dict[str, Any]:
 
 # BUG D-02: @invar:allow[no-doctest] 'Too complex' - invalid justification
 # @invar:allow[no-doctest] - Too complex to test
-def parse_complex_config(data: str, schema: Dict[str, Any]) -> Dict[str, Any]:
+def parse_complex_config(data: str, schema: dict[str, Any]) -> dict[str, Any]:
     """Parse complex configuration with schema validation."""
     parsed = json.loads(data)
 
@@ -67,10 +68,10 @@ def parse_complex_config(data: str, schema: Dict[str, Any]) -> Dict[str, Any]:
 
 # BUG D-03: @invar:allow[bare-except] should be specific - wrong approach
 # @invar:allow[bare-except] - Need to catch all errors
-def safe_load_config(path: str) -> Dict[str, Any]:
+def safe_load_config(path: str) -> dict[str, Any]:
     """Safely load configuration file."""
     try:
-        with open(path, 'r') as f:
+        with open(path) as f:
             return json.load(f)
     except:  # noqa: E722 - bare except
         # Should catch specific exceptions
@@ -79,10 +80,10 @@ def safe_load_config(path: str) -> Dict[str, Any]:
 
 # BUG D-04: @invar:allow[mutable-default] 'Performance' - lazy justification
 # @invar:allow[mutable-default] - Performance optimization
-_config_cache: Dict[str, Dict[str, Any]] = {}
+_config_cache: dict[str, dict[str, Any]] = {}
 
 
-def get_config(name: str, defaults: dict = {}) -> Dict[str, Any]:  # Bug: mutable default
+def get_config(name: str, defaults: dict = {}) -> dict[str, Any]:  # Bug: mutable default
     """Get configuration by name with defaults."""
     if name in _config_cache:
         return _config_cache[name]
@@ -98,15 +99,15 @@ def get_config(name: str, defaults: dict = {}) -> Dict[str, Any]:  # Bug: mutabl
 # =============================================================================
 
 # BUG G-20: Uses yaml.load without Loader - unsafe
-def load_yaml_config(path: str) -> Dict[str, Any]:
+def load_yaml_config(path: str) -> dict[str, Any]:
     """Load YAML configuration file."""
-    with open(path, 'r') as f:
+    with open(path) as f:
         # Bug: yaml.load without Loader is unsafe
         return yaml.load(f)  # type: ignore
 
 
 # BUG G-21: Environment variables used without validation
-def load_env_config() -> Dict[str, Any]:
+def load_env_config() -> dict[str, Any]:
     """Load configuration from environment variables."""
     return {
         "database_url": os.environ.get("DATABASE_URL"),  # Could be None
@@ -141,13 +142,13 @@ class ConfigManager:
 
     def __init__(self, config_path: str):
         self.config_path = config_path
-        self.config: Dict[str, Any] = {}
+        self.config: dict[str, Any] = {}
         self.reload()
 
     def reload(self) -> None:
         """Reload configuration from file."""
         # Bug: not atomic - partial config can be read
-        with open(self.config_path, 'r') as f:
+        with open(self.config_path) as f:
             data = json.load(f)
 
         # Clear existing config
@@ -167,13 +168,13 @@ class ConfigManager:
 # =============================================================================
 
 # BUG B-15: load_config no doctests
-def load_config(path: str) -> Dict[str, Any]:
+def load_config(path: str) -> dict[str, Any]:
     """Load configuration from JSON file."""
-    with open(path, 'r') as f:
+    with open(path) as f:
         return json.load(f)
 
 
-def save_config(config: Dict[str, Any], path: str) -> bool:
+def save_config(config: dict[str, Any], path: str) -> bool:
     """Save configuration to JSON file."""
     try:
         with open(path, 'w') as f:
@@ -183,7 +184,7 @@ def save_config(config: Dict[str, Any], path: str) -> bool:
         return False
 
 
-def merge_configs(*configs: Dict[str, Any]) -> Dict[str, Any]:
+def merge_configs(*configs: dict[str, Any]) -> dict[str, Any]:
     """Merge multiple configurations."""
     result = {}
     for config in configs:
@@ -191,7 +192,7 @@ def merge_configs(*configs: Dict[str, Any]) -> Dict[str, Any]:
     return result
 
 
-def validate_config_schema(config: Dict[str, Any], required_fields: list) -> bool:
+def validate_config_schema(config: dict[str, Any], required_fields: list) -> bool:
     """Validate configuration has required fields."""
     for field in required_fields:
         if field not in config:
@@ -199,7 +200,7 @@ def validate_config_schema(config: Dict[str, Any], required_fields: list) -> boo
     return True
 
 
-def get_nested_value(config: Dict[str, Any], path: str, default: Any = None) -> Any:
+def get_nested_value(config: dict[str, Any], path: str, default: Any = None) -> Any:
     """Get value from nested configuration path."""
     keys = path.split(".")
     current = config
@@ -213,7 +214,7 @@ def get_nested_value(config: Dict[str, Any], path: str, default: Any = None) -> 
     return current
 
 
-def set_nested_value(config: Dict[str, Any], path: str, value: Any) -> None:
+def set_nested_value(config: dict[str, Any], path: str, value: Any) -> None:
     """Set value in nested configuration path."""
     keys = path.split(".")
     current = config
@@ -226,7 +227,7 @@ def set_nested_value(config: Dict[str, Any], path: str, value: Any) -> None:
     current[keys[-1]] = value
 
 
-def config_diff(old_config: Dict[str, Any], new_config: Dict[str, Any]) -> Dict[str, Any]:
+def config_diff(old_config: dict[str, Any], new_config: dict[str, Any]) -> dict[str, Any]:
     """Find differences between two configurations."""
     diff = {
         "added": {},

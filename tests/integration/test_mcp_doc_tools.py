@@ -10,7 +10,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from returns.result import Success
 
 from invar.mcp.handlers import (
     _run_doc_delete,
@@ -53,7 +52,7 @@ Content for section 2.
 class TestDocToc:
     """Test invar_doc_toc MCP handler."""
 
-    
+
     async def test_doc_toc_basic(self, sample_markdown_file: Path):
         """Test basic TOC extraction."""
         args = {"file": str(sample_markdown_file)}
@@ -65,7 +64,7 @@ class TestDocToc:
         assert "Section 1" in result[0].text
         assert "Section 2" in result[0].text
 
-    
+
     async def test_doc_toc_missing_file(self):
         """Test TOC extraction with missing file."""
         args = {"file": "/nonexistent/file.md"}
@@ -75,7 +74,7 @@ class TestDocToc:
         assert "Error" in result[0].text
         assert "not found" in result[0].text.lower()
 
-    
+
     async def test_doc_toc_no_file_arg(self):
         """Test TOC extraction without file argument."""
         args = {}
@@ -89,7 +88,7 @@ class TestDocToc:
 class TestDocRead:
     """Test invar_doc_read MCP handler."""
 
-    
+
     async def test_doc_read_section_by_slug(self, sample_markdown_file: Path):
         """Test reading section by slug."""
         args = {
@@ -102,7 +101,7 @@ class TestDocRead:
         assert "Section 1" in result[0].text
         assert "Content for section 1" in result[0].text
 
-    
+
     async def test_doc_read_section_not_found(self, sample_markdown_file: Path):
         """Test reading non-existent section."""
         args = {
@@ -119,7 +118,7 @@ class TestDocRead:
 class TestDocFind:
     """Test invar_doc_find MCP handler."""
 
-    
+
     async def test_doc_find_pattern(self, sample_markdown_file: Path):
         """Test finding sections by pattern."""
         args = {
@@ -132,7 +131,7 @@ class TestDocFind:
         assert "Section 1" in result[0].text
         assert "Section 2" in result[0].text
 
-    
+
     async def test_doc_find_no_matches(self, sample_markdown_file: Path):
         """Test finding with no matches."""
         args = {
@@ -149,7 +148,7 @@ class TestDocFind:
 class TestDocReplace:
     """Test invar_doc_replace MCP handler."""
 
-    
+
     async def test_doc_replace_section(self, tmp_path: Path):
         """Test replacing section content."""
         # Create test file
@@ -174,7 +173,7 @@ class TestDocReplace:
         assert "Old content" not in new_content
         assert "# Title" in new_content  # Heading preserved
 
-    
+
     async def test_doc_replace_section_not_found(self, sample_markdown_file: Path):
         """Test replacing non-existent section."""
         args = {
@@ -192,7 +191,7 @@ class TestDocReplace:
 class TestDocInsert:
     """Test invar_doc_insert MCP handler."""
 
-    
+
     async def test_doc_insert_after(self, tmp_path: Path):
         """Test inserting content after a section."""
         content = "# Title\n\nContent\n\n# Next\n"
@@ -215,7 +214,7 @@ class TestDocInsert:
         assert "## Inserted" in new_content
         assert "New section" in new_content
 
-    
+
     async def test_doc_insert_invalid_position(self, sample_markdown_file: Path):
         """Test inserting with invalid position."""
         args = {
@@ -236,7 +235,7 @@ class TestDocInsert:
 class TestDocDelete:
     """Test invar_doc_delete MCP handler."""
 
-    
+
     async def test_doc_delete_section(self, tmp_path: Path):
         """Test deleting a section."""
         content = "# Title\n\nContent\n\n## Delete Me\n\nGone\n\n# Next\n"
@@ -259,7 +258,7 @@ class TestDocDelete:
         assert "# Title" in new_content
         assert "# Next" in new_content
 
-    
+
     async def test_doc_delete_section_not_found(self, sample_markdown_file: Path):
         """Test deleting non-existent section."""
         args = {
@@ -276,7 +275,7 @@ class TestDocDelete:
 class TestErrorHandling:
     """Test error handling across all handlers."""
 
-    
+
     async def test_path_validation_shell_chars(self):
         """Test that shell metacharacters are rejected."""
         dangerous_paths = [
@@ -294,7 +293,7 @@ class TestErrorHandling:
             assert "Error" in result[0].text
             assert ("Invalid path" in result[0].text or "forbidden" in result[0].text.lower())
 
-    
+
     async def test_directory_instead_of_file(self, tmp_path: Path):
         """Test handling directory path instead of file."""
         args = {"file": str(tmp_path)}

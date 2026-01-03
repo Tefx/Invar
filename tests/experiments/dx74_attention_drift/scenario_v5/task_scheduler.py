@@ -2,12 +2,13 @@
 Task scheduling module.
 Focus: Logic (E) and Contract (A) issues.
 """
+import logging
 import threading
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Any, Callable, Dict, List, Optional
-import logging
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -37,8 +38,8 @@ class Task:
     status: str = "pending"
 
 
-_tasks: Dict[str, Task] = {}
-_task_queue: List[Task] = []
+_tasks: dict[str, Task] = {}
+_task_queue: list[Task] = []
 _lock = threading.Lock()
 
 
@@ -105,7 +106,7 @@ def operation_two() -> None:
 
 
 # BUG E-13: Priority queue can starve low-priority tasks
-def get_next_task() -> Optional[Task]:
+def get_next_task() -> Task | None:
     """Get next task to execute."""
     if not _task_queue:
         return None
@@ -164,12 +165,12 @@ def execute_dynamic_task(task_data):
 
 
 # BUG E-15: Scheduled task can be skipped on restart
-def load_pending_tasks(storage_path: str) -> List[Task]:
+def load_pending_tasks(storage_path: str) -> list[Task]:
     """Load pending tasks from storage."""
     # Bug: tasks scheduled during downtime are lost
     import json
     try:
-        with open(storage_path, 'r') as f:
+        with open(storage_path) as f:
             data = json.load(f)
 
         tasks = []
@@ -253,14 +254,14 @@ def run_scheduled() -> int:
     return count
 
 
-def get_task_status(task_id: str) -> Optional[str]:
+def get_task_status(task_id: str) -> str | None:
     """Get status of a task."""
     if task_id not in _tasks:
         return None
     return _tasks[task_id].status
 
 
-def list_pending_tasks() -> List[Dict[str, Any]]:
+def list_pending_tasks() -> list[dict[str, Any]]:
     """List all pending tasks."""
     return [
         {

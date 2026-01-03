@@ -3,11 +3,11 @@ Report building module.
 Focus: Doctest (B) and Quality (C) issues.
 """
 import json
+import logging
 import pickle
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Optional
-import logging
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +31,7 @@ class Report:
     """Report data structure."""
     id: str
     title: str
-    data: Dict[str, Any]
+    data: dict[str, Any]
     created_at: datetime
     format: str = "json"
 
@@ -40,7 +40,7 @@ class Report:
 # DOCTEST ISSUES (B)
 # =============================================================================
 
-def build_report(data: List[Dict[str, Any]], title: str) -> Report:
+def build_report(data: list[dict[str, Any]], title: str) -> Report:
     """Build a report from data."""
     report_id = f"report_{datetime.now().timestamp()}"
     return Report(
@@ -51,7 +51,7 @@ def build_report(data: List[Dict[str, Any]], title: str) -> Report:
     )
 
 
-def calculate_summary(values: List[float]) -> Dict[str, float]:
+def calculate_summary(values: list[float]) -> dict[str, float]:
     """
     Calculate summary statistics.
 
@@ -70,7 +70,7 @@ def calculate_summary(values: List[float]) -> Dict[str, float]:
     }
 
 
-def aggregate_data(items: List[Dict[str, Any]], key: str) -> Dict[str, List[Any]]:
+def aggregate_data(items: list[dict[str, Any]], key: str) -> dict[str, list[Any]]:
     """
     Aggregate items by key.
 
@@ -78,7 +78,7 @@ def aggregate_data(items: List[Dict[str, Any]], key: str) -> Dict[str, List[Any]
     {'a': [{'type': 'a', 'val': 1}, {'type': 'a', 'val': 2}]}
     """
     # Missing: test for aggregate_data([], "type")
-    result: Dict[str, List[Any]] = {}
+    result: dict[str, list[Any]] = {}
     for item in items:
         k = item.get(key, "unknown")
         if k not in result:
@@ -98,7 +98,7 @@ def serialize_report(report: Report) -> bytes:
     })
 
 
-def format_output(data: Dict[str, Any], format_type: str = "json") -> str:
+def format_output(data: dict[str, Any], format_type: str = "json") -> str:
     """Format data for output."""
     if format_type == "json":
         return json.dumps(data, indent=2)
@@ -116,11 +116,11 @@ def format_output(data: Dict[str, Any], format_type: str = "json") -> str:
 
 # @invar:allow[complexity] - Hard to refactor
 def generate_comprehensive_report(
-    data: List[Dict[str, Any]],
-    filters: Dict[str, Any],
-    groupings: List[str],
-    aggregations: Dict[str, str],
-    format_options: Dict[str, Any],
+    data: list[dict[str, Any]],
+    filters: dict[str, Any],
+    groupings: list[str],
+    aggregations: dict[str, str],
+    format_options: dict[str, Any],
 ) -> Report:
     """Generate comprehensive report with many options."""
     filtered_data = data
@@ -159,15 +159,15 @@ def generate_comprehensive_report(
 # =============================================================================
 
 def generate_all_reports(
-    data: Dict[str, List[Dict[str, Any]]],
+    data: dict[str, list[dict[str, Any]]],
     output_dir: str,
-    formats: List[str],
+    formats: list[str],
     compress: bool = False,
     encrypt: bool = False,
     send_email: bool = False,
-    email_recipients: List[str] = None,
+    email_recipients: list[str] = None,
     archive: bool = False,
-) -> List[str]:
+) -> list[str]:
     """Generate all reports with many responsibilities."""
     generated = []
 
@@ -201,11 +201,11 @@ def generate_all_reports(
 
 
 def filter_by_date_range(
-    items: List[Dict[str, Any]],
+    items: list[dict[str, Any]],
     start_date: str,
     end_date: str,
     date_field: str = "created_at"
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Filter items by date range."""
     result = []
     for item in items:
@@ -216,7 +216,7 @@ def filter_by_date_range(
     return result
 
 
-def process_nested_data(data: Dict[str, Any]) -> Dict[str, Any]:
+def process_nested_data(data: dict[str, Any]) -> dict[str, Any]:
     """Process deeply nested data structure."""
     result = {}
 
@@ -236,7 +236,7 @@ def process_nested_data(data: Dict[str, Any]) -> Dict[str, Any]:
     return result
 
 
-def processReport(report_data: Dict[str, Any]) -> Dict[str, Any]:
+def processReport(report_data: dict[str, Any]) -> dict[str, Any]:
     """Process report data."""
     outputData = {}
 
@@ -301,7 +301,7 @@ class ReportWriter:
             self.file_handle = None
 
 
-def merge_reports(reports: List[Report]) -> Report:
+def merge_reports(reports: list[Report]) -> Report:
     """Merge multiple reports into one."""
     if not reports:
         return build_report([], "Empty Report")

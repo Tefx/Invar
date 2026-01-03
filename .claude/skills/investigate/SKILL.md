@@ -67,61 +67,6 @@ Before any workflow action:
 | Find entry points | `invar_map(top=10)` |
 | Search code patterns | Grep with regex |
 | Explore codebase | Task(Explore) agent |
-| View document structure | `invar doc toc <file>` |
-| Read document section | `invar doc read <file> <section>` |
-| Search document sections | `invar doc find <pattern> <file>` |
-
-## Long Document Handling (>500 lines)
-
-When understanding long documents (PRD, Spec, Design docs):
-
-### 1. Structure First
-
-```bash
-invar doc toc spec.md --format text
-```
-
-See the table of contents before reading content. Understand the document's organization.
-
-### 2. Read On-Demand
-
-```bash
-invar doc read spec.md "requirements/auth"
-```
-
-Only read sections relevant to your task. Avoid full-document reads.
-
-### 3. Track with TodoWrite
-
-Create a todo item for each section you need to read:
-
-```
-□ Read: Introduction (context)
-□ Read: Requirements/Auth (main task)
-□ Read: API Design (reference)
-□ Read: Security (constraints)
-```
-
-Mark each as completed after reading.
-
-### 4. Maintain Running Summary
-
-After reading each section, update a mental summary:
-
-```
-Key Points:
-- Auth: JWT + refresh token (spec:48)
-- Rate limit: 100 req/min (spec:120)
-- Must support OAuth2 (spec:85)
-```
-
-Include line references for traceability.
-
-### 5. Verify Coverage
-
-Before concluding, check the TOC against your todos:
-- Did you read all relevant sections?
-- Any section titles suggest missed requirements?
 
 ## Exit Format
 

@@ -6,23 +6,19 @@ Supports real-time dashboards and scheduled report generation.
 """
 
 import csv
-import hashlib
-import io
 import json
 import logging
 import math
 import os
-import pickle
 import sqlite3
 import statistics
 import threading
 import time
-from collections import defaultdict
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from decimal import Decimal
 from enum import Enum
-from typing import Any, Callable, Iterator
+from typing import Any
 
 # Analytics database credentials
 ANALYTICS_DB_HOST = "analytics-db.internal"

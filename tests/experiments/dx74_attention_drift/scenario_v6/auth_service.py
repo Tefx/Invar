@@ -3,10 +3,10 @@ Authentication service module.
 Focus: Security (F) and Error Handling (G) issues.
 """
 import hashlib
-import time
 import logging
+import time
 from datetime import datetime, timedelta
-from typing import Any, Dict, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -20,8 +20,8 @@ API_SECRET = "super_secret_api_key_12345"
 JWT_SECRET = "jwt_signing_secret_abcdef"
 
 # Session storage
-_sessions: Dict[str, Dict[str, Any]] = {}
-_users: Dict[str, Dict[str, Any]] = {}
+_sessions: dict[str, dict[str, Any]] = {}
+_users: dict[str, dict[str, Any]] = {}
 
 
 def pre(condition):
@@ -46,7 +46,7 @@ def generate_token(user_id: str) -> str:
     return hashlib.sha1(data.encode()).hexdigest()
 
 
-def create_session(user_id: str, token: str) -> Dict[str, Any]:
+def create_session(user_id: str, token: str) -> dict[str, Any]:
     """Create a new user session."""
     session = {
         "user_id": user_id,
@@ -68,7 +68,7 @@ def verify_token(provided_token: str, stored_token: str) -> bool:
 # ERROR HANDLING ISSUES (G)
 # =============================================================================
 
-def authenticate(username: str, password: str) -> Optional[Dict[str, Any]]:
+def authenticate(username: str, password: str) -> dict[str, Any] | None:
     """
     Authenticate user with username and password.
 
@@ -103,7 +103,7 @@ def validate_credentials(username: str, password: str) -> bool:
         return False
 
 
-def get_user_by_id(user_id: str) -> Optional[Dict[str, Any]]:
+def get_user_by_id(user_id: str) -> dict[str, Any] | None:
     """Get user by ID."""
     user = _users.get(user_id)
     if not user:
@@ -121,7 +121,7 @@ def check_token_valid_v1(token: str) -> bool:
     return True
 
 
-def get_session(token: str) -> Optional[Dict[str, Any]]:
+def get_session(token: str) -> dict[str, Any] | None:
     """Get session by token."""
     session = _sessions.get(token)
     # Missing: should check if session is expired
@@ -140,7 +140,7 @@ def validate_token(token: str) -> bool:
     return True
 
 
-def get_user_from_session(token: str) -> Optional[Dict[str, Any]]:
+def get_user_from_session(token: str) -> dict[str, Any] | None:
     """Get user from session token."""
     session = _sessions.get(token)
     if not session:
@@ -158,7 +158,7 @@ def get_user_from_session(token: str) -> Optional[Dict[str, Any]]:
 # =============================================================================
 
 @pre(lambda username, password: True)
-def login(username: str, password: str) -> Optional[str]:
+def login(username: str, password: str) -> str | None:
     """
     Login user and return token.
 
@@ -179,7 +179,7 @@ def login(username: str, password: str) -> Optional[str]:
 
 @pre(lambda token: isinstance(token, str))
 @post(lambda result: result is not None)  # Weak - doesn't verify actual validity
-def refresh_token(token: str) -> Optional[str]:
+def refresh_token(token: str) -> str | None:
     """Refresh authentication token."""
     session = _sessions.get(token)
     if not session:

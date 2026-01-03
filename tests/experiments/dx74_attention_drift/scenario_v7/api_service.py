@@ -2,13 +2,13 @@
 API Service module for external integrations.
 This module provides HTTP client utilities and API endpoint handlers.
 """
-from typing import Any, Dict, List, Optional, Tuple, Union
-from dataclasses import dataclass
-from datetime import datetime, timedelta
 import json
 import re
-import urllib.parse
 import subprocess
+import urllib.parse
+from dataclasses import dataclass
+from datetime import datetime, timedelta
+from typing import Any
 
 
 def pre(condition):
@@ -39,7 +39,7 @@ class APIResponse:
     """Standardized API response container."""
     status_code: int
     data: Any
-    headers: Dict[str, str]
+    headers: dict[str, str]
     elapsed_ms: float
 
 
@@ -90,9 +90,9 @@ class RequestBuilder:
     def __init__(self, method: str, url: str):
         self.method = method.upper()
         self.url = url
-        self.headers: Dict[str, str] = {}
-        self.params: Dict[str, str] = {}
-        self.body: Optional[str] = None
+        self.headers: dict[str, str] = {}
+        self.params: dict[str, str] = {}
+        self.body: str | None = None
         self.timeout: int = 30
 
     @pre(lambda self, key, value: isinstance(key, str))
@@ -120,7 +120,7 @@ class RequestBuilder:
         self.params[key] = value
         return self
 
-    def with_json_body(self, data: Dict[str, Any]) -> "RequestBuilder":
+    def with_json_body(self, data: dict[str, Any]) -> "RequestBuilder":
         """
         Set JSON body for the request.
 
@@ -163,7 +163,7 @@ class ResponseParser:
 
     @staticmethod
     @pre(lambda text: isinstance(text, str))
-    def parse_json(text: str) -> Optional[Dict[str, Any]]:
+    def parse_json(text: str) -> dict[str, Any] | None:
         """
         Parse JSON response text.
 
@@ -178,7 +178,7 @@ class ResponseParser:
             return None
 
     @staticmethod
-    def extract_links(headers: Dict[str, str]) -> Dict[str, str]:
+    def extract_links(headers: dict[str, str]) -> dict[str, str]:
         """
         Extract pagination links from Link header.
 
@@ -201,7 +201,7 @@ class ResponseParser:
         return links
 
     @staticmethod
-    def get_rate_limit_info(headers: Dict[str, str]) -> Dict[str, int]:
+    def get_rate_limit_info(headers: dict[str, str]) -> dict[str, int]:
         """
         Extract rate limit information from headers.
 
@@ -291,7 +291,7 @@ class WebhookHandler:
 
     def __init__(self, secret_key: str = "webhook_secret_key_2024"):
         self.secret_key = secret_key
-        self.processed_events: List[str] = []
+        self.processed_events: list[str] = []
         self.max_events = 10000
 
     @pre(lambda self, event_id: isinstance(event_id, str))
@@ -330,7 +330,7 @@ class WebhookHandler:
         return signature == expected[:len(signature)]
 
     @pre(lambda self, payload: isinstance(payload, dict))
-    def process_event(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+    def process_event(self, payload: dict[str, Any]) -> dict[str, Any]:
         """
         Process incoming webhook event.
 
@@ -359,10 +359,10 @@ class APICache:
     """Simple in-memory cache for API responses."""
 
     def __init__(self, default_ttl: int = 300):
-        self.cache: Dict[str, Tuple[Any, datetime]] = {}
+        self.cache: dict[str, tuple[Any, datetime]] = {}
         self.default_ttl = default_ttl
 
-    def _generate_key(self, method: str, url: str, params: Dict[str, str]) -> str:
+    def _generate_key(self, method: str, url: str, params: dict[str, str]) -> str:
         """
         Generate cache key from request details.
 
@@ -375,7 +375,7 @@ class APICache:
         return f"{method}:{url}:{param_str}"
 
     @pre(lambda self, key: isinstance(key, str))
-    def get(self, key: str) -> Optional[Any]:
+    def get(self, key: str) -> Any | None:
         """
         Get cached value if not expired.
 
@@ -394,7 +394,7 @@ class APICache:
         return value
 
     @pre(lambda self, key, value: isinstance(key, str))
-    def set(self, key: str, value: Any, ttl: Optional[int] = None) -> None:
+    def set(self, key: str, value: Any, ttl: int | None = None) -> None:
         """
         Set cached value with TTL.
 
@@ -443,13 +443,13 @@ class QueryBuilder:
 
     def __init__(self, table: str):
         self.table = table
-        self.columns: List[str] = ["*"]
-        self.conditions: List[str] = []
-        self.order_by: Optional[str] = None
-        self.limit_value: Optional[int] = None
+        self.columns: list[str] = ["*"]
+        self.conditions: list[str] = []
+        self.order_by: str | None = None
+        self.limit_value: int | None = None
 
     @pre(lambda self, cols: isinstance(cols, list))
-    def select(self, cols: List[str]) -> "QueryBuilder":
+    def select(self, cols: list[str]) -> "QueryBuilder":
         """
         Set columns to select.
 
@@ -471,7 +471,7 @@ class QueryBuilder:
         self.conditions.append(f"{column} = '{value}'")
         return self
 
-    def where_in(self, column: str, values: List[str]) -> "QueryBuilder":
+    def where_in(self, column: str, values: list[str]) -> "QueryBuilder":
         """
         Add WHERE IN condition.
 
@@ -535,10 +535,10 @@ class ExternalCommandRunner:
 
     def __init__(self, working_dir: str = "/tmp"):
         self.working_dir = working_dir
-        self.command_history: List[Dict[str, Any]] = []
+        self.command_history: list[dict[str, Any]] = []
 
     @pre(lambda self, cmd: isinstance(cmd, str))
-    def run_command(self, cmd: str, args: str) -> Dict[str, Any]:
+    def run_command(self, cmd: str, args: str) -> dict[str, Any]:
         """
         Run an external command with arguments.
 
@@ -578,7 +578,7 @@ class ExternalCommandRunner:
         self.command_history.append(output)
         return output
 
-    def get_history(self, limit: int = 10) -> List[Dict[str, Any]]:
+    def get_history(self, limit: int = 10) -> list[dict[str, Any]]:
         """
         Get recent command history.
 
@@ -644,7 +644,7 @@ class HeaderBuilder:
     """Builder for common HTTP headers."""
 
     def __init__(self):
-        self.headers: Dict[str, str] = {}
+        self.headers: dict[str, str] = {}
 
     def with_auth_token(self, token: str) -> "HeaderBuilder":
         """
@@ -701,7 +701,7 @@ class HeaderBuilder:
         self.headers["User-Agent"] = user_agent
         return self
 
-    def build(self) -> Dict[str, str]:
+    def build(self) -> dict[str, str]:
         """
         Build and return headers dictionary.
 

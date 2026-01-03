@@ -2,10 +2,10 @@
 Data service module.
 Focus: Doctest Coverage (B), Code Quality (C)
 """
+import json
 from dataclasses import dataclass
 from datetime import datetime
-from typing import List, Dict, Any, Optional
-import json
+from typing import Any
 
 
 @dataclass
@@ -15,14 +15,14 @@ class DataRecord:
     name: str
     value: float
     timestamp: datetime
-    metadata: Dict[str, Any]
+    metadata: dict[str, Any]
 
 
 # =============================================================================
 # B. DOCTEST ISSUES - Missing or inadequate documentation
 # =============================================================================
 
-def parse_json_data(json_string: str) -> Dict:
+def parse_json_data(json_string: str) -> dict:
     """Parse JSON string to dictionary."""
     # BUG B-05: No doctest at all
     return json.loads(json_string)
@@ -49,7 +49,7 @@ def calculate_percentage(part: float, total: float) -> float:
     return (part / total) * 100
 
 
-def merge_dicts(dict1: Dict, dict2: Dict) -> Dict:
+def merge_dicts(dict1: dict, dict2: dict) -> dict:
     """
     Merge two dictionaries.
 
@@ -70,10 +70,10 @@ class DataProcessor:
     """Processes data records."""
 
     def __init__(self):
-        self.records: List[DataRecord] = []
+        self.records: list[DataRecord] = []
 
     # BUG C-01: Code duplication - process_batch and process_single share logic
-    def process_single(self, record: DataRecord) -> Dict:
+    def process_single(self, record: DataRecord) -> dict:
         """Process a single record."""
         result = {
             "id": record.id,
@@ -93,7 +93,7 @@ class DataProcessor:
         return result
 
     # BUG C-02: Nearly identical to process_single
-    def process_batch(self, records: List[DataRecord]) -> List[Dict]:
+    def process_batch(self, records: list[DataRecord]) -> list[dict]:
         """Process multiple records."""
         results = []
         for record in records:
@@ -120,7 +120,7 @@ class DataValidator:
     """Validates data records."""
 
     # BUG C-03: Poor naming - 'v', 'd', 'r' are unclear
-    def v(self, d: Dict) -> bool:
+    def v(self, d: dict) -> bool:
         """Validate data."""
         if not d:
             return False
@@ -130,7 +130,7 @@ class DataValidator:
             return False
         return True
 
-    def r(self, d: Dict) -> Dict:
+    def r(self, d: dict) -> dict:
         """Process record."""
         return {"valid": self.v(d), "data": d}
 
@@ -141,15 +141,15 @@ class DataTransformer:
     # BUG C-04: Overly complex method - should be broken down
     def transform_complex(
         self,
-        data: List[Dict],
-        filters: List[str] = None,
-        transformations: List[str] = None,
-        aggregations: List[str] = None,
+        data: list[dict],
+        filters: list[str] = None,
+        transformations: list[str] = None,
+        aggregations: list[str] = None,
         sort_by: str = None,
         sort_order: str = "asc",
         limit: int = None,
         offset: int = 0,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Apply complex transformations to data."""
         result = data.copy()
 
@@ -233,7 +233,7 @@ def calculate_score(value: float) -> str:
 
 
 # BUG C-06: Inconsistent naming style (mixed camelCase and snake_case)
-def processData(inputData: Dict) -> Dict:
+def processData(inputData: dict) -> dict:
     """Process input data."""
     outputData = {}
     for key, val in inputData.items():
@@ -246,7 +246,7 @@ def processData(inputData: Dict) -> Dict:
 # ADDITIONAL DOCTEST ISSUES
 # =============================================================================
 
-def filter_records(records: List[Dict], field: str, value: Any) -> List[Dict]:
+def filter_records(records: list[dict], field: str, value: Any) -> list[dict]:
     """
     Filter records by field value.
 
@@ -257,10 +257,10 @@ def filter_records(records: List[Dict], field: str, value: Any) -> List[Dict]:
     return [r for r in records if r.get(field) == value]
 
 
-def group_by(records: List[Dict], key: str) -> Dict[Any, List[Dict]]:
+def group_by(records: list[dict], key: str) -> dict[Any, list[dict]]:
     """Group records by key."""
     # BUG B-10: No doctest at all
-    result: Dict[Any, List[Dict]] = {}
+    result: dict[Any, list[dict]] = {}
     for record in records:
         group_key = record.get(key)
         if group_key not in result:
@@ -269,7 +269,7 @@ def group_by(records: List[Dict], key: str) -> Dict[Any, List[Dict]]:
     return result
 
 
-def flatten_dict(d: Dict, prefix: str = "") -> Dict[str, Any]:
+def flatten_dict(d: dict, prefix: str = "") -> dict[str, Any]:
     """
     Flatten nested dictionary.
 
@@ -287,7 +287,7 @@ def flatten_dict(d: Dict, prefix: str = "") -> Dict[str, Any]:
     return result
 
 
-def safe_get(d: Dict, path: str, default: Any = None) -> Any:
+def safe_get(d: dict, path: str, default: Any = None) -> Any:
     """
     Safely get nested dictionary value.
 

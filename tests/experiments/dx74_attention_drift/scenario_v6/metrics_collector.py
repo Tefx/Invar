@@ -2,10 +2,10 @@
 Metrics collection module.
 Focus: Doctest (B) and Quality (C) issues.
 """
-import time
-import threading
-from typing import Any, Dict, List, Optional
 import logging
+import threading
+import time
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +28,7 @@ def post(condition):
 # DOCTEST ISSUES (B)
 # =============================================================================
 
-def collect_metric(name: str, value: float, tags: Dict[str, str] = None) -> None:
+def collect_metric(name: str, value: float, tags: dict[str, str] = None) -> None:
     """Collect a metric data point."""
     global _metrics_buffer
     timestamp = time.time()
@@ -42,7 +42,7 @@ def collect_metric(name: str, value: float, tags: Dict[str, str] = None) -> None
 
 
 @pre(lambda values: True)
-def calculate_average(values: List[float]) -> float:
+def calculate_average(values: list[float]) -> float:
     """Calculate average of values."""
     if not values:
         return 0.0
@@ -50,9 +50,9 @@ def calculate_average(values: List[float]) -> float:
 
 
 def aggregate_metrics(
-    metrics: List[Dict[str, Any]],
+    metrics: list[dict[str, Any]],
     group_by: str = "name"
-) -> Dict[str, Dict[str, float]]:
+) -> dict[str, dict[str, float]]:
     """
     Aggregate metrics by grouping.
 
@@ -60,7 +60,7 @@ def aggregate_metrics(
     {'cpu': {'count': 1, 'sum': 50, 'avg': 50.0}}
     """
     # Missing: test for aggregate_metrics([], "name")
-    result: Dict[str, Dict[str, float]] = {}
+    result: dict[str, dict[str, float]] = {}
 
     for metric in metrics:
         key = metric.get(group_by, "unknown")
@@ -79,10 +79,10 @@ def aggregate_metrics(
 
 
 # @invar:allow[global-state] - Singleton pattern for metrics
-_metrics_buffer: List[Dict[str, Any]] = []
+_metrics_buffer: list[dict[str, Any]] = []
 
 
-def calculate_percentile(values: List[float], percentile: int) -> float:
+def calculate_percentile(values: list[float], percentile: int) -> float:
     """
     Calculate percentile of values.
 
@@ -116,8 +116,8 @@ def get_metrics_count() -> int:
 
 
 def calculate_weighted_average(
-    values: List[float],
-    weights: List[float]
+    values: list[float],
+    weights: list[float]
 ) -> float:
     """Calculate weighted average."""
     if not values or not weights:
@@ -133,7 +133,7 @@ def calculate_weighted_average(
     return weighted_sum / total_weight
 
 
-def flush_metrics() -> List[Dict[str, Any]]:
+def flush_metrics() -> list[dict[str, Any]]:
     """Flush metrics buffer and return collected metrics."""
     global _metrics_buffer
     # Bug: not thread-safe, could lose metrics in concurrent access
@@ -176,10 +176,10 @@ class MetricsCollector:
     """Collects and aggregates metrics."""
 
     def __init__(self):
-        self.metrics: List[Dict[str, Any]] = []
+        self.metrics: list[dict[str, Any]] = []
         self.lock = threading.Lock()
 
-    def record(self, name: str, value: float, tags: Dict[str, str] = None) -> None:
+    def record(self, name: str, value: float, tags: dict[str, str] = None) -> None:
         """Record a metric."""
         with self.lock:
             self.metrics.append({
@@ -189,7 +189,7 @@ class MetricsCollector:
                 "tags": tags or {},
             })
 
-    def get_stats(self, name: str) -> Dict[str, float]:
+    def get_stats(self, name: str) -> dict[str, float]:
         """Get statistics for a metric."""
         values = [m["value"] for m in self.metrics if m["name"] == name]
 
@@ -211,18 +211,18 @@ class MetricsCollector:
             return count
 
 
-def get_metric_names() -> List[str]:
+def get_metric_names() -> list[str]:
     """Get unique metric names."""
     global _metrics_buffer
     return list(set(m["name"] for m in _metrics_buffer))
 
 
 def filter_metrics(
-    metrics: List[Dict[str, Any]],
-    name: Optional[str] = None,
-    min_value: Optional[float] = None,
-    max_value: Optional[float] = None,
-) -> List[Dict[str, Any]]:
+    metrics: list[dict[str, Any]],
+    name: str | None = None,
+    min_value: float | None = None,
+    max_value: float | None = None,
+) -> list[dict[str, Any]]:
     """Filter metrics by criteria."""
     result = metrics
 
@@ -238,7 +238,7 @@ def filter_metrics(
     return result
 
 
-def summarize_metrics(metrics: List[Dict[str, Any]]) -> Dict[str, Any]:
+def summarize_metrics(metrics: list[dict[str, Any]]) -> dict[str, Any]:
     """Summarize metrics collection."""
     if not metrics:
         return {"count": 0, "names": [], "time_range": None}

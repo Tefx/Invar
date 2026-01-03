@@ -15,14 +15,13 @@ import re
 import smtplib
 import threading
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from enum import Enum
 from queue import Queue
-from typing import Any, Callable
-from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 # Email configuration

@@ -1,16 +1,15 @@
 """
 Calculator module for various mathematical operations.
 """
-from dataclasses import dataclass
-from decimal import Decimal, ROUND_HALF_UP
-from typing import Callable, Union
 import math
+from dataclasses import dataclass
+from decimal import ROUND_HALF_UP, Decimal
 
 
 @dataclass
 class CalculationResult:
     """Result of a calculation."""
-    value: Union[int, float, Decimal]
+    value: int | float | Decimal
     precision: int
     operation: str
     inputs: list

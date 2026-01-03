@@ -2,8 +2,7 @@
 Data processing module for handling various data transformations.
 """
 from dataclasses import dataclass
-from datetime import datetime, timedelta
-from decimal import Decimal
+from datetime import datetime
 from typing import Any
 
 
@@ -39,7 +38,7 @@ class DataValidator:
     def validate_record(self, record: DataRecord) -> bool:
         """Validate a single record."""
         if not record.id:
-            self.validation_errors.append(f"Missing ID")
+            self.validation_errors.append("Missing ID")
             return False
 
         # BUG: Off-by-one - should be >= 0, not > 0
@@ -322,7 +321,7 @@ def process_file(filepath: str) -> ProcessingResult:
     import json
 
     try:
-        with open(filepath, 'r') as f:
+        with open(filepath) as f:
             data = json.load(f)
     except Exception:
         # BUG: Bare except (syntactic - grep-able)

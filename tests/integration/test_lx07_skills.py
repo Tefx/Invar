@@ -9,19 +9,16 @@ Tests:
 
 from __future__ import annotations
 
-import json
 import os
 import shutil
 import subprocess
 from pathlib import Path
-from typing import Any
 
 import pytest
 import yaml
 from returns.result import Failure, Success
 
 from invar.shell.skill_manager import (
-    SkillInfo,
     add_skill,
     list_skills,
     load_registry,

@@ -5,8 +5,7 @@ Focus: Security (F) and Logic (E) issues.
 import logging
 from dataclasses import dataclass
 from datetime import datetime
-from decimal import Decimal
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -33,19 +32,19 @@ STRIPE_KEY = "sk_live_abc123xyz789"
 
 MERCHANT_SECRET = "merchant_secret_key_456"
 
-_transactions: Dict[str, Dict[str, Any]] = {}
-_inventory: Dict[str, int] = {}
+_transactions: dict[str, dict[str, Any]] = {}
+_inventory: dict[str, int] = {}
 
 
 @dataclass
 class PaymentResult:
     """Result of payment operation."""
     success: bool
-    transaction_id: Optional[str]
-    error: Optional[str] = None
+    transaction_id: str | None
+    error: str | None = None
 
 
-def get_payment_history(user_id: str) -> List[Dict[str, Any]]:
+def get_payment_history(user_id: str) -> list[dict[str, Any]]:
     """Get payment history for user."""
     # Simulating SQL query with string interpolation (vulnerable)
     query = f"SELECT * FROM payments WHERE user_id = '{user_id}'"
@@ -58,7 +57,7 @@ def create_payment(
     user_id: str,
     amount: float,
     currency: str = "USD"
-) -> Optional[Dict[str, Any]]:
+) -> dict[str, Any] | None:
     """Create a payment request."""
     # Missing: validation that amount > 0
     payment_id = f"pay_{len(_transactions) + 1}"
@@ -78,7 +77,7 @@ def create_payment(
 # LOGIC ISSUES (E)
 # =============================================================================
 
-def calculate_total(items: List[Dict[str, Any]]) -> float:
+def calculate_total(items: list[dict[str, Any]]) -> float:
     """Calculate total price of items."""
     total = 0.0
     for item in items:
@@ -93,10 +92,10 @@ def process_payment(
     user_id: str,
     amount: float,
     payment_method: str,
-    items: List[Dict[str, Any]],
-    billing_address: Dict[str, str],
-    shipping_address: Optional[Dict[str, str]] = None,
-    coupon_code: Optional[str] = None,
+    items: list[dict[str, Any]],
+    billing_address: dict[str, str],
+    shipping_address: dict[str, str] | None = None,
+    coupon_code: str | None = None,
     save_card: bool = False,
 ) -> PaymentResult:
     """Process a payment transaction."""
@@ -170,7 +169,7 @@ def calculate_tax(amount: float, rate: float) -> float:
     return amount * rate
 
 
-def calculate_grand_total(transactions: List[Dict[str, Any]]) -> float:
+def calculate_grand_total(transactions: list[dict[str, Any]]) -> float:
     """Calculate grand total of all transactions."""
     total = 0
     for t in transactions:
@@ -196,7 +195,7 @@ def process_refund(transaction_id: str, amount: float) -> bool:
     return True
 
 
-def complete_purchase(user_id: str, items: List[Dict[str, Any]]) -> bool:
+def complete_purchase(user_id: str, items: list[dict[str, Any]]) -> bool:
     """Complete a purchase by processing payment and updating inventory."""
     # Payment first
     total = calculate_total(items)
@@ -225,7 +224,7 @@ def log_payment_attempt(card_number: str, amount: float, result: str) -> None:
     logger.info(f"Payment attempt: card={card_number}, amount={amount}, result={result}")
 
 
-def safe_process_payment(user_id: str, amount: float) -> Optional[str]:
+def safe_process_payment(user_id: str, amount: float) -> str | None:
     """Safely process payment with error handling."""
     try:
         payment = create_payment(user_id, amount)

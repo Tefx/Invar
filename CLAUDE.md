@@ -83,18 +83,7 @@ src/{project}/
 
 > Full decision tree: [INVAR.md#core-shell](./INVAR.md#decision-tree-core-vs-shell)
 
-### Document Tools (DX-76)
 
-| I want to... | Use |
-|--------------|-----|
-| View document structure | `invar doc toc <file> [--format text]` |
-| Read specific section | `invar doc read <file> <section>` |
-| Search sections by title | `invar doc find <pattern> <files...>` |
-| Replace section content | `invar doc replace <file> <section>` |
-| Insert new section | `invar doc insert <file> <anchor>` |
-| Delete section | `invar doc delete <file> <section>` |
-
-**Section addressing:** slug path (`requirements/auth`), fuzzy (`auth`), index (`#0/#1`), line (`@48`)
 
 ## Documentation Structure
 
@@ -298,6 +287,37 @@ When continuing from a previous session summary:
    - "verify/test" → VALIDATE
 3. **Display phase header** before resuming work
 4. **Re-read context.md** for project state
+
+## TypeScript Code Review
+
+**CRITICAL:** TypeScript files in `src/invar/node_tools/` are PART of this project and MUST be reviewed.
+
+When reviewing TypeScript code (*.js, *.ts files):
+
+### TypeScript-Specific Checklist
+
+- [ ] **Error Handling:** All `JSON.parse()` calls wrapped in try/catch
+- [ ] **Null Safety:** Optional property access uses `?.` or explicit null checks
+- [ ] **I/O Safety:** All `fs.readFileSync()` wrapped in try/catch
+- [ ] **Race Conditions:** No TOCTOU (check-then-use) patterns with file operations
+- [ ] **Type Guards:** Runtime type checks for external inputs
+- [ ] **Resource Cleanup:** No resource leaks in language services
+
+### Common TypeScript Vulnerabilities
+
+| Pattern | Risk | Fix |
+|---------|------|-----|
+| `JSON.parse(input)` | Crashes on invalid JSON | `try { JSON.parse() } catch { error }` |
+| `obj.prop.method()` | TypeError if prop is null | `obj.prop?.method()` or null check |
+| `if (exists(f)) read(f)` | TOCTOU race condition | `try { read(f) } catch { handle }` |
+| `fs.readFileSync()` in loop | One error kills all | Wrap each call in try/catch |
+
+### Integration Points
+
+TypeScript files interact with Python via:
+- **Subprocess:** Node.js process spawned by Python wrapper
+- **JSON protocol:** Structured input/output via stdin/stdout
+- **Path safety:** All file paths validated in Python layer before subprocess
 
 <!--/invar:user-->
 

@@ -2,13 +2,12 @@
 Configuration management module.
 Focus: Escape Hatch Audit (D), Error Handling (G)
 """
-from dataclasses import dataclass
-from pathlib import Path
-from typing import Any, Dict, Optional, List
 import json
 import os
-import yaml
+from pathlib import Path
+from typing import Any, Dict
 
+import yaml
 
 # =============================================================================
 # D. ESCAPE HATCH ISSUES - Unjustified @invar:allow markers
@@ -16,9 +15,9 @@ import yaml
 
 # @invar:allow[no-contract] - "Legacy code, will add later"
 # BUG D-01: Vague justification, no timeline
-def load_config(path: str) -> Dict:
+def load_config(path: str) -> dict:
     """Load configuration from file."""
-    with open(path, 'r') as f:
+    with open(path) as f:
         if path.endswith('.json'):
             return json.load(f)
         elif path.endswith('.yaml') or path.endswith('.yml'):
@@ -29,7 +28,7 @@ def load_config(path: str) -> Dict:
 
 # @invar:allow[no-doctest] - "Too complex to test"
 # BUG D-02: Invalid justification - complex code needs MORE testing, not less
-def merge_configs(*configs: Dict) -> Dict:
+def merge_configs(*configs: dict) -> dict:
     """Merge multiple configuration dictionaries."""
     result = {}
     for config in configs:
@@ -43,7 +42,7 @@ def merge_configs(*configs: Dict) -> Dict:
 
 # @invar:allow[bare-except] - "Need to catch all errors"
 # BUG D-03: Wrong approach - should catch specific exceptions
-def safe_load(path: str) -> Optional[Dict]:
+def safe_load(path: str) -> dict | None:
     """Safely load config, returning None on any error."""
     try:
         return load_config(path)
@@ -78,8 +77,8 @@ class ConfigManager:
 
     def __init__(self, config_dir: str = None):
         self.config_dir = Path(config_dir) if config_dir else Path.cwd() / "config"
-        self.cache: Dict[str, Dict] = {}
-        self.watchers: List[callable] = []
+        self.cache: dict[str, dict] = {}
+        self.watchers: list[callable] = []
 
     def get(self, key: str, default: Any = None) -> Any:
         """Get configuration value."""
@@ -110,7 +109,7 @@ class ConfigManager:
         current[keys[-1]] = value
         self._save_config(config)
 
-    def _load_main_config(self) -> Dict:
+    def _load_main_config(self) -> dict:
         """Load main configuration file."""
         config_path = self.config_dir / "main.json"
 
@@ -126,7 +125,7 @@ class ConfigManager:
             self.cache["main"] = config
             return config
 
-    def _save_config(self, config: Dict) -> None:
+    def _save_config(self, config: dict) -> None:
         """Save configuration to file."""
         config_path = self.config_dir / "main.json"
 
@@ -152,7 +151,7 @@ class EnvironmentConfig:
     def __init__(self, prefix: str = "APP"):
         self.prefix = prefix
 
-    def get(self, key: str, default: str = None) -> Optional[str]:
+    def get(self, key: str, default: str = None) -> str | None:
         """Get environment variable."""
         env_key = f"{self.prefix}_{key.upper()}"
         return os.environ.get(env_key, default)
@@ -188,10 +187,10 @@ class EnvironmentConfig:
 class ConfigValidator:
     """Validates configuration."""
 
-    def __init__(self, schema: Dict):
+    def __init__(self, schema: dict):
         self.schema = schema
 
-    def validate(self, config: Dict) -> List[str]:
+    def validate(self, config: dict) -> list[str]:
         """Validate configuration against schema."""
         errors = []
 
@@ -220,7 +219,7 @@ class ConfigValidator:
         return errors
 
 
-def load_env_file(path: str) -> Dict[str, str]:
+def load_env_file(path: str) -> dict[str, str]:
     """Load environment variables from .env file."""
     env_vars = {}
 

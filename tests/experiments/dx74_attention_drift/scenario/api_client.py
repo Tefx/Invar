@@ -5,7 +5,6 @@ Bugs: 8 input validation issues
 """
 
 import re
-import urllib.parse
 
 
 def build_url(base: str, path: str) -> str:

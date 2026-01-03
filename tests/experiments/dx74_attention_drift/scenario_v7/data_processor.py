@@ -2,16 +2,17 @@
 Data processing and transformation utilities.
 Handles data validation, transformation, and aggregation operations.
 """
-import re
-import json
 import csv
 import hashlib
+import json
+import re
 import statistics
-from datetime import datetime, date
-from typing import Any, Dict, List, Optional, Tuple, Union, Callable
+from collections.abc import Callable
 from dataclasses import dataclass, field
+from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
 from io import StringIO
+from typing import Any
 
 
 def pre(condition):
@@ -29,8 +30,8 @@ def post(condition):
 @dataclass
 class ValidationResult:
     is_valid: bool
-    errors: List[str] = field(default_factory=list)
-    warnings: List[str] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
     sanitized_value: Any = None
 
 
@@ -38,8 +39,8 @@ class ValidationResult:
 class TransformationResult:
     success: bool
     data: Any = None
-    error: Optional[str] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    error: str | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class DataValidator:
@@ -100,7 +101,7 @@ class DataValidator:
         except ValueError:
             return ValidationResult(False, [f"Invalid date format, expected {format}"])
 
-    def validate_choice(self, value: Any, choices: List[Any]) -> ValidationResult:
+    def validate_choice(self, value: Any, choices: list[Any]) -> ValidationResult:
         if value in choices:
             return ValidationResult(True, sanitized_value=value)
         return ValidationResult(False, [f"Value must be one of {choices}"])
@@ -124,11 +125,11 @@ class DataValidator:
 
 
 class SchemaValidator:
-    def __init__(self, schema: Dict[str, Any]):
+    def __init__(self, schema: dict[str, Any]):
         self.schema = schema
         self.validator = DataValidator()
 
-    def validate(self, data: Dict[str, Any]) -> ValidationResult:
+    def validate(self, data: dict[str, Any]) -> ValidationResult:
         errors = []
         warnings = []
         sanitized = {}
@@ -163,7 +164,7 @@ class SchemaValidator:
             sanitized_value=sanitized
         )
 
-    def _validate_field(self, value: Any, schema: Dict[str, Any]) -> ValidationResult:
+    def _validate_field(self, value: Any, schema: dict[str, Any]) -> ValidationResult:
         field_type = schema.get("type", "string")
 
         if field_type == "string":
@@ -190,7 +191,7 @@ class SchemaValidator:
 
 class DataTransformer:
     def __init__(self):
-        self._transformers: Dict[str, Callable] = {}
+        self._transformers: dict[str, Callable] = {}
 
     def register(self, name: str, func: Callable) -> None:
         self._transformers[name] = func
@@ -205,7 +206,7 @@ class DataTransformer:
         except Exception as e:
             return TransformationResult(False, error=str(e))
 
-    def chain(self, data: Any, transformers: List[Tuple[str, Dict]]) -> TransformationResult:
+    def chain(self, data: Any, transformers: list[tuple[str, dict]]) -> TransformationResult:
         current = data
         for name, kwargs in transformers:
             result = self.transform(current, name, **kwargs)
@@ -238,7 +239,7 @@ class TextProcessor:
         return text.strip('-')
 
     @staticmethod
-    def extract_numbers(text: str) -> List[float]:
+    def extract_numbers(text: str) -> list[float]:
         pattern = r'-?\d+\.?\d*'
         matches = re.findall(pattern, text)
         return [float(m) for m in matches]
@@ -302,7 +303,7 @@ class NumberProcessor:
 
 class DateProcessor:
     @staticmethod
-    def parse(date_str: str, formats: List[str] = None) -> Optional[datetime]:
+    def parse(date_str: str, formats: list[str] = None) -> datetime | None:
         if formats is None:
             formats = ["%Y-%m-%d", "%d/%m/%Y", "%m/%d/%Y", "%Y/%m/%d"]
         for fmt in formats:
@@ -351,7 +352,7 @@ class ListProcessor:
     @staticmethod
     @pre(lambda items: isinstance(items, list))
     @post(lambda result: isinstance(result, list))
-    def unique(items: List[Any]) -> List[Any]:
+    def unique(items: list[Any]) -> list[Any]:
         seen = set()
         result = []
         for item in items:
@@ -361,15 +362,15 @@ class ListProcessor:
         return result
 
     @staticmethod
-    def flatten(nested: List[List[Any]]) -> List[Any]:
+    def flatten(nested: list[list[Any]]) -> list[Any]:
         return [item for sublist in nested for item in sublist]
 
     @staticmethod
-    def chunk(items: List[Any], size: int) -> List[List[Any]]:
+    def chunk(items: list[Any], size: int) -> list[list[Any]]:
         return [items[i:i + size] for i in range(0, len(items), size)]
 
     @staticmethod
-    def partition(items: List[Any], predicate: Callable[[Any], bool]) -> Tuple[List, List]:
+    def partition(items: list[Any], predicate: Callable[[Any], bool]) -> tuple[list, list]:
         true_items = []
         false_items = []
         for item in items:
@@ -380,7 +381,7 @@ class ListProcessor:
         return true_items, false_items
 
     @staticmethod
-    def group_by(items: List[Dict], key: str) -> Dict[Any, List[Dict]]:
+    def group_by(items: list[dict], key: str) -> dict[Any, list[dict]]:
         groups = {}
         for item in items:
             k = item.get(key)
@@ -390,11 +391,11 @@ class ListProcessor:
         return groups
 
     @staticmethod
-    def sort_by(items: List[Dict], key: str, reverse: bool = False) -> List[Dict]:
+    def sort_by(items: list[dict], key: str, reverse: bool = False) -> list[dict]:
         return sorted(items, key=lambda x: x.get(key, 0), reverse=reverse)
 
     @staticmethod
-    def filter_by(items: List[Dict], filters: Dict[str, Any]) -> List[Dict]:
+    def filter_by(items: list[dict], filters: dict[str, Any]) -> list[dict]:
         result = items
         for key, value in filters.items():
             result = [item for item in result if item.get(key) == value]
@@ -403,7 +404,7 @@ class ListProcessor:
 
 class DictProcessor:
     @staticmethod
-    def deep_get(data: Dict, path: str, default: Any = None) -> Any:
+    def deep_get(data: dict, path: str, default: Any = None) -> Any:
         keys = path.split(".")
         current = data
         for key in keys:
@@ -414,7 +415,7 @@ class DictProcessor:
         return current
 
     @staticmethod
-    def deep_set(data: Dict, path: str, value: Any) -> Dict:
+    def deep_set(data: dict, path: str, value: Any) -> dict:
         keys = path.split(".")
         current = data
         for key in keys[:-1]:
@@ -425,7 +426,7 @@ class DictProcessor:
         return data
 
     @staticmethod
-    def flatten(data: Dict, separator: str = ".") -> Dict[str, Any]:
+    def flatten(data: dict, separator: str = ".") -> dict[str, Any]:
         result = {}
 
         def _flatten(obj, prefix=""):
@@ -440,22 +441,22 @@ class DictProcessor:
         return result
 
     @staticmethod
-    def unflatten(data: Dict[str, Any], separator: str = ".") -> Dict:
+    def unflatten(data: dict[str, Any], separator: str = ".") -> dict:
         result = {}
         for key, value in data.items():
             DictProcessor.deep_set(result, key.replace(separator, "."), value)
         return result
 
     @staticmethod
-    def pick(data: Dict, keys: List[str]) -> Dict:
+    def pick(data: dict, keys: list[str]) -> dict:
         return {k: data[k] for k in keys if k in data}
 
     @staticmethod
-    def omit(data: Dict, keys: List[str]) -> Dict:
+    def omit(data: dict, keys: list[str]) -> dict:
         return {k: v for k, v in data.items() if k not in keys}
 
     @staticmethod
-    def merge(*dicts: Dict) -> Dict:
+    def merge(*dicts: dict) -> dict:
         result = {}
         for d in dicts:
             result.update(d)
@@ -464,27 +465,27 @@ class DictProcessor:
 
 class StatisticsProcessor:
     @staticmethod
-    def mean(values: List[float]) -> float:
+    def mean(values: list[float]) -> float:
         return sum(values) / len(values)
 
     @staticmethod
-    def median(values: List[float]) -> float:
+    def median(values: list[float]) -> float:
         return statistics.median(values)
 
     @staticmethod
-    def mode(values: List[Any]) -> Any:
+    def mode(values: list[Any]) -> Any:
         return statistics.mode(values)
 
     @staticmethod
-    def std_dev(values: List[float]) -> float:
+    def std_dev(values: list[float]) -> float:
         return statistics.stdev(values)
 
     @staticmethod
-    def variance(values: List[float]) -> float:
+    def variance(values: list[float]) -> float:
         return statistics.variance(values)
 
     @staticmethod
-    def percentile(values: List[float], p: float) -> float:
+    def percentile(values: list[float], p: float) -> float:
         sorted_values = sorted(values)
         index = (len(sorted_values) - 1) * p / 100
         lower = int(index)
@@ -495,7 +496,7 @@ class StatisticsProcessor:
         return sorted_values[lower] * (1 - weight) + sorted_values[upper] * weight
 
     @staticmethod
-    def summary(values: List[float]) -> Dict[str, float]:
+    def summary(values: list[float]) -> dict[str, float]:
         return {
             "count": len(values),
             "sum": sum(values),
@@ -510,7 +511,7 @@ class StatisticsProcessor:
 class CSVProcessor:
     @staticmethod
     def parse(content: str, delimiter: str = ",",
-              has_header: bool = True) -> List[Dict[str, str]]:
+              has_header: bool = True) -> list[dict[str, str]]:
         reader = csv.reader(StringIO(content), delimiter=delimiter)
         rows = list(reader)
         if not rows:
@@ -521,7 +522,7 @@ class CSVProcessor:
         return [{"col_" + str(i): val for i, val in enumerate(row)} for row in rows]
 
     @staticmethod
-    def generate(data: List[Dict], columns: List[str] = None) -> str:
+    def generate(data: list[dict], columns: list[str] = None) -> str:
         if not data:
             return ""
         if columns is None:
@@ -584,8 +585,8 @@ def create_pipeline(*processors: Callable) -> Callable:
     return pipeline
 
 
-def batch_process(items: List[Any], processor: Callable,
-                  batch_size: int = 100) -> List[Any]:
+def batch_process(items: list[Any], processor: Callable,
+                  batch_size: int = 100) -> list[Any]:
     results = []
     for i in range(0, len(items), batch_size):
         batch = items[i:i + batch_size]

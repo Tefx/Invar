@@ -480,6 +480,30 @@ def sig_command(
         raise typer.Exit(1)
 
 
+# @invar:allow entry_point_too_thick: Multi-language ref finding with examples
+@app.command("refs")
+def refs_command(
+    target: str = typer.Argument(..., help="file.py::symbol or file.ts::symbol"),
+    json_output: bool = typer.Option(False, "--json", help="Output as JSON"),
+) -> None:
+    """Find all references to a symbol.
+
+    DX-78: Supports Python (via jedi) and TypeScript (via TS Compiler API).
+
+    Examples:
+        invar refs src/auth.py::AuthService
+        invar refs src/auth.ts::validateToken
+    """
+    from invar.shell.commands.perception import run_refs
+
+    # Auto-detect agent mode
+    use_json = json_output or _detect_agent_mode()
+    result = run_refs(target, use_json)
+    if isinstance(result, Failure):
+        console.print(f"[red]Error:[/red] {result.failure()}")
+        raise typer.Exit(1)
+
+
 # @invar:allow entry_point_too_thick: Rules display with filtering and dual output modes
 @app.command()
 def rules(

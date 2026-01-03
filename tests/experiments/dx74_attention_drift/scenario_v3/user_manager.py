@@ -1,12 +1,11 @@
 """
 User management module for handling user operations.
 """
+import hashlib
+import secrets
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Optional
-import hashlib
-import secrets
 
 
 class UserRole(Enum):
@@ -25,7 +24,7 @@ class User:
     email: str
     role: UserRole
     created_at: datetime
-    last_login: Optional[datetime] = None
+    last_login: datetime | None = None
     is_active: bool = True
     permissions: list = field(default_factory=list)
 
@@ -251,7 +250,7 @@ class UserService:
 
         return user
 
-    def authenticate(self, email: str, password: str) -> Optional[Session]:
+    def authenticate(self, email: str, password: str) -> Session | None:
         """Authenticate a user and create a session."""
         user = self.repository.get_user_by_email(email)
 

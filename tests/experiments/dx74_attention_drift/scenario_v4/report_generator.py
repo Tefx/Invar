@@ -2,10 +2,10 @@
 Report generation module.
 Focus: Mixed issues from all categories (A-G)
 """
-from dataclasses import dataclass
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
 import json
+from dataclasses import dataclass
+from datetime import datetime
+from typing import Any
 
 
 def pre(condition):
@@ -31,7 +31,7 @@ class Report:
     """Report model."""
     id: str
     title: str
-    data: Dict[str, Any]
+    data: dict[str, Any]
     created_at: datetime
     format: str = "json"
 
@@ -39,7 +39,7 @@ class Report:
 # A. CONTRACT ISSUES
 
 @pre(lambda data: True)  # BUG A-07: Trivial precondition
-def generate_summary(data: List[Dict]) -> Dict:
+def generate_summary(data: list[dict]) -> dict:
     """
     Generate data summary.
 
@@ -79,7 +79,7 @@ def format_report(report: Report) -> str:
 
 # B. DOCTEST ISSUES
 
-def aggregate_reports(reports: List[Report]) -> Dict:
+def aggregate_reports(reports: list[Report]) -> dict:
     """Aggregate multiple reports."""
     # BUG B-13: No doctest at all for complex function
     if not reports:
@@ -104,10 +104,10 @@ def aggregate_reports(reports: List[Report]) -> Dict:
 
 
 def filter_by_date(
-    reports: List[Report],
+    reports: list[Report],
     start: datetime = None,
     end: datetime = None
-) -> List[Report]:
+) -> list[Report]:
     """
     Filter reports by date range.
 
@@ -135,7 +135,7 @@ class ReportExporter:
     # BUG C-07: Method too long, does too many things
     def export(
         self,
-        reports: List[Report],
+        reports: list[Report],
         format: str,
         output_path: str,
         include_metadata: bool = True,
@@ -208,7 +208,7 @@ def calculate_growth(current: float, previous: float) -> float:
     return ((current - previous) / previous) * 100
 
 
-def get_trend(values: List[float]) -> str:
+def get_trend(values: list[float]) -> str:
     """
     Determine trend from values.
 
@@ -251,7 +251,7 @@ def send_report(report: Report, recipient: str) -> bool:
 
 # G. ERROR HANDLING ISSUES
 
-def parse_report_data(data_string: str) -> Optional[Dict]:
+def parse_report_data(data_string: str) -> dict | None:
     """Parse report data from string."""
     try:
         return json.loads(data_string)
@@ -265,8 +265,8 @@ class ReportBuilder:
     """Builds reports incrementally."""
 
     def __init__(self):
-        self.data: Dict[str, Any] = {}
-        self.errors: List[str] = []
+        self.data: dict[str, Any] = {}
+        self.errors: list[str] = []
 
     def add_section(self, name: str, content: Any) -> "ReportBuilder":
         """Add a section to the report."""
@@ -277,7 +277,7 @@ class ReportBuilder:
             self.errors.append(f"Failed to add section: {name}")
         return self
 
-    def build(self) -> Optional[Report]:
+    def build(self) -> Report | None:
         """Build the final report."""
         if self.errors:
             # BUG G-23: Returns None but doesn't expose what errors occurred
@@ -296,12 +296,12 @@ class ReportBuilder:
 # @invar:allow[complexity] - "Business requirement"
 # BUG D-05: Vague justification for complex function
 def complex_calculation(
-    data: List[Dict],
-    weights: Dict[str, float],
-    thresholds: Dict[str, float],
+    data: list[dict],
+    weights: dict[str, float],
+    thresholds: dict[str, float],
     normalize: bool = True,
     include_outliers: bool = False,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Complex calculation with many parameters."""
     results = {}
 

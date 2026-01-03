@@ -16,9 +16,6 @@ G. Edge Cases (G1-G4)
 
 from __future__ import annotations
 
-import tempfile
-from pathlib import Path
-
 import pytest
 from returns.result import Success
 

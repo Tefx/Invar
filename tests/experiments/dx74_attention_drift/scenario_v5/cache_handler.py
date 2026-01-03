@@ -2,10 +2,10 @@
 Cache handling module.
 Focus: Error Handling (G) and Quality (C) issues.
 """
-import time
-import threading
-from typing import Any, Dict, Optional
 import logging
+import threading
+import time
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +25,7 @@ def post(condition):
 
 
 # In-memory cache storage
-_cache: Dict[str, Dict[str, Any]] = {}
+_cache: dict[str, dict[str, Any]] = {}
 _cache_lock = threading.Lock()
 
 
@@ -47,7 +47,7 @@ class CacheClient:
         # Simulating connection
         self.connection = {"host": self.host, "port": self.port, "connected": True}
 
-    def get(self, key: str) -> Optional[Any]:
+    def get(self, key: str) -> Any | None:
         """Get value from cache."""
         self.connect()
         try:
@@ -62,7 +62,7 @@ class CacheClient:
 
 # BUG A-16: No @post on cache operations - missing postcondition
 @pre(lambda key: isinstance(key, str) and len(key) > 0)
-def get_cached(key: str) -> Optional[Any]:
+def get_cached(key: str) -> Any | None:
     """Get value from cache."""
     entry = _cache.get(key)
     if not entry:
@@ -83,7 +83,7 @@ def safe_get(key: str, default: Any = None) -> Any:
 
 
 # BUG G-13: No timeout handling for cache operations
-def get_with_timeout(key: str, timeout_ms: int = 1000) -> Optional[Any]:
+def get_with_timeout(key: str, timeout_ms: int = 1000) -> Any | None:
     """Get value with timeout."""
     # Bug: timeout not actually implemented
     return _cache.get(key, {}).get("value")
@@ -143,7 +143,7 @@ def set_cached(key: str, value: Any, ttl: int = 3600) -> bool:
 
 # BUG D-10: @invar:allow[no-contract] 'Performance critical'
 # @invar:allow[no-contract] - Performance critical
-def batch_get(keys: list) -> Dict[str, Any]:
+def batch_get(keys: list) -> dict[str, Any]:
     """Get multiple values from cache."""
     results = {}
     for key in keys:
@@ -175,7 +175,7 @@ def cleanup_expired() -> int:
 
 
 # BUG C-03: Variables x, y, z unclear meaning
-def calculate_cache_stats() -> Dict[str, Any]:
+def calculate_cache_stats() -> dict[str, Any]:
     """Calculate cache statistics."""
     x = len(_cache)  # total entries
     y = 0  # expired count
@@ -213,7 +213,7 @@ def invalidate_cache(pattern: str) -> int:
     """Invalidate cache entries matching pattern."""
     count = 0
     keys_to_delete = []
-    for key in _cache.keys():
+    for key in _cache:
         if pattern in key:
             keys_to_delete.append(key)
             count += 1
@@ -222,7 +222,7 @@ def invalidate_cache(pattern: str) -> int:
     return count
 
 
-def get_cache_info() -> Dict[str, Any]:
+def get_cache_info() -> dict[str, Any]:
     """Get cache information."""
     total = len(_cache)
     current_time = time.time()
@@ -267,4 +267,4 @@ def update_ttl(key: str, new_ttl: int) -> bool:
 
 def get_keys_by_prefix(prefix: str) -> list:
     """Get all cache keys starting with prefix."""
-    return [key for key in _cache.keys() if key.startswith(prefix)]
+    return [key for key in _cache if key.startswith(prefix)]

@@ -3,9 +3,9 @@ Utility functions module.
 This is a CONTROL file - contains NO intentional bugs.
 Used to verify false positive rates in review strategies.
 """
-from typing import Any, Dict, List, Optional, TypeVar
-from datetime import datetime
 import re
+from datetime import datetime
+from typing import Any, TypeVar
 
 
 def pre(condition):
@@ -91,7 +91,7 @@ def camel_to_snake(text: str) -> str:
 
 @pre(lambda items: isinstance(items, list))
 @post(lambda result: isinstance(result, list))
-def flatten(items: List[List[T]]) -> List[T]:
+def flatten(items: list[list[T]]) -> list[T]:
     """
     Flatten nested list one level.
 
@@ -107,7 +107,7 @@ def flatten(items: List[List[T]]) -> List[T]:
 
 @pre(lambda items: isinstance(items, list))
 @pre(lambda size: size > 0)
-def chunk(items: List[T], size: int) -> List[List[T]]:
+def chunk(items: list[T], size: int) -> list[list[T]]:
     """
     Split list into chunks of given size.
 
@@ -123,7 +123,7 @@ def chunk(items: List[T], size: int) -> List[List[T]]:
 
 @pre(lambda items: isinstance(items, list))
 @post(lambda result: isinstance(result, list))
-def unique(items: List[T]) -> List[T]:
+def unique(items: list[T]) -> list[T]:
     """
     Remove duplicates while preserving order.
 
@@ -149,7 +149,7 @@ def unique(items: List[T]) -> List[T]:
 
 @pre(lambda d: isinstance(d, dict))
 @pre(lambda keys: isinstance(keys, list))
-def pick(d: Dict[str, T], keys: List[str]) -> Dict[str, T]:
+def pick(d: dict[str, T], keys: list[str]) -> dict[str, T]:
     """
     Pick specified keys from dictionary.
 
@@ -165,7 +165,7 @@ def pick(d: Dict[str, T], keys: List[str]) -> Dict[str, T]:
 
 @pre(lambda d: isinstance(d, dict))
 @pre(lambda keys: isinstance(keys, list))
-def omit(d: Dict[str, T], keys: List[str]) -> Dict[str, T]:
+def omit(d: dict[str, T], keys: list[str]) -> dict[str, T]:
     """
     Omit specified keys from dictionary.
 
@@ -179,7 +179,7 @@ def omit(d: Dict[str, T], keys: List[str]) -> Dict[str, T]:
     return {k: v for k, v in d.items() if k not in keys}
 
 
-def deep_get(d: Dict[str, Any], path: str, default: Any = None) -> Any:
+def deep_get(d: dict[str, Any], path: str, default: Any = None) -> Any:
     """
     Get value from nested dictionary using dot notation.
 
@@ -218,7 +218,7 @@ def format_date(dt: datetime, fmt: str = "%Y-%m-%d") -> str:
     return dt.strftime(fmt)
 
 
-def parse_date(text: str, fmt: str = "%Y-%m-%d") -> Optional[datetime]:
+def parse_date(text: str, fmt: str = "%Y-%m-%d") -> datetime | None:
     """
     Parse string to datetime.
 

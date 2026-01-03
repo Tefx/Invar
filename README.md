@@ -103,7 +103,19 @@ Guard passed.
 
 ## 🚀 Quick Start
 
-> **Language Support:** Python (full), TypeScript (verification via Zod contracts).
+### Tool × Language Support
+
+| Tool | Python | TypeScript | Notes |
+|------|--------|------------|-------|
+| `invar guard` | ✅ Full | ⚠️ Partial | TS: tsc + eslint + vitest |
+| `invar sig` | ✅ Full | ✅ Full | TS: TS Compiler API |
+| `invar map` | ✅ Full | ✅ Full | TS: With reference counts |
+| `invar refs` | ✅ Full | ✅ Full | Cross-file reference finding |
+| `invar doc *` | ✅ Full | ✅ Full | Language-agnostic |
+
+**TypeScript Notes:**
+- Requires Node.js + TypeScript (most TS projects have these)
+- Falls back to regex parser if Node.js unavailable
 
 ### 📦 Two Packages, Different Purposes
 

@@ -2,13 +2,13 @@
 Report Engine module for generating and formatting reports.
 Provides utilities for building, rendering, and exporting reports.
 """
-from typing import Any, Dict, List, Optional, Tuple, Union, Callable
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta
-from enum import Enum
 import json
 import re
-import html
+from collections.abc import Callable
+from dataclasses import dataclass
+from datetime import datetime, timedelta
+from enum import Enum
+from typing import Any
 
 
 def pre(condition):
@@ -61,7 +61,7 @@ class TableColumn:
     key: str
     width: int = 0
     alignment: str = "left"
-    formatter: Optional[Callable] = None
+    formatter: Callable | None = None
 
 
 class TextFormatter:
@@ -131,7 +131,7 @@ class TextFormatter:
         return char * left_pad + text + char * right_pad
 
     @staticmethod
-    def wrap_text(text: str, width: int) -> List[str]:
+    def wrap_text(text: str, width: int) -> list[str]:
         """
         Wrap text to specified width.
 
@@ -167,7 +167,7 @@ class NumberFormatter:
 
     @staticmethod
     @pre(lambda value: isinstance(value, (int, float)))
-    def format_number(value: Union[int, float], decimals: int = 2) -> str:
+    def format_number(value: int | float, decimals: int = 2) -> str:
         """
         Format number with thousand separators.
 
@@ -247,7 +247,7 @@ class DateFormatter:
 
     @classmethod
     @pre(lambda cls, dt: isinstance(dt, datetime))
-    def format_date(cls, dt: datetime, fmt: Optional[str] = None) -> str:
+    def format_date(cls, dt: datetime, fmt: str | None = None) -> str:
         """
         Format datetime object to string.
 
@@ -303,7 +303,7 @@ class HTMLBuilder:
     """Builder for HTML report content."""
 
     def __init__(self):
-        self.content: List[str] = []
+        self.content: list[str] = []
 
     @pre(lambda self, level: 1 <= level <= 6)
     def add_heading(self, text: str, level: int = 1) -> "HTMLBuilder":
@@ -329,7 +329,7 @@ class HTMLBuilder:
         self.content.append(f"<p>{text}</p>")
         return self
 
-    def add_list(self, items: List[str], ordered: bool = False) -> "HTMLBuilder":
+    def add_list(self, items: list[str], ordered: bool = False) -> "HTMLBuilder":
         """
         Add list element.
 
@@ -342,7 +342,7 @@ class HTMLBuilder:
         self.content.append(f"<{tag}>{items_html}</{tag}>")
         return self
 
-    def add_table(self, headers: List[str], rows: List[List[str]]) -> "HTMLBuilder":
+    def add_table(self, headers: list[str], rows: list[list[str]]) -> "HTMLBuilder":
         """
         Add table element.
 
@@ -394,7 +394,7 @@ class MarkdownBuilder:
     """Builder for Markdown report content."""
 
     def __init__(self):
-        self.lines: List[str] = []
+        self.lines: list[str] = []
 
     @pre(lambda self, level: 1 <= level <= 6)
     def add_heading(self, text: str, level: int = 1) -> "MarkdownBuilder":
@@ -422,7 +422,7 @@ class MarkdownBuilder:
         self.lines.append("")
         return self
 
-    def add_list(self, items: List[str], ordered: bool = False) -> "MarkdownBuilder":
+    def add_list(self, items: list[str], ordered: bool = False) -> "MarkdownBuilder":
         """
         Add list.
 
@@ -450,7 +450,7 @@ class MarkdownBuilder:
         self.lines.append("")
         return self
 
-    def add_table(self, headers: List[str], rows: List[List[str]]) -> "MarkdownBuilder":
+    def add_table(self, headers: list[str], rows: list[list[str]]) -> "MarkdownBuilder":
         """
         Add table.
 
@@ -483,9 +483,9 @@ class CSVBuilder:
 
     def __init__(self, delimiter: str = ","):
         self.delimiter = delimiter
-        self.rows: List[List[str]] = []
+        self.rows: list[list[str]] = []
 
-    def add_row(self, values: List[Any]) -> "CSVBuilder":
+    def add_row(self, values: list[Any]) -> "CSVBuilder":
         """
         Add a row of values.
 
@@ -496,7 +496,7 @@ class CSVBuilder:
         self.rows.append([str(v) for v in values])
         return self
 
-    def add_header(self, headers: List[str]) -> "CSVBuilder":
+    def add_header(self, headers: list[str]) -> "CSVBuilder":
         """
         Add header row.
 
@@ -538,7 +538,7 @@ class TemplateEngine:
         self.template = template
 
     @pre(lambda self, context: isinstance(context, dict))
-    def render(self, context: Dict[str, Any]) -> str:
+    def render(self, context: dict[str, Any]) -> str:
         """
         Render template with context.
 
@@ -554,7 +554,7 @@ class TemplateEngine:
 
         return self.VARIABLE_PATTERN.sub(replace, result)
 
-    def render_html(self, context: Dict[str, Any]) -> str:
+    def render_html(self, context: dict[str, Any]) -> str:
         """
         Render template with HTML-escaped context.
 
@@ -577,7 +577,7 @@ class ReportAggregator:
 
     @staticmethod
     @pre(lambda values: isinstance(values, list))
-    def sum(values: List[Union[int, float]]) -> float:
+    def sum(values: list[int | float]) -> float:
         """
         Calculate sum of values.
 
@@ -588,7 +588,7 @@ class ReportAggregator:
 
     @staticmethod
     @pre(lambda values: isinstance(values, list))
-    def average(values: List[Union[int, float]]) -> float:
+    def average(values: list[int | float]) -> float:
         """
         Calculate average of values.
 
@@ -600,7 +600,7 @@ class ReportAggregator:
         return sum(values) / len(values)
 
     @staticmethod
-    def minimum(values: List[Union[int, float]]) -> Optional[float]:
+    def minimum(values: list[int | float]) -> float | None:
         """
         Find minimum value.
 
@@ -611,7 +611,7 @@ class ReportAggregator:
         return min(values) if values else None
 
     @staticmethod
-    def maximum(values: List[Union[int, float]]) -> Optional[float]:
+    def maximum(values: list[int | float]) -> float | None:
         """
         Find maximum value.
 
@@ -623,7 +623,7 @@ class ReportAggregator:
 
     @staticmethod
     @pre(lambda values: isinstance(values, list))
-    def count(values: List[Any]) -> int:
+    def count(values: list[Any]) -> int:
         """
         Count non-None values.
 
@@ -633,7 +633,7 @@ class ReportAggregator:
         return sum(1 for v in values if v is not None)
 
     @staticmethod
-    def group_by(items: List[Dict], key: str) -> Dict[str, List[Dict]]:
+    def group_by(items: list[dict], key: str) -> dict[str, list[dict]]:
         """
         Group items by key value.
 
@@ -642,7 +642,7 @@ class ReportAggregator:
         >>> len(grouped["a"])
         2
         """
-        groups: Dict[str, List[Dict]] = {}
+        groups: dict[str, list[dict]] = {}
         for item in items:
             group_key = str(item.get(key, ""))
             if group_key not in groups:
@@ -656,8 +656,8 @@ class ReportGenerator:
 
     def __init__(self, config: ReportConfig):
         self.config = config
-        self.sections: List[ReportSection] = []
-        self.data: Dict[str, Any] = {}
+        self.sections: list[ReportSection] = []
+        self.data: dict[str, Any] = {}
 
     @pre(lambda self, section: isinstance(section, ReportSection))
     def add_section(self, section: ReportSection) -> "ReportGenerator":
@@ -795,10 +795,10 @@ class ChartDataBuilder:
     """Builder for chart data structures."""
 
     def __init__(self):
-        self.labels: List[str] = []
-        self.datasets: List[Dict[str, Any]] = []
+        self.labels: list[str] = []
+        self.datasets: list[dict[str, Any]] = []
 
-    def set_labels(self, labels: List[str]) -> "ChartDataBuilder":
+    def set_labels(self, labels: list[str]) -> "ChartDataBuilder":
         """
         Set chart labels.
 
@@ -810,7 +810,7 @@ class ChartDataBuilder:
         return self
 
     @pre(lambda self, name, data: isinstance(name, str))
-    def add_dataset(self, name: str, data: List[float], color: str = "#000") -> "ChartDataBuilder":
+    def add_dataset(self, name: str, data: list[float], color: str = "#000") -> "ChartDataBuilder":
         """
         Add dataset to chart.
 
@@ -825,7 +825,7 @@ class ChartDataBuilder:
         })
         return self
 
-    def build(self) -> Dict[str, Any]:
+    def build(self) -> dict[str, Any]:
         """
         Build chart data structure.
 
@@ -843,7 +843,7 @@ class ReportScheduler:
     """Scheduler for automated report generation."""
 
     def __init__(self):
-        self.schedules: List[Dict[str, Any]] = []
+        self.schedules: list[dict[str, Any]] = []
 
     @pre(lambda self, name, interval: isinstance(name, str))
     def add_schedule(
@@ -868,7 +868,7 @@ class ReportScheduler:
         })
         return self
 
-    def get_due_reports(self) -> List[str]:
+    def get_due_reports(self) -> list[str]:
         """
         Get names of reports due for generation.
 
@@ -885,7 +885,7 @@ class ReportScheduler:
                 due.append(schedule["name"])
         return due
 
-    def run_schedule(self, name: str) -> Optional[str]:
+    def run_schedule(self, name: str) -> str | None:
         """
         Run a specific scheduled report.
 

@@ -13,7 +13,6 @@ from returns.result import Success
 
 from invar.shell.template_engine import get_templates_dir, render_template_file
 
-
 # =============================================================================
 # INVAR.md Template Rendering Tests
 # =============================================================================

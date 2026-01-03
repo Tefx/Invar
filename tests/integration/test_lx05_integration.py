@@ -19,7 +19,6 @@ from returns.result import Success
 from invar.core.sync_helpers import SyncConfig
 from invar.shell.commands.template_sync import sync_templates
 
-
 # =============================================================================
 # Init with Language Tests
 # =============================================================================

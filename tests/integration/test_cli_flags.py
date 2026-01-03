@@ -16,8 +16,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-import pytest
-
 # Get project root
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 
