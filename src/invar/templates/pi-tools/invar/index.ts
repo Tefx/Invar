@@ -69,18 +69,24 @@ const factory: CustomToolFactory = (pi) => {
         const cmd = await resolveInvarCommand();
         const args = [...cmd.args, "guard"];
 
+        // Handle optional parameters with defaults
+        const changed = params.changed ?? true;
+        const contractsOnly = params.contracts_only ?? false;
+        const coverage = params.coverage ?? false;
+        const strict = params.strict ?? false;
+
         // Default is --changed (check modified files)
-        if (params.changed === false) {
+        if (changed === false) {
           args.push("--all");
         }
 
-        if (params.contracts_only) {
+        if (contractsOnly) {
           args.push("-c");
         }
-        if (params.coverage) {
+        if (coverage) {
           args.push("--coverage");
         }
-        if (params.strict) {
+        if (strict) {
           args.push("--strict");
         }
 
@@ -116,6 +122,11 @@ const factory: CustomToolFactory = (pi) => {
       }),
       async execute(toolCallId, params, onUpdate, ctx, signal) {
         const cmd = await resolveInvarCommand();
+
+        // Validate required parameter
+        if (!params.target) {
+          throw new Error("Missing required parameter: target (file path or file::symbol)");
+        }
 
         if (!isValidPath(params.target)) {
           throw new Error("Invalid target path: contains unsafe characters or path traversal");
@@ -163,19 +174,21 @@ const factory: CustomToolFactory = (pi) => {
       async execute(toolCallId, params, onUpdate, ctx, signal) {
         const cmd = await resolveInvarCommand();
 
-        if (params.path && params.path !== "." && !isValidPath(params.path)) {
+        // Handle optional parameters with defaults
+        const targetPath = params.path ?? ".";
+        const topN = params.top ?? 10;
+
+        if (targetPath !== "." && !isValidPath(targetPath)) {
           throw new Error("Invalid path: contains unsafe characters or path traversal");
         }
 
         const args = [...cmd.args, "map"];
 
-        if (params.path && params.path !== ".") {
-          args.push(params.path);
+        if (targetPath !== ".") {
+          args.push(targetPath);
         }
 
-        if (params.top) {
-          args.push("--top", params.top.toString());
-        }
+        args.push("--top", topN.toString());
 
         const result = await pi.exec(cmd.command, args, {
           cwd: pi.cwd,
@@ -193,8 +206,8 @@ const factory: CustomToolFactory = (pi) => {
         return {
           content: [{ type: "text", text: result.stdout }],
           details: {
-            path: params.path || ".",
-            top: params.top || 10,
+            path: targetPath,
+            top: topN,
           },
         };
       },
@@ -221,14 +234,22 @@ const factory: CustomToolFactory = (pi) => {
       async execute(toolCallId, params, onUpdate, ctx, signal) {
         const cmd = await resolveInvarCommand();
 
+        // Validate required parameter
+        if (!params.file) {
+          throw new Error("Missing required parameter: file (markdown file path)");
+        }
+
         if (!isValidPath(params.file)) {
           throw new Error("Invalid file path: contains unsafe characters or path traversal");
         }
 
+        // Handle optional parameter with default
+        const maxDepth = params.depth ?? 6;
+
         const args = [...cmd.args, "doc", "toc", params.file];
 
-        if (params.depth && params.depth !== 6) {
-          args.push("--depth", params.depth.toString());
+        if (maxDepth !== 6) {
+          args.push("--depth", maxDepth.toString());
         }
 
         const result = await pi.exec(cmd.command, args, {
@@ -248,7 +269,7 @@ const factory: CustomToolFactory = (pi) => {
           content: [{ type: "text", text: result.stdout }],
           details: {
             file: params.file,
-            depth: params.depth || 6,
+            depth: maxDepth,
           },
         };
       },
@@ -276,13 +297,24 @@ const factory: CustomToolFactory = (pi) => {
       async execute(toolCallId, params, onUpdate, ctx, signal) {
         const cmd = await resolveInvarCommand();
 
+        // Validate required parameters
+        if (!params.file) {
+          throw new Error("Missing required parameter: file (markdown file path)");
+        }
+        if (!params.section) {
+          throw new Error("Missing required parameter: section (section path or identifier)");
+        }
+
         if (!isValidPath(params.file) || !isValidPath(params.section)) {
           throw new Error("Invalid file or section path: contains unsafe characters or path traversal");
         }
 
+        // Handle optional parameter with default
+        const includeChildren = params.children ?? true;
+
         const args = [...cmd.args, "doc", "read", params.file, params.section, "--json"];
 
-        if (params.children === false) {
+        if (includeChildren === false) {
           args.push("--no-children");
         }
 
@@ -335,12 +367,21 @@ const factory: CustomToolFactory = (pi) => {
       async execute(toolCallId, params, onUpdate, ctx, signal) {
         const cmd = await resolveInvarCommand();
 
+        // Validate required parameters
+        if (!params.file) {
+          throw new Error("Missing required parameter: file (markdown file path)");
+        }
+        if (!params.pattern) {
+          throw new Error("Missing required parameter: pattern (glob pattern for section titles)");
+        }
+
         if (!isValidPath(params.file)) {
           throw new Error("Invalid file path: contains unsafe characters or path traversal");
         }
 
         const args = [...cmd.args, "doc", "find", params.pattern, params.file, "--json"];
 
+        // Handle optional parameters
         if (params.content) {
           args.push("--content", params.content);
         }
@@ -397,9 +438,23 @@ const factory: CustomToolFactory = (pi) => {
       async execute(toolCallId, params, onUpdate, ctx, signal) {
         const cmd = await resolveInvarCommand();
 
+        // Validate required parameters
+        if (!params.file) {
+          throw new Error("Missing required parameter: file (markdown file path)");
+        }
+        if (!params.section) {
+          throw new Error("Missing required parameter: section (section path or identifier)");
+        }
+        if (!params.content) {
+          throw new Error("Missing required parameter: content (new content for section)");
+        }
+
         if (!isValidPath(params.file) || !isValidPath(params.section)) {
           throw new Error("Invalid file or section path: contains unsafe characters or path traversal");
         }
+
+        // Handle optional parameter with default
+        const keepHeading = params.keep_heading ?? true;
 
         // Write content to temporary file to avoid shell injection
         const tmpFile = path.join(pi.cwd, `.invar-tmp-${Date.now()}.txt`);
@@ -417,7 +472,7 @@ const factory: CustomToolFactory = (pi) => {
             tmpFile,
           ];
 
-          if (params.keep_heading === false) {
+          if (keepHeading === false) {
             args.push("--no-keep-heading");
           }
 
@@ -478,9 +533,23 @@ const factory: CustomToolFactory = (pi) => {
       async execute(toolCallId, params, onUpdate, ctx, signal) {
         const cmd = await resolveInvarCommand();
 
+        // Validate required parameters
+        if (!params.file) {
+          throw new Error("Missing required parameter: file (markdown file path)");
+        }
+        if (!params.anchor) {
+          throw new Error("Missing required parameter: anchor (section path for insertion point)");
+        }
+        if (!params.content) {
+          throw new Error("Missing required parameter: content (content to insert)");
+        }
+
         if (!isValidPath(params.file) || !isValidPath(params.anchor)) {
           throw new Error("Invalid file or anchor path: contains unsafe characters or path traversal");
         }
+
+        // Handle optional parameter with default
+        const position = params.position ?? "after";
 
         // Write content to temporary file
         const tmpFile = path.join(pi.cwd, `.invar-tmp-${Date.now()}.txt`);
@@ -498,8 +567,8 @@ const factory: CustomToolFactory = (pi) => {
             tmpFile,
           ];
 
-          if (params.position && params.position !== "after") {
-            args.push("--position", params.position);
+          if (position !== "after") {
+            args.push("--position", position);
           }
 
           const result = await pi.exec(cmd.command, args, {
@@ -556,13 +625,24 @@ const factory: CustomToolFactory = (pi) => {
       async execute(toolCallId, params, onUpdate, ctx, signal) {
         const cmd = await resolveInvarCommand();
 
+        // Validate required parameters
+        if (!params.file) {
+          throw new Error("Missing required parameter: file (markdown file path)");
+        }
+        if (!params.section) {
+          throw new Error("Missing required parameter: section (section path or identifier)");
+        }
+
         if (!isValidPath(params.file) || !isValidPath(params.section)) {
           throw new Error("Invalid file or section path: contains unsafe characters or path traversal");
         }
 
+        // Handle optional parameter with default
+        const includeChildren = params.children ?? true;
+
         const args = [...cmd.args, "doc", "delete", params.file, params.section];
 
-        if (params.children === false) {
+        if (includeChildren === false) {
           args.push("--no-children");
         }
 

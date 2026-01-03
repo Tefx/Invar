@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [1.15.3] - 2026-01-03
+
+### Fixed
+- **Pi Custom Tools: Parameter Handling** - Fixed parameter validation and default values
+  - Added validation for all required parameters (file, target, section, etc.)
+  - Added explicit default value handling using `??` operator for optional parameters
+  - Prevents tools from failing when Pi doesn't pass parameter values
+  - **Solves critical issue** where tools failed with missing parameters:
+    - Root cause: TypeBox default values not automatically populated in params object
+    - Pi may call tools without passing values, even for required parameters
+  - All 9 tools now validate inputs and handle defaults correctly
+  - Clear error messages guide LLM to provide required parameters
+
 
 ## [1.15.2] - 2026-01-03
 
@@ -365,7 +378,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[Unreleased]: https://github.com/yourusername/invar/compare/v1.15.2...HEAD
+[Unreleased]: https://github.com/yourusername/invar/compare/v1.15.3...HEAD
+[1.15.3]: https://github.com/yourusername/invar/compare/v1.15.2...v1.15.3
 [1.15.2]: https://github.com/yourusername/invar/compare/v1.15.1...v1.15.2
 [1.15.1]: https://github.com/yourusername/invar/compare/v1.15.0...v1.15.1
 [1.15.0]: https://github.com/yourusername/invar/compare/v1.14.0...v1.15.0
