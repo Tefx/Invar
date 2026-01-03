@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+
+
+## [1.15.1] - 2026-01-03
+
+### Added
+- **Pi Custom Tools: Document Tools** - Added 6 doc tools for structured markdown editing
+  - `invar_doc_toc`: Extract document structure (Table of Contents)
+  - `invar_doc_read`: Read specific section from a document
+  - `invar_doc_find`: Find sections matching a pattern
+  - `invar_doc_replace`: Replace section content
+  - `invar_doc_insert`: Insert content relative to a section
+  - `invar_doc_delete`: Delete a section
+  - All tools follow the same security patterns as core tools (path validation, temp file handling)
+  - Brings Pi custom tools to parity with MCP server capabilities (9 tools total)
+
+### Fixed
+- **Pi Custom Tools: uvx Fallback Support** - Automatic fallback to `uvx invar-tools`
+  - Added `resolveInvarCommand()` helper to replace `checkInvarInstalled()`
+  - Try `invar` command first (if installed in PATH)
+  - Fallback to `uvx invar-tools` if `invar` not found
+  - No installation required - uvx downloads and runs invar-tools on-demand
+  - Matches the 3-tier calling method documented in CLAUDE.md
+  - All 9 tools updated to use the command resolver
+
 ### Added
 - **Pi Custom Tools: Document Tools** - Added 6 doc tools for structured markdown editing
   - `invar_doc_toc`: Extract document structure (Table of Contents)
@@ -326,7 +350,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[Unreleased]: https://github.com/yourusername/invar/compare/v1.15.0...HEAD
+[Unreleased]: https://github.com/yourusername/invar/compare/v1.15.1...HEAD
+[1.15.1]: https://github.com/yourusername/invar/compare/v1.15.0...v1.15.1
 [1.15.0]: https://github.com/yourusername/invar/compare/v1.14.0...v1.15.0
 [1.14.0]: https://github.com/yourusername/invar/compare/v1.13.0...v1.14.0
 [1.13.0]: https://github.com/yourusername/invar/compare/v1.12.0...v1.13.0
