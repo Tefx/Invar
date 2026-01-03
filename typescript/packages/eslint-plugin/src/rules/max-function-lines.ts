@@ -3,11 +3,11 @@
  *
  * Enforce maximum function length with layer-based limits.
  *
- * Layered limits (LX-10):
- * - Core: 50 lines (strict, pure logic)
- * - Shell: 100 lines (I/O operations)
- * - Tests: 150 lines (test functions)
- * - Default: 50 lines (other files)
+ * TypeScript layered limits (LX-10, Python × 1.3):
+ * - Core: 65 lines (strict, pure logic)
+ * - Shell: 130 lines (I/O operations)
+ * - Tests: 260 lines (test functions)
+ * - Default: 104 lines (other files)
  */
 
 import type { Rule } from 'eslint';
@@ -90,8 +90,9 @@ export const maxFunctionLines: Rule.RuleModule = {
 
         if (skipComments) {
           allComments.forEach((comment: any) => {
-            const start = comment.loc?.start.line || 0;
-            const end = comment.loc?.end.line || 0;
+            if (!comment.loc) return; // Skip comments without location info
+            const start = comment.loc.start.line;
+            const end = comment.loc.end.line;
             for (let i = start; i <= end; i++) {
               commentLines.add(i);
             }
@@ -101,6 +102,9 @@ export const maxFunctionLines: Rule.RuleModule = {
         actualLines = 0;
         for (let lineNum = loc.start.line; lineNum <= loc.end.line; lineNum++) {
           const line = sourceCode.lines[lineNum - 1];
+
+          // Skip if line doesn't exist (edge case with trailing newlines)
+          if (!line) continue;
 
           // Skip comment lines
           if (skipComments && commentLines.has(lineNum)) {

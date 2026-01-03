@@ -3,11 +3,11 @@
  *
  * Enforce maximum file length with layer-based limits.
  *
- * Layered limits (LX-10):
- * - Core: 500 lines (strict, pure logic)
- * - Shell: 700 lines (I/O operations)
- * - Tests: 800 lines (test files)
- * - Default: 600 lines (other files)
+ * TypeScript layered limits (LX-10, Python × 1.3):
+ * - Core: 650 lines (strict, pure logic)
+ * - Shell: 910 lines (I/O operations)
+ * - Tests: 1300 lines (test files)
+ * - Default: 780 lines (other files)
  */
 
 import type { Rule } from 'eslint';
@@ -69,8 +69,9 @@ export const maxFileLines: Rule.RuleModule = {
 
           if (skipComments) {
             allComments.forEach(comment => {
-              const start = comment.loc?.start.line || 0;
-              const end = comment.loc?.end.line || 0;
+              if (!comment.loc) return; // Skip comments without location info
+              const start = comment.loc.start.line;
+              const end = comment.loc.end.line;
               for (let i = start; i <= end; i++) {
                 commentLines.add(i);
               }
@@ -81,6 +82,9 @@ export const maxFileLines: Rule.RuleModule = {
           for (let i = 0; i < lines.length; i++) {
             const lineNum = i + 1;
             const line = lines[i];
+
+            // Skip if line doesn't exist (edge case)
+            if (!line) continue;
 
             // Skip comment lines
             if (skipComments && commentLines.has(lineNum)) {

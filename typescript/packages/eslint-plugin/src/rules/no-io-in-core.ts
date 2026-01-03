@@ -39,6 +39,8 @@ const IO_PACKAGE_PATTERNS = [
   /^mongodb/,
   /^redis/,
   /^ioredis/,
+  /^@aws-sdk\//,
+  /^@vercel\//,
 ];
 
 function isIoModule(source: string): boolean {
@@ -47,7 +49,9 @@ function isIoModule(source: string): boolean {
 }
 
 function isInCoreDirectory(filename: string): boolean {
-  return filename.includes('/core/') || filename.includes('\\core\\');
+  // Normalize to lowercase and forward slashes for consistent cross-platform matching
+  const normalized = filename.replace(/\\/g, '/').toLowerCase();
+  return normalized.includes('/core/');
 }
 
 export const noIoInCore: Rule.RuleModule = {

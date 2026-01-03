@@ -32,9 +32,11 @@ export const requireJsdocExample: Rule.RuleModule = {
   },
 
   create(context): Rule.RuleListener {
-    function checkFunction(node: Rule.Node, name: string | null): void {
+    function checkFunction(node: Rule.Node, name: string | null, skipExportCheck = false): void {
       if (!name) return;
-      if (!isExported(node)) return;
+
+      // Only check export status if not already verified by selector
+      if (!skipExportCheck && !isExported(node)) return;
 
       // Check for @example in leading comments
       const sourceCode = context.sourceCode || context.getSourceCode();
@@ -61,12 +63,36 @@ export const requireJsdocExample: Rule.RuleModule = {
       },
 
       // Also check arrow functions assigned to exported variables
+      // Selector guarantees this is already exported, so skipExportCheck=true
       'ExportNamedDeclaration > VariableDeclaration > VariableDeclarator > ArrowFunctionExpression'(
         node: Rule.Node
       ) {
-        const parent = (node as unknown as { parent?: { id?: { name: string } } }).parent;
-        const name = parent?.id?.name || null;
-        checkFunction(node, name);
+        const anyNode = node as any;
+        const name = anyNode.parent?.id?.name || null;
+        if (!name) return;
+
+        // For exported variables, the JSDoc is typically before the ExportNamedDeclaration,
+        // not before the ArrowFunctionExpression
+        const sourceCode = context.sourceCode || context.getSourceCode();
+        const exportDeclaration = anyNode.parent?.parent?.parent;
+        const comments =
+          exportDeclaration?.type === 'ExportNamedDeclaration'
+            ? sourceCode.getCommentsBefore(exportDeclaration)
+            : sourceCode.getCommentsBefore(node);
+
+        const hasExample = comments.some(
+          (comment: any) =>
+            comment.type === 'Block' &&
+            comment.value.includes('@example')
+        );
+
+        if (!hasExample) {
+          context.report({
+            node,
+            messageId: 'missingExample',
+            data: { name },
+          });
+        }
       },
     };
   },
