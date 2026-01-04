@@ -180,12 +180,39 @@ export const shellComplexity: Rule.RuleModule = {
     }
 
     /**
-     * Get function name
+     * Get function name with improved extraction from parent context
      */
     function getFunctionName(node: FunctionNode): string {
+      // 1. FunctionDeclaration - use direct id
       if (node.type === 'FunctionDeclaration' && node.id) {
         return node.id.name;
       }
+
+      // 2. FunctionExpression - try id first, then parent
+      if (node.type === 'FunctionExpression' && node.id) {
+        return node.id.name;
+      }
+
+      // 3. For unnamed FunctionExpression or ArrowFunctionExpression,
+      //    try to get name from parent VariableDeclarator
+      try {
+        const ancestors = context.sourceCode?.getAncestors?.(node as unknown as Rule.Node)
+                       || context.getAncestors(node as unknown as Rule.Node);
+
+        // Look for parent VariableDeclarator
+        for (let i = ancestors.length - 1; i >= 0; i--) {
+          const ancestor = ancestors[i];
+          if (ancestor.type === 'VariableDeclarator') {
+            const varDecl = ancestor as unknown as { id: { type: string; name?: string } };
+            if (varDecl.id && varDecl.id.type === 'Identifier' && varDecl.id.name) {
+              return varDecl.id.name;
+            }
+          }
+        }
+      } catch {
+        // If ancestor lookup fails, fall through to 'anonymous'
+      }
+
       return 'anonymous';
     }
 

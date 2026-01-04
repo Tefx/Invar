@@ -869,6 +869,81 @@ describe('no-pure-logic-in-shell', () => {
       invalid: [],
     });
   });
+
+  it('should extract function name from FunctionExpression with id', () => {
+    ruleTester.run('no-pure-logic-in-shell', noPureLogicInShell, {
+      valid: [],
+      invalid: [
+        {
+          // Named FunctionExpression should use its own name
+          code: `
+            const foo = function namedFunc() {
+              const a = 1;
+              const b = 2;
+              const c = 3;
+              const d = 4;
+              return a + b + c + d;
+            };
+          `,
+          filename: '/project/shell/calculator.js',
+          errors: [{
+            messageId: 'pureLogicInShell',
+            data: { name: 'namedFunc' },  // Should use function's own name
+          }],
+        },
+      ],
+    });
+  });
+
+  it('should extract function name from parent VariableDeclarator for anonymous FunctionExpression', () => {
+    ruleTester.run('no-pure-logic-in-shell', noPureLogicInShell, {
+      valid: [],
+      invalid: [
+        {
+          // Anonymous FunctionExpression should use variable name
+          code: `
+            const calculateTotal = function() {
+              const a = 1;
+              const b = 2;
+              const c = 3;
+              const d = 4;
+              return a + b + c + d;
+            };
+          `,
+          filename: '/project/shell/calculator.js',
+          errors: [{
+            messageId: 'pureLogicInShell',
+            data: { name: 'calculateTotal' },  // Should use variable name
+          }],
+        },
+      ],
+    });
+  });
+
+  it('should extract function name from parent VariableDeclarator for ArrowFunctionExpression', () => {
+    ruleTester.run('no-pure-logic-in-shell', noPureLogicInShell, {
+      valid: [],
+      invalid: [
+        {
+          // Arrow function should use variable name
+          code: `
+            const processData = () => {
+              const a = 1;
+              const b = 2;
+              const c = 3;
+              const d = 4;
+              return a + b + c + d;
+            };
+          `,
+          filename: '/project/shell/processor.js',
+          errors: [{
+            messageId: 'pureLogicInShell',
+            data: { name: 'processData' },  // Should use variable name
+          }],
+        },
+      ],
+    });
+  });
 });
 
 describe('shell-complexity', () => {
@@ -1030,6 +1105,69 @@ describe('shell-complexity', () => {
         },
       ],
       invalid: [],
+    });
+  });
+
+  it('should extract function name from FunctionExpression with id', () => {
+    ruleTester.run('shell-complexity', shellComplexity, {
+      valid: [],
+      invalid: [
+        {
+          // Named FunctionExpression should use its own name
+          code: `
+            const foo = function namedHandler() {
+              ${'const x = 1;\n'.repeat(21)}
+            };
+          `,
+          filename: '/project/shell/handler.js',
+          errors: [{
+            messageId: 'tooManyStatements',
+            data: { name: 'namedHandler' },  // Should use function's own name
+          }],
+        },
+      ],
+    });
+  });
+
+  it('should extract function name from parent VariableDeclarator for anonymous FunctionExpression', () => {
+    ruleTester.run('shell-complexity', shellComplexity, {
+      valid: [],
+      invalid: [
+        {
+          // Anonymous FunctionExpression should use variable name
+          code: `
+            const processOrder = function() {
+              ${'const x = 1;\n'.repeat(21)}
+            };
+          `,
+          filename: '/project/shell/orders.js',
+          errors: [{
+            messageId: 'tooManyStatements',
+            data: { name: 'processOrder' },  // Should use variable name
+          }],
+        },
+      ],
+    });
+  });
+
+  it('should extract function name from parent VariableDeclarator for ArrowFunctionExpression', () => {
+    ruleTester.run('shell-complexity', shellComplexity, {
+      valid: [],
+      invalid: [
+        {
+          // Arrow function should use variable name
+          code: `
+            const handleRequest = () => {
+              ${'const x = 1;\n'.repeat(21)}
+            };
+          `,
+          filename: '/project/shell/api.js',
+          errors: [{
+            messageId: 'tooManyStatements',
+            data: { name: 'handleRequest' },  // Should use variable name
+          }],
+        },
+      ],
     });
   });
 });
