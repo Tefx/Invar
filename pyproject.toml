@@ -4,13 +4,14 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/invar"]
+# Disable VCS ignore to include gitignored node_tools (eslint-plugin)
+ignore-vcs = true
 
-# Include embedded Node.js tools (LX-05: TypeScript support without npm)
-# These are copied by scripts/embed_node_tools.py before build
-artifacts = ["src/invar/node_tools/**/*.js", "src/invar/node_tools/**/MANIFEST"]
+[tool.hatch.build.targets.sdist]
+# Also disable VCS ignore for sdist (needed for complete wheel build from sdist)
+ignore-vcs = true
 
 # Note: templates are included via packages = ["src/invar"]
-# force-include removed to avoid duplicate file errors in wheel
 
 [project]
 name = "invar-tools"

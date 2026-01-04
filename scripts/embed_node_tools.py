@@ -122,10 +122,11 @@ def clean_target(target: Path) -> None:
 # @invar:allow shell_result: Standalone script helper
 # @shell_complexity: File copy with validation and size reporting
 def copy_tool(ts_dir: Path, target: Path, tool_name: str) -> bool:
-    """Copy a single tool's bundled CLI to target.
+    """Copy a single tool's CLI to target.
 
-    Prefers bundle.js (standalone with deps) over cli.js (requires node_modules).
-    For tools with external dependencies (like eslint-plugin), also copies package.json.
+    Special handling:
+    - eslint-plugin: Copy entire dist/ directory (unbundled, 632 KB)
+    - Others: Prefer bundle.js (standalone with deps) over cli.js
     """
     src = ts_dir / "packages" / tool_name / "dist"
     src_pkg = ts_dir / "packages" / tool_name
@@ -135,7 +136,41 @@ def copy_tool(ts_dir: Path, target: Path, tool_name: str) -> bool:
         print(f"  WARNING: {tool_name}/dist not found, skipping")
         return False
 
-    # Prefer bundle.js (standalone) over cli.js (needs deps)
+    # Special case: eslint-plugin needs unbundled dist/ for ESLint module resolution
+    if tool_name == "eslint-plugin":
+        # Remove existing directory if present
+        if dst.exists():
+            shutil.rmtree(dst)
+
+        # Copy entire dist/ directory
+        shutil.copytree(src, dst)
+
+        # Get total size for reporting
+        total_size = sum(f.stat().st_size for f in dst.rglob('*') if f.is_file())
+        size_kb = total_size / 1024
+
+        print(f"  Embedded {tool_name} (unbundled: {size_kb:.1f} KB)")
+
+        # Copy package.json for dependencies
+        pkg_json = src_pkg / "package.json"
+        if pkg_json.exists():
+            with open(pkg_json) as f:
+                pkg_data = json.load(f)
+            safe_pkg = {
+                "name": pkg_data.get("name", "unknown"),
+                "version": pkg_data.get("version", "0.0.0"),
+                "type": pkg_data.get("type"),  # Keep "module" for ESM compatibility
+                "dependencies": pkg_data.get("dependencies", {}),
+                "engines": pkg_data.get("engines", {}),
+            }
+            # Remove None values
+            safe_pkg = {k: v for k, v in safe_pkg.items() if v is not None}
+            with open(dst / "package.json", "w") as f:
+                json.dump(safe_pkg, f, indent=2)
+
+        return True
+
+    # Other tools: use bundled approach
     bundle_js = src / "bundle.js"
     cli_js = src / "cli.js"
 

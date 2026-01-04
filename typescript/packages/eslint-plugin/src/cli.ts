@@ -19,6 +19,10 @@ import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import plugin from './index.js';
 
+// Get directory containing this CLI script (for resolving node_modules)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
 interface CliArgs {
   projectPath: string;
   config: 'recommended' | 'strict';
@@ -88,19 +92,13 @@ async function main(): Promise<void> {
       process.exit(1);
     }
 
-    // Determine where to resolve parser/plugins from
-    // For bundled CLI, this is the directory containing the bundle
-    const __dirname = typeof __filename !== 'undefined'
-      ? dirname(__filename)
-      : dirname(fileURLToPath(import.meta.url));
-
-    // Create ESLint instance using legacy API (ESLint 8 with useEslintrc: false)
-    // This allows programmatic plugin registration without flat config complexity
+    // Create ESLint instance with programmatic configuration
+    // Set cwd to CLI directory so ESLint can find parser in our node_modules
     const eslint = new ESLint({
       useEslintrc: false, // Don't load .eslintrc files
-      resolvePluginsRelativeTo: __dirname, // Tell ESLint where to find parser/plugins
+      cwd: __dirname, // Set working directory to CLI location for module resolution
       baseConfig: {
-        parser: '@typescript-eslint/parser', // String path resolved from resolvePluginsRelativeTo
+        parser: '@typescript-eslint/parser',
         parserOptions: {
           ecmaVersion: 2022,
           sourceType: 'module',
@@ -111,15 +109,13 @@ async function main(): Promise<void> {
       plugins: {
         '@invar': plugin, // Register our plugin programmatically
       },
-    } as any); // Type assertion for ESLint legacy API (types incomplete)
+    } as any); // Type assertion for ESLint config complexity
 
     // Lint the project
     const results = await eslint.lintFiles([projectPath]);
 
     // Output in standard ESLint JSON format (compatible with guard_ts.py)
     const formatter = await eslint.loadFormatter('json');
-
-    // Handle formatter.format() which may return string or Promise<string>
     const resultText = await Promise.resolve(formatter.format(results, {
       cwd: projectPath,
       rulesMeta: eslint.getRulesMetaForResults(results),

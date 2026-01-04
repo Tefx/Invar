@@ -5,6 +5,10 @@
 */node_modules/
 */package.json
 
+# eslint-plugin is unbundled (entire dist/ directory)
+# All other tools are bundled (single cli.js file)
+eslint-plugin/
+
 # Common generated/temp files
 *.log
 .DS_Store
