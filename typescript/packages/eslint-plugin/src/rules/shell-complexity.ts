@@ -59,7 +59,7 @@ export const shellComplexity: Rule.RuleModule = {
     const filename = context.filename || context.getFilename();
 
     // Only check files in shell/ directories
-    const isShell = /[\/\\]shell[\/\\]/.test(filename);
+    const isShell = /[/\\]shell[/\\]/.test(filename);
     if (!isShell) {
       return {}; // Skip non-shell files
     }
@@ -137,16 +137,23 @@ export const shellComplexity: Rule.RuleModule = {
           n.type === 'WhileStatement' ||
           n.type === 'DoWhileStatement' ||
           n.type === 'ConditionalExpression' || // ternary ? :
-          n.type === 'SwitchCase' ||
           n.type === 'CatchClause'
         ) {
           complexity++;
         }
 
-        // Logical operators (&&, ||) add complexity
+        // SwitchCase: only count non-default cases
+        if (n.type === 'SwitchCase') {
+          const caseNode = n as unknown as { test: unknown | null };
+          if (caseNode.test !== null) {
+            complexity++;
+          }
+        }
+
+        // Logical operators (&&, ||, ??) add complexity
         if (n.type === 'LogicalExpression') {
           const logicalNode = n as unknown as { operator: string };
-          if (logicalNode.operator === '&&' || logicalNode.operator === '||') {
+          if (logicalNode.operator === '&&' || logicalNode.operator === '||' || logicalNode.operator === '??') {
             complexity++;
           }
         }

@@ -41,6 +41,16 @@ const IO_IDENTIFIERS = [
   'readdir',
   'stat',
   'access',
+  'net',
+  'spawn',
+  'exec',
+  'execSync',
+  'child_process',
+  'WebSocket',
+  'XMLHttpRequest',
+  'request',
+  'got',
+  'console',
 ];
 
 export const noPureLogicInShell: Rule.RuleModule = {

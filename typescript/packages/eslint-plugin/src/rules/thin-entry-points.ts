@@ -69,15 +69,22 @@ export const thinEntryPoints: Rule.RuleModule = {
     const maxStatements = options.maxStatements || DEFAULT_MAX_STATEMENTS;
 
     /**
-     * Check if statement is an import/export
+     * Check if statement is an import/export WITHOUT a declaration
+     * Export with declarations like "export function foo()" should be treated as declarations
      */
     function isImportOrExport(stmt: ModuleDeclaration | Statement | Directive): boolean {
-      return (
-        stmt.type === 'ImportDeclaration' ||
-        stmt.type === 'ExportNamedDeclaration' ||
-        stmt.type === 'ExportDefaultDeclaration' ||
-        stmt.type === 'ExportAllDeclaration'
-      );
+      if (stmt.type === 'ImportDeclaration' || stmt.type === 'ExportAllDeclaration') {
+        return true;
+      }
+      
+      // ExportNamedDeclaration and ExportDefaultDeclaration can have declarations
+      if (stmt.type === 'ExportNamedDeclaration' || stmt.type === 'ExportDefaultDeclaration') {
+        const exportStmt = stmt as unknown as { declaration: Node | null };
+        // If there's a declaration, treat it as a regular statement (not just an export)
+        return exportStmt.declaration === null;
+      }
+      
+      return false;
     }
 
     /**
@@ -172,7 +179,7 @@ export const thinEntryPoints: Rule.RuleModule = {
               node: node as unknown as Rule.Node,
               messageId: 'hasComplexLogic',
               data: {
-                filename: filename.split('/').pop() || filename,
+                filename: filename.replace(/\\/g, '/').split('/').pop() || filename,
                 type: item.type,
               },
             });
@@ -185,7 +192,7 @@ export const thinEntryPoints: Rule.RuleModule = {
             node: node as unknown as Rule.Node,
             messageId: 'tooMuchLogic',
             data: {
-              filename: filename.split('/').pop() || filename,
+              filename: filename.replace(/\\/g, '/').split('/').pop() || filename,
               count: String(nonImportExportCount),
               max: String(maxStatements),
             },
