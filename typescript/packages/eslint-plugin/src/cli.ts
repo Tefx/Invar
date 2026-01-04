@@ -15,14 +15,9 @@
  */
 
 import { ESLint } from 'eslint';
-import { resolve, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { resolve } from 'path';
 import { statSync, realpathSync } from 'fs';
 import plugin from './index.js';
-
-// Get directory containing this CLI script (for resolving node_modules)
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 interface CliArgs {
   projectPath: string;
@@ -111,10 +106,10 @@ async function main(): Promise<void> {
     }
 
     // Create ESLint instance with programmatic configuration
-    // Set cwd to CLI directory so ESLint can find parser in our node_modules
+    // For embedded distribution: use project's cwd to find eslint/parser in project's node_modules
     const eslint = new ESLint({
       useEslintrc: false, // Don't load .eslintrc files
-      cwd: __dirname, // Set working directory to CLI location for module resolution
+      cwd: projectPath, // Use project directory for module resolution (embedded distribution)
       baseConfig: {
         parser: '@typescript-eslint/parser',
         parserOptions: {
