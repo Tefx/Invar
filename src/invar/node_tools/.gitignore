@@ -1,0 +1,6 @@
+# Embedded Node.js tools - runtime dependencies
+# These are installed by scripts/embed_node_tools.py
+# Run that script before building or testing
+
+*/node_modules/
+*/package.json

@@ -101,8 +101,10 @@ def copy_tool(ts_dir: Path, target: Path, tool_name: str) -> bool:
     """Copy a single tool's bundled CLI to target.
 
     Prefers bundle.js (standalone with deps) over cli.js (requires node_modules).
+    For tools with external dependencies (like eslint-plugin), also copies package.json.
     """
     src = ts_dir / "packages" / tool_name / "dist"
+    src_pkg = ts_dir / "packages" / tool_name
     dst = target / tool_name
 
     if not src.exists():
@@ -129,6 +131,18 @@ def copy_tool(ts_dir: Path, target: Path, tool_name: str) -> bool:
     dest_cli = dst / "cli.js"
     shutil.copy2(source_file, dest_cli)
 
+    # Copy package.json if it exists (for tools with runtime dependencies)
+    # Strip "type": "module" since bundles are CommonJS
+    pkg_json = src_pkg / "package.json"
+    if pkg_json.exists():
+        import json
+        with open(pkg_json) as f:
+            pkg_data = json.load(f)
+        # Remove "type": "module" to allow CommonJS bundles
+        pkg_data.pop("type", None)
+        with open(dst / "package.json", "w") as f:
+            json.dump(pkg_data, f, indent=2)
+
     # Get size for reporting
     size_kb = dest_cli.stat().st_size / 1024
 
@@ -146,6 +160,42 @@ def write_manifest(target: Path, embedded: list[str]) -> None:
         for tool in sorted(embedded):
             f.write(f"{tool}\n")
     print(f"  Wrote MANIFEST ({len(embedded)} tools)")
+
+
+# @invar:allow shell_result: Standalone script helper
+def install_dependencies(target: Path, embedded: list[str]) -> bool:
+    """Install runtime dependencies for tools that need them.
+
+    Runs npm install --production in each tool directory that has package.json.
+    """
+    print("Installing runtime dependencies...")
+    for tool in embedded:
+        tool_dir = target / tool
+        pkg_json = tool_dir / "package.json"
+
+        if not pkg_json.exists():
+            continue
+
+        print(f"  Installing deps for {tool}...")
+        result = subprocess.run(
+            ["npm", "install", "--production", "--no-save"],
+            cwd=tool_dir,
+            capture_output=True,
+            text=True,
+        )
+
+        if result.returncode != 0:
+            print(f"  ERROR: npm install failed for {tool}:")
+            print(result.stderr)
+            return False
+
+        # Report installed packages
+        node_modules = tool_dir / "node_modules"
+        if node_modules.exists():
+            pkg_count = len(list(node_modules.iterdir()))
+            print(f"    Installed {pkg_count} packages")
+
+    return True
 
 
 # @invar:allow shell_result: Standalone script entry point
@@ -203,6 +253,12 @@ def main() -> int:
 
     # Write manifest
     write_manifest(target, embedded)
+
+    print()
+
+    # Install runtime dependencies
+    if not install_dependencies(target, embedded):
+        return 1
 
     print()
     print(f"Done! Embedded {len(embedded)}/{len(TOOLS)} tools.")
