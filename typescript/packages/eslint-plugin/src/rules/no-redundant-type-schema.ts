@@ -10,7 +10,7 @@
  */
 
 import type { Rule } from 'eslint';
-import type { CallExpression, MemberExpression, VariableDeclarator } from 'estree';
+import type { CallExpression } from 'estree';
 
 /**
  * Check if a schema call chain has any refinements
@@ -25,7 +25,7 @@ function hasRefinements(node: CallExpression, baseType: string): boolean {
   const allowedMethods = refinementMethods[baseType] || [];
 
   // Walk up the AST to find any method calls on this schema
-  let current = node.parent;
+  let current = (node as any).parent;
   while (current) {
     if (current.type === 'CallExpression') {
       const callee = current.callee;

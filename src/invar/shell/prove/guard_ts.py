@@ -664,7 +664,9 @@ def _parse_tsc_line(line: str) -> TypeScriptViolation | None:
 
 # @shell_complexity: CLI tool integration with JSON parsing and error handling
 def run_eslint(project_path: Path) -> Result[list[TypeScriptViolation], str]:
-    """Run ESLint for code quality checks.
+    """Run ESLint with @invar/eslint-plugin rules.
+
+    Uses @invar/eslint-plugin CLI which pre-loads Invar-specific rules.
 
     Args:
         project_path: Path to project root.
@@ -677,9 +679,12 @@ def run_eslint(project_path: Path) -> Result[list[TypeScriptViolation], str]:
         return Failure(f"Project path does not exist: {project_path}")
 
     try:
+        # Get command for @invar/eslint-plugin (embedded or local dev)
+        cmd = _get_invar_package_cmd("eslint-plugin", project_path)
+        cmd.append(str(project_path))  # Add project path as argument
+
         result = subprocess.run(
-            ["npx", "eslint", ".", "--format", "json", "--ext", ".ts,.tsx"],
-            cwd=project_path,
+            cmd,
             capture_output=True,
             text=True,
             timeout=120,

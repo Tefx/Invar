@@ -26,7 +26,7 @@ import sys
 from pathlib import Path
 
 # Tools to embed (package names in typescript/packages/)
-TOOLS = ["ts-analyzer", "fc-runner", "quick-check"]
+TOOLS = ["ts-analyzer", "fc-runner", "quick-check", "eslint-plugin"]
 
 
 # @invar:allow shell_result: Standalone script helper

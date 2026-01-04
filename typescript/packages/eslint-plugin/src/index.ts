@@ -104,7 +104,7 @@ const configs = {
 
 const plugin: ESLint.Plugin = {
   rules,
-  configs,
+  configs: configs as any, // Type assertion due to ESLint config type complexity
 };
 
 export default plugin;

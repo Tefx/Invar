@@ -91,8 +91,9 @@ export const thinEntryPoints: Rule.RuleModule = {
      * Check if statement is simple (type-only, interface, or simple variable declaration)
      */
     function isSimpleStatement(stmt: ModuleDeclaration | Statement | Directive): boolean {
-      // Type aliases and interfaces are OK
-      if (stmt.type === 'TSTypeAliasDeclaration' || stmt.type === 'TSInterfaceDeclaration') {
+      // Type aliases and interfaces are OK (TypeScript-specific node types)
+      const stmtType = (stmt as any).type;
+      if (stmtType === 'TSTypeAliasDeclaration' || stmtType === 'TSInterfaceDeclaration') {
         return true;
       }
 

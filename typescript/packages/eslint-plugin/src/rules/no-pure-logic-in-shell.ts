@@ -151,8 +151,7 @@ export const noPureLogicInShell: Rule.RuleModule = {
       // 3. For unnamed FunctionExpression or ArrowFunctionExpression,
       //    try to get name from parent VariableDeclarator
       try {
-        const ancestors = context.sourceCode?.getAncestors?.(node as unknown as Rule.Node)
-                       || context.getAncestors(node as unknown as Rule.Node);
+        const ancestors = context.getAncestors();
 
         // Look for parent VariableDeclarator
         for (let i = ancestors.length - 1; i >= 0; i--) {

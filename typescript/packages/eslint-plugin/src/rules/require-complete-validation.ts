@@ -14,8 +14,6 @@ import type {
   FunctionExpression,
   ArrowFunctionExpression,
   Identifier,
-  TSTypeReference,
-  TSTypeQuery,
 } from 'estree';
 
 type FunctionNode = FunctionDeclaration | FunctionExpression | ArrowFunctionExpression;
@@ -29,7 +27,7 @@ function isZodInferType(typeAnnotation: any): boolean {
     return false;
   }
 
-  const typeRef = typeAnnotation as TSTypeReference;
+  const typeRef = typeAnnotation;
 
   // Check for z.infer type
   if (
@@ -80,8 +78,8 @@ export const requireCompleteValidation: Rule.RuleModule = {
       let unvalidatedCount = 0;
 
       for (const param of params) {
-        if (param.type === 'Identifier' && param.typeAnnotation) {
-          const typeAnnotation = param.typeAnnotation.typeAnnotation;
+        if (param.type === 'Identifier' && (param as any).typeAnnotation) {
+          const typeAnnotation = (param as any).typeAnnotation.typeAnnotation;
 
           if (isZodInferType(typeAnnotation)) {
             validatedCount++;
@@ -90,8 +88,8 @@ export const requireCompleteValidation: Rule.RuleModule = {
           }
         } else if (param.type === 'AssignmentPattern') {
           // Handle default parameters: param: Type = defaultValue
-          if (param.left.type === 'Identifier' && (param.left as Identifier).typeAnnotation) {
-            const typeAnnotation = (param.left as Identifier).typeAnnotation!.typeAnnotation;
+          if (param.left.type === 'Identifier' && (param.left as any).typeAnnotation) {
+            const typeAnnotation = (param.left as any).typeAnnotation.typeAnnotation;
 
             if (isZodInferType(typeAnnotation)) {
               validatedCount++;

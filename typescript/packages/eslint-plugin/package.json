@@ -28,6 +28,10 @@
     "url": "https://github.com/your-org/invar.git",
     "directory": "typescript/packages/eslint-plugin"
   },
+  "dependencies": {
+    "eslint": "^8.57.0",
+    "@typescript-eslint/parser": "^6.21.0"
+  },
   "peerDependencies": {
     "eslint": ">=8.0.0",
     "@typescript-eslint/parser": ">=6.0.0"
