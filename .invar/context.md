@@ -1,6 +1,6 @@
 # Invar Project Context
 
-*Last updated: 2026-01-02*
+*Last updated: 2026-01-04*
 
 <!-- DX-58: Slimmed context for efficient Check-In (~150 lines) -->
 
@@ -51,17 +51,17 @@
 
 ## Current State
 
-- **PyPI:** `invar-tools` v1.14.0 + `invar-runtime` v1.3.0
+- **PyPI:** `invar-tools` v1.16.0 + `invar-runtime` v1.3.0
 - **Protocol:** v5.0 (USBV workflow, DX-58 critical section)
-- **Status:** Feature complete, multi-agent support added (DX-81)
-- **Recent:** DX-81 (Multi-agent init support), DX-79 (Feedback collection), DX-78 (TypeScript Compiler API)
+- **Status:** Feature complete, TypeScript tooling production-ready
+- **Recent:** LX-06 (Unbundled eslint-plugin), DX-81 (Multi-agent init), DX-79 (Feedback collection)
 - **Blockers:** None
 
 ## Active Work
 
 See [docs/proposals/](../docs/proposals/) for planned changes.
 
-**Current focus:** DX-81 (Multi-agent init) completed, ready for v1.15.0 release
+**Current focus:** LX-06 completed - TypeScript tools production-ready with unbundled distribution
 
 ---
 
@@ -93,16 +93,16 @@ Smart Guard (`invar guard`) runs multiple verification layers:
 
 <!-- DX-58: Keep last 10, archive older ones -->
 
-1. **Agent-Native ≠ Agent-Only** - Design for Agent, measure by Human success
-2. **Automatic > Opt-in** - Agents won't use flags they don't know about
-3. **Example-Driven Learning** - Abstract rules don't teach; concrete code examples do
-4. **Skip Requires Justification** - Each @skip_property_test needs explicit reason
-5. **Review Gate as Conditional Step** - Review should be automatic trigger, not manual
-6. **Process Visibility vs Task Completion** - Need explicit visibility checkpoints
-7. **Enforcement Timing Matters** - Pre-commit blocks effective; PreToolUse hooks too late
-8. **Tools Exist ≠ Tools Used** - Habit overrides methodology
-9. **Performance Enables Adoption** - Fast tools get used more
-10. **Session Context > Async Feedback** - Problems caught during session beat CI feedback
+1. **Reliability > Size Optimization** - ESLint unbundled (632 KB) beats bundled (50 KB) when architecture demands it
+2. **Agent-Native ≠ Agent-Only** - Design for Agent, measure by Human success
+3. **Automatic > Opt-in** - Agents won't use flags they don't know about
+4. **Example-Driven Learning** - Abstract rules don't teach; concrete code examples do
+5. **Skip Requires Justification** - Each @skip_property_test needs explicit reason
+6. **Review Gate as Conditional Step** - Review should be automatic trigger, not manual
+7. **Process Visibility vs Task Completion** - Need explicit visibility checkpoints
+8. **Enforcement Timing Matters** - Pre-commit blocks effective; PreToolUse hooks too late
+9. **Tools Exist ≠ Tools Used** - Habit overrides methodology
+10. **Performance Enables Adoption** - Fast tools get used more
 
 ---
 
