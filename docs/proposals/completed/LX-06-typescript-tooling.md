@@ -513,28 +513,64 @@ jobs:
 ```
 
 ### Python ↔ TypeScript Integration
+### Python ↔ TypeScript Integration
 
-Python calls TypeScript tools via `npx` (subprocess):
+Python calls TypeScript tools via 3-tier discovery with graceful degradation:
 
 ```python
 # src/invar/shell/prove/guard_ts.py
 
-def run_ts_analyzer(path: str) -> Result[AnalysisResult, str]:
-    """Call @invar/ts-analyzer (if installed)."""
+def _get_invar_package_cmd(package_name: str, project_path: Path) -> list[str]:
+    """Get command to run an @invar/* package.
+    
+    Priority order:
+    1. Embedded tools (pip install invar-tools includes these)
+    2. Local development (typescript/packages/*/dist/ in Invar repo)
+    3. npx fallback (if published to npm)
+    """
+    # Priority 1: Embedded tools (from pip install)
     try:
-        result = subprocess.run(
-            ["npx", "@invar/ts-analyzer", "--json", path],
-            capture_output=True,
-            text=True,
-            timeout=60,
-        )
-        if result.returncode == 0:
-            return Success(json.loads(result.stdout))
-        return Failure(f"ts-analyzer failed: {result.stderr}")
+        from invar.node_tools import get_tool_path
+        if embedded := get_tool_path(package_name):
+            return ["node", str(embedded)]
+    except ImportError:
+        pass  # node_tools module not available
+    
+    # Priority 2: Local development setup
+    local_cli = project_path / f"typescript/packages/{package_name}/dist/cli.js"
+    if local_cli.exists():
+        return ["node", str(local_cli)]
+    
+    # Priority 3: npx fallback
+    return ["npx", f"@invar/{package_name}"]
+
+def run_eslint(project_path: Path) -> Result[list[TypeScriptViolation], str]:
+    """Run ESLint with @invar/eslint-plugin rules."""
+    try:
+        cmd = _get_invar_package_cmd("eslint-plugin", project_path)
+        cmd.append(str(project_path))
+        
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+        
+        violations = []
+        try:
+            eslint_output = json.loads(result.stdout)
+            for file_result in eslint_output:
+                for msg in file_result.get("messages", []):
+                    violations.append(TypeScriptViolation(...))
+        except json.JSONDecodeError:
+            if result.returncode != 0 and result.stderr:
+                return Failure(f"ESLint error: {result.stderr[:200]}")
+        
+        return Success(violations)
     except FileNotFoundError:
-        # Node/npm not installed, graceful degradation
-        return Failure("Node.js not installed, skipping enhanced analysis")
+        return Failure("npx not found - is Node.js installed?")
 ```
+
+**Key Benefits:**
+- **Zero-config for users:** Embedded tools work out-of-the-box after `pip install invar-tools`
+- **Development-friendly:** Local dev setup auto-detected in Invar repo
+- **Graceful degradation:** Falls back to npx if embedded tools not available
 
 ### Benefits
 
