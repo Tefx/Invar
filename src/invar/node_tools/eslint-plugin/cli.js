@@ -16,6 +16,7 @@
 import { ESLint } from 'eslint';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { statSync, realpathSync } from 'fs';
 import plugin from './index.js';
 // Get directory containing this CLI script (for resolving node_modules)
 const __filename = fileURLToPath(import.meta.url);
@@ -58,15 +59,32 @@ async function main() {
         process.exit(0);
     }
     const projectPath = resolve(args.projectPath);
-    // Validate resolved path is within current working directory or explicit allowed paths
+    // Validate resolved path is within current working directory
     // This prevents path traversal attacks via "../../../etc/passwd" patterns
+    // and symlink-based bypasses (e.g., "./symlink_inside/../../../etc/passwd")
     const cwd = process.cwd();
-    if (!projectPath.startsWith(cwd) && !projectPath.startsWith('/')) {
-        console.error(`Error: Project path must be within current directory`);
-        console.error(`  Requested: ${args.projectPath}`);
-        console.error(`  Resolved: ${projectPath}`);
-        console.error(`  Working dir: ${cwd}`);
-        process.exit(1);
+    try {
+        // Use realpath to resolve symlinks and prevent bypass attacks
+        const realProjectPath = realpathSync(projectPath);
+        const realCwd = realpathSync(cwd);
+        if (!realProjectPath.startsWith(realCwd)) {
+            console.error(`Error: Project path must be within current directory`);
+            console.error(`  Requested: ${args.projectPath}`);
+            console.error(`  Resolved: ${realProjectPath}`);
+            console.error(`  Working dir: ${realCwd}`);
+            process.exit(1);
+        }
+    }
+    catch (error) {
+        // If realpath fails (path doesn't exist), fall back to string comparison
+        // This allows error messages to be more specific
+        if (!projectPath.startsWith(cwd)) {
+            console.error(`Error: Project path must be within current directory`);
+            console.error(`  Requested: ${args.projectPath}`);
+            console.error(`  Resolved: ${projectPath}`);
+            console.error(`  Working dir: ${cwd}`);
+            process.exit(1);
+        }
     }
     try {
         // Get the rules config for the selected mode
@@ -93,8 +111,36 @@ async function main() {
                 '@invar': plugin, // Register our plugin programmatically
             },
         }); // Type assertion for ESLint config complexity
-        // Lint the project
-        const results = await eslint.lintFiles([projectPath]);
+        // Lint the project - detect if path is a file or directory
+        // ESLint defaults to .js only, so we need glob patterns for .ts/.tsx
+        let filesToLint;
+        try {
+            const stats = statSync(projectPath);
+            // Note: Advisory check for optimization - TOCTOU race condition is acceptable
+            // because ESLint will handle file system changes gracefully during actual linting
+            if (stats.isFile()) {
+                // Single file - lint it directly
+                filesToLint = [projectPath];
+            }
+            else if (stats.isDirectory()) {
+                // Directory - use glob patterns for TypeScript files primarily
+                // Note: Focus on TypeScript files as this is a TypeScript Guard tool
+                filesToLint = [
+                    `${projectPath}/**/*.ts`,
+                    `${projectPath}/**/*.tsx`,
+                ];
+            }
+            else {
+                console.error(`Error: Path is neither a file nor a directory: ${projectPath}`);
+                process.exit(1);
+            }
+        }
+        catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            console.error(`Error: Cannot access path: ${errorMessage}`);
+            process.exit(1);
+        }
+        const results = await eslint.lintFiles(filesToLint);
         // Output in standard ESLint JSON format (compatible with guard_ts.py)
         const formatter = await eslint.loadFormatter('json');
         const resultText = await Promise.resolve(formatter.format(results, {

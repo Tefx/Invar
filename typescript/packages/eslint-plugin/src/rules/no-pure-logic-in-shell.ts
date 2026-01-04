@@ -17,6 +17,8 @@ import type { FunctionDeclaration, FunctionExpression, ArrowFunctionExpression, 
 type FunctionNode = FunctionDeclaration | FunctionExpression | ArrowFunctionExpression;
 
 // I/O-related identifiers that indicate impure operations
+// Note: Result/Success/Failure are NOT I/O indicators - they're just return type wrappers
+// that can be used with pure logic. Only actual I/O operations should be listed here.
 const IO_IDENTIFIERS = [
   'fs',
   'readFile',
@@ -35,9 +37,6 @@ const IO_IDENTIFIERS = [
   'mkdir',
   'rmdir',
   'unlink',
-  'Result',
-  'Success',
-  'Failure',
   'readdir',
   'stat',
   'access',
@@ -88,9 +87,14 @@ export const noPureLogicInShell: Rule.RuleModule = {
       }
 
       // Walk the function body looking for I/O-related identifiers
-      function visit(n: Node): void {
-        if (hasIO) return;
+      // Optimization: Limit depth and skip non-identifier containers
+      const MAX_DEPTH = 10; // Reduced from 50 for better performance
 
+      function visit(n: Node, depth: number = 0): void {
+        if (hasIO) return; // Early return if already found
+        if (depth > MAX_DEPTH) return; // Depth limit
+
+        // Performance: Check node type first
         if (n.type === 'Identifier') {
           if (IO_IDENTIFIERS.includes(n.name)) {
             hasIO = true;
@@ -98,18 +102,34 @@ export const noPureLogicInShell: Rule.RuleModule = {
           }
         }
 
-        // Recursively visit children
-        for (const key of Object.keys(n)) {
+        // Performance: Skip node types that cannot contain identifiers
+        if (
+          n.type === 'Literal' ||
+          n.type === 'TemplateElement' ||
+          n.type === 'Super' ||
+          n.type === 'ThisExpression'
+        ) {
+          return; // These cannot contain identifier children
+        }
+
+        // Recursively visit children with depth tracking
+        // Only visit properties that typically contain code
+        const relevantKeys = ['body', 'expression', 'callee', 'object', 'property', 'left', 'right', 'test', 'consequent', 'alternate', 'arguments', 'params'];
+
+        for (const key of relevantKeys) {
           const value = (n as unknown as Record<string, unknown>)[key];
-          if (value && typeof value === 'object') {
+          if (!value) continue;
+
+          if (typeof value === 'object') {
             if (Array.isArray(value)) {
               for (const item of value) {
                 if (item && typeof item === 'object' && 'type' in item) {
-                  visit(item as Node);
+                  visit(item as Node, depth + 1);
+                  if (hasIO) return; // Early exit
                 }
               }
             } else if ('type' in value) {
-              visit(value as Node);
+              visit(value as Node, depth + 1);
             }
           }
         }

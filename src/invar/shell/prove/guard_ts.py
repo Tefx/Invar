@@ -84,6 +84,46 @@ class TypeScriptGuardResult:
     enhanced: EnhancedAnalysis | None = None
 
 
+# DX-22: Fix-or-Explain complexity debt enforcement
+# @shell_orchestration: Checks project-level complexity debt
+def check_ts_complexity_debt(
+    violations: list[TypeScriptViolation], limit: int = 3
+) -> list[TypeScriptViolation]:
+    """Check project-level shell-complexity debt (DX-22 Fix-or-Explain).
+
+    When the project has too many unaddressed shell-complexity warnings,
+    escalate to ERROR to force resolution. TypeScript default is 3 (vs Python's 5)
+    since TS projects tend to be smaller.
+
+    Args:
+        violations: All violations from ESLint/tsc/vitest.
+        limit: Maximum unaddressed complexity warnings before ERROR (default 3).
+
+    Returns:
+        List with single ERROR violation if debt limit exceeded, empty list otherwise.
+    """
+    # Count unaddressed shell-complexity warnings
+    unaddressed = [
+        v
+        for v in violations
+        if v.rule == "@invar/shell-complexity" and v.severity == "warning"
+    ]
+
+    if len(unaddressed) >= limit:
+        return [
+            TypeScriptViolation(
+                file="<project>",
+                line=None,
+                column=None,
+                rule="@invar/shell-complexity-debt",
+                message=f"Project has {len(unaddressed)} unaddressed complexity warnings (limit: {limit})",
+                severity="error",
+                source="eslint",
+            )
+        ]
+    return []
+
+
 # @shell_orchestration: Transforms TypeScriptGuardResult to JSON for agent consumption
 def format_typescript_guard_v2(result: TypeScriptGuardResult) -> dict:
     """Format TypeScript guard result as v2.0 JSON.
@@ -403,8 +443,32 @@ def run_ts_analyzer(project_path: Path) -> Result[dict, str]:
         # ts-analyzer exits non-zero when critical blind spots found, but still outputs valid JSON
         # Try to parse JSON output regardless of exit code
         if result.stdout.strip():
-            with contextlib.suppress(json.JSONDecodeError):
-                return Success(json.loads(result.stdout))
+            try:
+                data = json.loads(result.stdout)
+                return Success(data)
+            except json.JSONDecodeError as e:
+                # JSON too large or malformed - try to extract summary from text output
+                # Fall back to running without --json flag for human-readable summary
+                try:
+                    summary_result = subprocess.run(
+                        [*cmd, str(project_path)],
+                        capture_output=True,
+                        text=True,
+                        timeout=60,
+                        cwd=project_path,
+                    )
+                    # Extract key metrics from text output
+                    output = summary_result.stdout
+                    coverage_match = re.search(r'Contract coverage: (\d+)%', output)
+                    coverage = int(coverage_match.group(1)) if coverage_match else None
+
+                    return Success({
+                        "coverage": coverage,
+                        "summary_mode": True,
+                        "note": "Full JSON output too large, using summary metrics"
+                    })
+                except Exception:
+                    return Failure(f"JSON parse error: {str(e)[:100]}")
 
         # Only report failure if no valid JSON output
         if "not found" in result.stderr.lower() or "ENOENT" in result.stderr:
@@ -750,7 +814,8 @@ def run_vitest(project_path: Path) -> Result[list[TypeScriptViolation], str]:
                 deps = {**pkg.get("dependencies", {}), **pkg.get("devDependencies", {})}
                 if "vitest" not in deps:
                     return Success([])  # No vitest configured, skip
-            except json.JSONDecodeError:
+            except (json.JSONDecodeError, OSError):
+                # Handle both JSON parse errors and IO errors (file deleted, permission denied, etc.)
                 pass
 
     # LX-15 Phase 1: Generate doctests before running vitest
@@ -860,8 +925,19 @@ def run_typescript_guard(
         match eslint_result:
             case Success(violations):
                 all_violations.extend(violations)
-            case Failure(_):
-                pass  # ESLint errors are non-fatal
+            case Failure(err):
+                # Report ESLint failure as a violation instead of silently ignoring
+                all_violations.append(
+                    TypeScriptViolation(
+                        file="<eslint>",
+                        line=0,
+                        column=0,
+                        rule="eslint-error",
+                        message=f"ESLint failed to run: {err}",
+                        severity="error",
+                        source="eslint",
+                    )
+                )
 
     # Run vitest
     if result.vitest_available and not skip_tests:
@@ -910,6 +986,10 @@ def run_typescript_guard(
                 enhanced.quick_check_available = False
 
         result.enhanced = enhanced
+
+    # DX-22: Check for complexity debt (project-level Fix-or-Explain enforcement)
+    complexity_debt_violations = check_ts_complexity_debt(all_violations, limit=3)
+    all_violations.extend(complexity_debt_violations)
 
     # Aggregate results
     result.violations = all_violations

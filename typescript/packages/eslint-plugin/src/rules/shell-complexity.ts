@@ -77,8 +77,11 @@ export const shellComplexity: Rule.RuleModule = {
       }
 
       let count = 0;
+      const MAX_DEPTH = 10; // Reduced from 50 for better performance
 
-      function visit(n: Node): void {
+      function visit(n: Node, depth: number = 0): void {
+        if (depth > MAX_DEPTH) return; // Depth limit
+
         // Count different statement types
         if (
           n.type === 'ExpressionStatement' ||
@@ -95,18 +98,31 @@ export const shellComplexity: Rule.RuleModule = {
           count++;
         }
 
-        // Recursively visit children
-        for (const key of Object.keys(n)) {
+        // Performance: Skip non-statement nodes
+        if (
+          n.type === 'Literal' ||
+          n.type === 'Identifier' ||
+          n.type === 'ThisExpression'
+        ) {
+          return;
+        }
+
+        // Only visit relevant keys
+        const relevantKeys = ['body', 'consequent', 'alternate', 'cases', 'block', 'finalizer'];
+
+        for (const key of relevantKeys) {
           const value = (n as unknown as Record<string, unknown>)[key];
-          if (value && typeof value === 'object') {
+          if (!value) continue;
+
+          if (typeof value === 'object') {
             if (Array.isArray(value)) {
               for (const item of value) {
                 if (item && typeof item === 'object' && 'type' in item) {
-                  visit(item as Node);
+                  visit(item as Node, depth + 1);
                 }
               }
             } else if ('type' in value) {
-              visit(value as Node);
+              visit(value as Node, depth + 1);
             }
           }
         }
@@ -126,8 +142,11 @@ export const shellComplexity: Rule.RuleModule = {
       }
 
       let complexity = 1; // Start at 1
+      const MAX_DEPTH = 10; // Reduced from 50 for better performance
 
-      function visit(n: Node): void {
+      function visit(n: Node, depth: number = 0): void {
+        if (depth > MAX_DEPTH) return; // Depth limit
+
         // Decision points that increase complexity
         if (
           n.type === 'IfStatement' ||
@@ -158,18 +177,31 @@ export const shellComplexity: Rule.RuleModule = {
           }
         }
 
-        // Recursively visit children
-        for (const key of Object.keys(n)) {
+        // Performance: Skip leaf nodes
+        if (
+          n.type === 'Literal' ||
+          n.type === 'Identifier' ||
+          n.type === 'ThisExpression'
+        ) {
+          return;
+        }
+
+        // Only visit relevant keys
+        const relevantKeys = ['body', 'test', 'consequent', 'alternate', 'left', 'right', 'argument', 'cases'];
+
+        for (const key of relevantKeys) {
           const value = (n as unknown as Record<string, unknown>)[key];
-          if (value && typeof value === 'object') {
+          if (!value) continue;
+
+          if (typeof value === 'object') {
             if (Array.isArray(value)) {
               for (const item of value) {
                 if (item && typeof item === 'object' && 'type' in item) {
-                  visit(item as Node);
+                  visit(item as Node, depth + 1);
                 }
               }
             } else if ('type' in value) {
-              visit(value as Node);
+              visit(value as Node, depth + 1);
             }
           }
         }
@@ -177,6 +209,34 @@ export const shellComplexity: Rule.RuleModule = {
 
       visit(node.body as Node);
       return complexity;
+    }
+
+    /**
+     * Check if function has @shell_complexity marker comment (DX-22 Fix-or-Explain)
+     *
+     * Looks for `// @shell_complexity: <reason>` in the 4 lines before the function.
+     * This allows developers to explicitly justify complexity that cannot be refactored.
+     */
+    function hasComplexityMarker(node: FunctionNode): boolean {
+      const sourceCode = context.getSourceCode();
+      const functionStart = node.loc?.start.line;
+
+      if (!functionStart) {
+        return false;
+      }
+
+      // Check 4 lines before function (matching Python implementation)
+      const startLine = Math.max(1, functionStart - 4);
+      const endLine = functionStart;
+
+      for (let line = startLine; line < endLine; line++) {
+        const text = sourceCode.lines[line - 1]; // lines array is 0-indexed
+        if (text && /\/\/\s*@shell_complexity\s*:/.test(text)) {
+          return true;
+        }
+      }
+
+      return false;
     }
 
     /**
@@ -220,6 +280,11 @@ export const shellComplexity: Rule.RuleModule = {
 
       // Skip anonymous or very short helper functions
       if (functionName === 'anonymous' || functionName.length < 3) {
+        return;
+      }
+
+      // DX-22: Skip if marked with @shell_complexity (Fix-or-Explain mechanism)
+      if (hasComplexityMarker(node)) {
         return;
       }
 

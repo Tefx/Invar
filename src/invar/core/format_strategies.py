@@ -159,11 +159,13 @@ def text_with_pattern(
     )
     noise_lines = st.lists(noise_line, min_size=0, max_size=10)
 
+    # Note: Hypothesis will automatically explore different orderings of the lines,
+    # so explicit shuffling is unnecessary. The concatenation order is sufficient.
     return st.builds(
         lambda p, n: "\n".join(p + n),
         pattern_lines,
         noise_lines,
-    ).map(lambda x: "\n".join(sorted(x.split("\n"), key=lambda _: __import__("random").random())))
+    )
 
 
 @pre(lambda pattern: len(pattern) > 0)

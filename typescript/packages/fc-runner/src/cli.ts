@@ -108,9 +108,19 @@ function main(): void {
     } else if (arg === '--verbose') {
       options.verbose = true;
     } else if (arg === '--seed' && args[i + 1]) {
-      options.seed = parseInt(args[++i], 10);
+      const seed = parseInt(args[++i], 10);
+      if (isNaN(seed)) {
+        console.error(`Error: --seed requires a valid number, got "${args[i]}"`);
+        process.exit(1);
+      }
+      options.seed = seed;
     } else if (arg === '--num-runs' && args[i + 1]) {
-      options.numRuns = parseInt(args[++i], 10);
+      const numRuns = parseInt(args[++i], 10);
+      if (isNaN(numRuns)) {
+        console.error(`Error: --num-runs requires a valid number, got "${args[i]}"`);
+        process.exit(1);
+      }
+      options.numRuns = numRuns;
     }
   }
 
@@ -138,7 +148,10 @@ function main(): void {
     }),
   ];
 
-  console.log('Running demo properties...\n');
+  // Only show progress message in non-JSON mode
+  if (!options.json) {
+    console.log('Running demo properties...\n');
+  }
 
   // Cast needed because TypeScript infers specific types for each property definition
   const result = runProperties(demoProps as unknown as PropertyDefinition<Record<string, unknown>>[], options);

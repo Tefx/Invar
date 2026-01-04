@@ -95,9 +95,11 @@ function hasParseCall(body: Node | null, paramName: string): boolean {
   if (!body) return false;
 
   let found = false;
+  const MAX_DEPTH = 50; // Prevent stack overflow on deeply nested types
 
-  const visit = (node: Node): void => {
+  const visit = (node: Node, depth: number = 0): void => {
     if (found) return;
+    if (depth > MAX_DEPTH) return; // Depth limit to prevent stack overflow
 
     if (node.type === 'CallExpression') {
       const callee = node.callee;
@@ -118,18 +120,18 @@ function hasParseCall(body: Node | null, paramName: string): boolean {
       }
     }
 
-    // Recursively visit children
+    // Recursively visit children with depth tracking
     for (const key of Object.keys(node)) {
       const value = (node as unknown as Record<string, unknown>)[key];
       if (value && typeof value === 'object') {
         if (Array.isArray(value)) {
           for (const item of value) {
             if (item && typeof item === 'object' && 'type' in item) {
-              visit(item as Node);
+              visit(item as Node, depth + 1);
             }
           }
         } else if ('type' in value) {
-          visit(value as Node);
+          visit(value as Node, depth + 1);
         }
       }
     }

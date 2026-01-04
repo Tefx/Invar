@@ -69,7 +69,7 @@ const configs = {
       '@invar/no-any-in-schema': 'warn' as const,
       '@invar/require-jsdoc-example': 'error' as const,
       '@invar/max-file-lines': 'error' as const,
-      '@invar/max-function-lines': 'error' as const,
+      '@invar/max-function-lines': 'warn' as const,  // DX-22: Align with Python (WARN, not ERROR)
       '@invar/no-empty-schema': 'error' as const,
       '@invar/no-redundant-type-schema': 'warn' as const,
       '@invar/require-complete-validation': 'warn' as const,
