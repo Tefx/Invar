@@ -1,7 +1,8 @@
 # LX-15: TypeScript Guard Parity with Python
 
-**Status:** Active
+**Status:** COMPLETED (Phases 4-6: 2026-01-04)
 **Created:** 2026-01-04
+**Completed:** 2026-01-04
 **Priority:** High (Strategic: Complete TypeScript tooling)
 **Depends On:** LX-06 (TypeScript Tooling Support)
 **Supersedes:** LX-12 (Contract Enforcement), LX-14 (Doctest Execution)
@@ -456,6 +457,46 @@ export function handleCommand(args: Args) {
 ---
 
 ## Decision Log
+
+
+### 2026-01-04: Phases 4-6 Completed
+
+**Completed:**
+- ✅ Phase 4: Purity Checks (2 rules)
+  - `no-runtime-imports` - Forbid runtime require()/import()
+  - `no-impure-calls-in-core` - Prevent Core importing Shell
+- ✅ Phase 5: Shell Architecture (2 rules)
+  - `no-pure-logic-in-shell` - Warn about pure logic in Shell
+  - `shell-complexity` - Detect overly complex Shell functions
+- ✅ Phase 6: Entry Point Architecture (1 rule)
+  - `thin-entry-points` - Enforce thin entry points
+
+**Coverage Achieved:** 84% (15/18 rules)
+
+**Test Suite:** 56 tests passing
+- Added comprehensive test coverage for all 5 new rules
+- Added tests for cross-platform Windows path handling
+- Added tests for export declaration consistency
+- Added tests for McCabe complexity edge cases
+
+**Code Review:**
+- Conducted adversarial code review with isolated Opus subagent
+- Fixed 2 MAJOR issues (Windows paths, export declarations)
+- Fixed 4 MINOR issues (IO identifiers, complexity calculation)
+- All findings addressed and tested
+
+**Integration:**
+- All 5 rules registered in `index.ts`
+- Both `recommended` and `strict` configs updated
+- ESLint rule conventions followed
+- Production-ready quality achieved
+
+**Remaining Scope (16%):**
+- `check_semantic_tautology` - Out of scope (complex semantic analysis)
+- `check_postcondition_scope` - Out of scope (TypeScript type analysis)
+- `check_must_use` - Out of scope (low priority)
+
+**Next:** Move to completed proposals directory
 
 ### 2026-01-04: Unified Proposal Created
 

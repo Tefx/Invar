@@ -965,6 +965,58 @@ describe('shell-complexity', () => {
     });
   });
 
+  it('should not count default case in complexity', () => {
+    ruleTester.run('shell-complexity', shellComplexity, {
+      valid: [
+        {
+          // Switch with default should not add to complexity
+          code: `
+            function handler(type) {
+              switch (type) {
+                case 'a': return 1;
+                case 'b': return 2;
+                case 'c': return 3;
+                default: return 0;
+              }
+            }
+          `,
+          filename: '/project/shell/handler.js',
+          options: [{ maxComplexity: 3 }],
+        },
+      ],
+      invalid: [],
+    });
+  });
+
+  it('should count nullish coalescing operator', () => {
+    ruleTester.run('shell-complexity', shellComplexity, {
+      valid: [],
+      invalid: [
+        {
+          // Nullish coalescing should add to complexity
+          code: `
+            function handler() {
+              const a = x ?? 1;
+              const b = y ?? 2;
+              const c = z ?? 3;
+              const d = w ?? 4;
+              const e = v ?? 5;
+              if (a) return a;
+              if (b) return b;
+              if (c) return c;
+              if (d) return d;
+              if (e) return e;
+              return 0;
+            }
+          `,
+          filename: '/project/shell/handler.js',
+          options: [{ maxComplexity: 10 }],
+          errors: [{ messageId: 'tooComplex' }],
+        },
+      ],
+    });
+  });
+
   it('should not check non-shell files', () => {
     ruleTester.run('shell-complexity', shellComplexity, {
       valid: [
@@ -1106,7 +1158,7 @@ describe('thin-entry-points', () => {
 
   it('should detect all entry point patterns', () => {
     const patterns = ['index.ts', 'main.ts', 'cli.ts', 'app.ts', 'server.ts'];
-    
+
     for (const pattern of patterns) {
       ruleTester.run('thin-entry-points', thinEntryPoints, {
         valid: [],
@@ -1122,5 +1174,80 @@ describe('thin-entry-points', () => {
         ],
       });
     }
+  });
+
+  it('should handle Windows paths correctly in error messages', () => {
+    ruleTester.run('thin-entry-points', thinEntryPoints, {
+      valid: [],
+      invalid: [
+        {
+          // Windows path should be normalized to show just filename
+          code: `
+            function logic() { return 42; }
+            export { logic };
+          `,
+          filename: 'C:\\\\Project\\\\src\\\\index.ts',
+          errors: [{
+            messageId: 'hasComplexLogic',
+            // Error message should show 'index.ts' not full path
+          }],
+        },
+      ],
+    });
+  });
+
+  it('should treat export declarations with bodies as complex logic', () => {
+    ruleTester.run('thin-entry-points', thinEntryPoints, {
+      valid: [
+        {
+          // Pure re-export is OK
+          code: `
+            import { foo } from './foo';
+            export { foo };
+          `,
+          filename: '/project/index.ts',
+        },
+        {
+          // Type-only exports are OK
+          code: `
+            export type { User } from './types';
+            export interface Config { port: number; }
+          `,
+          filename: '/project/index.ts',
+        },
+      ],
+      invalid: [
+        {
+          // Export with function definition is complex logic
+          code: `
+            export function processData() {
+              return 42;
+            }
+          `,
+          filename: '/project/index.ts',
+          errors: [{ messageId: 'hasComplexLogic' }],
+        },
+        {
+          // Export with class definition is complex logic
+          code: `
+            export class Handler {
+              handle() { return 'handled'; }
+            }
+          `,
+          filename: '/project/index.ts',
+          errors: [{ messageId: 'hasComplexLogic' }],
+        },
+        {
+          // Export default with function is complex logic
+          code: `
+            export default function main() {
+              console.log('running');
+            }
+          `,
+          filename: '/project/main.ts',
+          errors: [{ messageId: 'hasComplexLogic' }],
+        },
+      ],
+    });
   });
 });
