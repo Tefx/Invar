@@ -1,13 +1,17 @@
 # Embedded Node.js tools - runtime dependencies
-# These are installed by scripts/embed_node_tools.py
-# Run that script before building or testing
+# node_modules are added during GitHub Actions build (see .github/workflows/publish.yml)
 
-*/node_modules/
+# Ignore node_modules everywhere
+**/node_modules/
+
+# Ignore package.json/package-lock.json (not needed in git, copied during build)
 */package.json
+*/package-lock.json
 
-# eslint-plugin is unbundled (entire dist/ directory)
-# All other tools are bundled (single cli.js file)
-eslint-plugin/
+# eslint-plugin: Ignore TypeScript definition files and bundle (not needed at runtime)
+**/*.d.ts
+**/*.d.ts.map
+eslint-plugin/bundle.js
 
 # Common generated/temp files
 *.log
