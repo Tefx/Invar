@@ -51,10 +51,10 @@
 
 ## Current State
 
-- **PyPI:** `invar-tools` v1.16.0 + `invar-runtime` v1.3.0
+- **PyPI:** `invar-tools` v1.17.0 + `invar-runtime` v1.3.0
 - **Protocol:** v5.0 (USBV workflow, DX-58 critical section)
 - **Status:** Feature complete, TypeScript tooling production-ready
-- **Recent:** LX-06 (Unbundled eslint-plugin), DX-81 (Multi-agent init), DX-79 (Feedback collection)
+- **Recent:** DX-22 (Fix-or-Explain complexity), LX-06 (Unbundled eslint-plugin), DX-81 (Multi-agent init)
 - **Blockers:** None
 
 ## Active Work
