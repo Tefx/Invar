@@ -15,9 +15,14 @@
  */
 
 import { ESLint } from 'eslint';
-import { resolve } from 'path';
+import { resolve, dirname } from 'path';
 import { statSync, realpathSync } from 'fs';
+import { fileURLToPath } from 'url';
 import plugin from './index.js';
+
+// Get the directory where this CLI script is located (embedded in site-packages)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 interface CliArgs {
   projectPath: string;
@@ -106,13 +111,14 @@ async function main(): Promise<void> {
     }
 
     // Create ESLint instance with programmatic configuration
-    // ESLint will resolve modules relative to where it was installed (embedded node_modules)
-    // But process files relative to project directory
+    // Use __dirname (where CLI is located) for module resolution
+    // This allows ESLint to find embedded node_modules in site-packages
     const eslint = new ESLint({
       useEslintrc: false, // Don't load .eslintrc files
-      cwd: projectPath, // Project directory for file processing and config resolution
+      cwd: __dirname, // Use CLI location for module resolution (embedded node_modules)
+      resolvePluginsRelativeTo: __dirname, // Resolve plugins from embedded location
       baseConfig: {
-        parser: '@typescript-eslint/parser',
+        parser: '@typescript-eslint/parser', // Will resolve from __dirname/node_modules
         parserOptions: {
           ecmaVersion: 2022,
           sourceType: 'module',
@@ -121,7 +127,7 @@ async function main(): Promise<void> {
         rules: selectedConfig.rules,
       },
       plugins: {
-        '@invar': plugin, // Register our plugin programmatically
+        '@invar': plugin, // Register plugin directly
       },
     } as any); // Type assertion for ESLint config complexity
 
