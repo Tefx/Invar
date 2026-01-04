@@ -15,7 +15,8 @@
  */
 
 import { ESLint } from 'eslint';
-import { resolve } from 'path';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import plugin from './index.js';
 
 interface CliArgs {
@@ -80,29 +81,37 @@ async function main(): Promise<void> {
   }
 
   try {
-    // Get the config (with type assertion since we know it exists)
-    const selectedConfig = plugin.configs?.[args.config];
-    if (!selectedConfig) {
-      console.error(`Config "${args.config}" not found`);
+    // Get the rules config for the selected mode
+    const selectedConfig = plugin.configs?.[args.config] as any;
+    if (!selectedConfig || !selectedConfig.rules) {
+      console.error(`Config "${args.config}" not found or invalid`);
       process.exit(1);
     }
 
-    // Create ESLint instance with our plugin pre-configured
+    // Determine where to resolve parser/plugins from
+    // For bundled CLI, this is the directory containing the bundle
+    const __dirname = typeof __filename !== 'undefined'
+      ? dirname(__filename)
+      : dirname(fileURLToPath(import.meta.url));
+
+    // Create ESLint instance using legacy API (ESLint 8 with useEslintrc: false)
+    // This allows programmatic plugin registration without flat config complexity
     const eslint = new ESLint({
+      useEslintrc: false, // Don't load .eslintrc files
+      resolvePluginsRelativeTo: __dirname, // Tell ESLint where to find parser/plugins
       baseConfig: {
-        ...selectedConfig as any, // Type assertion needed due to ESLint type complexity
-        parser: '@typescript-eslint/parser',
+        parser: '@typescript-eslint/parser', // String path resolved from resolvePluginsRelativeTo
         parserOptions: {
           ecmaVersion: 2022,
           sourceType: 'module',
         },
+        plugins: ['@invar'],
+        rules: selectedConfig.rules,
       },
-      overrideConfig: {
-        plugins: {
-          '@invar': plugin as any,
-        },
+      plugins: {
+        '@invar': plugin, // Register our plugin programmatically
       },
-    });
+    } as any); // Type assertion for ESLint legacy API (types incomplete)
 
     // Lint the project
     const results = await eslint.lintFiles([projectPath]);

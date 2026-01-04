@@ -4,6 +4,7 @@
 // dist/cli.js
 var import_eslint = require("eslint");
 var import_path = require("path");
+var import_url = require("url");
 
 // dist/rules/require-schema-validation.js
 var ZOD_TYPE_PATTERNS = [
@@ -1594,6 +1595,7 @@ var plugin = {
 var dist_default = plugin;
 
 // dist/cli.js
+var import_meta = {};
 function parseArgs(args) {
   const projectPath = args.find((arg) => !arg.startsWith("--")) || ".";
   const configArg = args.find((arg) => arg.startsWith("--config="));
@@ -1642,24 +1644,29 @@ async function main() {
   }
   try {
     const selectedConfig = dist_default.configs?.[args.config];
-    if (!selectedConfig) {
-      console.error(`Config "${args.config}" not found`);
+    if (!selectedConfig || !selectedConfig.rules) {
+      console.error(`Config "${args.config}" not found or invalid`);
       process.exit(1);
     }
+    const __dirname = typeof __filename !== "undefined" ? (0, import_path.dirname)(__filename) : (0, import_path.dirname)((0, import_url.fileURLToPath)(import_meta.url));
     const eslint = new import_eslint.ESLint({
+      useEslintrc: false,
+      // Don't load .eslintrc files
+      resolvePluginsRelativeTo: __dirname,
+      // Tell ESLint where to find parser/plugins
       baseConfig: {
-        ...selectedConfig,
-        // Type assertion needed due to ESLint type complexity
         parser: "@typescript-eslint/parser",
+        // String path resolved from resolvePluginsRelativeTo
         parserOptions: {
           ecmaVersion: 2022,
           sourceType: "module"
-        }
+        },
+        plugins: ["@invar"],
+        rules: selectedConfig.rules
       },
-      overrideConfig: {
-        plugins: {
-          "@invar": dist_default
-        }
+      plugins: {
+        "@invar": dist_default
+        // Register our plugin programmatically
       }
     });
     const results = await eslint.lintFiles([projectPath]);
