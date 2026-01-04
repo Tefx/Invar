@@ -106,10 +106,11 @@ async function main(): Promise<void> {
     }
 
     // Create ESLint instance with programmatic configuration
-    // For embedded distribution: use project's cwd to find eslint/parser in project's node_modules
+    // ESLint will resolve modules relative to where it was installed (embedded node_modules)
+    // But process files relative to project directory
     const eslint = new ESLint({
       useEslintrc: false, // Don't load .eslintrc files
-      cwd: projectPath, // Use project directory for module resolution (embedded distribution)
+      cwd: projectPath, // Project directory for file processing and config resolution
       baseConfig: {
         parser: '@typescript-eslint/parser',
         parserOptions: {
