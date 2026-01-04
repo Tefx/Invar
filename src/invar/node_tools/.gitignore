@@ -4,3 +4,10 @@
 
 */node_modules/
 */package.json
+
+# Common generated/temp files
+*.log
+.DS_Store
+.npm/
+npm-debug.log*
+node_modules/.cache/

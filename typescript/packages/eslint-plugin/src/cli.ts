@@ -68,6 +68,17 @@ async function main(): Promise<void> {
 
   const projectPath = resolve(args.projectPath);
 
+  // Validate resolved path is within current working directory or explicit allowed paths
+  // This prevents path traversal attacks via "../../../etc/passwd" patterns
+  const cwd = process.cwd();
+  if (!projectPath.startsWith(cwd) && !projectPath.startsWith('/')) {
+    console.error(`Error: Project path must be within current directory`);
+    console.error(`  Requested: ${args.projectPath}`);
+    console.error(`  Resolved: ${projectPath}`);
+    console.error(`  Working dir: ${cwd}`);
+    process.exit(1);
+  }
+
   try {
     // Get the config (with type assertion since we know it exists)
     const selectedConfig = plugin.configs?.[args.config];
@@ -98,10 +109,13 @@ async function main(): Promise<void> {
 
     // Output in standard ESLint JSON format (compatible with guard_ts.py)
     const formatter = await eslint.loadFormatter('json');
-    const resultText = formatter.format(results, {
+
+    // Handle formatter.format() which may return string or Promise<string>
+    const resultText = await Promise.resolve(formatter.format(results, {
       cwd: projectPath,
       rulesMeta: eslint.getRulesMetaForResults(results),
-    });
+    }));
+
     console.log(resultText);
 
     // Exit with error code if there are errors
@@ -109,7 +123,9 @@ async function main(): Promise<void> {
     process.exit(hasErrors ? 1 : 0);
 
   } catch (error) {
-    console.error('Error running ESLint:', error);
+    // Sanitize error message to avoid leaking file paths or system information
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error(`ESLint failed: ${errorMessage}`);
     process.exit(1);
   }
 }

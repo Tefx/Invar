@@ -36,11 +36,19 @@ function matchesEnforcePattern(filePath, patterns) {
     return false;
   const normalizedPath = filePath.replace(/\\/g, "/").toLowerCase();
   for (const pattern of patterns) {
+    if (pattern.length > 200) {
+      continue;
+    }
     const normalizedPattern = pattern.replace(/\\/g, "/").toLowerCase();
-    const regexPattern = normalizedPattern.replace(/\*\*/g, ".*").replace(/\*/g, "[^/]*").replace(/\?/g, ".");
-    const regex = new RegExp(regexPattern);
-    if (regex.test(normalizedPath)) {
-      return true;
+    const escaped = normalizedPattern.replace(/[.+^${}()|[\]]/g, "\\$&");
+    const regexPattern = escaped.replace(/\\\*\\\*/g, ".*?").replace(/\\\*/g, "[^/]*?").replace(/\\\?/g, ".");
+    try {
+      const regex = new RegExp(`^${regexPattern}$`);
+      if (regex.test(normalizedPath)) {
+        return true;
+      }
+    } catch (e) {
+      continue;
     }
   }
   return false;
@@ -1624,6 +1632,14 @@ async function main() {
     process.exit(0);
   }
   const projectPath = (0, import_path.resolve)(args.projectPath);
+  const cwd = process.cwd();
+  if (!projectPath.startsWith(cwd) && !projectPath.startsWith("/")) {
+    console.error(`Error: Project path must be within current directory`);
+    console.error(`  Requested: ${args.projectPath}`);
+    console.error(`  Resolved: ${projectPath}`);
+    console.error(`  Working dir: ${cwd}`);
+    process.exit(1);
+  }
   try {
     const selectedConfig = dist_default.configs?.[args.config];
     if (!selectedConfig) {
@@ -1648,15 +1664,16 @@ async function main() {
     });
     const results = await eslint.lintFiles([projectPath]);
     const formatter = await eslint.loadFormatter("json");
-    const resultText = formatter.format(results, {
+    const resultText = await Promise.resolve(formatter.format(results, {
       cwd: projectPath,
       rulesMeta: eslint.getRulesMetaForResults(results)
-    });
+    }));
     console.log(resultText);
     const hasErrors = results.some((result) => result.errorCount > 0);
     process.exit(hasErrors ? 1 : 0);
   } catch (error) {
-    console.error("Error running ESLint:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    console.error(`ESLint failed: ${errorMessage}`);
     process.exit(1);
   }
 }

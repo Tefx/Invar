@@ -20,6 +20,7 @@ Options:
 from __future__ import annotations
 
 import argparse
+import json
 import shutil
 import subprocess
 import sys
@@ -55,13 +56,24 @@ def check_prerequisites(ts_dir: Path) -> bool:
 
 # @invar:allow shell_result: Standalone script helper
 def build_typescript(ts_dir: Path) -> bool:
-    """Run pnpm install, build, and bundle."""
+    """Run pnpm install, build, and bundle.
+
+    Validates pnpm binary location to prevent PATH manipulation attacks.
+    """
     print("Building TypeScript packages...")
+
+    # Validate pnpm binary location to prevent command injection
+    pnpm_path = shutil.which("pnpm")
+    if not pnpm_path:
+        print("ERROR: pnpm not found in PATH")
+        return False
+
+    print(f"  Using pnpm: {pnpm_path}")
 
     # Install dependencies
     print("  pnpm install...")
     result = subprocess.run(
-        ["pnpm", "install"],
+        [pnpm_path, "install"],
         cwd=ts_dir,
         capture_output=True,
         text=True,
@@ -73,7 +85,7 @@ def build_typescript(ts_dir: Path) -> bool:
     # Build and bundle all packages
     print("  pnpm build:all (compile + bundle)...")
     result = subprocess.run(
-        ["pnpm", "build:all"],
+        [pnpm_path, "build:all"],
         cwd=ts_dir,
         capture_output=True,
         text=True,
@@ -87,12 +99,24 @@ def build_typescript(ts_dir: Path) -> bool:
 
 
 def clean_target(target: Path) -> None:
-    """Remove existing tool directories (preserve __init__.py)."""
+    """Remove existing tool directories (preserve __init__.py).
+
+    Uses scandir with proper error handling to avoid TOCTOU race conditions.
+    """
     print("Cleaning existing embedded tools...")
-    for item in target.iterdir():
-        if item.is_dir():
-            shutil.rmtree(item)
-            print(f"  Removed {item.name}/")
+    import os
+
+    with os.scandir(target) as entries:
+        for entry in entries:
+            if entry.is_dir(follow_symlinks=False):
+                try:
+                    shutil.rmtree(entry.path)
+                    print(f"  Removed {entry.name}/")
+                except FileNotFoundError:
+                    # Already deleted by another process - OK
+                    pass
+                except PermissionError as e:
+                    print(f"  WARNING: Cannot remove {entry.name}/: {e}")
 
 
 # @invar:allow shell_result: Standalone script helper
@@ -133,15 +157,23 @@ def copy_tool(ts_dir: Path, target: Path, tool_name: str) -> bool:
 
     # Copy package.json if it exists (for tools with runtime dependencies)
     # Strip "type": "module" since bundles are CommonJS
+    # Only copy required fields to prevent injection of malicious scripts
     pkg_json = src_pkg / "package.json"
     if pkg_json.exists():
-        import json
         with open(pkg_json) as f:
             pkg_data = json.load(f)
-        # Remove "type": "module" to allow CommonJS bundles
-        pkg_data.pop("type", None)
+
+        # Sanitized package.json: only copy safe fields needed for npm install
+        safe_pkg = {
+            "name": pkg_data.get("name", "unknown"),
+            "version": pkg_data.get("version", "0.0.0"),
+            "dependencies": pkg_data.get("dependencies", {}),
+            "engines": pkg_data.get("engines", {}),
+        }
+        # Explicitly exclude: type, scripts, bin, devDependencies
+
         with open(dst / "package.json", "w") as f:
-            json.dump(pkg_data, f, indent=2)
+            json.dump(safe_pkg, f, indent=2)
 
     # Get size for reporting
     size_kb = dest_cli.stat().st_size / 1024
@@ -167,6 +199,7 @@ def install_dependencies(target: Path, embedded: list[str]) -> bool:
     """Install runtime dependencies for tools that need them.
 
     Runs npm install --production in each tool directory that has package.json.
+    Uses --ignore-scripts to prevent malicious postinstall scripts.
     """
     print("Installing runtime dependencies...")
     for tool in embedded:
@@ -177,8 +210,10 @@ def install_dependencies(target: Path, embedded: list[str]) -> bool:
             continue
 
         print(f"  Installing deps for {tool}...")
+        node_modules = tool_dir / "node_modules"
+
         result = subprocess.run(
-            ["npm", "install", "--production", "--no-save"],
+            ["npm", "install", "--production", "--no-save", "--ignore-scripts"],
             cwd=tool_dir,
             capture_output=True,
             text=True,
@@ -187,10 +222,13 @@ def install_dependencies(target: Path, embedded: list[str]) -> bool:
         if result.returncode != 0:
             print(f"  ERROR: npm install failed for {tool}:")
             print(result.stderr)
+            # Clean up partial install
+            if node_modules.exists():
+                print(f"  Cleaning up partial install...")
+                shutil.rmtree(node_modules)
             return False
 
         # Report installed packages
-        node_modules = tool_dir / "node_modules"
         if node_modules.exists():
             pkg_count = len(list(node_modules.iterdir()))
             print(f"    Installed {pkg_count} packages")

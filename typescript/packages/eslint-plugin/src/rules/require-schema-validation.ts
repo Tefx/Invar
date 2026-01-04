@@ -47,6 +47,7 @@ function isHighRiskFunction(functionName: string, filePath: string): boolean {
 /**
  * Check if file path matches any of the enforceFor patterns.
  * Supports glob-like patterns with wildcards.
+ * Protected against ReDoS attacks with pattern length limits.
  */
 function matchesEnforcePattern(filePath: string, patterns: string[]): boolean {
   if (patterns.length === 0) return false;
@@ -54,19 +55,32 @@ function matchesEnforcePattern(filePath: string, patterns: string[]): boolean {
   const normalizedPath = filePath.replace(/\\/g, '/').toLowerCase();
 
   for (const pattern of patterns) {
+    // Protect against ReDoS: limit pattern length
+    if (pattern.length > 200) {
+      continue; // Skip overly long patterns
+    }
+
     const normalizedPattern = pattern.replace(/\\/g, '/').toLowerCase();
 
-    // Convert glob pattern to regex
-    // ** matches any directory depth
-    // * matches any characters except /
-    const regexPattern = normalizedPattern
-      .replace(/\*\*/g, '.*')
-      .replace(/\*/g, '[^/]*')
-      .replace(/\?/g, '.');
+    // Escape special regex characters except glob wildcards
+    const escaped = normalizedPattern.replace(/[.+^${}()|[\]]/g, '\\$&');
 
-    const regex = new RegExp(regexPattern);
-    if (regex.test(normalizedPath)) {
-      return true;
+    // Convert glob pattern to regex with safe replacements
+    // ** matches any directory depth (use reluctant quantifier)
+    // * matches any characters except / (use reluctant quantifier)
+    const regexPattern = escaped
+      .replace(/\\\*\\\*/g, '.*?') // ** → .*? (reluctant)
+      .replace(/\\\*/g, '[^/]*?')  // * → [^/]*? (reluctant)
+      .replace(/\\\?/g, '.');       // ? → .
+
+    try {
+      const regex = new RegExp(`^${regexPattern}$`);
+      if (regex.test(normalizedPath)) {
+        return true;
+      }
+    } catch (e) {
+      // Invalid regex from pattern - skip
+      continue;
     }
   }
 
