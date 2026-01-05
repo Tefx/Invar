@@ -154,9 +154,11 @@ def _get_guard_tool() -> Tool:
         name="invar_guard",
         title="Smart Guard",
         description=(
-            "Smart Guard: Verify code quality with static analysis + doctests. "
-            "Use this INSTEAD of Bash('pytest ...') or Bash('crosshair ...'). "
-            "Default runs static + doctests + CrossHair + Hypothesis."
+            "Smart Guard: Verify code quality with static analysis + tests. "
+            "Supports Python (pytest + doctest + CrossHair + Hypothesis) "
+            "and TypeScript (tsc + eslint + vitest). "
+            "Auto-detects project language from marker files (pyproject.toml, tsconfig.json). "
+            "Use this INSTEAD of Bash('pytest ...') or Bash('npm test ...')."
         ),
         inputSchema={
             "type": "object",
@@ -180,7 +182,8 @@ def _get_sig_tool() -> Tool:
         title="Show Signatures",
         description=(
             "Show function signatures and contracts (@pre/@post). "
-            "Use this INSTEAD of Read('file.py') when you want to understand structure."
+            "Supports Python and TypeScript (via TS Compiler API). "
+            "Use this INSTEAD of Read('file.py'/'file.ts') when you want to understand structure."
         ),
         inputSchema={
             "type": "object",
@@ -201,7 +204,8 @@ def _get_map_tool() -> Tool:
         title="Symbol Map",
         description=(
             "Symbol map with reference counts. "
-            "Use this INSTEAD of Grep for 'def ' to find functions."
+            "Supports Python and TypeScript projects. "
+            "Use this INSTEAD of Grep for 'def ' or 'function ' to find symbols."
         ),
         inputSchema={
             "type": "object",
