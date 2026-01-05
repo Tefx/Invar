@@ -274,7 +274,7 @@ def guard(
         changed_result = handle_changed_mode(path)
         if isinstance(changed_result, Failure):
             if changed_result.failure() == "NO_CHANGES":
-                console.print("[green]No changed Python files.[/green]")
+                console.print("[green]No changed files to verify.[/green]")
                 raise typer.Exit(0)
             console.print(f"[red]Error:[/red] {changed_result.failure()}")
             raise typer.Exit(1)

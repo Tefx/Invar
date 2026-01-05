@@ -53,7 +53,7 @@ def test(
             raise typer.Exit(1)
         files = list(changed_result.unwrap())
         if not files:
-            console.print("[green]No changed Python files.[/green]")
+            console.print("[green]No changed files to test.[/green]")
             raise typer.Exit(0)
     elif target:
         files = [Path(target)]
@@ -99,7 +99,7 @@ def verify(
             raise typer.Exit(1)
         files = list(changed_result.unwrap())
         if not files:
-            console.print("[green]No changed Python files.[/green]")
+            console.print("[green]No changed files to test.[/green]")
             raise typer.Exit(0)
     elif target:
         files = [Path(target)]

@@ -236,12 +236,13 @@ def _run_map_python(path: Path, top_n: int, json_output: bool) -> Result[None, s
 
     if not file_infos:
         return Failure(
-            "No Python symbols found.\n\n"
-            "Available tools:\n"
-            "- invar sig <file.py> — Extract signatures\n"
-            "- invar refs <file.py>::Symbol — Find references\n"
+            "No source files found in this directory.\n\n"
+            "💡 Available tools:\n"
+            "- invar sig <file> — Extract signatures\n"
+            "- invar refs <file>::Symbol — Find references\n"
             "- invar_doc_* — Document navigation\n"
-            "- invar_guard — Static verification"
+            "- invar_guard — Static verification\n\n"
+            "Supported languages: Python, TypeScript"
         )
 
     # Build perception map
@@ -274,12 +275,13 @@ def _run_map_typescript(path: Path, top_n: int, json_output: bool) -> Result[Non
 
             if not data.get("symbols"):
                 return Failure(
-                    "No TypeScript symbols found.\n\n"
-                    "Available tools:\n"
-                    "- invar sig <file.ts> — Extract signatures\n"
-                    "- invar refs <file.ts>::Symbol — Find references\n"
+                    "No source files found in this directory.\n\n"
+                    "💡 Available tools:\n"
+                    "- invar sig <file> — Extract signatures\n"
+                    "- invar refs <file>::Symbol — Find references\n"
                     "- invar_doc_* — Document navigation\n"
-                    "- invar_guard — Static verification"
+                    "- invar_guard — Static verification\n\n"
+                    "Supported languages: Python, TypeScript"
                 )
 
             # Output using TS Compiler API format

@@ -214,12 +214,53 @@ src/invar/mcp/server.py
 └── _get_map_tool() (line 205-209)
 ```
 
-### 6.2 变更统计
+### 6.2 变更统计（Phase 1）
 
 - **描述更新：** 3个工具
 - **代码修改：** 0行（只更新字符串）
 - **测试影响：** 0个（描述不影响功能）
 - **文档同步：** 需要（CLAUDE.md中的示例）
+
+### 6.3 Phase 2: 错误消息修复 ⚡
+
+**用户反馈：** "我因为 `invar_map` 返回 'No Python files found'，就错误地推断整个 Invar 系统都是 Python 专用的。"
+
+**根本原因：** 硬编码的语言特定错误消息。
+
+**问题场景：**
+```
+TypeScript项目（无tsconfig.json）
+→ 语言检测默认为 'python'（因为空目录默认Python）
+→ 进入Python代码路径
+→ 返回 "No Python files found"
+→ Agent误判：Invar = Python only
+```
+
+**修复的错误消息：**
+
+| 文件 | 修复前 | 修复后 |
+|------|--------|--------|
+| `guard.py:277` | "No changed Python files." | "No changed files to verify." |
+| `test.py:56,102` | "No changed Python files." | "No changed files to test." |
+| `perception.py:238` | "No Python symbols found." | "No source files found..." + "Supported languages: Python, TypeScript" |
+| `perception.py:276` | "No TypeScript symbols found." | 同上（统一消息） |
+
+**关键改进：**
+1. **移除语言假设** - "Python files" → "files"
+2. **明确多语言支持** - 添加"Supported languages: Python, TypeScript"
+3. **提供上下文** - 建议可用工具，而不是只说"找不到"
+
+**影响：**
+- ✅ Agent不会因为错误消息误判工具能力
+- ✅ 即使语言检测失败，消息也不会误导
+- ✅ 用户知道Invar支持多种语言
+
+**修改文件（Phase 2）：**
+```
+src/invar/shell/commands/guard.py (line 277)
+src/invar/shell/commands/test.py (line 56, 102)
+src/invar/shell/commands/perception.py (line 238-246, 276-285)
+```
 
 ---
 
@@ -285,25 +326,51 @@ DX-85的修复也改善了OpenCode用户体验：
 
 ### 10.1 问题本质
 
-**不是功能缺失，是文档缺失。** 代码完整支持TypeScript，但MCP描述未说明。
+**两层问题，都已修复：**
+
+**Phase 1: MCP描述缺失**
+- 代码完整支持TypeScript，但MCP描述未说明
+- Agent依赖描述判断能力，缺失 = 功能隐藏
+
+**Phase 2: 错误消息误导**
+- 硬编码"Python"字样的错误消息
+- 即使语言检测失败，也会误导Agent
+- 更深层的UX问题
 
 ### 10.2 修复价值
 
-**高ROI修复：**
+**Phase 1（MCP描述）：**
 - 成本：15分钟（3个字符串更新）
-- 收益：Agent在TS项目中使用Invar工具
+- 收益：Agent知道可以在TS项目中使用工具
 - 影响：改善OpenCode等跨Agent体验
+
+**Phase 2（错误消息）：**
+- 成本：20分钟（5处消息更新）
+- 收益：防止Agent因错误消息误判
+- 影响：更robust的多语言UX
+
+**总成本：** 35分钟 | **总收益：** 大幅改善跨语言agent体验
 
 ### 10.3 经验教训
 
-**MCP工具描述至关重要：**
+**1. MCP描述至关重要：**
 - Agent完全依赖描述判断工具能力
 - 描述不完整 = 功能隐藏
 - 应定期review描述与代码一致性
 
+**2. 错误消息影响认知：**
+- "No Python files found" → "Invar = Python only"
+- 错误消息是Agent学习工具能力的关键信号
+- 应使用语言无关的消息，或明确多语言支持
+
+**3. 语言检测的默认行为：**
+- 空目录默认Python可能误导
+- 未来可改进：基于文件扩展名fallback检测
+- 但错误消息修复已缓解此问题
+
 ---
 
-**文档版本：** v1.0
+**文档版本：** v2.0 (Phase 1 + Phase 2)
 **更新日期：** 2026-01-06
-**状态：** ✅ 已修复
+**状态：** ✅ 已修复（两阶段）
 **提交：** 待commit
