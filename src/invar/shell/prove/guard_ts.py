@@ -13,6 +13,7 @@ import contextlib
 import json
 import re
 import subprocess
+import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Literal
@@ -104,9 +105,7 @@ def check_ts_complexity_debt(
     """
     # Count unaddressed shell-complexity warnings
     unaddressed = [
-        v
-        for v in violations
-        if v.rule == "@invar/shell-complexity" and v.severity == "warning"
+        v for v in violations if v.rule == "@invar/shell-complexity" and v.severity == "warning"
     ]
 
     if len(unaddressed) >= limit:
@@ -142,9 +141,15 @@ def format_typescript_guard_v2(result: TypeScriptGuardResult) -> dict:
     """
     # Count violations by source
     tsc_errors = sum(1 for v in result.violations if v.source == "tsc" and v.severity == "error")
-    tsc_warnings = sum(1 for v in result.violations if v.source == "tsc" and v.severity == "warning")
-    eslint_errors = sum(1 for v in result.violations if v.source == "eslint" and v.severity == "error")
-    eslint_warnings = sum(1 for v in result.violations if v.source == "eslint" and v.severity == "warning")
+    tsc_warnings = sum(
+        1 for v in result.violations if v.source == "tsc" and v.severity == "warning"
+    )
+    eslint_errors = sum(
+        1 for v in result.violations if v.source == "eslint" and v.severity == "error"
+    )
+    eslint_warnings = sum(
+        1 for v in result.violations if v.source == "eslint" and v.severity == "warning"
+    )
     vitest_failures = sum(1 for v in result.violations if v.source == "vitest")
 
     # Count files checked (unique files in violations + estimate from available tools)
@@ -459,14 +464,16 @@ def run_ts_analyzer(project_path: Path) -> Result[dict, str]:
                     )
                     # Extract key metrics from text output
                     output = summary_result.stdout
-                    coverage_match = re.search(r'Contract coverage: (\d+)%', output)
+                    coverage_match = re.search(r"Contract coverage: (\d+)%", output)
                     coverage = int(coverage_match.group(1)) if coverage_match else None
 
-                    return Success({
-                        "coverage": coverage,
-                        "summary_mode": True,
-                        "note": "Full JSON output too large, using summary metrics"
-                    })
+                    return Success(
+                        {
+                            "coverage": coverage,
+                            "summary_mode": True,
+                            "note": "Full JSON output too large, using summary metrics",
+                        }
+                    )
                 except Exception:
                     return Failure(f"JSON parse error: {str(e)[:100]}")
 
@@ -481,9 +488,7 @@ def run_ts_analyzer(project_path: Path) -> Result[dict, str]:
 
 
 # @shell_complexity: Error handling branches for subprocess/JSON parsing
-def run_fc_runner(
-    project_path: Path, *, seed: int = 42, num_runs: int = 100
-) -> Result[dict, str]:
+def run_fc_runner(project_path: Path, *, seed: int = 42, num_runs: int = 100) -> Result[dict, str]:
     """Run @invar/fc-runner for property-based testing.
 
     Calls the Node component via npx with JSON output mode.
@@ -747,17 +752,35 @@ def run_eslint(project_path: Path) -> Result[list[TypeScriptViolation], str]:
         cmd = _get_invar_package_cmd("eslint-plugin", project_path)
         cmd.append(str(project_path))  # Add project path as argument
 
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            timeout=120,
-        )
+        # Use temp file to avoid subprocess 64KB buffer limit
+        # ESLint output can be large for big projects
+        with tempfile.NamedTemporaryFile(mode="w+", suffix=".json", delete=False) as temp_file:
+            temp_path = temp_file.name
+
+            try:
+                # Redirect stdout to temp file
+                with Path(temp_path).open("w") as f:
+                    result = subprocess.run(
+                        cmd,
+                        stdout=f,
+                        stderr=subprocess.PIPE,
+                        timeout=120,
+                        cwd=project_path,
+                        text=True,
+                    )
+
+                # Read from temp file
+                with Path(temp_path).open("r") as f:
+                    eslint_json = f.read()
+            finally:
+                # Clean up temp file
+                with contextlib.suppress(OSError):
+                    Path(temp_path).unlink()
 
         violations: list[TypeScriptViolation] = []
 
         try:
-            eslint_output = json.loads(result.stdout)
+            eslint_output = json.loads(eslint_json)
             for file_result in eslint_output:
                 file_path = file_result.get("filePath", "")
                 # Make path relative
@@ -781,6 +804,8 @@ def run_eslint(project_path: Path) -> Result[list[TypeScriptViolation], str]:
             # ESLint may output non-JSON on certain errors
             if result.returncode != 0 and result.stderr:
                 return Failure(f"ESLint error: {result.stderr[:200]}")
+            return Failure("ESLint output parsing failed: JSON decode error")
+            return Failure("ESLint output parsing failed: JSON decode error")
 
         return Success(violations)
 

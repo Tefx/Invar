@@ -31,10 +31,21 @@ if TYPE_CHECKING:
 console = Console()
 
 
+def _has_typescript_files(path: Path) -> bool:
+    """Check if directory contains TypeScript files (.ts, .tsx).
+
+    DX-78b: Fallback language detection when path is subdirectory
+    without tsconfig/package.json markers in parent directories.
+    """
+    from invar.shell.fs import discover_typescript_files
+
+    return bool(list(discover_typescript_files(path)))
+
+
 # @shell_complexity: Symbol map generation with sorting and output modes
 def run_map(path: Path, top_n: int, json_output: bool) -> Result[None, str]:
     """
-    Run the map command.
+    Run map command.
 
     Scans project and generates perception map with reference counts.
     LX-06: Supports TypeScript projects (basic symbol listing).
@@ -46,6 +57,14 @@ def run_map(path: Path, top_n: int, json_output: bool) -> Result[None, str]:
     from invar.shell.commands.init import detect_language
 
     project_language = detect_language(path)
+
+    # DX-78b: Fallback language detection by checking file extensions
+    # When path is a subdirectory without tsconfig/package.json markers,
+    # try detecting from actual file contents
+    if project_language == "python":
+        if _has_typescript_files(path):
+            project_language = "typescript"
+
     if project_language == "typescript":
         return _run_map_typescript(path, top_n, json_output)
 
@@ -174,7 +193,9 @@ def _run_sig_typescript(
                             console.print(f"    @post {post}")
                     if s.members:
                         for m in s.members:
-                            console.print(f"    [{m['kind']}] {m['name']}: {m.get('signature', '')}")
+                            console.print(
+                                f"    [{m['kind']}] {m['name']}: {m.get('signature', '')}"
+                            )
                     console.print()
 
             return Success(None)
@@ -396,16 +417,11 @@ def run_refs(target: str, json_output: bool) -> Result[None, str]:
     elif suffix in (".py", ".pyi"):
         return _run_refs_python(file_path, symbol_name, json_output)
     else:
-        return Failure(
-            f"Unsupported file type: {suffix}\n\n"
-            "Supported: .py, .pyi, .ts, .tsx"
-        )
+        return Failure(f"Unsupported file type: {suffix}\n\nSupported: .py, .pyi, .ts, .tsx")
 
 
 # @shell_complexity: Reference finding with output formatting and error handling
-def _run_refs_python(
-    file_path: Path, symbol_name: str, json_output: bool
-) -> Result[None, str]:
+def _run_refs_python(file_path: Path, symbol_name: str, json_output: bool) -> Result[None, str]:
     """Find references in Python using jedi."""
     from invar.shell.py_refs import find_all_references_to_symbol
 
@@ -462,15 +478,14 @@ def _run_refs_python(
 @dataclass
 class _SymbolPosition:
     """Temporary holder for symbol position during refs lookup."""
+
     line: int
     column: int
     name: str
 
 
 # @shell_complexity: TypeScript refs with symbol lookup and output formatting
-def _run_refs_typescript(
-    file_path: Path, symbol_name: str, json_output: bool
-) -> Result[None, str]:
+def _run_refs_typescript(file_path: Path, symbol_name: str, json_output: bool) -> Result[None, str]:
     """Find references in TypeScript using TS Compiler API."""
     from invar.shell.ts_compiler import is_typescript_available, run_refs_typescript
 
@@ -501,9 +516,7 @@ def _run_refs_typescript(
                         # Extract column if available, default to 0
                         column = member.get("column", 0)
                         symbol = _SymbolPosition(
-                            line=member["line"],
-                            column=column,
-                            name=symbol_name
+                            line=member["line"], column=column, name=symbol_name
                         )
                         break
             if symbol:
