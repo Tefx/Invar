@@ -261,7 +261,34 @@ def guard(
         changed_result = handle_changed_mode(path)
         if isinstance(changed_result, Failure):
             if changed_result.failure() == "NO_CHANGES":
-                console.print("[green]No changed files to verify.[/green]")
+                use_agent_output = _determine_output_mode(human, agent, json_output)
+                if use_agent_output:
+                    import json
+
+                    console.print(
+                        json.dumps(
+                            {
+                                "status": "passed",
+                                "static": {"passed": True, "errors": 0, "warnings": 0, "infos": 0},
+                                "summary": {
+                                    "files_checked": 0,
+                                    "errors": 0,
+                                    "warnings": 0,
+                                    "infos": 0,
+                                },
+                                "fixes": [],
+                                "verification_level": "STANDARD",
+                                "doctest": {"passed": True, "output": ""},
+                                "crosshair": {"status": "skipped", "reason": "no changed files"},
+                                "property_tests": {
+                                    "status": "skipped",
+                                    "reason": "no changed files",
+                                },
+                            }
+                        )
+                    )
+                else:
+                    console.print("[green]No changed files to verify.[/green]")
                 raise typer.Exit(0)
             console.print(f"[red]Error:[/red] {changed_result.failure()}")
             raise typer.Exit(1)
