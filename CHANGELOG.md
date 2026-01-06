@@ -14,6 +14,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - TypeScript-specific `exclude_paths`: `node_modules`, `.next`, `coverage`
   - Python projects unaffected (still get Python-specific config)
 
+## [1.17.19] - 2026-01-06
+
+### Fixed
+- **TypeScript Guard: ESLint timeout in large monorepos**
+  - `@invar/require-schema-validation` now traverses AST using `visitorKeys` (avoids pathological walks via non-AST properties)
+  - Precomputes `.parse()` / `.safeParse()` arguments once per function for O(1) checks
+  - Fixes real-world hangs (e.g. `src/paralex/shell/actions/message.actions.ts`) that caused the 120s ESLint timeout
+
+- **ESLint CLI: Faster file discovery**
+  - Prefer `git ls-files` for TS/TSX inputs when linting a directory
+  - Avoids expensive filesystem globbing in repos with huge `node_modules`
+
+- **ESLint CLI: Parser resolution**
+  - Prefer resolving `@typescript-eslint/parser` via project `typescript-eslint` installation when available
+
 ## [1.17.18] - 2026-01-06
 
 ### Fixed

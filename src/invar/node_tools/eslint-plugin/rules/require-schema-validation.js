@@ -77,49 +77,58 @@ function matchesEnforcePattern(filePath, patterns) {
 function isZodType(typeAnnotation) {
     return ZOD_TYPE_PATTERNS.some(pattern => pattern.test(typeAnnotation));
 }
-function hasParseCall(body, paramName) {
+function collectParseArgs(body, visitorKeys) {
+    const parsed = new Set();
     if (!body)
-        return false;
-    let found = false;
-    const MAX_DEPTH = 50; // Prevent stack overflow on deeply nested types
-    const visit = (node, depth = 0) => {
-        if (found)
-            return;
+        return parsed;
+
+    const MAX_DEPTH = 50;
+    const stack = [{ node: body, depth: 0 }];
+
+    while (stack.length > 0) {
+        const current = stack.pop();
+        if (!current)
+            continue;
+        const node = current.node;
+        const depth = current.depth;
+        if (!node || typeof node !== 'object')
+            continue;
         if (depth > MAX_DEPTH)
-            return; // Depth limit to prevent stack overflow
+            continue;
+
         if (node.type === 'CallExpression') {
             const callee = node.callee;
-            if (callee.type === 'MemberExpression') {
+            if (callee && callee.type === 'MemberExpression') {
                 const property = callee.property;
-                if (property.type === 'Identifier' &&
-                    (property.name === 'parse' || property.name === 'safeParse')) {
-                    // Check if argument is our param
-                    if (node.arguments.some(arg => arg.type === 'Identifier' && arg.name === paramName)) {
-                        found = true;
-                        return;
-                    }
-                }
-            }
-        }
-        // Recursively visit children with depth tracking
-        for (const key of Object.keys(node)) {
-            const value = node[key];
-            if (value && typeof value === 'object') {
-                if (Array.isArray(value)) {
-                    for (const item of value) {
-                        if (item && typeof item === 'object' && 'type' in item) {
-                            visit(item, depth + 1);
+                if (property && property.type === 'Identifier' && (property.name === 'parse' || property.name === 'safeParse')) {
+                    for (const arg of node.arguments || []) {
+                        if (arg && arg.type === 'Identifier') {
+                            parsed.add(arg.name);
                         }
                     }
                 }
-                else if ('type' in value) {
-                    visit(value, depth + 1);
-                }
             }
         }
-    };
-    visit(body);
-    return found;
+
+        const keys = (visitorKeys && node.type && visitorKeys[node.type]) || [];
+        for (const key of keys) {
+            const value = node[key];
+            if (!value)
+                continue;
+            if (Array.isArray(value)) {
+                for (const item of value) {
+                    if (item && typeof item === 'object' && item.type) {
+                        stack.push({ node: item, depth: depth + 1 });
+                    }
+                }
+            }
+            else if (typeof value === 'object' && value.type) {
+                stack.push({ node: value, depth: depth + 1 });
+            }
+        }
+    }
+
+    return parsed;
 }
 export const requireSchemaValidation = {
     meta: {
@@ -206,49 +215,54 @@ export const requireSchemaValidation = {
         }
         function checkFunction(node, params) {
             const functionName = getFunctionName(node);
-            // Skip if shouldn't check based on mode
             if (!shouldCheck(functionName)) {
                 return;
             }
+
             const body = 'body' in node ? node.body : null;
+            const zodParams = params.filter((p) => p.typeAnnotation && isZodType(p.typeAnnotation) && p.name && p.name !== '{...}' && p.name !== '[...]');
+            if (zodParams.length === 0) {
+                return;
+            }
+
+            const parsedArgs = collectParseArgs(body, sourceCode.visitorKeys);
             const isRiskFunction = isHighRiskFunction(functionName, filename);
-            for (const param of params) {
-                if (param.typeAnnotation && isZodType(param.typeAnnotation)) {
-                    if (!hasParseCall(body, param.name)) {
-                        // Extract schema name from type annotation (e.g., "z.infer<typeof UserSchema>" -> "UserSchema")
-                        const schemaMatch = param.typeAnnotation.match(/typeof\s+(\w+)/);
-                        const schemaName = schemaMatch ? schemaMatch[1] : 'Schema';
-                        const validatedVarName = `validated${param.name.charAt(0).toUpperCase()}${param.name.slice(1)}`;
-                        context.report({
-                            node: node,
-                            messageId: isRiskFunction ? 'missingValidationRisk' : 'missingValidation',
-                            data: {
-                                name: param.name,
-                                functionName: functionName,
-                            },
-                            suggest: [
-                                {
-                                    messageId: 'addParseCall',
-                                    data: { name: param.name },
-                                    fix(fixer) {
-                                        // Find the opening brace of the function body
-                                        if (!body || body.type !== 'BlockStatement')
-                                            return null;
-                                        const blockBody = body;
-                                        if (!blockBody.body || blockBody.body.length === 0)
-                                            return null;
-                                        const firstStatement = blockBody.body[0];
-                                        // Detect indentation from the first statement
-                                        const firstStatementStart = firstStatement.loc?.start.column ?? 2;
-                                        const indent = ' '.repeat(firstStatementStart);
-                                        const parseCode = `const ${validatedVarName} = ${schemaName}.parse(${param.name});\n${indent}`;
-                                        return fixer.insertTextBefore(firstStatement, parseCode);
-                                    },
-                                },
-                            ],
-                        });
-                    }
+
+            for (const param of zodParams) {
+                if (parsedArgs.has(param.name)) {
+                    continue;
                 }
+
+                const schemaMatch = param.typeAnnotation.match(/typeof\s+(\w+)/);
+                const schemaName = schemaMatch ? schemaMatch[1] : 'Schema';
+                const validatedVarName = `validated${param.name.charAt(0).toUpperCase()}${param.name.slice(1)}`;
+
+                context.report({
+                    node: node,
+                    messageId: isRiskFunction ? 'missingValidationRisk' : 'missingValidation',
+                    data: {
+                        name: param.name,
+                        functionName: functionName,
+                    },
+                    suggest: [
+                        {
+                            messageId: 'addParseCall',
+                            data: { name: param.name },
+                            fix(fixer) {
+                                if (!body || body.type !== 'BlockStatement')
+                                    return null;
+                                const blockBody = body;
+                                if (!blockBody.body || blockBody.body.length === 0)
+                                    return null;
+                                const firstStatement = blockBody.body[0];
+                                const firstStatementStart = firstStatement.loc?.start.column ?? 2;
+                                const indent = ' '.repeat(firstStatementStart);
+                                const parseCode = `const ${validatedVarName} = ${schemaName}.parse(${param.name});\n${indent}`;
+                                return fixer.insertTextBefore(firstStatement, parseCode);
+                            },
+                        },
+                    ],
+                });
             }
         }
         /**

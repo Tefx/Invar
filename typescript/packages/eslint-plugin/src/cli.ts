@@ -17,6 +17,7 @@
 import { ESLint } from 'eslint';
 import { resolve, dirname } from 'path';
 import { statSync, realpathSync } from 'fs';
+import { spawnSync } from 'child_process';
 import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
 import plugin from './index.js';
@@ -29,7 +30,21 @@ const require = createRequire(import.meta.url);
 
 function resolveTsParser(projectPath: string): string | null {
   try {
-    return require.resolve('@typescript-eslint/parser', { paths: [projectPath, __dirname] });
+    const tseslintEntry = require.resolve('typescript-eslint', { paths: [projectPath] });
+    if (tseslintEntry) {
+      const tseslintRoot = dirname(dirname(tseslintEntry));
+      return require.resolve('@typescript-eslint/parser', { paths: [tseslintRoot] });
+    }
+  } catch {
+  }
+
+  try {
+    return require.resolve('@typescript-eslint/parser', { paths: [projectPath] });
+  } catch {
+  }
+
+  try {
+    return require.resolve('@typescript-eslint/parser', { paths: [__dirname] });
   } catch {
     return null;
   }
@@ -39,6 +54,27 @@ interface CliArgs {
   projectPath: string;
   config: 'recommended' | 'strict';
   help: boolean;
+}
+
+function gitLsFiles(projectPath: string): string[] | null {
+  const check = spawnSync('git', ['-C', projectPath, 'rev-parse', '--is-inside-work-tree'], {
+    encoding: 'utf8',
+    timeout: 2000,
+  });
+  if (check.status !== 0) {
+    return null;
+  }
+
+  const ls = spawnSync('git', ['-C', projectPath, 'ls-files', '-z', '--', '*.ts', '*.tsx'], {
+    encoding: 'utf8',
+    timeout: 15000,
+  });
+  if (ls.status !== 0 || !ls.stdout) {
+    return null;
+  }
+
+  const files = ls.stdout.split('\0').filter(Boolean);
+  return files.length > 0 ? files : null;
 }
 
 function parseArgs(args: string[]): CliArgs {
@@ -123,16 +159,45 @@ async function main(): Promise<void> {
 
     const tsParser = resolveTsParser(projectPath);
     if (!tsParser) {
-      console.error("ESLint failed: Failed to load parser '@typescript-eslint/parser'.");
-      console.error("Install it in your project, e.g.: pnpm add -D @typescript-eslint/parser");
+      console.error("ESLint failed: Failed to load TypeScript parser.");
+      console.error("Install either 'typescript-eslint' or '@typescript-eslint/parser' in your project.");
+      process.exit(1);
+    }
+
+    let filesToLint: string[];
+    let lintCwd = projectPath;
+    let globInputPaths = true;
+
+    try {
+      const stats = statSync(projectPath);
+      if (stats.isFile()) {
+        lintCwd = dirname(projectPath);
+        filesToLint = [projectPath];
+        globInputPaths = false;
+      } else if (stats.isDirectory()) {
+        const gitFiles = gitLsFiles(projectPath);
+        if (gitFiles) {
+          filesToLint = gitFiles;
+          globInputPaths = false;
+        } else {
+          filesToLint = ['**/*.ts', '**/*.tsx'];
+        }
+      } else {
+        console.error(`Error: Path is neither a file nor a directory: ${projectPath}`);
+        process.exit(1);
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error(`Error: Cannot access path: ${errorMessage}`);
       process.exit(1);
     }
 
     const eslint = new ESLint({
       useEslintrc: false,
-      cwd: projectPath,
+      cwd: lintCwd,
       resolvePluginsRelativeTo: __dirname,
       errorOnUnmatchedPattern: false,
+      globInputPaths,
       baseConfig: {
         parser: tsParser,
         parserOptions: {
@@ -158,29 +223,6 @@ async function main(): Promise<void> {
         '@invar': plugin,
       },
     } as any);
-
-    // Lint the project - detect if path is a file or directory
-    // ESLint defaults to .js only, so we need glob patterns for .ts/.tsx
-    let filesToLint: string[];
-
-    try {
-      const stats = statSync(projectPath);
-      // Note: Advisory check for optimization - TOCTOU race condition is acceptable
-      // because ESLint will handle file system changes gracefully during actual linting
-      if (stats.isFile()) {
-        // Single file - lint it directly
-        filesToLint = [projectPath];
-      } else if (stats.isDirectory()) {
-        filesToLint = ['**/*.ts', '**/*.tsx'];
-      } else {
-        console.error(`Error: Path is neither a file nor a directory: ${projectPath}`);
-        process.exit(1);
-      }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.error(`Error: Cannot access path: ${errorMessage}`);
-      process.exit(1);
-    }
 
     const results = await eslint.lintFiles(filesToLint);
 
