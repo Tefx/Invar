@@ -47,7 +47,32 @@ export const requireJsdocExample = {
             }
         }
         return {
+            // Handle exported function declarations (async or sync)
+            // JSDoc comments are attached to ExportNamedDeclaration parent node
+            'ExportNamedDeclaration > FunctionDeclaration'(node) {
+                const anyNode = node;
+                const name = anyNode.id?.name || null;
+                if (!name)
+                    return;
+                // Get JSDoc from parent ExportNamedDeclaration
+                const sourceCode = context.sourceCode || context.getSourceCode();
+                const exportDeclaration = anyNode.parent;
+                const comments = sourceCode.getCommentsBefore(exportDeclaration);
+                const hasExample = comments.some((comment) => comment.type === 'Block' &&
+                    comment.value.includes('@example'));
+                if (!hasExample) {
+                    context.report({
+                        node,
+                        messageId: 'missingExample',
+                        data: { name },
+                    });
+                }
+            },
+            // Handle non-exported function declarations
             FunctionDeclaration(node) {
+                // Skip if exported (handled by selector above)
+                if (isExported(node))
+                    return;
                 checkFunction(node, node.id?.name || null);
             },
             // Also check arrow functions assigned to exported variables
