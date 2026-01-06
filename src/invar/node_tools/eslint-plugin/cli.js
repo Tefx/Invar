@@ -100,6 +100,7 @@ async function main() {
             useEslintrc: false, // Don't load .eslintrc files
             cwd: projectPath, // Use project directory as working directory (fix for timeout issue)
             resolvePluginsRelativeTo: __dirname, // Resolve plugins from embedded location
+            errorOnUnmatchedPattern: false, // Don't fail if no .tsx files found
             baseConfig: {
                 parser: '@typescript-eslint/parser', // Will resolve from __dirname/node_modules
                 parserOptions: {
@@ -108,7 +109,7 @@ async function main() {
                 },
                 plugins: ['@invar'],
                 rules: selectedConfig.rules,
-                ignore: [
+                ignorePatterns: [
                     // Explicit ignores to prevent scanning generated/cached directories
                     '**/node_modules/**',
                     '**/.next/**',
