@@ -241,7 +241,7 @@ def guard(
             raise typer.Exit(1)
 
         report_data = coverage_result.unwrap()
-        use_agent_output = _determine_output_mode(human, agent, json_output)
+        use_agent_output = not human
 
         if use_agent_output:
             console.print(json.dumps(format_contract_coverage_agent(report_data)))
@@ -261,7 +261,7 @@ def guard(
         changed_result = handle_changed_mode(path)
         if isinstance(changed_result, Failure):
             if changed_result.failure() == "NO_CHANGES":
-                use_agent_output = _determine_output_mode(human, agent, json_output)
+                use_agent_output = not human
                 if use_agent_output:
                     import json
 
@@ -322,8 +322,7 @@ def guard(
                 report.add_violation(violation)
 
     # DX-26: Simplified output mode (TTY auto-detect + --human override)
-    use_agent_output = _determine_output_mode(human, agent, json_output)
-
+    use_agent_output = not human
     # DX-19: Simplified to 2 levels (STATIC or STANDARD)
     verification_level = VerificationLevel.STATIC if static else VerificationLevel.STANDARD
     level_name = "STATIC" if static else "STANDARD"
