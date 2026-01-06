@@ -6,14 +6,12 @@ Shell module: handles user interaction and file I/O.
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
 import typer
 from returns.result import Failure, Result, Success
 from rich.console import Console
 from rich.table import Table
-
 
 from invar import __version__
 from invar.core.models import GuardReport, RuleConfig
@@ -109,6 +107,10 @@ def _scan_and_check(
         report.add_violation(escape_violation)
 
     return Success(report)
+
+
+def _determine_output_mode(human: bool, agent: bool = False, json_output: bool = False) -> bool:
+    return not human
 
 
 # @invar:allow entry_point_too_thick: Main CLI entry point, orchestrates all verification phases
@@ -420,27 +422,6 @@ def guard(
     raise typer.Exit(final_exit)
 
 
-# @shell_orchestration: Output mode decision helper for CLI
-def _determine_output_mode(human: bool, agent: bool = False, json_output: bool = False) -> bool:
-    """Determine if agent JSON output should be used (Agent First).
-
-    Agent First principle: Machine-readable JSON is the default output format.
-    Human-readable Rich output is opt-in via --human flag.
-
-    Priority:
-    - --human flag → human output (Rich, colored)
-    - Default → JSON output (machine-readable, Agent Native)
-    - --agent/--json flags → no-op (already default, kept for backward compat)
-    """
-    # --human flag forces human output (priority highest)
-    if human:
-        return False  # use_agent = False
-
-    # Default to JSON output (Agent First)
-    # --agent/--json are now no-ops but kept for backward compatibility
-    return True
-
-
 def _show_verification_level(verification_level) -> None:
     """Show verification level in human-readable format.
 
@@ -470,8 +451,6 @@ def map_command(
     """Generate symbol map with reference counts."""
     from invar.shell.commands.perception import run_map
 
-    # Agent First: Default to JSON output
-    # --json is now a no-op (kept for backward compat)
     use_json = True
     result = run_map(path, top, use_json)
     if isinstance(result, Failure):
@@ -487,8 +466,6 @@ def sig_command(
     """Extract signatures from a file or symbol."""
     from invar.shell.commands.perception import run_sig
 
-    # Agent First: Default to JSON output
-    # --json is now a no-op (kept for backward compat)
     use_json = True
     result = run_sig(target, use_json)
     if isinstance(result, Failure):
@@ -512,8 +489,6 @@ def refs_command(
     """
     from invar.shell.commands.perception import run_refs
 
-    # Agent First: Default to JSON output
-    # --json is now a no-op (kept for backward compat)
     use_json = True
     result = run_refs(target, use_json)
     if isinstance(result, Failure):
@@ -538,8 +513,6 @@ def rules(
 
     from invar.core.rule_meta import RULE_META, RuleCategory, get_rules_by_category
 
-    # Agent First: Default to JSON output
-    # --json is now a no-op (kept for backward compat)
     use_json = True
 
     # Filter by category if specified

@@ -11,11 +11,13 @@ import json
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
-from mcp.server.lowlevel.server import StructuredContent, CombinationContent
 from mcp.types import TextContent
 from returns.result import Success
+
+if TYPE_CHECKING:
+    from mcp.server.lowlevel.server import CombinationContent
 
 
 # @invar:allow shell_result: Pure validation helper, no I/O, returns tuple not Result
@@ -435,6 +437,6 @@ async def _execute_command(
             return [TextContent(type="text", text=output)]
 
     except subprocess.TimeoutExpired:
-        return [TextContent(type="text", text=f"Error: Command timed out ({timeout}s")]
+        return [TextContent(type="text", text=f"Error: Command timed out ({timeout}s)")]
     except Exception as e:
         return [TextContent(type="text", text=f"Error: {e}")]
