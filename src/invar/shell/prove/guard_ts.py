@@ -415,6 +415,8 @@ def _get_invar_package_cmd(package_name: str, project_path: Path) -> list[str]:
         return ["node", str(local_cli)]
 
     # Priority 2b: Walk up to find the Invar root (monorepo setup)
+    # This is intentional for monorepo development - allows running from subdirectories
+    # Only searches up to 5 levels to limit exposure
     check_path = resolved_path
     for _ in range(5):  # Max 5 levels up
         candidate = check_path / f"typescript/packages/{package_name}/dist/cli.js"
@@ -815,7 +817,6 @@ def run_eslint(project_path: Path) -> Result[list[TypeScriptViolation], str]:
             # ESLint may output non-JSON on certain errors
             if result.returncode != 0 and result.stderr:
                 return Failure(f"ESLint error: {result.stderr[:200]}")
-            return Failure("ESLint output parsing failed: JSON decode error")
             return Failure("ESLint output parsing failed: JSON decode error")
 
         return Success(violations)
