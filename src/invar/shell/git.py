@@ -7,12 +7,9 @@ Shell module: handles git I/O for changed file detection.
 from __future__ import annotations
 
 import subprocess
-from typing import TYPE_CHECKING
+from pathlib import Path
 
 from returns.result import Failure, Result, Success
-
-if TYPE_CHECKING:
-    from pathlib import Path
 
 
 def _run_git(args: list[str], cwd: Path) -> Result[str, str]:
@@ -49,27 +46,29 @@ def get_changed_files(project_root: Path) -> Result[set[Path], str]:
         >>> isinstance(result, (Success, Failure))
         True
     """
-    # Verify git repo
     check = _run_git(["rev-parse", "--git-dir"], project_root)
     if isinstance(check, Failure):
         return Failure(f"Not a git repository: {project_root}")
 
+    repo_root_result = _run_git(["rev-parse", "--show-toplevel"], project_root)
+    if isinstance(repo_root_result, Failure):
+        return Failure(repo_root_result.failure())
+
+    repo_root = Path(repo_root_result.unwrap().strip())
+
     changed: set[Path] = set()
 
-    # Staged changes
     staged = _run_git(["diff", "--cached", "--name-only"], project_root)
     if isinstance(staged, Success):
-        changed.update(_parse_py_files(staged.unwrap(), project_root))
+        changed.update(_parse_py_files(staged.unwrap(), repo_root))
 
-    # Unstaged changes
     unstaged = _run_git(["diff", "--name-only"], project_root)
     if isinstance(unstaged, Success):
-        changed.update(_parse_py_files(unstaged.unwrap(), project_root))
+        changed.update(_parse_py_files(unstaged.unwrap(), repo_root))
 
-    # Untracked files
     untracked = _run_git(["ls-files", "--others", "--exclude-standard"], project_root)
     if isinstance(untracked, Success):
-        changed.update(_parse_py_files(untracked.unwrap(), project_root))
+        changed.update(_parse_py_files(untracked.unwrap(), repo_root))
 
     return Success(changed)
 

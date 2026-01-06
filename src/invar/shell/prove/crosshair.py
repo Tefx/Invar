@@ -12,7 +12,7 @@ import os
 import subprocess
 import sys
 from concurrent.futures import ProcessPoolExecutor, as_completed
-from pathlib import Path  # noqa: TC003 - used at runtime
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from returns.result import Failure, Result, Success
@@ -82,10 +82,7 @@ def has_verifiable_contracts(source: str) -> bool:
                     if isinstance(func, ast.Name) and func.id in contract_decorators:
                         return True
                     # @deal.pre(...) or @deal.post(...)
-                    if (
-                        isinstance(func, ast.Attribute)
-                        and func.attr in contract_decorators
-                    ):
+                    if isinstance(func, ast.Attribute) and func.attr in contract_decorators:
                         return True
 
     return False
@@ -102,6 +99,7 @@ def _verify_single_file(
     max_iterations: int = 5,
     timeout: int = 300,
     per_condition_timeout: int = 30,
+    project_root: str | None = None,
 ) -> dict[str, Any]:
     """
     Verify a single file with CrossHair.
@@ -133,13 +131,14 @@ def _verify_single_file(
     ]
 
     try:
-        # DX-52: Inject project venv site-packages for uvx compatibility
+        env_root = Path(project_root) if project_root else None
         result = subprocess.run(
             cmd,
             capture_output=True,
             text=True,
             timeout=timeout,
-            env=build_subprocess_env(),
+            cwd=project_root,
+            env=build_subprocess_env(cwd=env_root),
         )
 
         elapsed_ms = int((time.time() - start_time) * 1000)
@@ -222,6 +221,7 @@ def run_crosshair_parallel(
     cache: ProveCache | None = None,
     timeout: int = 300,
     per_condition_timeout: int = 30,
+    project_root: Path | None = None,
 ) -> Result[dict, str]:
     """Run CrossHair on multiple files in parallel (DX-13).
 
@@ -331,7 +331,12 @@ def run_crosshair_parallel(
         with ProcessPoolExecutor(max_workers=max_workers) as executor:
             futures = {
                 executor.submit(
-                    _verify_single_file, str(f), max_iterations, timeout, per_condition_timeout
+                    _verify_single_file,
+                    str(f.resolve()),
+                    max_iterations,
+                    timeout,
+                    per_condition_timeout,
+                    str(project_root) if project_root else None,
                 ): f
                 for f in files_to_verify
             }
@@ -355,7 +360,11 @@ def run_crosshair_parallel(
         # Sequential execution (single file or max_workers=1)
         for py_file in files_to_verify:
             result = _verify_single_file(
-                str(py_file), max_iterations, timeout, per_condition_timeout
+                str(py_file.resolve()),
+                max_iterations,
+                timeout,
+                per_condition_timeout,
+                str(project_root) if project_root else None,
             )
             _process_verification_result(
                 result,
@@ -368,9 +377,7 @@ def run_crosshair_parallel(
             total_time_ms += result.get("time_ms", 0)
 
     # Determine overall status
-    status = (
-        CrossHairStatus.VERIFIED if not failed_files else CrossHairStatus.COUNTEREXAMPLE
-    )
+    status = CrossHairStatus.VERIFIED if not failed_files else CrossHairStatus.COUNTEREXAMPLE
 
     return Success(
         {

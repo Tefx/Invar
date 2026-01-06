@@ -36,23 +36,35 @@ def handle_changed_mode(
     if isinstance(changed_result, Failure):
         return Failure(changed_result.failure())
 
-    only_files = changed_result.unwrap()
+    all_files = changed_result.unwrap()
+    only_files = {p for p in all_files if p.is_relative_to(path)}
     if not only_files:
-        return Failure("NO_CHANGES")  # Special marker for "no changes"
+        return Failure("NO_CHANGES")
 
     return Success((only_files, list(only_files)))
 
 
 # @shell_orchestration: Coordinates path classification and file collection
 # @shell_complexity: File collection with path normalization
-def collect_files_to_check(
-    path: Path, checked_files: list[Path]
-) -> list[Path]:
-    """Collect Python files to check when not in --changed mode."""
-    from invar.shell.config import get_path_classification
+def collect_files_to_check(path: Path, checked_files: list[Path]) -> list[Path]:
+    """Collect Python files for runtime phases, honoring exclude_paths."""
+    from invar.shell.config import get_exclude_paths, get_path_classification
+    from invar.shell.fs import _is_excluded
 
     if checked_files:
         return checked_files
+
+    exclude_result = get_exclude_paths(path)
+    exclude_patterns = exclude_result.unwrap() if isinstance(exclude_result, Success) else []
+
+    def _add_py_files_under(root: Path) -> None:
+        for py_file in root.rglob("*.py"):
+            try:
+                rel = str(py_file.relative_to(path))
+            except ValueError:
+                rel = str(py_file)
+            if not _is_excluded(rel, exclude_patterns):
+                result_files.append(py_file)
 
     result_files: list[Path] = []
 
@@ -62,26 +74,33 @@ def collect_files_to_check(
     else:
         core_paths, shell_paths = ["src/core"], ["src/shell"]
 
-    # Scan core/shell paths
     for core_path in core_paths:
         full_path = path / core_path
         if full_path.exists():
-            result_files.extend(full_path.rglob("*.py"))
+            _add_py_files_under(full_path)
 
     for shell_path in shell_paths:
         full_path = path / shell_path
         if full_path.exists():
-            result_files.extend(full_path.rglob("*.py"))
+            _add_py_files_under(full_path)
 
-    # Fallback: scan path directly
     if not result_files and path.exists():
-        result_files.extend(path.rglob("*.py"))
+        _add_py_files_under(path)
 
-    return result_files
+    seen: set[str] = set()
+    unique: list[Path] = []
+    for f in result_files:
+        key = str(f)
+        if key not in seen:
+            seen.add(key)
+            unique.append(f)
+
+    return unique
 
 
 # @shell_orchestration: Coordinates doctest execution via testing module
 def run_doctests_phase(
+    project_root: Path,
     checked_files: list[Path],
     explain: bool,
     timeout: int = 60,
@@ -103,12 +122,20 @@ def run_doctests_phase(
         return True, "", None
 
     doctest_result = run_doctests_on_files(
-        checked_files, verbose=explain, timeout=timeout, collect_coverage=collect_coverage
+        checked_files,
+        verbose=explain,
+        timeout=timeout,
+        collect_coverage=collect_coverage,
+        cwd=project_root,
     )
     if isinstance(doctest_result, Success):
         result_data = doctest_result.unwrap()
         passed = result_data.get("status") in ("passed", "skipped")
-        output = result_data.get("stdout", "")
+        stdout = result_data.get("stdout", "")
+        stderr = result_data.get("stderr", "")
+        output = stdout
+        if not passed and stderr:
+            output = f"{stdout}\n{stderr}" if stdout else stderr
         # DX-37: Return coverage data if collected
         coverage_data = {"collected": result_data.get("coverage_collected", False)}
         return passed, output, coverage_data if collect_coverage else None
@@ -176,6 +203,7 @@ def run_crosshair_phase(
         cache=cache,
         timeout=timeout,
         per_condition_timeout=per_condition_timeout,
+        project_root=path,
     )
 
     if isinstance(crosshair_result, Success):
@@ -230,26 +258,17 @@ def output_verification_status(
                 console.print(doctest_output)
 
         # CrossHair results
-        _output_crosshair_status(
-            static_exit_code, doctest_passed, crosshair_output
-        )
+        _output_crosshair_status(static_exit_code, doctest_passed, crosshair_output)
 
         # Property tests results
         if property_output:
-            _output_property_tests_status(
-                static_exit_code, doctest_passed, property_output
-            )
+            _output_property_tests_status(static_exit_code, doctest_passed, property_output)
     else:
         console.print("[dim]⊘ Runtime tests skipped (static errors)[/dim]")
 
     # DX-26: Combined conclusion after all phases
     console.print("-" * 40)
-    all_passed = (
-        static_exit_code == 0
-        and doctest_passed
-        and crosshair_passed
-        and property_passed
-    )
+    all_passed = static_exit_code == 0 and doctest_passed and crosshair_passed and property_passed
     # In strict mode, warnings also cause failure (but exit code already reflects this)
     status = "passed" if all_passed else "failed"
     color = "green" if all_passed else "red"
@@ -259,6 +278,7 @@ def output_verification_status(
 # @shell_orchestration: Coordinates shell module calls for property testing
 # @shell_complexity: Property tests with result aggregation
 def run_property_tests_phase(
+    project_root: Path,
     checked_files: list[Path],
     doctest_passed: bool,
     static_exit_code: int,
@@ -290,7 +310,12 @@ def run_property_tests_phase(
     if not core_files:
         return True, {"status": "skipped", "reason": "no core files"}, None
 
-    result = run_property_tests_on_files(core_files, max_examples, collect_coverage=collect_coverage)
+    result = run_property_tests_on_files(
+        core_files,
+        max_examples,
+        collect_coverage=collect_coverage,
+        project_root=project_root,
+    )
 
     if isinstance(result, Success):
         report, coverage_data = result.unwrap()
@@ -305,15 +330,19 @@ def run_property_tests_phase(
             for r in report.results
             if not r.passed
         ]
-        return report.all_passed(), {
-            "status": "passed" if report.all_passed() else "failed",
-            "functions_tested": report.functions_tested,
-            "functions_passed": report.functions_passed,
-            "functions_failed": report.functions_failed,
-            "total_examples": report.total_examples,
-            "failures": failures,  # DX-26: Structured failure info
-            "errors": report.errors,
-        }, coverage_data
+        return (
+            report.all_passed(),
+            {
+                "status": "passed" if report.all_passed() else "failed",
+                "functions_tested": report.functions_tested,
+                "functions_passed": report.functions_passed,
+                "functions_failed": report.functions_failed,
+                "total_examples": report.total_examples,
+                "failures": failures,  # DX-26: Structured failure info
+                "errors": report.errors,
+            },
+            coverage_data,
+        )
 
     return False, {"status": "error", "error": result.failure()}, None
 
@@ -366,8 +395,8 @@ def _output_property_tests_status(
             # Show reproduction command with seed
             if seed:
                 console.print(
-                    f"    [dim]Reproduce: python -c \"from hypothesis import reproduce_failure; "
-                    f"import {func_name}\" --seed={seed}[/dim]"
+                    f'    [dim]Reproduce: python -c "from hypothesis import reproduce_failure; '
+                    f'import {func_name}" --seed={seed}[/dim]'
                 )
         # Fallback for errors without structured failures
         for error in property_output.get("errors", [])[:5]:
@@ -406,8 +435,7 @@ def _output_crosshair_status(
             if workers > 1:
                 stats += f", {workers} workers"
             console.print(
-                f"[green]✓ CrossHair verified[/green] "
-                f"[dim]({stats}, {time_sec:.1f}s)[/dim]"
+                f"[green]✓ CrossHair verified[/green] [dim]({stats}, {time_sec:.1f}s)[/dim]"
             )
         else:
             console.print("[green]✓ CrossHair verified[/green]")

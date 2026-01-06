@@ -135,13 +135,17 @@ def build_subprocess_env(cwd: Path | None = None) -> dict[str, str]:
     if site_packages is None:
         return env
 
-    # Prepend to PYTHONPATH (project packages have priority)
     current = env.get("PYTHONPATH", "")
     separator = ";" if os.name == "nt" else ":"
-    if current:
-        env["PYTHONPATH"] = f"{site_packages}{separator}{current}"
-    else:
-        env["PYTHONPATH"] = str(site_packages)
+
+    src_dir = project_root / "src"
+    prefix_parts: list[str] = []
+    if src_dir.exists():
+        prefix_parts.append(str(src_dir))
+    prefix_parts.append(str(site_packages))
+
+    prefix = separator.join(prefix_parts)
+    env["PYTHONPATH"] = f"{prefix}{separator}{current}" if current else prefix
 
     return env
 

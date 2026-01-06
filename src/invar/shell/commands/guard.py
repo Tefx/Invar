@@ -17,7 +17,7 @@ from invar import __version__
 from invar.core.models import GuardReport, RuleConfig
 from invar.core.rules import check_all_rules
 from invar.core.utils import get_exit_code
-from invar.shell.config import find_project_root, load_config
+from invar.shell.config import find_project_root, find_pyproject_root, load_config
 from invar.shell.fs import scan_project
 from invar.shell.guard_output import output_agent, output_rich
 
@@ -225,7 +225,14 @@ def guard(
             console.print(f"[red]Error:[/red] {path} is not a Python file")
             raise typer.Exit(1)
         single_file = path.resolve()
-        path = find_project_root(path)
+
+    pyproject_root = find_pyproject_root(single_file if single_file else path)
+    if pyproject_root is None:
+        console.print(
+            "[red]Error:[/red] pyproject.toml not found (searched upward from the target path)"
+        )
+        raise typer.Exit(1)
+    path = pyproject_root
 
     # Load and configure
     config_result = load_config(path)
@@ -373,6 +380,7 @@ def guard(
 
         # Phase 1: Doctests (DX-37: with optional coverage)
         doctest_passed, doctest_output, doctest_coverage = run_doctests_phase(
+            path,
             checked_files,
             explain,
             timeout=config.timeout_doctest,
@@ -393,6 +401,7 @@ def guard(
 
         # Phase 3: Hypothesis property tests (DX-37: with optional coverage)
         property_passed, property_output, property_coverage = run_property_tests_phase(
+            path,
             checked_files,
             doctest_passed,
             static_exit_code,

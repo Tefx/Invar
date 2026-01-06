@@ -10,6 +10,10 @@ import sys
 from pathlib import Path
 from unittest.mock import patch
 
+from returns.result import Success
+
+from invar.shell.guard_helpers import collect_files_to_check
+from invar.shell.property_tests import run_property_tests_on_file
 from invar.shell.subprocess_env import (
     build_subprocess_env,
     check_version_mismatch,
@@ -124,9 +128,13 @@ class TestBuildSubprocessEnv:
         site_packages = venv / "lib" / "python3.11" / "site-packages"
         site_packages.mkdir(parents=True)
 
+        src_dir = tmp_path / "src"
+        src_dir.mkdir()
+
         env = build_subprocess_env(cwd=tmp_path)
         assert "PYTHONPATH" in env
         assert str(site_packages) in env["PYTHONPATH"]
+        assert str(src_dir) in env["PYTHONPATH"]
 
     def test_prepends_to_existing_pythonpath(self, tmp_path: Path) -> None:
         """Test that project packages have priority over existing PYTHONPATH."""
@@ -137,12 +145,73 @@ class TestBuildSubprocessEnv:
         site_packages = venv / "lib" / "python3.11" / "site-packages"
         site_packages.mkdir(parents=True)
 
+        src_dir = tmp_path / "src"
+        src_dir.mkdir()
+
         # Set existing PYTHONPATH
         with patch.dict(os.environ, {"PYTHONPATH": "/existing/path"}):
             env = build_subprocess_env(cwd=tmp_path)
-            # Project should be first
-            assert env["PYTHONPATH"].startswith(str(site_packages))
+            assert env["PYTHONPATH"].startswith(str(src_dir))
+            assert str(site_packages) in env["PYTHONPATH"]
             assert "/existing/path" in env["PYTHONPATH"]
+
+
+class TestRuntimeFileCollectionExcludesVenv:
+    def test_collect_files_to_check_excludes_dot_venv(self, tmp_path: Path) -> None:
+        (tmp_path / "pyproject.toml").write_text(
+            """
+[project]
+name = "tmp"
+version = "0.0.0"
+
+[tool.invar.guard]
+core_paths = ["does-not-exist"]
+shell_paths = ["also-nope"]
+""".lstrip()
+        )
+
+        venv_file = tmp_path / ".venv" / "lib" / "python3.11" / "site-packages" / "x.py"
+        venv_file.parent.mkdir(parents=True)
+        venv_file.write_text("print('venv')\n")
+
+        src_file = tmp_path / "src" / "core" / "a.py"
+        src_file.parent.mkdir(parents=True)
+        src_file.write_text("x = 1\n")
+
+        files = collect_files_to_check(tmp_path, [])
+        paths = {str(p) for p in files}
+
+        assert any(str(src_file) == p for p in paths)
+        assert not any("/.venv/" in p or p.endswith("/.venv") for p in paths)
+
+
+class TestPropertyTestsCanImportFromProjectVenv:
+    def test_run_property_tests_on_file_injects_site_packages(self, tmp_path: Path) -> None:
+        venv = tmp_path / ".venv"
+        venv.mkdir()
+        (venv / "pyvenv.cfg").write_text("version = 3.11.5\n")
+
+        site_packages = venv / "lib" / "python3.11" / "site-packages"
+        dep_pkg = site_packages / "dummydep"
+        dep_pkg.mkdir(parents=True)
+        (dep_pkg / "__init__.py").write_text("VALUE = 123\n")
+
+        mod = tmp_path / "src" / "core" / "m.py"
+        mod.parent.mkdir(parents=True)
+        mod.write_text(
+            """
+from deal import pre, post
+import dummydep
+
+@pre(lambda x: x > 0)
+@post(lambda result: result > 0)
+def f(x: int) -> int:
+    return x
+""".lstrip()
+        )
+
+        result = run_property_tests_on_file(mod, max_examples=1, project_root=tmp_path)
+        assert isinstance(result, Success)
 
 
 # =============================================================================
@@ -203,9 +272,7 @@ class TestGetVenvPythonVersion:
         venv = tmp_path / ".venv"
         venv.mkdir()
         (venv / "pyvenv.cfg").write_text(
-            "home = /usr/bin\n"
-            "version = 3.11.5\n"
-            "include-system-site-packages = false\n"
+            "home = /usr/bin\nversion = 3.11.5\ninclude-system-site-packages = false\n"
         )
 
         result = get_venv_python_version(venv)

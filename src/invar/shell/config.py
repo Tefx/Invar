@@ -39,11 +39,27 @@ class ModuleType(Enum):
 
 
 # I/O libraries that indicate Shell module (for AST import checking)
-_IO_LIBRARIES = frozenset([
-    "os", "sys", "subprocess", "pathlib", "shutil", "io", "socket",
-    "requests", "aiohttp", "httpx", "urllib", "sqlite3", "psycopg2",
-    "pymongo", "sqlalchemy", "typer", "click",
-])
+_IO_LIBRARIES = frozenset(
+    [
+        "os",
+        "sys",
+        "subprocess",
+        "pathlib",
+        "shutil",
+        "io",
+        "socket",
+        "requests",
+        "aiohttp",
+        "httpx",
+        "urllib",
+        "sqlite3",
+        "psycopg2",
+        "pymongo",
+        "sqlalchemy",
+        "typer",
+        "click",
+    ]
+)
 
 # Contract decorator names
 _CONTRACT_DECORATORS = frozenset(["pre", "post", "invariant"])
@@ -226,6 +242,7 @@ def auto_detect_module_type(source: str, file_path: str = "") -> ModuleType:
     # Unknown: neither clear pattern
     return ModuleType.UNKNOWN
 
+
 if TYPE_CHECKING:
     from pathlib import Path
 
@@ -268,6 +285,20 @@ def _find_config_source(project_root: Path) -> Result[tuple[Path | None, ConfigS
 
 
 # @shell_complexity: Project root discovery requires checking multiple markers
+def find_pyproject_root(start_path: "Path") -> "Path | None":  # noqa: UP037
+    from pathlib import Path
+
+    current = Path(start_path).resolve()
+    if current.is_file():
+        current = current.parent
+
+    for parent in [current, *current.parents]:
+        if (parent / "pyproject.toml").exists():
+            return parent
+
+    return None
+
+
 def find_project_root(start_path: "Path") -> "Path":  # noqa: UP037
     """
     Find project root by walking up from start_path looking for config files.
@@ -492,6 +523,7 @@ def classify_file(
     else:
         # Log warning about config error, use defaults
         import logging
+
         logging.getLogger(__name__).debug(
             "Pattern classification failed: %s, using defaults", pattern_result.failure()
         )
@@ -503,6 +535,7 @@ def classify_file(
     else:
         # Log warning about config error, use defaults
         import logging
+
         logging.getLogger(__name__).debug(
             "Path classification failed: %s, using defaults", path_result.failure()
         )

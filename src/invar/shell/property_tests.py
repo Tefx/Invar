@@ -9,21 +9,49 @@ from __future__ import annotations
 
 import importlib.util
 import sys
+from contextlib import contextmanager, suppress
 from typing import TYPE_CHECKING
-
-from returns.result import Failure, Result, Success
-from rich.console import Console
-
-from invar.core.property_gen import (
-    PropertyTestReport,
-    find_contracted_functions,
-    run_property_test,
-)
 
 if TYPE_CHECKING:
     from pathlib import Path
 
+from returns.result import Failure, Result, Success
+from rich.console import Console
+
+from invar.core.property_gen import PropertyTestReport, find_contracted_functions, run_property_test
+from invar.shell.subprocess_env import detect_project_venv, find_site_packages
+
 console = Console()
+
+
+# @shell_orchestration: Temporarily inject venv site-packages for module imports
+@contextmanager
+def _inject_project_site_packages(project_root: Path):
+    venv = detect_project_venv(project_root)
+    site_packages = find_site_packages(venv) if venv is not None else None
+
+    if site_packages is None:
+        yield
+        return
+
+    src_dir = project_root / "src"
+
+    added: list[str] = []
+    if src_dir.exists():
+        src_dir_str = str(src_dir)
+        sys.path.insert(0, src_dir_str)
+        added.append(src_dir_str)
+
+    site_packages_str = str(site_packages)
+    sys.path.insert(0, site_packages_str)
+    added.append(site_packages_str)
+
+    try:
+        yield
+    finally:
+        for p in added:
+            with suppress(ValueError):
+                sys.path.remove(p)
 
 
 # @shell_complexity: Property test orchestration with module import
@@ -31,6 +59,7 @@ def run_property_tests_on_file(
     file_path: Path,
     max_examples: int = 100,
     verbose: bool = False,
+    project_root: Path | None = None,
 ) -> Result[PropertyTestReport, str]:
     """
     Run property tests on all contracted functions in a file.
@@ -66,8 +95,10 @@ def run_property_tests_on_file(
     if not contracted:
         return Success(PropertyTestReport())  # No contracted functions, skip
 
-    # Import the module to get actual function objects
-    module = _import_module_from_path(file_path)
+    root = project_root or file_path.parent
+    with _inject_project_site_packages(root):
+        module = _import_module_from_path(file_path)
+
     if module is None:
         return Failure(f"Could not import module: {file_path}")
 
@@ -105,6 +136,7 @@ def run_property_tests_on_files(
     max_examples: int = 100,
     verbose: bool = False,
     collect_coverage: bool = False,
+    project_root: Path | None = None,
 ) -> Result[tuple[PropertyTestReport, dict | None], str]:
     """
     Run property tests on multiple files.
@@ -122,9 +154,9 @@ def run_property_tests_on_files(
     try:
         import hypothesis  # noqa: F401
     except ImportError:
-        return Success((PropertyTestReport(
-            errors=["Hypothesis not installed (pip install hypothesis)"]
-        ), None))
+        return Success(
+            (PropertyTestReport(errors=["Hypothesis not installed (pip install hypothesis)"]), None)
+        )
 
     combined_report = PropertyTestReport()
     coverage_data = None
@@ -138,7 +170,9 @@ def run_property_tests_on_files(
             source_dirs = list({f.parent for f in files})
             with cov_ctx(source_dirs) as cov:
                 for file_path in files:
-                    result = run_property_tests_on_file(file_path, max_examples, verbose)
+                    result = run_property_tests_on_file(
+                        file_path, max_examples, verbose, project_root=project_root
+                    )
                     _accumulate_report(combined_report, result)
 
                 # Extract coverage after all tests
@@ -151,11 +185,15 @@ def run_property_tests_on_files(
         except ImportError:
             # coverage not installed, run without it
             for file_path in files:
-                result = run_property_tests_on_file(file_path, max_examples, verbose)
+                result = run_property_tests_on_file(
+                    file_path, max_examples, verbose, project_root=project_root
+                )
                 _accumulate_report(combined_report, result)
     else:
         for file_path in files:
-            result = run_property_tests_on_file(file_path, max_examples, verbose)
+            result = run_property_tests_on_file(
+                file_path, max_examples, verbose, project_root=project_root
+            )
             _accumulate_report(combined_report, result)
 
     return Success((combined_report, coverage_data))
@@ -222,26 +260,29 @@ def format_property_test_report(
     import json
 
     if json_output:
-        return json.dumps({
-            "functions_tested": report.functions_tested,
-            "functions_passed": report.functions_passed,
-            "functions_failed": report.functions_failed,
-            "functions_skipped": report.functions_skipped,
-            "total_examples": report.total_examples,
-            "all_passed": report.all_passed(),
-            "results": [
-                {
-                    "function": r.function_name,
-                    "passed": r.passed,
-                    "examples": r.examples_run,
-                    "error": r.error,
-                    "file_path": r.file_path,  # DX-26
-                    "seed": r.seed,  # DX-26
-                }
-                for r in report.results
-            ],
-            "errors": report.errors,
-        }, indent=2)
+        return json.dumps(
+            {
+                "functions_tested": report.functions_tested,
+                "functions_passed": report.functions_passed,
+                "functions_failed": report.functions_failed,
+                "functions_skipped": report.functions_skipped,
+                "total_examples": report.total_examples,
+                "all_passed": report.all_passed(),
+                "results": [
+                    {
+                        "function": r.function_name,
+                        "passed": r.passed,
+                        "examples": r.examples_run,
+                        "error": r.error,
+                        "file_path": r.file_path,  # DX-26
+                        "seed": r.seed,  # DX-26
+                    }
+                    for r in report.results
+                ],
+                "errors": report.errors,
+            },
+            indent=2,
+        )
 
     # Human-readable format
     lines = []
@@ -263,10 +304,16 @@ def format_property_test_report(
     for result in report.results:
         if not result.passed:
             # DX-26: file::function format
-            location = f"{result.file_path}::{result.function_name}" if result.file_path else result.function_name
+            location = (
+                f"{result.file_path}::{result.function_name}"
+                if result.file_path
+                else result.function_name
+            )
             lines.append(f"  [red]✗[/red] {location}")
             if result.error:
-                short_error = result.error[:100] + "..." if len(result.error) > 100 else result.error
+                short_error = (
+                    result.error[:100] + "..." if len(result.error) > 100 else result.error
+                )
                 lines.append(f"      {short_error}")
             if result.seed:
                 lines.append(f"      [dim]Seed: {result.seed}[/dim]")

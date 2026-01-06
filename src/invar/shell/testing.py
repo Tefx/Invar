@@ -119,6 +119,7 @@ def run_doctests_on_files(
     verbose: bool = False,
     timeout: int = 60,
     collect_coverage: bool = False,
+    cwd: Path | None = None,
 ) -> Result[dict, str]:
     """
     Run doctests on a list of Python files.
@@ -143,17 +144,16 @@ def run_doctests_on_files(
         parts = f.parts
         # Check for consecutive "templates/examples" or ".invar/examples"
         for i in range(len(parts) - 1):
-            if (parts[i] == "templates" and parts[i + 1] == "examples") or \
-               (parts[i] == ".invar" and parts[i + 1] == "examples"):
+            if (parts[i] == "templates" and parts[i + 1] == "examples") or (
+                parts[i] == ".invar" and parts[i + 1] == "examples"
+            ):
                 return True
         return False
 
     py_files = [
-        f for f in files
-        if f.suffix == ".py"
-        and f.exists()
-        and f.name != "conftest.py"
-        and not is_excluded(f)
+        f
+        for f in files
+        if f.suffix == ".py" and f.exists() and f.name != "conftest.py" and not is_excluded(f)
     ]
     if not py_files:
         return Success({"status": "skipped", "reason": "no Python files", "files": []})
@@ -162,16 +162,26 @@ def run_doctests_on_files(
     if collect_coverage:
         # Use coverage run to wrap pytest
         cmd = [
-            sys.executable, "-m", "coverage", "run",
+            sys.executable,
+            "-m",
+            "coverage",
+            "run",
             "--branch",  # Enable branch coverage
             "--parallel-mode",  # For merging with hypothesis later
-            "-m", "pytest",
-            "--doctest-modules", "-x", "--tb=short",
+            "-m",
+            "pytest",
+            "--doctest-modules",
+            "-x",
+            "--tb=short",
         ]
     else:
         cmd = [
-            sys.executable, "-m", "pytest",
-            "--doctest-modules", "-x", "--tb=short",
+            sys.executable,
+            "-m",
+            "pytest",
+            "--doctest-modules",
+            "-x",
+            "--tb=short",
         ]
     cmd.extend(str(f) for f in py_files)
     if verbose:
@@ -188,14 +198,16 @@ def run_doctests_on_files(
         )
         # Pytest exit codes: 0=passed, 5=no tests collected (also OK)
         is_passed = result.returncode in (0, 5)
-        return Success({
-            "status": "passed" if is_passed else "failed",
-            "files": [str(f) for f in py_files],
-            "exit_code": result.returncode,
-            "stdout": result.stdout,
-            "stderr": result.stderr,
-            "coverage_collected": collect_coverage,  # DX-37: Flag for caller
-        })
+        return Success(
+            {
+                "status": "passed" if is_passed else "failed",
+                "files": [str(f) for f in py_files],
+                "exit_code": result.returncode,
+                "stdout": result.stdout,
+                "stderr": result.stderr,
+                "coverage_collected": collect_coverage,  # DX-37: Flag for caller
+            }
+        )
     except subprocess.TimeoutExpired:
         return Failure(f"Doctest timeout ({timeout}s)")
     except Exception as e:
@@ -204,7 +216,11 @@ def run_doctests_on_files(
 
 # @shell_complexity: Property test orchestration with subprocess
 def run_test(
-    target: str, json_output: bool = False, verbose: bool = False, timeout: int = 300
+    target: str,
+    json_output: bool = False,
+    verbose: bool = False,
+    timeout: int = 300,
+    cwd: Path | None = None,
 ) -> Result[dict, str]:
     """
     Run property-based tests using Hypothesis via deal.cases.
@@ -225,20 +241,25 @@ def run_test(
         return Failure(f"Target must be a Python file: {target}")
 
     cmd = [
-        sys.executable, "-m", "pytest",
-        str(target_path), "--doctest-modules", "-x", "--tb=short",
+        sys.executable,
+        "-m",
+        "pytest",
+        str(target_path),
+        "--doctest-modules",
+        "-x",
+        "--tb=short",
     ]
     if verbose:
         cmd.append("-v")
 
     try:
-        # DX-52: Inject project venv site-packages for uvx compatibility
         result = subprocess.run(
             cmd,
             capture_output=True,
             text=True,
             timeout=timeout,
-            env=build_subprocess_env(),
+            cwd=str(cwd) if cwd is not None else None,
+            env=build_subprocess_env(cwd=cwd),
         )
         test_result = {
             "status": "passed" if result.returncode == 0 else "failed",
@@ -274,6 +295,7 @@ def run_verify(
     json_output: bool = False,
     total_timeout: int = 300,
     per_condition_timeout: int = 30,
+    cwd: Path | None = None,
 ) -> Result[dict, str]:
     """
     Run symbolic verification using CrossHair.
@@ -302,23 +324,28 @@ def run_verify(
         return Failure(f"Target must be a Python file: {target}")
 
     cmd = [
-        sys.executable, "-m", "crosshair", "check",
-        str(target_path), f"--per_condition_timeout={per_condition_timeout}",
+        sys.executable,
+        "-m",
+        "crosshair",
+        "check",
+        str(target_path),
+        f"--per_condition_timeout={per_condition_timeout}",
     ]
 
     try:
-        # DX-52: Inject project venv site-packages for uvx compatibility
         result = subprocess.run(
             cmd,
             capture_output=True,
             text=True,
             timeout=total_timeout,
-            env=build_subprocess_env(),
+            cwd=str(cwd) if cwd is not None else None,
+            env=build_subprocess_env(cwd=cwd),
         )
 
         # CrossHair format: "file:line: error: Err when calling func(...)"
         counterexamples = [
-            line.strip() for line in result.stdout.split("\n")
+            line.strip()
+            for line in result.stdout.split("\n")
             if ": error:" in line.lower() or "counterexample" in line.lower()
         ]
 
