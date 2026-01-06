@@ -33,6 +33,174 @@ Git 历史显示多次紧急修复：`60b90a0`, `7f75b31`, `8920562`, `33cdb49`
 
 ---
 
+## Cross-Platform Strategy
+
+### 问题：二进制嵌入的平台兼容性
+
+| 组件 | 类型 | 跨平台 |
+|------|------|--------|
+| **oxlint 本体** | Rust 原生二进制 | ❌ 需要 6 个平台构建 |
+| **@invar/oxlint-plugin** | JavaScript 代码 | ✅ 跨平台 |
+
+如果嵌入 oxlint 二进制：
+- 需要为 linux-x64, linux-arm64, darwin-x64, darwin-arm64, win32-x64, win32-arm64 分别构建
+- 包体积膨胀 ~6 倍
+- 构建和发布流程复杂化
+
+### 解决方案：只嵌入 JS 插件
+
+```
+Python 包嵌入 (跨平台)          用户安装 (平台相关)
+───────────────────────────────────────────────────
+@invar/oxlint-plugin      +      oxlint
+(JavaScript, ~100KB)             (用户自行安装)
+```
+
+### oxlint 安装方式
+
+```bash
+# 方式 1: npm 全局安装 (推荐)
+npm install -g oxlint
+
+# 方式 2: 包管理器
+brew install oxlint          # macOS
+cargo install oxlint         # Rust 用户
+
+# 方式 3: npx 按需下载 (零配置，稍慢)
+npx oxlint                   # 自动下载对应平台版本
+```
+
+### 检测逻辑
+
+```python
+def _get_oxlint_cmd() -> list[str] | None:
+    """获取 oxlint 命令"""
+    # 优先级 1: 全局安装 (最快)
+    if _check_tool_available("oxlint", ["--version"]):
+        return ["oxlint"]
+
+    # 优先级 2: npx (自动下载对应平台)
+    if _check_tool_available("npx", ["--version"]):
+        return ["npx", "oxlint"]
+
+    return None
+```
+
+---
+
+## File Filtering Strategy
+
+### 问题：检查范围控制
+
+TS 项目应该只检查项目代码，跳过：
+- `node_modules/` - 第三方依赖
+- `dist/`, `build/` - 编译输出
+- `.next/`, `.nuxt/` - 框架生成
+- `coverage/` - 测试覆盖率报告
+- 其他生成目录
+
+### 解决方案：智能文件过滤
+
+#### 1. 默认忽略列表
+
+```python
+DEFAULT_IGNORE_PATTERNS = [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/build/**",
+    "**/.next/**",
+    "**/.nuxt/**",
+    "**/.cache/**",
+    "**/coverage/**",
+    "**/.turbo/**",
+    "**/.vercel/**",
+    "**/playwright-report/**",
+    "**/test-results/**",
+    "**/*.min.js",
+    "**/*.bundle.js",
+]
+```
+
+#### 2. 基于 tsconfig.json 的智能检测
+
+```python
+def _get_project_files(project_path: Path) -> list[str]:
+    """获取项目文件列表，排除依赖和生成文件"""
+
+    # 优先使用 tsconfig.json 的 include/exclude
+    tsconfig = project_path / "tsconfig.json"
+    if tsconfig.exists():
+        config = json.loads(tsconfig.read_text())
+        include = config.get("include", ["src/**/*"])
+        exclude = config.get("exclude", [])
+        # 使用 tsconfig 定义的范围
+        return _glob_with_patterns(project_path, include, exclude)
+
+    # 回退到默认模式：src/ 目录
+    return _glob_with_patterns(
+        project_path,
+        include=["src/**/*.ts", "src/**/*.tsx"],
+        exclude=DEFAULT_IGNORE_PATTERNS,
+    )
+```
+
+#### 3. oxlint 命令行参数
+
+```python
+def run_oxlint(project_path: Path) -> Result[list[TypeScriptViolation], str]:
+    cmd = _get_oxlint_cmd()
+    if not cmd:
+        return Failure("oxlint not available")
+
+    cmd.extend([
+        "--format=json",
+        "--tsconfig", "tsconfig.json",
+        # 显式忽略模式
+        "--ignore-pattern", "node_modules",
+        "--ignore-pattern", "dist",
+        "--ignore-pattern", "build",
+        "--ignore-pattern", ".next",
+        "--ignore-pattern", "coverage",
+    ])
+
+    # 只检查 src/ 目录（如果存在）
+    src_dir = project_path / "src"
+    if src_dir.exists():
+        cmd.append("src/")
+    else:
+        cmd.append(".")
+
+    # ...
+```
+
+#### 4. 配置文件支持 (oxlint.json)
+
+用户可通过项目根目录的 `oxlint.json` 自定义：
+
+```json
+{
+  "ignorePatterns": [
+    "node_modules",
+    "dist",
+    "custom-generated/"
+  ],
+  "include": ["src/", "lib/"],
+  "plugins": ["@invar"]
+}
+```
+
+### 检查范围优先级
+
+```
+1. oxlint.json (项目自定义)
+       ↓
+2. tsconfig.json include/exclude
+       ↓
+3. 默认规则 (src/ + DEFAULT_IGNORE_PATTERNS)
+```
+
+---
+
 ## Rule Analysis
 
 ### 重要发现：所有规则都是 AST 级别检查
