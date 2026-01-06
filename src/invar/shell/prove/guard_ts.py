@@ -402,7 +402,13 @@ def _get_invar_package_cmd(package_name: str, project_path: Path) -> list[str]:
     # Resolve to absolute path to avoid path doubling issues
     resolved_path = project_path.resolve()
 
-    # Priority 2: Local development setup (Invar repo itself)
+    # Priority 1: Project-local override (for custom/modified tools)
+    # Allows projects to override embedded tools with local builds
+    local_cli = resolved_path / "typescript" / "packages" / package_name / "dist" / "cli.js"
+    if local_cli.exists():
+        return ["node", str(local_cli)]
+
+    # Priority 2: Embedded tools (from pip install)
     # Check both possible locations:
     # - resolved_path / "typescript" / "packages" / package_name / "dist" / "cli.js"
     # - resolved_path / "packages" / package_name / "dist" / "cli.js"
@@ -414,7 +420,7 @@ def _get_invar_package_cmd(package_name: str, project_path: Path) -> list[str]:
     if local_cli.exists():
         return ["node", str(local_cli)]
 
-    # Priority 2b: Walk up to find the Invar root (monorepo setup)
+    # Priority 3b: Walk up to find the Invar root (monorepo setup)
     # This is intentional for monorepo development - allows running from subdirectories
     # Only searches up to 5 levels to limit exposure
     check_path = resolved_path

@@ -98,7 +98,7 @@ async function main() {
         // This allows ESLint to find embedded node_modules in site-packages
         const eslint = new ESLint({
             useEslintrc: false, // Don't load .eslintrc files
-            cwd: __dirname, // Use CLI location for module resolution (embedded node_modules)
+            cwd: projectPath, // Use project directory as working directory (fix for timeout issue)
             resolvePluginsRelativeTo: __dirname, // Resolve plugins from embedded location
             baseConfig: {
                 parser: '@typescript-eslint/parser', // Will resolve from __dirname/node_modules
@@ -108,6 +108,15 @@ async function main() {
                 },
                 plugins: ['@invar'],
                 rules: selectedConfig.rules,
+                ignore: [
+                    // Explicit ignores to prevent scanning generated/cached directories
+                    '**/node_modules/**',
+                    '**/.next/**',
+                    '**/dist/**',
+                    '**/build/**',
+                    '**/.cache/**',
+                    '**/coverage/**',
+                ],
             },
             plugins: {
                 '@invar': plugin, // Register plugin directly
@@ -125,11 +134,12 @@ async function main() {
                 filesToLint = [projectPath];
             }
             else if (stats.isDirectory()) {
-                // Directory - use glob patterns for TypeScript files primarily
+                // Directory - use relative glob patterns for TypeScript files
                 // Note: Focus on TypeScript files as this is a TypeScript Guard tool
+                // Use relative patterns (no projectPath prefix) since cwd is set to projectPath
                 filesToLint = [
-                    `${projectPath}/**/*.ts`,
-                    `${projectPath}/**/*.tsx`,
+                    "**/*.ts",
+                    "**/*.tsx",
                 ];
             }
             else {
