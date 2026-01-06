@@ -18,11 +18,22 @@ import { ESLint } from 'eslint';
 import { resolve, dirname } from 'path';
 import { statSync, realpathSync } from 'fs';
 import { fileURLToPath } from 'url';
+import { createRequire } from 'module';
 import plugin from './index.js';
 
 // Get the directory where this CLI script is located (embedded in site-packages)
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
+const require = createRequire(import.meta.url);
+
+function resolveTsParser(projectPath: string): string | null {
+  try {
+    return require.resolve('@typescript-eslint/parser', { paths: [projectPath, __dirname] });
+  } catch {
+    return null;
+  }
+}
 
 interface CliArgs {
   projectPath: string;
@@ -110,26 +121,43 @@ async function main(): Promise<void> {
       process.exit(1);
     }
 
-    // Create ESLint instance with programmatic configuration
-    // Use __dirname (where CLI is located) for module resolution
-    // This allows ESLint to find embedded node_modules in site-packages
+    const tsParser = resolveTsParser(projectPath);
+    if (!tsParser) {
+      console.error("ESLint failed: Failed to load parser '@typescript-eslint/parser'.");
+      console.error("Install it in your project, e.g.: pnpm add -D @typescript-eslint/parser");
+      process.exit(1);
+    }
+
     const eslint = new ESLint({
-      useEslintrc: false, // Don't load .eslintrc files
-      cwd: __dirname, // Use CLI location for module resolution (embedded node_modules)
-      resolvePluginsRelativeTo: __dirname, // Resolve plugins from embedded location
+      useEslintrc: false,
+      cwd: projectPath,
+      resolvePluginsRelativeTo: __dirname,
+      errorOnUnmatchedPattern: false,
       baseConfig: {
-        parser: '@typescript-eslint/parser', // Will resolve from __dirname/node_modules
+        parser: tsParser,
         parserOptions: {
           ecmaVersion: 2022,
           sourceType: 'module',
         },
         plugins: ['@invar'],
         rules: selectedConfig.rules,
+        ignorePatterns: [
+          '**/node_modules/**',
+          '**/.next/**',
+          '**/dist/**',
+          '**/build/**',
+          '**/.cache/**',
+          '**/coverage/**',
+          '**/.turbo/**',
+          '**/.vercel/**',
+          '**/playwright-report/**',
+          '**/test-results/**',
+        ],
       },
       plugins: {
-        '@invar': plugin, // Register plugin directly
+        '@invar': plugin,
       },
-    } as any); // Type assertion for ESLint config complexity
+    } as any);
 
     // Lint the project - detect if path is a file or directory
     // ESLint defaults to .js only, so we need glob patterns for .ts/.tsx
@@ -143,12 +171,7 @@ async function main(): Promise<void> {
         // Single file - lint it directly
         filesToLint = [projectPath];
       } else if (stats.isDirectory()) {
-        // Directory - use glob patterns for TypeScript files primarily
-        // Note: Focus on TypeScript files as this is a TypeScript Guard tool
-        filesToLint = [
-          `${projectPath}/**/*.ts`,
-          `${projectPath}/**/*.tsx`,
-        ];
+        filesToLint = ['**/*.ts', '**/*.tsx'];
       } else {
         console.error(`Error: Path is neither a file nor a directory: ${projectPath}`);
         process.exit(1);

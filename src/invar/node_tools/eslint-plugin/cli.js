@@ -137,6 +137,10 @@ async function main() {
                     '**/build/**',
                     '**/.cache/**',
                     '**/coverage/**',
+                    '**/.turbo/**',
+                    '**/.vercel/**',
+                    '**/playwright-report/**',
+                    '**/test-results/**',
                 ],
             },
             plugins: {

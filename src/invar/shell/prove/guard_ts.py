@@ -374,6 +374,19 @@ def _check_tool_available(tool: str, check_args: list[str]) -> bool:
 # =============================================================================
 
 
+def _is_invar_package_dir(package_dir: Path, package_name: str) -> bool:
+    package_json = package_dir / "package.json"
+    if not package_json.exists():
+        return False
+
+    try:
+        data = json.loads(package_json.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return False
+
+    return data.get("name") == f"@invar/{package_name}"
+
+
 # @shell_complexity: Path discovery with fallback logic
 def _get_invar_package_cmd(package_name: str, project_path: Path) -> list[str]:
     """Get command to run an @invar/* package.
@@ -395,11 +408,11 @@ def _get_invar_package_cmd(package_name: str, project_path: Path) -> list[str]:
     resolved_path = project_path.resolve()
 
     local_cli = resolved_path / "typescript" / "packages" / package_name / "dist" / "cli.js"
-    if local_cli.exists():
+    if local_cli.exists() and _is_invar_package_dir(local_cli.parent.parent, package_name):
         return ["node", str(local_cli)]
 
     local_cli = resolved_path / "packages" / package_name / "dist" / "cli.js"
-    if local_cli.exists():
+    if local_cli.exists() and _is_invar_package_dir(local_cli.parent.parent, package_name):
         return ["node", str(local_cli)]
 
     # Priority 2: Embedded tools (from pip install)
@@ -417,7 +430,7 @@ def _get_invar_package_cmd(package_name: str, project_path: Path) -> list[str]:
     check_path = resolved_path
     for _ in range(5):  # Max 5 levels up
         candidate = check_path / f"typescript/packages/{package_name}/dist/cli.js"
-        if candidate.exists():
+        if candidate.exists() and _is_invar_package_dir(candidate.parent.parent, package_name):
             return ["node", str(candidate)]
         parent = check_path.parent
         if parent == check_path:

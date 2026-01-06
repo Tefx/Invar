@@ -14,6 +14,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - TypeScript-specific `exclude_paths`: `node_modules`, `.next`, `coverage`
   - Python projects unaffected (still get Python-specific config)
 
+## [1.17.18] - 2026-01-06
+
+### Fixed
+- **TypeScript Guard: Avoid wrong local override** - Prevents picking a project's own `packages/eslint-plugin` by accident
+  - `_get_invar_package_cmd()` now requires the target package directory to have `package.json` with `name == "@invar/<tool>"`
+  - Fixes external monorepos where `packages/eslint-plugin` exists but is unrelated to Invar
+
+- **TypeScript Guard: ESLint performance hardening**
+  - Added additional ignore patterns (`.turbo`, `.vercel`, `playwright-report`, `test-results`) to avoid scanning huge directories
+  - Kept fast path: `cwd=projectPath` + relative globs
+
 ## [1.17.17] - 2026-01-06
 
 ### Fixed
