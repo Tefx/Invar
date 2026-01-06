@@ -1,6 +1,6 @@
 # DX-90: ESLint Migration Proposal
 
-## Status: Draft
+## Status: Approved
 
 ## Problem Statement
 
@@ -15,33 +15,9 @@
 
 Git 历史显示多次紧急修复：`60b90a0`, `7f75b31`, `8920562`, `33cdb49`
 
-## Current State
-
-### 15 个自定义规则
-
-| 规则 | 复杂度 | 依赖 TS 类型 | 分类 |
-|------|--------|-------------|------|
-| `no-io-in-core` | 简单 | ❌ | Core/Shell |
-| `no-impure-calls-in-core` | 简单 | ❌ | Core/Shell |
-| `no-pure-logic-in-shell` | 复杂 | ❌ | Core/Shell |
-| `shell-complexity` | 复杂 | ❌ | Core/Shell |
-| `shell-result-type` | 中等 | ✅ | Core/Shell |
-| `no-any-in-schema` | 简单 | ❌ | Schema |
-| `no-empty-schema` | 简单 | ❌ | Schema |
-| `no-redundant-type-schema` | 中等 | ✅ | Schema |
-| `require-schema-validation` | 复杂 | ✅ | Schema |
-| `require-complete-validation` | 中等 | ✅ | Schema |
-| `max-file-lines` | 简单 | ❌ | Structure |
-| `max-function-lines` | 简单 | ❌ | Structure |
-| `thin-entry-points` | 中等 | ❌ | Structure |
-| `require-jsdoc-example` | 简单 | ❌ | Structure |
-| `no-runtime-imports` | 简单 | ❌ | Import |
-
-**统计:** 10 个不依赖 TS 类型, 5 个依赖 TS 类型
-
 ---
 
-## Proposed Solution: Migrate to oxlint
+## Solution: Migrate to oxlint
 
 ### Why oxlint?
 
@@ -53,47 +29,96 @@ Git 历史显示多次紧急修复：`60b90a0`, `7f75b31`, `8920562`, `33cdb49`
 | 自定义规则 | ✅ | ✅ (2025.10 发布) |
 | 依赖 | 复杂 node_modules | 单一二进制 |
 
-**关键:** oxlint 2025 年 10 月发布了 [JS 插件支持](https://oxc.rs/blog/2025-10-09-oxlint-js-plugins.html)，兼容 ESLint API。
+**关键:** oxlint 2025 年 10 月发布了 [JS 插件支持](https://oxc.rs/blog/2025-10-09-oxlint-js-plugins.html)，兼容 ESLint Rule API。
 
-### Migration Strategy
+---
+
+## Rule Analysis
+
+### 重要发现：所有规则都是 AST 级别检查
+
+分析现有 15 个规则的实现后发现，**没有规则依赖真正的 TypeScript 类型推断**：
+
+| 规则 | 检查方式 | 需要 TS 类型推断? |
+|------|----------|------------------|
+| `shell-result-type` | 类型注解文本匹配 `Result<` | ❌ |
+| `require-schema-validation` | 类型注解文本匹配 `z.infer` | ❌ |
+| `no-redundant-type-schema` | AST 调用链检查 | ❌ |
+| `require-complete-validation` | AST `TSTypeReference` 检查 | ❌ |
+| 其他 11 个规则 | 纯 AST 检查 | ❌ |
+
+**结论：所有 15 个规则可直接迁移到 oxlint JS 插件。**
+
+### 规则清单
+
+| # | 规则 | 复杂度 | 分类 |
+|---|------|--------|------|
+| 1 | `no-io-in-core` | 简单 | Core/Shell |
+| 2 | `no-impure-calls-in-core` | 简单 | Core/Shell |
+| 3 | `no-pure-logic-in-shell` | 复杂 | Core/Shell |
+| 4 | `shell-complexity` | 复杂 | Core/Shell |
+| 5 | `shell-result-type` | 中等 | Core/Shell |
+| 6 | `no-any-in-schema` | 简单 | Schema |
+| 7 | `no-empty-schema` | 简单 | Schema |
+| 8 | `no-redundant-type-schema` | 中等 | Schema |
+| 9 | `require-schema-validation` | 复杂 | Schema |
+| 10 | `require-complete-validation` | 中等 | Schema |
+| 11 | `max-file-lines` | 简单 | Structure |
+| 12 | `max-function-lines` | 简单 | Structure |
+| 13 | `thin-entry-points` | 中等 | Structure |
+| 14 | `require-jsdoc-example` | 简单 | Structure |
+| 15 | `no-runtime-imports` | 简单 | Import |
+
+---
+
+## Migration Plan
+
+### 简化的 2 阶段方案
 
 ```
-Phase 1: oxlint 基础集成 (无自定义规则)
-    ↓
-Phase 2: 迁移不依赖 TS 类型的规则 (10 个)
-    ↓
-Phase 3: 迁移依赖 TS 类型的规则 (5 个)
-    ↓
-Phase 4: 移除 ESLint 依赖
+Phase 1: oxlint 基础集成 (1-2 天)
+    │
+    ├── 添加 oxlint 调用
+    ├── 保留 ESLint fallback
+    └── 验证 JSON 输出兼容性
+    │
+    ▼
+Phase 2: 迁移全部规则 + 移除 ESLint (3-4 天)
+    │
+    ├── 迁移 15 个规则到 oxlint-plugin
+    ├── 测试用例验证
+    ├── 移除 eslint-plugin
+    └── 更新文档
 ```
+
+**总耗时：4-6 天**
 
 ---
 
 ## Phase 1: oxlint Basic Integration
 
-### 1.1 安装方式
+### 1.1 安装检测
 
 ```python
 # src/invar/shell/prove/guard_ts.py
 
-def _get_oxlint_binary() -> Path | None:
-    """Get oxlint binary path.
+def _get_oxlint_cmd(project_path: Path) -> list[str] | None:
+    """Get oxlint command.
 
     Priority:
-    1. Embedded binary in site-packages (future)
-    2. Global install via npm/cargo
-    3. npx fallback
+    1. Global install (oxlint)
+    2. Project-local (npx oxlint)
+    3. None if unavailable
     """
     # Check global install
-    result = subprocess.run(
-        ["oxlint", "--version"],
-        capture_output=True,
-        timeout=5,
-    )
-    if result.returncode == 0:
-        return Path("oxlint")
+    if _check_tool_available("oxlint", ["--version"]):
+        return ["oxlint"]
 
-    return None  # Will use npx fallback
+    # Check npx availability
+    if _check_tool_available("npx", ["oxlint", "--version"]):
+        return ["npx", "oxlint"]
+
+    return None
 ```
 
 ### 1.2 运行 oxlint
@@ -102,19 +127,27 @@ def _get_oxlint_binary() -> Path | None:
 def run_oxlint(project_path: Path) -> Result[list[TypeScriptViolation], str]:
     """Run oxlint for fast linting.
 
-    Uses oxlint's built-in rules + @invar plugin (Phase 2+).
+    Uses oxlint's built-in rules + @invar plugin.
+    Output format compatible with ESLint JSON.
     """
-    cmd = ["oxlint", "--format=json"]
+    cmd = _get_oxlint_cmd(project_path)
+    if not cmd:
+        return Failure("oxlint not available")
+
+    cmd.extend([
+        "--format=json",
+        "--tsconfig", "tsconfig.json",
+        ".",
+    ])
 
     result = subprocess.run(
         cmd,
         cwd=project_path,
         capture_output=True,
         text=True,
-        timeout=30,  # oxlint is fast, 30s is plenty
+        timeout=30,  # oxlint is fast
     )
 
-    # Parse JSON output (oxlint uses ESLint-compatible format)
     violations = _parse_oxlint_output(result.stdout)
     return Success(violations)
 ```
@@ -122,12 +155,12 @@ def run_oxlint(project_path: Path) -> Result[list[TypeScriptViolation], str]:
 ### 1.3 Fallback 策略
 
 ```python
-def run_typescript_lint(project_path: Path) -> Result[...]:
+def run_typescript_lint(project_path: Path) -> Result[list[TypeScriptViolation], str]:
     """Run TypeScript linting with fallback.
 
     Priority:
     1. oxlint (fast, preferred)
-    2. ESLint (legacy fallback)
+    2. ESLint (legacy fallback, will be removed in Phase 2)
     """
     oxlint_result = run_oxlint(project_path)
     if isinstance(oxlint_result, Success):
@@ -139,37 +172,46 @@ def run_typescript_lint(project_path: Path) -> Result[...]:
 
 ---
 
-## Phase 2: Migrate Non-TS Rules (10 rules)
+## Phase 2: Migrate Rules + Remove ESLint
 
 ### 2.1 Plugin Structure
 
 ```
 typescript/packages/oxlint-plugin/
 ├── package.json
+├── tsconfig.json
 ├── src/
-│   ├── index.ts          # Plugin entry
+│   ├── index.ts              # Plugin entry
+│   ├── configs.ts            # recommended/strict presets
 │   └── rules/
 │       ├── no-io-in-core.ts
 │       ├── no-impure-calls-in-core.ts
-│       ├── max-file-lines.ts
-│       ├── max-function-lines.ts
+│       ├── no-pure-logic-in-shell.ts
+│       ├── shell-complexity.ts
+│       ├── shell-result-type.ts
 │       ├── no-any-in-schema.ts
 │       ├── no-empty-schema.ts
-│       ├── no-runtime-imports.ts
-│       ├── require-jsdoc-example.ts
+│       ├── no-redundant-type-schema.ts
+│       ├── require-schema-validation.ts
+│       ├── require-complete-validation.ts
+│       ├── max-file-lines.ts
+│       ├── max-function-lines.ts
 │       ├── thin-entry-points.ts
-│       └── shell-complexity.ts
-└── dist/
-    └── index.js          # Bundled for embedding
+│       ├── require-jsdoc-example.ts
+│       └── no-runtime-imports.ts
+├── dist/
+│   └── index.js              # Bundled for embedding
+└── __tests__/
+    └── rules.test.ts         # Migrated from eslint-plugin
 ```
 
-### 2.2 Rule Migration Example
+### 2.2 Rule Migration
 
-现有 ESLint 规则已使用 ESLint Rule API，oxlint 兼容该 API：
+oxlint 兼容 ESLint Rule API，规则代码几乎无需修改：
 
 ```typescript
-// 几乎无需修改，oxlint 兼容 ESLint Rule API
-import type { Rule } from 'eslint';  // oxlint 支持此类型
+// 直接复制，仅更新 import
+import type { Rule } from 'eslint';  // oxlint 兼容
 
 export const noIoInCore: Rule.RuleModule = {
   meta: {
@@ -178,7 +220,7 @@ export const noIoInCore: Rule.RuleModule = {
     messages: { ioInCore: '...' },
   },
   create(context) {
-    // 完全相同的实现
+    // 实现完全相同
     return {
       ImportDeclaration(node) { ... },
       CallExpression(node) { ... },
@@ -187,125 +229,164 @@ export const noIoInCore: Rule.RuleModule = {
 };
 ```
 
-### 2.3 Migration Checklist (Phase 2)
+### 2.3 Migration Checklist
 
-- [ ] `no-io-in-core` - 直接迁移
-- [ ] `no-impure-calls-in-core` - 直接迁移
-- [ ] `max-file-lines` - 直接迁移
-- [ ] `max-function-lines` - 直接迁移
-- [ ] `no-any-in-schema` - 直接迁移
-- [ ] `no-empty-schema` - 直接迁移
-- [ ] `no-runtime-imports` - 直接迁移
-- [ ] `require-jsdoc-example` - 直接迁移
-- [ ] `thin-entry-points` - 直接迁移
-- [ ] `shell-complexity` - 直接迁移 (复杂但不依赖类型)
-- [ ] `no-pure-logic-in-shell` - 直接迁移 (复杂但不依赖类型)
+- [ ] 创建 `typescript/packages/oxlint-plugin/` 结构
+- [ ] 复制 15 个规则文件
+- [ ] 复制测试用例
+- [ ] 验证规则行为一致
+- [ ] 更新 `guard_ts.py` 移除 ESLint 代码
+- [ ] 删除 `src/invar/node_tools/eslint-plugin/`
+- [ ] 删除 `typescript/packages/eslint-plugin/`
+- [ ] 更新 `pyproject.toml`
+- [ ] 更新文档
 
 ---
 
-## Phase 3: Migrate TS-Dependent Rules (5 rules)
+## Progressive Enhancement Architecture
 
-这些规则需要类型信息，有两个选项：
+### 检查能力分层
 
-### Option A: oxlint Type-Aware Mode
+```
+Level 1: AST 检查 (当前 + Phase 1-2)
+├── oxlint JS 插件
+├── 能力：语法模式匹配、文本检查
+└── 覆盖：15/15 规则 ✅
 
-oxlint 正在开发类型感知模式。等待官方支持后迁移。
+Level 2: 类型感知 (未来按需)
+├── ts-checker 组件
+├── 能力：类型推断、类型兼容性
+└── 场景：检查无类型注解的返回类型
 
-### Option B: TypeScript Compiler API
+Level 3: 跨文件分析 (未来按需)
+├── project-analyzer 组件
+├── 能力：追踪 import 链、全局符号表
+└── 场景：检测间接 I/O 依赖
+```
 
-直接使用 TypeScript Compiler API 实现，绕过 linter：
+### 预留接口
+
+```python
+# src/invar/shell/prove/guard_ts.py
+
+def run_typescript_guard(project_path: Path) -> Result[TypeScriptGuardResult, str]:
+    """TypeScript verification pipeline.
+
+    Layered architecture:
+    - Level 1: oxlint (AST checks) - always run
+    - Level 2: ts-checker (type-aware) - future, optional
+    - Level 3: project-analyzer (cross-file) - future, optional
+    """
+    all_violations: list[TypeScriptViolation] = []
+
+    # Level 1: Fast AST checks (oxlint) - required
+    oxlint_result = run_oxlint(project_path)
+    match oxlint_result:
+        case Success(violations):
+            all_violations.extend(violations)
+        case Failure(err):
+            # oxlint is required, report as tool error
+            return Failure(f"oxlint failed: {err}")
+
+    # Level 2: Type-aware checks (future, optional)
+    if _has_ts_checker():
+        ts_checker_result = run_ts_checker(project_path)
+        match ts_checker_result:
+            case Success(violations):
+                all_violations.extend(violations)
+            case Failure(_):
+                pass  # Optional, don't fail
+
+    # Level 3: Cross-file analysis (future, optional)
+    if _has_project_analyzer():
+        analyzer_result = run_project_analyzer(project_path)
+        match analyzer_result:
+            case Success(violations):
+                all_violations.extend(violations)
+            case Failure(_):
+                pass  # Optional, don't fail
+
+    return Success(_build_result(all_violations))
+```
 
 ```typescript
-// src/invar/node_tools/ts-checker/index.ts
-import * as ts from 'typescript';
+// typescript/packages/ts-checker/src/index.ts (预留，暂不实现)
 
-interface CheckResult {
-  rule: string;
-  file: string;
-  line: number;
-  message: string;
+export interface TypeChecker {
+  // Level 2: 单文件类型检查
+  checkInferredReturnType(file: string, func: string): CheckResult;
+  checkSchemaTypeUsage(file: string, param: string): CheckResult;
 }
 
-export function checkShellResultType(
-  program: ts.Program,
-  sourceFile: ts.SourceFile
-): CheckResult[] {
-  const results: CheckResult[] = [];
-  const checker = program.getTypeChecker();
-
-  function visit(node: ts.Node) {
-    if (ts.isFunctionDeclaration(node) && isInShell(sourceFile.fileName)) {
-      const signature = checker.getSignatureFromDeclaration(node);
-      const returnType = checker.getReturnTypeOfSignature(signature!);
-      const typeString = checker.typeToString(returnType);
-
-      if (!isResultType(typeString)) {
-        results.push({
-          rule: '@invar/shell-result-type',
-          file: sourceFile.fileName,
-          line: sourceFile.getLineAndCharacterOfPosition(node.getStart()).line + 1,
-          message: `Shell function should return Result<T, E>`,
-        });
-      }
-    }
-    ts.forEachChild(node, visit);
-  }
-
-  visit(sourceFile);
-  return results;
+export interface ProjectAnalyzer {
+  // Level 3: 跨文件分析
+  traceImportChain(file: string, symbol: string): ImportChain;
+  findIndirectIoDependencies(file: string): Dependency[];
 }
 ```
 
-### 5 个 TS 依赖规则处理方案
+### 未来扩展示例
 
-| 规则 | 建议方案 | 原因 |
-|------|----------|------|
-| `shell-result-type` | TS Compiler API | 核心规则，类型检查简单 |
-| `require-schema-validation` | TS Compiler API | 核心规则，需要类型推断 |
-| `require-complete-validation` | TS Compiler API | 与上一个规则相关 |
-| `no-redundant-type-schema` | 降级为警告 | 低优先级，可后续实现 |
+**Level 2 场景：检查无类型注解的返回类型**
 
----
+```typescript
+// 当前 shell-result-type 只能检查有注解的情况
+export function fetchUser(id: string): Result<User, Error> { ... }  // ✅ 检测到
 
-## Phase 4: Remove ESLint Dependency
-
-### 4.1 清理步骤
-
-1. 删除 `src/invar/node_tools/eslint-plugin/`
-2. 删除 `typescript/packages/eslint-plugin/`
-3. 更新 `guard_ts.py` 移除 ESLint 代码路径
-4. 更新 `pyproject.toml` 移除 ESLint 嵌入配置
-5. 更新文档
-
-### 4.2 最终架构
-
+// Level 2 可以检查无注解的情况
+export function fetchUser(id: string) {  // ← 无返回类型注解
+  return ok(user);  // ts-checker 可推断实际返回 Result<User, Error>
+}
 ```
-TypeScript Guard Pipeline
-         │
-         ├── tsc (类型检查)
-         │
-         ├── oxlint (快速 lint)
-         │   ├── 内置规则 (645+)
-         │   └── @invar/oxlint-plugin (10 规则)
-         │
-         ├── ts-checker (类型相关检查)
-         │   └── 5 个 TS 依赖规则
-         │
-         └── vitest (测试)
+
+**Level 3 场景：检测间接 I/O 依赖**
+
+```typescript
+// core/logic.ts
+import { helper } from './helper';  // helper 间接依赖 fs
+
+// core/helper.ts
+import { readConfig } from '../shell/config';  // 违规！
+
+// project-analyzer 可追踪: logic.ts → helper.ts → config.ts → fs
 ```
 
 ---
 
 ## Timeline
 
-| Phase | 内容 | 估计工作量 |
-|-------|------|-----------|
+| Phase | 内容 | 耗时 |
+|-------|------|------|
 | Phase 1 | oxlint 集成 + fallback | 1-2 天 |
-| Phase 2 | 迁移 10 个非 TS 规则 | 2-3 天 |
-| Phase 3 | 实现 ts-checker | 3-5 天 |
-| Phase 4 | 移除 ESLint | 1 天 |
+| Phase 2 | 迁移 15 规则 + 移除 ESLint | 3-4 天 |
+| **总计** | | **4-6 天** |
 
-**总计:** 约 1-2 周
+### Future (按需)
+
+| 组件 | 触发条件 | 预计耗时 |
+|------|----------|----------|
+| ts-checker | 需要类型推断规则 | 2-3 天 |
+| project-analyzer | 需要跨文件分析 | 3-5 天 |
+
+---
+
+## Deliverables
+
+### Phase 1
+- [ ] `guard_ts.py` 添加 `run_oxlint()` 函数
+- [ ] `guard_ts.py` 添加 fallback 逻辑
+- [ ] 集成测试验证
+
+### Phase 2
+- [ ] `typescript/packages/oxlint-plugin/` 完整实现
+- [ ] 15 个规则迁移 + 测试
+- [ ] 删除 `eslint-plugin` 相关代码
+- [ ] 文档更新
+
+### Architecture (预留)
+- [ ] `guard_ts.py` 分层接口
+- [ ] `ts-checker` 接口定义 (不实现)
+- [ ] `project-analyzer` 接口定义 (不实现)
 
 ---
 
@@ -313,17 +394,9 @@ TypeScript Guard Pipeline
 
 | 风险 | 影响 | 缓解措施 |
 |------|------|----------|
-| oxlint JS 插件不稳定 | 中 | 保留 ESLint fallback 直到验证 |
-| 规则行为差异 | 低 | 保持测试用例，对比输出 |
-| ts-checker 性能 | 中 | 只对 shell/ 目录运行，缓存 Program |
-
----
-
-## Decision Required
-
-1. **Phase 2 vs Phase 3 优先级:** 先迁移简单规则还是先实现 ts-checker?
-2. **Fallback 保留时长:** ESLint fallback 保留多久?
-3. **oxlint 安装方式:** 嵌入二进制 vs 要求用户安装?
+| oxlint JS 插件 API 差异 | 低 | 已验证规则代码兼容 |
+| 规则行为细微差异 | 低 | 保留测试用例，逐个验证 |
+| oxlint 安装问题 | 中 | 文档说明安装方式，CI 验证 |
 
 ---
 
@@ -331,5 +404,5 @@ TypeScript Guard Pipeline
 
 - [oxlint JS Plugins Preview](https://oxc.rs/blog/2025-10-09-oxlint-js-plugins.html)
 - [oxlint Beta Announcement](https://oxc.rs/blog/2025-03-15-oxlint-beta)
+- [oxlint 1.0 Stable](https://voidzero.dev/posts/announcing-oxlint-1-stable)
 - [Biome vs ESLint 2025](https://medium.com/@harryespant/biome-vs-eslint-the-ultimate-2025-showdown)
-- [Biome Custom Rules Discussion](https://github.com/biomejs/biome/discussions/231)
