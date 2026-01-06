@@ -399,13 +399,23 @@ def _get_invar_package_cmd(package_name: str, project_path: Path) -> list[str]:
     except ImportError:
         pass  # node_tools module not available
 
+    # Resolve to absolute path to avoid path doubling issues
+    resolved_path = project_path.resolve()
+
     # Priority 2: Local development setup (Invar repo itself)
-    local_cli = project_path / f"typescript/packages/{package_name}/dist/cli.js"
+    # Check both possible locations:
+    # - resolved_path / "typescript" / "packages" / package_name / "dist" / "cli.js"
+    # - resolved_path / "packages" / package_name / "dist" / "cli.js"
+    local_cli = resolved_path / "typescript" / "packages" / package_name / "dist" / "cli.js"
+    if local_cli.exists():
+        return ["node", str(local_cli)]
+
+    local_cli = resolved_path / "packages" / package_name / "dist" / "cli.js"
     if local_cli.exists():
         return ["node", str(local_cli)]
 
     # Priority 2b: Walk up to find the Invar root (monorepo setup)
-    check_path = project_path
+    check_path = resolved_path
     for _ in range(5):  # Max 5 levels up
         candidate = check_path / f"typescript/packages/{package_name}/dist/cli.js"
         if candidate.exists():
@@ -439,7 +449,7 @@ def run_ts_analyzer(project_path: Path) -> Result[dict, str]:
     try:
         cmd = _get_invar_package_cmd("ts-analyzer", project_path)
         result = subprocess.run(
-            [*cmd, str(project_path), "--json"],
+            [*cmd, str(project_path.resolve()), "--json"],
             capture_output=True,
             text=True,
             timeout=60,
@@ -456,7 +466,7 @@ def run_ts_analyzer(project_path: Path) -> Result[dict, str]:
                 # Fall back to running without --json flag for human-readable summary
                 try:
                     summary_result = subprocess.run(
-                        [*cmd, str(project_path)],
+                        [*cmd, str(project_path.resolve())],
                         capture_output=True,
                         text=True,
                         timeout=60,
@@ -553,7 +563,7 @@ def run_quick_check(project_path: Path) -> Result[dict, str]:
     try:
         cmd = _get_invar_package_cmd("quick-check", project_path)
         result = subprocess.run(
-            [*cmd, str(project_path), "--json"],
+            [*cmd, str(project_path.resolve()), "--json"],
             capture_output=True,
             text=True,
             timeout=30,  # Quick check should be fast
@@ -750,7 +760,8 @@ def run_eslint(project_path: Path) -> Result[list[TypeScriptViolation], str]:
     try:
         # Get command for @invar/eslint-plugin (embedded or local dev)
         cmd = _get_invar_package_cmd("eslint-plugin", project_path)
-        cmd.append(str(project_path))  # Add project path as argument
+        # Resolve path to absolute to avoid path doubling in subprocess
+        cmd.append(str(project_path.resolve()))  # Add project path as argument
 
         # Use temp file to avoid subprocess 64KB buffer limit
         # ESLint output can be large for big projects
