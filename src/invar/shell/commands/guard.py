@@ -15,12 +15,6 @@ from rich.console import Console
 from rich.table import Table
 
 
-def _detect_agent_mode() -> bool:
-    """Detect agent context: INVAR_MODE=agent OR non-TTY (pipe/redirect)."""
-    import sys
-    return os.getenv("INVAR_MODE") == "agent" or not sys.stdout.isatty()
-
-
 from invar import __version__
 from invar.core.models import GuardReport, RuleConfig
 from invar.core.rules import check_all_rules
@@ -95,12 +89,14 @@ def _scan_and_check(
             for rule, reason, line in extract_escape_hatches(file_info.source):
                 all_escapes.append((file_info.path, rule, reason))
                 # DX-66: Add to escape hatch summary
-                report.escape_hatches.add(EscapeHatchDetail(
-                    file=file_info.path,
-                    line=line,
-                    rule=rule,
-                    reason=reason,
-                ))
+                report.escape_hatches.add(
+                    EscapeHatchDetail(
+                        file=file_info.path,
+                        line=line,
+                        rule=rule,
+                        reason=reason,
+                    )
+                )
 
     # DX-22: Check project-level complexity debt (Fix-or-Explain enforcement)
     for debt_violation in check_complexity_debt(
@@ -133,7 +129,7 @@ def guard(
         False, "--static", help="Static analysis only, skip all runtime tests"
     ),
     human: bool = typer.Option(
-        False, "--human", help="Force human-readable output (for testing/debugging)"
+        False, "--human", help="Force Rich human-readable output (opt-in, default is JSON)"
     ),
     # DX-26: Deprecated flags kept for backward compatibility
     no_strict_pure: bool = typer.Option(
@@ -192,23 +188,12 @@ def guard(
         ts_result = run_typescript_guard(path if path.is_dir() else find_project_root(path))
         match ts_result:
             case Success(result):
-                if json_output or agent:
-                    import json as json_mod
+                import json as json_mod
 
-                    from invar.shell.prove.guard_ts import format_typescript_guard_v2
+                from invar.shell.prove.guard_ts import format_typescript_guard_v2
 
-                    output = format_typescript_guard_v2(result)
-                    console.print(json_mod.dumps(output, indent=2))
-                else:
-                    console.print(f"[bold]TypeScript Guard[/bold] ({project_language})")
-                    if result.status == "passed":
-                        console.print("[green]✓ PASSED[/green]")
-                    elif result.status == "skipped":
-                        console.print("[yellow]⚠ SKIPPED[/yellow] (no TypeScript tools available)")
-                    else:
-                        console.print(f"[red]✗ FAILED[/red] ({result.error_count} errors)")
-                        for v in result.violations[:10]:  # Show first 10
-                            console.print(f"  {v.file}:{v.line}: [{v.severity}] {v.message}")
+                output = format_typescript_guard_v2(result)
+                console.print(json_mod.dumps(output, indent=2))
                 raise typer.Exit(0 if result.status == "passed" else 1)
             case Failure(err):
                 console.print(f"[red]Error:[/red] {err}")
@@ -295,6 +280,7 @@ def guard(
             run_pattern_detection,
             suggestions_to_violations,
         )
+
         # Run pattern detection on checked files
         files_to_check = list(only_files) if only_files else None
         pattern_result = run_pattern_detection(path, files_to_check)
@@ -331,6 +317,7 @@ def guard(
     # DX-37: Check coverage availability if requested
     if coverage:
         from invar.shell.coverage import check_coverage_available
+
         cov_check = check_coverage_available()
         if isinstance(cov_check, Failure):
             console.print(f"[yellow]Warning:[/yellow] {cov_check.failure()}")
@@ -342,14 +329,19 @@ def guard(
 
         # Phase 1: Doctests (DX-37: with optional coverage)
         doctest_passed, doctest_output, doctest_coverage = run_doctests_phase(
-            checked_files, explain, timeout=config.timeout_doctest,
+            checked_files,
+            explain,
+            timeout=config.timeout_doctest,
             collect_coverage=coverage,
         )
 
         # Phase 2: CrossHair symbolic verification
         # Note: CrossHair uses subprocess + symbolic execution, coverage not applicable
         crosshair_passed, crosshair_output = run_crosshair_phase(
-            path, checked_files, doctest_passed, static_exit_code,
+            path,
+            checked_files,
+            doctest_passed,
+            static_exit_code,
             changed_mode=changed,
             timeout=config.timeout_crosshair,
             per_condition_timeout=config.timeout_crosshair_per_condition,
@@ -357,7 +349,9 @@ def guard(
 
         # Phase 3: Hypothesis property tests (DX-37: with optional coverage)
         property_passed, property_output, property_coverage = run_property_tests_phase(
-            checked_files, doctest_passed, static_exit_code,
+            checked_files,
+            doctest_passed,
+            static_exit_code,
             collect_coverage=coverage,
         )
     elif verification_level == VerificationLevel.STATIC:
@@ -382,20 +376,31 @@ def guard(
         if property_coverage and property_coverage.get("collected"):
             coverage_output["phases_tracked"].append("hypothesis")
             if "overall_branch_coverage" in property_coverage:
-                coverage_output["overall_branch_coverage"] = property_coverage["overall_branch_coverage"]
+                coverage_output["overall_branch_coverage"] = property_coverage[
+                    "overall_branch_coverage"
+                ]
 
     # DX-26: Unified output (agent JSON or human Rich)
     if use_agent_output:
         output_agent(
-            report, strict, doctest_passed, doctest_output, crosshair_output, level_name,
+            report,
+            strict,
+            doctest_passed,
+            doctest_output,
+            crosshair_output,
+            level_name,
             property_output=property_output,
             coverage_data=coverage_output,  # DX-37
         )
     else:
         output_rich(report, config.strict_pure, changed, pedantic, explain, static)
         output_verification_status(
-            verification_level, static_exit_code, doctest_passed,
-            doctest_output, crosshair_output, explain,
+            verification_level,
+            static_exit_code,
+            doctest_passed,
+            doctest_output,
+            crosshair_output,
+            explain,
             property_output=property_output,
             strict=strict,
         )
@@ -405,7 +410,9 @@ def guard(
             overall = coverage_output.get("overall_branch_coverage", 0.0)
             console.print(f"\n[bold]Coverage Analysis[/bold] ({' + '.join(phases)})")
             console.print(f"  Overall branch coverage: {overall}%")
-            console.print("  [dim]Note: CrossHair uses symbolic execution; coverage not applicable.[/dim]")
+            console.print(
+                "  [dim]Note: CrossHair uses symbolic execution; coverage not applicable.[/dim]"
+            )
 
     # Exit with combined status
     all_passed = doctest_passed and crosshair_passed and property_passed
@@ -415,24 +422,23 @@ def guard(
 
 # @shell_orchestration: Output mode decision helper for CLI
 def _determine_output_mode(human: bool, agent: bool = False, json_output: bool = False) -> bool:
-    """Determine if agent JSON output should be used (DX-26).
+    """Determine if agent JSON output should be used (Agent First).
 
-    DX-26: TTY auto-detection with --human override.
-    - --human flag → human output (for testing/debugging)
-    - TTY (terminal) → human output
-    - Non-TTY (pipe/redirect) → agent JSON output
-    - Deprecated --agent/--json flags → still work for backward compat
+    Agent First principle: Machine-readable JSON is the default output format.
+    Human-readable Rich output is opt-in via --human flag.
+
+    Priority:
+    - --human flag → human output (Rich, colored)
+    - Default → JSON output (machine-readable, Agent Native)
+    - --agent/--json flags → no-op (already default, kept for backward compat)
     """
-    # --human flag always forces human output
+    # --human flag forces human output (priority highest)
     if human:
         return False  # use_agent = False
 
-    # Deprecated flags (backward compat)
-    if json_output or agent:
-        return True  # use_agent = True
-
-    # TTY auto-detection
-    return _detect_agent_mode()  # Returns True if non-TTY
+    # Default to JSON output (Agent First)
+    # --agent/--json are now no-ops but kept for backward compatibility
+    return True
 
 
 def _show_verification_level(verification_level) -> None:
@@ -464,8 +470,9 @@ def map_command(
     """Generate symbol map with reference counts."""
     from invar.shell.commands.perception import run_map
 
-    # Phase 9 P11: Auto-detect agent mode
-    use_json = json_output or _detect_agent_mode()
+    # Agent First: Default to JSON output
+    # --json is now a no-op (kept for backward compat)
+    use_json = True
     result = run_map(path, top, use_json)
     if isinstance(result, Failure):
         console.print(f"[red]Error:[/red] {result.failure()}")
@@ -480,8 +487,9 @@ def sig_command(
     """Extract signatures from a file or symbol."""
     from invar.shell.commands.perception import run_sig
 
-    # Phase 9 P11: Auto-detect agent mode
-    use_json = json_output or _detect_agent_mode()
+    # Agent First: Default to JSON output
+    # --json is now a no-op (kept for backward compat)
+    use_json = True
     result = run_sig(target, use_json)
     if isinstance(result, Failure):
         console.print(f"[red]Error:[/red] {result.failure()}")
@@ -504,8 +512,9 @@ def refs_command(
     """
     from invar.shell.commands.perception import run_refs
 
-    # Auto-detect agent mode
-    use_json = json_output or _detect_agent_mode()
+    # Agent First: Default to JSON output
+    # --json is now a no-op (kept for backward compat)
+    use_json = True
     result = run_refs(target, use_json)
     if isinstance(result, Failure):
         console.print(f"[red]Error:[/red] {result.failure()}")
@@ -529,8 +538,9 @@ def rules(
 
     from invar.core.rule_meta import RULE_META, RuleCategory, get_rules_by_category
 
-    # Phase 9 P11: Auto-detect agent mode
-    use_json = json_output or _detect_agent_mode()
+    # Agent First: Default to JSON output
+    # --json is now a no-op (kept for backward compat)
+    use_json = True
 
     # Filter by category if specified
     if category:

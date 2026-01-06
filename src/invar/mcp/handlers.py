@@ -13,6 +13,7 @@ import sys
 from pathlib import Path
 from typing import Any, Literal
 
+from mcp.server.lowlevel.server import StructuredContent, CombinationContent
 from mcp.types import TextContent
 from returns.result import Success
 
@@ -59,7 +60,7 @@ def _validate_path(path: str) -> tuple[bool, str]:
 # @shell_orchestration: MCP handler - subprocess is called inside
 # @shell_complexity: Guard command with multiple optional flags
 # @invar:allow shell_result: MCP handler for guard tool
-async def _run_guard(args: dict[str, Any]) -> list[TextContent]:
+async def _run_guard(args: dict[str, Any]) -> list[TextContent] | CombinationContent:
     """Run invar guard command."""
     path = args.get("path", ".")
     is_valid, error = _validate_path(path)
@@ -88,7 +89,7 @@ async def _run_guard(args: dict[str, Any]) -> list[TextContent]:
 
 # @shell_orchestration: MCP handler - subprocess is called inside
 # @invar:allow shell_result: MCP handler for sig tool
-async def _run_sig(args: dict[str, Any]) -> list[TextContent]:
+async def _run_sig(args: dict[str, Any]) -> list[TextContent] | CombinationContent:
     """Run invar sig command."""
     target = args.get("target", "")
     if not target:
@@ -106,7 +107,7 @@ async def _run_sig(args: dict[str, Any]) -> list[TextContent]:
 
 # @shell_orchestration: MCP handler - subprocess is called inside
 # @invar:allow shell_result: MCP handler for map tool
-async def _run_map(args: dict[str, Any]) -> list[TextContent]:
+async def _run_map(args: dict[str, Any]) -> list[TextContent] | CombinationContent:
     """Run invar map command."""
     path = args.get("path", ".")
     is_valid, error = _validate_path(path)
@@ -125,7 +126,7 @@ async def _run_map(args: dict[str, Any]) -> list[TextContent]:
 
 # @shell_orchestration: MCP handler - orchestrates refs command execution
 # @invar:allow shell_result: MCP handler for refs tool
-async def _run_refs(args: dict[str, Any]) -> list[TextContent]:
+async def _run_refs(args: dict[str, Any]) -> list[TextContent] | CombinationContent:
     """Run invar refs command.
 
     DX-78: Find all references to a symbol.
@@ -155,7 +156,7 @@ async def _run_refs(args: dict[str, Any]) -> list[TextContent]:
 # @shell_orchestration: MCP handler - calls shell layer directly
 # @shell_complexity: MCP input validation + result handling
 # @invar:allow shell_result: MCP handler for doc_toc tool
-async def _run_doc_toc(args: dict[str, Any]) -> list[TextContent]:
+async def _run_doc_toc(args: dict[str, Any]) -> list[TextContent] | CombinationContent:
     """Run invar_doc_toc - extract document structure."""
     from dataclasses import asdict
 
@@ -203,7 +204,7 @@ def _section_to_dict(section: Any) -> dict[str, Any]:
 # @shell_orchestration: MCP handler - calls shell layer directly
 # @shell_complexity: MCP input validation + result handling
 # @invar:allow shell_result: MCP handler for doc_read tool
-async def _run_doc_read(args: dict[str, Any]) -> list[TextContent]:
+async def _run_doc_read(args: dict[str, Any]) -> list[TextContent] | CombinationContent:
     """Run invar_doc_read - read a specific section."""
     from invar.shell.doc_tools import read_section
 
@@ -232,7 +233,7 @@ async def _run_doc_read(args: dict[str, Any]) -> list[TextContent]:
 
 # @shell_complexity: Multiple arg validation branches + error handling
 # @invar:allow shell_result: MCP handler for doc_read_many tool
-async def _run_doc_read_many(args: dict[str, Any]) -> list[TextContent]:
+async def _run_doc_read_many(args: dict[str, Any]) -> list[TextContent] | CombinationContent:
     """Run invar_doc_read_many - read multiple sections."""
     from invar.shell.doc_tools import read_sections_batch
 
@@ -264,7 +265,7 @@ async def _run_doc_read_many(args: dict[str, Any]) -> list[TextContent]:
 # @shell_orchestration: MCP handler - calls shell layer directly
 # @shell_complexity: MCP input validation + result handling
 # @invar:allow shell_result: MCP handler for doc_find tool
-async def _run_doc_find(args: dict[str, Any]) -> list[TextContent]:
+async def _run_doc_find(args: dict[str, Any]) -> list[TextContent] | CombinationContent:
     """Run invar_doc_find - find sections matching pattern."""
     from invar.shell.doc_tools import find_sections
 
@@ -308,7 +309,7 @@ async def _run_doc_find(args: dict[str, Any]) -> list[TextContent]:
 # @shell_orchestration: MCP handler - calls shell layer directly
 # @shell_complexity: MCP input validation + result handling
 # @invar:allow shell_result: MCP handler for doc_replace tool
-async def _run_doc_replace(args: dict[str, Any]) -> list[TextContent]:
+async def _run_doc_replace(args: dict[str, Any]) -> list[TextContent] | CombinationContent:
     """Run invar_doc_replace - replace section content."""
     from invar.shell.doc_tools import replace_section_content
 
@@ -342,7 +343,7 @@ async def _run_doc_replace(args: dict[str, Any]) -> list[TextContent]:
 # @shell_orchestration: MCP handler - calls shell layer directly
 # @shell_complexity: MCP input validation + result handling
 # @invar:allow shell_result: MCP handler for doc_insert tool
-async def _run_doc_insert(args: dict[str, Any]) -> list[TextContent]:
+async def _run_doc_insert(args: dict[str, Any]) -> list[TextContent] | CombinationContent:
     """Run invar_doc_insert - insert content relative to section."""
     from invar.shell.doc_tools import insert_section_content
 
@@ -382,7 +383,7 @@ async def _run_doc_insert(args: dict[str, Any]) -> list[TextContent]:
 # @shell_orchestration: MCP handler - calls shell layer directly
 # @shell_complexity: MCP input validation + result handling
 # @invar:allow shell_result: MCP handler for doc_delete tool
-async def _run_doc_delete(args: dict[str, Any]) -> list[TextContent]:
+async def _run_doc_delete(args: dict[str, Any]) -> list[TextContent] | CombinationContent:
     """Run invar_doc_delete - delete a section."""
     from invar.shell.doc_tools import delete_section_content
 
@@ -411,13 +412,11 @@ async def _run_doc_delete(args: dict[str, Any]) -> list[TextContent]:
 
 # @shell_complexity: Command execution with error handling branches
 # @invar:allow shell_result: MCP subprocess wrapper utility
-async def _execute_command(cmd: list[str], timeout: int = 600) -> list[TextContent]:
-    """Execute a command and return the result.
-
-    Args:
-        cmd: Command to execute
-        timeout: Maximum time in seconds (default: 600, accommodates full Guard cycle)
-    """
+async def _execute_command(
+    cmd: list[str],
+    timeout: int = 600,
+) -> list[TextContent] | CombinationContent:
+    """Execute a command and return result."""
     try:
         result = subprocess.run(
             cmd,
@@ -426,20 +425,16 @@ async def _execute_command(cmd: list[str], timeout: int = 600) -> list[TextConte
             timeout=timeout,
         )
 
-        output = result.stdout
-        if result.stderr:
-            output += f"\n\nStderr:\n{result.stderr}"
-
-        # Try to parse as JSON for better formatting
         try:
             parsed = json.loads(result.stdout)
-            output = json.dumps(parsed, indent=2)
+            return ([TextContent(type="text", text=json.dumps(parsed, indent=2))], parsed)
         except json.JSONDecodeError:
-            pass
-
-        return [TextContent(type="text", text=output)]
+            output = result.stdout
+            if result.stderr:
+                output += f"\n\nStderr:\n{result.stderr}"
+            return [TextContent(type="text", text=output)]
 
     except subprocess.TimeoutExpired:
-        return [TextContent(type="text", text=f"Error: Command timed out ({timeout}s)")]
+        return [TextContent(type="text", text=f"Error: Command timed out ({timeout}s")]
     except Exception as e:
         return [TextContent(type="text", text=f"Error: {e}")]
