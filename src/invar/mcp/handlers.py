@@ -427,11 +427,24 @@ async def _execute_command(
             timeout=timeout,
         )
 
+        stdout = result.stdout.strip()
+
+        # Try to parse as JSON
         try:
-            parsed = json.loads(result.stdout)
+            parsed = json.loads(stdout)
             return ([TextContent(type="text", text=json.dumps(parsed, indent=2))], parsed)
         except json.JSONDecodeError:
-            output = result.stdout
+            # Try to fix unescaped newlines in JSON strings
+            # Guard/map commands may output multiline JSON with literal newlines
+            fixed = _fix_json_newlines(stdout)
+            try:
+                parsed = json.loads(fixed)
+                return ([TextContent(type="text", text=json.dumps(parsed, indent=2))], parsed)
+            except json.JSONDecodeError:
+                pass
+
+            # Fall back to text output
+            output = stdout
             if result.stderr:
                 output += f"\n\nStderr:\n{result.stderr}"
             return [TextContent(type="text", text=output)]
@@ -440,3 +453,46 @@ async def _execute_command(
         return [TextContent(type="text", text=f"Error: Command timed out ({timeout}s)")]
     except Exception as e:
         return [TextContent(type="text", text=f"Error: {e}")]
+
+
+# @invar:allow shell_too_complex: Simple state machine, 6 branches is minimal
+# @invar:allow shell_pure_logic: No I/O, but called from shell context
+# @invar:allow shell_result: Pure transformation, returns str not Result
+def _fix_json_newlines(text: str) -> str:
+    """Fix unescaped newlines in JSON strings.
+
+    When subprocess outputs multiline JSON, newlines inside string values
+    are not escaped, causing json.loads() to fail. This function escapes them.
+
+    DX-33: Escape hatch for complex pure logic helper.
+    """
+    result = []
+    i = 0
+    while i < len(text):
+        if text[i] == '"':
+            # Inside a string - collect until closing quote
+            result.append('"')
+            i += 1
+            while i < len(text):
+                c = text[i]
+                if c == "\\" and i + 1 < len(text):
+                    # Escaped character - keep as is
+                    result.append("\\")
+                    result.append(text[i + 1])
+                    i += 2
+                elif c == '"':
+                    # End of string
+                    result.append('"')
+                    i += 1
+                    break
+                elif c == "\n" or c == "\r":
+                    # Unescaped newline - escape it
+                    result.append("\\n")
+                    i += 1
+                else:
+                    result.append(c)
+                    i += 1
+        else:
+            result.append(text[i])
+            i += 1
+    return "".join(result)
