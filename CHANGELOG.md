@@ -14,6 +14,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - TypeScript-specific `exclude_paths`: `node_modules`, `.next`, `coverage`
   - Python projects unaffected (still get Python-specific config)
 
+## [1.17.15] - 2026-01-06
+
+### Fixed
+- **MCP Tools: Agent Native Output (DX-33)** - MCP handlers now return structured JSON
+  - `_execute_command()` returns `(list[TextContent], dict)` tuples
+  - Added `_fix_json_newlines()` helper for multiline JSON from subprocess
+  - Agents can access `structuredContent` directly from MCP response
+  - CLI defaults to JSON output, `--human` flag for Rich output
+
+- **TypeScript Guard: Path Doubling Bug** - Fixed path resolution issues
+  - `_get_invar_package_cmd()` now resolves paths to absolute
+  - Added `.resolve()` calls in 4 locations in `run_eslint()`, `run_ts_analyzer()`, `run_quick_check()`
+  - Fixes ENOENT error when running guard with relative paths like `typescript/`
+
 ## [1.15.6] - 2026-01-03
 
 ### Fixed
