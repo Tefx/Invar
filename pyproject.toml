@@ -15,7 +15,7 @@ ignore-vcs = true
 
 [project]
 name = "invar-tools"
-version = "1.17.12"
+version = "1.17.13"
 description = "AI-native software engineering tools with design-by-contract verification"
 readme = "README.md"
 license = "GPL-3.0-or-later"

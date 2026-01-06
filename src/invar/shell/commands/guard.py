@@ -190,12 +190,28 @@ def guard(
         ts_result = run_typescript_guard(path if path.is_dir() else find_project_root(path))
         match ts_result:
             case Success(result):
-                import json as json_mod
+                if human:
+                    # Human-readable Rich output
+                    from invar.shell.prove.guard_ts import format_typescript_guard_v2
 
-                from invar.shell.prove.guard_ts import format_typescript_guard_v2
+                    output = format_typescript_guard_v2(result)
+                    console.print(f"[bold]TypeScript Guard[/bold] ({project_language})")
+                    if result.status == "passed":
+                        console.print("[green]✓ PASSED[/green]")
+                    elif result.status == "skipped":
+                        console.print("[yellow]⚠ SKIPPED[/yellow] (no TypeScript tools available)")
+                    else:
+                        console.print(f"[red]✗ FAILED[/red] ({result.error_count} errors)")
+                        for v in result.violations[:10]:  # Show first 10
+                            console.print(f"  {v.file}:{v.line}: [{v.severity}] {v.message}")
+                else:
+                    # JSON output for agents
+                    import json as json_mod
 
-                output = format_typescript_guard_v2(result)
-                console.print(json_mod.dumps(output, indent=2))
+                    from invar.shell.prove.guard_ts import format_typescript_guard_v2
+
+                    output = format_typescript_guard_v2(result)
+                    console.print(json_mod.dumps(output, indent=2))
                 raise typer.Exit(0 if result.status == "passed" else 1)
             case Failure(err):
                 console.print(f"[red]Error:[/red] {err}")
