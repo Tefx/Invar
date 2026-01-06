@@ -17,10 +17,22 @@ import { ESLint } from 'eslint';
 import { resolve, dirname } from 'path';
 import { statSync, realpathSync } from 'fs';
 import { fileURLToPath } from 'url';
+import { createRequire } from 'module';
 import plugin from './index.js';
 // Get the directory where this CLI script is located (embedded in site-packages)
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
+const require = createRequire(import.meta.url);
+
+function resolveTsParser(projectPath) {
+    try {
+        return require.resolve('@typescript-eslint/parser', { paths: [projectPath, __dirname] });
+    }
+    catch {
+        return null;
+    }
+}
 function parseArgs(args) {
     const projectPath = args.find(arg => !arg.startsWith('--')) || '.';
     const configArg = args.find(arg => arg.startsWith('--config='));
@@ -93,6 +105,14 @@ async function main() {
             console.error(`Config "${args.config}" not found or invalid`);
             process.exit(1);
         }
+        const tsParser = resolveTsParser(projectPath);
+        if (!tsParser) {
+            console.error("ESLint failed: Failed to load parser '@typescript-eslint/parser'.");
+            console.error("Install it in your project (recommended), or use npx-based ESLint.");
+            console.error("Example: pnpm add -D @typescript-eslint/parser");
+            process.exit(1);
+        }
+
         // Create ESLint instance with programmatic configuration
         // Use __dirname (where CLI is located) for module resolution
         // This allows ESLint to find embedded node_modules in site-packages
@@ -100,9 +120,9 @@ async function main() {
             useEslintrc: false, // Don't load .eslintrc files
             cwd: projectPath, // Use project directory as working directory (fix for timeout issue)
             resolvePluginsRelativeTo: __dirname, // Resolve plugins from embedded location
-            errorOnUnmatchedPattern: false, // Don't fail if no .tsx files found
+            errorOnUnmatchedPattern: false,
             baseConfig: {
-                parser: '@typescript-eslint/parser', // Will resolve from __dirname/node_modules
+                parser: tsParser,
                 parserOptions: {
                     ecmaVersion: 2022,
                     sourceType: 'module',

@@ -379,9 +379,10 @@ def _get_invar_package_cmd(package_name: str, project_path: Path) -> list[str]:
     """Get command to run an @invar/* package.
 
     Priority order:
-    1. Embedded tools (pip install invar-tools includes these)
-    2. Local development (typescript/packages/*/dist/ in Invar repo)
-    3. npx fallback (if published to npm)
+    1. Project-local override (typescript/packages/* or packages/*)
+    2. Embedded tools (pip install invar-tools includes these)
+    3. Local monorepo lookup (walk up)
+    4. npx fallback (if published to npm)
 
     Args:
         package_name: Package name without @invar/ prefix (e.g., "ts-analyzer")
@@ -390,28 +391,9 @@ def _get_invar_package_cmd(package_name: str, project_path: Path) -> list[str]:
     Returns:
         Command list for subprocess.run
     """
-    # Priority 1: Embedded tools (from pip install)
-    try:
-        from invar.node_tools import get_tool_path
-
-        if embedded := get_tool_path(package_name):
-            return ["node", str(embedded)]
-    except ImportError:
-        pass  # node_tools module not available
-
     # Resolve to absolute path to avoid path doubling issues
     resolved_path = project_path.resolve()
 
-    # Priority 1: Project-local override (for custom/modified tools)
-    # Allows projects to override embedded tools with local builds
-    local_cli = resolved_path / "typescript" / "packages" / package_name / "dist" / "cli.js"
-    if local_cli.exists():
-        return ["node", str(local_cli)]
-
-    # Priority 2: Embedded tools (from pip install)
-    # Check both possible locations:
-    # - resolved_path / "typescript" / "packages" / package_name / "dist" / "cli.js"
-    # - resolved_path / "packages" / package_name / "dist" / "cli.js"
     local_cli = resolved_path / "typescript" / "packages" / package_name / "dist" / "cli.js"
     if local_cli.exists():
         return ["node", str(local_cli)]
@@ -419,6 +401,15 @@ def _get_invar_package_cmd(package_name: str, project_path: Path) -> list[str]:
     local_cli = resolved_path / "packages" / package_name / "dist" / "cli.js"
     if local_cli.exists():
         return ["node", str(local_cli)]
+
+    # Priority 2: Embedded tools (from pip install)
+    try:
+        from invar.node_tools import get_tool_path
+
+        if embedded := get_tool_path(package_name):
+            return ["node", str(embedded)]
+    except ImportError:
+        pass  # node_tools module not available
 
     # Priority 3b: Walk up to find the Invar root (monorepo setup)
     # This is intentional for monorepo development - allows running from subdirectories

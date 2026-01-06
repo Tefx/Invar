@@ -14,6 +14,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - TypeScript-specific `exclude_paths`: `node_modules`, `.next`, `coverage`
   - Python projects unaffected (still get Python-specific config)
 
+## [1.17.17] - 2026-01-06
+
+### Fixed
+- **TypeScript Guard: ESLint parser resolution** - Embedded eslint-plugin CLI now resolves `@typescript-eslint/parser` reliably
+  - Resolves parser via `require.resolve(..., { paths: [projectPath, __dirname] })`
+  - Prevents `Cannot find module '@typescript-eslint/parser'` failures in external repos
+
+- **TypeScript Guard: Tool override priority** - Prefer project-local @invar/* tools before embedded
+  - `_get_invar_package_cmd()` now checks `typescript/packages/*/dist/cli.js` and `packages/*/dist/cli.js` first
+
+## [1.17.16] - 2026-01-06
+
+### Fixed
+- **TypeScript Guard: ESLint timeout** - Faster embedded eslint-plugin CLI invocation
+  - Use project root as `cwd`
+  - Add explicit ignores for generated/cache dirs (`.next`, `node_modules`, `dist`, `build`, `coverage`, etc.)
+  - Use relative glob patterns and disable `errorOnUnmatchedPattern`
+
 ## [1.17.15] - 2026-01-06
 
 ### Fixed
