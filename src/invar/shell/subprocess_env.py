@@ -11,6 +11,7 @@ This module provides three phases of dependency injection:
 from __future__ import annotations
 
 import os
+import shutil
 import subprocess
 import sys
 from datetime import datetime, timedelta
@@ -24,6 +25,7 @@ __all__ = [
     "detect_project_python_with_invar",
     "detect_project_venv",
     "find_site_packages",
+    "get_uvx_respawn_command",
     "get_venv_python_version",
     "maybe_show_upgrade_prompt",
     "should_respawn",
@@ -198,6 +200,53 @@ def detect_project_python_with_invar(cwd: Path) -> Path | None:
         pass
 
     return None
+
+
+def _detect_venv_python(venv: Path) -> Path | None:
+    python_path = venv / "bin" / "python"
+    if not python_path.exists():
+        python_path = venv / "Scripts" / "python.exe"
+    return python_path if python_path.exists() else None
+
+
+def get_uvx_respawn_command(
+    project_root: Path,
+    argv: list[str],
+    tool_name: str,
+    invar_tools_version: str,
+) -> list[str] | None:
+    if os.environ.get("INVAR_UVX_RESPAWNED") == "1":
+        return None
+
+    venv = detect_project_venv(project_root)
+    if venv is None:
+        return None
+
+    venv_version = get_venv_python_version(venv)
+    if venv_version is None:
+        return None
+
+    current_version = (sys.version_info.major, sys.version_info.minor)
+    if venv_version == current_version:
+        return None
+
+    uvx_path = shutil.which("uvx")
+    if uvx_path is None:
+        return None
+
+    project_python = _detect_venv_python(venv)
+    if project_python is None:
+        return None
+
+    return [
+        uvx_path,
+        "--python",
+        str(project_python),
+        "--from",
+        f"invar-tools=={invar_tools_version}",
+        tool_name,
+        *argv,
+    ]
 
 
 @pre(lambda cwd: isinstance(cwd, Path))

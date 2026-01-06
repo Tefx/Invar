@@ -6,6 +6,8 @@ Shell module: handles user interaction and file I/O.
 
 from __future__ import annotations
 
+import os
+import sys
 from pathlib import Path
 
 import typer
@@ -233,6 +235,19 @@ def guard(
         )
         raise typer.Exit(1)
     path = pyproject_root
+
+    from invar.shell.subprocess_env import get_uvx_respawn_command
+
+    cmd = get_uvx_respawn_command(
+        project_root=path,
+        argv=sys.argv[1:],
+        tool_name=Path(sys.argv[0]).name,
+        invar_tools_version=__version__,
+    )
+    if cmd is not None:
+        env = os.environ.copy()
+        env["INVAR_UVX_RESPAWNED"] = "1"
+        os.execvpe(cmd[0], cmd, env)
 
     # Load and configure
     config_result = load_config(path)

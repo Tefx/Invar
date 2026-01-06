@@ -501,7 +501,7 @@ wheels = [
 
 [[package]]
 name = "invar-tools"
-version = "1.17.20"
+version = "1.17.21"
 source = { editable = "." }
 dependencies = [
     { name = "crosshair-tool" },

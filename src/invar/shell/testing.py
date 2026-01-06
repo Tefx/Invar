@@ -194,7 +194,8 @@ def run_doctests_on_files(
             capture_output=True,
             text=True,
             timeout=timeout,
-            env=build_subprocess_env(),
+            cwd=str(cwd) if cwd is not None else None,
+            env=build_subprocess_env(cwd=cwd),
         )
         # Pytest exit codes: 0=passed, 5=no tests collected (also OK)
         is_passed = result.returncode in (0, 5)
