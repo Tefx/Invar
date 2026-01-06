@@ -58,7 +58,38 @@ export const requireJsdocExample: Rule.RuleModule = {
     }
 
     return {
+      // Handle exported function declarations (async or sync)
+      // JSDoc comments are attached to ExportNamedDeclaration parent node
+      'ExportNamedDeclaration > FunctionDeclaration'(node: Rule.Node) {
+        const anyNode = node as any;
+        const name = anyNode.id?.name || null;
+        if (!name) return;
+
+        // Get JSDoc from parent ExportNamedDeclaration
+        const sourceCode = context.sourceCode || context.getSourceCode();
+        const exportDeclaration = anyNode.parent;
+        const comments = sourceCode.getCommentsBefore(exportDeclaration);
+
+        const hasExample = comments.some(
+          (comment: any) =>
+            comment.type === 'Block' &&
+            comment.value.includes('@example')
+        );
+
+        if (!hasExample) {
+          context.report({
+            node,
+            messageId: 'missingExample',
+            data: { name },
+          });
+        }
+      },
+
+      // Handle non-exported function declarations
       FunctionDeclaration(node) {
+        // Skip if exported (handled by selector above)
+        if (isExported(node as unknown as Rule.Node)) return;
+
         checkFunction(node as unknown as Rule.Node, node.id?.name || null);
       },
 

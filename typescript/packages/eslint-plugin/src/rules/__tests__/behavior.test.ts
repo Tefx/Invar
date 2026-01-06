@@ -279,6 +279,62 @@ describe('require-jsdoc-example', () => {
       ],
     });
   });
+
+  it('should require @example for exported async functions', () => {
+    ruleTester.run('require-jsdoc-example', requireJsdocExample, {
+      valid: [
+        {
+          code: `
+            /**
+             * Valid async function with example
+             * @example
+             * await asyncFoo() // => 'result'
+             */
+            export async function asyncFoo() { return 'result'; }
+          `,
+          filename: '/project/test.js',
+        },
+        {
+          code: `
+            /**
+             * Valid async function with example
+             * @example
+             * await processData('input') // => 'output'
+             */
+            export async function processData(input: string) { return 'output'; }
+          `,
+          filename: '/project/test.js',
+        },
+      ],
+      invalid: [
+        {
+          code: `
+            /**
+             * Missing @example
+             */
+            export async function asyncFoo() { return 'result'; }
+          `,
+          filename: '/project/test.js',
+          errors: [{ messageId: 'missingExample' }],
+        },
+      ],
+    });
+  });
+
+  it('should handle non-exported async functions', () => {
+    ruleTester.run('require-jsdoc-example', requireJsdocExample, {
+      valid: [
+        {
+          code: `
+            // Non-exported async function - no @example required
+            async function privateAsync() { return 'private'; }
+          `,
+          filename: '/project/test.js',
+        },
+      ],
+      invalid: [],
+    });
+  });
 });
 
 describe('no-io-in-core', () => {
