@@ -71,7 +71,11 @@ def _build_size_suggestion(base: str, extraction_hint: str, func_hint: str) -> s
 def _get_func_hint(file_info: FileInfo) -> str:
     """Get top 5 largest functions as hint string."""
     funcs = sorted(
-        [(s.name, s.end_line - s.line + 1) for s in file_info.symbols if s.kind in (SymbolKind.FUNCTION, SymbolKind.METHOD)],
+        [
+            (s.name, s.end_line - s.line + 1)
+            for s in file_info.symbols
+            if s.kind in (SymbolKind.FUNCTION, SymbolKind.METHOD)
+        ],
         key=lambda x: -x[1],
     )[:5]
     return f" Functions: {', '.join(f'{n}({sz}L)' for n, sz in funcs)}" if funcs else ""
@@ -104,6 +108,7 @@ def check_file_size(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
     Check if file exceeds maximum line count or warning threshold.
 
     LX-10: Uses layer-based limits (Core/Shell/Tests/Default).
+    BUG-55: Config override - if max_file_lines is set to non-default, use it.
     P18: Shows function groups in size warnings to help agents decide what to extract.
     P25: Shows extractable groups with dependencies for warnings.
 
@@ -121,6 +126,10 @@ def check_file_size(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
         >>> # Core layer: 500 lines max (strict)
         >>> len(check_file_size(FileInfo(path="core/calc.py", lines=550, is_core=True), RuleConfig()))
         1
+        >>> # BUG-55: Config override allows larger files (no error at 550 with max 600)
+        >>> vs = check_file_size(FileInfo(path="core/calc.py", lines=550, is_core=True), RuleConfig(max_file_lines=600, size_warning_threshold=0))
+        >>> any(v.rule == "file_size" for v in vs)
+        False
     """
     # Check for escape hatch
     if _has_file_escape(file_info, "file_size"):
@@ -133,23 +142,38 @@ def check_file_size(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
     # LX-10: Get layer-based limits
     layer = get_layer(file_info)
     limits = get_limits(layer)
-    max_lines = limits.max_file_lines
+    # BUG-55: Allow config override if user sets non-default value
+    max_lines = config.max_file_lines if config.max_file_lines != 500 else limits.max_file_lines
 
     if file_info.lines > max_lines:
-        violations.append(Violation(
-            rule="file_size", severity=Severity.ERROR, file=file_info.path, line=None,
-            message=f"File has {file_info.lines} lines (max: {max_lines} for {layer.value})",
-            suggestion=_build_size_suggestion("Split into smaller modules.", extraction_hint, func_hint),
-        ))
+        violations.append(
+            Violation(
+                rule="file_size",
+                severity=Severity.ERROR,
+                file=file_info.path,
+                line=None,
+                message=f"File has {file_info.lines} lines (max: {max_lines} for {layer.value})",
+                suggestion=_build_size_suggestion(
+                    "Split into smaller modules.", extraction_hint, func_hint
+                ),
+            )
+        )
     elif config.size_warning_threshold > 0:
         threshold = int(max_lines * config.size_warning_threshold)
         if file_info.lines >= threshold:
             pct = int(file_info.lines / max_lines * 100)
-            violations.append(Violation(
-                rule="file_size_warning", severity=Severity.WARNING, file=file_info.path, line=None,
-                message=f"File has {file_info.lines} lines ({pct}% of {max_lines} limit)",
-                suggestion=_build_size_suggestion("Consider splitting before reaching limit.", extraction_hint, func_hint),
-            ))
+            violations.append(
+                Violation(
+                    rule="file_size_warning",
+                    severity=Severity.WARNING,
+                    file=file_info.path,
+                    line=None,
+                    message=f"File has {file_info.lines} lines ({pct}% of {max_lines} limit)",
+                    suggestion=_build_size_suggestion(
+                        "Consider splitting before reaching limit.", extraction_hint, func_hint
+                    ),
+                )
+            )
     return violations
 
 
@@ -159,6 +183,7 @@ def check_function_size(file_info: FileInfo, config: RuleConfig) -> list[Violati
     Check if any function exceeds maximum line count.
 
     LX-10: Uses layer-based limits (Core/Shell/Tests/Default).
+    BUG-55: Config override - if max_function_lines is set to non-default, use it.
     DX-22: Always uses code_lines (excluding docstring) and excludes doctest lines.
 
     Examples:
@@ -177,13 +202,19 @@ def check_function_size(file_info: FileInfo, config: RuleConfig) -> list[Violati
         >>> info3 = FileInfo(path="core/calc.py", lines=100, symbols=[sym3], is_core=True)
         >>> len(check_function_size(info3, RuleConfig()))
         1
+        >>> # BUG-55: Config override allows larger functions
+        >>> len(check_function_size(info3, RuleConfig(max_function_lines=70)))
+        0
     """
     violations: list[Violation] = []
 
     # LX-10: Get layer-based limits
     layer = get_layer(file_info)
     limits = get_limits(layer)
-    max_func_lines = limits.max_function_lines
+    # BUG-55: Allow config override if user sets non-default value
+    max_func_lines = (
+        config.max_function_lines if config.max_function_lines != 50 else limits.max_function_lines
+    )
 
     for symbol in file_info.symbols:
         if symbol.kind in (SymbolKind.FUNCTION, SymbolKind.METHOD):
@@ -392,7 +423,9 @@ def check_shell_result(file_info: FileInfo, config: RuleConfig) -> list[Violatio
         ):
             continue
         # DX-23: Skip entry points; DX-22: Skip if @invar:allow marker
-        if is_entry_point(symbol, file_info.source) or has_allow_marker(symbol, file_info.source, "shell_result"):
+        if is_entry_point(symbol, file_info.source) or has_allow_marker(
+            symbol, file_info.source, "shell_result"
+        ):
             continue
         if "Result[" not in symbol.signature:
             violations.append(
@@ -435,7 +468,9 @@ def check_entry_point_thin(file_info: FileInfo, config: RuleConfig) -> list[Viol
             continue
 
         # Only check entry points; DX-22: Skip if @invar:allow marker
-        if not is_entry_point(symbol, file_info.source) or has_allow_marker(symbol, file_info.source, "entry_point_too_thick"):
+        if not is_entry_point(symbol, file_info.source) or has_allow_marker(
+            symbol, file_info.source, "entry_point_too_thick"
+        ):
             continue
         lines = get_symbol_lines(symbol)
         if lines > max_lines:

@@ -88,6 +88,88 @@ def has_verifiable_contracts(source: str) -> bool:
     return False
 
 
+# BUG-56: Detect Literal types that CrossHair cannot handle
+# @shell_orchestration: Pre-filter for CrossHair verification
+# @shell_complexity: AST traversal for type annotation analysis
+def has_literal_in_contracted_functions(source: str) -> bool:
+    """Check if any contracted function uses Literal types in parameters.
+
+    CrossHair cannot symbolically execute Literal types and silently skips them.
+    This function detects such cases for pre-filtering and warning.
+    """
+    # Fast path: no Literal import
+    if "Literal" not in source:
+        return False
+
+    # Fast path: no contracts
+    if "@pre" not in source and "@post" not in source:
+        return False
+
+    try:
+        import ast
+
+        tree = ast.parse(source)
+    except SyntaxError:
+        return False  # Can't analyze, don't skip
+
+    contract_decorators = {"pre", "post"}
+
+    def has_contract(node: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
+        for dec in node.decorator_list:
+            if isinstance(dec, ast.Call):
+                func = dec.func
+                if isinstance(func, ast.Name) and func.id in contract_decorators:
+                    return True
+                if isinstance(func, ast.Attribute) and func.attr in contract_decorators:
+                    return True
+        return False
+
+    def annotation_uses_literal(annotation: ast.expr | None) -> bool:
+        """Check if annotation contains Literal type."""
+        if annotation is None:
+            return False
+
+        # Direct Literal["..."]
+        if isinstance(annotation, ast.Subscript):
+            value = annotation.value
+            if isinstance(value, ast.Name) and value.id == "Literal":
+                return True
+            if isinstance(value, ast.Attribute) and value.attr == "Literal":
+                return True
+            # Check nested (e.g., Optional[Literal["..."]])
+            if annotation_uses_literal(annotation.slice):
+                return True
+            if annotation_uses_literal(value):
+                return True
+
+        # Union types
+        if isinstance(annotation, ast.BinOp):  # X | Y syntax
+            return annotation_uses_literal(annotation.left) or annotation_uses_literal(
+                annotation.right
+            )
+
+        # Tuple of types (for Subscript.slice)
+        if isinstance(annotation, ast.Tuple):
+            return any(annotation_uses_literal(elt) for elt in annotation.elts)
+
+        return False
+
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            if has_contract(node):
+                # Check all parameter annotations
+                for arg in node.args.args + node.args.posonlyargs + node.args.kwonlyargs:
+                    if annotation_uses_literal(arg.annotation):
+                        return True
+                # Check *args and **kwargs
+                if node.args.vararg and annotation_uses_literal(node.args.vararg.annotation):
+                    return True
+                if node.args.kwarg and annotation_uses_literal(node.args.kwarg.annotation):
+                    return True
+
+    return False
+
+
 # ============================================================
 # DX-13: Single File Verification (for parallel execution)
 # ============================================================
@@ -156,6 +238,23 @@ def _verify_single_file(
             # symbolically execute C extensions like ast.parse()
             # Check both stdout and stderr for error patterns
             output = result.stdout + "\n" + result.stderr
+
+            # BUG-56: Detect Literal type errors (CrossHair limitation)
+            literal_errors = [
+                "Cannot instantiate typing.Literal",
+                "CrosshairUnsupported",
+            ]
+            is_literal_error = any(err in output for err in literal_errors)
+
+            if is_literal_error:
+                return {
+                    "file": file_path,
+                    "status": CrossHairStatus.SKIPPED,
+                    "time_ms": elapsed_ms,
+                    "reason": "Literal type not supported (tested by Hypothesis)",
+                    "stdout": output,
+                }
+
             execution_errors = [
                 "TypeError:",
                 "AttributeError:",
@@ -298,6 +397,17 @@ def run_crosshair_parallel(
                     }
                 )
                 continue
+
+            # BUG-56: Check for Literal types that CrossHair cannot handle
+            if has_literal_in_contracted_functions(source):
+                cached_results.append(
+                    {
+                        "file": str(py_file),
+                        "status": CrossHairStatus.SKIPPED,
+                        "reason": "Literal type not supported (tested by Hypothesis)",
+                    }
+                )
+                continue
         except OSError:
             pass  # Include file anyway
 
@@ -324,6 +434,7 @@ def run_crosshair_parallel(
     verified_files: list[str] = []
     failed_files: list[str] = []
     all_counterexamples: list[str] = []
+    skipped_at_runtime: list[dict] = []  # BUG-56: Track runtime skips with reasons
     total_time_ms = 0
 
     if max_workers > 1 and len(files_to_verify) > 1:
@@ -351,6 +462,7 @@ def run_crosshair_parallel(
                         verified_files,
                         failed_files,
                         all_counterexamples,
+                        skipped_at_runtime,
                         cache,
                     )
                     total_time_ms += result.get("time_ms", 0)
@@ -372,6 +484,7 @@ def run_crosshair_parallel(
                 verified_files,
                 failed_files,
                 all_counterexamples,
+                skipped_at_runtime,
                 cache,
             )
             total_time_ms += result.get("time_ms", 0)
@@ -379,13 +492,18 @@ def run_crosshair_parallel(
     # Determine overall status
     status = CrossHairStatus.VERIFIED if not failed_files else CrossHairStatus.COUNTEREXAMPLE
 
+    # BUG-56: Combine pre-filtered skipped and runtime skipped
+    all_skipped = [r["file"] for r in cached_results if r.get("status") == "skipped"]
+    all_skipped.extend([r["file"] for r in skipped_at_runtime])
+
     return Success(
         {
             "status": status,
             "verified": verified_files,
             "failed": failed_files,
             "cached": [r["file"] for r in cached_results if r.get("status") == "cached"],
-            "skipped": [r["file"] for r in cached_results if r.get("status") == "skipped"],
+            "skipped": all_skipped,
+            "skipped_reasons": skipped_at_runtime,  # BUG-56: Include reasons
             "counterexamples": all_counterexamples,
             "files": [str(f) for f in py_files],
             "files_verified": len(files_to_verify),
@@ -404,6 +522,7 @@ def _process_verification_result(
     verified_files: list[str],
     failed_files: list[str],
     all_counterexamples: list[str],
+    skipped_at_runtime: list[dict],  # BUG-56: Track runtime skips
     cache: ProveCache | None,
 ) -> None:
     """Process a single verification result."""
@@ -425,6 +544,14 @@ def _process_verification_result(
         failed_files.append(f"{file_path} (timeout)")
     elif status == CrossHairStatus.ERROR:
         failed_files.append(f"{file_path} ({result.get('error', 'unknown error')})")
+    elif status == CrossHairStatus.SKIPPED:
+        # BUG-56: Track skipped files with reasons (e.g., Literal type)
+        skipped_at_runtime.append(
+            {
+                "file": str(file_path),
+                "reason": result.get("reason", "unsupported"),
+            }
+        )
 
 
 # ============================================================

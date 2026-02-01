@@ -160,7 +160,10 @@ def get_layer(file_info: FileInfo) -> CodeLayer:
     return CodeLayer.DEFAULT
 
 
-@pre(lambda layer, language="python": isinstance(layer, CodeLayer) and language in ("python", "typescript"))
+@pre(
+    lambda layer, language="python": isinstance(layer, CodeLayer)
+    and language in ("python", "typescript")
+)
 @post(lambda result: result.max_file_lines > 0 and result.max_function_lines > 0)
 def get_limits(layer: CodeLayer, language: str = "python") -> LayerLimits:
     """
@@ -424,8 +427,9 @@ class RuleConfig(BaseModel):
     """
 
     # MINOR-6: Added ge=1 constraints for numeric fields
-    max_file_lines: int = Field(default=500, ge=1)  # Phase 9 P1: Raised from 300
-    max_function_lines: int = Field(default=50, ge=1)
+    # BUG-55: These override layer-based limits when set to non-default values
+    max_file_lines: int = Field(default=500, ge=1)  # Override all layers if != 500
+    max_function_lines: int = Field(default=50, ge=1)  # Override all layers if != 50
     entry_max_lines: int = Field(default=15, ge=1)  # DX-23: Entry point max lines
     shell_max_branches: int = Field(default=3, ge=1)  # DX-22: Shell function max branches
     shell_complexity_debt_limit: int = Field(default=5, ge=0)  # DX-22: 0 = no limit
