@@ -366,34 +366,44 @@ def load_config(project_root: Path) -> Result[RuleConfig, str]:
     3. .invar/config.toml [guard]
     4. Built-in defaults
 
+    If pyproject.toml exists but has no [tool.invar.guard] section,
+    continues to check other sources (fallback behavior).
+
     Args:
         project_root: Path to project root directory
 
     Returns:
         Result containing RuleConfig or error message
     """
-    find_result = _find_config_source(project_root)
-    if isinstance(find_result, Failure):
-        return find_result
-    config_path, source = find_result.unwrap()
+    # Try each config source in priority order
+    sources_to_try: list[tuple[Path, ConfigSource]] = []
 
-    if source == "default":
-        return Success(RuleConfig())
+    pyproject = project_root / "pyproject.toml"
+    if pyproject.exists():
+        sources_to_try.append((pyproject, "pyproject"))
 
-    assert config_path is not None  # source != "default" guarantees path exists
-    result = _read_toml(config_path)
+    invar_toml = project_root / "invar.toml"
+    if invar_toml.exists():
+        sources_to_try.append((invar_toml, "invar"))
 
-    if isinstance(result, Failure):
-        return result
+    invar_config = project_root / ".invar" / "config.toml"
+    if invar_config.exists():
+        sources_to_try.append((invar_config, "invar_dir"))
 
-    data = result.unwrap()
-    guard_config = extract_guard_section(data, source)
+    # Try each source, fallback if no guard config found
+    for config_path, source in sources_to_try:
+        result = _read_toml(config_path)
+        if isinstance(result, Failure):
+            continue  # Skip unreadable files
 
-    # For pyproject.toml, if no [tool.invar.guard] section, use defaults
-    if source == "pyproject" and not guard_config:
-        return Success(RuleConfig())
+        data = result.unwrap()
+        guard_config = extract_guard_section(data, source)
 
-    return Success(parse_guard_config(guard_config))
+        if guard_config:  # Found valid guard config
+            return Success(parse_guard_config(guard_config))
+
+    # No config found in any source, use defaults
+    return Success(RuleConfig())
 
 
 # Default paths for Core/Shell classification
