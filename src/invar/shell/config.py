@@ -435,24 +435,42 @@ _DEFAULT_EXCLUDE_PATHS = [
 ]
 
 
+# @shell_complexity: Config fallthrough requires checking multiple sources
 def _get_classification_config(project_root: Path) -> Result[dict[str, Any], str]:
-    """Get classification-related config (paths and patterns)."""
-    find_result = _find_config_source(project_root)
-    if isinstance(find_result, Failure):
-        return Success({})  # Return empty on error
-    config_path, source = find_result.unwrap()
+    """Get classification-related config (paths and patterns).
 
-    if source == "default":
-        return Success({})
+    Uses fallthrough logic: if pyproject.toml exists but has no [tool.invar.guard],
+    continues to check invar.toml and .invar/config.toml.
+    """
+    # Build list of config sources to try (same order as load_config)
+    sources_to_try: list[tuple[Path, ConfigSource]] = []
 
-    assert config_path is not None
-    result = _read_toml(config_path)
+    pyproject = project_root / "pyproject.toml"
+    if pyproject.exists():
+        sources_to_try.append((pyproject, "pyproject"))
 
-    if isinstance(result, Failure):
-        return Success({})  # Return empty on error
+    invar_toml = project_root / "invar.toml"
+    if invar_toml.exists():
+        sources_to_try.append((invar_toml, "invar"))
 
-    data = result.unwrap()
-    return Success(extract_guard_section(data, source))
+    invar_config = project_root / ".invar" / "config.toml"
+    if invar_config.exists():
+        sources_to_try.append((invar_config, "invar_dir"))
+
+    # Try each source, fallback if no guard config found
+    for config_path, source in sources_to_try:
+        result = _read_toml(config_path)
+        if isinstance(result, Failure):
+            continue  # Skip unreadable files
+
+        data = result.unwrap()
+        guard_config = extract_guard_section(data, source)
+
+        if guard_config:  # Found valid guard config
+            return Success(guard_config)
+
+    # No config found in any source, return empty dict
+    return Success({})
 
 
 def get_path_classification(project_root: Path) -> Result[tuple[list[str], list[str]], str]:
