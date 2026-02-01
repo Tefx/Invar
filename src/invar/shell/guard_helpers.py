@@ -178,7 +178,24 @@ def run_crosshair_phase(
         return True, {"status": "skipped", "reason": "no files to verify"}
 
     # Only verify Core files (pure logic)
-    core_files = [f for f in checked_files if "core" in str(f)]
+    # BUG-57: Use config-based core detection instead of hardcoded "core" in path
+    from invar.core.utils import matches_path_prefix
+    from invar.shell.config import get_path_classification
+
+    path_result = get_path_classification(path)
+    if isinstance(path_result, Success):
+        core_paths, _ = path_result.unwrap()
+    else:
+        core_paths = ["src/core", "core"]
+
+    def is_core_file(f: Path) -> bool:
+        try:
+            rel = str(f.relative_to(path))
+        except ValueError:
+            rel = str(f)
+        return matches_path_prefix(rel, core_paths)
+
+    core_files = [f for f in checked_files if is_core_file(f)]
     if not core_files:
         return True, {"status": "skipped", "reason": "no core files found"}
 
@@ -306,7 +323,24 @@ def run_property_tests_phase(
         return True, {"status": "skipped", "reason": "no files"}, None
 
     # Only test Core files (with contracts)
-    core_files = [f for f in checked_files if "core" in str(f)]
+    # BUG-57: Use config-based core detection instead of hardcoded "core" in path
+    from invar.core.utils import matches_path_prefix
+    from invar.shell.config import get_path_classification
+
+    path_result = get_path_classification(project_root)
+    if isinstance(path_result, Success):
+        core_paths, _ = path_result.unwrap()
+    else:
+        core_paths = ["src/core", "core"]
+
+    def is_core_file(f: Path) -> bool:
+        try:
+            rel = str(f.relative_to(project_root))
+        except ValueError:
+            rel = str(f)
+        return matches_path_prefix(rel, core_paths)
+
+    core_files = [f for f in checked_files if is_core_file(f)]
     if not core_files:
         return True, {"status": "skipped", "reason": "no core files"}, None
 

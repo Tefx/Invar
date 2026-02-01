@@ -97,7 +97,7 @@ def run_property_tests_on_file(
 
     root = project_root or file_path.parent
     with _inject_project_site_packages(root):
-        module = _import_module_from_path(file_path)
+        module = _import_module_from_path(file_path, project_root=root)
 
     if module is None:
         return Failure(f"Could not import module: {file_path}")
@@ -218,15 +218,56 @@ def _accumulate_report(
     combined_report.errors.extend(file_report.errors)
 
 
-def _import_module_from_path(file_path: Path) -> object | None:
+# @shell_complexity: BUG-57 fix requires package hierarchy setup for relative imports
+def _import_module_from_path(file_path: Path, project_root: Path | None = None) -> object | None:
     """
     Import a Python module from a file path.
+
+    BUG-57: Properly handles relative imports by setting up package context.
 
     Returns None if import fails.
     """
     try:
-        module_name = file_path.stem
-        spec = importlib.util.spec_from_file_location(module_name, file_path)
+        # Calculate the full module name from project root
+        if project_root and file_path.is_relative_to(project_root):
+            # Convert path to module name: my_package/main.py -> my_package.main
+            relative = file_path.relative_to(project_root)
+            parts = list(relative.with_suffix("").parts)
+            module_name = ".".join(parts)
+        else:
+            module_name = file_path.stem
+
+        # Ensure project root is in sys.path for relative imports
+        if project_root:
+            root_str = str(project_root)
+            if root_str not in sys.path:
+                sys.path.insert(0, root_str)
+
+        # For packages with relative imports, we need to set up parent packages first
+        if "." in module_name:
+            # Import parent packages first
+            parts = module_name.split(".")
+            for i in range(1, len(parts)):
+                parent_name = ".".join(parts[:i])
+                if parent_name not in sys.modules:
+                    parent_path = project_root / "/".join(parts[:i]) if project_root else None
+                    if parent_path and (parent_path / "__init__.py").exists():
+                        parent_spec = importlib.util.spec_from_file_location(
+                            parent_name,
+                            parent_path / "__init__.py",
+                            submodule_search_locations=[str(parent_path)],
+                        )
+                        if parent_spec and parent_spec.loader:
+                            parent_module = importlib.util.module_from_spec(parent_spec)
+                            sys.modules[parent_name] = parent_module
+                            parent_spec.loader.exec_module(parent_module)
+
+        # Now import the target module
+        spec = importlib.util.spec_from_file_location(
+            module_name,
+            file_path,
+            submodule_search_locations=[str(file_path.parent)],
+        )
         if spec is None or spec.loader is None:
             return None
 
