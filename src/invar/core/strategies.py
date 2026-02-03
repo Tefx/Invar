@@ -111,7 +111,10 @@ PATTERNS: list[tuple[str, Callable[[re.Match, str], dict[str, Any] | None]]] = [
     ),
     (
         r"(-?[\d.]+(?:e[+-]?\d+)?)\s*<=\s*(\w+)\s*<=\s*(-?[\d.]+(?:e[+-]?\d+)?)",
-        lambda m, p: {"min_value": _parse_number(m.group(1)), "max_value": _parse_number(m.group(3))}
+        lambda m, p: {
+            "min_value": _parse_number(m.group(1)),
+            "max_value": _parse_number(m.group(3)),
+        }
         if m.group(2) == p
         else None,
     ),
@@ -140,7 +143,11 @@ PATTERNS: list[tuple[str, Callable[[re.Match, str], dict[str, Any] | None]]] = [
 ]
 
 
-@pre(lambda pre_source, param_name, param_type=None: len(param_name) > 0)  # Param must be named
+@pre(
+    lambda pre_source, param_name, param_type=None: isinstance(pre_source, str)
+    and len(param_name) > 0
+    and (param_type is None or isinstance(param_type, type))
+)  # Param must be named
 @post(lambda result: isinstance(result.constraints, dict))  # Returns valid hint
 def infer_from_lambda(
     pre_source: str,
@@ -193,7 +200,11 @@ def infer_from_lambda(
     )
 
 
-@pre(lambda pre_sources, param_name, param_type=None: len(param_name) > 0)  # Param must be named
+@pre(
+    lambda pre_sources, param_name, param_type=None: isinstance(pre_sources, list)
+    and len(param_name) > 0
+    and (param_type is None or isinstance(param_type, type))
+)  # Param must be named
 @post(lambda result: isinstance(result.constraints, dict))  # Returns valid hint
 def infer_from_multiple(
     pre_sources: list[str],

@@ -72,7 +72,13 @@ class PatternRegistry:
         """
         return [d for d in self._detectors if d.priority == priority]
 
-    @pre(lambda self, file_path, source, min_confidence=None, priority_filter=None: len(file_path) > 0)
+    @pre(
+        lambda self, file_path, source, min_confidence=None, priority_filter=None: len(file_path)
+        > 0
+        and isinstance(source, str)
+        and (min_confidence is None or min_confidence in Confidence)
+        and (priority_filter is None or priority_filter in Priority)
+    )
     @post(lambda result: result is not None)
     def detect_file(
         self,
@@ -220,7 +226,11 @@ def get_registry() -> PatternRegistry:
     return PatternRegistry()
 
 
-@pre(lambda file_path, source, min_confidence=None: len(file_path) > 0)
+@pre(
+    lambda file_path, source, min_confidence=None: len(file_path) > 0
+    and isinstance(source, str)
+    and (min_confidence is None or min_confidence in Confidence)
+)
 @post(lambda result: result is not None)
 def detect_patterns(
     file_path: str,

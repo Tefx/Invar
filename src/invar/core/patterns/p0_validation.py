@@ -114,7 +114,7 @@ class ValidationDetector(BaseDetector):
 
         return suggestions
 
-    @pre(lambda self, node, file_path: len(file_path) > 0)
+    @pre(lambda self, node, file_path: node is not None and len(file_path) > 0)
     def _check_function(
         self, node: ast.FunctionDef | ast.AsyncFunctionDef, file_path: str
     ) -> PatternSuggestion | None:
@@ -156,9 +156,7 @@ class ValidationDetector(BaseDetector):
         return None
 
     @post(lambda result: result >= 0)
-    def _count_early_error_returns(
-        self, node: ast.FunctionDef | ast.AsyncFunctionDef
-    ) -> int:
+    def _count_early_error_returns(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> int:
         """
         Count early returns with error-like values inside if statements.
 
@@ -239,7 +237,7 @@ class ValidationDetector(BaseDetector):
 
         return False
 
-    @pre(lambda self, node, early_returns: early_returns >= 0)
+    @pre(lambda self, node, early_returns: node is not None and early_returns >= 0)
     @post(lambda result: result in Confidence)
     def _calculate_confidence(
         self, node: ast.FunctionDef | ast.AsyncFunctionDef, early_returns: int
@@ -269,9 +267,7 @@ class ValidationDetector(BaseDetector):
         return Confidence.LOW
 
     @post(lambda result: len(result) > 0 and "def " in result)
-    def _format_function_preview(
-        self, node: ast.FunctionDef | ast.AsyncFunctionDef
-    ) -> str:
+    def _format_function_preview(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> str:
         """
         Format function preview for display.
 

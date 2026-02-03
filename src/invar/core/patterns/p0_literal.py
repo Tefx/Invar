@@ -101,7 +101,7 @@ class LiteralDetector(BaseDetector):
 
         return suggestions
 
-    @pre(lambda self, node, file_path: len(file_path) > 0)
+    @pre(lambda self, node, file_path: node is not None and len(file_path) > 0)
     @post(lambda result: all(isinstance(s, PatternSuggestion) for s in result))
     def _check_function(
         self, node: ast.FunctionDef | ast.AsyncFunctionDef, file_path: str
@@ -145,7 +145,11 @@ class LiteralDetector(BaseDetector):
 
         return suggestions
 
-    @post(lambda result: all(len(name) > 0 and len(vals) > 0 and line > 0 for name, vals, line in result))
+    @post(
+        lambda result: all(
+            len(name) > 0 and len(vals) > 0 and line > 0 for name, vals, line in result
+        )
+    )
     def _find_membership_checks(
         self, node: ast.FunctionDef | ast.AsyncFunctionDef
     ) -> list[tuple[str, list[str | int], int]]:
@@ -206,9 +210,7 @@ class LiteralDetector(BaseDetector):
                 self._collect_membership_checks(stmt.orelse, checks)
 
     @post(lambda result: result is None or (len(result[0]) > 0 and len(result[1]) > 0))
-    def _extract_membership_check(
-        self, test: ast.expr
-    ) -> tuple[str, list[str | int]] | None:
+    def _extract_membership_check(self, test: ast.expr) -> tuple[str, list[str | int]] | None:
         """
         Extract variable and values from membership check.
 
@@ -259,9 +261,7 @@ class LiteralDetector(BaseDetector):
         if isinstance(node, (ast.Tuple, ast.List, ast.Set)):
             values = []
             for elt in node.elts:
-                if isinstance(elt, ast.Constant) and isinstance(
-                    elt.value, (str, int)
-                ):
+                if isinstance(elt, ast.Constant) and isinstance(elt.value, (str, int)):
                     values.append(elt.value)
                 else:
                     return None  # Non-literal value

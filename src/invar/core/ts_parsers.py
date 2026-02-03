@@ -115,7 +115,9 @@ def parse_tsc_output(output: str) -> list[TSViolation]:
     return violations
 
 
-@pre(lambda output, base_path="": output is not None)  # Accepts any string including empty
+@pre(
+    lambda output, base_path="": output is not None and isinstance(base_path, str)
+)  # Accepts any string including empty
 @post(lambda result: all(v.source == "eslint" for v in result))
 def parse_eslint_json(output: str, base_path: str = "") -> list[TSViolation]:
     """Parse ESLint JSON output into violations list.
@@ -194,7 +196,9 @@ def parse_eslint_json(output: str, base_path: str = "") -> list[TSViolation]:
     return violations
 
 
-@pre(lambda output, base_path="": output is not None)  # Accepts any string including empty
+@pre(
+    lambda output, base_path="": output is not None and isinstance(base_path, str)
+)  # Accepts any string including empty
 @post(lambda result: all(v.source == "vitest" for v in result))
 def parse_vitest_json(output: str, base_path: str = "") -> list[TSViolation]:
     """Parse Vitest JSON output into violations list.

@@ -107,7 +107,7 @@ class NewTypeDetector(BaseDetector):
 
         return suggestions
 
-    @pre(lambda self, node, file_path: len(file_path) > 0)
+    @pre(lambda self, node, file_path: node is not None and len(file_path) > 0)
     def _check_function(
         self, node: ast.FunctionDef | ast.AsyncFunctionDef, file_path: str
     ) -> PatternSuggestion | None:
@@ -153,7 +153,7 @@ class NewTypeDetector(BaseDetector):
 
         return None
 
-    @pre(lambda self, param_names, _node: len(param_names) > 0)
+    @pre(lambda self, param_names, _node: len(param_names) > 0 and _node is not None)
     @post(lambda result: result in Confidence)
     def _calculate_confidence(
         self, param_names: list[str], _node: ast.FunctionDef | ast.AsyncFunctionDef

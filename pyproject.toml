@@ -114,9 +114,9 @@ strict_pure = true          # Detect internal imports and impure calls in Core
 use_code_lines = false
 exclude_doctest_lines = true  # DX-15: Reward good doctests, don't penalize documentation
 
-# Severity overrides - turn off noisy rules
+# Severity overrides
 [tool.invar.guard.severity_overrides]
-partial_contract = "off"  # Often intentional: methods don't check self, config is Pydantic-validated
+# partial_contract now auto-skips self/cls, enabled as warning
 
 # Rule exclusions for specific patterns
 [[tool.invar.guard.rule_exclusions]]

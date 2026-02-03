@@ -106,10 +106,8 @@ class ExhaustiveMatchDetector(BaseDetector):
 
         return suggestions
 
-    @pre(lambda self, node, file_path: len(file_path) > 0)
-    def _check_match(
-        self, node: ast.Match, file_path: str
-    ) -> PatternSuggestion | None:
+    @pre(lambda self, node, file_path: node is not None and len(file_path) > 0)
+    def _check_match(self, node: ast.Match, file_path: str) -> PatternSuggestion | None:
         """
         Check if match statement could benefit from assert_never.
 
@@ -144,7 +142,9 @@ class ExhaustiveMatchDetector(BaseDetector):
             elif isinstance(pattern, ast.MatchValue):
                 if isinstance(pattern.value, ast.Attribute):
                     has_enum_patterns = True
-                    enum_cases.append(ast.unparse(pattern.value) if hasattr(ast, "unparse") else "...")
+                    enum_cases.append(
+                        ast.unparse(pattern.value) if hasattr(ast, "unparse") else "..."
+                    )
 
         # Suggest if: has enum patterns + has wildcard + doesn't use assert_never
         if has_enum_patterns and has_wildcard and not uses_assert_never:

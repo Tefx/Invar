@@ -73,9 +73,7 @@ class ParsedFile:
 # Patterns for region markers
 # <!--invar:managed version="5.0"-->
 # <!--/invar:managed-->
-REGION_START_PATTERN = re.compile(
-    r'<!--invar:(\w+)(?:\s+version=["\']([^"\']+)["\'])?-->'
-)
+REGION_START_PATTERN = re.compile(r'<!--invar:(\w+)(?:\s+version=["\']([^"\']+)["\'])?-->')
 REGION_END_PATTERN = re.compile(r"<!--/invar:(\w+)-->")
 
 
@@ -157,10 +155,15 @@ def parse_invar_regions(content: str) -> ParsedFile:
     return ParsedFile(regions=regions, before=before, after=after, raw=content)
 
 
-@pre(lambda parsed, updates: all(k == v.name for k, v in parsed.regions.items()))  # Keys must match names
-@ensure(lambda parsed, updates, result: (
-    not parsed.has_regions or all(f"<!--invar:{r}" in result for r in parsed.regions)
-))  # Checks start tag prefix (version attribute may follow)
+@pre(
+    lambda parsed, updates: isinstance(updates, dict)
+    and all(k == v.name for k, v in parsed.regions.items())
+)  # Keys must match names
+@ensure(
+    lambda parsed, updates, result: (
+        not parsed.has_regions or all(f"<!--invar:{r}" in result for r in parsed.regions)
+    )
+)  # Checks start tag prefix (version attribute may follow)
 def reconstruct_file(parsed: ParsedFile, updates: dict[str, str]) -> str:
     """Reconstruct file content with updated regions.
 
@@ -359,11 +362,16 @@ def detect_claude_md_state(content: str) -> ClaudeMdState:
     project_complete = has_project_open and has_project_close
 
     # All markers present
-    any_marker = any([
-        has_managed_open, has_managed_close,
-        has_user_open, has_user_close,
-        has_project_open, has_project_close,
-    ])
+    any_marker = any(
+        [
+            has_managed_open,
+            has_managed_close,
+            has_user_open,
+            has_user_close,
+            has_project_open,
+            has_project_close,
+        ]
+    )
 
     if not any_marker:
         return ClaudeMdState(state="missing")
@@ -424,13 +432,13 @@ def strip_invar_markers(content: str) -> str:
     """
     # Remove all <!--invar:xxx--> and <!--/invar:xxx--> markers
     # Also handle version attribute
-    cleaned = re.sub(r'<!--/?invar:\w+[^>]*-->', '', content)
+    cleaned = re.sub(r"<!--/?invar:\w+[^>]*-->", "", content)
     # Clean up excessive blank lines
-    cleaned = re.sub(r'\n{3,}', '\n\n', cleaned)
+    cleaned = re.sub(r"\n{3,}", "\n\n", cleaned)
     return cleaned.strip()
 
 
-@pre(lambda content, merge_date: len(content) > 0)
+@pre(lambda content, merge_date="": len(content) > 0 and isinstance(merge_date, str))
 @post(lambda result: "MERGED CONTENT" in result)
 def format_preserved_content(content: str, merge_date: str = "") -> str:
     """Format preserved content with review markers.

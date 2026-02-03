@@ -194,10 +194,12 @@ def _check_decorator_contracts(dec: ast.Call) -> tuple[bool, bool]:
     return has_pre, has_post
 
 
-@pre(lambda node: (
-    isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and
-    hasattr(node, 'decorator_list')
-))
+@pre(
+    lambda node: (
+        isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+        and hasattr(node, "decorator_list")
+    )
+)
 @post(lambda result: isinstance(result, tuple) and len(result) == 2)
 def _get_function_contracts(node: ast.FunctionDef | ast.AsyncFunctionDef) -> tuple[bool, bool]:
     """Check function decorators for contracts, return (has_pre, has_post).
@@ -247,18 +249,22 @@ def find_contracted_functions(source: str) -> list[dict[str, Any]]:
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             has_pre, has_post = _get_function_contracts(node)
             if has_pre or has_post:
-                functions.append({
-                    "name": node.name,
-                    "lineno": node.lineno,
-                    "has_pre": has_pre,
-                    "has_post": has_post,
-                    "params": _extract_params(node),
-                    "return_type": _extract_return_type(node),
-                })
+                functions.append(
+                    {
+                        "name": node.name,
+                        "lineno": node.lineno,
+                        "has_pre": has_pre,
+                        "has_post": has_post,
+                        "params": _extract_params(node),
+                        "return_type": _extract_return_type(node),
+                    }
+                )
     return functions
 
 
-@pre(lambda node: isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and hasattr(node, "args"))
+@pre(
+    lambda node: isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and hasattr(node, "args")
+)
 @post(lambda result: isinstance(result, list))
 def _extract_params(node: ast.FunctionDef | ast.AsyncFunctionDef) -> list[dict[str, str]]:
     """Extract parameter names and type annotations from function node."""
@@ -280,7 +286,11 @@ def _extract_return_type(node: ast.FunctionDef | ast.AsyncFunctionDef) -> str | 
     return None
 
 
-@pre(lambda func, strategies, max_examples=100: callable(func) and isinstance(strategies, dict))
+@pre(
+    lambda func, strategies, max_examples=100: callable(func)
+    and isinstance(strategies, dict)
+    and max_examples > 0
+)
 @post(lambda result: result is None or callable(result))
 def build_test_function(
     func: Callable,
@@ -366,25 +376,37 @@ def _skip_result(name: str, reason: str) -> PropertyTestResult:
 
 # Skip patterns for untestable error detection
 _SKIP_PATTERNS = (
-    "Nothing", "NoSuchExample", "filter_too_much", "Could not resolve",
-    "validation error", "missing", "positional argument", "Unable to satisfy",
+    "Nothing",
+    "NoSuchExample",
+    "filter_too_much",
+    "Could not resolve",
+    "validation error",
+    "missing",
+    "positional argument",
+    "Unable to satisfy",
     "has no attribute 'check'",  # invar_runtime contracts, not deal contracts
 )
 
 
-@pre(lambda err_str, func_name, max_examples: len(err_str) > 0 and len(func_name) > 0 and max_examples > 0)
+@pre(
+    lambda err_str, func_name, max_examples: len(err_str) > 0
+    and len(func_name) > 0
+    and max_examples > 0
+)
 @post(lambda result: isinstance(result, PropertyTestResult))
-def _handle_test_exception(
-    err_str: str, func_name: str, max_examples: int
-) -> PropertyTestResult:
+def _handle_test_exception(err_str: str, func_name: str, max_examples: int) -> PropertyTestResult:
     """Handle exception from property test, returning skip or failure result."""
     # Check for invar_runtime contracts (deal.cases requires deal contracts)
     if "has no attribute 'check'" in err_str:
-        return _skip_result(func_name, "Skipped: uses invar_runtime (deal.cases requires deal contracts)")
+        return _skip_result(
+            func_name, "Skipped: uses invar_runtime (deal.cases requires deal contracts)"
+        )
     if any(p in err_str for p in _SKIP_PATTERNS):
         return _skip_result(func_name, "Skipped: untestable types")
     seed = _extract_hypothesis_seed(err_str)
-    return PropertyTestResult(func_name, passed=False, examples_run=max_examples, error=err_str, seed=seed)
+    return PropertyTestResult(
+        func_name, passed=False, examples_run=max_examples, error=err_str, seed=seed
+    )
 
 
 @pre(lambda func, max_examples: callable(func) and max_examples > 0)
@@ -424,7 +446,9 @@ def run_property_test(func: Callable, max_examples: int = 100) -> PropertyTestRe
     except deal.PostContractError as e:
         err_str = str(e)
         seed = _extract_hypothesis_seed(err_str)
-        return PropertyTestResult(func_name, passed=False, examples_run=max_examples, error=err_str, seed=seed)
+        return PropertyTestResult(
+            func_name, passed=False, examples_run=max_examples, error=err_str, seed=seed
+        )
     except ImportError:
         pass  # Fall through to custom strategy approach
     except Exception as e:

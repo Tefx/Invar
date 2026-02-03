@@ -8,7 +8,7 @@ import re
 from deal import post, pre
 
 
-@pre(lambda tree: isinstance(tree, ast.AST) and hasattr(tree, '__class__'))
+@pre(lambda tree: isinstance(tree, ast.AST) and hasattr(tree, "__class__"))
 @post(lambda result: result is None or isinstance(result, ast.Lambda))
 def find_lambda(tree: ast.Expression) -> ast.Lambda | None:
     """Find the lambda node in an expression tree.
@@ -114,7 +114,7 @@ def extract_func_param_names(signature: str) -> list[str] | None:
     return params
 
 
-@pre(lambda node: isinstance(node, ast.expr) and hasattr(node, '__class__'))
+@pre(lambda node: isinstance(node, ast.expr) and hasattr(node, "__class__"))
 @post(lambda result: isinstance(result, set))
 def extract_used_names(node: ast.expr) -> set[str]:
     """Extract all variable names used in an expression (Load context).

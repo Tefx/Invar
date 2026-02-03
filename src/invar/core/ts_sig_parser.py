@@ -188,7 +188,9 @@ def extract_ts_signatures(source: str) -> list[TSSymbol]:
         # Find actual class line (skip decorators)
         match_text = match.group(0)
         class_keyword_pos = match_text.find("class ")
-        actual_start = match.start() + class_keyword_pos if class_keyword_pos >= 0 else match.start()
+        actual_start = (
+            match.start() + class_keyword_pos if class_keyword_pos >= 0 else match.start()
+        )
         line = get_line_number(actual_start)
         line_content = lines[line - 1].strip() if line <= len(lines) else ""
         signature = line_content.rstrip("{").rstrip()
@@ -241,11 +243,13 @@ def extract_ts_signatures(source: str) -> list[TSSymbol]:
     return symbols
 
 
-@pre(lambda symbols, file_path="": all(s.line > 0 for s in symbols))  # All symbols have valid line numbers
+@pre(
+    lambda symbols, file_path="": isinstance(symbols, list)
+    and isinstance(file_path, str)
+    and all(s.line > 0 for s in symbols)
+)  # All symbols have valid line numbers
 @post(lambda result: "file" in result and "symbols" in result)
-def format_ts_signatures_json(
-    symbols: list[TSSymbol], file_path: str = ""
-) -> dict:
+def format_ts_signatures_json(symbols: list[TSSymbol], file_path: str = "") -> dict:
     """Format TypeScript symbols as JSON output.
 
     Args:
@@ -277,11 +281,13 @@ def format_ts_signatures_json(
     }
 
 
-@pre(lambda symbols, file_path="": all(s.line > 0 for s in symbols))  # All symbols have valid line numbers
+@pre(
+    lambda symbols, file_path="": isinstance(symbols, list)
+    and isinstance(file_path, str)
+    and all(s.line > 0 for s in symbols)
+)  # All symbols have valid line numbers
 @post(lambda result: len(result) > 0)  # Always produces output (at least header)
-def format_ts_signatures_text(
-    symbols: list[TSSymbol], file_path: str = ""
-) -> str:
+def format_ts_signatures_text(symbols: list[TSSymbol], file_path: str = "") -> str:
     """Format TypeScript symbols as human-readable text.
 
     Args:
@@ -303,7 +309,9 @@ def format_ts_signatures_text(
         lines.append(f"  {symbol.signature}")
         if symbol.docstring:
             # Truncate long docstrings
-            doc = symbol.docstring[:100] + "..." if len(symbol.docstring) > 100 else symbol.docstring
+            doc = (
+                symbol.docstring[:100] + "..." if len(symbol.docstring) > 100 else symbol.docstring
+            )
             lines.append(f"  /** {doc} */")
         lines.append("")
 

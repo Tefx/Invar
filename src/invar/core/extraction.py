@@ -32,9 +32,16 @@ def _build_call_graph(funcs: dict[str, Symbol]) -> dict[str, set[str]]:
     return graph
 
 
-@pre(lambda start, graph, visited: start and start in graph)  # Start must exist in graph
+@pre(
+    lambda start, graph, visited: start
+    and start in graph
+    and isinstance(graph, dict)
+    and isinstance(visited, set)
+)  # Start must exist in graph
 @post(lambda result: len(result) >= 1 or not result)  # At least 1 if found, else empty
-def _find_connected_component(start: str, graph: dict[str, set[str]], visited: set[str]) -> list[str]:
+def _find_connected_component(
+    start: str, graph: dict[str, set[str]], visited: set[str]
+) -> list[str]:
     """BFS to find all functions connected to start.
 
     >>> g = {"a": {"b"}, "b": {"a"}, "c": set()}
@@ -97,17 +104,24 @@ def find_extractable_groups(file_info: FileInfo) -> list[dict]:
         total_lines = sum(funcs[n].end_line - funcs[n].line + 1 for n in component)
         deps = _get_group_dependencies(component, funcs, file_info.imports)
 
-        groups.append({
-            "functions": sorted(component),
-            "lines": total_lines,
-            "dependencies": sorted(deps),
-        })
+        groups.append(
+            {
+                "functions": sorted(component),
+                "lines": total_lines,
+                "dependencies": sorted(deps),
+            }
+        )
 
     groups.sort(key=lambda g: -g["lines"])
     return groups
 
 
-@pre(lambda func_names, funcs, file_imports: all(n in funcs for n in func_names if n))
+@pre(
+    lambda func_names, funcs, file_imports: isinstance(func_names, list)
+    and isinstance(funcs, dict)
+    and isinstance(file_imports, list)
+    and all(n in funcs for n in func_names if n)
+)
 @post(lambda result: isinstance(result, set))
 def _get_group_dependencies(
     func_names: list[str],
@@ -135,7 +149,9 @@ def _get_group_dependencies(
     return deps.intersection(set(file_imports)) if file_imports else deps
 
 
-@pre(lambda file_info, max_groups=3: max_groups >= 1)  # At least 1 group
+@pre(
+    lambda file_info, max_groups=3: isinstance(file_info, FileInfo) and max_groups >= 1
+)  # At least 1 group
 def format_extraction_hint(file_info: FileInfo, max_groups: int = 3) -> str:
     """
     Format extraction suggestions for file_size_warning.

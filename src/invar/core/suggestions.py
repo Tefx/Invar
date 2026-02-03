@@ -35,7 +35,7 @@ CONSTRAINT_PATTERNS: dict[str, list[str]] = {
 # Return-type-aware @post patterns for redundant_type_contract suggestions
 RETURN_TYPE_POST_PATTERNS: dict[str, str] = {
     "list[Violation]": '@post(lambda result: all(v.rule == "RULE_NAME" for v in result))',
-    "list": '@post(lambda result: all(<predicate> for item in result))',
+    "list": "@post(lambda result: all(<predicate> for item in result))",
     "dict": "@post(lambda result: all(isinstance(k, <type>) for k in result))",
     "set": "@post(lambda result: all(<predicate> for item in result))",
     "int": "@post(lambda result: result >= 0)",
@@ -331,11 +331,18 @@ _VIOLATION_PREFIXES = {
     "missing_contract": ("Add: ", "Add: "),
     "empty_contract": ("Replace with: ", "Replace with: "),
     "redundant_type_contract": ("Replace with business logic: ", "Replace with: "),
-    "semantic_tautology": ("Replace tautology with meaningful constraint: ", "Replace tautology with: "),
+    "semantic_tautology": (
+        "Replace tautology with meaningful constraint: ",
+        "Replace tautology with: ",
+    ),
 }
 
 
-@pre(lambda prefix, suggestion, patterns: bool(prefix) and bool(suggestion))
+@pre(
+    lambda prefix, suggestion, patterns: bool(prefix)
+    and bool(suggestion)
+    and isinstance(patterns, str)
+)
 @post(lambda result: isinstance(result, str) and len(result) > 0)
 def _format_with_patterns(prefix: str, suggestion: str, patterns: str) -> str:
     """Format suggestion with optional patterns.
@@ -350,7 +357,8 @@ def _format_with_patterns(prefix: str, suggestion: str, patterns: str) -> str:
 
 
 @pre(
-    lambda symbol, violation_type: violation_type
+    lambda symbol, violation_type: symbol is not None
+    and violation_type
     in ("missing_contract", "empty_contract", "redundant_type_contract", "semantic_tautology", "")
 )
 def format_suggestion_for_violation(symbol: Symbol, violation_type: str) -> str:

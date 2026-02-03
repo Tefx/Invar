@@ -102,7 +102,7 @@ class NonEmptyDetector(BaseDetector):
 
         return suggestions
 
-    @pre(lambda self, node, file_path: len(file_path) > 0)
+    @pre(lambda self, node, file_path: node is not None and len(file_path) > 0)
     def _check_function(
         self, node: ast.FunctionDef | ast.AsyncFunctionDef, file_path: str
     ) -> PatternSuggestion | None:
@@ -173,9 +173,7 @@ class NonEmptyDetector(BaseDetector):
         return checks
 
     @pre(lambda self, stmts, checks: stmts is not None and checks is not None)
-    def _collect_empty_checks(
-        self, stmts: list[ast.stmt], checks: list[tuple[str, int]]
-    ) -> None:
+    def _collect_empty_checks(self, stmts: list[ast.stmt], checks: list[tuple[str, int]]) -> None:
         """
         Recursively collect empty checks, avoiding nested functions.
 
@@ -260,7 +258,7 @@ class NonEmptyDetector(BaseDetector):
         """
         return any(isinstance(stmt, (ast.Raise, ast.Return)) for stmt in body)
 
-    @pre(lambda self, node, var_name: len(var_name) > 0)
+    @pre(lambda self, node, var_name: node is not None and len(var_name) > 0)
     def _get_param_type(
         self, node: ast.FunctionDef | ast.AsyncFunctionDef, var_name: str
     ) -> str | None:
@@ -278,7 +276,11 @@ class NonEmptyDetector(BaseDetector):
                 return self._annotation_to_str(arg.annotation)
         return None
 
-    @pre(lambda self, _node, var_name, param_type: len(var_name) > 0)
+    @pre(
+        lambda self, _node, var_name, param_type=None: _node is not None
+        and len(var_name) > 0
+        and (param_type is None or isinstance(param_type, str))
+    )
     @post(lambda result: result in Confidence)
     def _calculate_confidence(
         self,
@@ -305,7 +307,10 @@ class NonEmptyDetector(BaseDetector):
 
         return Confidence.LOW
 
-    @pre(lambda self, var_name, param_type: len(var_name) > 0)
+    @pre(
+        lambda self, var_name, param_type=None: len(var_name) > 0
+        and (param_type is None or isinstance(param_type, str))
+    )
     @post(lambda result: len(result) > 0 and "if not" in result)
     def _format_check(self, var_name: str, param_type: str | None) -> str:
         """

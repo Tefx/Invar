@@ -22,69 +22,71 @@ if TYPE_CHECKING:
     from invar.core.models import Symbol
 
 # I/O indicators that mark a function as legitimately in Shell
-IO_INDICATORS: frozenset[str] = frozenset([
-    # File operations
-    ".read(",
-    ".write(",
-    ".read_text(",
-    ".write_text(",
-    ".read_bytes(",
-    ".write_bytes(",
-    "open(",
-    "Path(",
-    ".exists()",
-    ".is_file()",
-    ".is_dir()",
-    ".rglob(",
-    ".glob(",
-    ".iterdir(",
-    ".mkdir(",
-    ".unlink(",
-    "shutil.",
-    "tempfile.",
-    # Process operations
-    "subprocess.",
-    "os.system(",
-    "os.popen(",
-    "os.getenv(",
-    "os.environ",
-    # Terminal/System
-    "sys.stdout",
-    "sys.stderr",
-    "sys.stdin",
-    ".isatty()",
-    # Module loading
-    "importlib.",
-    "exec_module(",
-    # Network operations
-    "requests.",
-    "aiohttp.",
-    "httpx.",
-    "urllib.",
-    # Console output
-    "print(",
-    "console.",
-    "Console(",
-    "typer.",
-    "click.",
-    "rich.",
-    # Result wrapping (Shell's primary job)
-    "Success(",
-    "Failure(",
-    "Result[",
-    # Database
-    "cursor.",
-    "connection.",
-    "session.",
-    # Logging
-    "logger.",
-    "logging.",
-    # Serialization (often to files)
-    "json.dump(",
-    "json.load(",
-    "toml.load(",
-    "yaml.load(",
-])
+IO_INDICATORS: frozenset[str] = frozenset(
+    [
+        # File operations
+        ".read(",
+        ".write(",
+        ".read_text(",
+        ".write_text(",
+        ".read_bytes(",
+        ".write_bytes(",
+        "open(",
+        "Path(",
+        ".exists()",
+        ".is_file()",
+        ".is_dir()",
+        ".rglob(",
+        ".glob(",
+        ".iterdir(",
+        ".mkdir(",
+        ".unlink(",
+        "shutil.",
+        "tempfile.",
+        # Process operations
+        "subprocess.",
+        "os.system(",
+        "os.popen(",
+        "os.getenv(",
+        "os.environ",
+        # Terminal/System
+        "sys.stdout",
+        "sys.stderr",
+        "sys.stdin",
+        ".isatty()",
+        # Module loading
+        "importlib.",
+        "exec_module(",
+        # Network operations
+        "requests.",
+        "aiohttp.",
+        "httpx.",
+        "urllib.",
+        # Console output
+        "print(",
+        "console.",
+        "Console(",
+        "typer.",
+        "click.",
+        "rich.",
+        # Result wrapping (Shell's primary job)
+        "Success(",
+        "Failure(",
+        "Result[",
+        # Database
+        "cursor.",
+        "connection.",
+        "session.",
+        # Logging
+        "logger.",
+        "logging.",
+        # Serialization (often to files)
+        "json.dump(",
+        "json.load(",
+        "toml.load(",
+        "yaml.load(",
+    ]
+)
 
 # Marker pattern to exempt functions from complexity check
 COMPLEXITY_MARKER_PATTERN = re.compile(r"#\s*@shell_complexity\s*:")
@@ -111,7 +113,7 @@ def has_io_operations(source: str) -> bool:
     return any(indicator in source for indicator in IO_INDICATORS)
 
 
-@pre(lambda symbol, source: symbol is not None)  # Symbol must exist
+@pre(lambda symbol, source: symbol is not None and isinstance(source, str))  # Symbol must exist
 def has_orchestration_marker(symbol: Symbol, source: str) -> bool:
     """
     Check if symbol has @shell_orchestration marker comment.
@@ -144,7 +146,7 @@ def has_orchestration_marker(symbol: Symbol, source: str) -> bool:
     return bool(ORCHESTRATION_MARKER_PATTERN.search(context))
 
 
-@pre(lambda symbol, source: symbol is not None)  # Symbol must exist
+@pre(lambda symbol, source: symbol is not None and isinstance(source, str))  # Symbol must exist
 def has_complexity_marker(symbol: Symbol, source: str) -> bool:
     """
     Check if symbol has @shell_complexity marker comment.
@@ -221,7 +223,9 @@ def count_branches(source: str) -> int:
     return count
 
 
-@pre(lambda symbol, file_source: symbol is not None)  # Symbol must exist
+@pre(
+    lambda symbol, file_source: symbol is not None and isinstance(file_source, str)
+)  # Symbol must exist
 def get_symbol_source(symbol: Symbol, file_source: str) -> str:
     """
     Extract the source code for a specific symbol.

@@ -112,7 +112,11 @@ def crosshair_output(
     )
 
 
-@pre(lambda pattern, min_occurrences, max_occurrences: len(pattern) > 0 and min_occurrences >= 0)
+@pre(
+    lambda pattern, min_occurrences, max_occurrences: len(pattern) > 0
+    and min_occurrences >= 0
+    and max_occurrences >= min_occurrences
+)
 @post(lambda result: result is not None)
 def text_with_pattern(
     pattern: str,
@@ -154,9 +158,7 @@ def text_with_pattern(
     )
 
     # Combine into full output
-    pattern_lines = st.lists(
-        pattern_line, min_size=min_occurrences, max_size=max_occurrences
-    )
+    pattern_lines = st.lists(pattern_line, min_size=min_occurrences, max_size=max_occurrences)
     noise_lines = st.lists(noise_line, min_size=0, max_size=10)
 
     # Note: Hypothesis will automatically explore different orderings of the lines,

@@ -4,6 +4,7 @@ Hypothesis strategy generation from type annotations and @pre contracts.
 Core module: converts Python types and @pre bounds to Hypothesis strategies.
 Part of DX-12: Hypothesis as CrossHair fallback.
 """
+# @invar:allow file_size: Strategy gen inherently complex, extraction increases coupling
 
 from __future__ import annotations
 
@@ -136,7 +137,9 @@ def _strategy_for_dict(args: tuple, strategy_fn: Callable) -> StrategySpec:
 def _strategy_for_set(args: tuple, strategy_fn: Callable) -> StrategySpec:
     """Generate strategy for set type."""
     element_type = args[0] if args else int
-    return StrategySpec("frozensets", {"elements": strategy_fn(element_type).to_code()}, f"Sets of {element_type}")
+    return StrategySpec(
+        "frozensets", {"elements": strategy_fn(element_type).to_code()}, f"Sets of {element_type}"
+    )
 
 
 @post(lambda result: result is None or isinstance(result, StrategySpec))
@@ -149,7 +152,11 @@ def _strategy_for_numpy(hint: type) -> StrategySpec | None:
     if hint is np.ndarray or (hasattr(hint, "__name__") and "ndarray" in str(hint)):
         return StrategySpec(
             "arrays",
-            {"dtype": "np.float64", "shape": "st.integers(1, 100)", "elements": "st.floats(-1e6, 1e6, allow_nan=False)"},
+            {
+                "dtype": "np.float64",
+                "shape": "st.integers(1, 100)",
+                "elements": "st.floats(-1e6, 1e6, allow_nan=False)",
+            },
             "NumPy float64 array",
         )
     return None
@@ -182,7 +189,9 @@ def strategy_from_type(hint: type) -> StrategySpec:
     if hint is list:
         return StrategySpec("lists", {"elements": "st.integers()"}, "Lists of int")
     if hint is dict:
-        return StrategySpec("dictionaries", {"keys": "st.text()", "values": "st.integers()"}, "Dict")
+        return StrategySpec(
+            "dictionaries", {"keys": "st.text()", "values": "st.integers()"}, "Dict"
+        )
     if hint is tuple:
         return StrategySpec("tuples", {}, "Tuple")
     if hint is set:
@@ -310,7 +319,12 @@ def infer_strategies_for_function(func: Callable) -> dict[str, StrategySpec]:
     return result
 
 
-@pre(lambda func, type_specs, user_strategies, pre_sources: callable(func))
+@pre(
+    lambda func, type_specs, user_strategies, pre_sources: callable(func)
+    and isinstance(type_specs, dict)
+    and isinstance(user_strategies, dict)
+    and isinstance(pre_sources, list)
+)
 @post(lambda result: isinstance(result, dict))
 def _refine_all_strategies(
     func: Callable,
@@ -467,7 +481,12 @@ def _extract_pre_sources(func: Callable) -> list[str]:
     return pre_sources
 
 
-@post(lambda result: all(k in ("min_value", "max_value", "min_size", "max_size", "exclude_min", "exclude_max") for k in result))
+@post(
+    lambda result: all(
+        k in ("min_value", "max_value", "min_size", "max_size", "exclude_min", "exclude_max")
+        for k in result
+    )
+)
 def _bounds_to_strategy_kwargs(bounds: dict[str, Any], strategy_name: str) -> dict[str, Any]:
     """Convert bound constraints to Hypothesis strategy kwargs."""
     kwargs = {}

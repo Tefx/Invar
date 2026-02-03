@@ -15,9 +15,14 @@ if TYPE_CHECKING:
     from invar.core.doc_parser import Section
 
 
-@pre(lambda source, section, new_content, keep_heading=True: section.line_start >= 1)
-@pre(lambda source, section, new_content, keep_heading=True: section.line_end >= section.line_start)
-@pre(lambda source, section, new_content, keep_heading=True: section.line_end <= len(source.split("\n")))
+@pre(
+    lambda source, section, new_content, keep_heading=True: len(source) > 0
+    and isinstance(new_content, str)
+    and isinstance(keep_heading, bool)
+    and section.line_start >= 1
+    and section.line_end >= section.line_start
+    and section.line_end <= len(source.split("\n"))
+)
 def replace_section(
     source: str,
     section: Section,
@@ -73,9 +78,13 @@ def replace_section(
     return "\n".join(result_lines)
 
 
-@pre(lambda source, anchor, content, position="after": anchor.line_start >= 1)
-@pre(lambda source, anchor, content, position="after": anchor.line_end <= len(source.split("\n")))
-@pre(lambda source, anchor, content, position="after": position in ("before", "after", "first_child", "last_child"))
+@pre(
+    lambda source, anchor, content, position="after": len(source) > 0
+    and isinstance(content, str)
+    and anchor.line_start >= 1
+    and anchor.line_end <= len(source.split("\n"))
+    and position in ("before", "after", "first_child", "last_child")
+)
 def insert_section(
     source: str,
     anchor: Section,
@@ -132,9 +141,13 @@ def insert_section(
     return "\n".join(result_lines)
 
 
-@pre(lambda source, section, include_children=True: section.line_start >= 1)
-@pre(lambda source, section, include_children=True: section.line_end >= section.line_start)
-@pre(lambda source, section, include_children=True: section.line_end <= len(source.split("\n")))
+@pre(
+    lambda source, section, include_children=True: len(source) > 0
+    and isinstance(include_children, bool)
+    and section.line_start >= 1
+    and section.line_end >= section.line_start
+    and section.line_end <= len(source.split("\n"))
+)
 def delete_section(source: str, section: Section, include_children: bool = True) -> str:
     """Delete a section from the document.
 

@@ -76,7 +76,7 @@ def is_redundant_type_contract(expression: str, annotations: dict[str, str]) -> 
         return False
 
 
-@pre(lambda node: isinstance(node, ast.expr) and hasattr(node, '__class__'))
+@pre(lambda node: isinstance(node, ast.expr) and hasattr(node, "__class__"))
 @post(lambda result: result is None or isinstance(result, list))
 def _extract_isinstance_checks(node: ast.expr) -> list[tuple[str, str]] | None:
     """Extract isinstance checks. Returns None if other logic present.
@@ -84,17 +84,21 @@ def _extract_isinstance_checks(node: ast.expr) -> list[tuple[str, str]] | None:
     Conservative: returns None for complex expressions (nested BoolOp, etc.)
     to avoid false positives when detecting redundant type contracts.
     """
-    if isinstance(node, ast.Call) and hasattr(node, 'func'):
+    if isinstance(node, ast.Call) and hasattr(node, "func"):
         check = _parse_isinstance_call(node)
         return [check] if check else None
-    if isinstance(node, ast.BoolOp) and hasattr(node, 'op') and isinstance(node.op, ast.And):
-        valid_calls = [v for v in node.values if isinstance(v, ast.Call) and hasattr(v, 'func') and hasattr(v, 'args')]
+    if isinstance(node, ast.BoolOp) and hasattr(node, "op") and isinstance(node.op, ast.And):
+        valid_calls = [
+            v
+            for v in node.values
+            if isinstance(v, ast.Call) and hasattr(v, "func") and hasattr(v, "args")
+        ]
         checks = [_parse_isinstance_call(v) for v in valid_calls]
         return checks if len(checks) == len(node.values) and all(checks) else None
     return None
 
 
-@pre(lambda node: isinstance(node, ast.Call) and hasattr(node, 'func') and hasattr(node, 'args'))
+@pre(lambda node: isinstance(node, ast.Call) and hasattr(node, "func") and hasattr(node, "args"))
 @post(lambda result: result is None or (isinstance(result, tuple) and len(result) == 2))
 def _parse_isinstance_call(node: ast.Call) -> tuple[str, str] | None:
     """Parse isinstance(x, Type) call. Returns (param, type) or None."""
@@ -353,6 +357,9 @@ def check_partial_contract(file_info: FileInfo, config: RuleConfig) -> list[Viol
     - param_mismatch: lambda param COUNT != function param count (ERROR)
     - partial_contract: lambda has all params but doesn't USE all (WARN)
 
+    Note: For methods, 'self' and 'cls' are automatically excluded from unused params check,
+    since these are instance/class references that rarely need @pre constraints.
+
     Examples:
         >>> from invar.core.models import FileInfo, Symbol, SymbolKind, Contract, RuleConfig
         >>> c = Contract(kind="pre", expression="lambda x, y: x > 0", line=1)
@@ -364,6 +371,23 @@ def check_partial_contract(file_info: FileInfo, config: RuleConfig) -> list[Viol
         <Severity.WARNING: 'warning'>
         >>> "y" in vs[0].message
         True
+
+        Method's self is excluded from unused check:
+        >>> c2 = Contract(kind="pre", expression="lambda self, x, y: x > 0", line=1)
+        >>> m = Symbol(name="calc", kind=SymbolKind.METHOD, line=1, end_line=5, signature="(self, x: int, y: int) -> int", contracts=[c2])
+        >>> vs2 = check_partial_contract(FileInfo(path="c.py", lines=10, symbols=[m], is_core=True), RuleConfig())
+        >>> len(vs2)
+        1
+        >>> "self" in vs2[0].message  # self should NOT be reported
+        False
+        >>> "y" in vs2[0].message  # y should still be reported
+        True
+
+        When only self is unused, no violation:
+        >>> c3 = Contract(kind="pre", expression="lambda self, x: x > 0", line=1)
+        >>> m2 = Symbol(name="calc", kind=SymbolKind.METHOD, line=1, end_line=5, signature="(self, x: int) -> int", contracts=[c3])
+        >>> check_partial_contract(FileInfo(path="c.py", lines=10, symbols=[m2], is_core=True), RuleConfig())
+        []
     """
     violations: list[Violation] = []
     if not file_info.is_core:
@@ -376,6 +400,10 @@ def check_partial_contract(file_info: FileInfo, config: RuleConfig) -> list[Viol
             if contract.kind != "pre":
                 continue
             has_unused, unused, used = has_unused_params(contract.expression, symbol.signature)
+            # For methods, exclude self/cls from unused check (they rarely need @pre constraints)
+            if symbol.kind == SymbolKind.METHOD:
+                unused = [p for p in unused if p not in ("self", "cls")]
+                has_unused = len(unused) > 0
             if has_unused:
                 kind = "Method" if symbol.kind == SymbolKind.METHOD else "Function"
                 unused_str = ", ".join(f"'{p}'" for p in unused)
@@ -429,7 +457,11 @@ def check_skip_without_reason(file_info: FileInfo, config: RuleConfig) -> list[V
 
     for line_num, line in enumerate(source.split("\n"), 1):
         # Check for bare @skip_property_test, empty parens, or empty string reason
-        if bare_pattern.match(line) or no_reason_pattern.match(line) or empty_string_pattern.match(line):
+        if (
+            bare_pattern.match(line)
+            or no_reason_pattern.match(line)
+            or empty_string_pattern.match(line)
+        ):
             violations.append(
                 Violation(
                     rule="skip_without_reason",

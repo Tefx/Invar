@@ -101,9 +101,11 @@ def _slugify(title: str) -> str:
     return slug
 
 
-@skip_property_test("crosshair_incompatible: Unicode character validation conflicts with symbolic execution")  # type: ignore[untyped-decorator]
+@skip_property_test(
+    "crosshair_incompatible: Unicode character validation conflicts with symbolic execution"
+)  # type: ignore[untyped-decorator]
 @pre(lambda text: len(text) <= 1000)
-@post(lambda result: result == '' or all(c.isalnum() or c == '_' or ord(c) > 127 for c in result))
+@post(lambda result: result == "" or all(c.isalnum() or c == "_" or ord(c) > 127 for c in result))
 def _normalize_for_fuzzy(text: str) -> str:
     """
     Normalize text for Unicode-aware fuzzy matching.
@@ -128,9 +130,9 @@ def _normalize_for_fuzzy(text: str) -> str:
         'apiv20'
     """
     # Convert ASCII to lowercase, keep Unicode as-is
-    ascii_lower = ''.join(c.lower() if c.isascii() else c for c in text)
+    ascii_lower = "".join(c.lower() if c.isascii() else c for c in text)
     # Remove non-word-chars, but keep Unicode letters/digits (via re.UNICODE)
-    return re.sub(r'[^\w]', '', ascii_lower, flags=re.UNICODE)
+    return re.sub(r"[^\w]", "", ascii_lower, flags=re.UNICODE)
 
 
 @pre(lambda sections: all(1 <= s.level <= 6 for s in sections))  # Valid heading levels
@@ -313,7 +315,7 @@ def parse_toc(source: str) -> DocumentToc:
     return DocumentToc(sections=root_sections, frontmatter=frontmatter)
 
 
-@pre(lambda sections, target_line: target_line >= 1)
+@pre(lambda sections, target_line: isinstance(sections, list) and target_line >= 1)
 @post(lambda result: result is None or isinstance(result, Section))
 def _find_by_line(sections: list[Section], target_line: int) -> Section | None:
     """Find section by line number.
@@ -337,7 +339,7 @@ def _find_by_line(sections: list[Section], target_line: int) -> Section | None:
     return None
 
 
-@pre(lambda sections, path: len(path) > 0 and path.startswith("#"))
+@pre(lambda sections, path: isinstance(sections, list) and len(path) > 0 and path.startswith("#"))
 @post(lambda result: result is None or isinstance(result, Section))
 def _find_by_index(sections: list[Section], path: str) -> Section | None:
     """Find section by index path (#0/#1/#2).
@@ -378,7 +380,7 @@ def _find_by_index(sections: list[Section], path: str) -> Section | None:
 
 
 @skip_property_test("crosshair_incompatible: Calls _normalize_for_fuzzy with Unicode validation")  # type: ignore[untyped-decorator]
-@pre(lambda sections, path: len(path) > 0)
+@pre(lambda sections, path: isinstance(sections, list) and len(path) > 0)
 @post(lambda result: result is None or isinstance(result, Section))
 def _find_by_slug_or_fuzzy(sections: list[Section], path: str) -> Section | None:
     """Find section by slug path or fuzzy match.
@@ -433,7 +435,7 @@ def _find_by_slug_or_fuzzy(sections: list[Section], path: str) -> Section | None
 
 
 @skip_property_test("crosshair_incompatible: Calls _find_by_slug_or_fuzzy with Unicode validation")  # type: ignore[untyped-decorator]
-@pre(lambda sections, path: len(path) > 0)
+@pre(lambda sections, path: isinstance(sections, list) and len(path) > 0)
 @post(lambda result: result is None or isinstance(result, Section))
 def find_section(sections: list[Section], path: str) -> Section | None:
     """Find section by path (slug, fuzzy, index, or line anchor).
@@ -515,9 +517,13 @@ def _get_last_line(section: Section) -> int:
     return _get_last_line(last_child)
 
 
-@pre(lambda source, section, include_children=True: section.line_start >= 1)
-@pre(lambda source, section, include_children=True: section.line_end >= section.line_start)
-@pre(lambda source, section, include_children=True: section.line_end <= len(source.split("\n")))  # Bounds check
+@pre(
+    lambda source, section, include_children=True: len(source) > 0
+    and isinstance(include_children, bool)
+    and section.line_start >= 1
+    and section.line_end >= section.line_start
+    and section.line_end <= len(source.split("\n"))
+)
 def extract_content(source: str, section: Section, include_children: bool = True) -> str:
     """Extract section content from source.
 

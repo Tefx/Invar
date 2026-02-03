@@ -15,7 +15,11 @@ from deal import post, pre
 from invar.core.models import GuardReport, RuleConfig, RuleExclusion
 
 
-@pre(lambda report, strict: report.files_checked >= 0 and report.errors >= 0)
+@pre(
+    lambda report, strict: report.files_checked >= 0
+    and report.errors >= 0
+    and isinstance(strict, bool)
+)
 @post(lambda result: result in (0, 1))
 def get_exit_code(report: GuardReport, strict: bool) -> int:
     """
@@ -43,6 +47,10 @@ def get_exit_code(report: GuardReport, strict: bool) -> int:
     doctest_passed=True,
     crosshair_passed=True,
     property_passed=True: report.files_checked >= 0
+    and isinstance(strict, bool)
+    and isinstance(doctest_passed, bool)
+    and isinstance(crosshair_passed, bool)
+    and isinstance(property_passed, bool)
 )
 @post(lambda result: result in ("passed", "failed"))
 def get_combined_status(
@@ -89,7 +97,10 @@ def get_combined_status(
     return "passed"
 
 
-@pre(lambda data, source: source in ("pyproject", "invar", "invar_dir", "default"))
+@pre(
+    lambda data, source: isinstance(data, dict)
+    and source in ("pyproject", "invar", "invar_dir", "default")
+)
 @post(lambda result: isinstance(result, dict))
 def extract_guard_section(data: dict[str, Any], source: str) -> dict[str, Any]:
     """
@@ -121,7 +132,7 @@ def extract_guard_section(data: dict[str, Any], source: str) -> dict[str, Any]:
     return result if isinstance(result, dict) else {}
 
 
-@pre(lambda config, key: len(key) > 0)
+@pre(lambda config, key: isinstance(config, dict) and len(key) > 0)
 @post(lambda result: result is None or isinstance(result, bool))
 def _get_bool(config: dict[str, Any], key: str) -> bool | None:
     """
@@ -138,7 +149,7 @@ def _get_bool(config: dict[str, Any], key: str) -> bool | None:
     return None
 
 
-@pre(lambda config, key: len(key) > 0)
+@pre(lambda config, key: isinstance(config, dict) and len(key) > 0)
 @post(lambda result: result is None or isinstance(result, int))
 def _get_int(config: dict[str, Any], key: str) -> int | None:
     """
@@ -155,7 +166,7 @@ def _get_int(config: dict[str, Any], key: str) -> int | None:
     return None
 
 
-@pre(lambda config, key: len(key) > 0)
+@pre(lambda config, key: isinstance(config, dict) and len(key) > 0)
 @post(lambda result: result is None or isinstance(result, float))
 def _get_float(config: dict[str, Any], key: str) -> float | None:
     """
@@ -174,7 +185,7 @@ def _get_float(config: dict[str, Any], key: str) -> float | None:
     return None
 
 
-@pre(lambda config, key: len(key) > 0)
+@pre(lambda config, key: isinstance(config, dict) and len(key) > 0)
 @post(lambda result: result is None or isinstance(result, list))
 def _get_str_list(config: dict[str, Any], key: str) -> list[str] | None:
     """
@@ -301,7 +312,7 @@ def parse_guard_config(guard_config: dict[str, Any]) -> RuleConfig:
         return RuleConfig()
 
 
-@pre(lambda file_path, patterns: len(file_path) > 0)
+@pre(lambda file_path, patterns: len(file_path) > 0 and isinstance(patterns, list))
 def matches_pattern(file_path: str, patterns: list[str]) -> bool:
     """
     Check if a file path matches any of the glob patterns.
@@ -331,7 +342,7 @@ def matches_pattern(file_path: str, patterns: list[str]) -> bool:
     return False
 
 
-@pre(lambda file_path, prefixes: len(file_path) > 0)
+@pre(lambda file_path, prefixes: len(file_path) > 0 and isinstance(prefixes, list))
 def matches_path_prefix(file_path: str, prefixes: list[str]) -> bool:
     """
     Check if file_path starts with any of the given prefixes.
@@ -401,7 +412,7 @@ def match_glob_pattern(file_path: str, pattern: str) -> bool:
     return False
 
 
-@pre(lambda file_path, config: len(file_path) > 0)
+@pre(lambda file_path, config: len(file_path) > 0 and isinstance(config, RuleConfig))
 def get_excluded_rules(file_path: str, config: RuleConfig) -> set[str]:
     """
     Get the set of rules to exclude for a given file path.

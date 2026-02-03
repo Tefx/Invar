@@ -147,11 +147,9 @@ class BaseDetector:
             result = ast.unparse(annotation)
             return result if result else "<unknown>"
 
-    @pre(lambda self, params, type_name: len(type_name) > 0)
+    @pre(lambda self, params, type_name: isinstance(params, list) and len(type_name) > 0)
     @post(lambda result: result >= 0)
-    def count_type_occurrences(
-        self, params: list[tuple[str, str | None]], type_name: str
-    ) -> int:
+    def count_type_occurrences(self, params: list[tuple[str, str | None]], type_name: str) -> int:
         """
         Count how many parameters have a specific type.
 
@@ -203,12 +201,33 @@ class BaseDetector:
         for case in match_node.cases:
             pattern = case.pattern
             if isinstance(pattern, ast.MatchValue):
-                cases.append(ast.unparse(pattern.value) if hasattr(ast, "unparse") else str(pattern.value))
+                cases.append(
+                    ast.unparse(pattern.value) if hasattr(ast, "unparse") else str(pattern.value)
+                )
             elif isinstance(pattern, ast.MatchAs) and pattern.pattern is None:
                 cases.append("_")  # Wildcard
         return cases
 
-    @pre(lambda self, pattern_id, priority, file_path, line, message, current_code, suggested_pattern, confidence, reference_pattern: line > 0)
+    @pre(
+        lambda self,
+        pattern_id,
+        priority,
+        file_path,
+        line,
+        message,
+        current_code,
+        suggested_pattern,
+        confidence,
+        reference_pattern: pattern_id in PatternID
+        and priority in Priority
+        and confidence in Confidence
+        and line > 0
+        and len(file_path) > 0
+        and len(message) > 0
+        and len(current_code) > 0
+        and len(suggested_pattern) > 0
+        and len(reference_pattern) > 0
+    )
     @post(lambda result: result.reference_file == ".invar/examples/functional.py")
     def make_suggestion(
         self,

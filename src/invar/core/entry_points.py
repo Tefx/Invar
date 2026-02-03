@@ -22,46 +22,48 @@ if TYPE_CHECKING:
 
 # Decorator patterns that indicate framework entry points
 # These functions interface with external frameworks and cannot return Result
-ENTRY_POINT_DECORATORS: frozenset[str] = frozenset([
-    # Web frameworks - Flask
-    "app.route",
-    "app.get",
-    "app.post",
-    "app.put",
-    "app.delete",
-    "app.patch",
-    "blueprint.route",
-    "bp.route",
-    # Web frameworks - FastAPI
-    "router.get",
-    "router.post",
-    "router.put",
-    "router.delete",
-    "router.patch",
-    "api_router.get",
-    "api_router.post",
-    "api_router.put",
-    "api_router.delete",
-    # CLI frameworks - Typer
-    "app.command",
-    "app.callback",
-    "typer.command",
-    # CLI frameworks - Click
-    "click.command",
-    "click.group",
-    "cli.command",
-    # Testing - pytest
-    "pytest.fixture",
-    "fixture",
-    # Event handlers
-    "on_event",
-    "app.on_event",
-    "middleware",
-    "app.middleware",
-    # Django
-    "admin.register",
-    "receiver",
-])
+ENTRY_POINT_DECORATORS: frozenset[str] = frozenset(
+    [
+        # Web frameworks - Flask
+        "app.route",
+        "app.get",
+        "app.post",
+        "app.put",
+        "app.delete",
+        "app.patch",
+        "blueprint.route",
+        "bp.route",
+        # Web frameworks - FastAPI
+        "router.get",
+        "router.post",
+        "router.put",
+        "router.delete",
+        "router.patch",
+        "api_router.get",
+        "api_router.post",
+        "api_router.put",
+        "api_router.delete",
+        # CLI frameworks - Typer
+        "app.command",
+        "app.callback",
+        "typer.command",
+        # CLI frameworks - Click
+        "click.command",
+        "click.group",
+        "cli.command",
+        # Testing - pytest
+        "pytest.fixture",
+        "fixture",
+        # Event handlers
+        "on_event",
+        "app.on_event",
+        "middleware",
+        "app.middleware",
+        # Django
+        "admin.register",
+        "receiver",
+    ]
+)
 
 # Explicit marker comment for edge cases
 ENTRY_MARKER_PATTERN = re.compile(r"#\s*@shell:entry\b")
@@ -188,7 +190,6 @@ def is_entry_point(symbol: Symbol, source: str) -> bool:
     return _has_entry_marker(symbol, source)
 
 
-
 @post(lambda result: isinstance(result, str))
 def _decorator_to_string(decorator: ast.AST) -> str:
     """
@@ -215,6 +216,7 @@ def _decorator_to_string(decorator: ast.AST) -> str:
     elif isinstance(decorator, ast.Call):
         return _decorator_to_string(decorator.func)
     return ""
+
 
 @pre(lambda symbol, source: symbol is not None and isinstance(source, str))
 @post(lambda result: isinstance(result, bool))
@@ -320,7 +322,11 @@ def get_symbol_lines(symbol: Symbol) -> int:
     return max(1, symbol.end_line - symbol.line + 1)
 
 
-@pre(lambda symbol, source, rule: symbol is not None and isinstance(rule, str))
+@pre(
+    lambda symbol, source, rule: symbol is not None
+    and isinstance(source, str)
+    and isinstance(rule, str)
+)
 @post(lambda result: isinstance(result, bool))
 def has_allow_marker(symbol: Symbol, source: str, rule: str) -> bool:
     """

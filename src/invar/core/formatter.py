@@ -15,7 +15,7 @@ from invar.core.models import GuardReport, PerceptionMap, Symbol, SymbolRefs, Vi
 from invar.core.rule_meta import get_rule_meta
 
 
-@pre(lambda perception_map, top_n=0: top_n >= 0)
+@pre(lambda perception_map, top_n=0: isinstance(perception_map, PerceptionMap) and top_n >= 0)
 def format_map_text(perception_map: PerceptionMap, top_n: int = 0) -> str:
     """
     Format perception map as plain text.
@@ -137,7 +137,7 @@ def _symbol_refs_to_dict(sr: SymbolRefs) -> dict:
     }
 
 
-@pre(lambda symbol, file_path: len(file_path) > 0)
+@pre(lambda symbol, file_path: isinstance(symbol, Symbol) and len(file_path) > 0)
 def format_signature(symbol: Symbol, file_path: str) -> str:
     """
     Format a single symbol signature.
@@ -153,7 +153,7 @@ def format_signature(symbol: Symbol, file_path: str) -> str:
     return f"{file_path}::{symbol.name}{sig}"
 
 
-@pre(lambda symbols, file_path: len(file_path) > 0)
+@pre(lambda symbols, file_path: isinstance(symbols, list) and len(file_path) > 0)
 def format_signatures_text(symbols: list[Symbol], file_path: str) -> str:
     """
     Format multiple signatures as text.
@@ -168,7 +168,7 @@ def format_signatures_text(symbols: list[Symbol], file_path: str) -> str:
     return "\n".join(lines)
 
 
-@pre(lambda symbols, file_path: len(file_path) > 0)
+@pre(lambda symbols, file_path: isinstance(symbols, list) and len(file_path) > 0)
 def format_signatures_json(symbols: list[Symbol], file_path: str) -> dict:
     """
     Format signatures as JSON-serializable dict.
@@ -199,7 +199,10 @@ def format_signatures_json(symbols: list[Symbol], file_path: str) -> dict:
 # Phase 8.2: Agent-mode formatting
 
 
-@pre(lambda report, combined_status=None: combined_status is None or combined_status in ("passed", "failed"))
+@pre(
+    lambda report, combined_status=None: isinstance(report, GuardReport)
+    and (combined_status is None or combined_status in ("passed", "failed"))
+)
 def format_guard_agent(report: GuardReport, combined_status: str | None = None) -> dict:
     """
     Format Guard report for Agent consumption (Phase 8.2 + DX-26).
@@ -301,7 +304,7 @@ def _violation_to_fix(v: Violation) -> dict:
     return result
 
 
-@pre(lambda suggestion, rule: suggestion is None or isinstance(suggestion, str))
+@pre(lambda suggestion, rule: (suggestion is None or isinstance(suggestion, str)) and len(rule) > 0)
 def _parse_suggestion(suggestion: str | None, rule: str) -> dict | None:
     """Parse suggestion string into structured fix instruction."""
     if not suggestion:

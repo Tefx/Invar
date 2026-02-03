@@ -111,7 +111,10 @@ class CrossHairOutputSpec(FormatSpec):
         """
         return f"{filename}:{line}: error: {error_type} when calling {function}({args})"
 
-    @pre(lambda self, count, include_success, include_errors: count >= 0 and (not include_errors or (len(self.error_types) > 0 and bool(self.error_marker))))
+    @pre(
+        lambda self, count, include_success, include_errors: count >= 0
+        and (not include_errors or (len(self.error_types) > 0 and bool(self.error_marker)))
+    )
     @post(lambda result: isinstance(result, list))
     def generate_output(
         self,
@@ -174,7 +177,9 @@ CROSSHAIR_SPEC = CrossHairOutputSpec()
 PYTEST_SPEC = PytestOutputSpec()
 
 
-@post(lambda result: all(isinstance(line, str) and line.strip() for line in result))  # Non-empty strings
+@post(
+    lambda result: all(isinstance(line, str) and line.strip() for line in result)
+)  # Non-empty strings
 def extract_by_format(text: str, spec: CrossHairOutputSpec) -> list[str]:
     """
     Extract lines matching a format specification.

@@ -61,7 +61,13 @@ def is_semantic_tautology(expression: str) -> tuple[bool, str]:
 
         # DX-38 Tier 1: Check for no-parameter lambda
         args = lambda_node.args
-        if not args.args and not args.posonlyargs and not args.kwonlyargs and not args.vararg and not args.kwarg:
+        if (
+            not args.args
+            and not args.posonlyargs
+            and not args.kwonlyargs
+            and not args.vararg
+            and not args.kwarg
+        ):
             return (True, "contract has no parameters (doesn't validate function inputs)")
 
         return _check_tautology_patterns(lambda_node.body)
@@ -92,9 +98,14 @@ def _check_comparison_patterns(node: ast.expr) -> tuple[bool, str] | None:
     # Length non-negative pattern
     if len(node.comparators) == 1:
         left, op, right = node.left, node.ops[0], node.comparators[0]
-        if (isinstance(left, ast.Call) and isinstance(left.func, ast.Name) and
-            left.func.id == "len" and isinstance(op, ast.GtE) and
-            isinstance(right, ast.Constant) and right.value == 0):
+        if (
+            isinstance(left, ast.Call)
+            and isinstance(left.func, ast.Name)
+            and left.func.id == "len"
+            and isinstance(op, ast.GtE)
+            and isinstance(right, ast.Constant)
+            and right.value == 0
+        ):
             arg = ast.unparse(left.args[0]) if left.args else "x"
             return (True, f"len({arg}) >= 0 is always True for any sequence")
     return None
@@ -103,8 +114,12 @@ def _check_comparison_patterns(node: ast.expr) -> tuple[bool, str] | None:
 @pre(lambda node: isinstance(node, ast.expr))
 def _check_isinstance_object(node: ast.expr) -> tuple[bool, str] | None:
     """Check for isinstance(x, object) pattern."""
-    if (isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and
-        node.func.id == "isinstance" and len(node.args) == 2):
+    if (
+        isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == "isinstance"
+        and len(node.args) == 2
+    ):
         type_arg = node.args[1]
         if isinstance(type_arg, ast.Name) and type_arg.id == "object":
             return (True, f"isinstance({ast.unparse(node.args[0])}, object) is always True")
@@ -139,7 +154,7 @@ def _check_boolop_patterns(node: ast.expr) -> tuple[bool, str] | None:
     return None
 
 
-@pre(lambda node: isinstance(node, ast.expr) and hasattr(node, '__class__'))
+@pre(lambda node: isinstance(node, ast.expr) and hasattr(node, "__class__"))
 @post(lambda result: isinstance(result, tuple) and len(result) == 2)
 def _check_tautology_patterns(node: ast.expr) -> tuple[bool, str]:
     """Check for common tautology patterns in AST node.
@@ -157,15 +172,23 @@ def _check_tautology_patterns(node: ast.expr) -> tuple[bool, str]:
         >>> _check_tautology_patterns(ast.Constant(value=False))
         (True, 'contract always returns False (contradiction - will always fail)')
     """
-    for checker in [_check_literal_patterns, _check_comparison_patterns,
-                    _check_isinstance_object, _check_boolop_patterns]:
+    for checker in [
+        _check_literal_patterns,
+        _check_comparison_patterns,
+        _check_isinstance_object,
+        _check_boolop_patterns,
+    ]:
         result = checker(node)
         if result:
             return result
     return (False, "")
 
 
-@pre(lambda file_info, config: len(file_info.path) > 0)
+@pre(
+    lambda file_info, config: file_info is not None
+    and len(file_info.path) > 0
+    and config is not None
+)
 def check_semantic_tautology(file_info: FileInfo, config: RuleConfig) -> list[Violation]:
     """Check for semantic tautology contracts. Core files only.
 
