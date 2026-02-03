@@ -23,5 +23,8 @@ core_paths = ["src/myapp/core"]    # Default: ["src/core", "core"]
 shell_paths = ["src/myapp/shell"]  # Default: ["src/shell", "shell"]
 max_file_lines = 500               # Default: 500 (warning at 80%)
 max_function_lines = 50            # Default: 50
+timeout_doctest = 60                 # Default: 60s
+timeout_crosshair = 300              # Default: 300s
+timeout_hypothesis = 300             # Default: 300s
 # Doctest lines are excluded from size calculations
 ```

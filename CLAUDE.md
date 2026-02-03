@@ -102,71 +102,51 @@ src/{project}/
 
 ### Calling Methods (Priority Order)
 
+Invar tools can be called in 3 ways. **Try in order:**
 
-Invar tools can be called in different ways depending on your agent:
+1. **MCP tools** (Claude Code with MCP enabled)
+   - Direct function calls: `invar_guard()`, `invar_sig()`, etc.
+   - No Bash wrapper needed
 
-**Claude Code (MCP enabled):**
-1. **MCP tools** - Direct function calls: `invar_guard()`, `invar_sig()`, etc.
-2. **CLI command** - Via Bash: `invar guard`, `invar sig`, etc.
-
-**Pi Coding Agent:**
-1. **Custom tools** (auto-installed via `invar init --pi`)
-   - Direct tool calls: `invar_guard(changed=true)`, `invar_sig(target="file.py")`, `invar_map(top=10)`
-   - Installed in `.pi/tools/invar/index.ts`
-   - Pi auto-discovers tools, no configuration needed
-2. **CLI command** (fallback)
+2. **CLI command** (if `invar` installed in PATH)
    - Via Bash: `invar guard`, `invar sig`, etc.
+   - Install: `pip install invar-tools`
 
-**Other agents:**
-- **CLI command** - Via Bash: `invar guard`, `invar sig`, etc.
-- **uvx fallback** - No install needed: `uvx invar-tools guard`
+3. **uvx fallback** (always available, no install needed)
+   - Via Bash: `uvx invar-tools guard`, `uvx invar-tools sig`, etc.
 
 ---
 
 ### Parameter Reference
 
-
 **guard** - Verify code quality
 ```python
-# MCP (Claude Code)
+# MCP
 invar_guard()                    # Check changed files (default)
 invar_guard(changed=False)       # Check all files
-
-# Pi Custom Tool
-invar_guard(changed=true)        # Check changed files (default)
-invar_guard(changed=false)       # Check all files
-invar_guard(coverage=true)       # Collect branch coverage
 ```
 
 **sig** - Show function signatures and contracts
 ```python
-# MCP (Claude Code)
+# MCP
 invar_sig(target="src/foo.py")
-
-# Pi Custom Tool
-invar_sig(target="src/foo.py")
-invar_sig(target="src/foo.py::MyClass")
 ```
 
 **map** - Find entry points
 ```python
-# MCP (Claude Code)
+# MCP
 invar_map(path=".", top=10)
-
-# Pi Custom Tool
-invar_map(path=".", top=10)
-invar_map(top=20)                # Show top 20 symbols
 ```
 
 **refs** - Find all references to a symbol
 ```python
-# MCP (Claude Code only - not available as Pi tool yet)
+# MCP
 invar_refs(target="src/foo.py::MyClass")
 ```
 
 **doc*** - Document tools
 ```python
-# MCP (Claude Code only - not available as Pi tool yet)
+# MCP
 invar_doc_toc(file="docs/spec.md")
 invar_doc_read(file="docs/spec.md", section="intro")
 ```
