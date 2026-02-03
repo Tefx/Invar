@@ -37,7 +37,13 @@ def get_exit_code(report: GuardReport, strict: bool) -> int:
     return 0
 
 
-@pre(lambda report, strict, doctest_passed=True, crosshair_passed=True, property_passed=True: report.files_checked >= 0)
+@pre(
+    lambda report,
+    strict,
+    doctest_passed=True,
+    crosshair_passed=True,
+    property_passed=True: report.files_checked >= 0
+)
 @post(lambda result: result in ("passed", "failed"))
 def get_combined_status(
     report: GuardReport,
@@ -204,7 +210,9 @@ def _parse_rule_exclusions(config: dict[str, Any]) -> list[RuleExclusion] | None
         if isinstance(excl, dict) and "pattern" in excl and "rules" in excl:
             pattern, rules = excl["pattern"], excl["rules"]
             if isinstance(pattern, str) and isinstance(rules, list):
-                exclusions.append(RuleExclusion(pattern=str(pattern), rules=[str(r) for r in rules]))
+                exclusions.append(
+                    RuleExclusion(pattern=str(pattern), rules=[str(r) for r in rules])
+                )
     return exclusions if exclusions else None
 
 
@@ -253,7 +261,14 @@ def parse_guard_config(guard_config: dict[str, Any]) -> RuleConfig:
     kwargs: dict[str, Any] = {}
 
     # Int fields
-    for key in ("max_file_lines", "max_function_lines"):
+    for key in (
+        "max_file_lines",
+        "max_function_lines",
+        "timeout_doctest",
+        "timeout_hypothesis",
+        "timeout_crosshair",
+        "timeout_crosshair_per_condition",
+    ):
         if (val := _get_int(guard_config, key)) is not None:
             kwargs[key] = val
 

@@ -7,13 +7,10 @@ Handles I/O and file scanning, returns Result[T, E].
 
 from __future__ import annotations
 
-import importlib.util
 import sys
+import tomllib
 from contextlib import contextmanager, suppress
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from pathlib import Path
+from pathlib import Path
 
 from returns.result import Failure, Result, Success
 from rich.console import Console
@@ -24,9 +21,98 @@ from invar.shell.subprocess_env import detect_project_venv, find_site_packages
 console = Console()
 
 
+def _extract_src_dirs_from_paths(project_root: Path, paths: list[str]) -> set[str]:
+    """
+    Extract unique src directories from configured paths.
+
+    For monorepo structures like 'packages/pkg-a/src/pkg_a/core',
+    extracts 'packages/pkg-a/src' as the directory to add to sys.path.
+
+    Examples:
+        >>> from pathlib import Path
+        >>> root = Path("/project")
+        >>> paths = ["packages/a/src/pkg/core", "packages/b/src/pkg/shell"]
+        >>> # Returns src dirs (would check existence in real use)
+        >>> sorted(_extract_src_dirs_from_paths(root, paths))  # doctest: +SKIP
+        ['/project/packages/a/src', '/project/packages/b/src']
+    """
+    src_dirs: set[str] = set()
+    for p in paths:
+        parts = Path(p).parts
+        if "src" in parts:
+            idx = parts.index("src")
+            src_dir = project_root / Path(*parts[: idx + 1])
+            if src_dir.exists():
+                src_dirs.add(str(src_dir))
+    return src_dirs
+
+
+# @shell_complexity: Config fallthrough requires checking 3 sources with error handling
+def _get_invar_paths_from_config(project_root: Path) -> list[str]:
+    """
+    Get 'paths' from [tool.invar] config across all config locations.
+
+    Checks in priority order:
+    1. pyproject.toml [tool.invar].paths
+    2. invar.toml [invar].paths (root level)
+    3. .invar/config.toml [invar].paths (root level)
+
+    Returns first found, or empty list.
+    """
+    # 1. pyproject.toml [tool.invar].paths
+    pyproject = project_root / "pyproject.toml"
+    if pyproject.exists():
+        try:
+            with pyproject.open("rb") as f:
+                data = tomllib.load(f)
+            paths = data.get("tool", {}).get("invar", {}).get("paths", [])
+            if paths:
+                return paths
+        except Exception:
+            pass
+
+    # 2. invar.toml [invar].paths (root level, since no [tool] wrapper)
+    invar_toml = project_root / "invar.toml"
+    if invar_toml.exists():
+        try:
+            with invar_toml.open("rb") as f:
+                data = tomllib.load(f)
+            # In invar.toml, paths could be at root or under [invar]
+            paths = data.get("paths", []) or data.get("invar", {}).get("paths", [])
+            if paths:
+                return paths
+        except Exception:
+            pass
+
+    # 3. .invar/config.toml
+    invar_config = project_root / ".invar" / "config.toml"
+    if invar_config.exists():
+        try:
+            with invar_config.open("rb") as f:
+                data = tomllib.load(f)
+            paths = data.get("paths", []) or data.get("invar", {}).get("paths", [])
+            if paths:
+                return paths
+        except Exception:
+            pass
+
+    return []
+
+
 # @shell_orchestration: Temporarily inject venv site-packages for module imports
+# @shell_complexity: Monorepo support requires reading config and extracting src dirs
 @contextmanager
 def _inject_project_site_packages(project_root: Path):
+    """
+    Context manager that temporarily injects project dependencies into sys.path.
+
+    Supports:
+    - Standard layout: project_root/src
+    - Monorepo layout: paths from config (pyproject.toml, invar.toml, .invar/config.toml)
+    - Configured paths: extracted from core_paths/shell_paths in [tool.invar.guard]
+    """
+    from invar.shell.config import get_path_classification
+
     venv = detect_project_venv(project_root)
     site_packages = find_site_packages(venv) if venv is not None else None
 
@@ -34,13 +120,35 @@ def _inject_project_site_packages(project_root: Path):
         yield
         return
 
-    src_dir = project_root / "src"
-
     added: list[str] = []
+
+    # 1. Read 'paths' from config (supports pyproject.toml, invar.toml, .invar/config.toml)
+    invar_paths = _get_invar_paths_from_config(project_root)
+    for p in invar_paths:
+        src_dir = project_root / p
+        if src_dir.exists():
+            src_dir_str = str(src_dir)
+            if src_dir_str not in added:
+                sys.path.insert(0, src_dir_str)
+                added.append(src_dir_str)
+
+    # 2. Extract src dirs from core_paths and shell_paths config
+    path_result = get_path_classification(project_root)
+    if isinstance(path_result, Success):
+        core_paths, shell_paths = path_result.unwrap()
+        src_dirs = _extract_src_dirs_from_paths(project_root, core_paths + shell_paths)
+        for src_dir_str in src_dirs:
+            if src_dir_str not in added:
+                sys.path.insert(0, src_dir_str)
+                added.append(src_dir_str)
+
+    # 3. Fallback to project_root/src (standard layout)
+    src_dir = project_root / "src"
     if src_dir.exists():
         src_dir_str = str(src_dir)
-        sys.path.insert(0, src_dir_str)
-        added.append(src_dir_str)
+        if src_dir_str not in added:
+            sys.path.insert(0, src_dir_str)
+            added.append(src_dir_str)
 
     site_packages_str = str(site_packages)
     sys.path.insert(0, site_packages_str)
@@ -218,64 +326,84 @@ def _accumulate_report(
     combined_report.errors.extend(file_report.errors)
 
 
+# @shell_complexity: Path traversal logic for monorepo src detection
+def _find_module_root(file_path: Path, project_root: Path | None) -> Path | None:
+    """
+    Find the module root directory (the directory that should be in sys.path).
+
+    For monorepo structures, finds the 'src' directory containing the file.
+    Falls back to project_root for standard layouts.
+
+    Examples:
+        >>> from pathlib import Path
+        >>> # Standard layout: project/src/pkg/module.py -> project/src
+        >>> # Monorepo: project/packages/a/src/pkg/module.py -> project/packages/a/src
+    """
+    if project_root is None:
+        return None
+
+    # Check if file is under a 'src' directory
+    try:
+        relative = file_path.relative_to(project_root)
+        parts = relative.parts
+
+        if "src" in parts:
+            idx = parts.index("src")
+            # Return the src directory itself
+            return project_root / Path(*parts[: idx + 1])
+    except ValueError:
+        pass
+
+    # Fallback: check if project_root/src exists and contains the file
+    src_dir = project_root / "src"
+    if src_dir.exists():
+        try:
+            file_path.relative_to(src_dir)
+            return src_dir
+        except ValueError:
+            pass
+
+    return project_root
+
+
 # @shell_complexity: BUG-57 fix requires package hierarchy setup for relative imports
 def _import_module_from_path(file_path: Path, project_root: Path | None = None) -> object | None:
     """
     Import a Python module from a file path.
 
     BUG-57: Properly handles relative imports by setting up package context.
+    Monorepo fix: Calculates module name relative to src directory, not project root.
 
     Returns None if import fails.
     """
+    import importlib
+
     try:
-        # Calculate the full module name from project root
-        if project_root and file_path.is_relative_to(project_root):
-            # Convert path to module name: my_package/main.py -> my_package.main
+        # Find the module root (src directory) for this file
+        module_root = _find_module_root(file_path, project_root)
+
+        # Calculate module name relative to module_root (not project_root!)
+        if module_root and file_path.is_relative_to(module_root):
+            relative = file_path.relative_to(module_root)
+            parts = list(relative.with_suffix("").parts)
+            module_name = ".".join(parts)
+        elif project_root and file_path.is_relative_to(project_root):
+            # Fallback to project_root relative path
             relative = file_path.relative_to(project_root)
             parts = list(relative.with_suffix("").parts)
             module_name = ".".join(parts)
         else:
             module_name = file_path.stem
 
-        # Ensure project root is in sys.path for relative imports
-        if project_root:
-            root_str = str(project_root)
+        # Ensure module root is in sys.path
+        if module_root:
+            root_str = str(module_root)
             if root_str not in sys.path:
                 sys.path.insert(0, root_str)
 
-        # For packages with relative imports, we need to set up parent packages first
-        if "." in module_name:
-            # Import parent packages first
-            parts = module_name.split(".")
-            for i in range(1, len(parts)):
-                parent_name = ".".join(parts[:i])
-                if parent_name not in sys.modules:
-                    parent_path = project_root / "/".join(parts[:i]) if project_root else None
-                    if parent_path and (parent_path / "__init__.py").exists():
-                        parent_spec = importlib.util.spec_from_file_location(
-                            parent_name,
-                            parent_path / "__init__.py",
-                            submodule_search_locations=[str(parent_path)],
-                        )
-                        if parent_spec and parent_spec.loader:
-                            parent_module = importlib.util.module_from_spec(parent_spec)
-                            sys.modules[parent_name] = parent_module
-                            parent_spec.loader.exec_module(parent_module)
-
-        # Now import the target module
-        spec = importlib.util.spec_from_file_location(
-            module_name,
-            file_path,
-            submodule_search_locations=[str(file_path.parent)],
-        )
-        if spec is None or spec.loader is None:
-            return None
-
-        module = importlib.util.module_from_spec(spec)
-        sys.modules[module_name] = module
-
-        # Suppress output during import
-        spec.loader.exec_module(module)
+        # Use importlib.import_module which correctly handles relative imports
+        # This is simpler and more reliable than manual spec loading
+        module = importlib.import_module(module_name)
         return module
 
     except Exception:
