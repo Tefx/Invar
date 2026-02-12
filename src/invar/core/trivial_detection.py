@@ -98,10 +98,22 @@ def extract_contracts_from_decorators(
         2
         >>> contracts[0][0]
         'pre'
+
+        ast nodes constructed without fields default to having no decorators.
+        (This occurs in generated property tests.)
+
+        >>> extract_contracts_from_decorators(ast.FunctionDef())
+        []
     """
     contracts = []
 
-    for decorator in node.decorator_list:
+    # NOTE: ast nodes can be constructed without field attributes (e.g., ast.FunctionDef()).
+    # Treat missing/None decorator_list as "no decorators".
+    decorator_list = getattr(node, "decorator_list", None)
+    if not decorator_list:
+        return []
+
+    for decorator in decorator_list:
         if isinstance(decorator, ast.Call):
             # Get decorator name
             if isinstance(decorator.func, ast.Name):

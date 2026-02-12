@@ -158,6 +158,7 @@ def render_template(
         return Failure(f"Template rendering failed: {e}")
 
 
+# @shell_complexity: Needs branching for missing dependency, render errors, and file cleanup
 def render_template_file(
     template_path: Path,
     variables: dict[str, str],
@@ -337,6 +338,7 @@ def generate_from_manifest(
                 continue  # Don't overwrite existing directory
             try:
                 import shutil
+
                 shutil.copytree(src_path, full_dest)
                 generated.append(dest_path)
             except OSError as e:

@@ -299,6 +299,7 @@ def find_pyproject_root(start_path: "Path") -> "Path | None":  # noqa: UP037
     return None
 
 
+# @shell_complexity: Root discovery checks multiple markers and handles file/dir inputs
 def find_project_root(start_path: "Path") -> "Path":  # noqa: UP037
     """
     Find project root by walking up from start_path looking for config files.

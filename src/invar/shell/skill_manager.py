@@ -118,9 +118,7 @@ def load_registry() -> Result[dict, str]:
 
 
 # @shell_complexity: Iterates registry entries and checks installed status
-def list_skills(
-    project_path: Path, console: Console
-) -> Result[list[SkillInfo], str]:
+def list_skills(project_path: Path, console: Console) -> Result[list[SkillInfo], str]:
     """
     List all available extension skills.
 
@@ -164,9 +162,7 @@ def list_skills(
 
 
 # @shell_complexity: Validates skill, copies files/directories with error recovery
-def add_skill(
-    skill_name: str, project_path: Path, console: Console
-) -> Result[str, str]:
+def add_skill(skill_name: str, project_path: Path, console: Console) -> Result[str, str]:
     """
     Add or update an extension skill to the project.
 
@@ -260,6 +256,7 @@ def add_skill(
         return Failure(f"Failed to {'update' if is_update else 'install'} skill: {e}")
 
 
+# @shell_complexity: Branches cover missing file, unreadable file, parse errors, and extension detection
 def has_user_extensions(skill_dir: Path) -> bool:
     """Check if SKILL.md has user content in extensions region."""
     skill_md = skill_dir / "SKILL.md"
@@ -316,8 +313,7 @@ def remove_skill(
     # Protect core skills
     if skill_name in CORE_SKILLS:
         return Failure(
-            f"Cannot remove core skill: {skill_name}. "
-            "Only extension skills can be removed."
+            f"Cannot remove core skill: {skill_name}. Only extension skills can be removed."
         )
 
     # DX-71: Check for user extensions
@@ -325,13 +321,10 @@ def remove_skill(
     # This check remains for programmatic API callers.
     if not force and has_user_extensions(dest_dir):
         console.print(
-            "[yellow]Warning:[/yellow] This skill has custom extensions content "
-            "that will be lost."
+            "[yellow]Warning:[/yellow] This skill has custom extensions content that will be lost."
         )
         # M2 fix: API-appropriate message (not CLI --force)
-        return Failure(
-            "Skill has user extensions. Pass force=True to confirm removal."
-        )
+        return Failure("Skill has user extensions. Pass force=True to confirm removal.")
 
     try:
         shutil.rmtree(dest_dir)
@@ -340,16 +333,12 @@ def remove_skill(
         return Failure(f"Failed to remove skill: {e}")
 
 
-def update_skill(
-    skill_name: str, project_path: Path, console: Console
-) -> Result[str, str]:
+def update_skill(skill_name: str, project_path: Path, console: Console) -> Result[str, str]:
     """
     Update an installed extension skill from templates.
 
     DX-71: Deprecated - use `add_skill` instead (idempotent).
     This function now delegates to add_skill with a deprecation notice.
     """
-    console.print(
-        "[dim]Note: 'skill update' is deprecated, use 'skill add' instead[/dim]"
-    )
+    console.print("[dim]Note: 'skill update' is deprecated, use 'skill add' instead[/dim]")
     return add_skill(skill_name, project_path, console)

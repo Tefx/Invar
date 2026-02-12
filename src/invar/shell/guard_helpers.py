@@ -57,10 +57,12 @@ def collect_files_to_check(path: Path, checked_files: list[Path]) -> list[Path]:
     exclude_result = get_exclude_paths(path)
     exclude_patterns = exclude_result.unwrap() if isinstance(exclude_result, Success) else []
 
+    resolved_base = path.resolve()
+
     def _add_py_files_under(root: Path) -> None:
         for py_file in root.rglob("*.py"):
             try:
-                rel = str(py_file.relative_to(path))
+                rel = str(py_file.resolve().relative_to(resolved_base))
             except ValueError:
                 rel = str(py_file)
             if not _is_excluded(rel, exclude_patterns):
@@ -99,6 +101,7 @@ def collect_files_to_check(path: Path, checked_files: list[Path]) -> list[Path]:
 
 
 # @shell_orchestration: Coordinates doctest execution via testing module
+# @shell_complexity: Branches handle empty set, pass/fail, stderr merge, and optional coverage data
 def run_doctests_phase(
     project_root: Path,
     checked_files: list[Path],
@@ -188,9 +191,12 @@ def run_crosshair_phase(
     else:
         core_paths = ["src/core", "core"]
 
+    resolved_root = path.resolve()
+
     def is_core_file(f: Path) -> bool:
+        file_path = f if f.is_absolute() else (resolved_root / f)
         try:
-            rel = str(f.relative_to(path))
+            rel = str(file_path.resolve().relative_to(resolved_root))
         except ValueError:
             rel = str(f)
         return matches_path_prefix(rel, core_paths)
@@ -333,9 +339,12 @@ def run_property_tests_phase(
     else:
         core_paths = ["src/core", "core"]
 
+    resolved_root = project_root.resolve()
+
     def is_core_file(f: Path) -> bool:
+        file_path = f if f.is_absolute() else (resolved_root / f)
         try:
-            rel = str(f.relative_to(project_root))
+            rel = str(file_path.resolve().relative_to(resolved_root))
         except ValueError:
             rel = str(f)
         return matches_path_prefix(rel, core_paths)

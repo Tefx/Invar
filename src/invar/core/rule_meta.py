@@ -8,14 +8,14 @@ Used by: hints (P5), --agent output, invar rules command.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 
 from deal import post
 
 from invar.core.models import Severity
 
 
-class RuleCategory(str, Enum):
+class RuleCategory(StrEnum):
     """Categories for grouping rules."""
 
     SIZE = "size"

@@ -5,6 +5,8 @@ DX-76 Phase A-2: Section-level document editing.
 Core module - pure logic, no I/O.
 """
 
+# mypy: disable-error-code=untyped-decorator
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Literal
@@ -16,12 +18,14 @@ if TYPE_CHECKING:
 
 
 @pre(
-    lambda source, section, new_content, keep_heading=True: len(source) > 0
-    and isinstance(new_content, str)
-    and isinstance(keep_heading, bool)
-    and section.line_start >= 1
-    and section.line_end >= section.line_start
-    and section.line_end <= len(source.split("\n"))
+    lambda source, section, new_content, keep_heading=True: (
+        len(source) > 0
+        and isinstance(new_content, str)
+        and isinstance(keep_heading, bool)
+        and section.line_start >= 1
+        and section.line_end >= section.line_start
+        and section.line_end <= len(source.split("\n"))
+    )
 )
 def replace_section(
     source: str,
@@ -79,11 +83,13 @@ def replace_section(
 
 
 @pre(
-    lambda source, anchor, content, position="after": len(source) > 0
-    and isinstance(content, str)
-    and anchor.line_start >= 1
-    and anchor.line_end <= len(source.split("\n"))
-    and position in ("before", "after", "first_child", "last_child")
+    lambda source, anchor, content, position="after": (
+        len(source) > 0
+        and isinstance(content, str)
+        and anchor.line_start >= 1
+        and anchor.line_end <= len(source.split("\n"))
+        and position in ("before", "after", "first_child", "last_child")
+    )
 )
 def insert_section(
     source: str,
@@ -142,11 +148,13 @@ def insert_section(
 
 
 @pre(
-    lambda source, section, include_children=True: len(source) > 0
-    and isinstance(include_children, bool)
-    and section.line_start >= 1
-    and section.line_end >= section.line_start
-    and section.line_end <= len(source.split("\n"))
+    lambda source, section, include_children=True: (
+        len(source) > 0
+        and isinstance(include_children, bool)
+        and section.line_start >= 1
+        and section.line_end >= section.line_start
+        and section.line_end <= len(source.split("\n"))
+    )
 )
 def delete_section(source: str, section: Section, include_children: bool = True) -> str:
     """Delete a section from the document.

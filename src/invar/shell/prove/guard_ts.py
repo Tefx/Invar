@@ -124,6 +124,7 @@ def check_ts_complexity_debt(
 
 
 # @shell_orchestration: Transforms TypeScriptGuardResult to JSON for agent consumption
+# @shell_complexity: Aggregates multiple tool outputs (tsc/eslint/vitest) into one JSON report
 def format_typescript_guard_v2(result: TypeScriptGuardResult) -> dict:
     """Format TypeScript guard result as v2.0 JSON.
 
@@ -266,6 +267,7 @@ def format_typescript_guard_v2(result: TypeScriptGuardResult) -> dict:
 
 
 # @shell_orchestration: Helper for format_typescript_guard_v2 output assembly
+# @shell_complexity: Rule-specific mapping and filtering requires multiple branches
 def _generate_fix_suggestions(violations: list[TypeScriptViolation]) -> list[dict]:
     """Generate actionable fix suggestions from violations.
 

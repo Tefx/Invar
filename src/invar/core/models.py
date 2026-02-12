@@ -9,14 +9,14 @@ No I/O operations allowed.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 from typing import Literal
 
 from deal import post, pre
 from pydantic import BaseModel, Field
 
 
-class SymbolKind(str, Enum):
+class SymbolKind(StrEnum):
     """Kind of symbol extracted from Python code."""
 
     FUNCTION = "function"
@@ -24,7 +24,7 @@ class SymbolKind(str, Enum):
     METHOD = "method"
 
 
-class Severity(str, Enum):
+class Severity(StrEnum):
     """Severity level for violations."""
 
     ERROR = "error"
@@ -33,7 +33,7 @@ class Severity(str, Enum):
     SUGGEST = "suggest"  # DX-61: Functional pattern suggestions
 
 
-class CodeLayer(str, Enum):
+class CodeLayer(StrEnum):
     """Code layer for differentiated size limits (LX-10)."""
 
     CORE = "core"
@@ -161,8 +161,9 @@ def get_layer(file_info: FileInfo) -> CodeLayer:
 
 
 @pre(
-    lambda layer, language="python": isinstance(layer, CodeLayer)
-    and language in ("python", "typescript")
+    lambda layer, language="python": (
+        isinstance(layer, CodeLayer) and language in ("python", "typescript")
+    )
 )
 @post(lambda result: result.max_file_lines > 0 and result.max_function_lines > 0)
 def get_limits(layer: CodeLayer, language: str = "python") -> LayerLimits:

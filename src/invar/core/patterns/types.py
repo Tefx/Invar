@@ -5,13 +5,13 @@ Core types for the functional pattern guidance system.
 """
 
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 from typing import Literal
 
 from deal import post, pre
 
 
-class PatternID(str, Enum):
+class PatternID(StrEnum):
     """Unique identifier for each pattern."""
 
     # P0 - Core patterns
@@ -26,7 +26,7 @@ class PatternID(str, Enum):
     STRUCTURED_ERROR = "structured_error"
 
 
-class Confidence(str, Enum):
+class Confidence(StrEnum):
     """Confidence level for pattern suggestions."""
 
     HIGH = "high"  # Strong signal, very likely applicable
@@ -34,7 +34,7 @@ class Confidence(str, Enum):
     LOW = "low"  # Weak signal, possibly applicable
 
 
-class Priority(str, Enum):
+class Priority(StrEnum):
     """Pattern priority tier."""
 
     P0 = "P0"  # Core patterns, always suggested

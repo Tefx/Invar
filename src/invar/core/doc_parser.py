@@ -5,6 +5,7 @@ DX-76: Parses markdown into a section tree for precise navigation.
 Core module - pure logic, no I/O.
 """
 # @invar:allow file_size: DX-77 Phase A adds Unicode fuzzy matching, extraction planned
+# mypy: disable-error-code=untyped-decorator
 
 from __future__ import annotations
 
@@ -78,7 +79,7 @@ class DocumentToc:
 
 
 @pre(lambda title: len(title) <= 1000)  # Reasonable max title length
-@post(lambda result: result == "" or re.match(r"^[a-z0-9]+(-[a-z0-9]+)*$", result))
+@post(lambda result: result == "" or bool(re.match(r"^[a-z0-9]+(-[a-z0-9]+)*$", result)))
 def _slugify(title: str) -> str:
     """Convert title to URL-friendly slug.
 
@@ -103,7 +104,7 @@ def _slugify(title: str) -> str:
 
 @skip_property_test(
     "crosshair_incompatible: Unicode character validation conflicts with symbolic execution"
-)  # type: ignore[untyped-decorator]
+)
 @pre(lambda text: len(text) <= 1000)
 @post(lambda result: result == "" or all(c.isalnum() or c == "_" or ord(c) > 127 for c in result))
 def _normalize_for_fuzzy(text: str) -> str:
@@ -181,7 +182,7 @@ def _build_section_tree(sections: list[Section]) -> list[Section]:
     return result
 
 
-@skip_property_test("external_io: hypothesis inspect module incompatibility with Python 3.14")  # type: ignore[untyped-decorator]
+@skip_property_test("external_io: hypothesis inspect module incompatibility with Python 3.14")
 @pre(lambda source: len(source) <= 10_000_000)  # Max 10MB document
 @post(lambda result: all(s.line_start >= 1 for s in result.sections))
 @post(lambda result: all(s.line_end >= s.line_start for s in result.sections))
@@ -379,7 +380,7 @@ def _find_by_index(sections: list[Section], path: str) -> Section | None:
     return None
 
 
-@skip_property_test("crosshair_incompatible: Calls _normalize_for_fuzzy with Unicode validation")  # type: ignore[untyped-decorator]
+@skip_property_test("crosshair_incompatible: Calls _normalize_for_fuzzy with Unicode validation")
 @pre(lambda sections, path: isinstance(sections, list) and len(path) > 0)
 @post(lambda result: result is None or isinstance(result, Section))
 def _find_by_slug_or_fuzzy(sections: list[Section], path: str) -> Section | None:
@@ -434,7 +435,7 @@ def _find_by_slug_or_fuzzy(sections: list[Section], path: str) -> Section | None
     return find_fuzzy(sections)
 
 
-@skip_property_test("crosshair_incompatible: Calls _find_by_slug_or_fuzzy with Unicode validation")  # type: ignore[untyped-decorator]
+@skip_property_test("crosshair_incompatible: Calls _find_by_slug_or_fuzzy with Unicode validation")
 @pre(lambda sections, path: isinstance(sections, list) and len(path) > 0)
 @post(lambda result: result is None or isinstance(result, Section))
 def find_section(sections: list[Section], path: str) -> Section | None:
@@ -518,11 +519,13 @@ def _get_last_line(section: Section) -> int:
 
 
 @pre(
-    lambda source, section, include_children=True: len(source) > 0
-    and isinstance(include_children, bool)
-    and section.line_start >= 1
-    and section.line_end >= section.line_start
-    and section.line_end <= len(source.split("\n"))
+    lambda source, section, include_children=True: (
+        len(source) > 0
+        and isinstance(include_children, bool)
+        and section.line_start >= 1
+        and section.line_end >= section.line_start
+        and section.line_end <= len(source.split("\n"))
+    )
 )
 def extract_content(source: str, section: Section, include_children: bool = True) -> str:
     """Extract section content from source.

@@ -458,6 +458,8 @@ async def _execute_command(
 # @invar:allow shell_too_complex: Simple state machine, 6 branches is minimal
 # @invar:allow shell_pure_logic: No I/O, but called from shell context
 # @invar:allow shell_result: Pure transformation, returns str not Result
+# @shell_complexity: Character-level scan and escaping requires multiple branches
+# @shell_orchestration: MCP output normalization (shell-owned, not reusable core API)
 def _fix_json_newlines(text: str) -> str:
     """Fix unescaped newlines in JSON strings.
 

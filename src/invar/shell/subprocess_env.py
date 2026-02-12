@@ -209,6 +209,7 @@ def _detect_venv_python(venv: Path) -> Path | None:
     return python_path if python_path.exists() else None
 
 
+# @shell_complexity: Guardrails for respawn loop, venv detection, version mismatch, and uvx availability
 def get_uvx_respawn_command(
     project_root: Path,
     argv: list[str],
