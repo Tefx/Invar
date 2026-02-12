@@ -63,9 +63,7 @@ def format_verification_stats(stats: VerificationStats) -> str:
     if stats.hypothesis_tested > 0:
         lines.append(f"  ✓ Tested (Hypothesis): {stats.hypothesis_tested} functions")
     if stats.routed_to_hypothesis > 0:
-        lines.append(
-            f"    [dim](C-extension routing: {stats.routed_to_hypothesis} files)[/dim]"
-        )
+        lines.append(f"    [dim](C-extension routing: {stats.routed_to_hypothesis} files)[/dim]")
     if stats.doctests_passed > 0:
         lines.append(f"  ✓ Doctests: {stats.doctests_passed} passed")
     if stats.total_verified > 0:
@@ -214,10 +212,7 @@ def output_rich(
         escape_count = report.escape_hatches.count
         by_rule = report.escape_hatches.by_rule
         rule_parts = [f"{count} {rule}" for rule, count in sorted(by_rule.items())]
-        console.print(
-            f"\n[bold]Escape hatches:[/bold] {escape_count} "
-            f"({', '.join(rule_parts)})"
-        )
+        console.print(f"\n[bold]Escape hatches:[/bold] {escape_count} ({', '.join(rule_parts)})")
 
     # Code Health display (only when guard passes)
     if report.passed and report.files_checked > 0:
@@ -262,6 +257,7 @@ def output_rich(
         )
 
 
+# @shell_orchestration: Writes agent JSON report to stdout
 # @shell_complexity: JSON output assembly with multiple sections
 def output_agent(
     report: GuardReport,
@@ -291,7 +287,7 @@ def output_agent(
     DX-26: status now reflects ALL test phases, not just static analysis.
     DX-37: Adds optional coverage data from doctest + hypothesis phases.
     """
-    import json
+    from invar.shell.json_output import write_json
 
     # DX-26: Extract passed status from phase outputs
     crosshair_passed = True
@@ -329,4 +325,4 @@ def output_agent(
     # DX-37: Add coverage data if collected
     if coverage_data:
         output["coverage"] = coverage_data
-    console.print(json.dumps(output, indent=2))
+    write_json(output, indent=2)

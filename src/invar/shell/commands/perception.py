@@ -6,7 +6,6 @@ Shell module: handles file I/O for map and sig commands.
 
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -24,6 +23,7 @@ from invar.core.models import FileInfo
 from invar.core.parser import parse_source
 from invar.core.references import build_perception_map
 from invar.shell.fs import discover_python_files
+from invar.shell.json_output import write_json
 
 if TYPE_CHECKING:
     from invar.core.models import Symbol
@@ -31,6 +31,7 @@ if TYPE_CHECKING:
 console = Console()
 
 
+# @shell_orchestration: Fallback language detection via shell file discovery
 def _has_typescript_files(path: Path) -> bool:
     """Check if directory contains TypeScript files (.ts, .tsx).
 
@@ -134,7 +135,7 @@ def _run_sig_python(
     # Output
     if json_output:
         output = format_signatures_json(symbols, str(file_path))
-        console.print(json.dumps(output, indent=2))
+        write_json(output, indent=2)
     else:
         output = format_signatures_text(symbols, str(file_path))
         console.print(output)
@@ -180,7 +181,7 @@ def _run_sig_typescript(
                         for s in symbols
                     ],
                 }
-                console.print(json.dumps(output, indent=2))
+                write_json(output, indent=2)
             else:
                 console.print(f"[bold]{file_path}[/bold]")
                 for s in symbols:
@@ -219,7 +220,7 @@ def _run_sig_typescript(
     # Output
     if json_output:
         output = format_ts_signatures_json(symbols, str(file_path))
-        console.print(json.dumps(output, indent=2))
+        write_json(output, indent=2)
     else:
         output = format_ts_signatures_text(symbols, str(file_path))
         console.print(output)
@@ -272,7 +273,7 @@ def _run_map_python(path: Path, top_n: int, json_output: bool) -> Result[None, s
     # Output
     if json_output:
         output = format_map_json(perception_map, top_n)
-        console.print(json.dumps(output, indent=2))
+        write_json(output, indent=2)
     else:
         output = format_map_text(perception_map, top_n)
         console.print(output)
@@ -312,7 +313,7 @@ def _run_map_typescript(path: Path, top_n: int, json_output: bool) -> Result[Non
                     "total_symbols": data.get("total", len(data["symbols"])),
                     "symbols": data["symbols"],
                 }
-                console.print(json.dumps(output, indent=2))
+                write_json(output, indent=2)
             else:
                 console.print("[bold]TypeScript Symbol Map[/bold]")
                 console.print(f"Total symbols: {data.get('total', len(data['symbols']))}\n")
@@ -375,7 +376,7 @@ def _run_map_typescript(path: Path, top_n: int, json_output: bool) -> Result[Non
                 for file_path, sym in display_symbols
             ],
         }
-        console.print(json.dumps(output, indent=2))
+        write_json(output, indent=2)
     else:
         console.print("[bold]TypeScript Symbol Map[/bold]")
         console.print(f"Total symbols: {len(all_symbols)}\n")
@@ -455,7 +456,7 @@ def _run_refs_python(file_path: Path, symbol_name: str, json_output: bool) -> Re
                 for ref in refs
             ],
         }
-        console.print(json.dumps(output, indent=2))
+        write_json(output, indent=2)
     else:
         console.print(f"[bold]References to {symbol_name}[/bold]")
         console.print(f"Found {len(refs)} reference(s)\n")
@@ -553,7 +554,7 @@ def _run_refs_typescript(file_path: Path, symbol_name: str, json_output: bool) -
                 for ref in refs
             ],
         }
-        console.print(json.dumps(output, indent=2))
+        write_json(output, indent=2)
     else:
         console.print(f"[bold]References to {symbol_name}[/bold]")
         console.print(f"Found {len(refs)} reference(s)\n")

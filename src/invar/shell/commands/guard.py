@@ -208,12 +208,11 @@ def guard(
                             console.print(f"  {v.file}:{v.line}: [{v.severity}] {v.message}")
                 else:
                     # JSON output for agents
-                    import json as json_mod
-
+                    from invar.shell.json_output import write_json
                     from invar.shell.prove.guard_ts import format_typescript_guard_v2
 
                     output = format_typescript_guard_v2(result)
-                    console.print(json_mod.dumps(output, indent=2))
+                    write_json(output, indent=2)
                 raise typer.Exit(0 if result.status == "passed" else 1)
             case Failure(err):
                 console.print(f"[red]Error:[/red] {err}")
@@ -263,8 +262,6 @@ def guard(
 
     # DX-63: Contract coverage check only mode
     if contracts_only:
-        import json
-
         from invar.shell.contract_coverage import (
             calculate_contract_coverage,
             format_contract_coverage_agent,
@@ -282,7 +279,9 @@ def guard(
         use_agent_output = not human
 
         if use_agent_output:
-            console.print(json.dumps(format_contract_coverage_agent(report_data)))
+            from invar.shell.json_output import write_json
+
+            write_json(format_contract_coverage_agent(report_data), indent=2)
         else:
             console.print(format_contract_coverage_report(report_data))
 
@@ -301,29 +300,28 @@ def guard(
             if changed_result.failure() == "NO_CHANGES":
                 use_agent_output = not human
                 if use_agent_output:
-                    import json
+                    from invar.shell.json_output import write_json
 
-                    console.print(
-                        json.dumps(
-                            {
-                                "status": "passed",
-                                "static": {"passed": True, "errors": 0, "warnings": 0, "infos": 0},
-                                "summary": {
-                                    "files_checked": 0,
-                                    "errors": 0,
-                                    "warnings": 0,
-                                    "infos": 0,
-                                },
-                                "fixes": [],
-                                "verification_level": "STANDARD",
-                                "doctest": {"passed": True, "output": ""},
-                                "crosshair": {"status": "skipped", "reason": "no changed files"},
-                                "property_tests": {
-                                    "status": "skipped",
-                                    "reason": "no changed files",
-                                },
-                            }
-                        )
+                    write_json(
+                        {
+                            "status": "passed",
+                            "static": {"passed": True, "errors": 0, "warnings": 0, "infos": 0},
+                            "summary": {
+                                "files_checked": 0,
+                                "errors": 0,
+                                "warnings": 0,
+                                "infos": 0,
+                            },
+                            "fixes": [],
+                            "verification_level": "STANDARD",
+                            "doctest": {"passed": True, "output": ""},
+                            "crosshair": {"status": "skipped", "reason": "no changed files"},
+                            "property_tests": {
+                                "status": "skipped",
+                                "reason": "no changed files",
+                            },
+                        },
+                        indent=2,
                     )
                 else:
                     console.print("[green]No changed files to verify.[/green]")
