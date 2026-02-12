@@ -1,11 +1,14 @@
 # DX-81: 多 Agent 初始化支持
 
-**Status**: Draft
+**Status**: ✅ Implemented (v1.15.0) — Superseded (Removal proposed)
 **Created**: 2026-01-03
 **Priority**: Medium
 **Type**: Enhancement
 
 ---
+
+> ⚠️ **Superseded:** This feature is proposed for removal.
+> See: **DX-87: Remove Multi-Agent Init Support** (`docs/proposals/DX-87-remove-multi-agent-init.md`).
 
 ## Problem
 

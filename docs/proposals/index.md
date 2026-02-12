@@ -8,12 +8,13 @@ This directory contains design proposals for Invar development.
 - `LX-XX-name.md` — Language eXtension (multi-language evolution)
 - Completed/archived proposals in `completed/` subdirectory
 
-## Active Proposals (16)
+## Active Proposals (18)
 
 ### DX Series (Developer Experience)
 
 | ID | Name | Status | Description |
 |----|------|--------|-------------|
+| DX-87 | [remove-multi-agent-init](DX-87-remove-multi-agent-init.md) | Draft | Remove combined/multi-select init; enforce single-agent init only |
 | DX-78 | [mcp-protocol-sync](DX-78-mcp-protocol-sync.md) | Draft | Sync MCP to v5.0 + TypeScript sig/map tools (tree-sitter) |
 | DX-74 | tiered-attention-defense | Draft | Multi-tier defense against LLM attention drift in skills |
 | DX-70 | init-simplification | ✅ Complete | Simplified init with interactive menus and safe merge |
@@ -26,6 +27,12 @@ This directory contains design proposals for Invar development.
 | DX-25 | functional-patterns | Defer | Functional patterns enhancement |
 | DX-29 | pure-content-detection | Defer | Pure content detection (`@invar:module` marker) |
 | DX-38 | contract-quality-rules | Partial | Tier 1-2 done, Tier 3-4 deferred |
+
+### Agent Ecosystem
+
+| ID | Name | Status | Description |
+|----|------|--------|-------------|
+| DX-85 | [opencode-support](DX-85-opencode-support.md) | Draft | Native OpenCode init (`AGENTS.md` + `opencode.json`); manual coexistence |
 
 ### LX Series (Language/Platform eXtension)
 
