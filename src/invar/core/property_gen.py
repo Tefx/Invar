@@ -388,6 +388,10 @@ _HINT_SKIP = (
     "@pre may be too restrictive for Hypothesis to generate valid inputs. "
     "Consider relaxing @pre or adding type hints to help input generation."
 )
+_HINT_STUB = (
+    "Function is a stub (NotImplementedError). "
+    "Use invar guard --contracts-only (-c) during SPECIFY phase to check contract coverage without running tests."
+)
 
 # Skip patterns for untestable error detection
 _SKIP_PATTERNS = (
@@ -400,6 +404,7 @@ _SKIP_PATTERNS = (
     "positional argument",
     "Unable to satisfy",
     "has no attribute 'check'",  # invar_runtime contracts, not deal contracts
+    "NotImplementedError",  # Stub functions in SPECIFY phase
 )
 
 
@@ -411,6 +416,9 @@ _SKIP_PATTERNS = (
 @post(lambda result: isinstance(result, PropertyTestResult))
 def _handle_test_exception(err_str: str, func_name: str, max_examples: int) -> PropertyTestResult:
     """Handle exception from property test, returning skip or failure result."""
+    # Stub functions (NotImplementedError) — expected in SPECIFY phase
+    if "NotImplementedError" in err_str:
+        return _skip_result(func_name, "Skipped: stub function (NotImplementedError)", hint=_HINT_STUB)
     # Check for invar_runtime contracts (deal.cases requires deal contracts)
     if "has no attribute 'check'" in err_str:
         return _skip_result(

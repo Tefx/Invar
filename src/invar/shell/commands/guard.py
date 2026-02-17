@@ -158,7 +158,10 @@ def guard(
         False, "--suggest", help="DX-61: Show functional pattern suggestions"
     ),
     contracts_only: bool = typer.Option(
-        False, "--contracts-only", "-c", help="DX-63: Contract coverage check only"
+        False,
+        "--contracts-only",
+        "-c",
+        help="Check contract coverage only (skip all tests). Use during SPECIFY phase when functions are stubs.",
     ),
 ) -> None:
     """Check project against Invar architecture rules.
@@ -169,7 +172,7 @@ def guard(
     Use --all to check the entire project (useful for CI/release).
     Use --static for quick static-only checks (~0.5s vs ~5s full).
     Use --suggest to get functional pattern suggestions (NewType, Validation, etc.).
-    Use --contracts-only (-c) to check contract coverage without running tests (DX-63).
+    Use --contracts-only (-c) to check contract coverage without running tests (SPECIFY phase).
     """
     # LX-06: Language detection and dispatch
     from invar.shell.commands.init import detect_language
