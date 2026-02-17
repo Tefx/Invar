@@ -369,6 +369,7 @@ def run_property_tests_phase(
                 "file_path": r.file_path,
                 "error": r.error,
                 "seed": r.seed,
+                **({"hint": r.hint} if r.hint else {}),
             }
             for r in report.results
             if not r.passed
@@ -441,6 +442,11 @@ def _output_property_tests_status(
                     f'    [dim]Reproduce: python -c "from hypothesis import reproduce_failure; '
                     f'import {func_name}" --seed={seed}[/dim]'
                 )
+
+            # Show diagnostic hint
+            hint = failure.get("hint")
+            if hint:
+                console.print(f"    [dim]Hint: {hint}[/dim]")
         # Fallback for errors without structured failures
         for error in property_output.get("errors", [])[:5]:
             console.print(f"  [yellow]![/yellow] {error}")

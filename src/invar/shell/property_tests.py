@@ -486,6 +486,8 @@ def format_property_test_report(
                 lines.append(f"      {short_error}")
             if result.seed:
                 lines.append(f"      [dim]Seed: {result.seed}[/dim]")
+            if result.hint:
+                lines.append(f"      [dim]Hint: {result.hint}[/dim]")
 
     # Show errors
     for error in report.errors:

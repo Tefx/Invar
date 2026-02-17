@@ -31,6 +31,7 @@ class PropertyTestResult:
     error: str | None = None
     file_path: str | None = None  # DX-26: For file::function format
     seed: int | None = None  # DX-26: Hypothesis seed for reproduction
+    hint: str | None = None  # Diagnostic hint for @pre/Hypothesis relationship
 
 
 @dataclass
@@ -367,12 +368,26 @@ def _extract_hypothesis_seed(error_str: str) -> int | None:
     return None
 
 
-@pre(lambda name, reason: len(name) > 0 and len(reason) > 0)
+@pre(lambda name, reason, hint=None: len(name) > 0 and len(reason) > 0 and (hint is None or len(hint) > 0))
 @post(lambda result: isinstance(result, PropertyTestResult) and result.passed)
-def _skip_result(name: str, reason: str) -> PropertyTestResult:
+def _skip_result(name: str, reason: str, hint: str | None = None) -> PropertyTestResult:
     """Create a skip result (passed=True, 0 examples)."""
-    return PropertyTestResult(function_name=name, passed=True, examples_run=0, error=reason)
+    return PropertyTestResult(function_name=name, passed=True, examples_run=0, error=reason, hint=hint)
 
+
+# Diagnostic hints for @pre/Hypothesis relationship
+_HINT_POST_FAILURE = (
+    "Hypothesis generates random inputs satisfying @pre, then checks @post. "
+    "If @post fails, your @pre may allow invalid inputs — consider tightening it."
+)
+_HINT_EXCEPTION = (
+    "Function raised an exception on input that satisfied @pre. "
+    "Your @pre may be too permissive — it should reject inputs the function cannot handle."
+)
+_HINT_SKIP = (
+    "@pre may be too restrictive for Hypothesis to generate valid inputs. "
+    "Consider relaxing @pre or adding type hints to help input generation."
+)
 
 # Skip patterns for untestable error detection
 _SKIP_PATTERNS = (
@@ -405,7 +420,8 @@ def _handle_test_exception(err_str: str, func_name: str, max_examples: int) -> P
         return _skip_result(func_name, "Skipped: untestable types")
     seed = _extract_hypothesis_seed(err_str)
     return PropertyTestResult(
-        func_name, passed=False, examples_run=max_examples, error=err_str, seed=seed
+        func_name, passed=False, examples_run=max_examples, error=err_str, seed=seed,
+        hint=_HINT_EXCEPTION,
     )
 
 
@@ -442,12 +458,13 @@ def run_property_test(func: Callable, max_examples: int = 100) -> PropertyTestRe
         test_case()
         return PropertyTestResult(func_name, passed=True, examples_run=max_examples)
     except deal.PreContractError:
-        return _skip_result(func_name, "Skipped: could not generate valid inputs")
+        return _skip_result(func_name, "Skipped: could not generate valid inputs", hint=_HINT_SKIP)
     except deal.PostContractError as e:
         err_str = str(e)
         seed = _extract_hypothesis_seed(err_str)
         return PropertyTestResult(
-            func_name, passed=False, examples_run=max_examples, error=err_str, seed=seed
+            func_name, passed=False, examples_run=max_examples, error=err_str, seed=seed,
+            hint=_HINT_POST_FAILURE,
         )
     except ImportError:
         pass  # Fall through to custom strategy approach
