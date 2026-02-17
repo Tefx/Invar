@@ -24,22 +24,23 @@ repos:
       # Smart mode: runs full guard when rule files change, --changed otherwise
       - id: invar-guard
         name: Invar Guard
-        entry: bash -c '
-          RULE_FILES="rule_meta.py rules.py contracts.py purity.py pyproject.toml"
-          STAGED=$(git diff --cached --name-only)
-          FULL=false
-          for f in $RULE_FILES; do
-            if echo "$STAGED" | grep -q "$f"; then FULL=true; break; fi
-          done
-          if [ "$FULL" = true ]; then
-            echo "⚠️  Rule change detected - running FULL guard"
-            invar guard
-          else
-            invar guard --changed
-          fi
-        '
-        language: python
-        additional_dependencies: ['invar-tools']
+        entry: bash
+        args:
+          - -c
+          - |
+            RULE_FILES="rule_meta.py rules.py contracts.py purity.py pyproject.toml"
+            STAGED=$(git diff --cached --name-only)
+            FULL=false
+            for f in $RULE_FILES; do
+              if echo "$STAGED" | grep -q "$f"; then FULL=true; break; fi
+            done
+            if [ "$FULL" = true ]; then
+              echo "⚠️  Rule change detected - running FULL guard"
+              invar guard
+            else
+              invar guard --changed
+            fi
+        language: system
         pass_filenames: false
         stages: [pre-commit]
         types: [python]
