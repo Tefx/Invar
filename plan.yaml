@@ -20,24 +20,29 @@ phases:
       documentation
     verification: Run `invar dev sync` and verify CLAUDE.md contains Tool Selection
       section with MCP/CLI/uvx comparison table
+  - id: dx-80.testing-verification
+    name: testing-verification
+    status: pending
+    description: 'Manual and integration testing: CLI behavior, --all flag, backward
+      compatibility, pre-commit hooks'
+    verification: 'All tests pass: `invar guard` (changed), `invar guard --all` (full),
+      `invar guard --changed` (backward compat), pre-commit hooks work'
 - id: config-cleanup
   name: Remove .invar/config.toml support
   status: pending
   steps:
   - id: config-cleanup.remove-config-toml
-    name: remove-config-toml
+    name: remove-invar-config-toml
     status: pending
-    description: >
-      Remove .invar/config.toml as a config source. Keep only pyproject.toml
-      ([tool.invar.guard]) and invar.toml ([guard]). Update load_config() and
-      find_config_file() in shell/config.py to remove the third fallback.
-      Update find_project_root() to remove .invar/ as a project root marker.
-      Add deprecation warning if .invar/config.toml is detected (don't silently
-      ignore). Update manifest.toml never_touch list. Update docs/help text.
-    verification: >
-      Confirm `invar guard` still works with pyproject.toml and invar.toml.
+    description: 'Remove .invar/config.toml as a config source. Keep only pyproject.toml
+      ([tool.invar.guard]) and invar.toml ([guard]). Update load_config() and find_config_file()
+      in shell/config.py to remove the third fallback. Update find_project_root()
+      to remove .invar/ as a project root marker. Add deprecation warning if .invar/config.toml
+      is detected (don''t silently ignore). Update manifest.toml never_touch list.
+      Update docs/help text.
+
+      '
+    verification: 'Confirm `invar guard` still works with pyproject.toml and invar.toml.
       Confirm .invar/ directory can be fully gitignored without losing config.
-    notes: >
-      Backward-compat break: users with .invar/config.toml need to migrate.
-      Pair with CONTEXT.md relocation (move .invar/context.md → CONTEXT.md)
-      when ready — that change completes the "safely ignore .invar/" goal.
+
+      '
