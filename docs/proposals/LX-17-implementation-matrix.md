@@ -1,5 +1,8 @@
 # Invar功能实现度矩阵
 
+**Status:** Deferred
+**Series:** LX (Language eXtension)
+
 ## 概述
 
 本文档分析Invar的核心功能在不同语言中的可实现性。

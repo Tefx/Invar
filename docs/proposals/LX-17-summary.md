@@ -1,5 +1,8 @@
 # LX-17 Summary: Go & Rust Feasibility
 
+**Status:** Deferred
+**Series:** LX (Language eXtension)
+
 ## 快速对比
 
 | 维度 | Go | Rust | 获胜者 |

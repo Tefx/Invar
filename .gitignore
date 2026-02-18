@@ -53,6 +53,9 @@ Thumbs.db
 
 # Claude Code local settings (not committed)
 .claude/settings.local.json
+
+# Serena IDE tool (local state)
+.serena/
 .hypothesis/
 src/invar/core/.invar/
 

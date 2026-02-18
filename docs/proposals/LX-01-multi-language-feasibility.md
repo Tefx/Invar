@@ -1,6 +1,6 @@
 # LX-01: Multi-Language Invar Feasibility Assessment
 
-**Status:** Draft
+**Status:** Deferred
 **Created:** 2025-12-27
 **Series:** LX (Language eXtension) - New series for multi-language evolution
 

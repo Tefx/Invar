@@ -1,6 +1,6 @@
 # LX-17: Haskell & Elm Feasibility Assessment
 
-**Status:** Analysis
+**Status:** Deferred
 **Created:** 2026-01-05
 **Series:** LX (Language eXtension)
 **Authors:** Claude Sonnet 4.5 (deep analysis request)

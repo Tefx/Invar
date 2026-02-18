@@ -1,0 +1,9 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "invar": {
+      "type": "local",
+      "command": ["{env:HOME}/Projects/Invar/.venv/bin/python", "-m", "invar.mcp"]
+    }
+  }
+}

@@ -1,6 +1,6 @@
 # LX-11: Cursor IDE Support
 
-**Status:** Draft
+**Status:** Deferred
 **Created:** 2026-01-04
 **Updated:** 2026-01-04
 **Priority:** High (Largest user base among coding agents)
