@@ -1,3 +1,43 @@
 version: 1
 project: invar
 context: Implementation plan for invar.
+phases:
+- id: dx-80
+  name: DX-80
+  status: pending
+  steps:
+  - id: dx-80.code-fix-default
+    name: code-fix-default
+    status: pending
+    description: 'Modify guard.py CLI: change default changed=False to True, add --all
+      flag'
+    verification: Run `invar guard` and verify it checks only changed files. Run `invar
+      guard --all` and verify full check.
+  - id: dx-80.docs-tool-selection
+    name: docs-tool-selection
+    status: pending
+    description: Add Tool Selection section to CLAUDE.md template and update guard
+      documentation
+    verification: Run `invar dev sync` and verify CLAUDE.md contains Tool Selection
+      section with MCP/CLI/uvx comparison table
+- id: config-cleanup
+  name: Remove .invar/config.toml support
+  status: pending
+  steps:
+  - id: config-cleanup.remove-config-toml
+    name: remove-config-toml
+    status: pending
+    description: >
+      Remove .invar/config.toml as a config source. Keep only pyproject.toml
+      ([tool.invar.guard]) and invar.toml ([guard]). Update load_config() and
+      find_config_file() in shell/config.py to remove the third fallback.
+      Update find_project_root() to remove .invar/ as a project root marker.
+      Add deprecation warning if .invar/config.toml is detected (don't silently
+      ignore). Update manifest.toml never_touch list. Update docs/help text.
+    verification: >
+      Confirm `invar guard` still works with pyproject.toml and invar.toml.
+      Confirm .invar/ directory can be fully gitignored without losing config.
+    notes: >
+      Backward-compat break: users with .invar/config.toml need to migrate.
+      Pair with CONTEXT.md relocation (move .invar/context.md → CONTEXT.md)
+      when ready — that change completes the "safely ignore .invar/" goal.
