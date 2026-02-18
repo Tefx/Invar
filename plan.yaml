@@ -46,3 +46,30 @@ phases:
       Confirm .invar/ directory can be fully gitignored without losing config.
 
       '
+- id: dx-87
+  name: DX-87
+  status: pending
+  steps:
+  - id: dx-87.cli-reject-multi-agent
+    name: cli-reject-multi-agent
+    status: pending
+    description: 'Modify CLI to reject multiple agent flags. Add validation: if more
+      than one agent flag provided, error and exit with message "Cannot initialize
+      multiple agents in one run."'
+    verification: '`invar init --claude --pi` returns error. `invar init --claude`
+      succeeds. `invar init --pi` succeeds.'
+  - id: dx-87.interactive-single-select
+    name: interactive-single-select
+    status: pending
+    description: Change interactive init from multi-select (checkbox) to single-select.
+      User must choose one agent at a time.
+    verification: Interactive `invar init` shows single-select menu (not checkboxes).
+      Cannot select multiple agents.
+  - id: dx-87.docs-remove-multi-agent
+    name: docs-remove-multi-agent
+    status: pending
+    description: 'Update docs: remove multi-agent init references from proposals,
+      guides, and templates. Clarify that multi-agent setup requires separate init
+      runs.'
+    verification: No docs imply first-class multi-agent coexistence. Guides show separate
+      init commands for multiple agents.
