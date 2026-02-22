@@ -15,7 +15,8 @@ from pathlib import Path
 from returns.result import Failure, Result, Success
 from rich.console import Console
 
-from invar.core.property_gen import PropertyTestReport, find_contracted_functions, run_property_test
+from invar.core.property_gen import PropertyTestReport, find_contracted_functions
+from invar.core.property_runner import run_property_test
 from invar.shell.subprocess_env import detect_project_venv, find_site_packages
 
 console = Console()

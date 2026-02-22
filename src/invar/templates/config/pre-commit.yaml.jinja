@@ -32,7 +32,7 @@ repos:
             STAGED=$(git diff --cached --name-only)
             FULL=false
             for f in $RULE_FILES; do
-              if echo "$STAGED" | grep -q "$f"; then FULL=true; break; fi
+              if echo "$STAGED" | grep -qE "(^|/)${f}$"; then FULL=true; break; fi
             done
             if [ "$FULL" = true ]; then
               echo "⚠️  Rule change detected - running FULL guard"
