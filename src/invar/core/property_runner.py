@@ -128,14 +128,14 @@ def _is_skip_worthy_multi_failure(exc: Exception) -> bool:
     False
     """
     try:
-        from hypothesis.errors import InvalidArgument, MultipleFailures
+        from hypothesis.errors import InvalidArgument
     except ImportError:
         return False
 
-    if not isinstance(exc, MultipleFailures):
+    if not isinstance(exc, BaseExceptionGroup):
         return False
 
-    sub_exceptions = getattr(exc, "exceptions", [])
+    sub_exceptions = exc.exceptions
     if not sub_exceptions:
         return False
 
