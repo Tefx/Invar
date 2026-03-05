@@ -65,19 +65,23 @@ def _scan_and_check(
     path: Path, config: RuleConfig, only_files: set[Path] | None = None
 ) -> Result[GuardReport, str]:
     """Scan project files and check against rules."""
+    from invar.core.dead_export import check_dead_exports
     from invar.core.entry_points import extract_escape_hatches
-    from invar.core.models import EscapeHatchDetail
+    from invar.core.models import EscapeHatchDetail, FileInfo
+    from invar.core.references import count_cross_file_references
     from invar.core.review_trigger import check_duplicate_escape_reasons
     from invar.core.shell_architecture import check_complexity_debt
 
     report = GuardReport(files_checked=0)
     all_escapes: list[tuple[str, str, str]] = []  # DX-33: (file, rule, reason)
+    all_file_infos: list[FileInfo] = []
 
     for file_result in scan_project(path, only_files):
         if isinstance(file_result, Failure):
             console.print(f"[yellow]Warning:[/yellow] {file_result.failure()}")
             continue
         file_info = file_result.unwrap()
+        all_file_infos.append(file_info)
         report.files_checked += 1
         # P24: Track contract coverage for Core files
         total, with_contracts = _count_core_functions(file_info)
@@ -97,6 +101,11 @@ def _scan_and_check(
                         reason=reason,
                     )
                 )
+
+    sources = {fi.path: fi.source for fi in all_file_infos if fi.source}
+    ref_counts = count_cross_file_references(all_file_infos, sources)
+    for dead_violation in check_dead_exports(all_file_infos, ref_counts, config):
+        report.add_violation(dead_violation)
 
     # DX-22: Check project-level complexity debt (Fix-or-Explain enforcement)
     for debt_violation in check_complexity_debt(
