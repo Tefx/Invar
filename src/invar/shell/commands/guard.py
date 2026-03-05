@@ -102,8 +102,15 @@ def _scan_and_check(
                     )
                 )
 
-    sources = {fi.path: fi.source for fi in all_file_infos if fi.source}
-    ref_counts = count_cross_file_references(all_file_infos, sources)
+    ref_context_infos = all_file_infos
+    if only_files is not None:
+        ref_context_infos = []
+        for context_result in scan_project(path):
+            if isinstance(context_result, Success):
+                ref_context_infos.append(context_result.unwrap())
+
+    sources = {fi.path: fi.source for fi in ref_context_infos if fi.source}
+    ref_counts = count_cross_file_references(ref_context_infos, sources)
     for dead_violation in check_dead_exports(all_file_infos, ref_counts, config):
         report.add_violation(dead_violation)
 
