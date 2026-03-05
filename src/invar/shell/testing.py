@@ -82,6 +82,7 @@ class VerificationResult:
 
 
 # @shell_orchestration: Verifier discovery helper
+# @invar:allow dead_export: Public helper API used by external integrations
 def get_available_verifiers() -> list[str]:
     """
     Detect installed verification tools.
@@ -183,9 +184,33 @@ def run_doctests_on_files(
             "-x",
             "--tb=short",
         ]
-    cmd.extend(str(f) for f in py_files)
+    run_cwd = cwd.resolve() if cwd is not None else None
+
+    target_args: list[str] = []
+    for py_file in py_files:
+        if run_cwd is None:
+            target_args.append(str(py_file))
+            continue
+        try:
+            target_args.append(str(py_file.resolve().relative_to(run_cwd)))
+        except ValueError:
+            target_args.append(str(py_file.resolve()))
+
+    cmd.extend(target_args)
     if verbose:
         cmd.append("-v")
+
+    env = build_subprocess_env(cwd=cwd)
+    if run_cwd is not None:
+        separator = ";" if sys.platform.startswith("win") else ":"
+        extras: list[str] = []
+        src_dir = run_cwd / "src"
+        if src_dir.exists():
+            extras.append(str(src_dir))
+        extras.append(str(run_cwd))
+        existing = env.get("PYTHONPATH", "")
+        prefix = separator.join(list(dict.fromkeys(extras)))
+        env["PYTHONPATH"] = f"{prefix}{separator}{existing}" if existing else prefix
 
     try:
         # DX-52: Inject project venv site-packages for uvx compatibility
@@ -195,7 +220,7 @@ def run_doctests_on_files(
             text=True,
             timeout=timeout,
             cwd=str(cwd) if cwd is not None else None,
-            env=build_subprocess_env(cwd=cwd),
+            env=env,
         )
         # Pytest exit codes: 0=passed, 5=no tests collected (also OK)
         is_passed = result.returncode in (0, 5)
@@ -216,6 +241,7 @@ def run_doctests_on_files(
 
 
 # @shell_complexity: Property test orchestration with subprocess
+# @invar:allow dead_export: Backward-compatible CLI helper invoked by external callers
 def run_test(
     target: str,
     json_output: bool = False,
