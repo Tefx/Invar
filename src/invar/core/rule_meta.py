@@ -188,6 +188,18 @@ RULE_META: dict[str, RuleMeta] = {
         cannot_detect=("Individual function justifications",),
         hint="Address shell_too_complex warnings: refactor OR add @shell_complexity: markers",
     ),
+    "dead_export": RuleMeta(
+        name="dead_export",
+        severity=Severity.WARNING,
+        category=RuleCategory.SHELL,
+        detects="Public shell function with zero runtime callers across src/ (excluding tests/)",
+        cannot_detect=(
+            "Dynamic dispatch",
+            "Reflection-based callers",
+            "External consumers outside src/",
+        ),
+        hint="Add a caller in src/ or mark with: # @invar:allow dead_export: <reason>",
+    ),
     # Documentation rules
     "missing_doctest": RuleMeta(
         name="missing_doctest",
