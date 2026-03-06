@@ -9,12 +9,22 @@ Core module: pure logic, no I/O.
 
 from __future__ import annotations
 
-from deal import post
+from deal import post, pre
 
 from invar.core.entry_points import has_allow_marker, is_entry_point
 from invar.core.models import FileInfo, RuleConfig, Severity, SymbolKind, Violation
 
 
+@pre(
+    lambda file_infos, ref_counts, config: (
+        all(isinstance(fi, FileInfo) for fi in file_infos)
+        and all(
+            isinstance(name, str) and isinstance(count, int) and count >= 0
+            for name, count in ref_counts.items()
+        )
+        and isinstance(config, RuleConfig)
+    )
+)
 @post(lambda result: all(v.rule == "dead_export" for v in result))
 def check_dead_exports(
     file_infos: list[FileInfo], ref_counts: dict[str, int], config: RuleConfig
