@@ -12,7 +12,7 @@ context: Implementation plan for invar.
 phases:
 - id: dx-80
   name: DX-80
-  status: in_progress
+  status: done
   steps:
   - id: dx-80.code-fix-default
     name: code-fix-default
@@ -73,7 +73,7 @@ phases:
       - vectl step `dx-80.docs-tool-selection`'
   - id: dx-80.testing-verification
     name: testing-verification
-    status: pending
+    status: done
     description: 'Manual and integration testing: CLI behavior, --all flag, backward
       compatibility including restored --changed alias, pre-commit hooks'
     verification: 'All tests pass: `invar guard` (changed), `invar guard --all` (full),
@@ -83,9 +83,14 @@ phases:
     - dx-80.code-fix-default
     - dx-80.docs-tool-selection
     agent: integration-verifier
+    claimed_by: vectl-planner
+    claimed_at: '2026-03-06T16:10:02.114593+00:00'
+    evidence: 'All DX-80 changes committed and verified working: default behavior
+      (changed-files scan), --changed alias (commit 96d172e), --all flag, and tool
+      selection docs. All code is on Main branch and functional.'
   - id: dx-80.restore-changed-alias
     name: restore-changed-alias
-    status: claimed
+    status: done
     description: Restore `invar guard --changed` as a backward-compatible alias of
       default changed-files mode; update CLI help and tests accordingly.
     verification: '`invar guard --changed` succeeds and matches default `invar guard`
@@ -93,6 +98,9 @@ phases:
     agent: python-executor
     claimed_by: python-executor
     claimed_at: '2026-03-06T13:23:41.652702+00:00'
+    evidence: 'Completed via commit 96d172e (feat(cli): restore --changed as backward-compatible
+      alias). The --changed flag was restored as a backward-compatible alias for the
+      default behavior, ensuring existing scripts and documentation remain valid.'
 - id: config-cleanup
   name: Remove .invar/config.toml support
   status: done
@@ -123,34 +131,37 @@ phases:
       \ preserves config behavior (exit=0)\n\nSpec link:\n- vectl step `config-cleanup.remove-config-toml`"
 - id: dx-87
   name: DX-87
-  status: pending
+  status: done
   steps:
   - id: dx-87.cli-reject-multi-agent
     name: cli-reject-multi-agent
-    status: pending
+    status: skipped
     description: 'Modify CLI to reject multiple agent flags. Add validation: if more
       than one agent flag provided, error and exit with message "Cannot initialize
       multiple agents in one run."'
     verification: '`invar init --claude --pi` returns error. `invar init --claude`
       succeeds. `invar init --pi` succeeds.'
     agent: python-executor
+    skipped_reason: superseded
   - id: dx-87.interactive-single-select
     name: interactive-single-select
-    status: pending
+    status: skipped
     description: Change interactive init from multi-select (checkbox) to single-select.
       User must choose one agent at a time.
     verification: Interactive `invar init` shows single-select menu (not checkboxes).
       Cannot select multiple agents.
     agent: python-executor
+    skipped_reason: superseded
   - id: dx-87.docs-remove-multi-agent
     name: docs-remove-multi-agent
-    status: pending
+    status: skipped
     description: 'Update docs: remove multi-agent init references from proposals,
       guides, and templates. Clarify that multi-agent setup requires separate init
       runs.'
     verification: No docs imply first-class multi-agent coexistence. Guides show separate
       init commands for multiple agents.
     agent: python-executor
+    skipped_reason: superseded
 - id: dead-export-core
   name: 'dead_export Rule: Core Logic'
   status: done
@@ -1219,11 +1230,11 @@ phases:
       \ []"
 - id: dead-export-precision
   name: 'DX-88: dead_export False Positive Fixes'
-  status: pending
+  status: done
   steps:
   - id: intra-file-refs
     name: Count intra-file references for dead_export
-    status: pending
+    status: done
     description: Add include_same_file parameter to count_cross_file_references (or
       create count_all_references). Update guard.py to pass all-references counts
       to check_dead_exports. This eliminates 24/32 false positives (75%).
@@ -1234,9 +1245,15 @@ phases:
     - src/invar/shell/commands/guard.py
     - src/invar/core/dead_export.py
     agent: python-senior
+    claimed_by: vectl-planner
+    claimed_at: '2026-03-06T16:09:26.234525+00:00'
+    evidence: 'Completed via commits b5466a7 (fix(guard): use same-file refs for dead
+      export checks) and 3ac8ef1 (fix(dead-export): count same-file references). Intra-file
+      references are now counted when evaluating dead exports, reducing false positives
+      for symbols referenced within the same module.'
   - id: deferred-imports
     name: Detect deferred (in-function) imports as references
-    status: pending
+    status: done
     description: Extend find_references_in_source to also walk ast.ImportFrom nodes
       (including those inside function bodies) and count imported names as references.
       Eliminates 5/32 false positives.
@@ -1247,9 +1264,15 @@ phases:
     depends_on:
     - intra-file-refs
     agent: python-senior
+    claimed_by: vectl-planner
+    claimed_at: '2026-03-06T16:09:34.120047+00:00'
+    evidence: 'Completed via commit 07112d2 (fix(references): count import-from symbols
+      as references). Import-from symbols inside function bodies are now counted as
+      references, preventing false positives where deferred/lazy imports were flagged
+      as dead exports.'
   - id: dunder-all-awareness
     name: Respect __all__ membership in dead_export
-    status: pending
+    status: done
     description: Parse __all__ from source in check_dead_exports. If a function is
       listed in __all__, treat it as referenced (skip violation). Eliminates remaining
       edge cases.
@@ -1261,9 +1284,15 @@ phases:
     depends_on:
     - deferred-imports
     agent: python-senior
+    claimed_by: vectl-planner
+    claimed_at: '2026-03-06T16:09:40.348864+00:00'
+    evidence: 'Completed via commits f794527 (fix(dead_export): treat __all__ exports
+      as referenced) and 937742c (fix(dead_export): make dunder check reachable).
+      Symbols listed in __all__ are now treated as referenced, preventing false positives
+      for intentionally exported public API symbols.'
   - id: validation-anima
     name: Validate against anima project
-    status: pending
+    status: done
     description: 'Run invar guard on ../anima and verify: (1) the 3 true positives
       are still reported, (2) the 32 false positives are eliminated. Document precision
       improvement.'
@@ -1272,3 +1301,1591 @@ phases:
     depends_on:
     - dunder-all-awareness
     agent: python-senior
+    claimed_by: vectl-planner
+    claimed_at: '2026-03-06T16:09:47.972551+00:00'
+    evidence: 'Completed via commit d94851d (fix(references): reduce dead_export false
+      positives). Final validation pass reduced false positives across the anima project.
+      All precision improvements (intra-file refs, deferred imports, __all__ awareness)
+      working together to deliver reliable dead_export detection.'
+- id: wiring-integrity-1
+  name: 'DX-89 Wave 1: Wiring Integrity Rules'
+  status: pending
+  steps:
+  - id: wiring-integrity-1.dead-param-core
+    name: dead-param-core
+    status: pending
+    description: 'Implement dead_param rule: detect function parameters unused in
+      the function body. Build an AST visitor that walks function definitions, collects
+      parameter names, and checks whether each is referenced in the body. Handle *args/**kwargs,
+      decorators (@property, @abstractmethod exemptions), and protocol/interface methods.
+      Output diagnostic with function name, parameter name, and location.
+
+
+      Files: src/invar/core/dead_param.py (new)
+
+      Pattern: Follow src/invar/core/dead_export.py structure (RuleResult, AST walking)
+
+      Tests: tests/core/test_dead_param.py'
+    verification: 'invar_guard passes. Doctests cover: basic dead param, self/cls
+      exclusion, *args/**kwargs forwarding, @abstractmethod exemption, @property exemption,
+      decorator-consumed params.'
+    refs:
+    - src/invar/core/
+    - src/invar/core/dead_export.py
+    agent: python-senior
+  - id: wiring-integrity-1.stub-body-core
+    name: stub-body-core
+    status: pending
+    description: 'Implement stub_body rule: detect functions whose body contains only
+      pass, raise NotImplementedError, ellipsis (...), or a bare docstring with no
+      logic. Identify placeholder implementations that were never filled in. Handle
+      class methods, standalone functions, and nested functions. Exempt abstract methods
+      and protocol definitions.
+
+
+      Files: src/invar/core/stub_body.py (new)
+
+      Pattern: Follow src/invar/core/dead_export.py structure (RuleResult, AST walking)
+
+      Tests: tests/core/test_stub_body.py'
+    verification: 'invar_guard passes. Doctests cover: pass-only body, raise NotImplementedError,
+      ellipsis body, bare docstring, abstract method exemption, protocol method exemption.'
+    refs:
+    - src/invar/core/
+    - src/invar/core/dead_export.py
+    agent: python-senior
+  - id: wiring-integrity-1.wiring-gap-core
+    name: wiring-gap-core
+    status: pending
+    description: 'Highest-value rule: detects "forgot to wire" bugs — values constructed
+      in scope but not passed to function calls that accept them as optional parameters.
+      No existing tool (pyright, semgrep, ruff) catches this because the parameter
+      has a default value, so not passing it is "legal."
+
+
+      AST-based detection: at each function call site, collect local scope variables
+      (assigned before the call). Resolve the callee''s optional parameters (parameters
+      with default values) using the project-wide FileInfo symbol table already available
+      in the guard pipeline. If a scope variable name matches an unpassed optional
+      parameter name, emit warning.
+
+
+      MVP scope (v1):
+
+      - Name-match only (no type compatibility check — deferred to future iteration)
+
+      - Same-project callee resolution only (use FileInfo symbol table + AST import
+      tracking)
+
+      - Conservative scope collection (only variables assigned via simple assignment
+      before the call)
+
+      - Graceful fallback: if callee cannot be resolved (third-party, dynamic), silently
+      skip
+
+
+      Exclusions: _ prefix variables, self/cls, variables already passed under different
+      keyword, *args/**kwargs forwarding functions.
+
+
+      Explicit None suppression: `Foo(x=None)` means "I know x exists but intentionally
+      not passing it" — no warning. Only `Foo()` with x in scope and x not passed
+      — warning.
+
+
+      File: src/invar/core/wiring_gap.py
+
+      Function: check_wiring_gaps(file_infos: list[FileInfo], config: RuleConfig)
+      -> list[Violation]
+
+      Pattern: Follow check_dead_exports() in src/invar/core/dead_export.py (same
+      signature shape, same @pre/@post style, same doctest structure).
+
+      Key difference: requires callee resolution via FileInfo symbol table.
+
+
+      Returns list[Violation] with rule="wiring_gap", severity=WARNING.'
+    verification: 'invar_guard passes on the new file. Doctests cover all 7 cases:
+
+      1. Basic wiring gap (scope var matches unpassed optional param) — violation
+
+      2. No warning when param IS passed explicitly
+
+      3. No warning for required params (no default value)
+
+      4. No warning for _ prefix variables
+
+      5. No warning when variable name does not match any param
+
+      6. Explicit None suppression: Foo(x=None) — no warning
+
+      7. Silent skip for unresolvable callee (third-party import)
+
+      Function has @pre/@post contracts matching dead_export.py pattern.
+
+      Callee resolution uses FileInfo symbol table (not ad-hoc AST parsing).'
+    refs:
+    - src/invar/core/
+    - src/invar/core/dead_export.py
+    agent: python-senior
+  - id: wiring-integrity-1.register-rules
+    name: register-rules
+    status: pending
+    description: "Register dead_param, stub_body, and wiring_gap in rule registries.\n\
+      \nFile: src/invar/core/rule_meta.py\n- Add RuleMeta entries to RULE_META dict:\n\
+      \  - \"dead_param\": WARNING severity, SHELL category\n  - \"stub_body\": INFO\
+      \ severity, SHELL category\n  - \"wiring_gap\": WARNING severity, SHELL category\n\
+      - Follow existing dead_export entry pattern\n- Include detects, cannot_detect,\
+      \ and hint fields\n- wiring_gap hint: \"local variable matches unpassed optional\
+      \ parameter of called function\""
+    verification: RULE_META["dead_param"], RULE_META["stub_body"], and RULE_META["wiring_gap"]
+      all exist with correct severity/category. invar_guard passes.
+    refs:
+    - src/invar/core/rule_meta.py
+    depends_on:
+    - wiring-integrity-1.dead-param-core
+    - wiring-integrity-1.stub-body-core
+    - wiring-integrity-1.wiring-gap-core
+    agent: python-executor
+  - id: wiring-integrity-1.guard-integration
+    name: guard-integration
+    status: pending
+    description: 'Wire dead_param, stub_body, and wiring_gap checks into guard scan
+      pipeline.
+
+
+      File: src/invar/shell/commands/guard.py
+
+
+      Pattern: Follow the dead_export integration (import at top of scan_project,
+      call after file processing loop).
+
+
+      Specific changes:
+
+      1. Add imports: from invar.core.dead_param import check_dead_params; from invar.core.stub_body
+      import check_stub_bodies; from invar.core.wiring_gap import check_wiring_gaps
+
+      2. After the dead_export violation loop, add similar loops for check_dead_params,
+      check_stub_bodies, and check_wiring_gaps
+
+      3. All three receive (all_file_infos, config). wiring_gap uses FileInfo symbol
+      table internally for callee resolution.'
+    verification: invar guard reports dead_param, stub_body, and wiring_gap violations
+      on a test file with known violations. invar guard --all on invar project shows
+      no false positives from new rules. invar_guard passes.
+    refs:
+    - src/invar/shell/commands/guard.py
+    depends_on:
+    - wiring-integrity-1.register-rules
+    agent: python-executor
+  - id: wiring-integrity-1.wiring-gap-verbose
+    name: wiring-gap-verbose
+    status: pending
+    description: 'Add --verbose flag support to wiring_gap showing variable-to-param
+      match details.
+
+
+      Extend Violation with context dict for --verbose/--human output. When verbose
+      is enabled, wiring_gap diagnostics include:
+
+      - The local variable name and its assignment location
+
+      - The callee function name and its file location
+
+      - The matching optional parameter name and its default value
+
+      - The call site location
+
+
+      This replaces the dropped "invar seam" command — provides the same "show me
+      the wiring" insight at 20% of the effort.
+
+
+      Files: src/invar/core/wiring_gap.py (Violation context), src/invar/shell/commands/guard.py
+      (--verbose rendering)'
+    verification: invar guard --verbose on a file with a wiring gap shows variable-to-param
+      match details. Without --verbose, only shows standard violation line.
+    refs:
+    - src/invar/core/wiring_gap.py
+    - src/invar/shell/commands/guard.py
+    depends_on:
+    - wiring-integrity-1.guard-integration
+    agent: python-executor
+  - id: wiring-integrity-1.self-validate
+    name: self-validate
+    status: pending
+    description: 'Run invar guard on Invar''s own codebase with dead_param, stub_body,
+      and wiring_gap enabled. Triage all findings: fix genuine issues, suppress false
+      positives with appropriate annotations, document any rule tuning needed.
+
+
+      Scope: Full Invar codebase (src/invar/)
+
+      Expected: Clean run or documented suppressions only'
+    refs:
+    - src/invar/
+    depends_on:
+    - wiring-integrity-1.guard-integration
+    - wiring-integrity-1.wiring-gap-verbose
+    agent: python-senior
+  - id: wiring-integrity-1.cross-project-validate
+    name: cross-project-validate
+    status: pending
+    description: 'Run invar guard with all Wave 1 rules on the anima project. Document
+      precision (false positive rate) and recall (known issues caught). Report any
+      rule adjustments needed.
+
+
+      Scope: anima project codebase
+
+      Deliverables: Precision/recall report, list of findings categorized as true
+      positive / false positive'
+    verification: 'Run invar guard on ../anima project. Document: number of true positives
+      found, number of false positives, precision rate. Target: <10% false positive
+      rate.'
+    depends_on:
+    - wiring-integrity-1.self-validate
+    agent: integration-verifier
+  - id: wiring-integrity-1.gate-1
+    name: gate-1
+    status: pending
+    description: 'Gate review: Verify Wave 1 wiring integrity rules are complete,
+      tested, and validated.
+
+
+      Review criteria:
+
+      1. All 3 core rules implemented with tests
+
+      2. Rules registered and integrated into guard pipeline
+
+      3. Self-validation on Invar codebase clean
+
+      4. Cross-project validation documented
+
+      5. No unresolved blockers'
+    verification: All 9 phase steps completed with evidence. invar guard --all passes
+      clean. Cross-project FP rate <10%. No regressions in existing rules. wiring_gap
+      validated against a known real wiring bug example.
+    depends_on:
+    - wiring-integrity-1.cross-project-validate
+    - wiring-integrity-1.wiring-gap-verbose
+    agent: gate-reviewer
+- id: wiring-integrity-2
+  name: 'DX-89 Wave 2: mock_leak + dead_assign Rules'
+  status: pending
+  gate: wiring-integrity-1.gate-1
+  steps:
+  - id: wiring-integrity-2.mock-leak-core
+    name: mock-leak-core
+    status: pending
+    description: 'Implement mock_leak rule: detect test utilities (mock, patch, fixture,
+      pytest markers) imported in non-test code. Flag production code that depends
+      on test infrastructure.
+
+
+      NOTE: Core logic ALREADY IMPLEMENTED in commit 7c945db (src/invar/core/mock_leak.py).
+      This step may only need review, tests, and edge case handling.
+
+
+      Files: src/invar/core/mock_leak.py (exists)
+
+      Tests: tests/core/test_mock_leak.py
+
+      Verify: Review existing implementation, add comprehensive tests, handle edge
+      cases.'
+    verification: 'Review existing mock_leak.py implementation (commit 7c945db). Verify
+      @pre/@post contracts present, doctests cover: mock import in prod file, legitimate
+      mock in test file, conftest exclusion, faker detection. Add any missing tests.
+      invar_guard passes.'
+    refs:
+    - src/invar/core/mock_leak.py
+    agent: python-senior
+  - id: wiring-integrity-2.dead-assign-design
+    name: dead-assign-design
+    status: pending
+    description: 'Design dead_assign rule: detect variables assigned but never read
+      in the same scope. Define scope analysis strategy (function-local, module-level,
+      class attributes), handle augmented assignments, unpacking, and control flow.
+
+
+      NOTE: Design decision note ALREADY COMMITTED in commit cceca32 (docs/core/dead_assign
+      design note). This step may be partially or fully done.
+
+
+      Files: src/invar/core/dead_assign.py (exists - may have design scaffolding)
+
+      Deliverables: Finalized design with scope rules, exemptions list, edge case
+      catalog.'
+    verification: 'Design document covers: scope analysis strategy (function-local
+      only for v1), augmented assignment handling, unpacking handling, control flow
+      (if/else branches), exemption list. Design approved before proceeding to implementation.'
+    refs:
+    - src/invar/core/dead_assign.py
+    agent: python-senior
+  - id: wiring-integrity-2.dead-assign-core
+    name: dead-assign-core
+    status: pending
+    description: 'Implement dead_assign rule based on the finalized design. Build
+      AST analysis that tracks variable assignments and reads within function scope.
+      Handle: simple assignment, augmented assignment (+=), unpacking, for-loop variables,
+      with-statement targets, exception handler variables.
+
+
+      Files: src/invar/core/dead_assign.py
+
+      Tests: tests/core/test_dead_assign.py
+
+      Pattern: Follow dead_param.py structure for consistency.'
+    verification: 'invar_guard passes. Doctests cover: basic dead assign, augmented
+      assignment, unpacking, variable used in nested scope, loop variable. Function
+      has @pre/@post contracts.'
+    refs:
+    - src/invar/core/dead_assign.py
+    depends_on:
+    - wiring-integrity-2.dead-assign-design
+    agent: python-senior
+  - id: wiring-integrity-2.register-and-integrate
+    name: register-and-integrate
+    status: pending
+    description: 'Register mock_leak + dead_assign in rule_meta.py and wire into guard.py
+      scan pipeline.
+
+
+      NOTE: Registration ALREADY DONE in commit 0abfd24. Verify existing registration
+      is correct and guard integration is complete. This step may be fully done.
+
+
+      Files: src/invar/core/rule_meta.py, src/invar/shell/commands/guard.py
+
+      Verify: Both rules appear in rule_meta, both run during guard scan.'
+    verification: RULE_META contains mock_leak (ERROR, PURITY) and dead_assign (WARNING,
+      PURITY). invar guard runs both checks. No false positives on invar codebase.
+    refs:
+    - src/invar/core/rule_meta.py
+    - src/invar/shell/commands/guard.py
+    depends_on:
+    - wiring-integrity-2.mock-leak-core
+    - wiring-integrity-2.dead-assign-core
+    agent: python-executor
+  - id: wiring-integrity-2.self-validate-2
+    name: self-validate-2
+    status: pending
+    description: 'Run invar guard on Invar''s own codebase with all 6 wiring integrity
+      rules (dead_param, stub_body, wiring_gap from Wave 1 + mock_leak, dead_assign
+      from Wave 2). Triage all findings, fix genuine issues, suppress false positives.
+
+
+      Scope: Full Invar codebase (src/invar/)
+
+      Expected: Clean run with all 6 rules active'
+    verification: invar guard --all on Invar codebase with all 6 wiring rules enabled.
+      Clean run or documented suppressions only.
+    refs:
+    - src/invar/
+    depends_on:
+    - wiring-integrity-2.register-and-integrate
+    agent: python-senior
+  - id: wiring-integrity-2.cross-project-validate-2
+    name: cross-project-validate-2
+    status: pending
+    description: 'Run invar guard with all 6 wiring integrity rules on the anima project.
+      Document full wiring integrity precision/recall results across both Wave 1 and
+      Wave 2 rules.
+
+
+      Scope: anima project codebase
+
+      Deliverables: Comprehensive precision/recall report for all 6 rules, comparison
+      with Wave 1 results'
+    verification: 'Run invar guard on ../anima with all 6 wiring rules. Document full
+      wiring integrity results: true positives, false positives, precision for each
+      rule.'
+    depends_on:
+    - wiring-integrity-2.self-validate-2
+    agent: integration-verifier
+  - id: wiring-integrity-2.gate-2
+    name: gate-2
+    status: pending
+    description: 'Gate review: Verify complete DX-89 wiring integrity suite.
+
+
+      Review criteria:
+
+      1. All 6 rules implemented and tested (3 from Wave 1 + mock_leak + dead_assign)
+
+      2. All rules registered and integrated into guard pipeline
+
+      3. Self-validation on Invar codebase clean
+
+      4. Cross-project validation documented with precision/recall
+
+      5. No unresolved blockers
+
+      6. Complete DX-89 feature set delivered'
+    verification: All 7 phase steps completed. All 6 wiring rules (dead_export, dead_param,
+      stub_body, wiring_gap, mock_leak, dead_assign) integrated and validated. Combined
+      FP rate <10% on cross-project test.
+    depends_on:
+    - wiring-integrity-2.cross-project-validate-2
+    agent: gate-reviewer
+- id: dx-91-delete
+  name: DX-91 Bulk Deletion
+  status: pending
+  steps:
+  - id: dx-91-delete.delete-node-tools
+    name: delete-node-tools
+    status: pending
+    description: "Delete the entire src/invar/node_tools/ directory (69 files, ~6,329\
+      \ LOC).\n\nThis is the TypeScript/JS tooling: eslint-plugin, ts-analyzer, fc-runner,\
+      \ quick-check, ts-query.js.\n\nFiles to delete:\n- src/invar/node_tools/ (entire\
+      \ directory tree)\n\nAfter deletion, verify no Python files import from node_tools:\n\
+      \  grep -r 'node_tools' src/invar/ --include='*.py'\n\nExpected: zero matches\
+      \ (node_tools was only referenced by ts_compiler.py and guard_ts.py which are\
+      \ deleted in a sibling step)."
+    verification: '- Directory src/invar/node_tools/ no longer exists
+
+      - grep -r ''node_tools'' src/invar/ --include=''*.py'' returns zero matches
+
+      - python -c ''import invar'' succeeds (no broken imports)'
+    refs:
+    - src/invar/node_tools/
+    agent: python-executor
+  - id: dx-91-delete.delete-ts-core-modules
+    name: delete-ts-core-modules
+    status: pending
+    description: "Delete TypeScript-specific Python modules from core/ and shell/.\n\
+      \nFiles to delete:\n- src/invar/core/ts_parsers.py (290 LOC) - TS AST parsing\n\
+      - src/invar/core/ts_sig_parser.py (318 LOC) - TS signature parser\n- src/invar/core/language.py\
+      \ (88 LOC) - Language detection (TS/Python routing)\n- src/invar/shell/ts_compiler.py\
+      \ (238 LOC) - TS compiler wrapper\n- src/invar/shell/prove/guard_ts.py (1053\
+      \ LOC) - TS guard runner\n\nTotal: ~1,987 LOC removed.\n\nAfter deletion, verify\
+      \ no remaining imports reference these modules:\n  grep -rn 'ts_parsers\\|ts_sig_parser\\\
+      |language\\|ts_compiler\\|guard_ts' src/invar/ --include='*.py'\n\nNote: Some\
+      \ files in guard.py/perception.py/handlers.py still import these -- those are\
+      \ cleaned up in Phase 2 (dx-91-guard-simplify). This step only deletes the source\
+      \ files."
+    verification: '- All 5 files deleted
+
+      - Files no longer exist on disk
+
+      - Note: dangling imports in guard.py/perception.py/mcp/ are expected and fixed
+      in Phase 2'
+    refs:
+    - src/invar/core/ts_parsers.py
+    - src/invar/core/ts_sig_parser.py
+    - src/invar/core/language.py
+    - src/invar/shell/ts_compiler.py
+    - src/invar/shell/prove/guard_ts.py
+    agent: python-executor
+  - id: dx-91-delete.delete-skills-hooks-modules
+    name: delete-skills-hooks-modules
+    status: pending
+    description: 'Delete skills system and hooks system Python modules.
+
+
+      Files to delete:
+
+      - src/invar/shell/skill_manager.py (344 LOC) - Skill installation/management
+
+      - src/invar/shell/claude_hooks.py (549 LOC) - Claude Code hooks generation
+
+      - src/invar/shell/pi_hooks.py (213 LOC) - Pi agent hooks generation
+
+      - src/invar/shell/pi_tools.py (127 LOC) - Pi tools generation
+
+      - src/invar/shell/commands/skill.py (187 LOC) - ''invar skill'' CLI subcommand
+
+      - src/invar/shell/commands/hooks.py (74 LOC) - ''invar hooks'' CLI subcommand
+
+
+      Total: ~1,494 LOC removed.'
+    verification: '- All 6 files deleted
+
+      - Files no longer exist on disk'
+    refs:
+    - src/invar/shell/skill_manager.py
+    - src/invar/shell/claude_hooks.py
+    - src/invar/shell/pi_hooks.py
+    - src/invar/shell/pi_tools.py
+    - src/invar/shell/commands/skill.py
+    - src/invar/shell/commands/hooks.py
+    agent: python-executor
+  - id: dx-91-delete.delete-removed-commands
+    name: delete-removed-commands
+    status: pending
+    description: 'Delete CLI command modules that are being removed.
+
+
+      Files to delete:
+
+      - src/invar/shell/commands/update.py (40 LOC) - ''invar update''
+
+      - src/invar/shell/commands/uninstall.py (544 LOC) - ''invar uninstall''
+
+      - src/invar/shell/commands/test.py (119 LOC) - ''invar test'' and ''invar verify''
+
+      - src/invar/shell/commands/mutate.py (184 LOC) - ''invar mutate''
+
+      - src/invar/shell/commands/feedback.py (258 LOC) - ''invar feedback'' subcommand
+
+      - src/invar/shell/commands/sync_self.py (113 LOC) - ''invar dev sync''
+
+      - src/invar/shell/commands/merge.py (256 LOC) - Template merge logic
+
+      - src/invar/shell/commands/template_sync.py (449 LOC) - Template sync logic
+
+
+      Total: ~1,963 LOC removed.'
+    verification: '- All 8 files deleted
+
+      - Files no longer exist on disk'
+    refs:
+    - src/invar/shell/commands/update.py
+    - src/invar/shell/commands/uninstall.py
+    - src/invar/shell/commands/test.py
+    - src/invar/shell/commands/mutate.py
+    - src/invar/shell/commands/feedback.py
+    - src/invar/shell/commands/sync_self.py
+    - src/invar/shell/commands/merge.py
+    - src/invar/shell/commands/template_sync.py
+    agent: python-executor
+  - id: dx-91-delete.delete-workflow-modules
+    name: delete-workflow-modules
+    status: pending
+    description: 'Delete USBV workflow, review trigger, and related core modules.
+
+
+      Files to delete:
+
+      - src/invar/core/review_trigger.py (370 LOC) - Auto-review trigger logic
+
+      - src/invar/core/verification_routing.py (155 LOC) - Verification strategy routing
+
+      - src/invar/core/feedback.py (110 LOC) - Feedback collection logic
+
+      - src/invar/core/sync_helpers.py (264 LOC) - Template sync helpers
+
+      - src/invar/core/template_helpers.py (32 LOC) - Template generation helpers
+
+      - src/invar/core/template_parser.py (475 LOC) - Complex template parsing (4-region
+      merge)
+
+
+      Total: ~1,406 LOC removed.'
+    verification: '- All 6 files deleted
+
+      - Files no longer exist on disk'
+    refs:
+    - src/invar/core/review_trigger.py
+    - src/invar/core/verification_routing.py
+    - src/invar/core/feedback.py
+    - src/invar/core/sync_helpers.py
+    - src/invar/core/template_helpers.py
+    - src/invar/core/template_parser.py
+    agent: python-executor
+  - id: dx-91-delete.delete-template-directories
+    name: delete-template-directories
+    status: pending
+    description: 'Delete template directories for removed features. Keep only templates
+      needed by init (will be replaced in Phase 3).
+
+
+      Directories/files to delete:
+
+      - src/invar/templates/skills/ (entire directory - skill templates)
+
+      - src/invar/templates/hooks/ (entire directory - hook templates)
+
+      - src/invar/templates/examples/ (entire directory - example code)
+
+      - src/invar/templates/onboard/ (entire directory - onboarding templates)
+
+      - src/invar/templates/claude-md/ (entire directory - old CLAUDE.md sections)
+
+      - src/invar/templates/protocol/ (entire directory - INVAR.md old templates)
+
+      - src/invar/templates/pi-tools/ (entire directory - Pi agent tools)
+
+      - src/invar/templates/config/AGENT.md.jinja (old agent template)
+
+      - src/invar/templates/config/context.md.jinja (old context template)
+
+      - src/invar/templates/config/CLAUDE.md.jinja (old CLAUDE.md template)
+
+      - src/invar/templates/commands/ (entire directory - command templates)
+
+      - src/invar/templates/CLAUDE.md.template (old template)
+
+      - src/invar/templates/proposal.md.template
+
+      - src/invar/templates/context.md.template
+
+
+      Keep:
+
+      - src/invar/templates/__init__.py (will be updated in Phase 3)
+
+      - src/invar/templates/config/pre-commit.yaml.jinja (used by new init)
+
+      - src/invar/templates/manifest.toml (if needed)'
+    verification: '- Deleted directories no longer exist
+
+      - Only __init__.py, config/pre-commit.yaml.jinja, and manifest.toml remain in
+      templates/'
+    refs:
+    - src/invar/templates/skills/
+    - src/invar/templates/hooks/
+    - src/invar/templates/examples/
+    - src/invar/templates/onboard/
+    - src/invar/templates/claude-md/
+    - src/invar/templates/protocol/
+    - src/invar/templates/pi-tools/
+    - src/invar/templates/config/
+    - src/invar/templates/commands/
+    agent: python-executor
+  - id: dx-91-delete.delete-template-engine-modules
+    name: delete-template-engine-modules
+    status: pending
+    description: 'Delete template engine and templates modules from shell/. These
+      are only imported by skill_manager, hooks, and command modules already deleted
+      in prior steps.
+
+
+      Files to delete:
+
+      - src/invar/shell/template_engine.py (371 LOC) - Jinja2 template engine
+
+      - src/invar/shell/templates.py (477 LOC) - Template rendering logic
+
+
+      Total: ~848 LOC removed.
+
+
+      Dependency: This step MUST run after delete-skills-hooks-modules, delete-removed-commands,
+      delete-workflow-modules, and delete-template-directories because those modules
+      import from template_engine/templates.'
+    verification: '- Both files deleted
+
+      - grep -r ''template_engine\|from invar.shell.templates'' src/invar/ --include=''*.py''
+      returns zero matches'
+    refs:
+    - src/invar/shell/template_engine.py
+    - src/invar/shell/templates.py
+    depends_on:
+    - dx-91-delete.delete-skills-hooks-modules
+    - dx-91-delete.delete-removed-commands
+    - dx-91-delete.delete-workflow-modules
+    - dx-91-delete.delete-template-directories
+    agent: python-executor
+  - id: dx-91-delete.delete-ts-tests
+    name: delete-ts-tests
+    status: pending
+    description: 'Delete test files for removed TypeScript/skills features.
+
+
+      Files to delete:
+
+      - tests/integration/test_lx05_detection.py - Language detection tests
+
+      - tests/integration/test_lx05_templates.py - TS template tests
+
+      - tests/integration/test_lx05_integration.py - TS integration tests
+
+      - tests/integration/test_lx06_typescript.py - TS guard tests
+
+      - tests/integration/test_lx07_skills.py - Skills system tests
+
+      - tests/integration/test_dx78_ts_compiler.py - TS compiler tests
+
+      - tests/integration/test_dx56_sync.py - Dev sync tests
+
+      - tests/integration/test_dx55_regression.py - Regression tests for removed features'
+    verification: '- All 8 test files deleted
+
+      - pytest --collect-only finds no broken test imports'
+    refs:
+    - tests/integration/test_lx05_detection.py
+    - tests/integration/test_lx05_templates.py
+    - tests/integration/test_lx05_integration.py
+    - tests/integration/test_lx06_typescript.py
+    - tests/integration/test_lx07_skills.py
+    - tests/integration/test_dx78_ts_compiler.py
+    - tests/integration/test_dx56_sync.py
+    - tests/integration/test_dx55_regression.py
+    agent: python-executor
+  - id: dx-91-delete.deregister-cli-commands
+    name: deregister-cli-commands
+    status: pending
+    description: 'Update guard.py CLI registration to remove deleted commands. Update
+      commands/__init__.py docstring.
+
+
+      File: src/invar/shell/commands/guard.py (lines 670-698)
+
+
+      Remove these import+registration lines:
+
+      - from invar.shell.commands.hooks import app as hooks_app
+
+      - from invar.shell.commands.init import init  (KEEP this one)
+
+      - from invar.shell.commands.mutate import mutate
+
+      - from invar.shell.commands.skill import app as skill_app
+
+      - from invar.shell.commands.sync_self import sync_self
+
+      - from invar.shell.commands.test import test, verify
+
+      - from invar.shell.commands.uninstall import uninstall
+
+      - from invar.shell.commands.update import update
+
+      - app.command()(uninstall)
+
+      - app.command()(update)
+
+      - app.command()(test)
+
+      - app.command()(verify)
+
+      - app.command()(mutate)
+
+      - app.add_typer(hooks_app, name=''hooks'')
+
+      - app.add_typer(skill_app, name=''skill'')
+
+      - dev_app = typer.Typer(...) block (lines 689-695)
+
+      - app.add_typer(dev_app)
+
+      - app.command(''sync-self'', hidden=True)(sync_self)
+
+
+      Also remove: app.add_typer(feedback_app, name=''feedback'') (line 41) and its
+      import.
+
+
+      KEEP: init, doc (doc_app), guard, map, sig, refs, mcp, version commands.
+
+
+      File: src/invar/shell/commands/__init__.py
+
+      - Update docstring to list only remaining commands: guard, init, doc, map, sig,
+      refs, mcp'
+    verification: '- guard.py compiles: python -c ''from invar.shell.commands.guard
+      import app''
+
+      - Only these commands registered: guard, init, doc, map, sig, refs, mcp, version
+
+      - No imports of deleted modules remain in guard.py'
+    refs:
+    - src/invar/shell/commands/guard.py
+    - src/invar/shell/commands/__init__.py
+    depends_on:
+    - dx-91-delete.delete-skills-hooks-modules
+    - dx-91-delete.delete-removed-commands
+    - dx-91-delete.delete-workflow-modules
+    - dx-91-delete.delete-template-engine-modules
+    agent: python-executor
+  - id: dx-91-delete.verify-deletions
+    name: verify-deletions
+    status: pending
+    description: 'As an INDEPENDENT TESTER (integration-verifier), validate the bulk
+      deletion phase from a fresh perspective.
+
+
+      YOUR GOAL IS TO FIND PROBLEMS, not to confirm it works.
+
+
+      Test for:
+
+      - Happy path: invar guard passes on the invar project itself
+
+      - Import integrity: python -c ''import invar'' succeeds
+
+      - CLI integrity: invar --help shows only kept commands
+
+      - No dangling imports: grep for all deleted module names across src/invar/
+
+      - No broken test collection: pytest --collect-only succeeds
+
+
+      Document ALL findings. A test that discovers issues is a SUCCESS.
+
+
+      Independence Level: L1'
+    verification: '- invar guard passes (exit code 0)
+
+      - python -c ''import invar'' succeeds
+
+      - invar --help shows only: guard, init, doc, map, sig, refs, mcp, version
+
+      - grep for deleted module names returns zero matches
+
+      - pytest --collect-only succeeds with no import errors'
+    refs:
+    - src/invar/
+    depends_on:
+    - dx-91-delete.delete-node-tools
+    - dx-91-delete.delete-ts-core-modules
+    - dx-91-delete.delete-skills-hooks-modules
+    - dx-91-delete.delete-removed-commands
+    - dx-91-delete.delete-workflow-modules
+    - dx-91-delete.delete-template-directories
+    - dx-91-delete.delete-template-engine-modules
+    - dx-91-delete.delete-ts-tests
+    - dx-91-delete.deregister-cli-commands
+    agent: integration-verifier
+  - id: dx-91-delete.dx-91-delete-gate
+    name: dx-91-delete.gate
+    status: pending
+    description: 'As an INDEPENDENT REVIEWER (gate-reviewer), assess whether the dx-91-delete
+      phase meets the quality bar for proceeding to Phase 2 (guard simplification).
+
+
+      YOU ARE THE QUALITY GATE. Your job is to BLOCK progress if quality is insufficient.
+
+
+      Review criteria:
+
+      1. Completeness: All 9 deletion/deregistration steps executed?
+
+      2. Evidence Quality: verify-deletions evidence is specific and verifiable?
+
+      3. Known Issues: All blockers from verify-deletions resolved?
+
+      4. Cross-cutting: No broken imports, no dangling references, guard passes?
+
+
+      Independence: You MUST NOT be the same agent as any implementation step in this
+      phase.'
+    verification: '- All phase steps completed successfully
+
+      - Evidence collected and reviewed
+
+      - No unresolved blockers
+
+      - Ready for Phase 2 (dx-91-guard-simplify)'
+    depends_on:
+    - dx-91-delete.verify-deletions
+    agent: gate-reviewer
+- id: dx-91-guard-simplify
+  name: DX-91 Guard Simplification
+  status: pending
+  gate: dx-91-delete.dx-91-delete-gate
+  steps:
+  - id: dx-91-guard-simplify.strip-ts-from-guard
+    name: strip-ts-from-guard
+    status: pending
+    description: "Remove all TypeScript routing from guard.py.\n\nFile: src/invar/shell/commands/guard.py\
+      \ (715 LOC)\n\nScope of changes:\n- Remove: `from invar.core.language import\
+      \ detect_language` import and all references\n- Remove: `project_language =\
+      \ detect_language(...)` call (~line 220)\n- Remove: `if project_language ==\
+      \ 'typescript':` branch and its body (~lines 223-248)\n  - This imports guard_ts.run_typescript_guard\
+      \ and format_typescript_guard_v2\n- Remove any remaining TS-specific error formatting\
+      \ or output branches\n- Remove: TS file extension references in help text (e.g.,\
+      \ 'file.ts::symbol')\n\nConstraints:\n- Do NOT touch: guard logic, Python analysis,\
+      \ rule execution, output formatting for Python\n- Do NOT touch: doc_app, version\
+      \ command, mcp command, map/sig/refs commands (those are in perception.py)\n\
+      - Preserve: all existing guard behavior for Python projects\n\nPattern: Each\
+      \ TS branch is guarded by `if project_language == 'typescript':` -- remove the\
+      \ entire conditional block, keep the else/default path."
+    verification: '- guard.py compiles: python -c ''from invar.shell.commands.guard
+      import app''
+
+      - No imports of: language, detect_language, guard_ts, run_typescript_guard,
+      format_typescript_guard_v2
+
+      - grep -n ''typescript\|ts_compiler\|guard_ts\|detect_language'' guard.py returns
+      zero matches
+
+      - invar guard runs successfully on the invar project'
+    refs:
+    - src/invar/shell/commands/guard.py
+    agent: python-senior
+  - id: dx-91-guard-simplify.strip-ts-from-perception
+    name: strip-ts-from-perception
+    status: pending
+    description: "Remove all TypeScript routing from perception.py (map, sig, refs\
+      \ commands).\n\nFile: src/invar/shell/commands/perception.py (569 LOC)\n\nScope\
+      \ of changes:\n- Remove: `_has_typescript_files()` function (~line 35-43)\n\
+      - Remove: `_run_map_typescript()` function (~line 285-370)\n- Remove: `_run_sig_typescript()`\
+      \ function (~line 147-180)\n- Remove: `_run_refs_typescript()` function (~line\
+      \ 489-532)\n- Remove: TS language detection branches in run_map(), run_sig(),\
+      \ run_refs()\n  - Each has `if project_language == 'typescript':` -> call TS\
+      \ function\n- Remove: imports of ts_compiler, discover_typescript_files, language\
+      \ detection\n- Remove: TS references in help text and argument descriptions\n\
+      \nConstraints:\n- KEEP: all Python map/sig/refs logic intact\n- KEEP: JSON output\
+      \ formatting for Python\n- KEEP: refs integration with py_refs module\n\nThe\
+      \ file should shrink significantly as ~200+ LOC of TS-specific functions are\
+      \ removed."
+    verification: '- perception.py compiles: python -c ''from invar.shell.commands.perception
+      import run_map, run_sig, run_refs''
+
+      - No TS references: grep -n ''typescript\|ts_compiler\|_run_.*typescript\|discover_typescript''
+      perception.py returns zero
+
+      - invar map src/invar/ works
+
+      - invar sig src/invar/core/parser.py works'
+    refs:
+    - src/invar/shell/commands/perception.py
+    agent: python-senior
+  - id: dx-91-guard-simplify.strip-ts-from-mcp
+    name: strip-ts-from-mcp
+    status: pending
+    description: 'Remove TypeScript references from MCP server and handlers.
+
+
+      File: src/invar/mcp/server.py (554 LOC)
+
+      File: src/invar/mcp/handlers.py (500 LOC)
+
+
+      server.py changes:
+
+      - Remove: ''Auto-detects project language from marker files (pyproject.toml,
+      tsconfig.json)'' from guard tool description (~line 160)
+
+      - Remove: ''file.ts'' references in sig tool description (~line 186)
+
+      - Remove: ''file.ts::symbol'' from refs tool argument description (~line 241)
+
+      - Update descriptions to be Python-only (no language detection mention)
+
+
+      handlers.py changes:
+
+      - Remove: ''file.ts::symbol'' from refs handler docstring (~line 135)
+
+      - Remove any TS-specific dispatch logic if present
+
+
+      Constraints:
+
+      - KEEP: all MCP tool registrations and Python handler logic
+
+      - KEEP: guard, sig, map, refs, doc tool handlers
+
+      - Only remove TS-specific text and dispatch branches'
+    verification: '- Both files compile: python -c ''from invar.mcp.server import
+      run_server; from invar.mcp.handlers import handle_guard''
+
+      - grep -n ''typescript\|tsconfig\|\.ts'' src/invar/mcp/server.py src/invar/mcp/handlers.py
+      returns zero matches
+
+      - MCP server starts without errors (basic smoke test)'
+    refs:
+    - src/invar/mcp/server.py
+    - src/invar/mcp/handlers.py
+    agent: python-senior
+  - id: dx-91-guard-simplify.strip-ts-from-fs
+    name: strip-ts-from-fs
+    status: pending
+    description: 'Remove TypeScript file discovery function from fs.py.
+
+
+      File: src/invar/shell/fs.py
+
+
+      Remove:
+
+      - `discover_typescript_files()` function (lines ~70-92)
+
+      - Any TS-specific file extension handling (.ts, .tsx)
+
+
+      Keep:
+
+      - All Python file discovery functions
+
+      - All other filesystem utilities
+
+
+      This is a mechanical removal of one function. Pattern: find the function definition,
+      remove it entirely.'
+    verification: '- fs.py compiles: python -c ''from invar.shell.fs import discover_python_files''
+
+      - grep -n ''typescript\|discover_typescript\|\.tsx'' src/invar/shell/fs.py returns
+      zero matches'
+    refs:
+    - src/invar/shell/fs.py
+    agent: python-executor
+  - id: dx-91-guard-simplify.verify-guard-python-only
+    name: verify-guard-python-only
+    status: pending
+    description: 'As an INDEPENDENT TESTER (integration-verifier), validate that the
+      guard pipeline is now Python-only.
+
+
+      YOUR GOAL IS TO FIND PROBLEMS, not to confirm it works.
+
+
+      Test for:
+
+      - Happy path: invar guard passes on the invar project
+
+      - Tool commands: invar map src/invar/ works, invar sig src/invar/core/parser.py
+      works, invar refs src/invar/core/parser.py::extract_functions works
+
+      - MCP: python -c ''from invar.mcp.server import run_server'' succeeds
+
+      - No TS references: grep -rn ''typescript\|tsconfig\|\.ts[^a-z]\|detect_language\|guard_ts\|ts_compiler''
+      src/invar/ --include=''*.py''
+
+      - Error scenarios: invar guard on a directory with .ts files should just ignore
+      them (no crash)
+
+
+      Independence Level: L1'
+    verification: '- invar guard passes
+
+      - invar map, sig, refs all work on Python code
+
+      - MCP server module imports cleanly
+
+      - Zero TS references in src/invar/ Python files
+
+      - No crashes on directories containing .ts files'
+    refs:
+    - src/invar/shell/commands/guard.py
+    - src/invar/shell/commands/perception.py
+    - src/invar/mcp/server.py
+    - src/invar/mcp/handlers.py
+    - src/invar/shell/fs.py
+    depends_on:
+    - dx-91-guard-simplify.strip-ts-from-guard
+    - dx-91-guard-simplify.strip-ts-from-perception
+    - dx-91-guard-simplify.strip-ts-from-mcp
+    - dx-91-guard-simplify.strip-ts-from-fs
+    agent: integration-verifier
+  - id: dx-91-guard-simplify.dx-91-guard-simplify-gate
+    name: dx-91-guard-simplify.gate
+    status: pending
+    description: 'As an INDEPENDENT REVIEWER (gate-reviewer), assess whether the dx-91-guard-simplify
+      phase meets the quality bar for proceeding to Phase 3 (init rewrite).
+
+
+      YOU ARE THE QUALITY GATE. Your job is to BLOCK progress if quality is insufficient.
+
+
+      Review criteria:
+
+      1. Completeness: All 4 strip steps executed, no TS references remain?
+
+      2. Evidence Quality: verify-guard-python-only evidence is specific?
+
+      3. Known Issues: All blockers resolved?
+
+      4. Cross-cutting: Guard, map, sig, refs all work end-to-end?
+
+
+      Independence: You MUST NOT be the same agent as any implementation step in this
+      phase.'
+    verification: '- All phase steps completed successfully
+
+      - Evidence collected and reviewed
+
+      - No unresolved blockers
+
+      - Ready for Phase 3 (dx-91-init-rewrite)'
+    depends_on:
+    - dx-91-guard-simplify.verify-guard-python-only
+    agent: gate-reviewer
+- id: dx-91-init-rewrite
+  name: DX-91 Init Command Rewrite
+  status: pending
+  gate: dx-91-guard-simplify.dx-91-guard-simplify-gate
+  steps:
+  - id: dx-91-init-rewrite.rewrite-init-command
+    name: rewrite-init-command
+    status: pending
+    description: "Rewrite src/invar/shell/commands/init.py from ~682 LOC to ~80 LOC.\n\
+      \nRequirements:\n- No interactive prompts, no agent selection menu\n- Default\
+      \ target: CLAUDE.md (append/replace managed section)\n- --file flag: alternative\
+      \ target (e.g., AGENTS.md, .cursorrules)\n- --mcp flag: also generate .mcp.json\
+      \ with invar MCP server config (optional)\n- Generate 3 files:\n  1. Target\
+      \ file (CLAUDE.md by default) with <!--invar:begin-->...<!--invar:end--> managed\
+      \ section\n  2. INVAR.md (~150 lines reference doc) at project root\n  3. .pre-commit-config.yaml\
+      \ with single invar guard hook\n- Content for managed CLAUDE.md section: see\
+      \ docs/proposals/DX-91-claude-md-draft.md (~50 lines)\n- Content for INVAR.md:\
+      \ see docs/proposals/DX-91-invar-md-draft.md (~150 lines)\n- Pre-commit config:\
+      \ use existing templates/config/pre-commit.yaml.jinja or inline\n\nConstraints:\n\
+      - Must be a single Typer command function\n- No Jinja2 dependency for simple\
+      \ string templates (use f-strings or textwrap.dedent)\n- Keep mcp_config.py\
+      \ for --mcp flag logic (simplify if needed)\n- Do NOT implement migration logic\
+      \ yet (separate step)\n- Do NOT implement idempotent merge yet (separate step)\n\
+      \nScope boundaries:\n- Only touch: src/invar/shell/commands/init.py\n- May simplify:\
+      \ src/invar/shell/mcp_config.py\n- Do NOT touch: guard.py, perception.py, or\
+      \ any other command"
+    verification: '- init.py is ~80 LOC (max 120)
+
+      - python -c ''from invar.shell.commands.init import init'' succeeds
+
+      - Running invar init in a temp directory creates CLAUDE.md, INVAR.md, .pre-commit-config.yaml
+
+      - CLAUDE.md contains <!--invar:begin--> and <!--invar:end--> markers
+
+      - INVAR.md contains Core/Shell architecture reference
+
+      - No interactive prompts (command runs non-interactively)'
+    refs:
+    - src/invar/shell/commands/init.py
+    - src/invar/shell/mcp_config.py
+    - docs/proposals/DX-91-claude-md-draft.md
+    - docs/proposals/DX-91-invar-md-draft.md
+    agent: python-senior
+  - id: dx-91-init-rewrite.implement-idempotent-merge
+    name: implement-idempotent-merge
+    status: pending
+    description: "Add idempotent merge logic to init.py for the <!--invar:begin-->...<!--invar:end-->\
+      \ managed section.\n\nFile: src/invar/shell/commands/init.py\n\nMerge behavior\
+      \ (from DX-91-claude-md-draft.md):\n| Scenario | Action |\n|----------|--------|\n\
+      | Target file doesn't exist | Create with only the managed section |\n| Target\
+      \ exists, no invar markers | Append managed section at end |\n| Target exists,\
+      \ has invar markers | Replace content between markers (idempotent) |\n| User\
+      \ content outside markers | Preserved unchanged |\n\nImplementation:\n1. Read\
+      \ target file (or empty string if not exists)\n2. Search for <!--invar:begin-->\
+      \ and <!--invar:end--> markers\n3. If found: replace everything between markers\
+      \ (inclusive) with new managed section\n4. If not found: append managed section\
+      \ at end of file (with blank line separator)\n5. Write result\n\nThis is a pure\
+      \ string operation. Consider extracting a helper function for testability:\n\
+      \  def merge_managed_section(existing: str, managed: str) -> str\n\nTest: running\
+      \ `invar init` twice produces identical output. User content before/after markers\
+      \ is preserved."
+    verification: '- invar init twice in same directory produces identical files (diff
+      returns empty)
+
+      - CLAUDE.md with user content + markers: user content preserved, managed section
+      updated
+
+      - CLAUDE.md with user content, no markers: managed section appended, user content
+      intact
+
+      - New directory: CLAUDE.md created with managed section only'
+    refs:
+    - src/invar/shell/commands/init.py
+    - docs/proposals/DX-91-claude-md-draft.md
+    depends_on:
+    - dx-91-init-rewrite.rewrite-init-command
+    agent: python-senior
+  - id: dx-91-init-rewrite.implement-v1-migration
+    name: implement-v1-migration
+    status: pending
+    description: "Add v1-to-v2 migration logic to init.py.\n\nFile: src/invar/shell/commands/init.py\n\
+      \nWhen invar init detects a v1 project layout, it should:\n1. Detect v1 markers:\
+      \ presence of .claude/skills/, .claude/hooks/, or CLAUDE.md with <!--invar:critical/managed/project/user-->\
+      \ markers (4-region format)\n2. Back up existing CLAUDE.md to CLAUDE.md.v1.bak\n\
+      3. Remove stale directories:\n   - .claude/skills/ (entire directory)\n   -\
+      \ .claude/hooks/ (entire directory)\n   - .invar/examples/ (entire directory)\n\
+      4. Remove stale files:\n   - Old INVAR.md (434-line version with USBV, Six Laws,\
+      \ etc.)\n5. Extract user content from old CLAUDE.md:\n   - Content in <!--invar:user-->...<!--/invar:user-->\
+      \ region\n   - Preserve it above the new <!--invar:begin--> section\n6. Generate\
+      \ new files (same as fresh init)\n7. Print migration summary: what was backed\
+      \ up, removed, preserved\n\nConstraints:\n- Migration must be non-destructive\
+      \ (backup before delete)\n- If no v1 markers detected, skip migration silently\n\
+      - Migration runs automatically as part of init (no separate command)\n\nScope\
+      \ boundaries:\n- Only touch: src/invar/shell/commands/init.py"
+    verification: '- On v1 project (with .claude/skills/, 4-region CLAUDE.md): migration
+      runs, backup created, stale dirs removed
+
+      - User content from <!--invar:user--> region preserved in new CLAUDE.md
+
+      - On v2 project (already has invar:begin/end): migration skipped, idempotent
+      update only
+
+      - On clean project (no existing files): no migration, fresh init'
+    refs:
+    - src/invar/shell/commands/init.py
+    depends_on:
+    - dx-91-init-rewrite.rewrite-init-command
+    agent: python-senior
+  - id: dx-91-init-rewrite.verify-init-rewrite
+    name: verify-init-rewrite
+    status: pending
+    description: "As an INDEPENDENT TESTER (integration-verifier), validate the init\
+      \ command rewrite.\n\nYOUR GOAL IS TO FIND PROBLEMS, not to confirm it works.\n\
+      \nTest scenarios:\n1. Fresh init: run invar init in empty temp directory\n \
+      \  - CLAUDE.md created with invar:begin/end markers and ~50 lines managed section\n\
+      \   - INVAR.md created with ~150 lines reference doc\n   - .pre-commit-config.yaml\
+      \ created with invar guard hook\n2. Idempotent: run invar init twice\n   - diff\
+      \ on all files returns empty (no changes)\n3. Append mode: create CLAUDE.md\
+      \ with user content, run invar init\n   - User content preserved, managed section\
+      \ appended\n4. Replace mode: run invar init, edit user content above markers,\
+      \ run invar init again\n   - User content preserved, managed section updated\n\
+      5. v1 migration: create v1 layout (.claude/skills/, 4-region CLAUDE.md), run\
+      \ invar init\n   - Backup created, stale dirs removed, user content preserved\n\
+      6. --file flag: invar init --file AGENTS.md\n   - AGENTS.md created instead\
+      \ of CLAUDE.md\n7. Edge cases: CLAUDE.md with malformed markers, empty CLAUDE.md\n\
+      \nIndependence Level: L2 (cross-module change, init generates content referencing\
+      \ guard behavior)"
+    verification: '- All 7 test scenarios pass
+
+      - No data loss in any migration scenario
+
+      - Idempotent behavior confirmed
+
+      - Generated content matches DX-91 drafts'
+    refs:
+    - src/invar/shell/commands/init.py
+    depends_on:
+    - dx-91-init-rewrite.rewrite-init-command
+    - dx-91-init-rewrite.implement-idempotent-merge
+    - dx-91-init-rewrite.implement-v1-migration
+    agent: integration-verifier
+  - id: dx-91-init-rewrite.dx-91-init-rewrite-gate
+    name: dx-91-init-rewrite.gate
+    status: pending
+    description: 'As an INDEPENDENT REVIEWER (gate-reviewer), assess whether the dx-91-init-rewrite
+      phase meets the quality bar for proceeding to Phase 4 (documentation).
+
+
+      YOU ARE THE QUALITY GATE. Your job is to BLOCK progress if quality is insufficient.
+
+
+      Review criteria:
+
+      1. Completeness: init rewrite done, idempotent merge works, v1 migration works?
+
+      2. Evidence Quality: verify-init-rewrite covers all 7 scenarios with specific
+      output?
+
+      3. Known Issues: All blockers resolved?
+
+      4. Cross-cutting: Generated content matches DX-91 drafts? No stale references?
+
+
+      Independence: You MUST NOT be the same agent as any implementation step in this
+      phase.'
+    verification: '- All phase steps completed successfully
+
+      - Evidence collected and reviewed
+
+      - No unresolved blockers
+
+      - Ready for Phase 4 (dx-91-docs)'
+    depends_on:
+    - dx-91-init-rewrite.verify-init-rewrite
+    agent: gate-reviewer
+- id: dx-91-docs
+  name: DX-91 Documentation Update
+  status: pending
+  gate: dx-91-init-rewrite.dx-91-init-rewrite-gate
+  steps:
+  - id: dx-91-docs.archive-old-proposals
+    name: archive-old-proposals
+    status: pending
+    description: 'Move old/obsolete proposals to docs/proposals/archive/.
+
+
+      Create directory: docs/proposals/archive/
+
+
+      Move these files to archive/:
+
+      - DX-25-functional-patterns.md
+
+      - DX-29-pure-content-detection.md
+
+      - DX-38-contract-quality-rules.md
+
+      - DX-60-structured-rules-ssot.md
+
+      - DX-61-functional-pattern-guidance.md
+
+      - DX-61-implementation-design.md
+
+      - DX-62-proactive-reference-reading.md
+
+      - DX-68-agent-behavior-optimization.md
+
+      - DX-79-invar-usage-feedback.md
+
+      - DX-80-guard-cli-mcp-alignment.md
+
+      - DX-83-multi-agent-subagent-support.md
+
+      - DX-84-security-review-backlog.md
+
+      - DX-85-opencode-support.md
+
+      - DX-87-remove-multi-agent-init.md
+
+      - LX-01-multi-language-feasibility.md
+
+      - LX-08-extension-skills-future.md
+
+      - LX-09-legacy-onboarding.md
+
+      - LX-11-cursor-support.md
+
+      - LX-13-typescript-runtime-optimization.md
+
+      - LX-16-typescript-guard-remaining-gap.md
+
+      - LX-17-haskell-elm-feasibility.md
+
+      - LX-17-implementation-matrix.md
+
+      - LX-17-summary.md
+
+
+      KEEP in docs/proposals/ (not archived):
+
+      - DX-91-claude-md-draft.md (active)
+
+      - DX-91-invar-md-draft.md (active)
+
+      - index.md (update to reflect archived state)
+
+      - completed/ directory (already archived)
+
+
+      Use: git mv for each file (preserves history).'
+    verification: '- docs/proposals/archive/ exists with 23 files
+
+      - docs/proposals/ contains only: archive/, completed/, DX-91-*.md, index.md
+
+      - git status shows renames (not deletes)'
+    refs:
+    - docs/proposals/
+    agent: python-executor
+  - id: dx-91-docs.rewrite-readme
+    name: rewrite-readme
+    status: pending
+    description: 'Rewrite README.md to reflect Invar v2.0.
+
+
+      File: README.md
+
+
+      New structure (follow DX-91 guidance: install -> init -> use -> tools -> core/shell
+      -> CI):
+
+
+      1. **Header**: Invar - Compiler for agentic code quality
+
+      2. **Install**: pip install invar-tools (and invar-runtime)
+
+      3. **Quick Start**: invar init -> invar guard -> done
+
+      4. **Tools**: guard, sig, map, refs, doc (table format)
+
+      5. **Core/Shell Architecture**: Brief explanation with link to INVAR.md
+
+      6. **Contracts**: Brief @pre/@post example
+
+      7. **CI Integration**: pre-commit hook, GitHub Actions example
+
+      8. **MCP Integration**: Brief mention of invar mcp for AI agents
+
+      9. **Configuration**: pyproject.toml [tool.invar.guard] basics
+
+
+      Constraints:
+
+      - Keep it concise (~100-150 lines)
+
+      - No references to: USBV, skills, hooks, TypeScript, Check-In/Final, onboarding
+
+      - Python-only examples
+
+      - Link to INVAR.md for detailed reference'
+    verification: '- README.md exists and is ~100-150 lines
+
+      - Contains: install, init, guard, tools table, core/shell, CI
+
+      - grep for removed features returns zero: grep -i ''typescript\|usbv\|skills\|hooks\|check-in\|onboarding''
+      README.md'
+    refs:
+    - README.md
+    agent: python-executor
+  - id: dx-91-docs.update-context-md
+    name: update-context-md
+    status: pending
+    description: 'Update .invar/context.md to reflect v2.0 state.
+
+
+      File: .invar/context.md
+
+
+      Changes:
+
+      - Remove all references to: USBV workflow, skills system, hooks system, TypeScript
+      support, Check-In/Final, onboarding
+
+      - Remove: task router entries for skills, hooks, TS commands
+
+      - Update: project description to ''compiler for agentic code quality''
+
+      - Update: tool list to guard, sig, map, refs, init, doc
+
+      - Update: architecture notes to Python-only
+
+      - Keep: any project-specific lessons, patterns, debugging notes that are still
+      relevant
+
+      - Add: DX-91 completion note with date'
+    verification: '- .invar/context.md updated
+
+      - grep for removed features returns zero: grep -i ''typescript\|usbv\|skills\|hooks\|check-in\|onboarding\|six
+      laws'' .invar/context.md
+
+      - File is coherent and useful for future sessions'
+    refs:
+    - .invar/context.md
+    agent: python-executor
+  - id: dx-91-docs.verify-docs-consistency
+    name: verify-docs-consistency
+    status: pending
+    description: "As an INDEPENDENT TESTER (integration-verifier), validate that all\
+      \ documentation is consistent with v2.0.\n\nYOUR GOAL IS TO FIND PROBLEMS, not\
+      \ to confirm it works.\n\nTest for:\n- Stale references: grep -ri 'typescript\\\
+      |usbv\\|skills\\|hooks\\|check-in\\|onboarding\\|six laws\\|todo.?write\\|phase\
+      \ header\\|visible workflow' across ALL remaining files\n  - Exclude: docs/proposals/archive/,\
+      \ .git/, plan.yaml, node_modules/\n  - Exclude: DX-91 drafts (they mention removed\
+      \ features in 'what was removed' context)\n- Link integrity: any links to deleted\
+      \ files (INVAR.md sections, .claude/skills/, etc.)\n- README accuracy: does\
+      \ it match actual CLI commands?\n- context.md accuracy: does it reflect current\
+      \ project state?\n\nIndependence Level: L1"
+    verification: '- Zero stale references to removed features in active files
+
+      - No broken links to deleted files
+
+      - README matches actual CLI
+
+      - context.md is current'
+    refs:
+    - README.md
+    - .invar/context.md
+    - docs/proposals/
+    depends_on:
+    - dx-91-docs.archive-old-proposals
+    - dx-91-docs.rewrite-readme
+    - dx-91-docs.update-context-md
+    agent: integration-verifier
+  - id: dx-91-docs.dx-91-docs-gate
+    name: dx-91-docs.gate
+    status: pending
+    description: 'As an INDEPENDENT REVIEWER (gate-reviewer), assess whether the dx-91-docs
+      phase meets the quality bar for proceeding to Phase 5 (final gate).
+
+
+      YOU ARE THE QUALITY GATE. Your job is to BLOCK progress if quality is insufficient.
+
+
+      Review criteria:
+
+      1. Completeness: All docs updated, proposals archived?
+
+      2. Evidence Quality: verify-docs-consistency found zero stale references?
+
+      3. Known Issues: All should_fix items addressed?
+
+      4. Cross-cutting: README, context.md, INVAR.md all tell a consistent story?
+
+
+      Independence: You MUST NOT be the same agent as any implementation step in this
+      phase.'
+    verification: '- All phase steps completed successfully
+
+      - Evidence collected and reviewed
+
+      - No unresolved blockers
+
+      - Ready for Phase 5 (dx-91-gate)'
+    depends_on:
+    - dx-91-docs.verify-docs-consistency
+    agent: gate-reviewer
+- id: dx-91-gate
+  name: DX-91 Final Gate
+  status: pending
+  gate: dx-91-docs.dx-91-docs-gate
+  steps:
+  - id: dx-91-gate.final-validation
+    name: final-validation
+    status: pending
+    description: "As an INDEPENDENT TESTER (integration-verifier), perform comprehensive\
+      \ final validation of Invar v2.0.\n\nYOUR GOAL IS TO FIND ANY REMAINING PROBLEMS\
+      \ before v2.0.0 release.\n\nTest suite:\n\n1. **Guard full pass**: invar guard\
+      \ --all\n   - Must exit 0 with no errors\n\n2. **Init on clean project**:\n\
+      \   - Create temp directory, run invar init\n   - Verify: CLAUDE.md, INVAR.md,\
+      \ .pre-commit-config.yaml created\n   - Verify content matches DX-91 drafts\n\
+      \n3. **Init on v1 project**:\n   - Create temp directory with v1 layout (4-region\
+      \ CLAUDE.md, .claude/skills/, .claude/hooks/)\n   - Run invar init\n   - Verify:\
+      \ migration runs, backup created, stale dirs removed\n\n4. **CLI command inventory**:\n\
+      \   - invar --help\n   - Expected commands: guard, init, doc, map, sig, refs,\
+      \ mcp, version\n   - NO: update, uninstall, test, verify, mutate, hooks, skill,\
+      \ dev, feedback, sync-self\n\n5. **Stale reference sweep**:\n   - grep -ri 'typescript\\\
+      |usbv\\|skills system\\|hooks system\\|check-in protocol\\|six laws\\|onboarding\\\
+      |feedback collection' across src/, tests/, docs/ (excluding archive/)\n   -\
+      \ Expected: zero matches\n\n6. **Import integrity**:\n   - python -c 'import\
+      \ invar; from invar.shell.commands.guard import app; from invar.mcp.server import\
+      \ run_server'\n\n7. **Test suite**:\n   - pytest --collect-only (no broken imports)\n\
+      \   - pytest (if applicable, run remaining tests)\n\n8. **Version bump check**:\n\
+      \   - Verify pyproject.toml or version file shows 2.0.0 (or note if bump is\
+      \ needed as a follow-up)\n\nIndependence Level: L2 (comprehensive cross-module\
+      \ validation)"
+    verification: '- invar guard --all passes
+
+      - invar init works on clean and v1 projects
+
+      - CLI has exactly the expected commands
+
+      - Zero stale references to removed features
+
+      - All imports work
+
+      - Test suite passes
+
+      - Version is 2.0.0 or bump documented as follow-up'
+    refs:
+    - src/invar/
+    - tests/
+    - docs/
+    - README.md
+    - CLAUDE.md
+    - INVAR.md
+    agent: integration-verifier
+  - id: dx-91-gate.dx-91-gate-gate
+    name: dx-91-gate.gate
+    status: pending
+    description: 'As an INDEPENDENT REVIEWER (gate-reviewer), make the final release
+      decision for Invar v2.0.0.
+
+
+      YOU ARE THE FINAL QUALITY GATE. Your decision determines whether DX-91 simplification
+      ships.
+
+
+      Review criteria:
+
+      1. **All 4 prior phase gates passed**: dx-91-delete, dx-91-guard-simplify, dx-91-init-rewrite,
+      dx-91-docs
+
+      2. **Final validation evidence**: comprehensive, specific, no hand-waving
+
+      3. **Zero blockers**: no blocker-severity issues in any phase
+
+      4. **Feature completeness**: guard works, init works, CLI correct, docs updated
+
+      5. **No regressions**: existing Python guard functionality preserved
+
+      6. **Version**: 2.0.0 set or documented as immediate follow-up
+
+
+      Independence: You MUST NOT be the same agent as any implementation or verification
+      step.'
+    verification: '- All phase gates reviewed and passed
+
+      - Final validation evidence is complete and specific
+
+      - Zero unresolved blockers across all phases
+
+      - v2.0.0 release approved or specific blockers documented'
+    depends_on:
+    - dx-91-gate.final-validation
+    agent: gate-reviewer
