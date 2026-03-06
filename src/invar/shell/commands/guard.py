@@ -110,7 +110,7 @@ def _scan_and_check(
                 ref_context_infos.append(context_result.unwrap())
 
     sources = {fi.path: fi.source for fi in ref_context_infos if fi.source}
-    ref_counts = count_cross_file_references(ref_context_infos, sources)
+    ref_counts = count_cross_file_references(ref_context_infos, sources, include_same_file=True)
     for dead_violation in check_dead_exports(all_file_infos, ref_counts, config):
         report.add_violation(dead_violation)
 
