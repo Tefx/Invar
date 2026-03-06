@@ -39,6 +39,12 @@ def find_references_in_source(source: str, known_symbols: set[str]) -> list[tupl
         >>> sorted(refs)
         [('init', 1), ('test', 2)]
         >>> refs = find_references_in_source(
+        ...     "loop.set_exception_handler(suppress_invalid_state_error)",
+        ...     {"suppress_invalid_state_error"},
+        ... )
+        >>> sorted(refs)
+        [('suppress_invalid_state_error', 1)]
+        >>> refs = find_references_in_source(
         ...     "def build():\\n    from mod import foo\\n    return 1",
         ...     {"foo"},
         ... )
@@ -68,6 +74,16 @@ def find_references_in_source(source: str, known_symbols: set[str]) -> list[tupl
             if name in known_symbols:
                 line = getattr(node, "lineno", 0)
                 seen.add((name, line))
+
+            # Count callback/function-object usage passed as call arguments.
+            for arg in node.args:
+                if isinstance(arg, ast.Name) and arg.id in known_symbols:
+                    line = getattr(arg, "lineno", 0)
+                    seen.add((arg.id, line))
+            for keyword in node.keywords:
+                if isinstance(keyword.value, ast.Name) and keyword.value.id in known_symbols:
+                    line = getattr(keyword.value, "lineno", 0)
+                    seen.add((keyword.value.id, line))
 
         # Count dynamic Typer registration usage: app.command()(fn)
         if (
@@ -114,6 +130,42 @@ def build_symbol_table(file_infos: list[FileInfo]) -> dict[str, str]:
     return symbol_table
 
 
+@post(
+    lambda result: all(
+        isinstance(name, str)
+        and isinstance(files, set)
+        and all(isinstance(path, str) for path in files)
+        for name, files in result.items()
+    )
+)
+def build_symbol_index(file_infos: list[FileInfo]) -> dict[str, set[str]]:
+    """Build mapping of symbol names to all defining files.
+
+    References are often discovered by bare symbol name (e.g. ``foo()``),
+    which can be ambiguous when multiple modules define the same symbol name.
+    This index keeps all candidates so dead-export analysis remains conservative
+    and avoids false positives from name collisions.
+
+    Examples:
+        >>> from invar.core.models import FileInfo, Symbol, SymbolKind
+        >>> a = Symbol(name="main", kind=SymbolKind.FUNCTION, line=1, end_line=3)
+        >>> b = Symbol(name="main", kind=SymbolKind.FUNCTION, line=1, end_line=3)
+        >>> info_a = FileInfo(path="shell/a.py", lines=3, symbols=[a])
+        >>> info_b = FileInfo(path="shell/b.py", lines=3, symbols=[b])
+        >>> index = build_symbol_index([info_a, info_b])
+        >>> sorted(index["main"])
+        ['shell/a.py', 'shell/b.py']
+    """
+    symbol_index: dict[str, set[str]] = defaultdict(set)
+
+    for file_info in file_infos:
+        for symbol in file_info.symbols:
+            if symbol.kind in (SymbolKind.FUNCTION, SymbolKind.CLASS):
+                symbol_index[symbol.name].add(file_info.path)
+
+    return dict(symbol_index)
+
+
 @post(lambda result: all("::" in k and v >= 0 for k, v in result.items()))  # Valid ref counts
 def count_cross_file_references(
     file_infos: list[FileInfo], sources: dict[str, str], include_same_file: bool = False
@@ -143,10 +195,21 @@ def count_cross_file_references(
         ... )
         >>> same_file_refs.get("a.py::foo", 0) > 0
         True
+        >>> main_a = Symbol(name="main", kind=SymbolKind.FUNCTION, line=1, end_line=2)
+        >>> main_b = Symbol(name="main", kind=SymbolKind.FUNCTION, line=1, end_line=2)
+        >>> info_a = FileInfo(path="shell/a.py", lines=3, symbols=[main_a])
+        >>> info_b = FileInfo(path="shell/b.py", lines=3, symbols=[main_b])
+        >>> ambiguous_sources = {
+        ...     "shell/a.py": "def main():\\n    return 1",
+        ...     "shell/b.py": "def main():\\n    return 2\\n\\nmain()",
+        ... }
+        >>> refs = count_cross_file_references([info_a, info_b], ambiguous_sources, include_same_file=True)
+        >>> refs.get("shell/a.py::main", 0) > 0 and refs.get("shell/b.py::main", 0) > 0
+        True
     """
-    # Build symbol table: name -> defining file
-    symbol_table = build_symbol_table(file_infos)
-    known_symbols = set(symbol_table.keys())
+    # Build symbol index: name -> defining files
+    symbol_index = build_symbol_index(file_infos)
+    known_symbols = set(symbol_index.keys())
 
     # Count references from each file
     ref_counts: dict[str, int] = defaultdict(int)
@@ -159,10 +222,11 @@ def count_cross_file_references(
         references = find_references_in_source(source, known_symbols)
 
         for symbol_name, _ in references:
-            defining_file = symbol_table.get(symbol_name)
-            if defining_file and (include_same_file or defining_file != file_info.path):
-                key = f"{defining_file}::{symbol_name}"
-                ref_counts[key] += 1
+            defining_files = symbol_index.get(symbol_name, set())
+            for defining_file in defining_files:
+                if include_same_file or defining_file != file_info.path:
+                    key = f"{defining_file}::{symbol_name}"
+                    ref_counts[key] += 1
 
     return dict(ref_counts)
 
