@@ -76,6 +76,13 @@ def check_dead_exports(
         >>> len(check_dead_exports([info4], ref_counts4, RuleConfig()))
         0
 
+        >>> # Case 4b: FUNCTION-kind dunder (e.g., module-level __init__) - excluded
+        >>> sym4b = Symbol(name="__init__", kind=SymbolKind.FUNCTION, line=5, end_line=10)
+        >>> info4b = FileInfo(path="shell/api.py", lines=15, symbols=[sym4b], is_shell=True)
+        >>> ref_counts4b = {}
+        >>> len(check_dead_exports([info4b], ref_counts4b, RuleConfig()))
+        0
+
         >>> # Case 5: Entry point (decorator) - excluded
         >>> sym5 = Symbol(name="index", kind=SymbolKind.FUNCTION, line=3, end_line=5)
         >>> source5 = '''
@@ -131,12 +138,12 @@ def check_dead_exports(
             if symbol.kind != SymbolKind.FUNCTION:
                 continue
 
-            # Skip private functions (start with _)
-            if symbol.name.startswith("_"):
+            # Skip dunder methods (e.g., __init__, __str__) - must check before private
+            if symbol.name.startswith("__") and symbol.name.endswith("__"):
                 continue
 
-            # Skip dunder methods (e.g., __init__, __str__)
-            if symbol.name.startswith("__") and symbol.name.endswith("__"):
+            # Skip private functions (start with _)
+            if symbol.name.startswith("_"):
                 continue
 
             # Skip entry points (framework callbacks)
