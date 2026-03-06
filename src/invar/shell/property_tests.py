@@ -48,7 +48,7 @@ def _extract_src_dirs_from_paths(project_root: Path, paths: list[str]) -> set[st
     return src_dirs
 
 
-# @shell_complexity: Config fallthrough requires checking 3 sources with error handling
+# @shell_complexity: Config fallthrough requires checking 2 sources with error handling
 def _get_invar_paths_from_config(project_root: Path) -> list[str]:
     """
     Get 'paths' from [tool.invar] config across all config locations.
@@ -56,7 +56,6 @@ def _get_invar_paths_from_config(project_root: Path) -> list[str]:
     Checks in priority order:
     1. pyproject.toml [tool.invar].paths
     2. invar.toml [invar].paths (root level)
-    3. .invar/config.toml [invar].paths (root level)
 
     Returns first found, or empty list.
     """
@@ -85,18 +84,6 @@ def _get_invar_paths_from_config(project_root: Path) -> list[str]:
         except Exception:
             pass
 
-    # 3. .invar/config.toml
-    invar_config = project_root / ".invar" / "config.toml"
-    if invar_config.exists():
-        try:
-            with invar_config.open("rb") as f:
-                data = tomllib.load(f)
-            paths = data.get("paths", []) or data.get("invar", {}).get("paths", [])
-            if paths:
-                return paths
-        except Exception:
-            pass
-
     return []
 
 
@@ -109,7 +96,7 @@ def _inject_project_site_packages(project_root: Path):
 
     Supports:
     - Standard layout: project_root/src
-    - Monorepo layout: paths from config (pyproject.toml, invar.toml, .invar/config.toml)
+    - Monorepo layout: paths from config (pyproject.toml, invar.toml)
     - Configured paths: extracted from core_paths/shell_paths in [tool.invar.guard]
     """
     from invar.shell.config import get_path_classification
@@ -123,7 +110,7 @@ def _inject_project_site_packages(project_root: Path):
 
     added: list[str] = []
 
-    # 1. Read 'paths' from config (supports pyproject.toml, invar.toml, .invar/config.toml)
+    # 1. Read 'paths' from config (supports pyproject.toml, invar.toml)
     invar_paths = _get_invar_paths_from_config(project_root)
     for p in invar_paths:
         src_dir = project_root / p

@@ -320,7 +320,7 @@ def find_project_root(start_path: "Path") -> "Path":  # noqa: UP037
     """
     Find project root by walking up from start_path looking for config files.
 
-    Looks for (in order): pyproject.toml, invar.toml, .invar/, .git/
+    Looks for (in order): pyproject.toml, invar.toml, .git/
 
     Args:
         start_path: Starting path (file or directory)
@@ -352,8 +352,6 @@ def find_project_root(start_path: "Path") -> "Path":  # noqa: UP037
             return parent
         if (parent / "invar.toml").exists():
             return parent
-        if (parent / ".invar").is_dir():
-            return parent
         if (parent / ".git").exists():
             return parent
 
@@ -380,11 +378,12 @@ def load_config(project_root: Path) -> Result[RuleConfig, str]:
     Tries sources in priority order:
     1. pyproject.toml [tool.invar.guard]
     2. invar.toml [guard]
-    3. .invar/config.toml [guard]
-    4. Built-in defaults
+    3. Built-in defaults
 
     If pyproject.toml exists but has no [tool.invar.guard] section,
     continues to check other sources (fallback behavior).
+
+    If deprecated .invar/config.toml exists, emits a warning and ignores it.
 
     Args:
         project_root: Path to project root directory
@@ -403,9 +402,7 @@ def load_config(project_root: Path) -> Result[RuleConfig, str]:
     if invar_toml.exists():
         sources_to_try.append((invar_toml, "invar"))
 
-    invar_config = project_root / ".invar" / "config.toml"
-    if invar_config.exists():
-        sources_to_try.append((invar_config, "invar_dir"))
+    _warn_deprecated_invar_config(project_root)
 
     # Try each source, fallback if no guard config found
     for config_path, source in sources_to_try:
@@ -457,7 +454,7 @@ def _get_classification_config(project_root: Path) -> Result[dict[str, Any], str
     """Get classification-related config (paths and patterns).
 
     Uses fallthrough logic: if pyproject.toml exists but has no [tool.invar.guard],
-    continues to check invar.toml and .invar/config.toml.
+    continues to check invar.toml.
     """
     # Build list of config sources to try (same order as load_config)
     sources_to_try: list[tuple[Path, ConfigSource]] = []
@@ -470,9 +467,7 @@ def _get_classification_config(project_root: Path) -> Result[dict[str, Any], str
     if invar_toml.exists():
         sources_to_try.append((invar_toml, "invar"))
 
-    invar_config = project_root / ".invar" / "config.toml"
-    if invar_config.exists():
-        sources_to_try.append((invar_config, "invar_dir"))
+    _warn_deprecated_invar_config(project_root)
 
     # Try each source, fallback if no guard config found
     for config_path, source in sources_to_try:

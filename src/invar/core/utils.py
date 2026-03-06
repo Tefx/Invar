@@ -16,9 +16,9 @@ from invar.core.models import GuardReport, RuleConfig, RuleExclusion
 
 
 @pre(
-    lambda report, strict: report.files_checked >= 0
-    and report.errors >= 0
-    and isinstance(strict, bool)
+    lambda report, strict: (
+        report.files_checked >= 0 and report.errors >= 0 and isinstance(strict, bool)
+    )
 )
 @post(lambda result: result in (0, 1))
 def get_exit_code(report: GuardReport, strict: bool) -> int:
@@ -42,15 +42,13 @@ def get_exit_code(report: GuardReport, strict: bool) -> int:
 
 
 @pre(
-    lambda report,
-    strict,
-    doctest_passed=True,
-    crosshair_passed=True,
-    property_passed=True: report.files_checked >= 0
-    and isinstance(strict, bool)
-    and isinstance(doctest_passed, bool)
-    and isinstance(crosshair_passed, bool)
-    and isinstance(property_passed, bool)
+    lambda report, strict, doctest_passed=True, crosshair_passed=True, property_passed=True: (
+        report.files_checked >= 0
+        and isinstance(strict, bool)
+        and isinstance(doctest_passed, bool)
+        and isinstance(crosshair_passed, bool)
+        and isinstance(property_passed, bool)
+    )
 )
 @post(lambda result: result in ("passed", "failed"))
 def get_combined_status(
@@ -97,10 +95,7 @@ def get_combined_status(
     return "passed"
 
 
-@pre(
-    lambda data, source: isinstance(data, dict)
-    and source in ("pyproject", "invar", "invar_dir", "default")
-)
+@pre(lambda data, source: isinstance(data, dict) and source in ("pyproject", "invar", "default"))
 @post(lambda result: isinstance(result, dict))
 def extract_guard_section(data: dict[str, Any], source: str) -> dict[str, Any]:
     """
@@ -111,8 +106,6 @@ def extract_guard_section(data: dict[str, Any], source: str) -> dict[str, Any]:
         {'x': 1}
         >>> extract_guard_section({"guard": {"y": 2}}, "invar")
         {'y': 2}
-        >>> extract_guard_section({"guard": {"z": 3}}, "invar_dir")
-        {'z': 3}
         >>> extract_guard_section({}, "default")
         {}
         >>> extract_guard_section({"guard": 0}, "invar")  # Non-dict value returns empty
@@ -127,7 +120,7 @@ def extract_guard_section(data: dict[str, Any], source: str) -> dict[str, Any]:
             return {}
         result = result.get("guard", {})
         return result if isinstance(result, dict) else {}
-    # invar.toml and .invar/config.toml use [guard] directly
+    # invar.toml uses [guard] directly
     result = data.get("guard", {})
     return result if isinstance(result, dict) else {}
 
