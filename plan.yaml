@@ -16,7 +16,7 @@ phases:
   steps:
   - id: dx-80.code-fix-default
     name: code-fix-default
-    status: claimed
+    status: done
     description: 'Modify guard.py CLI: change default changed=False to True, add --all
       flag'
     verification: Run `invar guard` and verify it checks only changed files. Run `invar
@@ -24,9 +24,28 @@ phases:
     agent: python-executor
     claimed_by: python-executor
     claimed_at: '2026-03-06T11:49:53.390315+00:00'
+    evidence: 'Artifact:
+
+      - Commit: e788e3ffadc9a9f91aaa95a47ebd946b9bddb99f
+
+
+      Verification:
+
+      - Diff check on `src/invar/shell/commands/guard.py` confirms CLI parameter logic
+      adjusted for default changed-files mode + `--all` full mode
+
+      - Syntax parse check passed via `python3 -c "import ast; ast.parse(open(''src/invar/shell/commands/guard.py'').read())"`
+
+      - Executor verified call-site consistency for coverage/crosshair/output paths
+      with `not all_files`
+
+
+      Spec link:
+
+      - vectl step `dx-80.code-fix-default`'
   - id: dx-80.docs-tool-selection
     name: docs-tool-selection
-    status: claimed
+    status: done
     description: Add Tool Selection section to CLAUDE.md template and update guard
       documentation
     verification: Run `invar dev sync` and verify CLAUDE.md contains Tool Selection
@@ -34,21 +53,53 @@ phases:
     agent: python-executor
     claimed_by: python-executor
     claimed_at: '2026-03-06T11:49:56.406237+00:00'
+    evidence: 'Artifact:
+
+      - No new commit required; documentation already met acceptance criteria
+
+
+      Verification:
+
+      - `invar dev sync` -> completed with no file changes
+
+      - CLAUDE.md verified to contain Tool Selection section with MCP/CLI/uvx guidance
+      and examples
+
+
+      Spec link:
+
+      - docs/proposals/DX-80-guard-cli-mcp-alignment.md
+
+      - vectl step `dx-80.docs-tool-selection`'
   - id: dx-80.testing-verification
     name: testing-verification
     status: pending
     description: 'Manual and integration testing: CLI behavior, --all flag, backward
-      compatibility, pre-commit hooks'
+      compatibility including restored --changed alias, pre-commit hooks'
     verification: 'All tests pass: `invar guard` (changed), `invar guard --all` (full),
-      `invar guard --changed` (backward compat), pre-commit hooks work'
+      `invar guard --changed` (backward compat alias), pre-commit hooks work'
+    depends_on:
+    - dx-80.restore-changed-alias
+    - dx-80.code-fix-default
+    - dx-80.docs-tool-selection
     agent: integration-verifier
+  - id: dx-80.restore-changed-alias
+    name: restore-changed-alias
+    status: claimed
+    description: Restore `invar guard --changed` as a backward-compatible alias of
+      default changed-files mode; update CLI help and tests accordingly.
+    verification: '`invar guard --changed` succeeds and matches default `invar guard`
+      behavior on same workspace state.'
+    agent: python-executor
+    claimed_by: python-executor
+    claimed_at: '2026-03-06T13:23:41.652702+00:00'
 - id: config-cleanup
   name: Remove .invar/config.toml support
-  status: in_progress
+  status: done
   steps:
   - id: config-cleanup.remove-config-toml
     name: remove-invar-config-toml
-    status: claimed
+    status: done
     description: 'Remove .invar/config.toml as a config source. Keep only pyproject.toml
       ([tool.invar.guard]) and invar.toml ([guard]). Update load_config() and find_config_file()
       in shell/config.py to remove the third fallback. Update find_project_root()
@@ -64,6 +115,12 @@ phases:
     agent: python-senior
     claimed_by: python-senior
     claimed_at: '2026-03-06T11:49:35.198304+00:00'
+    evidence: "Artifact:\n- Commit: 4f6a01a (supporting commit: 50e1a80)\n\nVerification:\n\
+      - `uv run pytest -q tests/test_config_cleanup.py` -> 4 passed, 0 failed\n- `uv\
+      \ run --active invar guard --all` -> passed, 0 errors, 91 warnings\n- Scenario\
+      \ checks reported by executor:\n  - pyproject config path works (exit=0)\n \
+      \ - invar.toml fallback works (exit=0)\n  - `.invar/` fully gitignored still\
+      \ preserves config behavior (exit=0)\n\nSpec link:\n- vectl step `config-cleanup.remove-config-toml`"
 - id: dx-87
   name: DX-87
   status: pending

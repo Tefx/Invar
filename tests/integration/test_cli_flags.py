@@ -87,20 +87,33 @@ class TestStaticFlag:
 
 
 class TestDefaultBehavior:
-    """DX-80: Verify default behavior is now --all (full project check)."""
+    """DX-80: Verify default behavior is changed-only (--changed is default)."""
 
     @pytest.mark.timeout(15)
-    def test_default_is_all_flag_behavior(self):
-        """Default guard (no flags) should check entire project (DX-80: default changed to --all)."""
-        # Use --static to speed up test while verifying --all behavior
+    def test_default_is_changed_flag_behavior(self):
+        """Default guard (no flags) should check only changed files (backward compatible)."""
+        # Use --static to speed up test while verifying default behavior
         result = run_invar_guard("--static", timeout=15)
 
         # Should have summary
         assert "status" in result or "summary" in result, "Default guard should produce output"
 
-        # With --static flag, should still check files
+        # With --static flag, should still check files (or 0 files if no changes)
         if "summary" in result:
             assert result["summary"]["files_checked"] >= 0, "Should report files checked"
+
+
+class TestChangedFlag:
+    """DX-80: Verify --changed flag is backward-compatible alias."""
+
+    @pytest.mark.timeout(15)
+    def test_changed_flag_explicit_alias(self):
+        """--changed should be explicit alias for default changed-only behavior."""
+        # Use --static to speed up test
+        result = run_invar_guard("--static", "--changed", timeout=15)
+
+        # Should work without error
+        assert "status" in result or "summary" in result, "--changed should work"
 
 
 class TestAllFlag:

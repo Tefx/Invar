@@ -142,8 +142,10 @@ def guard(
         dir_okay=True,
     ),
     strict: bool = typer.Option(False, "--strict", help="Treat warnings as errors"),
-    all_files: bool = typer.Option(
-        False, "--all", help="Check all files (default: only git-modified files)"
+    changed: bool = typer.Option(
+        True,
+        "--changed/--all",
+        help="Check only changed files (default) or all files",
     ),
     static: bool = typer.Option(
         False, "--static", help="Static analysis only, skip all runtime tests"
@@ -186,6 +188,7 @@ def guard(
 
     By default, checks only git-modified files for fast feedback during development.
     Use --all to check the entire project (useful for CI/release).
+    Use --changed to explicitly check only changed files (backward-compatible alias).
     Use --static for quick static-only checks (~0.5s vs ~5s full).
     Use --suggest to get functional pattern suggestions (NewType, Validation, etc.).
     Use --contracts-only (-c) to check contract coverage without running tests (SPECIFY phase).
@@ -289,7 +292,7 @@ def guard(
 
         # DX-65: Use single file path if in single file mode
         coverage_path = single_file if single_file else path
-        coverage_result = calculate_contract_coverage(coverage_path, changed_only=not all_files)
+        coverage_result = calculate_contract_coverage(coverage_path, changed_only=changed)
         if isinstance(coverage_result, Failure):
             console.print(f"[red]Error:[/red] {coverage_result.failure()}")
             raise typer.Exit(1)
@@ -313,7 +316,7 @@ def guard(
         # DX-65: Single file mode - only check the specified file
         only_files = {single_file}
         checked_files = [single_file]
-    elif not all_files:
+    elif changed:
         changed_result = handle_changed_mode(path)
         if isinstance(changed_result, Failure):
             if changed_result.failure() == "NO_CHANGES":
@@ -426,7 +429,7 @@ def guard(
             checked_files,
             doctest_passed,
             static_exit_code,
-            changed_mode=not all_files,
+            changed_mode=changed,
             timeout=config.timeout_crosshair,
             per_condition_timeout=config.timeout_crosshair_per_condition,
         )
@@ -478,7 +481,7 @@ def guard(
             coverage_data=coverage_output,  # DX-37
         )
     else:
-        output_rich(report, config.strict_pure, not all_files, pedantic, explain, static)
+        output_rich(report, config.strict_pure, changed, pedantic, explain, static)
         output_verification_status(
             verification_level,
             static_exit_code,
