@@ -114,14 +114,12 @@ def copy_template(
 def add_config(path: Path, console, language: str = "python") -> Result[bool, str]:
     """Add configuration to project. Returns Success(True) if added, Success(False) if skipped.
 
-    DX-70: Creates .invar/config.toml instead of invar.toml for cleaner organization.
     LX-05: Now generates language-specific config (Python vs TypeScript).
-    Backward compatible: still reads from invar.toml if it exists.
+    Guard config supports pyproject.toml [tool.invar.guard] and invar.toml [guard].
     """
     pyproject = path / "pyproject.toml"
-    invar_dir = path / ".invar"
-    invar_config = invar_dir / "config.toml"
-    legacy_invar_toml = path / "invar.toml"
+    invar_toml = path / "invar.toml"
+    deprecated_invar_config = path / ".invar" / "config.toml"
 
     try:
         # Priority 1: Add to pyproject.toml if it exists (Python projects only)
@@ -134,16 +132,23 @@ def add_config(path: Path, console, language: str = "python") -> Result[bool, st
                 return Success(True)
             return Success(False)
 
-        # Skip if legacy invar.toml exists (backward compatibility)
-        if legacy_invar_toml.exists():
+        # Skip if invar.toml already exists
+        if invar_toml.exists():
             return Success(False)
 
-        # Create .invar/config.toml (DX-70: new default location)
+        # Do not silently ignore deprecated config location.
+        if deprecated_invar_config.exists():
+            console.print(
+                "[yellow]Warning:[/yellow] Detected deprecated .invar/config.toml. "
+                "Move config to invar.toml [guard] or pyproject.toml [tool.invar.guard]."
+            )
+            return Success(False)
+
+        # Create invar.toml for projects without pyproject.toml
         # LX-05: Use language-specific config
-        if not invar_config.exists():
-            invar_dir.mkdir(exist_ok=True)
-            invar_config.write_text(_get_invar_config(language))
-            console.print("[green]Created[/green] .invar/config.toml")
+        if not invar_toml.exists():
+            invar_toml.write_text(_get_invar_config(language))
+            console.print("[green]Created[/green] invar.toml")
             return Success(True)
 
         return Success(False)
@@ -223,6 +228,7 @@ def copy_commands_directory(dest: Path, console) -> Result[bool, str]:
 def copy_skills_directory(dest: Path, console) -> Result[bool, str]:
     """Copy skills directory to .claude/skills/. Returns Success(True) if copied."""
     import shutil
+
     skills_dest = dest / ".claude" / "skills"
     if skills_dest.exists():
         return Success(False)

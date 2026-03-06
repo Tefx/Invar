@@ -82,12 +82,16 @@ from invar.core.language import (
 )
 
 # Marker files to check for language detection
-LANGUAGE_MARKERS: frozenset[str] = frozenset({
-    "pyproject.toml", "setup.py",  # Python
-    "tsconfig.json", "package.json",  # TypeScript
-    "Cargo.toml",  # Rust (future)
-    "go.mod",  # Go (future)
-})
+LANGUAGE_MARKERS: frozenset[str] = frozenset(
+    {
+        "pyproject.toml",
+        "setup.py",  # Python
+        "tsconfig.json",
+        "package.json",  # TypeScript
+        "Cargo.toml",  # Rust (future)
+        "go.mod",  # Go (future)
+    }
+)
 
 
 def detect_language(path: Path) -> str:
@@ -117,9 +121,7 @@ def detect_language(path: Path) -> str:
         'python'
     """
     # Collect present markers (I/O operation)
-    present_markers = frozenset(
-        marker for marker in LANGUAGE_MARKERS if (path / marker).exists()
-    )
+    present_markers = frozenset(marker for marker in LANGUAGE_MARKERS if (path / marker).exists())
     # Delegate to pure core function
     return detect_language_from_markers(present_markers)
 
@@ -145,12 +147,14 @@ def _get_prompt_style():
     """
     from questionary import Style
 
-    return Style([
-        ("pointer", "fg:cyan bold"),        # Pointer: cyan bold
-        ("highlighted", "noreverse"),       # Current row: no reverse
-        ("selected", "noreverse"),          # Selected items: no reverse
-        ("text", "noreverse"),              # Normal text: no reverse
-    ])
+    return Style(
+        [
+            ("pointer", "fg:cyan bold"),  # Pointer: cyan bold
+            ("highlighted", "noreverse"),  # Current row: no reverse
+            ("selected", "noreverse"),  # Selected items: no reverse
+            ("text", "noreverse"),  # Normal text: no reverse
+        ]
+    )
 
 
 # @shell_complexity: Interactive prompt with cursor selection
@@ -165,18 +169,10 @@ def _prompt_agent_selection() -> list[str]:
         questionary.Choice(
             "Claude Code (recommended)",
             value="claude",
-            checked=True  # Default selection
+            checked=True,  # Default selection
         ),
-        questionary.Choice(
-            "Pi Coding Agent",
-            value="pi",
-            checked=False
-        ),
-        questionary.Choice(
-            "Other (AGENT.md)",
-            value="generic",
-            checked=False
-        ),
+        questionary.Choice("Pi Coding Agent", value="pi", checked=False),
+        questionary.Choice("Other (AGENT.md)", value="generic", checked=False),
     ]
 
     selected = questionary.checkbox(
@@ -242,9 +238,7 @@ def _prompt_file_selection(agents: list[str]) -> dict[str, bool]:
         if unique_files:
             choices.append(questionary.Separator(f"── {category_name} ──"))
             for file, desc in unique_files:
-                choices.append(
-                    questionary.Choice(f"{file:28} {desc}", value=file, checked=True)
-                )
+                choices.append(questionary.Choice(f"{file:28} {desc}", value=file, checked=True))
                 file_list.append(file)
                 seen_files.add(file)
 
@@ -421,7 +415,9 @@ def init(
         raise typer.Exit(1)
 
     if mcp_only and language is not None:
-        console.print("[red]Error:[/red] --language is not needed with --mcp-only (MCP tools work for all languages).")
+        console.print(
+            "[red]Error:[/red] --language is not needed with --mcp-only (MCP tools work for all languages)."
+        )
         raise typer.Exit(1)
 
     # Resolve path
@@ -476,7 +472,9 @@ def init(
         # Validate explicitly provided language
         if language not in VALID_LANGUAGES:
             valid = ", ".join(sorted(VALID_LANGUAGES))
-            console.print(f"[red]Error:[/red] Invalid language '{language}'. Must be one of: {valid}")
+            console.print(
+                f"[red]Error:[/red] Invalid language '{language}'. Must be one of: {valid}"
+            )
             raise typer.Exit(1)
 
     # Header (DX-81: Support multi-agent display)
@@ -514,13 +512,21 @@ def init(
         # DX-79: Default feedback enabled for quick mode
         feedback_enabled = True
         if len(agents) > 1:
-            console.print(f"\n[dim]📊 Configuring for {len(agents)} agents: {', '.join(agents)}[/dim]")
-        console.print("\n[dim]📊 Feedback collection enabled by default (stored locally in .invar/feedback/)[/dim]")
-        console.print("[dim]   To disable: Set feedback.enabled=false in .claude/settings.local.json[/dim]")
+            console.print(
+                f"\n[dim]📊 Configuring for {len(agents)} agents: {', '.join(agents)}[/dim]"
+            )
+        console.print(
+            "\n[dim]📊 Feedback collection enabled by default (stored locally in .invar/feedback/)[/dim]"
+        )
+        console.print(
+            "[dim]   To disable: Set feedback.enabled=false in .claude/settings.local.json[/dim]"
+        )
     else:
         # Interactive mode
         if not _is_interactive():
-            console.print("[yellow]Non-interactive terminal detected. Use --claude or --pi for quick setup.[/yellow]")
+            console.print(
+                "[yellow]Non-interactive terminal detected. Use --claude or --pi for quick setup.[/yellow]"
+            )
             raise typer.Exit(1)
 
         agents = _prompt_agent_selection()
@@ -552,7 +558,7 @@ def init(
     merged: list[str] = []
     skipped: list[str] = []
 
-    # Add config file (.invar/config.toml or pyproject.toml)
+    # Add config file (invar.toml or pyproject.toml)
     # LX-05: Pass language for language-specific config generation
     config_result = add_config(path, console, language)
     if isinstance(config_result, Failure):

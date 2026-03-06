@@ -17,7 +17,7 @@ Use `--all` for comprehensive checks before release.
 ## Configuration (Python)
 
 ```toml
-# pyproject.toml or invar.toml
+# pyproject.toml
 [tool.invar.guard]
 core_paths = ["src/myapp/core"]    # Default: ["src/core", "core"]
 shell_paths = ["src/myapp/shell"]  # Default: ["src/shell", "shell"]
@@ -28,3 +28,12 @@ timeout_crosshair = 300              # Default: 300s
 timeout_hypothesis = 300             # Default: 300s
 # Doctest lines are excluded from size calculations
 ```
+
+```toml
+# invar.toml
+[guard]
+core_paths = ["src/myapp/core"]
+shell_paths = ["src/myapp/shell"]
+```
+
+`.invar/config.toml` is deprecated and no longer loaded.

@@ -510,7 +510,7 @@ Cursor users get full verification via MCP:
 
 <sup>* mypy hook included in `.pre-commit-config.yaml` but requires: `pip install mypy`</sup>
 
-**Note:** If `pyproject.toml` exists, Guard configuration goes there as `[tool.invar.guard]` instead of `.invar/config.toml`.
+**Note:** Guard reads config from `pyproject.toml` (`[tool.invar.guard]`) or `invar.toml` (`[guard]`). `.invar/config.toml` is deprecated.
 
 **Recommended structure:**
 

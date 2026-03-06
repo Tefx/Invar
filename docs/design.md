@@ -648,8 +648,7 @@ project/
 Priority (highest to lowest):
 1. pyproject.toml [tool.invar.guard]    # Standard Python projects
 2. invar.toml [guard]                   # Standalone config
-3. .invar/config.toml [guard]           # Context directory
-4. Built-in defaults                    # Fallback
+3. Built-in defaults                    # Fallback
 ```
 
 **invar.toml Format:**
@@ -685,8 +684,8 @@ def load_config(project_root: Path) -> RuleConfig:
     if (invar_toml := project_root / "invar.toml").exists():
         return parse_invar_toml(invar_toml)
 
-    if (invar_config := project_root / ".invar/config.toml").exists():
-        return parse_invar_toml(invar_config)
+    if (deprecated := project_root / ".invar/config.toml").exists():
+        warn_deprecated(deprecated)
 
     return RuleConfig()  # defaults
 ```
