@@ -16,6 +16,8 @@ from deal import post, pre
 
 from invar.core.models import FileInfo, PerceptionMap, SymbolKind, SymbolRefs
 
+TYPER_DYNAMIC_REGISTRATION_METHODS: frozenset[str] = frozenset({"command", "callback"})
+
 
 @pre(lambda source, known_symbols: len(source) > 0 and len(known_symbols) > 0)  # Non-empty inputs
 @post(lambda result: all(isinstance(name, str) and line > 0 for name, line in result))  # Valid refs
@@ -33,6 +35,9 @@ def find_references_in_source(source: str, known_symbols: set[str]) -> list[tupl
         >>> refs = find_references_in_source("mod.foo()\\npkg.mod.bar()", {"foo", "bar"})
         >>> sorted(refs)
         [('bar', 2), ('foo', 1)]
+        >>> refs = find_references_in_source("app.command()(init)\\napp.command('t')(test)", {"init", "test", "verify"})
+        >>> sorted(refs)
+        [('init', 1), ('test', 2)]
         >>> find_references_in_source("x = unknown()", {"foo"})
         []
     """
@@ -50,6 +55,22 @@ def find_references_in_source(source: str, known_symbols: set[str]) -> list[tupl
             if name in known_symbols:
                 line = getattr(node, "lineno", 0)
                 seen.add((name, line))
+
+        # Count dynamic Typer registration usage: app.command()(fn)
+        if (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Call)
+            and isinstance(node.func.func, ast.Attribute)
+            and node.func.func.attr in TYPER_DYNAMIC_REGISTRATION_METHODS
+        ):
+            for arg in node.args:
+                if isinstance(arg, ast.Name) and arg.id in known_symbols:
+                    line = getattr(arg, "lineno", 0)
+                    seen.add((arg.id, line))
+            for keyword in node.keywords:
+                if isinstance(keyword.value, ast.Name) and keyword.value.id in known_symbols:
+                    line = getattr(keyword.value, "lineno", 0)
+                    seen.add((keyword.value.id, line))
 
     return list(seen)
 
