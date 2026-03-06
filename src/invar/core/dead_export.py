@@ -9,6 +9,8 @@ Core module: pure logic, no I/O.
 
 from __future__ import annotations
 
+import ast
+
 from deal import post, pre
 
 from invar.core.entry_points import has_allow_marker, is_entry_point
@@ -132,6 +134,17 @@ def check_dead_exports(
         >>> refs9 = count_cross_file_references([info9], {"shell/c.py": source9}, include_same_file=True)
         >>> check_dead_exports([info9], refs9, RuleConfig())
         []
+
+        >>> # Case 10: Function listed in __all__ with 0 cross-file refs - excluded
+        >>> from invar.core.references import count_cross_file_references
+        >>> sym10 = Symbol(name="public_api", kind=SymbolKind.FUNCTION, line=1, end_line=2)
+        >>> source10 = "def public_api():\\n    return 1\\n\\n__all__ = ['public_api']"
+        >>> info10 = FileInfo(path="shell/d.py", lines=5, symbols=[sym10], is_shell=True, source=source10)
+        >>> refs10 = count_cross_file_references([info10], {"shell/d.py": source10})
+        >>> refs10.get("shell/d.py::public_api", 0)
+        0
+        >>> check_dead_exports([info10], refs10, RuleConfig())
+        []
     """
     violations: list[Violation] = []
 
@@ -141,6 +154,27 @@ def check_dead_exports(
             continue
 
         source = file_info.source or ""
+        exported_names: set[str] = set()
+
+        if source:
+            try:
+                tree = ast.parse(source)
+            except (SyntaxError, TypeError, ValueError):
+                tree = None
+
+            if tree is not None:
+                for node in tree.body:
+                    if isinstance(node, ast.Assign):
+                        has_all_target = any(
+                            isinstance(target, ast.Name) and target.id == "__all__"
+                            for target in node.targets
+                        )
+                        if not has_all_target:
+                            continue
+                        if isinstance(node.value, (ast.List, ast.Tuple, ast.Set)):
+                            for elt in node.value.elts:
+                                if isinstance(elt, ast.Constant) and isinstance(elt.value, str):
+                                    exported_names.add(elt.value)
 
         for symbol in file_info.symbols:
             # Only check functions
@@ -161,6 +195,10 @@ def check_dead_exports(
 
             # Skip if has @invar:allow dead_export marker
             if has_allow_marker(symbol, source, "dead_export"):
+                continue
+
+            # Spec: __all__ marks intended public API, treat as referenced.
+            if symbol.name in exported_names:
                 continue
 
             # Build reference key
