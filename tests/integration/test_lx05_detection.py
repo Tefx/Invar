@@ -11,11 +11,8 @@ from pathlib import Path
 import pytest
 
 from invar.core.sync_helpers import VALID_LANGUAGES, SyncConfig
-from invar.shell.commands.init import (
-    FUTURE_LANGUAGES,
-    SUPPORTED_LANGUAGES,
-    detect_language,
-)
+from invar.core.language import FUTURE_LANGUAGES, SUPPORTED_LANGUAGES
+from invar.shell.commands.init import detect_language
 
 # =============================================================================
 # Language Detection Tests
