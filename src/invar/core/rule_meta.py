@@ -200,6 +200,28 @@ RULE_META: dict[str, RuleMeta] = {
         ),
         hint="Add a caller in src/ or mark with: # @invar:allow dead_export: <reason>",
     ),
+    "mock_leak": RuleMeta(
+        name="mock_leak",
+        severity=Severity.ERROR,
+        category=RuleCategory.PURITY,
+        detects="Test utilities (unittest.mock, faker) imported in non-test files",
+        cannot_detect=(
+            "Dynamic imports",
+            "Test utilities used via dependency injection",
+        ),
+        hint="Move test utilities to test files (test_*.py, *_test.py, or tests/)",
+    ),
+    "dead_assign": RuleMeta(
+        name="dead_assign",
+        severity=Severity.WARNING,
+        category=RuleCategory.PURITY,
+        detects="Local variable assigned but never read later in function",
+        cannot_detect=(
+            "Value used in debugger/inspector",
+            "Side-effectful assignment patterns",
+        ),
+        hint="Remove assignment, use the value, or add: # @invar:allow dead_assign: <reason>",
+    ),
     # Documentation rules
     "missing_doctest": RuleMeta(
         name="missing_doctest",

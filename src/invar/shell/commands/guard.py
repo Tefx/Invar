@@ -114,6 +114,18 @@ def _scan_and_check(
     for dead_violation in check_dead_exports(all_file_infos, ref_counts, config):
         report.add_violation(dead_violation)
 
+    # MOCK-LEAK: Check for test utilities in production code
+    from invar.core.mock_leak import check_mock_leaks
+
+    for mock_violation in check_mock_leaks(all_file_infos, config):
+        report.add_violation(mock_violation)
+
+    # DEAD-ASSIGN: Check for dead assignments in functions
+    from invar.core.dead_assign import check_dead_assigns
+
+    for dead_assign_violation in check_dead_assigns(all_file_infos, config):
+        report.add_violation(dead_assign_violation)
+
     # DX-22: Check project-level complexity debt (Fix-or-Explain enforcement)
     for debt_violation in check_complexity_debt(
         report.violations, config.shell_complexity_debt_limit
