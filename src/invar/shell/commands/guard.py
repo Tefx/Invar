@@ -339,14 +339,13 @@ def guard(
                     write_json(
                         {
                             "status": "passed",
-                            "static": {"passed": True, "errors": 0, "warnings": 0, "infos": 0},
+                            "static": {"passed": True, "errors": 0, "warnings": 0, "infos": 0, "findings": []},
                             "summary": {
                                 "files_checked": 0,
                                 "errors": 0,
                                 "warnings": 0,
                                 "infos": 0,
                             },
-                            "fixes": [],
                             "verification_level": "STANDARD",
                             "doctest": {"passed": True, "output": ""},
                             "crosshair": {"status": "skipped", "reason": "no changed files"},

@@ -225,7 +225,7 @@ def format_guard_agent(report: GuardReport, combined_status: str | None = None) 
         >>> d = format_guard_agent(report)
         >>> d["status"]
         'passed'
-        >>> len(d["fixes"])
+        >>> len(d["static"]["findings"])
         1
         >>> # DX-26: combined_status overrides report.passed
         >>> d2 = format_guard_agent(report, combined_status="failed")
@@ -246,6 +246,7 @@ def format_guard_agent(report: GuardReport, combined_status: str | None = None) 
             "errors": report.errors,
             "warnings": report.warnings,
             "infos": report.infos,
+            "findings": [_violation_to_fix(v) for v in report.violations],
         },
         "summary": {
             "files_checked": report.files_checked,
@@ -253,7 +254,6 @@ def format_guard_agent(report: GuardReport, combined_status: str | None = None) 
             "warnings": report.warnings,
             "infos": report.infos,
         },
-        "fixes": [_violation_to_fix(v) for v in report.violations],
     }
     # DX-61: Add suggests count if any pattern suggestions exist
     if report.suggests > 0:
