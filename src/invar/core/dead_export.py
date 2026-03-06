@@ -123,6 +123,15 @@ def check_dead_exports(
         1
         >>> violations8[0].file
         'shell/b.py'
+
+        >>> # Case 9: Same-file reference counted -> not a dead export
+        >>> from invar.core.references import count_cross_file_references
+        >>> sym9 = Symbol(name="ping", kind=SymbolKind.FUNCTION, line=1, end_line=4)
+        >>> source9 = "def ping():\\n    return 1\\n\\nvalue = ping()"
+        >>> info9 = FileInfo(path="shell/c.py", lines=4, symbols=[sym9], is_shell=True, source=source9)
+        >>> refs9 = count_cross_file_references([info9], {"shell/c.py": source9}, include_same_file=True)
+        >>> check_dead_exports([info9], refs9, RuleConfig())
+        []
     """
     violations: list[Violation] = []
 

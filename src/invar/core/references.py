@@ -103,13 +103,14 @@ def build_symbol_table(file_infos: list[FileInfo]) -> dict[str, str]:
 
 @post(lambda result: all("::" in k and v >= 0 for k, v in result.items()))  # Valid ref counts
 def count_cross_file_references(
-    file_infos: list[FileInfo], sources: dict[str, str]
+    file_infos: list[FileInfo], sources: dict[str, str], include_same_file: bool = False
 ) -> dict[str, int]:
     """
     Count cross-file references for all symbols.
 
     Returns dict of {"file::symbol": reference_count}.
-    Only counts references from OTHER files (excludes self-references).
+    By default, only counts references from OTHER files (excludes self-references).
+    Set include_same_file=True to also count references within the defining file.
 
     Examples:
         >>> from invar.core.models import FileInfo, Symbol, SymbolKind
@@ -120,6 +121,15 @@ def count_cross_file_references(
         >>> refs = count_cross_file_references([info, info2], sources)
         >>> refs.get("a.py::foo", 0)
         1
+        >>> same_file_sources = {
+        ...     "a.py": "def foo():\\n    return 1\\n\\nfoo()",
+        ...     "b.py": "pass",
+        ... }
+        >>> same_file_refs = count_cross_file_references(
+        ...     [info, info2], same_file_sources, include_same_file=True
+        ... )
+        >>> same_file_refs.get("a.py::foo", 0) > 0
+        True
     """
     # Build symbol table: name -> defining file
     symbol_table = build_symbol_table(file_infos)
@@ -137,8 +147,7 @@ def count_cross_file_references(
 
         for symbol_name, _ in references:
             defining_file = symbol_table.get(symbol_name)
-            if defining_file and defining_file != file_info.path:
-                # Cross-file reference: increment count
+            if defining_file and (include_same_file or defining_file != file_info.path):
                 key = f"{defining_file}::{symbol_name}"
                 ref_counts[key] += 1
 
