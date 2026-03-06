@@ -12,24 +12,28 @@ context: Implementation plan for invar.
 phases:
 - id: dx-80
   name: DX-80
-  status: pending
+  status: in_progress
   steps:
   - id: dx-80.code-fix-default
     name: code-fix-default
-    status: pending
+    status: claimed
     description: 'Modify guard.py CLI: change default changed=False to True, add --all
       flag'
     verification: Run `invar guard` and verify it checks only changed files. Run `invar
       guard --all` and verify full check.
     agent: python-executor
+    claimed_by: python-executor
+    claimed_at: '2026-03-06T11:49:53.390315+00:00'
   - id: dx-80.docs-tool-selection
     name: docs-tool-selection
-    status: pending
+    status: claimed
     description: Add Tool Selection section to CLAUDE.md template and update guard
       documentation
     verification: Run `invar dev sync` and verify CLAUDE.md contains Tool Selection
       section with MCP/CLI/uvx comparison table
     agent: python-executor
+    claimed_by: python-executor
+    claimed_at: '2026-03-06T11:49:56.406237+00:00'
   - id: dx-80.testing-verification
     name: testing-verification
     status: pending
@@ -40,11 +44,11 @@ phases:
     agent: integration-verifier
 - id: config-cleanup
   name: Remove .invar/config.toml support
-  status: pending
+  status: in_progress
   steps:
   - id: config-cleanup.remove-config-toml
     name: remove-invar-config-toml
-    status: pending
+    status: claimed
     description: 'Remove .invar/config.toml as a config source. Keep only pyproject.toml
       ([tool.invar.guard]) and invar.toml ([guard]). Update load_config() and find_config_file()
       in shell/config.py to remove the third fallback. Update find_project_root()
@@ -58,6 +62,8 @@ phases:
 
       '
     agent: python-senior
+    claimed_by: python-senior
+    claimed_at: '2026-03-06T11:49:35.198304+00:00'
 - id: dx-87
   name: DX-87
   status: pending
@@ -1154,3 +1160,58 @@ phases:
       \ behavior via tests/probes.\n\nnotes:\n  suggestions: [\"Pytest output included\
       \ 1 warning; non-blocking and did not affect pass verdict.\"]\n  tech_debt:\
       \ []"
+- id: dead-export-precision
+  name: 'DX-88: dead_export False Positive Fixes'
+  status: pending
+  steps:
+  - id: intra-file-refs
+    name: Count intra-file references for dead_export
+    status: pending
+    description: Add include_same_file parameter to count_cross_file_references (or
+      create count_all_references). Update guard.py to pass all-references counts
+      to check_dead_exports. This eliminates 24/32 false positives (75%).
+    verification: 'invar_guard passes. New doctest: function referenced only in same
+      file has ref_count > 0 and no violation.'
+    refs:
+    - src/invar/core/references.py
+    - src/invar/shell/commands/guard.py
+    - src/invar/core/dead_export.py
+    agent: python-senior
+  - id: deferred-imports
+    name: Detect deferred (in-function) imports as references
+    status: pending
+    description: Extend find_references_in_source to also walk ast.ImportFrom nodes
+      (including those inside function bodies) and count imported names as references.
+      Eliminates 5/32 false positives.
+    verification: 'invar_guard passes. New doctest: ''from mod import foo'' inside
+      function body counts foo as reference.'
+    refs:
+    - src/invar/core/references.py
+    depends_on:
+    - intra-file-refs
+    agent: python-senior
+  - id: dunder-all-awareness
+    name: Respect __all__ membership in dead_export
+    status: pending
+    description: Parse __all__ from source in check_dead_exports. If a function is
+      listed in __all__, treat it as referenced (skip violation). Eliminates remaining
+      edge cases.
+    verification: 'invar_guard passes. New doctest: function in __all__ with 0 cross-file
+      refs produces no violation.'
+    refs:
+    - src/invar/core/dead_export.py
+    - src/invar/core/references.py
+    depends_on:
+    - deferred-imports
+    agent: python-senior
+  - id: validation-anima
+    name: Validate against anima project
+    status: pending
+    description: 'Run invar guard on ../anima and verify: (1) the 3 true positives
+      are still reported, (2) the 32 false positives are eliminated. Document precision
+      improvement.'
+    verification: invar guard on anima reports at most 5 dead_export warnings (down
+      from 35). True positives preserved.
+    depends_on:
+    - dunder-all-awareness
+    agent: python-senior

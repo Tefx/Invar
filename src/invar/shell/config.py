@@ -6,8 +6,7 @@ Shell module: performs file I/O to load configuration.
 Configuration sources (priority order):
 1. pyproject.toml [tool.invar.guard]
 2. invar.toml [guard]
-3. .invar/config.toml [guard]
-4. Built-in defaults
+3. Built-in defaults
 
 DX-22: Added content-based auto-detection for Core/Shell classification.
 """
@@ -16,6 +15,7 @@ from __future__ import annotations
 
 import ast
 import tomllib
+import warnings
 from enum import Enum
 from typing import TYPE_CHECKING, Any, Literal
 
@@ -246,11 +246,24 @@ def auto_detect_module_type(source: str, file_path: str = "") -> ModuleType:
 if TYPE_CHECKING:
     from pathlib import Path
 
-ConfigSource = Literal["pyproject", "invar", "invar_dir", "default"]
+ConfigSource = Literal["pyproject", "invar", "default"]
+
+
+def _warn_deprecated_invar_config(project_root: Path) -> None:
+    """Warn when deprecated .invar/config.toml is present."""
+    invar_config = project_root / ".invar" / "config.toml"
+    if invar_config.exists():
+        warnings.warn(
+            "Detected deprecated .invar/config.toml. "
+            "Move Guard config to pyproject.toml [tool.invar.guard] "
+            "or invar.toml [guard].",
+            FutureWarning,
+            stacklevel=2,
+        )
 
 
 # @shell_complexity: Config cascade checks multiple sources with fallback
-def _find_config_source(project_root: Path) -> Result[tuple[Path | None, ConfigSource], str]:
+def find_config_file(project_root: Path) -> Result[tuple[Path | None, ConfigSource], str]:
     """
     Find the first available config file.
 
@@ -262,7 +275,7 @@ def _find_config_source(project_root: Path) -> Result[tuple[Path | None, ConfigS
         >>> import tempfile
         >>> with tempfile.TemporaryDirectory() as tmpdir:
         ...     root = Path(tmpdir)
-        ...     result = _find_config_source(root)
+        ...     result = find_config_file(root)
         ...     result.unwrap()[1]
         'default'
     """
@@ -275,13 +288,16 @@ def _find_config_source(project_root: Path) -> Result[tuple[Path | None, ConfigS
         if invar_toml.exists():
             return Success((invar_toml, "invar"))
 
-        invar_config = project_root / ".invar" / "config.toml"
-        if invar_config.exists():
-            return Success((invar_config, "invar_dir"))
+        _warn_deprecated_invar_config(project_root)
 
         return Success((None, "default"))
     except OSError as e:
         return Failure(f"Failed to find config: {e}")
+
+
+def _find_config_source(project_root: Path) -> Result[tuple[Path | None, ConfigSource], str]:
+    """Backward-compatible alias for find_config_file()."""
+    return find_config_file(project_root)
 
 
 # @shell_complexity: Project root discovery requires checking multiple markers

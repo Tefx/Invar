@@ -142,8 +142,8 @@ def guard(
         dir_okay=True,
     ),
     strict: bool = typer.Option(False, "--strict", help="Treat warnings as errors"),
-    changed: bool = typer.Option(
-        True, "--changed/--all", help="Check git-modified files only (use --all for full check)"
+    all_files: bool = typer.Option(
+        False, "--all", help="Check all files (default: only git-modified files)"
     ),
     static: bool = typer.Option(
         False, "--static", help="Static analysis only, skip all runtime tests"
@@ -289,7 +289,7 @@ def guard(
 
         # DX-65: Use single file path if in single file mode
         coverage_path = single_file if single_file else path
-        coverage_result = calculate_contract_coverage(coverage_path, changed_only=changed)
+        coverage_result = calculate_contract_coverage(coverage_path, changed_only=not all_files)
         if isinstance(coverage_result, Failure):
             console.print(f"[red]Error:[/red] {coverage_result.failure()}")
             raise typer.Exit(1)
@@ -313,7 +313,7 @@ def guard(
         # DX-65: Single file mode - only check the specified file
         only_files = {single_file}
         checked_files = [single_file]
-    elif changed:
+    elif not all_files:
         changed_result = handle_changed_mode(path)
         if isinstance(changed_result, Failure):
             if changed_result.failure() == "NO_CHANGES":
@@ -426,7 +426,7 @@ def guard(
             checked_files,
             doctest_passed,
             static_exit_code,
-            changed_mode=changed,
+            changed_mode=not all_files,
             timeout=config.timeout_crosshair,
             per_condition_timeout=config.timeout_crosshair_per_condition,
         )
@@ -478,7 +478,7 @@ def guard(
             coverage_data=coverage_output,  # DX-37
         )
     else:
-        output_rich(report, config.strict_pure, changed, pedantic, explain, static)
+        output_rich(report, config.strict_pure, not all_files, pedantic, explain, static)
         output_verification_status(
             verification_level,
             static_exit_code,
