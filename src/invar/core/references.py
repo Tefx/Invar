@@ -38,6 +38,12 @@ def find_references_in_source(source: str, known_symbols: set[str]) -> list[tupl
         >>> refs = find_references_in_source("app.command()(init)\\napp.command('t')(test)", {"init", "test", "verify"})
         >>> sorted(refs)
         [('init', 1), ('test', 2)]
+        >>> refs = find_references_in_source(
+        ...     "def build():\\n    from mod import foo\\n    return 1",
+        ...     {"foo"},
+        ... )
+        >>> sorted(refs)
+        [('foo', 2)]
         >>> find_references_in_source("x = unknown()", {"foo"})
         []
     """
@@ -49,6 +55,13 @@ def find_references_in_source(source: str, known_symbols: set[str]) -> list[tupl
     seen: set[tuple[str, int]] = set()
 
     for node in ast.walk(tree):
+        # Count explicit imports: from mod import foo
+        if isinstance(node, ast.ImportFrom):
+            line = getattr(node, "lineno", 0)
+            for imported_name in node.names:
+                if imported_name.name != "*" and imported_name.name in known_symbols:
+                    seen.add((imported_name.name, line))
+
         # Count function calls: foo() and module.foo()
         if isinstance(node, ast.Call) and isinstance(node.func, (ast.Name, ast.Attribute)):
             name = node.func.id if isinstance(node.func, ast.Name) else node.func.attr
