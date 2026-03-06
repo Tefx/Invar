@@ -41,12 +41,26 @@ def _is_protocol_base(base: ast.expr) -> bool:
 @pre(lambda tree: isinstance(tree, ast.AST))
 @post(lambda result: all(isinstance(name, str) for name in result))
 def _collect_protocol_classes(tree: ast.AST) -> set[str]:
-    protocol_classes: set[str] = set()
-    for node in ast.walk(tree):
-        if not isinstance(node, ast.ClassDef):
-            continue
-        if any(_is_protocol_base(base) for base in node.bases):
-            protocol_classes.add(node.name)
+    protocol_classes: set[str] = {
+        node.name
+        for node in ast.walk(tree)
+        if isinstance(node, ast.ClassDef) and any(_is_protocol_base(base) for base in node.bases)
+    }
+
+    while True:
+        additions: set[str] = {
+            node.name
+            for node in ast.walk(tree)
+            if isinstance(node, ast.ClassDef)
+            and node.name not in protocol_classes
+            and any(
+                isinstance(base, ast.Name) and base.id in protocol_classes for base in node.bases
+            )
+        }
+        if not additions:
+            break
+        protocol_classes.update(additions)
+
     return protocol_classes
 
 
@@ -57,12 +71,16 @@ def _collect_protocol_classes(tree: ast.AST) -> set[str]:
 def _build_parent_map(tree: ast.AST) -> dict[ast.AST, ast.AST]:
     parents: dict[ast.AST, ast.AST] = {}
     for node in ast.walk(tree):
-        for child in ast.iter_child_nodes(node):
-            parents[child] = node
+        parents.update(dict.fromkeys(ast.iter_child_nodes(node), node))
     return parents
 
 
-@pre(lambda node, parent_map: isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)))
+@pre(
+    lambda node, parent_map: (
+        isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+        and all(isinstance(k, ast.AST) and isinstance(v, ast.AST) for k, v in parent_map.items())
+    )
+)
 @post(lambda result: result is None or isinstance(result, str))
 def _enclosing_class_name(
     node: ast.FunctionDef | ast.AsyncFunctionDef,
@@ -76,16 +94,30 @@ def _enclosing_class_name(
     return None
 
 
-@pre(lambda node: isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)))
+@pre(
+    lambda node: (
+        isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+        and hasattr(node, "decorator_list")
+    )
+)
 @post(lambda result: isinstance(result, bool))
 def _is_exempt_decorated_function(node: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
-    decorator_names = {
-        name for decorator in node.decorator_list if (name := _decorator_name(decorator))
-    }
+    decorator_names: set[str] = set()
+    for decorator in node.decorator_list:
+        name = _decorator_name(decorator)
+        if name is not None:
+            decorator_names.add(name)
     return "property" in decorator_names or "abstractmethod" in decorator_names
 
 
-@pre(lambda args: isinstance(args, ast.arguments))
+@pre(
+    lambda args: (
+        isinstance(args, ast.arguments)
+        and hasattr(args, "posonlyargs")
+        and hasattr(args, "args")
+        and hasattr(args, "kwonlyargs")
+    )
+)
 @post(
     lambda result: all(
         isinstance(name, str) and isinstance(arg_node, ast.arg) for name, arg_node in result
@@ -149,7 +181,9 @@ def _collect_names_from_node(node: ast.AST, used_names: set[str]) -> None:
         _collect_names_from_node(child, used_names)
 
 
-@pre(lambda node: isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)))
+@pre(
+    lambda node: isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and hasattr(node, "body")
+)
 @post(lambda result: all(isinstance(v, str) for v in result))
 def _collect_used_names(node: ast.FunctionDef | ast.AsyncFunctionDef) -> set[str]:
     used_names: set[str] = set()
@@ -210,7 +244,7 @@ def check_dead_params(file_infos: list[FileInfo], config: RuleConfig) -> list[Vi
         >>> check_dead_params([file6], RuleConfig())
         []
     """
-    del config
+    _ = config
 
     violations: list[Violation] = []
     for file_info in file_infos:
