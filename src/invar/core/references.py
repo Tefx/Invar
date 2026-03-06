@@ -30,6 +30,9 @@ def find_references_in_source(source: str, known_symbols: set[str]) -> list[tupl
         >>> refs = find_references_in_source("x = foo()\\nbar(x)", {"foo", "bar"})
         >>> sorted(refs)
         [('bar', 2), ('foo', 1)]
+        >>> refs = find_references_in_source("mod.foo()\\npkg.mod.bar()", {"foo", "bar"})
+        >>> sorted(refs)
+        [('bar', 2), ('foo', 1)]
         >>> find_references_in_source("x = unknown()", {"foo"})
         []
     """
@@ -41,9 +44,9 @@ def find_references_in_source(source: str, known_symbols: set[str]) -> list[tupl
     seen: set[tuple[str, int]] = set()
 
     for node in ast.walk(tree):
-        # Count function calls: foo()
-        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
-            name = node.func.id
+        # Count function calls: foo() and module.foo()
+        if isinstance(node, ast.Call) and isinstance(node.func, (ast.Name, ast.Attribute)):
+            name = node.func.id if isinstance(node.func, ast.Name) else node.func.attr
             if name in known_symbols:
                 line = getattr(node, "lineno", 0)
                 seen.add((name, line))
@@ -121,12 +124,15 @@ def count_cross_file_references(
     return dict(ref_counts)
 
 
-@pre(lambda file_infos, sources, project_root: (
-    isinstance(file_infos, list) and
-    all(isinstance(fi, FileInfo) for fi in file_infos) and
-    isinstance(sources, dict) and
-    isinstance(project_root, str) and len(project_root) > 0
-))
+@pre(
+    lambda file_infos, sources, project_root: (
+        isinstance(file_infos, list)
+        and all(isinstance(fi, FileInfo) for fi in file_infos)
+        and isinstance(sources, dict)
+        and isinstance(project_root, str)
+        and len(project_root) > 0
+    )
+)
 def build_perception_map(
     file_infos: list[FileInfo], sources: dict[str, str], project_root: str
 ) -> PerceptionMap:
