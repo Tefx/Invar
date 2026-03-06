@@ -7,8 +7,12 @@ from __future__ import annotations
 
 import os
 import sys
-from pathlib import Path
+from types import SimpleNamespace
+from typing import TYPE_CHECKING
 from unittest.mock import patch
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 from returns.result import Success
 
@@ -17,6 +21,7 @@ from invar.shell.property_tests import run_property_tests_on_file
 from invar.shell.subprocess_env import (
     build_subprocess_env,
     check_version_mismatch,
+    detect_local_invar_source,
     detect_project_python_with_invar,
     detect_project_venv,
     find_site_packages,
@@ -190,15 +195,22 @@ class TestPropertyTestsCanImportFromProjectVenv:
     def test_run_property_tests_on_file_injects_site_packages(self, tmp_path: Path) -> None:
         venv = tmp_path / ".venv"
         venv.mkdir()
-        (venv / "pyvenv.cfg").write_text("version = 3.11.5\n")
+        py_version = f"{sys.version_info.major}.{sys.version_info.minor}.0"
+        (venv / "pyvenv.cfg").write_text(f"version = {py_version}\n")
 
-        site_packages = venv / "lib" / "python3.11" / "site-packages"
+        site_packages = (
+            venv
+            / "lib"
+            / f"python{sys.version_info.major}.{sys.version_info.minor}"
+            / "site-packages"
+        )
         dep_pkg = site_packages / "dummydep"
         dep_pkg.mkdir(parents=True)
         (dep_pkg / "__init__.py").write_text("VALUE = 123\n")
 
         mod = tmp_path / "src" / "core" / "m.py"
         mod.parent.mkdir(parents=True)
+        (mod.parent / "__init__.py").write_text("")
         mod.write_text(
             """
 from deal import pre, post
@@ -282,14 +294,24 @@ class TestUvxRespawnCommand:
         python_path.parent.mkdir(parents=True)
         python_path.write_text("")
 
-        with patch.dict(os.environ, {}, clear=True):
-            with patch("shutil.which", return_value="uvx"):
-                cmd = get_uvx_respawn_command(
-                    project_root=tmp_path,
-                    argv=["guard", str(tmp_path), "--all"],
-                    tool_name="invar-tools",
-                    invar_tools_version="1.2.3",
-                )
+        with (
+            patch.dict(os.environ, {}, clear=True),
+            patch("shutil.which", return_value="uvx"),
+            patch(
+                "invar.shell.subprocess_env.sys.version_info",
+                SimpleNamespace(major=3, minor=11),
+            ),
+            patch(
+                "invar.shell.subprocess_env.detect_local_invar_source",
+                return_value=None,
+            ),
+        ):
+            cmd = get_uvx_respawn_command(
+                project_root=tmp_path,
+                argv=["guard", str(tmp_path), "--all"],
+                tool_name="invar-tools",
+                invar_tools_version="1.2.3",
+            )
 
         assert cmd == [
             "uvx",
@@ -312,15 +334,82 @@ class TestUvxRespawnCommand:
         python_path.parent.mkdir(parents=True)
         python_path.write_text("")
 
-        with patch.dict(os.environ, {"INVAR_UVX_RESPAWNED": "1"}, clear=True):
-            with patch("shutil.which", return_value="uvx"):
-                cmd = get_uvx_respawn_command(
-                    project_root=tmp_path,
-                    argv=["guard", str(tmp_path)],
-                    tool_name="invar-tools",
-                    invar_tools_version="1.2.3",
-                )
+        with (
+            patch.dict(os.environ, {"INVAR_UVX_RESPAWNED": "1"}, clear=True),
+            patch("shutil.which", return_value="uvx"),
+        ):
+            cmd = get_uvx_respawn_command(
+                project_root=tmp_path,
+                argv=["guard", str(tmp_path)],
+                tool_name="invar-tools",
+                invar_tools_version="1.2.3",
+            )
         assert cmd is None
+
+    def test_prefers_local_source_checkout(self, tmp_path: Path) -> None:
+        (tmp_path / "pyproject.toml").write_text("[project]\nname='x'\nversion='0.0.0'\n")
+        venv = tmp_path / ".venv"
+        venv.mkdir()
+        (venv / "pyvenv.cfg").write_text("version = 3.12.0\n")
+        python_path = venv / "bin" / "python"
+        python_path.parent.mkdir(parents=True)
+        python_path.write_text("")
+
+        local_src = tmp_path / "local-invar"
+        (local_src / "src" / "invar").mkdir(parents=True)
+        (local_src / "pyproject.toml").write_text(
+            '[project]\nname = "invar-tools"\nversion = "1.2.3"\n'
+        )
+
+        with (
+            patch.dict(os.environ, {}, clear=True),
+            patch("shutil.which", return_value="uvx"),
+            patch(
+                "invar.shell.subprocess_env.detect_local_invar_source",
+                return_value=local_src,
+            ),
+            patch(
+                "invar.shell.subprocess_env.sys.version_info",
+                SimpleNamespace(major=3, minor=11),
+            ),
+        ):
+            cmd = get_uvx_respawn_command(
+                project_root=tmp_path,
+                argv=["guard", str(tmp_path), "--all"],
+                tool_name="invar",
+                invar_tools_version="1.2.3",
+            )
+
+        assert cmd == [
+            "uvx",
+            "--python",
+            str(python_path),
+            "--from",
+            str(local_src),
+            "invar",
+            "guard",
+            str(tmp_path),
+            "--all",
+        ]
+
+
+class TestDetectLocalInvarSource:
+    def test_returns_none_when_not_checkout(self, tmp_path: Path) -> None:
+        fake_module = tmp_path / "site-packages" / "invar" / "shell" / "subprocess_env.py"
+        fake_module.parent.mkdir(parents=True)
+        fake_module.write_text("")
+
+        assert detect_local_invar_source(fake_module) is None
+
+    def test_detects_checkout_root(self, tmp_path: Path) -> None:
+        repo = tmp_path / "invar-repo"
+        module_path = repo / "src" / "invar" / "shell" / "subprocess_env.py"
+        module_path.parent.mkdir(parents=True)
+        module_path.write_text("")
+        (repo / "src" / "invar" / "__init__.py").write_text("")
+        (repo / "pyproject.toml").write_text('[project]\nname = "invar-tools"\nversion = "0.0.0"\n')
+
+        assert detect_local_invar_source(module_path) == repo
 
 
 # =============================================================================

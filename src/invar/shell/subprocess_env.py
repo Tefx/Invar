@@ -22,6 +22,7 @@ from deal import post, pre
 __all__ = [
     "build_subprocess_env",
     "check_version_mismatch",
+    "detect_local_invar_source",
     "detect_project_python_with_invar",
     "detect_project_venv",
     "find_site_packages",
@@ -39,6 +40,41 @@ __all__ = [
 
 
 VENV_NAMES: tuple[str, ...] = (".venv", "venv", ".env", "env")
+
+
+@post(lambda result: result is None or result.exists())
+def detect_local_invar_source(module_file: Path | None = None) -> Path | None:
+    """Detect local Invar source checkout root from module location.
+
+    Returns repository root when running from a source checkout (contains
+    ``src/invar`` and ``pyproject.toml`` with ``name = "invar-tools"``).
+    Returns None for wheel/site-packages installs.
+
+    Args:
+        module_file: Optional module path override for testing.
+
+    Examples:
+        >>> detect_local_invar_source(Path('/tmp/nope/site-packages/invar/x.py')) is None
+        True
+    """
+    candidate = (module_file or Path(__file__)).resolve()
+
+    for parent in candidate.parents:
+        pyproject = parent / "pyproject.toml"
+        src_pkg = parent / "src" / "invar"
+
+        if not pyproject.exists() or not src_pkg.exists():
+            continue
+
+        try:
+            content = pyproject.read_text(encoding="utf-8")
+        except OSError:
+            continue
+
+        if 'name = "invar-tools"' in content:
+            return parent
+
+    return None
 
 
 @pre(lambda cwd: isinstance(cwd, Path))
@@ -238,6 +274,19 @@ def get_uvx_respawn_command(
     project_python = _detect_venv_python(venv)
     if project_python is None:
         return None
+
+    local_source = detect_local_invar_source()
+
+    if local_source is not None:
+        return [
+            uvx_path,
+            "--python",
+            str(project_python),
+            "--from",
+            str(local_source),
+            tool_name,
+            *argv,
+        ]
 
     return [
         uvx_path,
