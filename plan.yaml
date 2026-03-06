@@ -1574,12 +1574,12 @@ phases:
     agent: gate-reviewer
 - id: wiring-integrity-2
   name: 'DX-89 Wave 2: mock_leak + dead_assign Rules'
-  status: pending
+  status: in_progress
   gate: wiring-integrity-1.gate-1
   steps:
   - id: wiring-integrity-2.mock-leak-core
     name: mock-leak-core
-    status: pending
+    status: done
     description: 'Implement mock_leak rule: detect test utilities (mock, patch, fixture,
       pytest markers) imported in non-test code. Flag production code that depends
       on test infrastructure.
@@ -1602,9 +1602,32 @@ phases:
     refs:
     - src/invar/core/mock_leak.py
     agent: python-senior
+    claimed_by: python-senior
+    claimed_at: '2026-03-06T19:32:02.238142+00:00'
+    evidence: 'Artifact:
+
+      - Commits from git history: `7c945db42dccbc43b38287fe9ae1dd2cecc0e831` (mock_leak
+      core), `67d0d32e5811f80f29bcde270f5fd2538298a7e2` (test coverage updates)
+
+
+      Verification:
+
+      - History audit confirms `src/invar/core/mock_leak.py` present and wired with
+      contracts
+
+      - `uv run pytest -v tests/core/test_mock_leak.py` -> 4 passed, 0 failed (prod
+      mock violation + test/conftest exemptions + faker detection)
+
+      - `uvx invar-tools guard src/invar/core/mock_leak.py --static --human` -> pass
+      (`Errors: 0`, `Warnings: 0`, contract coverage 100%)
+
+
+      Spec link:
+
+      - step `wiring-integrity-2.mock-leak-core` in DX-89 Wave 2'
   - id: wiring-integrity-2.dead-assign-design
     name: dead-assign-design
-    status: pending
+    status: done
     description: 'Design dead_assign rule: detect variables assigned but never read
       in the same scope. Define scope analysis strategy (function-local, module-level,
       class attributes), handle augmented assignments, unpacking, and control flow.
@@ -1624,9 +1647,17 @@ phases:
     refs:
     - src/invar/core/dead_assign.py
     agent: python-senior
+    claimed_by: python-senior
+    claimed_at: '2026-03-06T19:32:15.629372+00:00'
+    evidence: "Artifact:\n- Design commit from git history: `cceca329435a2aa5a630c501d6988398a4e4add0`\n\
+      \nVerification:\n- Audit confirms design note content in `src/invar/core/dead_assign.py`\
+      \ covers:\n  - function-local v1 scope strategy\n  - augmented assignment handling\n\
+      \  - unpacking handling\n  - control-flow branch handling\n  - exemption list\n\
+      - `python3 -m py_compile src/invar/core/dead_assign.py` -> pass\n\nSpec link:\n\
+      - step `wiring-integrity-2.dead-assign-design` in DX-89 Wave 2"
   - id: wiring-integrity-2.dead-assign-core
     name: dead-assign-core
-    status: pending
+    status: done
     description: 'Implement dead_assign rule based on the finalized design. Build
       AST analysis that tracks variable assignments and reads within function scope.
       Handle: simple assignment, augmented assignment (+=), unpacking, for-loop variables,
@@ -1646,6 +1677,28 @@ phases:
     depends_on:
     - wiring-integrity-2.dead-assign-design
     agent: python-senior
+    claimed_by: python-senior
+    claimed_at: '2026-03-06T19:32:26.195042+00:00'
+    evidence: 'Artifact:
+
+      - Implementation commits from git history: `67d0d32e5811f80f29bcde270f5fd2538298a7e2`,
+      `20b1b64c00d1d59630d2c4d20b6cbd2e8a474d78`
+
+
+      Verification:
+
+      - `uv run pytest tests/core/test_dead_assign.py -v` -> pass (10 passed)
+
+      - Import/export check: `uv run python -c "from invar.core.dead_assign import
+      check_dead_assigns; print(check_dead_assigns.__name__)"` -> `check_dead_assigns`
+
+      - Integration audit showed dead_assign active with reduced false-positive count
+      after tuning (150 -> 22)
+
+
+      Spec link:
+
+      - step `wiring-integrity-2.dead-assign-core` in DX-89 Wave 2'
   - id: wiring-integrity-2.register-and-integrate
     name: register-and-integrate
     status: pending
