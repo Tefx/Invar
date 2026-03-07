@@ -18,7 +18,11 @@ if TYPE_CHECKING:
 from returns.result import Success
 
 from invar.shell.guard_helpers import collect_files_to_check
-from invar.shell.property_tests import _import_module_from_path, run_property_tests_on_file
+from invar.shell.property_tests import (
+    _import_module_from_path,
+    _inject_project_site_packages,
+    run_property_tests_on_file,
+)
 from invar.shell.subprocess_env import (
     build_subprocess_env,
     check_version_mismatch,
@@ -287,6 +291,49 @@ def f(x: int) -> int:
             sys.modules.pop("demo", None)
             if inserted in sys.path:
                 sys.path.remove(inserted)
+
+    def test_inject_project_site_packages_keeps_src_before_site_packages(
+        self, tmp_path: Path
+    ) -> None:
+        package_name = "overlaydemo"
+        py_version = f"{sys.version_info.major}.{sys.version_info.minor}.0"
+        venv = tmp_path / ".venv"
+        venv.mkdir()
+        (venv / "pyvenv.cfg").write_text(f"version = {py_version}\n")
+
+        site_packages = (
+            venv
+            / "lib"
+            / f"python{sys.version_info.major}.{sys.version_info.minor}"
+            / "site-packages"
+        )
+        installed_core = site_packages / package_name / "core"
+        installed_core.mkdir(parents=True)
+        (site_packages / package_name / "__init__.py").write_text("")
+        (installed_core / "__init__.py").write_text("")
+
+        local_module = tmp_path / "src" / package_name / "core" / "dead_param.py"
+        local_module.parent.mkdir(parents=True)
+        (local_module.parent.parent / "__init__.py").write_text("")
+        (local_module.parent / "__init__.py").write_text("")
+        (local_module.parent / "dead_param_helpers.py").write_text("VALUE = 7\n")
+        local_module.write_text(
+            f"from {package_name}.core.dead_param_helpers import VALUE\nANSWER = VALUE\n"
+        )
+
+        for name in (
+            f"{package_name}.core.dead_param",
+            f"{package_name}.core.dead_param_helpers",
+            f"{package_name}.core",
+            package_name,
+        ):
+            sys.modules.pop(name, None)
+
+        with _inject_project_site_packages(tmp_path):
+            module = _import_module_from_path(local_module, project_root=tmp_path)
+
+        assert module is not None
+        assert getattr(module, "ANSWER", None) == 7
 
 
 # =============================================================================

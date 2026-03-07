@@ -139,8 +139,9 @@ def _inject_project_site_packages(project_root: Path):
             added.append(src_dir_str)
 
     site_packages_str = str(site_packages)
-    sys.path.insert(0, site_packages_str)
-    added.append(site_packages_str)
+    if site_packages_str not in sys.path:
+        sys.path.append(site_packages_str)
+        added.append(site_packages_str)
 
     try:
         yield
