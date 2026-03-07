@@ -52,6 +52,27 @@ def _is_protocol_base(base: ast.expr) -> bool:
     return False
 
 
+@pre(
+    lambda tree, protocol_classes: (
+        isinstance(tree, ast.AST) and all(isinstance(name, str) for name in protocol_classes)
+    )
+)
+@post(lambda result: all(isinstance(name, str) for name in result))
+def _collect_protocol_method_names(tree: ast.AST, protocol_classes: set[str]) -> set[str]:
+    """Collect all method names from Protocol classes in the same file.
+
+    This is used to exempt implementation methods that match Protocol method names,
+    even if the implementing class doesn't explicitly inherit from the Protocol.
+    """
+    method_names: set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef) and node.name in protocol_classes:
+            for item in node.body:
+                if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    method_names.add(item.name)
+    return method_names
+
+
 @pre(lambda tree: isinstance(tree, ast.AST))
 @post(lambda result: all(isinstance(name, str) for name in result))
 def _collect_protocol_classes(tree: ast.AST) -> set[str]:
@@ -439,6 +460,7 @@ def check_dead_params(file_infos: list[FileInfo], config: RuleConfig) -> list[Vi
             continue
 
         protocol_classes = _collect_protocol_classes(tree)
+        protocol_method_names = _collect_protocol_method_names(tree, protocol_classes)
         parent_map = _build_parent_map(tree)
         callback_names = _collect_registered_callback_names(tree)
 
@@ -451,6 +473,12 @@ def check_dead_params(file_infos: list[FileInfo], config: RuleConfig) -> list[Vi
 
             if (class_name := _enclosing_class_name(node, parent_map)) in protocol_classes:
                 continue
+
+            # Exempt non-Protocol class methods when method name matches Protocol method name in same file
+            # (structural subtyping: match by method name only, not inheritance)
+            if class_name is not None and class_name not in protocol_classes:
+                if node.name in protocol_method_names:
+                    continue
 
             symbol = _symbol_for_node(node, class_name)
             if has_allow_marker(symbol, file_info.source, "dead_param"):

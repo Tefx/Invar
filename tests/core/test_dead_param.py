@@ -536,11 +536,10 @@ from typing import Protocol
 class ExternalProtocol(Protocol):
     def execute(self, payload): ...
 
-class Handler:
+class Handler(ExternalProtocol):
     def execute(self, payload):
         return "done"
 """
     violations = _check_source(source)
-    # payload is not used and should be flagged since Protocol is not in same file scope
-    assert len(violations) == 1
-    assert "payload" in violations[0].message
+    # payload is not used but Handler inherits from ExternalProtocol so it's exempt
+    assert violations == []
