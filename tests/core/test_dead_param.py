@@ -543,3 +543,16 @@ class Handler(ExternalProtocol):
     violations = _check_source(source)
     # payload is not used but Handler inherits from ExternalProtocol so it's exempt
     assert violations == []
+
+
+def test_dead_param_suggestion_contains_invar_allow_hint() -> None:
+    """The suggestion message should include @invar:allow hint for suppression."""
+    source = """
+def add(x, y):
+    return y
+"""
+    violations = _check_source(source)
+    assert len(violations) == 1
+    # Verify the suggestion message contains the @invar:allow hint
+    assert "@invar:allow" in violations[0].suggestion
+    assert "dead_param" in violations[0].suggestion
