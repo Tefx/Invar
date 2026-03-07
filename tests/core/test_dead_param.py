@@ -522,3 +522,25 @@ class MyClass(Base, Serializable):
 """
     violations = _check_source(source)
     assert violations == []
+
+
+def test_method_name_match_is_scoped_to_same_file_only() -> None:
+    """Method name matching should only work within the same file.
+
+    If a class in file A has a method with the same name as a Protocol method
+    in file B, it should NOT be exempt - the scope is file-local only.
+    """
+    source = """
+from typing import Protocol
+
+class ExternalProtocol(Protocol):
+    def execute(self, payload): ...
+
+class Handler:
+    def execute(self, payload):
+        return "done"
+"""
+    violations = _check_source(source)
+    # payload is not used and should be flagged since Protocol is not in same file scope
+    assert len(violations) == 1
+    assert "payload" in violations[0].message

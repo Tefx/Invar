@@ -188,6 +188,34 @@ def f(chunks) -> str:
     assert violations == []
 
 
+def test_for_loop_next_iteration_read_clears_pending_write() -> None:
+    source = """
+def f(items):
+    prev = None
+    for item in items:
+        if prev is not None:
+            consume(prev)
+        prev = item
+"""
+    violations = _check_source(source)
+    assert violations == []
+
+
+def test_for_loop_true_dead_write_still_reported() -> None:
+    source = """
+def f(items):
+    prev = None
+    for item in items:
+        if prev is not None:
+            consume(prev)
+        prev = item
+        scratch = item
+"""
+    violations = _check_source(source)
+    assert len(violations) == 1
+    assert "scratch" in violations[0].message
+
+
 def test_true_dead_assign_in_loop() -> None:
     source = """
 def f(items):
