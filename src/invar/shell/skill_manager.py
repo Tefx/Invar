@@ -118,7 +118,7 @@ def load_registry() -> Result[dict, str]:
 
 
 # @shell_complexity: Iterates registry entries and checks installed status
-def list_skills(project_path: Path, console: Console) -> Result[list[SkillInfo], str]:
+def list_skills(project_path: Path, _console: Console) -> Result[list[SkillInfo], str]:
     """
     List all available extension skills.
 

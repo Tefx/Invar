@@ -200,8 +200,10 @@ def format_signatures_json(symbols: list[Symbol], file_path: str) -> dict:
 
 
 @pre(
-    lambda report, combined_status=None: isinstance(report, GuardReport)
-    and (combined_status is None or combined_status in ("passed", "failed"))
+    lambda report, combined_status=None: (
+        isinstance(report, GuardReport)
+        and (combined_status is None or combined_status in ("passed", "failed"))
+    )
 )
 def format_guard_agent(report: GuardReport, combined_status: str | None = None) -> dict:
     """
@@ -304,8 +306,10 @@ def _violation_to_fix(v: Violation) -> dict:
     return result
 
 
-@pre(lambda suggestion, rule: (suggestion is None or isinstance(suggestion, str)) and len(rule) > 0)
-def _parse_suggestion(suggestion: str | None, rule: str) -> dict | None:
+@pre(
+    lambda suggestion, _rule: (suggestion is None or isinstance(suggestion, str)) and len(_rule) > 0
+)
+def _parse_suggestion(suggestion: str | None, _rule: str) -> dict | None:
     """Parse suggestion string into structured fix instruction."""
     if not suggestion:
         return None

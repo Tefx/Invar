@@ -154,7 +154,7 @@ def _inject_project_site_packages(project_root: Path):
 def run_property_tests_on_file(
     file_path: Path,
     max_examples: int = 100,
-    verbose: bool = False,
+    _verbose: bool = False,
     project_root: Path | None = None,
 ) -> Result[PropertyTestReport, str]:
     """

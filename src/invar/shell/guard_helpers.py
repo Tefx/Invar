@@ -259,6 +259,8 @@ def output_verification_status(
     if verification_level == VerificationLevel.STATIC:
         return
 
+    _ = strict
+
     # DX-26: Extract passed status from phase outputs
     crosshair_passed = True
     if crosshair_output:

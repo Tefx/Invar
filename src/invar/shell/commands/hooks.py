@@ -29,13 +29,14 @@ def _handle_result(result: Result[object, str]) -> None:
     if isinstance(result, Failure):
         console.print(f"[red]Error:[/red] {result.failure()}")
 
+
 app = typer.Typer(help="Manage Claude Code hooks")
 
 
 # @invar:allow entry_point_too_thick: Typer command with options and docstring
 @app.callback(invoke_without_command=True)
 def hooks(
-    ctx: typer.Context,
+    _ctx: typer.Context,
     path: Path = typer.Argument(Path(), help="Project root directory"),
     remove: bool = typer.Option(False, "--remove", help="Remove Invar hooks"),
     disable: bool = typer.Option(False, "--disable", help="Temporarily disable hooks"),

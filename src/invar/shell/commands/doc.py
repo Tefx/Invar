@@ -82,9 +82,11 @@ def _format_toc_text(toc_data: dict, depth: int | None = None) -> str:
         fm = toc_data["frontmatter"]
         lines.append(f"[frontmatter] ({fm['line_start']}-{fm['line_end']})")
 
+    sections: list[dict] = toc_data.get("sections", [])
+    if depth is not None:
+        sections = _filter_by_depth(sections, depth)
+
     def format_section(section: dict, current_depth: int = 1) -> None:
-        if depth is not None and section["level"] > depth:
-            return
         indent = "  " * (section["level"] - 1)
         prefix = "#" * section["level"]
         char_display = _format_size(section["char_count"])
@@ -95,7 +97,7 @@ def _format_toc_text(toc_data: dict, depth: int | None = None) -> str:
         for child in section.get("children", []):
             format_section(child, current_depth + 1)
 
-    for section in toc_data.get("sections", []):
+    for section in sections:
         format_section(section)
 
     return "\n".join(lines)
@@ -281,15 +283,17 @@ def find_command(
             if isinstance(result, Success):
                 sections = result.unwrap()
                 for s in sections:
-                    all_matches.append({
-                        "file": str(path),
-                        "path": s.path,
-                        "title": s.title,
-                        "level": s.level,
-                        "line_start": s.line_start,
-                        "line_end": s.line_end,
-                        "char_count": s.char_count,
-                    })
+                    all_matches.append(
+                        {
+                            "file": str(path),
+                            "path": s.path,
+                            "title": s.title,
+                            "level": s.level,
+                            "line_start": s.line_start,
+                            "line_end": s.line_end,
+                            "char_count": s.char_count,
+                        }
+                    )
             else:
                 typer.echo(f"Error: {result.failure()}", err=True)
                 has_error = True
@@ -352,7 +356,9 @@ def insert_command(
     ] = None,
     position: Annotated[
         str,
-        typer.Option("--position", "-p", help="Where to insert: before, after, first_child, last_child"),
+        typer.Option(
+            "--position", "-p", help="Where to insert: before, after, first_child, last_child"
+        ),
     ] = "after",
 ) -> None:
     """Insert new content relative to a section.
@@ -374,6 +380,7 @@ def insert_command(
         content = _read_file_limited(content_file)
 
     from typing import Literal
+
     pos: Literal["before", "after", "first_child", "last_child"] = position  # type: ignore[assignment]
     result = insert_section_content(file, anchor, content, pos)
 

@@ -132,6 +132,39 @@ def _iter_checked_params(args: ast.arguments) -> list[tuple[str, ast.arg]]:
     return params
 
 
+@pre(lambda annotation: annotation is None or isinstance(annotation, ast.expr))
+@post(lambda result: result is None or isinstance(result, str))
+def _annotation_name(annotation: ast.expr | None) -> str | None:
+    if annotation is None:
+        return None
+    if isinstance(annotation, ast.Name):
+        return annotation.id
+    if isinstance(annotation, ast.Attribute):
+        return annotation.attr
+    if isinstance(annotation, ast.Subscript):
+        return _annotation_name(annotation.value)
+    return None
+
+
+@pre(
+    lambda function_name, param_name, arg_node: (
+        len(function_name) > 0 and len(param_name) > 0 and isinstance(arg_node, ast.arg)
+    )
+)
+@post(lambda result: isinstance(result, bool))
+def _is_config_shape_param(function_name: str, param_name: str, arg_node: ast.arg) -> bool:
+    """Return True for checker-signature config parameters.
+
+    These are intentionally accepted for uniform checker interface shape.
+    """
+    if param_name != "config":
+        return False
+    if not function_name.startswith("check_"):
+        return False
+    annotation = _annotation_name(arg_node.annotation)
+    return annotation in {"RuleConfig", None}
+
+
 @pre(
     lambda node, used_names: (
         isinstance(node, ast.AST) and all(isinstance(v, str) for v in used_names)
@@ -187,6 +220,30 @@ def _collect_names_from_node(node: ast.AST, used_names: set[str]) -> None:
 @post(lambda result: all(isinstance(v, str) for v in result))
 def _collect_used_names(node: ast.FunctionDef | ast.AsyncFunctionDef) -> set[str]:
     used_names: set[str] = set()
+
+    for decorator in node.decorator_list:
+        _collect_names_from_node(decorator, used_names)
+
+    for default in node.args.defaults:
+        _collect_names_from_node(default, used_names)
+
+    for kw_default in node.args.kw_defaults:
+        if kw_default is not None:
+            _collect_names_from_node(kw_default, used_names)
+
+    for arg_node in [
+        *node.args.posonlyargs,
+        *node.args.args,
+        *node.args.kwonlyargs,
+        node.args.vararg,
+        node.args.kwarg,
+    ]:
+        if arg_node is not None and arg_node.annotation is not None:
+            _collect_names_from_node(arg_node.annotation, used_names)
+
+    if node.returns is not None:
+        _collect_names_from_node(node.returns, used_names)
+
     for stmt in node.body:
         _collect_names_from_node(stmt, used_names)
     return used_names
@@ -243,6 +300,16 @@ def check_dead_params(file_infos: list[FileInfo], config: RuleConfig) -> list[Vi
         >>> file6 = FileInfo(path="core/f.py", lines=5, source=source6)
         >>> check_dead_params([file6], RuleConfig())
         []
+
+        >>> source7 = "def check_rule(file_info, config: RuleConfig):" + nl + "    return file_info.path" + nl
+        >>> file7 = FileInfo(path="core/g.py", lines=2, source=source7)
+        >>> check_dead_params([file7], RuleConfig())
+        []
+
+        >>> source8 = "def parse(data, _unused):" + nl + "    return data" + nl
+        >>> file8 = FileInfo(path="core/h.py", lines=2, source=source8)
+        >>> check_dead_params([file8], RuleConfig())
+        []
     """
     _ = config
 
@@ -276,6 +343,12 @@ def check_dead_params(file_infos: list[FileInfo], config: RuleConfig) -> list[Vi
 
             used_names = _collect_used_names(node)
             for param_name, param_node in checked_params:
+                if param_name.startswith("_"):
+                    continue
+
+                if _is_config_shape_param(node.name, param_name, param_node):
+                    continue
+
                 if param_name in used_names:
                     continue
 
