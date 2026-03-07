@@ -63,6 +63,41 @@ Each rule has documented limitations in `src/invar/core/rule_meta.py`:
 5. **mock_leak**: Cannot detect dynamic imports, test utilities via dependency injection
 6. **dead_assign**: Cannot detect debugger/inspector usage, side-effectful assignments
 
+## Suppression Paths
+
+### dead_export Suppression
+
+If a shell function is flagged as dead_export but is actually used (e.g., Typer CLI entry point, dynamically registered callback), add an escape hatch marker:
+
+```python
+# @invar:allow dead_export: Typer CLI command registered at runtime
+def my_command():
+    ...
+```
+
+Common reasons for suppression:
+- Typer commands registered via `app.command()(fn)` pattern
+- Flask routes registered via blueprint
+- Dynamically registered event handlers
+- Functions called via reflection
+
+### dead_param Suppression
+
+If a parameter is required by framework signature but unused in implementation:
+
+```python
+def handler(request, _unused_param):  # Framework requires this param
+    # @invar:allow dead_param: Framework signature requirement
+    return process(request)
+```
+
+Or rename to `_param` to explicitly mark as unused:
+
+```python
+def handler(request, _context):  # Unused but required by interface
+    return process(request)
+```
+
 ## Future Improvements
 
 - Improve dead_param to recognize closure-capture patterns
