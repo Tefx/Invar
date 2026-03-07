@@ -129,6 +129,7 @@ def run_hypothesis_fallback(
         "pytest",
         "--hypothesis-show-statistics",
         "--hypothesis-seed=0",  # Reproducible
+        f"--hypothesis-max-examples={max_examples}",
         "-x",  # Stop on first failure
         "--tb=short",
     ]
@@ -207,9 +208,7 @@ def run_prove_with_fallback(
             "crosshair_files": len(routing.crosshair_files),
             "hypothesis_files": len(routing.hypothesis_files),
             "skip_files": len(routing.skip_files),
-            "incompatible_reasons": {
-                k: list(v) for k, v in routing.incompatible_reasons.items()
-            },
+            "incompatible_reasons": {k: list(v) for k, v in routing.incompatible_reasons.items()},
         },
         "crosshair": None,
         "hypothesis": None,
@@ -230,6 +229,7 @@ def run_prove_with_fallback(
             max_iterations=5,  # Fast mode
             max_workers=None,  # Auto-detect
             cache=cache,
+            timeout=crosshair_timeout,
         )
 
         if isinstance(crosshair_result, Success):
@@ -283,9 +283,7 @@ def run_prove_with_fallback(
 
     # DX-22: Add de-duplicated statistics
     result["stats"] = {
-        "crosshair_proven": len(
-            result.get("crosshair", {}).get("verified", [])
-        ),
+        "crosshair_proven": len(result.get("crosshair", {}).get("verified", [])),
         "hypothesis_tested": len(routing.hypothesis_files),
         "total_verified": len(files) - len(routing.skip_files),
     }

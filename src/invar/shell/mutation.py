@@ -221,15 +221,16 @@ def parse_mutmut_output(
                     result.killed = int(line.split("Killed:")[1].split(",")[0].strip())
             if "Survived:" in line:
                 with contextlib.suppress(ValueError, IndexError):
-                    result.survived = int(
-                        line.split("Survived:")[1].split(",")[0].strip()
-                    )
+                    result.survived = int(line.split("Survived:")[1].split(",")[0].strip())
 
         result.total = result.killed + result.survived + result.timeout
 
     # Check for errors
     if stderr and "error" in stderr.lower():
         result.errors.append(stderr.strip())
+
+    if returncode != 0 and not result.errors:
+        result.errors.append(f"mutmut exited with status {returncode}")
 
     return Success(result)
 
@@ -257,6 +258,7 @@ def get_surviving_mutants(target: Path) -> Result[list[str], str]:
             capture_output=True,
             text=True,
             timeout=30,
+            cwd=target.parent if target.is_file() else target,
         )
 
         survivors = []
@@ -270,7 +272,7 @@ def get_surviving_mutants(target: Path) -> Result[list[str], str]:
                 if line.startswith("  "):
                     survivors.append(line.strip())
                 elif not line.startswith(" "):
-                    in_survivors = False
+                    break
 
         return Success(survivors)
 
