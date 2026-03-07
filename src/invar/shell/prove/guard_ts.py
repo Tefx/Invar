@@ -341,7 +341,7 @@ def _generate_fix_suggestions(violations: list[TypeScriptViolation]) -> list[dic
             },
         }
         fixes.append(fix)
-        fix_counter += 1
+        fix_counter += 1  # @invar:allow dead_assign: next fix ID is read on next iteration
 
     return fixes
 
@@ -437,7 +437,7 @@ def _get_invar_package_cmd(package_name: str, project_path: Path) -> list[str]:
         parent = check_path.parent
         if parent == check_path:
             break
-        check_path = parent
+        check_path = parent  # @invar:allow dead_assign: parent path read next loop iteration
 
     # Priority 3: npx fallback (requires package published to npm)
     return ["npx", f"@invar/{package_name}"]

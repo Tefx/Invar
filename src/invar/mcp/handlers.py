@@ -474,7 +474,7 @@ def _fix_json_newlines(text: str) -> str:
         if text[i] == '"':
             # Inside a string - collect until closing quote
             result.append('"')
-            i += 1
+            i += 1  # @invar:allow dead_assign: loop index consumed by next while iteration
             while i < len(text):
                 c = text[i]
                 if c == "\\" and i + 1 < len(text):
@@ -496,5 +496,5 @@ def _fix_json_newlines(text: str) -> str:
                     i += 1
         else:
             result.append(text[i])
-            i += 1
+            i += 1  # @invar:allow dead_assign: loop index consumed by next while iteration
     return "".join(result)

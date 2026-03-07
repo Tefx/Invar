@@ -320,10 +320,12 @@ def infer_strategies_for_function(func: Callable) -> dict[str, StrategySpec]:
 
 
 @pre(
-    lambda func, type_specs, user_strategies, pre_sources: callable(func)
-    and isinstance(type_specs, dict)
-    and isinstance(user_strategies, dict)
-    and isinstance(pre_sources, list)
+    lambda func, type_specs, user_strategies, pre_sources: (
+        callable(func)
+        and isinstance(type_specs, dict)
+        and isinstance(user_strategies, dict)
+        and isinstance(pre_sources, list)
+    )
 )
 @post(lambda result: isinstance(result, dict))
 def _refine_all_strategies(
@@ -455,7 +457,7 @@ def _extract_pre_lambdas_from_source(source: str) -> list[str]:
             if content.startswith("lambda"):
                 results.append(content)
 
-        i = j
+        i = j  # @invar:allow dead_assign: loop index consumed by next while condition
 
     return results
 

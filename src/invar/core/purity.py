@@ -53,7 +53,9 @@ IMPURE_PATTERNS: set[tuple[str, str]] = {
 }
 
 
-@pre(lambda node: isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef) and hasattr(node, "body"))
+@pre(
+    lambda node: isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef) and hasattr(node, "body")
+)
 def extract_internal_imports(node: ast.FunctionDef | ast.AsyncFunctionDef) -> list[str]:
     """
     Extract imports inside a function body.
@@ -83,7 +85,9 @@ def extract_internal_imports(node: ast.FunctionDef | ast.AsyncFunctionDef) -> li
     return list(set(imports))
 
 
-@pre(lambda node: isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef) and hasattr(node, "body"))
+@pre(
+    lambda node: isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef) and hasattr(node, "body")
+)
 def extract_impure_calls(node: ast.FunctionDef | ast.AsyncFunctionDef) -> list[str]:
     """
     Extract calls to known impure functions.
@@ -112,7 +116,9 @@ def extract_impure_calls(node: ast.FunctionDef | ast.AsyncFunctionDef) -> list[s
     return list(set(impure))
 
 
-@pre(lambda node: isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef) and hasattr(node, "body"))
+@pre(
+    lambda node: isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef) and hasattr(node, "body")
+)
 def extract_function_calls(node: ast.FunctionDef | ast.AsyncFunctionDef) -> list[str]:
     """
     Extract all function calls from a function body (P25: for extraction analysis).
@@ -193,9 +199,11 @@ def _is_impure_call(call_name: str) -> bool:
 
 
 @pre(
-    lambda node: isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef)
-    and hasattr(node, "lineno")
-    and hasattr(node, "body")
+    lambda node: (
+        isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef)
+        and hasattr(node, "lineno")
+        and hasattr(node, "body")
+    )
 )
 def count_code_lines(node: ast.FunctionDef | ast.AsyncFunctionDef) -> int:
     """
@@ -234,7 +242,9 @@ def count_code_lines(node: ast.FunctionDef | ast.AsyncFunctionDef) -> int:
     return total_lines - docstring_lines
 
 
-@pre(lambda node: isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef) and hasattr(node, "body"))
+@pre(
+    lambda node: isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef) and hasattr(node, "body")
+)
 def count_doctest_lines(node: ast.FunctionDef | ast.AsyncFunctionDef) -> int:
     """
     Count lines that are doctest examples in the docstring.
@@ -277,7 +287,7 @@ def count_doctest_lines(node: ast.FunctionDef | ast.AsyncFunctionDef) -> int:
             count += 1  # Expected output line
             # Note: Empty line ends doctest, handled by else branch below
         else:
-            in_doctest = False
+            in_doctest = False  # @invar:allow dead_assign: loop-carried state read next iteration
     return count
 
 

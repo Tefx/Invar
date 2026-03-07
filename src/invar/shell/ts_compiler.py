@@ -64,7 +64,9 @@ def _find_tsconfig_root(file_path: Path) -> Path:
     while current != current.parent:
         if (current / "tsconfig.json").exists():
             return current
-        current = current.parent
+        current = (  # @invar:allow dead_assign: loop cursor read by next while condition
+            current.parent
+        )
 
     # Fallback to file's directory
     return file_path.parent if file_path.is_file() else file_path
@@ -180,9 +182,7 @@ def run_map_typescript(path: Path, top_n: int) -> Result[dict[str, Any], str]:
     return query_typescript(path, "map", path=str(path), top=top_n)
 
 
-def run_refs_typescript(
-    file_path: Path, line: int, column: int
-) -> Result[list[TSReference], str]:
+def run_refs_typescript(file_path: Path, line: int, column: int) -> Result[list[TSReference], str]:
     """Find all references to symbol at position.
 
     Args:

@@ -279,8 +279,8 @@ def parse_toc(source: str) -> DocumentToc:
             if i + 1 < len(tokens) and tokens[i + 1].type == "inline":
                 title = tokens[i + 1].content or ""
                 headings.append((title, level, start_line, end_line))
-            i += 1
-        i += 1
+            i += 1  # @invar:allow dead_assign: loop index read by next while iteration
+        i += 1  # @invar:allow dead_assign: loop index read by next while iteration
 
     # Build section tree
     if not headings:
@@ -375,7 +375,7 @@ def _find_by_index(sections: list[Section], path: str) -> Section | None:
         section = current_list[idx]
         if i == len(parts) - 1:  # Last part
             return section
-        current_list = section.children
+        current_list = section.children  # @invar:allow dead_assign: traversed in next for-iteration
 
     return None
 
