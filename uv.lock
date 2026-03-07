@@ -504,6 +504,7 @@ name = "invar-tools"
 version = "1.19.0"
 source = { editable = "." }
 dependencies = [
+    { name = "coverage", extra = ["toml"] },
     { name = "crosshair-tool" },
     { name = "hypothesis" },
     { name = "invar-runtime" },
@@ -522,7 +523,6 @@ dependencies = [
 
 [package.optional-dependencies]
 dev = [
-    { name = "coverage", extra = ["toml"] },
     { name = "mypy" },
     { name = "pytest-cov" },
     { name = "ruff" },
@@ -530,7 +530,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "coverage", extras = ["toml"], marker = "extra == 'dev'", specifier = ">=7.0" },
+    { name = "coverage", extras = ["toml"], specifier = ">=7.0" },
     { name = "crosshair-tool", specifier = ">=0.0.60" },
     { name = "hypothesis", specifier = ">=6.0" },
     { name = "invar-runtime", specifier = ">=1.3.0" },

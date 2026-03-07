@@ -432,14 +432,14 @@ async def _execute_command(
         # Try to parse as JSON
         try:
             parsed = json.loads(stdout)
-            return ([TextContent(type="text", text=json.dumps(parsed, indent=2))], parsed)
+            return [TextContent(type="text", text=json.dumps(parsed, indent=2))]
         except json.JSONDecodeError:
             # Try to fix unescaped newlines in JSON strings
             # Guard/map commands may output multiline JSON with literal newlines
             fixed = _fix_json_newlines(stdout)
             try:
                 parsed = json.loads(fixed)
-                return ([TextContent(type="text", text=json.dumps(parsed, indent=2))], parsed)
+                return [TextContent(type="text", text=json.dumps(parsed, indent=2))]
             except json.JSONDecodeError:
                 pass
 
