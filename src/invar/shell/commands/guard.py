@@ -62,7 +62,10 @@ def _count_core_functions(file_info) -> tuple[int, int]:
 
 # @shell_complexity: Core orchestration - iterates files, handles failures, aggregates results
 def _scan_and_check(
-    path: Path, config: RuleConfig, only_files: set[Path] | None = None
+    path: Path,
+    config: RuleConfig,
+    only_files: set[Path] | None = None,
+    include_verbose_wiring: bool = False,
 ) -> Result[GuardReport, str]:
     """Scan project files and check against rules."""
     from invar.core.dead_export import check_dead_exports
@@ -114,6 +117,26 @@ def _scan_and_check(
     for dead_violation in check_dead_exports(all_file_infos, ref_counts, config):
         report.add_violation(dead_violation)
 
+    # DEAD-PARAM: Check for unused function parameters
+    from invar.core.dead_param import check_dead_params
+
+    for dead_param_violation in check_dead_params(all_file_infos, config):
+        report.add_violation(dead_param_violation)
+
+    # STUB-BODY: Check for placeholder function bodies
+    from invar.core.stub_body import check_stub_bodies
+
+    for stub_body_violation in check_stub_bodies(all_file_infos, config):
+        report.add_violation(stub_body_violation)
+
+    # WIRING-GAP: Check for local assignments that should be passed to optional params
+    from invar.core.wiring_gap import check_wiring_gaps
+
+    for wiring_gap_violation in check_wiring_gaps(
+        all_file_infos, config, verbose=include_verbose_wiring
+    ):
+        report.add_violation(wiring_gap_violation)
+
     # MOCK-LEAK: Check for test utilities in production code
     from invar.core.mock_leak import check_mock_leaks
 
@@ -140,7 +163,7 @@ def _scan_and_check(
 
 
 def _determine_output_mode(human: bool, agent: bool = False, json_output: bool = False) -> bool:
-    return not human
+    return agent or json_output or (not human)
 
 
 # @invar:allow entry_point_too_thick: Main CLI entry point, orchestrates all verification phases
@@ -162,6 +185,7 @@ def guard(
     static: bool = typer.Option(
         False, "--static", help="Static analysis only, skip all runtime tests"
     ),
+    verbose: bool = typer.Option(False, "--verbose", help="Include wiring-gap match context"),
     human: bool = typer.Option(
         False, "--human", help="Force Rich human-readable output (opt-in, default is JSON)"
     ),
@@ -339,7 +363,13 @@ def guard(
                     write_json(
                         {
                             "status": "passed",
-                            "static": {"passed": True, "errors": 0, "warnings": 0, "infos": 0, "findings": []},
+                            "static": {
+                                "passed": True,
+                                "errors": 0,
+                                "warnings": 0,
+                                "infos": 0,
+                                "findings": [],
+                            },
                             "summary": {
                                 "files_checked": 0,
                                 "errors": 0,
@@ -364,7 +394,7 @@ def guard(
         only_files, checked_files = changed_result.unwrap()
 
     # Run static analysis
-    scan_result = _scan_and_check(path, config, only_files)
+    scan_result = _scan_and_check(path, config, only_files, include_verbose_wiring=verbose)
     if isinstance(scan_result, Failure):
         console.print(f"[red]Error:[/red] {scan_result.failure()}")
         raise typer.Exit(1)
@@ -391,7 +421,7 @@ def guard(
                 report.add_violation(violation)
 
     # DX-26: Simplified output mode (TTY auto-detect + --human override)
-    use_agent_output = not human
+    use_agent_output = _determine_output_mode(human, agent=agent, json_output=json_output)
     # DX-19: Simplified to 2 levels (STATIC or STANDARD)
     verification_level = VerificationLevel.STATIC if static else VerificationLevel.STANDARD
     level_name = "STATIC" if static else "STANDARD"
@@ -548,6 +578,7 @@ def map_command(
     """Generate symbol map with reference counts."""
     from invar.shell.commands.perception import run_map
 
+    _ = json_output
     use_json = True
     result = run_map(path, top, use_json)
     if isinstance(result, Failure):
@@ -563,6 +594,7 @@ def sig_command(
     """Extract signatures from a file or symbol."""
     from invar.shell.commands.perception import run_sig
 
+    _ = json_output
     use_json = True
     result = run_sig(target, use_json)
     if isinstance(result, Failure):
@@ -586,6 +618,7 @@ def refs_command(
     """
     from invar.shell.commands.perception import run_refs
 
+    _ = json_output
     use_json = True
     result = run_refs(target, use_json)
     if isinstance(result, Failure):
@@ -610,6 +643,7 @@ def rules(
 
     from invar.core.rule_meta import RULE_META, RuleCategory, get_rules_by_category
 
+    _ = json_output
     use_json = True
 
     # Filter by category if specified
