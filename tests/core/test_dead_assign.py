@@ -124,3 +124,78 @@ def f(items):
 """
     violations = _check_source(source)
     assert violations == []
+
+
+def test_while_counter_not_false_positive() -> None:
+    source = """
+def f(n: int) -> int:
+    count = 0
+    while n > 0:
+        count += 1
+        n -= 1
+    return count
+"""
+    violations = _check_source(source)
+    assert violations == []
+
+
+def test_boolean_flag_loop_carried() -> None:
+    source = """
+def f(items) -> bool:
+    found = False
+    for item in items:
+        if item == target:
+            found = True
+    return found
+"""
+    violations = _check_source(source)
+    assert violations == []
+
+
+def test_accumulator_loop_carried() -> None:
+    source = """
+def f(numbers) -> int:
+    total = 0
+    for num in numbers:
+        total += num
+    return total
+"""
+    violations = _check_source(source)
+    assert violations == []
+
+
+def test_prev_value_tracking() -> None:
+    source = """
+def f(items):
+    prev = None
+    for item in items:
+        yield prev
+        prev = item
+"""
+    violations = _check_source(source)
+    assert violations == []
+
+
+def test_buffer_reset_loop_carried() -> None:
+    source = """
+def f(chunks) -> str:
+    buffer = ""
+    for chunk in chunks:
+        buffer = buffer + chunk
+    return buffer
+"""
+    violations = _check_source(source)
+    assert violations == []
+
+
+def test_true_dead_assign_in_loop() -> None:
+    source = """
+def f(items):
+    unused = 0
+    for item in items:
+        x = item
+    return items
+"""
+    violations = _check_source(source)
+    assert len(violations) == 2
+    assert "unused" in violations[0].message
