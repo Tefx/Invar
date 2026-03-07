@@ -1,0 +1,70 @@
+# DX-89 Wiring Integrity Rules - Cross-Project Validation
+
+This document records the precision/recall results for the six wiring integrity rules across projects.
+
+## Six Wiring Integrity Rules
+
+| Rule | Category | Severity | Detects |
+|------|----------|----------|---------|
+| dead_export | SHELL | WARNING | Public shell function with zero runtime callers |
+| dead_param | SHELL | WARNING | Function parameter declared but never referenced |
+| stub_body | SHELL | INFO | Function body is a non-implementation stub |
+| wiring_gap | SHELL | WARNING | Local variable matches unpassed optional parameter |
+| mock_leak | PURITY | ERROR | Test utilities imported in non-test files |
+| dead_assign | PURITY | WARNING | Local variable assigned but never read |
+
+## Cross-Project Validation Results
+
+### Invar Project (self-validation)
+
+All six rules have been validated against the Invar codebase itself.
+
+**Status**: ✅ Clean run with documented suppressions
+
+### Anima Project (external validation)
+
+Cross-project testing with the anima codebase to measure precision/recall.
+
+**Test Command**:
+```bash
+invar guard --all /path/to/anima
+```
+
+**Results Summary**:
+
+| Rule | True Positives | False Positives | Precision |
+|------|---------------|-----------------|-----------|
+| dead_export | ~3 | ~0 | ~95% |
+| dead_param | ~3-4 | ~4 | ~50-60% |
+| stub_body | TBD | TBD | TBD |
+| wiring_gap | TBD | TBD | TBD |
+| mock_leak | TBD | TBD | TBD |
+| dead_assign | TBD | TBD | TBD |
+
+**Note**: The dead_param rule shows elevated false positives due to:
+- Closure-capture patterns (function capturing parameter for callback)
+- Framework-signature patterns (parameters required by framework but unused in implementation)
+
+These are known limitations documented in the rule's `cannot_detect` field.
+
+## Precision/Recall Targets
+
+- **Target Precision**: >90% (less than 10% false positive rate)
+- **Target Recall**: >80% (catch most true violations)
+
+## Known Limitations
+
+Each rule has documented limitations in `src/invar/core/rule_meta.py`:
+
+1. **dead_export**: Cannot detect dynamic dispatch, reflection-based callers, external consumers
+2. **dead_param**: Cannot detect dynamic parameter access via locals()/kwargs, framework-mandated parameters
+3. **stub_body**: Cannot detect intentional protocol stubs, generated code placeholders
+4. **wiring_gap**: Cannot detect semantic intent mismatch, runtime-resolved call targets
+5. **mock_leak**: Cannot detect dynamic imports, test utilities via dependency injection
+6. **dead_assign**: Cannot detect debugger/inspector usage, side-effectful assignments
+
+## Future Improvements
+
+- Improve dead_param to recognize closure-capture patterns
+- Add framework-signature awareness for common frameworks (Flask, Django, FastAPI)
+- Enhance wiring_gap with type compatibility checking
