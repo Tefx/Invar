@@ -257,6 +257,37 @@ def f(x: int) -> int:
             if inserted in sys.path:
                 sys.path.remove(inserted)
 
+    def test_import_module_from_path_prioritizes_workspace_overlay(self, tmp_path: Path) -> None:
+        site_root = tmp_path / "site"
+        installed_pkg = site_root / "demo" / "core"
+        installed_pkg.mkdir(parents=True)
+        (site_root / "demo" / "__init__.py").write_text("")
+        (installed_pkg / "__init__.py").write_text("")
+        (installed_pkg / "dead_param_helpers.py").write_text("VALUE = 1\n")
+
+        local_module = tmp_path / "src" / "demo" / "core" / "dead_param.py"
+        local_module.parent.mkdir(parents=True)
+        (local_module.parent / "__init__.py").write_text("")
+        (local_module.parent / "dead_param_helpers.py").write_text("VALUE = 7\n")
+        local_module.write_text("from demo.core.dead_param_helpers import VALUE\nANSWER = VALUE\n")
+
+        inserted = str(site_root)
+        sys.path.insert(0, inserted)
+        try:
+            demo_core = importlib.import_module("demo.core")
+            module = _import_module_from_path(local_module, project_root=tmp_path)
+
+            assert module is not None
+            assert getattr(module, "ANSWER", None) == 7
+            assert str(tmp_path / "src" / "demo" / "core") == list(demo_core.__path__)[0]
+        finally:
+            sys.modules.pop("demo.core.dead_param", None)
+            sys.modules.pop("demo.core.dead_param_helpers", None)
+            sys.modules.pop("demo.core", None)
+            sys.modules.pop("demo", None)
+            if inserted in sys.path:
+                sys.path.remove(inserted)
+
 
 # =============================================================================
 # Phase 2: Smart Re-spawn Tests

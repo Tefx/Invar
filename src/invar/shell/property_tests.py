@@ -367,7 +367,7 @@ def _extend_loaded_package_paths(module_name: str, module_root: Path) -> None:
     only inside the loaded package path unless we extend it.
     """
     package_parts = module_name.split(".")[:-1]
-    path_added = False
+    path_changed = False
     for depth in range(1, len(package_parts) + 1):
         package_name = ".".join(package_parts[:depth])
         package = sys.modules.get(package_name)
@@ -380,11 +380,16 @@ def _extend_loaded_package_paths(module_name: str, module_root: Path) -> None:
             continue
 
         path_list = list(existing_paths)
-        if package_path not in path_list:
-            package.__path__ = [*path_list, package_path]
-            path_added = True
+        if path_list and path_list[0] == package_path:
+            continue
 
-    if path_added:
+        if package_path in path_list:
+            path_list = [p for p in path_list if p != package_path]
+
+        package.__path__ = [package_path, *path_list]
+        path_changed = True
+
+    if path_changed:
         import importlib
 
         importlib.invalidate_caches()
