@@ -127,7 +127,7 @@ def collect_coverage(source_dirs: list[Path]) -> Iterator[Coverage]:
 
 
 # @shell_complexity: Coverage API interaction with multiple analysis branches
-@pre(lambda cov, files: files is not None)
+@pre(lambda cov, files, phase: files is not None and len(phase) > 0)
 @post(lambda result: isinstance(result, CoverageReport))
 def extract_coverage_report(cov: Coverage, files: list[Path], phase: str) -> CoverageReport:
     """Extract coverage report from Coverage object.
@@ -172,6 +172,8 @@ def extract_coverage_report(cov: Coverage, files: list[Path], phase: str) -> Cov
                     uncovered = []
                     if hasattr(branch_stats, "missing_branch_arcs"):
                         for arc in branch_stats.missing_branch_arcs():
+                            if not isinstance(arc, tuple) or len(arc) != 2:
+                                continue
                             from_line, to_line = arc
                             uncovered.append(
                                 UncoveredBranch(

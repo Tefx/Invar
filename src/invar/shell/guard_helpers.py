@@ -51,13 +51,25 @@ def collect_files_to_check(path: Path, checked_files: list[Path]) -> list[Path]:
     from invar.shell.config import get_exclude_paths, get_path_classification
     from invar.shell.fs import _is_excluded
 
-    if checked_files:
-        return checked_files
-
     exclude_result = get_exclude_paths(path)
     exclude_patterns = exclude_result.unwrap() if isinstance(exclude_result, Success) else []
 
     resolved_base = path.resolve()
+
+    if checked_files:
+        filtered: list[Path] = []
+        for file_path in checked_files:
+            if file_path.suffix != ".py":
+                continue
+            resolved_file = file_path.resolve()
+            try:
+                rel = str(resolved_file.relative_to(resolved_base))
+            except ValueError:
+                rel = str(file_path)
+            if _is_excluded(rel, exclude_patterns):
+                continue
+            filtered.append(file_path)
+        return filtered
 
     def _add_py_files_under(root: Path) -> None:
         for py_file in root.rglob("*.py"):

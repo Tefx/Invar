@@ -359,6 +359,30 @@ def _find_module_root(file_path: Path, project_root: Path | None) -> Path | None
     return project_root
 
 
+def _extend_loaded_package_paths(module_name: str, module_root: Path) -> None:
+    """Allow already-loaded packages to resolve modules from module_root.
+
+    When running under ``uvx``, ``invar`` may already be imported from site-packages.
+    If we then try to import a project file with a newer submodule, importlib will look
+    only inside the loaded package path unless we extend it.
+    """
+    package_parts = module_name.split(".")[:-1]
+    for depth in range(1, len(package_parts) + 1):
+        package_name = ".".join(package_parts[:depth])
+        package = sys.modules.get(package_name)
+        if package is None:
+            continue
+
+        package_path = str(module_root.joinpath(*package_parts[:depth]))
+        existing_paths = getattr(package, "__path__", None)
+        if existing_paths is None:
+            continue
+
+        path_list = list(existing_paths)
+        if package_path not in path_list:
+            package.__path__ = [*path_list, package_path]
+
+
 # @shell_complexity: BUG-57 fix requires package hierarchy setup for relative imports
 def _import_module_from_path(file_path: Path, project_root: Path | None = None) -> object | None:
     """
@@ -393,6 +417,7 @@ def _import_module_from_path(file_path: Path, project_root: Path | None = None) 
             root_str = str(module_root)
             if root_str not in sys.path:
                 sys.path.insert(0, root_str)
+            _extend_loaded_package_paths(module_name, module_root)
 
         # Use importlib.import_module which correctly handles relative imports
         # This is simpler and more reliable than manual spec loading

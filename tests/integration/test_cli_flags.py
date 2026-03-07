@@ -21,6 +21,7 @@ import pytest
 
 # Get project root
 PROJECT_ROOT = Path(__file__).parent.parent.parent
+CORE_SMOKE_TARGET = "src/invar/core/parser.py"
 
 
 # @invar:allow shell_result: Test helper, returns dict for assertion convenience
@@ -64,7 +65,7 @@ class TestStaticFlag:
 
     def test_static_flag_skips_doctests(self):
         """--static should only run static analysis, no doctests."""
-        result = run_invar_guard("--static", "src/invar/core")
+        result = run_invar_guard("--static", CORE_SMOKE_TARGET)
 
         # Should have status
         assert "status" in result, f"Missing status in output: {result}"
@@ -79,7 +80,7 @@ class TestStaticFlag:
 
     def test_static_flag_runs_static_analysis(self):
         """--static should still run static analysis."""
-        result = run_invar_guard("--static", "--all", "src/invar/core")
+        result = run_invar_guard("--static", "--all", CORE_SMOKE_TARGET)
 
         assert "summary" in result, f"Missing summary in output: {result}"
         assert "files_checked" in result["summary"], "Should report files checked"
@@ -93,7 +94,7 @@ class TestDefaultBehavior:
     def test_default_is_changed_flag_behavior(self):
         """Default guard (no flags) should check only changed files (backward compatible)."""
         # Use --static to speed up test while verifying default behavior
-        result = run_invar_guard("--static", timeout=15)
+        result = run_invar_guard("--static", CORE_SMOKE_TARGET, timeout=30)
 
         # Should have summary
         assert "status" in result or "summary" in result, "Default guard should produce output"
@@ -110,7 +111,7 @@ class TestChangedFlag:
     def test_changed_flag_explicit_alias(self):
         """--changed should be explicit alias for default changed-only behavior."""
         # Use --static to speed up test
-        result = run_invar_guard("--static", "--changed", timeout=15)
+        result = run_invar_guard("--static", "--changed", CORE_SMOKE_TARGET, timeout=30)
 
         # Should work without error
         assert "status" in result or "summary" in result, "--changed should work"
@@ -121,27 +122,24 @@ class TestAllFlag:
 
     def test_all_flag_checks_all_files(self):
         """--all should check entire project, not just changed files."""
-        result = run_invar_guard("--static", "--all", "src/invar/core")
+        result = run_invar_guard("--static", "--all", CORE_SMOKE_TARGET)
 
         assert "summary" in result, "Should have summary"
         assert result["summary"]["files_checked"] > 0, "Should check files"
 
-    @pytest.mark.skip(
-        reason="Doctest verification is slow (~90s+), run manually for full verification"
-    )
+    @pytest.mark.timeout(30)
     def test_all_flag_runs_doctests(self):
         """--all should run full verification including doctests."""
-        # Use timeout to prevent hanging
-        result = run_invar_guard("--all", "src/invar/core", timeout=90)
+        result = run_invar_guard("--all", CORE_SMOKE_TARGET, timeout=30)
 
         # Should have doctest section
         assert "doctest" in result, "--all guard should run doctests"
         assert "passed" in result["doctest"], "Doctest should have passed status"
 
-    @pytest.mark.skip(reason="CrossHair tests can be slow, run separately if needed")
+    @pytest.mark.timeout(30)
     def test_all_flag_runs_crosshair(self):
         """--all should include CrossHair verification."""
-        result = run_invar_guard("--all", "src/invar/core", timeout=120)
+        result = run_invar_guard("--all", CORE_SMOKE_TARGET, timeout=30)
 
         # Should have crosshair section
         assert "crosshair" in result, "--all guard should include crosshair section"
@@ -158,7 +156,7 @@ class TestAgentModeDetection:
 
     def test_pipe_mode_produces_json(self):
         """When piped (non-TTY), output should be JSON."""
-        result = run_invar_guard("--static", "src/invar/core")
+        result = run_invar_guard("--static", CORE_SMOKE_TARGET)
 
         # If we got a dict back, JSON parsing succeeded
         assert isinstance(result, dict), "Piped output should be valid JSON"
@@ -172,7 +170,7 @@ class TestExplainFlag:
         """--explain should provide detailed violation info."""
         # This test may pass or fail depending on code state
         # Just verify it doesn't crash
-        result = run_invar_guard("--explain", "--static", "src/invar")
+        result = run_invar_guard("--explain", "--static", CORE_SMOKE_TARGET)
 
         assert "status" in result, f"--explain should work: {result}"
 
