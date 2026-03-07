@@ -475,7 +475,7 @@ class TestUvxRespawnCommand:
             patch("shutil.which", return_value="uvx"),
             patch(
                 "invar.shell.subprocess_env.detect_local_invar_source",
-                return_value=local_src,
+                side_effect=[local_src, None],
             ),
             patch(
                 "invar.shell.subprocess_env.sys.version_info",
@@ -501,6 +501,52 @@ class TestUvxRespawnCommand:
             "--all",
         ]
 
+    def test_prefers_local_source_even_without_version_mismatch(self, tmp_path: Path) -> None:
+        (tmp_path / "pyproject.toml").write_text("[project]\nname='x'\nversion='0.0.0'\n")
+        venv = tmp_path / ".venv"
+        venv.mkdir()
+        (venv / "pyvenv.cfg").write_text("version = 3.12.0\n")
+        python_path = venv / "bin" / "python"
+        python_path.parent.mkdir(parents=True)
+        python_path.write_text("")
+
+        local_src = tmp_path / "local-invar"
+        (local_src / "src" / "invar").mkdir(parents=True)
+        (local_src / "pyproject.toml").write_text(
+            '[project]\nname = "invar-tools"\nversion = "1.2.3"\n'
+        )
+
+        with (
+            patch.dict(os.environ, {}, clear=True),
+            patch("shutil.which", return_value="uvx"),
+            patch(
+                "invar.shell.subprocess_env.detect_local_invar_source",
+                side_effect=[local_src, None],
+            ),
+            patch(
+                "invar.shell.subprocess_env.sys.version_info",
+                SimpleNamespace(major=3, minor=12),
+            ),
+        ):
+            cmd = get_uvx_respawn_command(
+                project_root=tmp_path,
+                argv=["guard", str(tmp_path), "--all"],
+                tool_name="invar-tools",
+                invar_tools_version="1.2.3",
+            )
+
+        assert cmd == [
+            "uvx",
+            "--python",
+            str(python_path),
+            "--from",
+            str(local_src),
+            "invar-tools",
+            "guard",
+            str(tmp_path),
+            "--all",
+        ]
+
 
 class TestDetectLocalInvarSource:
     def test_returns_none_when_not_checkout(self, tmp_path: Path) -> None:
@@ -519,6 +565,33 @@ class TestDetectLocalInvarSource:
         (repo / "pyproject.toml").write_text('[project]\nname = "invar-tools"\nversion = "0.0.0"\n')
 
         assert detect_local_invar_source(module_path) == repo
+
+    def test_detects_checkout_root_from_project_root_hint(self, tmp_path: Path) -> None:
+        repo = tmp_path / "invar-repo"
+        module_path = tmp_path / "site-packages" / "invar" / "shell" / "subprocess_env.py"
+        module_path.parent.mkdir(parents=True)
+        module_path.write_text("")
+
+        (repo / "src" / "invar" / "__init__.py").parent.mkdir(parents=True)
+        (repo / "src" / "invar" / "__init__.py").write_text("")
+        (repo / "pyproject.toml").write_text('[project]\nname = "invar-tools"\nversion = "0.0.0"\n')
+
+        nested_cwd = repo / "packages" / "demo"
+        nested_cwd.mkdir(parents=True)
+
+        assert detect_local_invar_source(module_path, project_root=nested_cwd) == repo
+
+    def test_detects_checkout_root_when_project_root_is_repo_root(self, tmp_path: Path) -> None:
+        repo = tmp_path / "invar-repo"
+        module_path = tmp_path / "site-packages" / "invar" / "shell" / "subprocess_env.py"
+        module_path.parent.mkdir(parents=True)
+        module_path.write_text("")
+
+        (repo / "src" / "invar" / "__init__.py").parent.mkdir(parents=True)
+        (repo / "src" / "invar" / "__init__.py").write_text("")
+        (repo / "pyproject.toml").write_text('[project]\nname = "invar-tools"\nversion = "0.0.0"\n')
+
+        assert detect_local_invar_source(module_path, project_root=repo) == repo
 
 
 # =============================================================================

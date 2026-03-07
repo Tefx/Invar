@@ -43,7 +43,10 @@ VENV_NAMES: tuple[str, ...] = (".venv", "venv", ".env", "env")
 
 
 @post(lambda result: result is None or result.exists())
-def detect_local_invar_source(module_file: Path | None = None) -> Path | None:
+def detect_local_invar_source(
+    module_file: Path | None = None,
+    project_root: Path | None = None,
+) -> Path | None:
     """Detect local Invar source checkout root from module location.
 
     Returns repository root when running from a source checkout (contains
@@ -52,27 +55,39 @@ def detect_local_invar_source(module_file: Path | None = None) -> Path | None:
 
     Args:
         module_file: Optional module path override for testing.
+        project_root: Optional cwd/project-root hint used when module_file points to
+            site-packages and source checkout is nearby.
 
     Examples:
         >>> detect_local_invar_source(Path('/tmp/nope/site-packages/invar/x.py')) is None
         True
     """
+
+    def _find_checkout_root(candidate: Path) -> Path | None:
+        for parent in (candidate, *candidate.parents):
+            pyproject = parent / "pyproject.toml"
+            src_pkg = parent / "src" / "invar"
+
+            if not pyproject.exists() or not src_pkg.exists():
+                continue
+
+            try:
+                content = pyproject.read_text(encoding="utf-8")
+            except OSError:
+                continue
+
+            if 'name = "invar-tools"' in content:
+                return parent
+
+        return None
+
     candidate = (module_file or Path(__file__)).resolve()
+    if (direct_match := _find_checkout_root(candidate)) is not None:
+        return direct_match
 
-    for parent in candidate.parents:
-        pyproject = parent / "pyproject.toml"
-        src_pkg = parent / "src" / "invar"
-
-        if not pyproject.exists() or not src_pkg.exists():
-            continue
-
-        try:
-            content = pyproject.read_text(encoding="utf-8")
-        except OSError:
-            continue
-
-        if 'name = "invar-tools"' in content:
-            return parent
+    if project_root is not None:
+        if (cwd_match := _find_checkout_root(project_root.resolve())) is not None:
+            return cwd_match
 
     return None
 
@@ -255,6 +270,30 @@ def get_uvx_respawn_command(
     if os.environ.get("INVAR_UVX_RESPAWNED") == "1":
         return None
 
+    uvx_path = shutil.which("uvx")
+    if uvx_path is None:
+        return None
+
+    local_source = detect_local_invar_source(project_root=project_root)
+    running_source = detect_local_invar_source()
+    if (
+        local_source is not None
+        and running_source is None
+        and tool_name in {"invar", "invar-tools"}
+    ):
+        venv = detect_project_venv(project_root)
+        project_python = _detect_venv_python(venv) if venv is not None else None
+        python_for_uvx = project_python or Path(sys.executable)
+        return [
+            uvx_path,
+            "--python",
+            str(python_for_uvx),
+            "--from",
+            str(local_source),
+            tool_name,
+            *argv,
+        ]
+
     venv = detect_project_venv(project_root)
     if venv is None:
         return None
@@ -267,15 +306,9 @@ def get_uvx_respawn_command(
     if venv_version == current_version:
         return None
 
-    uvx_path = shutil.which("uvx")
-    if uvx_path is None:
-        return None
-
     project_python = _detect_venv_python(venv)
     if project_python is None:
         return None
-
-    local_source = detect_local_invar_source()
 
     if local_source is not None:
         return [
