@@ -149,3 +149,71 @@ def setup():
     violations = _check_source(source)
     assert len(violations) == 1
     assert "request" in violations[0].message
+
+
+def test_fmcp_custom_route_request_signature_is_exempt() -> None:
+    source = """
+from starlette.requests import Request
+
+class AgentServer:
+    async def _handle_stream_request(self, request: Request):
+        return {"ok": True}
+"""
+    violations = _check_source(source)
+    assert violations == []
+
+
+def test_returned_context_callback_signature_is_exempt() -> None:
+    source = """
+from typing import Any
+from pydantic_ai import RunContext
+
+def build_callback():
+    async def inject_meta_callback(ctx: RunContext[Any], name: str):
+        return name
+    return inject_meta_callback
+"""
+    violations = _check_source(source)
+    assert violations == []
+
+
+def test_keyword_instructions_context_signature_is_exempt() -> None:
+    source = """
+from typing import Any
+
+def run_agent(*, instructions):
+    return instructions
+
+def setup():
+    async def get_dynamic_instructions(ctx: Any):
+        return None
+    return run_agent(instructions=get_dynamic_instructions)
+"""
+    violations = _check_source(source)
+    assert violations == []
+
+
+def test_except_fallback_contextmanager_signature_is_exempt() -> None:
+    source = """
+from contextlib import contextmanager
+
+try:
+    from prompt_toolkit.patch_stdout import patch_stdout
+except ImportError:
+    @contextmanager
+    def patch_stdout(*, raw: bool = False):
+        yield None
+"""
+    violations = _check_source(source)
+    assert violations == []
+
+
+def test_request_without_framework_annotation_is_not_exempt() -> None:
+    source = """
+class AgentServer:
+    async def _handle_stream_request(self, request):
+        return {"ok": True}
+"""
+    violations = _check_source(source)
+    assert len(violations) == 1
+    assert "request" in violations[0].message

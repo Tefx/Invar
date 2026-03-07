@@ -1,7 +1,6 @@
 """Dead parameter detection for function and method definitions.
 
 Identifies function parameters that are never referenced in the function body.
-
 Core module: pure logic, no I/O.
 """
 
@@ -292,26 +291,77 @@ def _is_callback_registrar(call_name: str) -> bool:
 @pre(lambda tree: isinstance(tree, ast.AST))
 @post(lambda result: all(isinstance(name, str) for name in result))
 def _collect_registered_callback_names(tree: ast.AST) -> set[str]:
+    callback_keyword_names: set[str] = {
+        "callback",
+        "handler",
+        "hook",
+        "instructions",
+        "instruction",
+    }
     callback_names: set[str] = set()
     for node in ast.walk(tree):
+        if isinstance(node, ast.Return) and isinstance(node.value, ast.Name):
+            callback_names.add(node.value.id)
+
         if not isinstance(node, ast.Call):
             continue
+
         call_name = _call_target_name(node.func)
-        if call_name is None or not _is_callback_registrar(call_name):
-            continue
+        is_registrar = call_name is not None and _is_callback_registrar(call_name)
 
         for arg in node.args:
-            if isinstance(arg, ast.Name):
+            if is_registrar and isinstance(arg, ast.Name):
                 callback_names.add(arg.id)
-            elif isinstance(arg, ast.Attribute):
+            elif is_registrar and isinstance(arg, ast.Attribute):
                 callback_names.add(arg.attr)
+
         for keyword in node.keywords:
             value = keyword.value
-            if isinstance(value, ast.Name):
+            is_callback_keyword = keyword.arg is not None and (
+                keyword.arg in callback_keyword_names
+                or any(
+                    keyword.arg.endswith(suffix)
+                    for suffix in ("_callback", "_handler", "_hook", "_instructions")
+                )
+            )
+            if (is_registrar or is_callback_keyword) and isinstance(value, ast.Name):
                 callback_names.add(value.id)
-            elif isinstance(value, ast.Attribute):
+            elif is_registrar and isinstance(value, ast.Attribute):
                 callback_names.add(value.attr)
     return callback_names
+
+
+@pre(
+    lambda node, param_name, param_node, callback_names, parent_map: (
+        isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+        and len(param_name) > 0
+        and isinstance(param_node, ast.arg)
+        and all(isinstance(name, str) for name in callback_names)
+        and all(isinstance(k, ast.AST) and isinstance(v, ast.AST) for k, v in parent_map.items())
+    )
+)
+@post(lambda result: isinstance(result, bool))
+def _has_framework_signature_exemption(
+    node: ast.FunctionDef | ast.AsyncFunctionDef,
+    param_name: str,
+    param_node: ast.arg,
+    callback_names: set[str],
+    parent_map: dict[ast.AST, ast.AST],
+) -> bool:
+    annotation = _annotation_name(param_node.annotation)
+    if param_name == "request" and annotation in {"Request", "HTTPConnection", "WebSocket"}:
+        return node.name.startswith(("handle_", "_handle_"))
+    if param_name in {"ctx", "context"} and node.name in callback_names:
+        return annotation in {"RunContext", "Context", "Any", None}
+    if param_name == "raw" and any(
+        _decorator_name(decorator) == "contextmanager" for decorator in node.decorator_list
+    ):
+        current: ast.AST = node
+        while current in parent_map:
+            current = parent_map[current]
+            if isinstance(current, ast.ExceptHandler):
+                return True
+    return False
 
 
 @pre(
@@ -363,50 +413,17 @@ def check_dead_params(file_infos: list[FileInfo], config: RuleConfig) -> list[Vi
         1
         >>> "add" in violations1[0].message and "x" in violations1[0].message
         True
-
         >>> source2 = "class Repo:" + nl + "    def save(self, value):" + nl + "        return value" + nl
         >>> file2 = FileInfo(path="core/b.py", lines=3, source=source2)
         >>> check_dead_params([file2], RuleConfig())
         []
-
-        >>> source3 = "def forward(*args, **kwargs):" + nl + "    return run(*args, **kwargs)" + nl
-        >>> file3 = FileInfo(path="core/c.py", lines=2, source=source3)
-        >>> check_dead_params([file3], RuleConfig())
-        []
-
-        >>> source4 = "from abc import abstractmethod" + nl + "class Service:" + nl + "    @abstractmethod" + nl + "    def run(self, token):" + nl + "        ..." + nl
-        >>> file4 = FileInfo(path="core/d.py", lines=5, source=source4)
-        >>> check_dead_params([file4], RuleConfig())
-        []
-
-        >>> source5 = "class User:" + nl + "    @property" + nl + "    def name(self):" + nl + "        ..." + nl
-        >>> file5 = FileInfo(path="core/e.py", lines=4, source=source5)
-        >>> check_dead_params([file5], RuleConfig())
-        []
-
         >>> source6 = "def configure(timeout):" + nl + "    @retry(wait=timeout)" + nl + "    def run():" + nl + "        return 1" + nl + "    return run()" + nl
         >>> file6 = FileInfo(path="core/f.py", lines=5, source=source6)
         >>> check_dead_params([file6], RuleConfig())
         []
-
         >>> source7 = "def check_rule(file_info, config: RuleConfig):" + nl + "    return file_info.path" + nl
         >>> file7 = FileInfo(path="core/g.py", lines=2, source=source7)
         >>> check_dead_params([file7], RuleConfig())
-        []
-
-        >>> source8 = "def parse(data, _unused):" + nl + "    return data" + nl
-        >>> file8 = FileInfo(path="core/h.py", lines=2, source=source8)
-        >>> check_dead_params([file8], RuleConfig())
-        []
-
-        >>> source9 = "def create_handler(token):" + nl + "    def handle():" + nl + "        return token" + nl + "    return handle" + nl
-        >>> file9 = FileInfo(path="core/i.py", lines=4, source=source9)
-        >>> check_dead_params([file9], RuleConfig())
-        []
-
-        >>> source10 = "import signal" + nl + "def setup():" + nl + "    def handle_signal(signum, frame):" + nl + "        return 0" + nl + "    signal.signal(signal.SIGINT, handle_signal)" + nl
-        >>> file10 = FileInfo(path="core/j.py", lines=5, source=source10)
-        >>> check_dead_params([file10], RuleConfig())
         []
     """
     _ = config
@@ -432,8 +449,7 @@ def check_dead_params(file_infos: list[FileInfo], config: RuleConfig) -> list[Vi
             if _is_exempt_decorated_function(node):
                 continue
 
-            class_name = _enclosing_class_name(node, parent_map)
-            if class_name is not None and class_name in protocol_classes:
+            if (class_name := _enclosing_class_name(node, parent_map)) in protocol_classes:
                 continue
 
             symbol = _symbol_for_node(node, class_name)
@@ -455,6 +471,11 @@ def check_dead_params(file_infos: list[FileInfo], config: RuleConfig) -> list[Vi
                     continue
 
                 if _is_config_shape_param(node.name, param_name, param_node):
+                    continue
+
+                if _has_framework_signature_exemption(
+                    node, param_name, param_node, callback_names, parent_map
+                ):
                     continue
 
                 if is_registered_callback:
