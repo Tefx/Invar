@@ -3188,4 +3188,1284 @@ phases:
       - DX-92 ready for release'
     depends_on:
     - fp-self-validate.self-validate-invar
+    - fp-self-validate.self-validate-invar-fix
+    - fp-self-validate.self-validate-invar-retest
+    - fp-self-validate.self-validate-invar-retest-fix
+    - fp-self-validate.self-validate-invar-retest-retest
     agent: gate-reviewer
+  - id: fp-self-validate.self-validate-invar-fix
+    name: self-validate-invar.fix
+    status: pending
+    description: 'Priority: HIGH
+
+
+      Fix blocker findings from `fp-self-validate.self-validate-invar`.
+
+
+      Scope:
+
+      - `src/invar/core/dead_param.py`: reduce or redesign file-size pressure so full
+      `uvx invar-tools guard --all` no longer fails the dead_param file-size policy
+      (`file_size` 527>500)
+
+      - failing test suites: investigate and fix the 6 failing `uv run pytest tests/
+      -v` failures, including DX-78 / LX-05 / LX-07 related assertions if they are
+      the active failing clusters
+
+      - test tooling / coverage availability: make the quantitative sufficiency path
+      runnable so the coverage command is present and documented for the repo test
+      environment
+
+
+      Requirements:
+
+      - Preserve intended dead_param behavior while bringing the module back under
+      policy or splitting logic safely
+
+      - Fix root causes, not just assertions, for the current failing suites
+
+      - Restore a working coverage execution path without weakening the gate
+
+
+      Non-goals:
+
+      - Do not broaden scope beyond the failures surfaced by `fp-self-validate.self-validate-invar`
+
+      - Do not change acceptance thresholds unless separately approved
+
+
+      prior_loop: [fp-self-validate.self-validate-invar]
+
+      remaining_blocker: full-project guard, full pytest suite, and coverage sufficiency
+      proof are all blocked
+
+      why_new_loop: the original independent validation surfaced concrete blockers
+      that now require an implementation remediation step before self-validation can
+      continue'
+    verification: '- Main path: targeted fixes land for `src/invar/core/dead_param.py`,
+      the currently failing test suites, and coverage tooling availability
+
+      - Failure path: regression coverage proves the dead_param file-size failure
+      and at least one representative previously-failing pytest assertion are no longer
+      broken
+
+      - Evidence includes the exact commands used to reproduce and verify each blocker
+      path
+
+      - No gate threshold or policy is silently weakened'
+    depends_on:
+    - fp-self-validate.self-validate-invar
+    agent: python-senior
+  - id: fp-self-validate.self-validate-invar-retest
+    name: self-validate-invar.retest
+    status: pending
+    description: 'Priority: HIGH
+
+
+      Re-test after `fp-self-validate.self-validate-invar-fix` as an INDEPENDENT TESTER
+      (`integration-verifier`).
+
+
+      Re-run the blocked self-validation evidence collection from a fresh perspective.
+
+
+      Test for:
+
+      - happy path: full `uvx invar-tools guard --all` completes without the dead_param
+      file-size failure
+
+      - regression path: `uv run pytest tests/ -v` completes without the 6 known failures
+
+      - sufficiency path: the coverage gate command is now available and quantitative
+      evidence can be collected
+
+      - evidence quality: outputs are pasted and specific enough for the final gate
+
+
+      Finding additional issues is a successful verification outcome.'
+    verification: '- Run full `uvx invar-tools guard --all` and record actual output
+      summary
+
+      - Run full `uv run pytest tests/ -v` and record actual output summary
+
+      - Run the intended coverage gate command and record whether quantitative sufficiency
+      is proven
+
+      - If issues remain, document exact blocker(s), reproduction command(s), and
+      whether another remediation loop is required'
+    depends_on:
+    - fp-self-validate.self-validate-invar-fix
+    agent: integration-verifier
+  - id: fp-self-validate.self-validate-invar-retest-fix
+    name: self-validate-invar-retest.fix
+    status: pending
+    description: 'Priority: HIGH
+
+
+      Fix blocker findings from `fp-self-validate.self-validate-invar-retest`.
+
+
+      Scope:
+
+      - restore a passing full-project self-validation path for the current repo source
+      via a repository-local command path (for example `uv run ...` against the checked-out
+      workspace), including warning-debt handling or guard criteria behavior needed
+      for a non-failed status
+
+      - make the quantitative coverage path executable in the repo test environment,
+      including the pytest-cov / coverage integration needed for the intended command
+      path
+
+      - eliminate the 2 skipped tests in `tests/integration/test_cli_flags.py` or
+      replace them with explicit, reviewable justification inside the test plan and
+      evidence path if true elimination is not yet possible
+
+      - run `uvx invar-tools guard --all` as a distribution/runtime parity probe and
+      classify any remaining failure caused only by uvx resolving cached/published
+      code instead of the local repo as a separate packaging/parity issue, not as
+      proof that local-source correctness failed
+
+
+      Requirements:
+
+      - fix root causes for the warnings-heavy failed guard status instead of masking
+      the failure in evidence
+
+      - ensure the repository-local self-validation command uses current workspace
+      source and passes end-to-end with no threshold weakening
+
+      - ensure at least one quantitative coverage command is supported end-to-end
+      and documented by the test/tooling configuration actually used in this repo
+
+      - resolve the skipped-test ambiguity so retest evidence can state either zero
+      skips or a precise approved justification for any remaining skip
+
+      - preserve strict acceptance: local-source correctness must pass; parity findings
+      may only be carved out when evidence shows the failure is exclusively an environment-distribution
+      mismatch between uvx-resolved published artifacts and the checked-out repo source
+
+
+      Non-goals:
+
+      - do not loosen guard quality bars or coverage expectations without an explicit
+      spec change
+
+      - do not treat a real local-source guard failure as a packaging issue
+
+      - do not broaden work beyond the blocker surfaces named above unless needed
+      to remove the same root cause
+
+
+      prior_loop: [fp-self-validate.self-validate-invar-fix, fp-self-validate.self-validate-invar-retest]
+
+      remaining_blocker: local-source self-validation still needs a passing repo-local
+      guard path, a working quantitative coverage path, and skip-free or explicitly
+      justified CLI flag evidence; uvx parity may remain separately blocked by distribution
+      mismatch
+
+      why_new_loop: the prior retest narrowed the failure set and exposed that published-artifact
+      resolution can diverge from current repo source, so acceptance must separate
+      local correctness from packaging/runtime parity without weakening either bar'
+    verification: '- Main path: targeted fixes land for repository-local guard execution,
+      coverage command availability, and `tests/integration/test_cli_flags.py` skip
+      handling
+
+      - Main path proof: record the exact repo-local command that exercises current
+      workspace source and show it completes with a non-failed status under the existing
+      warning/guard policy
+
+      - Failure path: run `uvx invar-tools guard --all` as a parity probe and show
+      whether any remaining failure is exclusively due to uvx resolving cached/published
+      runtime rather than local repo source; if so, record it as a separate packaging/parity
+      blocker with concrete output
+
+      - Proof includes exact commands and outputs for the repo-local guard path, `uvx
+      invar-tools guard --all`, the chosen quantitative coverage command, and the
+      CLI flag test file execution
+
+      - No silent weakening of guard thresholds, warning policy, or coverage expectations'
+    depends_on:
+    - fp-self-validate.self-validate-invar-retest
+    agent: python-senior
+  - id: fp-self-validate.self-validate-invar-retest-retest
+    name: self-validate-invar-retest.retest
+    status: pending
+    description: 'Priority: HIGH
+
+
+      Re-test after `fp-self-validate.self-validate-invar-retest-fix` as an INDEPENDENT
+      TESTER (`integration-verifier`).
+
+
+      Re-run the blocked self-validation evidence collection from a fresh perspective.
+
+
+      Test for:
+
+      - local-source happy path: the repository-local guard command that uses current
+      workspace source completes with a non-failed status and the warning policy outcome
+      is explicit
+
+      - quantitative path: the intended coverage command now runs successfully and
+      produces quantitative evidence in this repo environment
+
+      - regression path: `tests/integration/test_cli_flags.py` runs without unexplained
+      skips, or any remaining skip is explicitly justified and documented as non-blocking
+      by policy
+
+      - parity path: `uvx invar-tools guard --all` is still exercised, but any failure
+      may only be treated as a separate distribution/runtime parity issue if the tester
+      can show the repo-local path passes and the uvx failure comes from cached/published
+      artifact resolution rather than current repo source
+
+      - evidence quality: outputs are pasted and specific enough for the final gate
+
+
+      Finding additional issues is a successful verification outcome.
+
+
+      Independence Level: L1'
+    verification: '- Run the exact repo-local guard command established by the fix
+      step and record the actual output summary, including warning/failure disposition
+
+      - Run `uvx invar-tools guard --all` and record whether the result matches the
+      repo-local path or diverges because uvx resolves non-local artifacts
+
+      - Run the quantitative coverage command that the fix step establishes and record
+      actual output proving the path is available
+
+      - Run the focused CLI flag test command and record whether skips were eliminated
+      or explicitly justified
+
+      - If issues remain, distinguish local-source correctness blockers from packaging/parity
+      blockers and document exact reproduction commands for each'
+    depends_on:
+    - fp-self-validate.self-validate-invar-retest-fix
+    agent: integration-verifier
+  - id: fp-self-validate.fp-final-gate-fix
+    name: fp-final-gate.fix
+    status: pending
+    description: 'Fix release-readiness blocker from final gate: prove and correct
+      distribution parity for `uvx invar-tools guard --all`, which currently fails
+      in packaged execution with an import error for `src/invar/core/dead_param_helpers.py`
+      while local-source guard passes.
+
+
+      Scope:
+
+      - packaging/build manifest and included modules for the distributed artifact
+
+      - import path assumptions for `dead_param_helpers` in packaged runtime
+
+      - release parity diagnostics/evidence needed for final readiness review
+
+
+      Tasks:
+
+      - identify why packaged execution omits or mis-resolves `dead_param_helpers`
+
+      - update packaging/runtime assumptions so packaged and local-source guard behavior
+      match
+
+      - add focused release-parity diagnostics/evidence showing the root cause and
+      the corrected distribution path
+
+
+      remaining_blocker: packaged `guard --all` fails while local-source guard passes,
+      so release parity is not proven
+
+      why_new_loop: final gate surfaced a blocker that cannot be cleared by existing
+      self-validation evidence because the failure appears only in distributed execution
+
+      Out of scope: unrelated guard failures outside the `dead_param_helpers` packaging/import
+      parity path.'
+    verification: '- Main path: targeted packaging/parity validation demonstrates
+      packaged `uvx invar-tools guard --all` can import and execute the `dead_param_helpers`
+      path successfully
+
+      - Failure path: regression evidence captures the prior packaged import error
+      scenario and shows it is now prevented or explained by corrected packaging/runtime
+      resolution
+
+      - Proof: packaging/build manifest, included module set, and release-parity evidence
+      are updated sufficiently for final release-readiness review'
+    evidence_template: '## Packaging Parity Fix Evidence
+
+
+      **Root cause**:
+
+      <why packaged execution could not import `dead_param_helpers`>
+
+
+      **Files changed**:
+
+      - <packaging/build manifest>
+
+      - <runtime/import surface>
+
+      - <release parity evidence doc>
+
+
+      **Parity proof command(s)**:
+
+      ```bash
+
+      <exact command used to exercise packaged distribution parity>
+
+      ```
+
+
+      **Actual output**:
+
+      ```text
+
+      <paste relevant output showing packaged execution now resolves/imports correctly>
+
+      ```
+
+
+      **Failure-path evidence**:
+
+      ```text
+
+      <paste the previous import error or a focused regression check proving the failure
+      mode is covered>
+
+      ```
+
+
+      **Release-readiness note**:
+
+      <why this closes the final-gate blocker>'
+    depends_on:
+    - fp-self-validate.fp-final-gate
+    agent: python-senior
+  - id: fp-self-validate.fp-final-gate-retest
+    name: fp-final-gate.retest
+    status: pending
+    description: 'As an INDEPENDENT REVIEWER (gate-reviewer), re-test the final release-readiness
+      blocker after the distribution-parity fix.
+
+
+      YOUR GOAL IS TO FIND REMAINING PACKAGING OR RELEASE-PARITY PROBLEMS, not to
+      confirm success.
+
+
+      Test for:
+
+      - Happy path: packaged `uvx invar-tools guard --all` matches local-source behavior
+      for the `dead_param_helpers` import path
+
+      - Edge cases: manifest/module inclusion and packaged import resolution remain
+      correct in the distributed artifact
+
+      - Error scenarios: no import error or equivalent packaging-parity regression
+      remains in release-readiness validation
+
+
+      Document all findings. A re-test that discovers issues is a success.
+
+
+      Independence Level: L1
+
+      prior_loop: fp-self-validate.fp-final-gate
+
+      remaining_blocker: release readiness is blocked until packaged guard parity
+      is demonstrated
+
+      why_new_loop: final gate evidence must be re-checked independently after the
+      packaging fix'
+    verification: '- Review fix evidence for packaged vs local-source parity
+
+      - Execute or inspect the exact packaged parity check for `uvx invar-tools guard
+      --all`
+
+      - Confirm the original `dead_param_helpers` import-error blocker is resolved
+      or report any remaining blocker precisely
+
+      - Verdict is suitable to feed back into final release gate decision'
+    evidence_template: '## Final Gate Retest Report
+
+
+      **Reviewer**: gate-reviewer
+
+      **Scope**: distribution parity for packaged `uvx invar-tools guard --all`
+
+      **Original blocker**: import error for `src/invar/core/dead_param_helpers.py`
+      in packaged execution
+
+
+      ### Commands / checks
+
+      ```bash
+
+      <exact packaged parity command(s) reviewed or executed>
+
+      ```
+
+
+      ### Output summary
+
+      ```text
+
+      <paste relevant output>
+
+      ```
+
+
+      ### Findings
+
+      | Severity | Description | Location | Reproduction |
+
+      | --- | --- | --- | --- |
+
+      | blocker| <remaining issue or ''none''> | <artifact/path> | <steps> |
+
+
+      ### Verdict
+
+      - [ ] PASS: packaged and local-source guard behavior are acceptably aligned
+
+      - [ ] ISSUES_FOUND: blocker or follow-up issue remains
+
+      - [ ] INCOMPLETE: evidence insufficient for release-readiness gate'
+    depends_on:
+    - fp-self-validate.fp-final-gate-fix
+    agent: gate-reviewer
+  - id: fp-self-validate.fp-final-gate-import-path-fix
+    name: fp-final-gate-import-path-fix
+    status: pending
+    description: 'Priority: HIGH
+
+
+      Fix the repeated final-parity blocker by consolidating the existing `fp-final-gate`
+      remediation chain around the exact runtime path that still fails: `uvx invar-tools
+      guard --all` during the property-tests phase importing `src/invar/core/dead_param_helpers.py`.
+
+
+      prior_loop: [fp-self-validate.fp-final-gate-fix, fp-self-validate.fp-final-gate-retest]
+
+      remaining_blocker: independent retest still reproduces the `dead_param_helpers`
+      import failure on the real uvx/property-tests execution path, so prior parity
+      closure was too broad
+
+      why_new_loop: the blocker narrowed from generic wheel parity to a specific mixed-runtime
+      import-path failure inside `property_tests`, so the chain is extended in focused
+      form instead of appending another generic parity loop
+
+
+      spec_refs:
+
+      - plan.yaml / fp-self-validate / fp-final.gate
+
+      - derived acceptance from prior gate evidence and repeated retest blocker report
+      (runtime parity for `uvx invar-tools guard --all`)
+
+
+      touch_paths:
+
+      - `src/invar/shell/property_tests.py`
+
+      - `src/invar/core/dead_param.py`
+
+      - `src/invar/core/dead_param_helpers.py`
+
+      - `tests/test_subprocess_env.py`
+
+      - packaging metadata or runtime-path support files only if needed by the same
+      blocker
+
+
+      harness_refs:
+
+      - `uvx invar-tools guard --all`
+
+      - property-tests phase reached via `src/invar/shell/guard_helpers.py`
+
+      - `tests/test_subprocess_env.py`
+
+
+      Failure-mode checklist:
+
+      - relative vs absolute path behavior: prove whether helper import succeeds when
+      module is loaded from workspace overlay versus installed-package path under
+      uvx
+
+      - missing-file fallback behavior: if helper module cannot be resolved on the
+      uvx path, failure must be explicit and reproducible from the property-tests
+      entry path, not inferred from wheel contents
+
+      - explicit clear/null overwrite semantics: any `sys.modules` / `__path__` /
+      cache reset needed for mixed-runtime imports must intentionally clear stale
+      resolution state rather than silently reuse the installed package copy
+
+      - stale-definition vs new-state precedence: define and implement which tree
+      wins when uvx-installed package metadata and workspace source both exist during
+      property-tests import
+
+      - partial-write / CAS-conflict behavior: if package-path extension or cache
+      invalidation applies only partially, the command must surface a deterministic
+      blocker instead of claiming parity closure
+
+
+      State semantics:
+
+      - last-writer-wins: active import-path ordering during `property_tests` determines
+      which package tree is used for `invar.core.*` resolution in uvx runtime
+
+      - preserve exactly: local-source `uv run python -m invar.shell.commands.guard
+      guard --all` behavior and packaged wheel module inclusion
+
+      - backward-compatible legacy behavior: repo-local self-validation stays passing
+      while uvx parity path stops failing on `dead_param_helpers`
+
+
+      Concrete regression work:
+
+      - reproduce the exact failure with `uvx invar-tools guard --all` and capture
+      the property-tests traceback plus resolved module paths
+
+      - add/update focused regression coverage in `tests/test_subprocess_env.py` for
+      installed-package + workspace-overlay helper import behavior at the actual property-tests
+      entry path
+
+      - add/update a focused regression proving `run_property_tests_on_file(...)`
+      can import helper-split modules under the uvx-style path arrangement
+
+
+      Out of scope:
+
+      - unrelated warning-count cleanup
+
+      - non-import parity issues outside the `dead_param_helpers` / property-tests
+      runtime path
+
+      - broad packaging refactors not required for this blocker'
+    verification: '- Main path: targeted regression tests and the exact uvx/property-tests
+      runtime path demonstrate `dead_param_helpers` imports successfully during `uvx
+      invar-tools guard --all`
+
+      - Failure path: explicit reproduction captures the old import error scenario
+      first, then shows the same path now resolves the helper module with concrete
+      file-path evidence
+
+      - Proof: no parity closure claim is acceptable without output from the real
+      uvx command, the focused regression test(s), and imported-module path evidence
+      from inside the property-tests path'
+    depends_on:
+    - fp-self-validate.fp-final-gate-retest
+    agent: python-senior
+  - id: fp-self-validate.fp-final-gate-import-path-freeze
+    name: fp-final-gate-import-path-freeze
+    status: pending
+    description: 'Freeze: lock the remediation snapshot before L2 parity retest.
+
+
+      spec_refs:
+
+      - plan.yaml / fp-self-validate / final parity remediation chain
+
+
+      touch_paths:
+
+      - none expected; snapshot only
+
+
+      harness_refs:
+
+      - `git rev-parse HEAD`
+
+      - `git status --short`
+
+      - uvx/uv environment declaration used for parity retest
+
+
+      Tasks:
+
+      - record the exact commit under test with `git rev-parse HEAD`
+
+      - record `git status --short` and require a clean or explicitly enumerated verification-only
+      workspace
+
+      - declare the uvx/uv commands and environment assumptions that will be used
+      for the parity retest
+
+      - state that no code changes are allowed until `fp-self-validate.fp-final-gate-import-path-retest`
+      completes
+
+
+      This freeze exists because the parity retest is L2 and must run against a locked
+      snapshot.'
+    verification: '- Freeze proof includes `git rev-parse HEAD`, `git status` summary,
+      environment declaration, and an explicit no-code-changes statement covering
+      the subsequent retest'
+    depends_on:
+    - fp-self-validate.fp-final-gate-import-path-fix
+    agent: integration-verifier
+  - id: fp-self-validate.fp-final-gate-import-path-retest
+    name: fp-final-gate-import-path-retest
+    status: pending
+    description: 'Priority: HIGH
+
+
+      As an INDEPENDENT TESTER (`integration-verifier`), re-test the narrowed final-parity
+      blocker from a fresh snapshot.
+
+
+      YOUR GOAL IS TO FIND REMAINING PROBLEMS, not to confirm success.
+
+
+      Independence Level: L2
+
+      prior_loop: [fp-self-validate.fp-final-gate-fix, fp-self-validate.fp-final-gate-retest]
+
+      remaining_blocker: `uvx invar-tools guard --all` still fails in property-tests
+      with an import error for `src/invar/core/dead_param_helpers.py`
+
+      why_new_loop: the prior loop proved wheel contents and a synthetic import path,
+      but did not close the exact uvx/property-tests runtime behavior that the independent
+      retest still reproduces
+
+
+      spec_refs:
+
+      - plan.yaml / fp-self-validate / fp-final.gate
+
+      - focused runtime-parity acceptance derived from repeated blocker report
+
+
+      touch_paths:
+
+      - verify behavior across `src/invar/shell/property_tests.py`, `src/invar/shell/guard_helpers.py`,
+      `src/invar/core/dead_param.py`, and `src/invar/core/dead_param_helpers.py`
+
+      - regression harness in `tests/test_subprocess_env.py`
+
+
+      harness_refs:
+
+      - `uvx invar-tools guard --all`
+
+      - `uv run python -m invar.shell.commands.guard guard --all`
+
+      - focused subprocess/import-path regression tests in `tests/test_subprocess_env.py`
+
+
+      Test for:
+
+      - happy path: the exact uvx command completes the property-tests phase without
+      the `dead_param_helpers` import error
+
+      - edge cases: helper-split imports still resolve when an installed package tree
+      and workspace source tree both contribute to package discovery
+
+      - error scenarios: if parity still fails, capture the full traceback, resolved
+      module file paths, and whether the failure occurs before or during `run_property_tests_on_file(...)`
+
+      - proof quality: wheel-manifest inspection alone is insufficient; evidence must
+      come from the live uvx command and the focused regression harness
+
+
+      A retest that reproduces the blocker is a SUCCESSFUL verification outcome.'
+    verification: '- Main path: run `uvx invar-tools guard --all` from the frozen
+      snapshot and paste the actual property-tests section output, showing no `dead_param_helpers`
+      import error
+
+      - Control path: run `uv run python -m invar.shell.commands.guard guard --all`
+      and compare behavior to confirm parity at the real entrypoints
+
+      - Failure path: if uvx still fails, paste the traceback plus concrete imported
+      file-path evidence for `invar.core.dead_param_helpers` and the module under
+      test
+
+      - Regression proof: run the focused `tests/test_subprocess_env.py` import-path
+      regression(s) and paste output showing the mixed installed-package/workspace
+      case is covered'
+    depends_on:
+    - fp-self-validate.fp-final-gate-import-path-freeze
+    agent: integration-verifier
+  - id: fp-self-validate.fp-final-gate-rereview
+    name: fp-final-gate-rereview
+    status: pending
+    description: 'Gate review: re-assess final DX-92 release readiness after the narrowed
+      packaged-module remediation.
+
+
+      As an INDEPENDENT REVIEWER (`gate-reviewer`), decide whether the repeated parity
+      blocker is actually closed.
+
+
+      spec_refs:
+
+      - plan.yaml / fp-self-validate / fp-final.gate
+
+
+      touch_paths:
+
+      - review evidence only; no new code expected
+
+
+      harness_refs:
+
+      - evidence from `fp-self-validate.fp-final-gate-import-path-package-fix`
+
+      - freeze evidence from `fp-self-validate.fp-final-gate-import-path-package-freeze`
+
+      - retest evidence from `fp-self-validate.fp-final-gate-import-path-package-retest`
+
+
+      Review criteria:
+
+      - the narrowed fix addressed packaged module availability/path composition on
+      the real `uvx` path, not just a local-build wheel or synthetic import check
+
+      - L2 freeze requirements were met before the newest retest
+
+      - the newest retest either proves packaged parity closure with actual command
+      output or records a precise remaining blocker
+
+      - no downstream release-readiness decision bypasses the newest retest evidence'
+    verification: '- Review the narrowed fix, freeze, and newest retest evidence as
+      one consolidated remediation chain
+
+      - Decide OPEN only if the exact packaged `uvx` import path is proven clean by
+      command output and regression coverage
+
+      - Otherwise keep the gate BLOCKED with a precise remaining blocker'
+    depends_on:
+    - fp-self-validate.fp-final-gate-import-path-package-retest
+    agent: gate-reviewer
+  - id: fp-self-validate.fp-final-gate-import-path-package-fix
+    name: fp-final-gate-import-path-package-fix
+    status: pending
+    description: 'Priority: HIGH
+
+
+      Fix the remaining final-parity blocker by narrowing the remediation scope to
+      packaged module availability and package-path composition for `invar.core.dead_param_helpers`
+      on the real `uvx invar-tools guard --all` path.
+
+
+      prior_loop: [fp-self-validate.fp-final-gate-import-path-fix, fp-self-validate.fp-final-gate-import-path-retest]
+
+      remaining_blocker: packaged `uvx` execution still raises `ModuleNotFoundError:
+      invar.core.dead_param_helpers` even though the repo-local control path passes,
+      so installed-package availability/path composition is still wrong on the parity
+      path
+
+      why_new_loop: the prior focused fix closed a wheel-from-local-build path, but
+      the still-failing plain packaged `uvx` path proves the blocker is narrower than
+      generic import parity and needs a replacement fix centered on installed module
+      presence and package-path composition
+
+
+      spec_refs:
+
+      - plan.yaml / fp-self-validate / fp-final.gate
+
+      - repeated blocker report for `fp-self-validate.fp-final-gate-import-path-retest`
+
+
+      touch_paths:
+
+      - packaging metadata and build inclusion rules affecting `src/invar/core/dead_param_helpers.py`
+
+      - `src/invar/shell/property_tests.py`
+
+      - `src/invar/shell/guard_helpers.py`
+
+      - import-path composition helpers that determine `invar.core.*` resolution under
+      packaged `uvx`
+
+      - focused regression harness in `tests/test_subprocess_env.py`
+
+
+      harness_refs:
+
+      - `uvx invar-tools guard --all`
+
+      - packaged module import probes for `invar.core.dead_param_helpers`
+
+      - focused subprocess/import-path regressions in `tests/test_subprocess_env.py`
+
+
+      Failure-mode checklist:
+
+      - relative vs absolute path behavior: prove `dead_param_helpers` resolves correctly
+      when package discovery begins from installed-site paths versus repo-root overlays
+
+      - missing-file fallback behavior: packaged execution must fail explicitly if
+      the helper is absent from the built distribution, and the fix must close that
+      exact absence path
+
+      - explicit clear/null overwrite semantics: any import-cache, `sys.modules`,
+      or `__path__` reset used to compose packaged/workspace paths must intentionally
+      clear stale resolution state
+
+      - stale-definition vs new-state precedence: define which source wins when packaged
+      `invar.core` and workspace `src/invar/core` are both discoverable during property-tests
+      execution
+
+      - partial-write / CAS-conflict behavior: mixed path composition must not leave
+      `invar.core` partially extended such that sibling modules resolve inconsistently
+
+
+      State semantics:
+
+      - last-writer-wins: final `invar.core.__path__` ordering at the packaged property-tests
+      entrypoint determines the module tree used for helper imports
+
+      - preserve exactly: repo-local control-path success and existing helper-split
+      behavior outside the packaged parity path
+
+      - backward-compatible legacy behavior: installed `uvx` self-validation can still
+      discover repo test targets while resolving packaged core helper modules consistently
+
+
+      Concrete regression work:
+
+      - add or update a focused regression for packaged availability of `invar.core.dead_param_helpers`
+
+      - add or update a focused regression for package-path composition when installed
+      and workspace trees coexist
+
+      - capture the exact packaged `uvx` failure first, then close it with evidence
+      from the same entrypath
+
+
+      Out of scope:
+
+      - unrelated guard warning cleanup
+
+      - parity issues not involving packaged availability/path composition for `dead_param_helpers`
+
+      - broad restructuring outside the minimal runtime/package composition needed
+      for this blocker'
+    verification: '- Main path: targeted regressions and the packaged `uvx invar-tools
+      guard --all` path prove `invar.core.dead_param_helpers` is available and imported
+      successfully during property-tests
+
+      - Failure path: evidence captures the old packaged-module absence/path-composition
+      failure and shows the same path now resolves the helper with concrete module
+      file paths
+
+      - Proof: no closure claim is acceptable without packaged `uvx` output, focused
+      regression output, and explicit module-path evidence for `invar.core.dead_param_helpers`
+
+      - Guardrail: keep the fix scoped to packaged module availability/path composition
+      and document any deferred broader parity issues'
+    evidence_template: '## Packaged Path Remediation Evidence
+
+
+      **Command or test exercising the full path**:
+
+      ```
+
+      uvx invar-tools guard --all
+
+      <focused packaged import regression command>
+
+      ```
+
+
+      **Actual output** (paste, not "tests pass"):
+
+      ```
+
+      <stdout/stderr showing packaged helper import behavior>
+
+      ```
+
+
+      **Path exercised**: packaged `uvx` entrypoint -> `invar.shell.commands.guard`
+      -> `guard_helpers` / `property_tests` -> `invar.core.dead_param_helpers`
+
+
+      **Module availability proof**:
+
+      ```
+
+      <imported module file path(s) for invar.core.dead_param_helpers and invar.core>
+
+      ```'
+    depends_on:
+    - fp-self-validate.fp-final-gate-import-path-freeze
+    agent: python-senior
+  - id: fp-self-validate.fp-final-gate-import-path-package-freeze
+    name: fp-final-gate-import-path-package-freeze
+    status: pending
+    description: 'Freeze: lock the narrowed packaged-path remediation snapshot before
+      the L2 retest.
+
+
+      spec_refs:
+
+      - plan.yaml / fp-self-validate / fp-final.gate
+
+      - repeated blocker report for packaged `uvx` divergence
+
+
+      touch_paths:
+
+      - none expected; snapshot only
+
+
+      harness_refs:
+
+      - `git rev-parse HEAD`
+
+      - `git status --short`
+
+      - packaged `uvx` and control-path commands used for parity retest
+
+
+      Tasks:
+
+      - record the exact commit under test with `git rev-parse HEAD`
+
+      - record `git status --short` and enumerate any verification-only workspace
+      deltas
+
+      - declare the packaged `uvx` command, control command, and environment assumptions
+      for the narrowed retest
+
+      - state that no code changes are allowed until `fp-self-validate.fp-final-gate-import-path-package-retest`
+      completes
+
+
+      This freeze is required because the narrowed parity retest remains L2.'
+    verification: '- Freeze proof includes `git rev-parse HEAD`, `git status`, environment
+      declaration, and an explicit no-code-changes statement covering the subsequent
+      packaged-path retest'
+    depends_on:
+    - fp-self-validate.fp-final-gate-import-path-package-fix
+    agent: integration-verifier
+  - id: fp-self-validate.fp-final-gate-import-path-package-retest
+    name: fp-final-gate-import-path-package-retest
+    status: pending
+    description: 'Priority: HIGH
+
+
+      As an INDEPENDENT TESTER (`integration-verifier`), re-test the narrowed final-parity
+      blocker from a fresh snapshot with focus on packaged module availability and
+      package-path composition for `invar.core.dead_param_helpers`.
+
+
+      YOUR GOAL IS TO FIND REMAINING PROBLEMS, not to confirm success.
+
+
+      Independence Level: L2
+
+      prior_loop: [fp-self-validate.fp-final-gate-import-path-fix, fp-self-validate.fp-final-gate-import-path-retest]
+
+      remaining_blocker: plain packaged `uvx invar-tools guard --all` still diverges
+      from the repo-local control path with `ModuleNotFoundError: invar.core.dead_param_helpers`
+
+      why_new_loop: the prior retest confirmed a narrower blocker than generic import
+      parity, so this replacement retest checks the exact packaged-module-availability
+      and path-composition failure path
+
+
+      spec_refs:
+
+      - plan.yaml / fp-self-validate / fp-final.gate
+
+      - repeated blocker report for `fp-self-validate.fp-final-gate-import-path-retest`
+
+
+      touch_paths:
+
+      - verify behavior across packaged distribution contents, `src/invar/shell/property_tests.py`,
+      `src/invar/shell/guard_helpers.py`, and `src/invar/core/dead_param_helpers.py`
+
+      - focused regression harness in `tests/test_subprocess_env.py`
+
+
+      harness_refs:
+
+      - `uvx invar-tools guard --all`
+
+      - `uv run python -m invar.shell.commands.guard guard --all`
+
+      - focused packaged import-path regression tests in `tests/test_subprocess_env.py`
+
+
+      Test for:
+
+      - happy path: the exact packaged `uvx` command completes property-tests without
+      `ModuleNotFoundError` for `invar.core.dead_param_helpers`
+
+      - edge cases: installed-package and workspace-overlay coexistence still resolves
+      sibling `invar.core.*` modules consistently
+
+      - error scenarios: if packaged `uvx` still fails, capture the full traceback,
+      module file paths, and whether `dead_param_helpers` is missing from the distribution,
+      missing from `invar.core.__path__`, or shadowed by path ordering
+
+      - proof quality: wheel-manifest inspection alone is insufficient; evidence must
+      come from the live packaged `uvx` command and focused regression harness
+
+
+      A retest that reproduces the blocker is a SUCCESSFUL verification outcome.'
+    verification: '- Main path: run packaged `uvx invar-tools guard --all` from the
+      frozen snapshot and paste the actual property-tests section output, showing
+      no `dead_param_helpers` import error
+
+      - Control path: run `uv run python -m invar.shell.commands.guard guard --all`
+      and compare behavior to confirm whether divergence is closed at the real entrypoints
+
+      - Failure path: if packaged `uvx` still fails, paste the traceback plus concrete
+      module file-path evidence for `invar.core.dead_param_helpers`, `invar.core`,
+      and the module under test
+
+      - Regression proof: run the focused `tests/test_subprocess_env.py` packaged
+      import-path regression(s) and paste output showing the mixed installed-package/workspace
+      case is covered'
+    evidence_template: "## Verification Report\n\n**Tester**: integration-verifier\
+      \ (independent of implementation)\n**Scope**: packaged module availability/path\
+      \ composition for `invar.core.dead_param_helpers`\n**Independence Level**: L2\n\
+      \n### Test Execution\n- Commands executed:\n  ```\n  uvx invar-tools guard --all\n\
+      \  uv run python -m invar.shell.commands.guard guard --all\n  <focused regression\
+      \ command>\n  ```\n- Output summary: <key packaged-vs-control results>\n\n###\
+      \ Issues Found\n- blocker / should_fix / suggestion / tech_debt findings with\
+      \ reproduction steps\n\n### Coverage Assessment\n- Happy path verified: ✅/❌\n\
+      - Edge cases tested: packaged + workspace coexistence, sibling helper import\
+      \ resolution\n- NOT tested: <areas not covered and why>\n\n### Verdict\n- PASS\
+      \ / ISSUES_FOUND / INCOMPLETE\n\n**Confidence**: high/medium/low"
+    depends_on:
+    - fp-self-validate.fp-final-gate-import-path-package-freeze
+    agent: integration-verifier
+  - id: fp-self-validate.fp-final-gate-import-path-package-retest-fix
+    name: fp-final-gate-import-path-package-retest-fix
+    status: pending
+    description: 'Priority: HIGH
+
+
+      Fix the packaged import-path parity blocker reproduced by `fp-self-validate.fp-final-gate-import-path-package-retest`,
+      specifically the plain `uvx invar-tools guard --all` failure with `ModuleNotFoundError:
+      No module named ''invar.core.dead_param_helpers''` while the repo-local control
+      path still passes.
+
+
+      prior_loop: [fp-self-validate.fp-final-gate-import-path-package-fix, fp-self-validate.fp-final-gate-import-path-package-retest]
+
+      remaining_blocker: the published/plain packaged `uvx` archive still omits or
+      fails to resolve `invar.core.dead_param_helpers`, so packaged `invar.core` contents
+      diverge from the working repo-local control path on the real property-tests
+      entrypath
+
+      why_new_loop: the previous package-focused fix closed the locally built wheel
+      path, but independent retest proved the plain packaged distribution still has
+      a narrower artifact/import-composition defect that requires another focused
+      remediation loop
+
+
+      spec_refs:
+
+      - plan.yaml / fp-self-validate / fp-final.gate
+
+      - blocker report from `fp-self-validate.fp-final-gate-import-path-package-retest`
+
+
+      touch_paths:
+
+      - packaging/distribution metadata and inclusion rules affecting published `invar.core`
+      contents
+
+      - `src/invar/core/dead_param.py`
+
+      - `src/invar/core/dead_param_helpers.py`
+
+      - package build manifests or package-data configuration that determines `invar.core`
+      files in built artifacts
+
+      - runtime import-path composition used by property-tests entrypoints (`src/invar/shell/property_tests.py`,
+      `src/invar/shell/guard_helpers.py`)
+
+      - focused packaged import-path regressions in `tests/test_subprocess_env.py`
+
+
+      harness_refs:
+
+      - `uvx invar-tools guard --all`
+
+      - `uv run python -m invar.shell.commands.guard guard --all`
+
+      - packaged artifact inspection/probe for installed `invar.core` contents
+
+      - focused regression coverage in `tests/test_subprocess_env.py`
+
+
+      Failure-mode checklist:
+
+      - relative vs absolute path behavior: packaged helper import must resolve the
+      same way whether discovery starts from installed cache paths or workspace-root
+      overlays
+
+      - missing-file fallback behavior: if `dead_param_helpers.py` is absent from
+      the packaged artifact, the regression must fail explicitly and identify the
+      missing packaged file rather than masking the issue with repo-local imports
+
+      - explicit clear / null overwrite semantics: any reset of `sys.path`, `sys.modules`,
+      namespace-package state, or cached build artifacts must intentionally clear
+      stale state before verifying the packaged path
+
+      - stale-definition vs new-state precedence: define whether packaged `site-packages`
+      or workspace `src/invar/core` wins when both are visible, and keep sibling `invar.core.*`
+      resolution consistent
+
+      - partial-write / CAS-conflict behavior: packaging/build updates must not leave
+      a partially updated artifact where `dead_param.py` is present but `dead_param_helpers.py`
+      is missing or unresolved
+
+
+      State semantics:
+
+      - last-writer-wins: the final packaged artifact contents and final `invar.core.__path__`
+      ordering at the packaged property-tests entrypoint determine import behavior
+
+      - preserve exactly: repo-local control-path success, existing `dead_param` helper
+      split, and current property-tests behavior outside this packaged-artifact defect
+
+      - backward-compatible legacy behavior: self-validation can still exercise repo
+      targets while published packaged `invar.core` exposes all required sibling helper
+      modules consistently
+
+
+      Concrete regression work:
+
+      - add or update a focused regression that inspects packaged `invar.core` contents
+      and fails if `dead_param.py` ships without `dead_param_helpers.py`
+
+      - add or update a focused regression for the exact plain packaged `uvx invar-tools
+      guard --all` property-tests import path
+
+      - capture the failing packaged artifact/path evidence first, then close the
+      same failure path with updated packaging/runtime evidence
+
+
+      Out of scope:
+
+      - unrelated final-gate parity failures once `dead_param_helpers` packaging/import
+      resolution is closed
+
+      - broad restructuring beyond the minimal packaging/runtime path needed to make
+      packaged `invar.core` contents consistent
+
+      - unrelated warning cleanup'
+    verification: '- Main path: targeted regressions plus a packaged artifact probe
+      show `invar.core.dead_param.py` and `invar.core.dead_param_helpers.py` are both
+      present/resolvable for the plain packaged `uvx` path
+
+      - Failure path: capture the pre-fix packaged artifact/import trace proving the
+      helper was missing or unreachable, then show the same plain packaged `uvx invar-tools
+      guard --all` path no longer raises `ModuleNotFoundError`
+
+      - Control comparison: compare against `uv run python -m invar.shell.commands.guard
+      guard --all` to prove packaged/local parity is restored for this blocker
+
+      - Proof: include exact commands and outputs for the plain packaged `uvx` command,
+      artifact/module-path inspection, and focused `tests/test_subprocess_env.py`
+      regression(s)
+
+      - Guardrail: keep the remediation scoped to packaged `invar.core` contents and
+      import composition for `dead_param_helpers`'
+    depends_on:
+    - fp-self-validate.fp-final-gate-import-path-package-retest
+    agent: python-senior
+  - id: fp-self-validate.fp-final-gate-import-path-package-retest-reretest
+    name: fp-final-gate-import-path-package-retest-reretest
+    status: pending
+    description: 'Priority: HIGH
+
+
+      As an INDEPENDENT TESTER (`integration-verifier`), re-test the packaged artifact/import-path
+      blocker after `fp-self-validate.fp-final-gate-import-path-package-retest-fix`
+      from a fresh snapshot.
+
+
+      YOUR GOAL IS TO FIND REMAINING PROBLEMS, not to confirm success.
+
+
+      Independence Level: L2
+
+      prior_loop: [fp-self-validate.fp-final-gate-import-path-package-retest, fp-self-validate.fp-final-gate-import-path-package-retest-fix]
+
+      remaining_blocker: plain packaged `uvx invar-tools guard --all` may still diverge
+      from the repo-local control path if published/package-cached `invar.core` contents
+      or namespace path composition still exclude `dead_param_helpers`
+
+      why_new_loop: the issue was reproduced by independent retest on the real packaged
+      path, so a fresh independent retest must validate the exact plain packaged artifact
+      and property-tests import path after the focused remediation
+
+
+      spec_refs:
+
+      - plan.yaml / fp-self-validate / fp-final.gate
+
+      - blocker report from `fp-self-validate.fp-final-gate-import-path-package-retest`
+
+
+      touch_paths:
+
+      - verify packaged distribution contents for `invar.core`
+
+      - `src/invar/core/dead_param.py`
+
+      - `src/invar/core/dead_param_helpers.py`
+
+      - `src/invar/shell/property_tests.py`
+
+      - `src/invar/shell/guard_helpers.py`
+
+      - focused regression harness in `tests/test_subprocess_env.py`
+
+
+      harness_refs:
+
+      - `uvx invar-tools guard --all`
+
+      - `uv run python -m invar.shell.commands.guard guard --all`
+
+      - packaged module probes for `invar.core.dead_param_helpers`
+
+      - focused packaged import-path regressions in `tests/test_subprocess_env.py`
+
+
+      Test for:
+
+      - happy path: the exact plain packaged `uvx invar-tools guard --all` command
+      completes the property-tests import path without `ModuleNotFoundError` for `invar.core.dead_param_helpers`
+
+      - edge cases: package-cache versus workspace-overlay coexistence still resolves
+      sibling `invar.core.*` modules consistently, and packaged artifact inspection
+      shows both required files are present
+
+      - error scenarios: if packaged `uvx` still fails, capture the full traceback,
+      packaged file listing/path evidence, and whether the helper is missing from
+      the artifact, missing from `invar.core.__path__`, or shadowed by path ordering
+
+      - proof quality: wheel-from-local-build evidence alone is insufficient; evidence
+      must come from the plain packaged `uvx` path plus focused regression coverage
+
+
+      A retest that reproduces the blocker is a SUCCESSFUL verification outcome.'
+    verification: '- Main path: run plain packaged `uvx invar-tools guard --all` from
+      the frozen/fresh snapshot and paste the actual property-tests output, showing
+      no `dead_param_helpers` import error
+
+      - Control path: run `uv run python -m invar.shell.commands.guard guard --all`
+      and compare behavior to confirm the packaged/local divergence is closed at the
+      real entrypoints
+
+      - Failure path: if packaged `uvx` still fails, paste the traceback plus concrete
+      packaged file/module-path evidence for `invar.core`, `invar.core.dead_param.py`,
+      and `invar.core.dead_param_helpers.py`
+
+      - Regression proof: run the focused `tests/test_subprocess_env.py` packaged
+      import-path regression(s) and paste output showing the missing-helper artifact
+      case and mixed installed-package/workspace case are both covered'
+    depends_on:
+    - fp-self-validate.fp-final-gate-import-path-package-retest-fix
+    agent: integration-verifier
