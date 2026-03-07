@@ -1309,11 +1309,11 @@ phases:
       working together to deliver reliable dead_export detection.'
 - id: wiring-integrity-1
   name: 'DX-89 Wave 1: Wiring Integrity Rules'
-  status: pending
+  status: in_progress
   steps:
   - id: wiring-integrity-1.dead-param-core
     name: dead-param-core
-    status: pending
+    status: done
     description: 'Implement dead_param rule: detect function parameters unused in
       the function body. Build an AST visitor that walks function definitions, collects
       parameter names, and checks whether each is referenced in the body. Handle *args/**kwargs,
@@ -1333,9 +1333,30 @@ phases:
     - src/invar/core/
     - src/invar/core/dead_export.py
     agent: python-senior
+    claimed_by: python-senior
+    claimed_at: '2026-03-06T22:13:43.919558+00:00'
+    evidence: 'Artifact:
+
+      - Commit hash(es): 9a34190
+
+      - Files changed: src/invar/core/dead_param.py
+
+
+      Verification:
+
+      - Run: .venv/bin/python -m pytest -q tests/core/test_dead_param.py -> PASS (7
+      passed)
+
+      - Run: .venv/bin/python -m pytest -q --doctest-modules src/invar/core/dead_param.py
+      -> PASS
+
+
+      Spec link:
+
+      - plan.yaml step wiring-integrity-1.dead-param-core'
   - id: wiring-integrity-1.stub-body-core
     name: stub-body-core
-    status: pending
+    status: done
     description: 'Implement stub_body rule: detect functions whose body contains only
       pass, raise NotImplementedError, ellipsis (...), or a bare docstring with no
       logic. Identify placeholder implementations that were never filled in. Handle
@@ -1354,9 +1375,31 @@ phases:
     - src/invar/core/
     - src/invar/core/dead_export.py
     agent: python-senior
+    claimed_by: python-senior
+    claimed_at: '2026-03-07T05:51:10.001721+00:00'
+    evidence: 'Artifact:
+
+      - Commit: cc037e6 (implements src/invar/core/stub_body.py and tests/core/test_stub_body.py)
+
+
+      Verification:
+
+      - Run: invar_guard(path="src/invar/core/stub_body.py", changed=False) -> PASS
+      (static 0 errors/0 warnings, doctest passed, property tests passed)
+
+      - Run: invar_guard(path=".", changed=False) -> PASS (static 0 errors/0 warnings,
+      doctest passed)
+
+      - Coverage check: doctests and tests include required cases (pass-only, raise
+      NotImplementedError, ellipsis, bare docstring, abstract/protocol exemptions)
+
+
+      Spec link:
+
+      - plan.yaml step wiring-integrity-1.stub-body-core'
   - id: wiring-integrity-1.wiring-gap-core
     name: wiring-gap-core
-    status: pending
+    status: claimed
     description: 'Highest-value rule: detects "forgot to wire" bugs — values constructed
       in scope but not passed to function calls that accept them as optional parameters.
       No existing tool (pyright, semgrep, ruff) catches this because the parameter
@@ -1428,6 +1471,8 @@ phases:
     - src/invar/core/
     - src/invar/core/dead_export.py
     agent: python-senior
+    claimed_by: python-senior
+    claimed_at: '2026-03-07T05:54:52.017673+00:00'
   - id: wiring-integrity-1.register-rules
     name: register-rules
     status: pending
