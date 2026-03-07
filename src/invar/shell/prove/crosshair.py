@@ -265,6 +265,7 @@ def _verify_single_file(
                 "RecursionError:",  # Infinite recursion in repr code
                 "maximum recursion depth exceeded",  # Stack overflow
                 "format_boundargs",  # CrossHair repr formatting bug
+                "ValidationError:",  # Pydantic rejects symbolic values
             ]
             is_execution_error = any(err in output for err in execution_errors)
 

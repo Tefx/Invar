@@ -210,6 +210,11 @@ def run_property_tests_on_file(
             report.functions_skipped += 1
             continue
 
+        # Skip functions marked with @skip_property_test
+        if hasattr(func, "__invar_skip_property_test__"):
+            report.functions_skipped += 1
+            continue
+
         # Run property test
         result = run_property_test(func, max_examples)
         # DX-26: Set file_path for actionable failure output
