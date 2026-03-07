@@ -135,6 +135,33 @@ def _walk_expr(node: ast.AST, pending: dict[str, DeadWrite], dead_writes: list[D
         _walk_expr(child, pending, dead_writes)
 
 
+@post(lambda result: result is None)
+def _walk_expr_read_only(node: ast.AST, pending: dict[str, DeadWrite]) -> None:
+    if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Load):
+        _record_read(node.id, pending)
+        return
+
+    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+        _walk_nested_scope_reads_read_only(node, pending)
+        return
+
+    for child in ast.iter_child_nodes(node):
+        _walk_expr_read_only(child, pending)
+
+
+@post(lambda result: result is None)
+def _walk_stmt_read_only(node: ast.stmt, pending: dict[str, DeadWrite]) -> None:
+    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+        _walk_nested_scope_reads_read_only(node, pending)
+        return
+
+    for child in ast.iter_child_nodes(node):
+        if isinstance(child, ast.stmt):
+            _walk_stmt_read_only(child, pending)
+        else:
+            _walk_expr_read_only(child, pending)
+
+
 @pre(
     lambda node, pending, dead_writes: (
         _has_ast_fields(node, ("targets", "value")) and _state_is_valid(pending, dead_writes)
@@ -218,6 +245,30 @@ def _walk_loop(
         _record_write(name, line, pending, dead_writes)
     for body_stmt in node.body:
         _walk_stmt(body_stmt, pending, dead_writes)
+    # Simulate one additional iteration in read-only mode so loop-carried
+    # reads clear pending writes from the previous iteration.
+    for body_stmt in node.body:
+        _walk_stmt_read_only(body_stmt, pending)
+    for else_stmt in node.orelse:
+        _walk_stmt(else_stmt, pending, dead_writes)
+
+
+@pre(
+    lambda node, pending, dead_writes: (
+        _has_ast_fields(node, ("test", "body", "orelse")) and _state_is_valid(pending, dead_writes)
+    )
+)
+@post(lambda result: result is None)
+def _walk_while(
+    node: ast.While,
+    pending: dict[str, DeadWrite],
+    dead_writes: list[DeadWrite],
+) -> None:
+    _walk_expr(node.test, pending, dead_writes)
+    for body_stmt in node.body:
+        _walk_stmt(body_stmt, pending, dead_writes)
+    # Simulate next-iteration condition check in read-only mode.
+    _walk_expr_read_only(node.test, pending)
     for else_stmt in node.orelse:
         _walk_stmt(else_stmt, pending, dead_writes)
 
@@ -300,6 +351,24 @@ def _walk_nested_scope_reads(
         _walk_nested_scope_reads(child, pending, dead_writes)
 
 
+@post(lambda result: result is None)
+def _walk_nested_scope_reads_read_only(node: ast.AST, pending: dict[str, DeadWrite]) -> None:
+    if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Load):
+        _record_read(node.id, pending)
+        return
+
+    if isinstance(node, ast.Lambda):
+        _walk_expr_read_only(node.body, pending)
+        return
+
+    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+        _walk_nested_scope_header_read_only(node, pending)
+        return
+
+    for child in ast.iter_child_nodes(node):
+        _walk_nested_scope_reads_read_only(child, pending)
+
+
 @pre(
     lambda node, pending, dead_writes: (
         _has_ast_fields(node, ("decorator_list", "body"))
@@ -355,6 +424,60 @@ def _walk_nested_scope_header(
         _walk_nested_scope_reads(body_stmt, pending, dead_writes)
 
 
+@pre(
+    lambda node, pending: (
+        _has_ast_fields(node, ("decorator_list", "body"))
+        and (
+            not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+            or _has_ast_fields(
+                node,
+                (
+                    "args",
+                    "returns",
+                ),
+            )
+        )
+        and all(len(k) > 0 and v[1] > 0 for k, v in pending.items())
+    )
+)
+@post(lambda result: result is None)
+def _walk_nested_scope_header_read_only(
+    node: ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef,
+    pending: dict[str, DeadWrite],
+) -> None:
+    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+        for decorator in node.decorator_list:
+            _walk_expr_read_only(decorator, pending)
+        for default in node.args.defaults:
+            _walk_expr_read_only(default, pending)
+        for kw_default in node.args.kw_defaults:
+            if kw_default is not None:
+                _walk_expr_read_only(kw_default, pending)
+        for arg_node in [
+            *node.args.posonlyargs,
+            *node.args.args,
+            *node.args.kwonlyargs,
+            node.args.vararg,
+            node.args.kwarg,
+        ]:
+            if arg_node is not None and arg_node.annotation is not None:
+                _walk_expr_read_only(arg_node.annotation, pending)
+        if node.returns is not None:
+            _walk_expr_read_only(node.returns, pending)
+        for body_stmt in node.body:
+            _walk_nested_scope_reads_read_only(body_stmt, pending)
+        return
+
+    for base in node.bases:
+        _walk_expr_read_only(base, pending)
+    for keyword in node.keywords:
+        _walk_expr_read_only(keyword.value, pending)
+    for decorator in node.decorator_list:
+        _walk_expr_read_only(decorator, pending)
+    for body_stmt in node.body:
+        _walk_nested_scope_reads_read_only(body_stmt, pending)
+
+
 @post(lambda result: result is None)
 def _walk_stmt(node: ast.stmt, pending: dict[str, DeadWrite], dead_writes: list[DeadWrite]) -> None:
     if isinstance(node, ast.Assign):
@@ -371,6 +494,10 @@ def _walk_stmt(node: ast.stmt, pending: dict[str, DeadWrite], dead_writes: list[
 
     if isinstance(node, (ast.For, ast.AsyncFor)):
         _walk_loop(node, pending, dead_writes)
+        return
+
+    if isinstance(node, ast.While):
+        _walk_while(node, pending, dead_writes)
         return
 
     if isinstance(node, (ast.With, ast.AsyncWith)):
