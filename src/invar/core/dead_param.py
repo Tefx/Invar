@@ -519,7 +519,7 @@ def check_dead_params(file_infos: list[FileInfo], config: RuleConfig) -> list[Vi
                         file=file_info.path,
                         line=getattr(param_node, "lineno", node.lineno),
                         message=(f"Function '{node.name}' parameter '{param_name}' is never used"),
-                        suggestion="Remove parameter or prefix with _ if intentionally unused",
+                        suggestion="Remove unused parameter, rename to _param, or add: # @invar:allow dead_param: <reason>",
                     )
                 )
 
