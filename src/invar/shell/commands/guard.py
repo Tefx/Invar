@@ -60,6 +60,22 @@ def _count_core_functions(file_info) -> tuple[int, int]:
     return (total, with_contracts)
 
 
+def _is_dependency_or_env_path(relative_path: str) -> bool:
+    normalized = relative_path.replace("\\", "/")
+    return (
+        normalized.startswith(
+            (
+                ".venv/",
+                ".venv",
+                ".venv314/",
+                "venv/",
+                "site-packages/",
+            )
+        )
+        or "/site-packages/" in normalized
+    )
+
+
 # @shell_complexity: Core orchestration - iterates files, handles failures, aggregates results
 def _scan_and_check(
     path: Path,
@@ -84,6 +100,8 @@ def _scan_and_check(
             console.print(f"[yellow]Warning:[/yellow] {file_result.failure()}")
             continue
         file_info = file_result.unwrap()
+        if _is_dependency_or_env_path(file_info.path):
+            continue
         all_file_infos.append(file_info)
         report.files_checked += 1
         # P24: Track contract coverage for Core files
@@ -110,7 +128,10 @@ def _scan_and_check(
         ref_context_infos = []
         for context_result in scan_project(path):
             if isinstance(context_result, Success):
-                ref_context_infos.append(context_result.unwrap())
+                file_info = context_result.unwrap()
+                if _is_dependency_or_env_path(file_info.path):
+                    continue
+                ref_context_infos.append(file_info)
 
     sources = {fi.path: fi.source for fi in ref_context_infos if fi.source}
     ref_counts = count_cross_file_references(ref_context_infos, sources, include_same_file=True)
