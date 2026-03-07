@@ -1,0 +1,74 @@
+{
+  "step": "wiring-integrity-1.cross-project-validate-fix",
+  "spec_source": "plan.yaml (cross-project baseline: TP=4, FP=22, total=26)",
+  "scope": {
+    "project": "../anima",
+    "rules": ["dead_param", "stub_body", "wiring_gap"]
+  },
+  "commands": {
+    "baseline": "uv run invar guard ../anima --all --static --agent > /tmp/wiring_cross_validate_fix_baseline.json",
+    "after_fix": "uv run invar guard ../anima --all --static --agent > /tmp/wiring_cross_validate_fix_after.json"
+  },
+  "counts": {
+    "before": {
+      "total": 25,
+      "dead_param": 24,
+      "stub_body": 1,
+      "wiring_gap": 0
+    },
+    "after": {
+      "total": 7,
+      "dead_param": 7,
+      "stub_body": 0,
+      "wiring_gap": 0
+    }
+  },
+  "remaining_after": [
+    {
+      "rule": "dead_param",
+      "file": "src/anima/shell/agent_budget.py",
+      "line": 185,
+      "message": "Function 'handle_model_request_turn' parameter 'token_usage' is never used"
+    },
+    {
+      "rule": "dead_param",
+      "file": "src/anima/shell/mcp_agent.py",
+      "line": 452,
+      "message": "Function '_handle_stream_request' parameter 'request' is never used"
+    },
+    {
+      "rule": "dead_param",
+      "file": "src/anima/shell/mcp_agent.py",
+      "line": 625,
+      "message": "Function 'start_stream_session' parameter 'turn_number' is never used"
+    },
+    {
+      "rule": "dead_param",
+      "file": "src/anima/shell/meta_injection.py",
+      "line": 159,
+      "message": "Function 'inject_meta_callback' parameter 'ctx' is never used"
+    },
+    {
+      "rule": "dead_param",
+      "file": "src/anima/shell/agent.py",
+      "line": 673,
+      "message": "Function 'get_dynamic_instructions' parameter 'ctx' is never used"
+    },
+    {
+      "rule": "dead_param",
+      "file": "src/anima/shell/cli_commands/talk_runtime.py",
+      "line": 39,
+      "message": "Function 'patch_stdout' parameter 'raw' is never used"
+    },
+    {
+      "rule": "dead_param",
+      "file": "src/anima/shell/cli_commands/talk_streaming.py",
+      "line": 127,
+      "message": "Function 'probe_streaming_support' parameter 'socket_path' is never used"
+    }
+  ],
+  "notes": [
+    "This artifact captures fix-step tuning impact only.",
+    "Independent TP/FP re-categorization is intentionally deferred to wiring-integrity-1.cross-project-validate-retest."
+  ]
+}
