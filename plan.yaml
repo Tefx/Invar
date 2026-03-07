@@ -1617,6 +1617,74 @@ phases:
     - wiring-integrity-1.cross-project-validate
     - wiring-integrity-1.wiring-gap-verbose
     agent: gate-reviewer
+  - id: gate-1-fix
+    name: gate-1-fix
+    status: done
+    description: 'Fix blocker findings from wiring-integrity-1.gate-1.
+
+
+      Scope:
+
+      - Land rule registration in src/invar/core/rule_meta.py in committed state
+
+      - Add explicit non-doctest wiring_gap coverage and guard integration artifact path
+
+      - Make self-validation reproducibly clean and document exact commands/artifacts
+
+      - Complete cross-project precision/recall documentation
+
+      - Resolve freeze/evidence quality requirements with clean/staged state procedure'
+    verification: '- rule_meta registration committed
+
+      - wiring_gap non-doctest coverage added
+
+      - guard integration artifact path documented
+
+      - self-validation + cross-project validation commands documented with outcomes
+
+      - freeze/evidence requirements documented'
+    depends_on:
+    - wiring-integrity-1.gate-1
+    agent: python-senior
+    claimed_by: python-senior
+    claimed_at: '2026-03-07T06:51:05.095235+00:00'
+    evidence: 'Artifact:
+
+      - Commit hash(es): 117a810 + current step commit
+
+      - Files changed: src/invar/core/rule_meta.py; src/invar/shell/commands/guard.py;
+      tests/core/test_wiring_gap.py; tests/integration/test_wiring_gap_guard_integration.py;
+      docs/testing/artifacts/wiring-gap-guard-integration.json; docs/testing/wiring-integrity-1-gate-1-fix.md;
+      plan.yaml
+
+
+      Verification:
+
+      - Run: uv run python -m pytest -q tests/core/test_dead_param.py tests/core/test_stub_body.py
+      tests/core/test_wiring_gap.py tests/integration/test_wiring_gap_guard_integration.py
+      -> PASS (20 passed, 0 failed)
+
+      - Run: uv run invar guard src/invar/core/rule_meta.py --all -> PASS
+
+      - Run: uv run invar guard src/invar/core/wiring_gap.py --all -> PASS
+
+      - Run: uv run invar guard src/invar/shell/commands/guard.py --all --static ->
+      PASS
+
+      - Run: uvx invar-tools guard --all --static (workdir /Users/tefx/Projects/anima)
+      -> PASS; wave-1 rule counts dead_param=0, stub_body=0, wiring_gap=0
+
+
+      Spec link:
+
+      - plan.yaml step gate-1-fix
+
+
+      Gaps/Notes:
+
+      - Guard integration artifact path: docs/testing/artifacts/wiring-gap-guard-integration.json
+
+      - Freeze/evidence requirements documented in docs/testing/wiring-integrity-1-gate-1-fix.md'
 - id: wiring-integrity-2
   name: 'DX-89 Wave 2: mock_leak + dead_assign Rules'
   status: in_progress

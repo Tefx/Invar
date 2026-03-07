@@ -1,0 +1,91 @@
+{
+  "status": "passed",
+  "static": {
+    "passed": true,
+    "errors": 0,
+    "warnings": 3,
+    "infos": 0,
+    "findings": [
+      {
+        "file": "src/demo/shell/caller.py",
+        "line": 3,
+        "rule": "dead_export",
+        "severity": "warning",
+        "message": "Shell function 'run' is never referenced",
+        "fix": {
+          "action": "manual",
+          "instruction": "Remove unused function, or add: # @invar:allow dead_export: <reason>"
+        },
+        "rule_meta": {
+          "category": "shell",
+          "detects": "Public shell function with zero runtime callers across src/ (excluding tests/)",
+          "cannot_detect": [
+            "Dynamic dispatch",
+            "Reflection-based callers",
+            "External consumers outside src/"
+          ],
+          "hint": "Add a caller in src/ or mark with: # @invar:allow dead_export: <reason>"
+        }
+      },
+      {
+        "file": "src/demo/shell/caller.py",
+        "line": 5,
+        "rule": "wiring_gap",
+        "severity": "warning",
+        "message": "Local variable 'payload' matches optional parameter on call to 'build' but is not passed",
+        "fix": {
+          "action": "manual",
+          "instruction": "Pass 'payload=payload' explicitly, rename local variable, or confirm omission intentionally"
+        },
+        "rule_meta": {
+          "category": "shell",
+          "detects": "Local variable name matches an unpassed optional parameter of a called function",
+          "cannot_detect": [
+            "Semantic intent mismatch despite matching names",
+            "Call targets resolved only at runtime"
+          ],
+          "hint": "local variable matches unpassed optional parameter of called function"
+        }
+      },
+      {
+        "file": "src/demo/shell/caller.py",
+        "line": 4,
+        "rule": "dead_assign",
+        "severity": "warning",
+        "message": "Function 'run' local 'payload' is assigned but never read",
+        "fix": {
+          "action": "manual",
+          "instruction": "Remove assignment, use the value, or add: # @invar:allow dead_assign: <reason>"
+        },
+        "rule_meta": {
+          "category": "purity",
+          "detects": "Local variable assigned but never read later in function",
+          "cannot_detect": [
+            "Value used in debugger/inspector",
+            "Side-effectful assignment patterns"
+          ],
+          "hint": "Remove assignment, use the value, or add: # @invar:allow dead_assign: <reason>"
+        }
+      }
+    ]
+  },
+  "summary": {
+    "files_checked": 2,
+    "errors": 0,
+    "warnings": 3,
+    "infos": 0
+  },
+  "verification_level": "STATIC",
+  "doctest": {
+    "passed": true,
+    "output": ""
+  },
+  "crosshair": {
+    "status": "skipped",
+    "reason": "static mode"
+  },
+  "property_tests": {
+    "status": "skipped",
+    "reason": "static mode"
+  }
+}

@@ -200,6 +200,39 @@ RULE_META: dict[str, RuleMeta] = {
         ),
         hint="Add a caller in src/ or mark with: # @invar:allow dead_export: <reason>",
     ),
+    "dead_param": RuleMeta(
+        name="dead_param",
+        severity=Severity.WARNING,
+        category=RuleCategory.SHELL,
+        detects="Function parameter declared but never referenced in the function body",
+        cannot_detect=(
+            "Dynamic parameter access via locals()/kwargs",
+            "Framework-mandated but intentionally unused parameters",
+        ),
+        hint="Remove unused parameter, rename to _param, or add: # @invar:allow dead_param: <reason>",
+    ),
+    "stub_body": RuleMeta(
+        name="stub_body",
+        severity=Severity.INFO,
+        category=RuleCategory.SHELL,
+        detects="Function body is a non-implementation stub (..., pass, or NotImplementedError)",
+        cannot_detect=(
+            "Intentional protocol stubs in abstract base types",
+            "Generated code placeholders finalized at runtime",
+        ),
+        hint="Implement behavior or add: # @invar:allow stub_body: <reason>",
+    ),
+    "wiring_gap": RuleMeta(
+        name="wiring_gap",
+        severity=Severity.WARNING,
+        category=RuleCategory.SHELL,
+        detects="Local variable name matches an unpassed optional parameter of a called function",
+        cannot_detect=(
+            "Semantic intent mismatch despite matching names",
+            "Call targets resolved only at runtime",
+        ),
+        hint="local variable matches unpassed optional parameter of called function",
+    ),
     "mock_leak": RuleMeta(
         name="mock_leak",
         severity=Severity.ERROR,
