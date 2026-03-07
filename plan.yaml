@@ -1650,7 +1650,7 @@ phases:
     claimed_at: '2026-03-07T06:51:05.095235+00:00'
     evidence: 'Artifact:
 
-      - Commit hash(es): 117a810 + current step commit
+      - Commit hash(es): 117a810, 098225d
 
       - Files changed: src/invar/core/rule_meta.py; src/invar/shell/commands/guard.py;
       tests/core/test_wiring_gap.py; tests/integration/test_wiring_gap_guard_integration.py;
