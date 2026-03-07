@@ -1309,7 +1309,7 @@ phases:
       working together to deliver reliable dead_export detection.'
 - id: wiring-integrity-1
   name: 'DX-89 Wave 1: Wiring Integrity Rules'
-  status: in_progress
+  status: done
   steps:
   - id: wiring-integrity-1.dead-param-core
     name: dead-param-core
@@ -1399,7 +1399,7 @@ phases:
       - plan.yaml step wiring-integrity-1.stub-body-core'
   - id: wiring-integrity-1.wiring-gap-core
     name: wiring-gap-core
-    status: claimed
+    status: done
     description: 'Highest-value rule: detects "forgot to wire" bugs — values constructed
       in scope but not passed to function calls that accept them as optional parameters.
       No existing tool (pyright, semgrep, ruff) catches this because the parameter
@@ -1473,9 +1473,25 @@ phases:
     agent: python-senior
     claimed_by: python-senior
     claimed_at: '2026-03-07T05:54:52.017673+00:00'
+    evidence: 'Artifact:
+
+      - Commit hash: f3e74ef
+
+
+      Verification:
+
+      - Run: invar_guard(path=''.'', changed=False) -> PASS (0 errors, 0 warnings)
+
+      - Run: uv run python -m doctest src/invar/core/wiring_gap.py -v -> PASS (14
+      passed)
+
+
+      Spec link:
+
+      - plan.yaml step wiring-integrity-1.wiring-gap-core'
   - id: wiring-integrity-1.register-rules
     name: register-rules
-    status: pending
+    status: done
     description: "Register dead_param, stub_body, and wiring_gap in rule registries.\n\
       \nFile: src/invar/core/rule_meta.py\n- Add RuleMeta entries to RULE_META dict:\n\
       \  - \"dead_param\": WARNING severity, SHELL category\n  - \"stub_body\": INFO\
@@ -1492,9 +1508,36 @@ phases:
     - wiring-integrity-1.stub-body-core
     - wiring-integrity-1.wiring-gap-core
     agent: python-executor
+    claimed_by: python-executor
+    claimed_at: '2026-03-07T07:24:28.831053+00:00'
+    evidence: 'Artifact:
+
+      - Commit hash(es): none (no changes required)
+
+      - File verified: src/invar/core/rule_meta.py
+
+
+      Verification:
+
+      - Run: uv run python inline RULE_META inspection -> PASS; dead_param WARNING/SHELL,
+      stub_body INFO/SHELL, wiring_gap WARNING/SHELL; wiring_gap hint exact
+
+      - Run: uv run python -m doctest src/invar/core/rule_meta.py -v -> PASS (11 passed)
+
+      - Run: invar_invar_guard(path=''.'', changed=False) -> PASS
+
+
+      Spec link:
+
+      - plan.yaml step wiring-integrity-1.register-rules
+
+
+      Gaps/Notes:
+
+      - Pre-existing plan.yaml modification observed, untouched in this step.'
   - id: wiring-integrity-1.guard-integration
     name: guard-integration
-    status: pending
+    status: done
     description: 'Wire dead_param, stub_body, and wiring_gap checks into guard scan
       pipeline.
 
@@ -1524,9 +1567,38 @@ phases:
     depends_on:
     - wiring-integrity-1.register-rules
     agent: python-executor
+    claimed_by: python-executor
+    claimed_at: '2026-03-07T07:39:11.667794+00:00'
+    evidence: 'Artifact:
+
+      - Commit hash(es): none
+
+      - Files changed: src/invar/shell/commands/guard.py
+
+
+      Verification:
+
+      - Run: invar_invar_guard(path=''.'', changed=true) -> PASS (0 errors, 0 warnings)
+
+      - Run: ruff check src/invar/shell/commands/guard.py -> PASS
+
+      - Run: uv run pytest tests/integration/test_wiring_gap_guard_integration.py
+      -q -> PASS (1 passed)
+
+
+      Spec link:
+
+      - plan.yaml step wiring-integrity-1.guard-integration
+
+
+      Gaps/Notes:
+
+      - No commit created in this dispatch; changes remain uncommitted.
+
+      - Pre-existing plan.yaml modification present.'
   - id: wiring-integrity-1.wiring-gap-verbose
     name: wiring-gap-verbose
-    status: pending
+    status: done
     description: 'Add --verbose flag support to wiring_gap showing variable-to-param
       match details.
 
@@ -1557,9 +1629,41 @@ phases:
     depends_on:
     - wiring-integrity-1.guard-integration
     agent: python-executor
+    claimed_by: python-executor
+    claimed_at: '2026-03-07T08:26:09.688213+00:00'
+    evidence: 'Artifact:
+
+      - Commit hash(es): none
+
+      - Files changed: src/invar/shell/commands/guard.py
+
+
+      Verification:
+
+      - Run: invar_invar_guard(path=''/Users/tefx/Projects/Invar'', changed=False,
+      strict=False, coverage=False, contracts_only=False) -> PASS (static errors 0,
+      warnings 0, infos 0; doctest passed)
+
+      - Run: uv run pytest tests/core/test_wiring_gap.py tests/integration/test_wiring_gap_guard_integration.py
+      -q -> PASS (4 passed, 1 warning)
+
+      - Run: git status --short -> shows modified plan.yaml and guard.py in working
+      tree
+
+
+      Spec link:
+
+      - plan.yaml step wiring-integrity-1.wiring-gap-verbose
+
+
+      Gaps/Notes:
+
+      - No commit produced in this dispatch.
+
+      - Pytest warning is non-blocking Hypothesis directory notice.'
   - id: wiring-integrity-1.self-validate
     name: self-validate
-    status: pending
+    status: done
     description: 'Run invar guard on Invar''s own codebase with dead_param, stub_body,
       and wiring_gap enabled. Triage all findings: fix genuine issues, suppress false
       positives with appropriate annotations, document any rule tuning needed.
@@ -1574,9 +1678,23 @@ phases:
     - wiring-integrity-1.guard-integration
     - wiring-integrity-1.wiring-gap-verbose
     agent: python-senior
+    claimed_by: python-senior
+    claimed_at: '2026-03-07T08:31:28.561078+00:00'
+    evidence: "Artifact:\n- Commit hash(es): none\n- Files changed: none\n\nVerification:\n\
+      - Run: uv run invar guard src/invar --all --static --agent > /tmp/wiring_self_validate_guard.json\
+      \ -> PASS exit; static summary included warnings\n- Run: parse /tmp/wiring_self_validate_guard.json\
+      \ for src/invar and rules dead_param/stub_body/wiring_gap -> total_subset=29,\
+      \ by_rule={'dead_param':29,'stub_body':0,'wiring_gap':0}\n- Run: bucket dead_param\
+      \ findings -> config=15, underscore=3, other=11\n\nSpec link:\n- plan.yaml step\
+      \ wiring-integrity-1.self-validate\n\nnotes:\n  suggestions:\n    - \"dead_param\
+      \ false-positive reduction: ignore underscore-prefixed parameters by default.\"\
+      \n  tech_debt:\n    - \"Add protocol/interface-shape handling for checker-style\
+      \ config params or enforce explicit suppressions.\"\n\nIssue handling:\n- Detected\
+      \ should_fix issue (self-validation not clean for dead_param).\n- Created remediation\
+      \ steps via planner: wiring-integrity-1.self-validate-fix and wiring-integrity-1.self-validate-retest."
   - id: wiring-integrity-1.cross-project-validate
     name: cross-project-validate
-    status: pending
+    status: done
     description: 'Run invar guard with all Wave 1 rules on the anima project. Document
       precision (false positive rate) and recall (known issues caught). Report any
       rule adjustments needed.
@@ -1592,9 +1710,24 @@ phases:
     depends_on:
     - wiring-integrity-1.self-validate
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-07T08:37:07.128769+00:00'
+    evidence: "Artifact:\n- Commit hash(es): none\n- Files changed: none\n\nVerification:\n\
+      - Run: uv run invar guard ../anima --all --static --agent > /tmp/wiring_cross_validate_guard.json\
+      \ -> PASS execution; status passed; warnings 63; infos 12\n- Run: parse Wave-1\
+      \ findings (dead_param/stub_body/wiring_gap) -> wave_total=26 (dead_param=25,\
+      \ stub_body=1, wiring_gap=0)\n- TP/FP categorization -> TP=4, FP=22; precision=15.38%;\
+      \ false-positive rate=84.62%\n\nSpec link:\n- plan.yaml step wiring-integrity-1.cross-project-validate\n\
+      \nIssue detected:\n- blocker: target FP rate <10% not met (observed 84.62%);\n\
+      - likely false-positive sources: dead_param closure-capture/framework-signature\
+      \ heuristics and stub_body click-entrypoint pattern.\n\nRemediation:\n- Created\
+      \ follow-up steps: wiring-integrity-1.cross-project-validate-fix and wiring-integrity-1.cross-project-validate-retest.\n\
+      \nnotes:\n  suggestions:\n    - \"Need seeded known wiring_gap example in cross-project\
+      \ dataset to quantify recall for wiring_gap.\"\n  tech_debt:\n    - \"Cross-project\
+      \ benchmark corpus needs stable TP/FP ground-truth fixtures.\""
   - id: wiring-integrity-1.gate-1
     name: gate-1
-    status: pending
+    status: done
     description: 'Gate review: Verify Wave 1 wiring integrity rules are complete,
       tested, and validated.
 
@@ -1617,6 +1750,24 @@ phases:
     - wiring-integrity-1.cross-project-validate
     - wiring-integrity-1.wiring-gap-verbose
     agent: gate-reviewer
+    claimed_by: gate-reviewer
+    claimed_at: '2026-03-07T09:25:17.288123+00:00'
+    evidence: "Artifact:\n- Gate decision: PASS (independent gate-reviewer)\n\nVerification:\n\
+      - Run: uv run pyright src/invar/core/dead_param.py src/invar/core/stub_body.py\
+      \ src/invar/core/wiring_gap.py src/invar/shell/commands/guard.py -> PASS (0\
+      \ errors)\n- Run: uv run ruff check (core/guard/test paths for Wave-1) -> PASS\n\
+      - Run: uv run python -m pytest -q tests/core/test_dead_param.py tests/core/test_stub_body.py\
+      \ tests/core/test_wiring_gap.py tests/integration/test_wiring_gap_guard_integration.py\
+      \ -> PASS (32 passed)\n- Run: static guard parse for src/invar -> Wave-1 findings\
+      \ dead_param=0, stub_body=0, wiring_gap=0\n- Run: static guard parse for ../anima\
+      \ -> Wave-1 findings dead_param=3, stub_body=0, wiring_gap=0; evidence confirms\
+      \ FP target met in latest independent retest\n- Evidence/docs reviewed: plan.yaml\
+      \ validation entries + wiring-gap integration artifact confirm criteria coverage\n\
+      \nSpec link:\n- plan.yaml step wiring-integrity-1.gate-1\n\nnotes:\n  suggestions:\n\
+      \    - \"Cross-project markdown doc contains stale zero-count snapshot; update\
+      \ to mirror latest retest evidence for consistency.\"\n  tech_debt:\n    - \"\
+      Cross-project TP/FP classification is still manual and would benefit from a\
+      \ stable benchmark fixture corpus.\""
   - id: gate-1-fix
     name: gate-1-fix
     status: done
@@ -1627,7 +1778,8 @@ phases:
 
       - Land rule registration in src/invar/core/rule_meta.py in committed state
 
-      - Add explicit non-doctest wiring_gap coverage and guard integration artifact path
+      - Add explicit non-doctest wiring_gap coverage and guard integration artifact
+      path
 
       - Make self-validation reproducibly clean and document exact commands/artifacts
 
@@ -1685,6 +1837,304 @@ phases:
       - Guard integration artifact path: docs/testing/artifacts/wiring-gap-guard-integration.json
 
       - Freeze/evidence requirements documented in docs/testing/wiring-integrity-1-gate-1-fix.md'
+  - id: wiring-integrity-1.self-validate-fix
+    name: self-validate.fix
+    status: done
+    description: 'Fix: reduce dead_param noise in src/invar by suppressing legitimate
+      false positives (including config-shape parameters and underscore-prefixed parameters
+      where appropriate) and resolving any genuine unused parameter findings identified
+      from wiring-integrity-1.self-validate.'
+    verification: '- Dead_param findings triaged across src/invar
+
+      - False positives suppressed with explicit, maintainable rationale
+
+      - Genuine unused parameters fixed without changing intended behavior
+
+      - Follow-up notes captured for any rule-tuning still needed'
+    depends_on:
+    - wiring-integrity-1.self-validate
+    agent: python-senior
+    claimed_by: python-senior
+    claimed_at: '2026-03-07T08:37:17.959626+00:00'
+    evidence: 'Artifact:
+
+      - Commit hash(es): 1f5c29f26406ef0ba4cdd71770210ce7bf7e0aca, af66c87b253eb05c1e3db6593d1ecc427f4b8483
+
+      - Files changed: src/invar/core/dead_param.py, src/invar/core/formatter.py,
+      src/invar/shell/commands/doc.py, src/invar/shell/commands/hooks.py, src/invar/shell/guard_helpers.py,
+      src/invar/shell/property_tests.py, src/invar/shell/skill_manager.py, src/invar/shell/mutation.py,
+      src/invar/shell/prove/hypothesis.py
+
+
+      Verification:
+
+      - Run: uv run invar guard src/invar --all --static --agent (before/after triage)
+      -> dead_param findings in src/invar reduced from 29 to 0, static errors 0
+
+      - Run: invar_invar_guard(path=''.'', changed=true) -> PASS (errors 0, warnings
+      0)
+
+      - Final: guard PASS | 0 errors, 0 warnings
+
+
+      Spec link:
+
+      - plan.yaml step wiring-integrity-1.self-validate-fix
+
+
+      Gaps/Notes:
+
+      - plan.yaml and unrelated guard.py local changes were intentionally left untouched
+      in this step boundary.'
+  - id: wiring-integrity-1.self-validate-retest
+    name: self-validate.retest
+    status: done
+    description: Re-test after dead_param cleanup in src/invar. As an INDEPENDENT
+      TESTER (python-senior), rerun the same self-validation scope for dead_param
+      findings and confirm whether remaining findings are resolved or explicitly documented.
+      Finding additional issues is a successful outcome.
+    verification: '- Re-run the self-validation scope used by wiring-integrity-1.self-validate
+      for src/invar
+
+      - Confirm dead_param output is clean or all remaining findings are explicitly
+      documented as accepted/suppressed
+
+      - Record exact commands and output snippets for any residual findings'
+    depends_on:
+    - wiring-integrity-1.self-validate-fix
+    agent: python-senior
+    claimed_by: python-senior
+    claimed_at: '2026-03-07T08:53:17.338280+00:00'
+    evidence: 'Artifact:
+
+      - Commit hash(es): none in this step
+
+      - Files changed: none (workspace already had pre-existing plan.yaml and guard.py
+      modifications)
+
+
+      Verification:
+
+      - Run: uv run invar guard src/invar --all --static --agent > /tmp/wiring_self_validate_retest_guard.json
+      -> completed (exit 0)
+
+      - Run: parse JSON for src/invar rules {dead_param,stub_body,wiring_gap} -> total_subset=0,
+      by_rule={}
+
+      - Run: parsed summary -> status passed; errors 0; warnings 64; infos 1
+
+
+      Spec link:
+
+      - plan.yaml step wiring-integrity-1.self-validate-retest
+
+
+      Gaps/Notes:
+
+      - Target scope clean for dead_param/stub_body/wiring_gap in src/invar.
+
+      - Non-target warnings remain outside this step scope.'
+  - id: wiring-integrity-1.cross-project-validate-fix
+    name: cross-project-validate.fix
+    status: done
+    description: 'Fix: reduce Wave-1 cross-project false positives in ../anima after
+      wiring-integrity-1.cross-project-validate measured 84.62% FP (TP=4, FP=22, total=26).
+      Prioritize dead_param closure-capture/framework-signature false positives and
+      stub_body click-entrypoint false positives in src/invar/core/dead_param.py and
+      src/invar/core/stub_body.py, plus any required tests, docs, and cross-project
+      report artifacts. Priority: HIGH. Deliverables: rule adjustments with regression
+      coverage and updated cross-project validation notes.'
+    verification: '- False-positive sources from ../anima triaged and addressed
+
+      - Regression tests added/updated for closure-capture, framework-signature, and
+      click-entrypoint cases
+
+      - Related docs/report artifacts updated to explain the tuning and expected precision
+      impact
+
+      - Changes stay scoped to false-positive reduction without regressing known true
+      positives'
+    depends_on:
+    - wiring-integrity-1.cross-project-validate
+    agent: python-senior
+    claimed_by: python-senior
+    claimed_at: '2026-03-07T08:53:28.932102+00:00'
+    evidence: 'Artifact:
+
+      - Commit hash(es): e7597cef8f1787b2c24d166ea7cf1322c64385dd, 1167e4ef689079f0bc7549759702d4b87cd5d748
+
+      - Files changed: src/invar/core/dead_param.py, src/invar/core/stub_body.py,
+      tests/core/test_dead_param.py, tests/core/test_stub_body.py, docs/testing/artifacts/wiring-cross-project-validate-fix-wave1.json,
+      docs/testing/wiring-integrity-1-cross-project-validate-fix.md
+
+
+      Verification:
+
+      - Run: uv run python -m pytest -q tests/core/test_dead_param.py tests/core/test_stub_body.py
+      --doctest-modules src/invar/core/dead_param.py src/invar/core/stub_body.py ->
+      PASS (29 passed)
+
+      - Run: uv run invar guard ../anima --all --static --agent (baseline and after)
+      -> Wave-1 findings reduced 25 -> 7
+
+      - Run: uv run invar guard src/invar/core/dead_param.py --all -> PASS
+
+      - Run: uv run invar guard src/invar/core/stub_body.py --all -> PASS
+
+
+      Spec link:
+
+      - plan.yaml step wiring-integrity-1.cross-project-validate-fix
+
+
+      Gaps/Notes:
+
+      - cross-project-validate-retest remains pending for independent confirmation
+      of final FP-rate target.'
+  - id: wiring-integrity-1.cross-project-validate-retest
+    name: cross-project-validate.retest
+    status: done
+    description: 'Re-test after cross-project false-positive fixes. As an INDEPENDENT
+      TESTER (integration-verifier), rerun the anima Wave-1 cross-project validation
+      from a fresh state and document updated precision/recall, with explicit focus
+      on dead_param closure-capture/framework-signature and stub_body click-entrypoint
+      outcomes. Priority: HIGH. Finding additional issues is a successful outcome.'
+    verification: '- Run the same ../anima cross-project validation scope as wiring-integrity-1.cross-project-validate
+
+      - Report TP, FP, total findings, and false-positive rate
+
+      - Confirm whether target false-positive rate (<10%) is met or document remaining
+      blocker gaps
+
+      - Preserve independent evidence with exact command, output summary, and categorized
+      findings'
+    depends_on:
+    - wiring-integrity-1.cross-project-validate-fix
+    agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-07T09:09:19.435999+00:00'
+    evidence: "Artifact:\n- Commit hash(es) under test: Invar=1167e4ef689079f0bc7549759702d4b87cd5d748,\
+      \ anima=2895d18e1e77a5f7d939a96dda88b6b322d48467\n- Files changed in this step:\
+      \ none\n\nVerification:\n- Run: uv run invar guard ../anima --all --static --agent\
+      \ > /tmp/wiring_cross_validate_retest_guard.json -> status passed; errors 0;\
+      \ warnings 50; infos 11\n- Run: parse Wave-1 findings -> total=7; by_rule={'dead_param':7}\n\
+      - Run: independent TP/FP triage -> TP=3, FP=4, FPR=57.14%, target<10% NOT met\n\
+      - FP focus outcomes: stub_body click-entrypoint FPs resolved (0); closure-capture\
+      \ FPs resolved (0); remaining framework-signature FPs=4\n\nSpec link:\n- plan.yaml\
+      \ step wiring-integrity-1.cross-project-validate-retest\n\nIssue detected (blocker):\n\
+      - False-positive target not met (57.14% > 10%). Remaining blocker concentrated\
+      \ in framework-signature dead_param cases.\n\nRemediation:\n- Created steps:\
+      \ wiring-integrity-1.cross-project-validate-retest-fix and wiring-integrity-1.cross-project-validate-retest-retest.\n\
+      \nnotes:\n  suggestions:\n    - \"Add framework callback signature heuristics\
+      \ or explicit suppression conventions for dead_param.\"\n  tech_debt:\n    -\
+      \ \"Cross-project TP/FP ground-truth fixtures for framework callbacks remain\
+      \ limited.\""
+  - id: wiring-integrity-1.cross-project-validate-retest-fix
+    name: cross-project-validate-retest-fix
+    status: done
+    description: 'Fix: reduce remaining ../anima dead_param framework-signature false
+      positives after wiring-integrity-1.cross-project-validate-retest measured TP=3,
+      FP=4, total=7, FPR=57.14%, missing the <10% target. Scope the fix to src/invar/core/dead_param.py
+      and related regression tests/docs/report artifacts, with explicit coverage for
+      remaining false positives at src/anima/shell/mcp_agent.py:452, src/anima/shell/meta_injection.py:159,
+      src/anima/shell/agent.py:673, and src/anima/shell/cli_commands/talk_runtime.py:39.
+      Priority: HIGH. Deliverables: rule tuning, regression coverage, and updated
+      validation notes proving framework-signature dead_param cases are suppressed
+      without regressing known true positives.'
+    verification: '- Remaining ../anima false positives triaged and addressed in src/invar/core/dead_param.py
+
+      - Regression tests added/updated for the four listed framework-signature dead_param
+      cases
+
+      - Any supporting docs/report artifacts updated with the retest findings and
+      rationale
+
+      - Changes remain scoped to false-positive reduction and preserve known true
+      positives'
+    depends_on:
+    - wiring-integrity-1.cross-project-validate-retest
+    agent: python-senior
+    claimed_by: python-senior
+    claimed_at: '2026-03-07T09:13:59.377101+00:00'
+    evidence: 'Artifact:
+
+      - Commit hash(es): 9584d70
+
+      - Files changed: src/invar/core/dead_param.py, tests/core/test_dead_param.py
+
+
+      Verification:
+
+      - Run: uv run python -m pytest -q tests/core/test_dead_param.py --doctest-modules
+      src/invar/core/dead_param.py -> PASS (18 passed)
+
+      - Run: uvx invar-tools guard --static -> PASS (errors 0; non-blocking size warning)
+
+      - Run: git commit hooks (ruff, mypy, invar guard) -> PASS
+
+
+      Spec link:
+
+      - plan.yaml step wiring-integrity-1.cross-project-validate-retest-fix
+
+
+      Gaps/Notes:
+
+      - cross-project retest step intentionally not run in this fix step.
+
+      - dead_param.py near file-size threshold warning remains non-blocking.'
+  - id: wiring-integrity-1.cross-project-validate-retest-retest
+    name: cross-project-validate-retest-retest
+    status: done
+    description: 'Re-test after remaining ../anima framework-signature false-positive
+      fixes. As an INDEPENDENT TESTER (integration-verifier), rerun the same anima
+      Wave-1 cross-project validation from a fresh state and document updated TP,
+      FP, total findings, and false-positive rate, with explicit focus on the four
+      prior framework-signature dead_param locations. Priority: HIGH. Finding additional
+      issues is a successful outcome.'
+    verification: '- Run the same ../anima cross-project validation scope as wiring-integrity-1.cross-project-validate-retest
+
+      - Report TP, FP, total findings, and false-positive rate
+
+      - Confirm whether target false-positive rate (<10%) is met or document any remaining
+      blocker gaps
+
+      - Preserve independent evidence with exact command, output summary, and categorized
+      findings'
+    depends_on:
+    - wiring-integrity-1.cross-project-validate-retest-fix
+    agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-07T09:22:57.338027+00:00'
+    evidence: 'Artifact:
+
+      - Commit hash(es) under test: Invar=9584d701bd35fe7823b604b2a5f3355bf7e3326a,
+      anima=2895d18e1e77a5f7d939a96dda88b6b322d48467
+
+      - Files changed in this step: none (read-only verification)
+
+
+      Verification:
+
+      - Run: uv run invar guard ../anima --all --static --agent > /tmp/wiring_cross_validate_retest_retest_guard.json
+      -> status passed; errors 0; warnings 46; infos 11
+
+      - Run: parse Wave-1 findings for src/anima and rules {dead_param,stub_body,wiring_gap}
+      -> total=3, by_rule={dead_param:3, stub_body:0, wiring_gap:0}
+
+      - Run: focus check for prior framework-signature FP locations -> 0 hits
+
+      - TP/FP categorization -> TP=3, FP=0, FP rate=0.00% (target <10% met)
+
+
+      Spec link:
+
+      - plan.yaml step wiring-integrity-1.cross-project-validate-retest-retest
+
+
+      Gaps/Notes:
+
+      - This is independent retest evidence; no code changes made.'
 - id: wiring-integrity-2
   name: 'DX-89 Wave 2: mock_leak + dead_assign Rules'
   status: in_progress
@@ -1814,7 +2264,7 @@ phases:
       - step `wiring-integrity-2.dead-assign-core` in DX-89 Wave 2'
   - id: wiring-integrity-2.register-and-integrate
     name: register-and-integrate
-    status: pending
+    status: done
     description: 'Register mock_leak + dead_assign in rule_meta.py and wire into guard.py
       scan pipeline.
 
@@ -1835,9 +2285,40 @@ phases:
     - wiring-integrity-2.mock-leak-core
     - wiring-integrity-2.dead-assign-core
     agent: python-executor
+    claimed_by: python-executor
+    claimed_at: '2026-03-07T09:29:10.235900+00:00'
+    evidence: 'Artifact:
+
+      - Commit hash(es): none in this dispatch (integration already present)
+
+      - Files verified: src/invar/core/rule_meta.py, src/invar/shell/commands/guard.py
+
+
+      Verification:
+
+      - Run: uv run pytest tests/core/test_mock_leak.py tests/core/test_dead_assign.py
+      -q -> PASS (14 passed)
+
+      - Run: uv run python -m doctest src/invar/core/mock_leak.py src/invar/core/dead_assign.py
+      src/invar/core/rule_meta.py -> PASS
+
+      - Run: python check for RULE_META + scan hooks in guard.py -> PASS (mock_leak
+      error/purity; dead_assign warning/purity; check_mock_leaks and check_dead_assigns
+      present)
+
+
+      Spec link:
+
+      - plan.yaml step wiring-integrity-2.register-and-integrate
+
+
+      Gaps/Notes:
+
+      - Broader dead_assign warnings belong to subsequent self-validate-2 triage step,
+      not this registration/integration step.'
   - id: wiring-integrity-2.self-validate-2
     name: self-validate-2
-    status: pending
+    status: done
     description: 'Run invar guard on Invar''s own codebase with all 6 wiring integrity
       rules (dead_param, stub_body, wiring_gap from Wave 1 + mock_leak, dead_assign
       from Wave 2). Triage all findings, fix genuine issues, suppress false positives.
@@ -1853,9 +2334,41 @@ phases:
     depends_on:
     - wiring-integrity-2.register-and-integrate
     agent: python-senior
+    claimed_by: python-senior
+    claimed_at: '2026-03-07T09:48:15.347696+00:00'
+    evidence: 'Artifact:
+
+      - Commit hash(es): d55f19ffe3eef93b8b753783175a73a646b27ecc, ad1d66548e281241f8500b026d0cc61fc5ea5221
+
+      - Files changed: runtime/src/invar_runtime/resource.py, src/invar/core/dead_assign.py,
+      src/invar/core/template_parser.py, src/invar/core/doc_parser.py, src/invar/core/hypothesis_strategies.py,
+      src/invar/core/purity.py, src/invar/mcp/handlers.py, src/invar/shell/prove/guard_ts.py,
+      src/invar/shell/ts_compiler.py
+
+
+      Verification:
+
+      - Run: uv run invar guard src/invar --all --static --agent + filter for six
+      wiring rules -> status passed; wiring rule count 0; static errors 0
+
+      - Run: uv run invar guard --agent -> status passed; errors 0; warnings 0
+
+      - Final: guard PASS | 0 errors, 0 warnings
+
+
+      Spec link:
+
+      - plan.yaml step wiring-integrity-2.self-validate-2
+
+
+      Gaps/Notes:
+
+      - Inline dead_assign suppressions added with rationale for loop-carried assignments.
+
+      - Non-wiring static warnings noted outside this step scope were not addressed.'
   - id: wiring-integrity-2.cross-project-validate-2
     name: cross-project-validate-2
-    status: pending
+    status: done
     description: 'Run invar guard with all 6 wiring integrity rules on the anima project.
       Document full wiring integrity precision/recall results across both Wave 1 and
       Wave 2 rules.
@@ -1871,9 +2384,41 @@ phases:
     depends_on:
     - wiring-integrity-2.self-validate-2
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-07T10:13:27.572820+00:00'
+    evidence: 'Artifact:
+
+      - Commit hash(es) under test: Invar=ad1d66548e281241f8500b026d0cc61fc5ea5221,
+      anima=8797866fe6414cf1e7fc4a70aa4b4872ef98cf93
+
+      - Files changed in this step: none (read-only verification)
+
+
+      Verification:
+
+      - Run: uv run invar guard ../anima --all --static --agent > /tmp/wiring_cross_project_validate2_guard.json
+      -> status passed; static errors 0; warnings 37; infos 11
+
+      - Run: parse six-rule findings -> total=15; by_rule={dead_export:4, dead_param:3,
+      stub_body:0, wiring_gap:0, mock_leak:0, dead_assign:8}
+
+      - TP/FP classification -> TP=15, FP=0, overall precision=100.00%
+
+      - Wave1-vs-Wave2 comparison documented (delta +12 TP, FP unchanged at 0)
+
+
+      Spec link:
+
+      - plan.yaml step wiring-integrity-2.cross-project-validate-2
+
+
+      Gaps/Notes:
+
+      - Recall only fully quantified for dead_param via prior known-TP set; no seeded
+      denominator for some other rules in this step scope.'
   - id: wiring-integrity-2.gate-2
     name: gate-2
-    status: pending
+    status: done
     description: 'Gate review: Verify complete DX-89 wiring integrity suite.
 
 
@@ -1896,6 +2441,120 @@ phases:
     depends_on:
     - wiring-integrity-2.cross-project-validate-2
     agent: gate-reviewer
+    claimed_by: gate-reviewer
+    claimed_at: '2026-03-07T10:16:05.607244+00:00'
+    evidence: "Artifact:\n- Gate decision: FAIL (independent gate-reviewer)\n\nVerification:\n\
+      - Run: pyright + ruff + pytest + doctest for mock_leak/dead_assign scope ->\
+      \ PASS\n- Run: uv run invar guard src/invar --all --static --agent + six-rule\
+      \ parse -> status passed; errors 0; warnings 39; six_rule_counts showed dead_export\
+      \ findings=19\n- Run: uv run invar guard ../anima --all --static --agent + six-rule\
+      \ parse -> status passed; errors 0; warnings 37; six_rule_counts dead_export=4,\
+      \ dead_param=3, dead_assign=8\n- Run: evidence/doc inspection in plan.yaml ->\
+      \ recall documentation incomplete for full six-rule suite (dead_param complete,\
+      \ others lacking denominators)\n\nSpec link:\n- plan.yaml step wiring-integrity-2.gate-2\n\
+      \nBlockers:\n- Self-validation not clean for six-rule suite due dead_export\
+      \ findings on src/invar\n- Cross-project recall documentation incomplete for\
+      \ full six-rule set\n- Rule-count wording ambiguity (5 vs 6) needs clarification\n\
+      \nRemediation:\n- Created follow-up steps: wiring-integrity-2.gate-2-fix and\
+      \ wiring-integrity-2.gate-2-retest\n\nnotes:\n  suggestions:\n    - \"Store\
+      \ reproducible six-rule self-validation artifact after dead_export triage.\"\
+      \n  tech_debt:\n    - \"Cross-project TP/FP+recall benchmarking remains partly\
+      \ manual and should be fixture-driven.\""
+  - id: wiring-integrity-2.gate-2-fix
+    name: gate-2-fix
+    status: claimed
+    description: 'Fix blocker issues identified by `wiring-integrity-2.gate-2`.
+
+
+      Priority: HIGH
+
+
+      Scope:
+
+      - Eliminate `dead_export` false positives or unresolved findings so independent
+      self-validation on `src/invar/` is clean for the full six-rule suite
+
+      - Complete cross-project recall documentation for all six rules, not only `dead_param`
+
+      - Clarify six-rule wording anywhere it still says 5 vs 6
+
+
+      Likely files:
+
+      - `src/invar/core/dead_export.py`
+
+      - related callsites/tests/docs
+
+      - `plan.yaml` evidence/docs
+
+
+      Deliverables:
+
+      - code/doc fixes for the blocker findings
+
+      - updated evidence/docs with explicit six-rule coverage
+
+      - clarified rule-count language'
+    verification: Address all three blocker findings with updated code/tests/docs
+      and record exact files changed.
+    depends_on:
+    - wiring-integrity-2.gate-2
+    agent: python-executor
+    claimed_by: python-executor
+    claimed_at: '2026-03-07T10:21:30.923396+00:00'
+  - id: wiring-integrity-2.gate-2-retest
+    name: gate-2-retest
+    status: pending
+    description: 'As an INDEPENDENT REVIEWER (`gate-reviewer`), re-test the blockers
+      raised by `wiring-integrity-2.gate-2` after the fix step.
+
+
+      YOUR GOAL IS TO FIND REMAINING PROBLEMS, not to confirm success.
+
+
+      Re-check:
+
+      - self-validation on `src/invar/` is clean for all 6 rules
+
+      - cross-project recall documentation fully covers all 6 rules
+
+      - all wording consistently says 6 rules where appropriate
+
+
+      Priority: HIGH
+
+      Independence Level: L1'
+    verification: Re-run independent review of the three blocker items and document
+      PASS or ISSUES_FOUND with concrete evidence.
+    evidence_template: '## Verification Report
+
+
+      **Tester**: gate-reviewer (independent of implementation)
+
+      **Scope**: Re-test blockers from `wiring-integrity-2.gate-2`
+
+      **Independence Level**: L1
+
+
+      ### Checks
+
+      - Self-validation on `src/invar/`
+
+      - Cross-project recall documentation for all 6 rules
+
+      - Rule-count wording consistency
+
+
+      ### Verdict
+
+      - [ ] PASS
+
+      - [ ] ISSUES_FOUND
+
+      - [ ] INCOMPLETE'
+    depends_on:
+    - wiring-integrity-2.gate-2-fix
+    agent: gate-reviewer
 - id: dx-91-delete
   name: DX-91 Bulk Deletion
   status: pending
@@ -1917,31 +2576,35 @@ phases:
       - python -c ''import invar'' succeeds (no broken imports)'
     refs:
     - src/invar/node_tools/
+    - docs/proposals/DX-91-simplification.md
     agent: python-executor
   - id: dx-91-delete.delete-ts-core-modules
     name: delete-ts-core-modules
     status: pending
     description: "Delete TypeScript-specific Python modules from core/ and shell/.\n\
       \nFiles to delete:\n- src/invar/core/ts_parsers.py (290 LOC) - TS AST parsing\n\
-      - src/invar/core/ts_sig_parser.py (318 LOC) - TS signature parser\n- src/invar/core/language.py\
-      \ (88 LOC) - Language detection (TS/Python routing)\n- src/invar/shell/ts_compiler.py\
+      - src/invar/core/ts_sig_parser.py (318 LOC) - TS signature parser\n- src/invar/shell/ts_compiler.py\
       \ (238 LOC) - TS compiler wrapper\n- src/invar/shell/prove/guard_ts.py (1053\
-      \ LOC) - TS guard runner\n\nTotal: ~1,987 LOC removed.\n\nAfter deletion, verify\
-      \ no remaining imports reference these modules:\n  grep -rn 'ts_parsers\\|ts_sig_parser\\\
-      |language\\|ts_compiler\\|guard_ts' src/invar/ --include='*.py'\n\nNote: Some\
-      \ files in guard.py/perception.py/handlers.py still import these -- those are\
-      \ cleaned up in Phase 2 (dx-91-guard-simplify). This step only deletes the source\
-      \ files."
-    verification: '- All 5 files deleted
+      \ LOC) - TS guard runner\n\nTotal: ~1,899 LOC removed.\n\nNOTE: src/invar/core/language.py\
+      \ is NOT deleted here. It is still imported by guard.py and perception.py (via\
+      \ init.py). Deleting it here would break `invar guard` before Phase 2 strips\
+      \ those references. language.py is deleted in Phase 2 step `delete-language-module`\
+      \ after TS routing is removed.\n\nAfter deletion, verify no remaining imports\
+      \ reference these modules:\n  grep -rn 'ts_parsers\\|ts_sig_parser\\|ts_compiler\\\
+      |guard_ts' src/invar/ --include='*.py'\n\nNote: Some files in guard.py/perception.py/handlers.py\
+      \ still import these -- those are cleaned up in Phase 2 (dx-91-guard-simplify).\
+      \ This step only deletes the source files."
+    verification: '- All 4 files deleted
 
       - Files no longer exist on disk
 
       - Note: dangling imports in guard.py/perception.py/mcp/ are expected and fixed
-      in Phase 2'
+      in Phase 2
+
+      - src/invar/core/language.py still exists (deferred to Phase 2)'
     refs:
     - src/invar/core/ts_parsers.py
     - src/invar/core/ts_sig_parser.py
-    - src/invar/core/language.py
     - src/invar/shell/ts_compiler.py
     - src/invar/shell/prove/guard_ts.py
     agent: python-executor
@@ -2234,7 +2897,15 @@ phases:
       import.
 
 
-      KEEP: init, doc (doc_app), guard, map, sig, refs, mcp, version commands.
+      Also remove: version() command function and its registration (DX-91 spec Section
+      2.8 says remove `invar version`, use `invar --version` instead).
+
+
+      Also verify: whether `invar rules` command exists as a registered command. If
+      so, remove it (DX-91 spec Section 2.8 lists it for removal).
+
+
+      KEEP: init, doc (doc_app), guard, map, sig, refs, mcp commands.
 
 
       File: src/invar/shell/commands/__init__.py
@@ -2244,12 +2915,17 @@ phases:
     verification: '- guard.py compiles: python -c ''from invar.shell.commands.guard
       import app''
 
-      - Only these commands registered: guard, init, doc, map, sig, refs, mcp, version
+      - Only these commands registered: guard, init, doc, map, sig, refs, mcp
 
-      - No imports of deleted modules remain in guard.py'
+      - No imports of deleted modules remain in guard.py
+
+      - `invar version` is NOT a command (use `invar --version` instead)
+
+      - `invar rules` is NOT a command (if it existed)'
     refs:
     - src/invar/shell/commands/guard.py
     - src/invar/shell/commands/__init__.py
+    - docs/proposals/DX-91-simplification.md
     depends_on:
     - dx-91-delete.delete-skills-hooks-modules
     - dx-91-delete.delete-removed-commands
@@ -2287,13 +2963,15 @@ phases:
 
       - python -c ''import invar'' succeeds
 
-      - invar --help shows only: guard, init, doc, map, sig, refs, mcp, version
+      - invar --help shows only: guard, init, doc, map, sig, refs, mcp (NO version,
+      NO rules)
 
       - grep for deleted module names returns zero matches
 
       - pytest --collect-only succeeds with no import errors'
     refs:
     - src/invar/
+    - docs/proposals/DX-91-simplification.md
     depends_on:
     - dx-91-delete.delete-node-tools
     - dx-91-delete.delete-ts-core-modules
@@ -2371,6 +3049,7 @@ phases:
       - invar guard runs successfully on the invar project'
     refs:
     - src/invar/shell/commands/guard.py
+    - docs/proposals/DX-91-simplification.md
     agent: python-senior
   - id: dx-91-guard-simplify.strip-ts-from-perception
     name: strip-ts-from-perception
@@ -2447,7 +3126,7 @@ phases:
     refs:
     - src/invar/mcp/server.py
     - src/invar/mcp/handlers.py
-    agent: python-senior
+    agent: python-executor
   - id: dx-91-guard-simplify.strip-ts-from-fs
     name: strip-ts-from-fs
     status: pending
@@ -2527,6 +3206,7 @@ phases:
     - dx-91-guard-simplify.strip-ts-from-perception
     - dx-91-guard-simplify.strip-ts-from-mcp
     - dx-91-guard-simplify.strip-ts-from-fs
+    - dx-91-guard-simplify.delete-language-module
     agent: integration-verifier
   - id: dx-91-guard-simplify.dx-91-guard-simplify-gate
     name: dx-91-guard-simplify.gate
@@ -2561,6 +3241,34 @@ phases:
     depends_on:
     - dx-91-guard-simplify.verify-guard-python-only
     agent: gate-reviewer
+  - id: dx-91-guard-simplify.delete-language-module
+    name: delete-language-module
+    status: pending
+    description: 'Delete src/invar/core/language.py (88 LOC) - Language detection
+      (TS/Python routing).
+
+
+      This file was deferred from Phase 1 because guard.py and perception.py imported
+      detect_language() from init.py, which in turn imported from core/language.py.
+      Now that Phase 2 strip steps have removed all detect_language references from
+      guard.py and perception.py, this file is dead code and safe to delete.
+
+
+      Also remove detect_language() function from init.py (it will be fully rewritten
+      in Phase 3, but removing the broken import now prevents guard failures during
+      Phase 2 verification).'
+    verification: '- src/invar/core/language.py no longer exists
+
+      - grep -rn ''from invar.core.language'' src/invar/ --include=''*.py'' returns
+      zero matches
+
+      - grep -rn ''detect_language'' src/invar/ --include=''*.py'' returns zero matches
+
+      - python -c ''import invar'' succeeds'
+    depends_on:
+    - dx-91-guard-simplify.strip-ts-from-guard
+    - dx-91-guard-simplify.strip-ts-from-perception
+    agent: python-executor
 - id: dx-91-init-rewrite
   name: DX-91 Init Command Rewrite
   status: pending
@@ -2570,12 +3278,16 @@ phases:
     name: rewrite-init-command
     status: pending
     description: "Rewrite src/invar/shell/commands/init.py from ~682 LOC to ~80 LOC.\n\
-      \nRequirements:\n- No interactive prompts, no agent selection menu\n- Default\
-      \ target: CLAUDE.md (append/replace managed section)\n- --file flag: alternative\
-      \ target (e.g., AGENTS.md, .cursorrules)\n- --mcp flag: also generate .mcp.json\
-      \ with invar MCP server config (optional)\n- Generate 3 files:\n  1. Target\
-      \ file (CLAUDE.md by default) with <!--invar:begin-->...<!--invar:end--> managed\
-      \ section\n  2. INVAR.md (~150 lines reference doc) at project root\n  3. .pre-commit-config.yaml\
+      \nNOTE: detect_language() and all language detection imports (from invar.core.language)\
+      \ are no longer needed — they were removed from guard.py and perception.py in\
+      \ Phase 2, and core/language.py was deleted in Phase 2 step delete-language-module.\
+      \ The rewritten init.py must NOT import or reference detect_language.\n\nRequirements:\n\
+      - No interactive prompts, no agent selection menu\n- Default target: CLAUDE.md\
+      \ (append/replace managed section)\n- --file flag: alternative target (e.g.,\
+      \ AGENTS.md, .cursorrules)\n- --mcp flag: also generate .mcp.json with invar\
+      \ MCP server config (optional)\n- Generate 3 files:\n  1. Target file (CLAUDE.md\
+      \ by default) with <!--invar:begin-->...<!--invar:end--> managed section\n \
+      \ 2. INVAR.md (~150 lines reference doc) at project root\n  3. .pre-commit-config.yaml\
       \ with single invar guard hook\n- Content for managed CLAUDE.md section: see\
       \ docs/proposals/DX-91-claude-md-draft.md (~50 lines)\n- Content for INVAR.md:\
       \ see docs/proposals/DX-91-invar-md-draft.md (~150 lines)\n- Pre-commit config:\
@@ -2603,25 +3315,28 @@ phases:
     - src/invar/shell/mcp_config.py
     - docs/proposals/DX-91-claude-md-draft.md
     - docs/proposals/DX-91-invar-md-draft.md
+    - docs/proposals/DX-91-simplification.md
     agent: python-senior
   - id: dx-91-init-rewrite.implement-idempotent-merge
     name: implement-idempotent-merge
     status: pending
     description: "Add idempotent merge logic to init.py for the <!--invar:begin-->...<!--invar:end-->\
-      \ managed section.\n\nFile: src/invar/shell/commands/init.py\n\nMerge behavior\
-      \ (from DX-91-claude-md-draft.md):\n| Scenario | Action |\n|----------|--------|\n\
-      | Target file doesn't exist | Create with only the managed section |\n| Target\
-      \ exists, no invar markers | Append managed section at end |\n| Target exists,\
-      \ has invar markers | Replace content between markers (idempotent) |\n| User\
-      \ content outside markers | Preserved unchanged |\n\nImplementation:\n1. Read\
-      \ target file (or empty string if not exists)\n2. Search for <!--invar:begin-->\
-      \ and <!--invar:end--> markers\n3. If found: replace everything between markers\
-      \ (inclusive) with new managed section\n4. If not found: append managed section\
-      \ at end of file (with blank line separator)\n5. Write result\n\nThis is a pure\
-      \ string operation. Consider extracting a helper function for testability:\n\
-      \  def merge_managed_section(existing: str, managed: str) -> str\n\nTest: running\
-      \ `invar init` twice produces identical output. User content before/after markers\
-      \ is preserved."
+      \ managed section.\n\nIntegration note: This is an integration step — init.py\
+      \ (source) generates content consumed by guard (sink: CLAUDE.md/INVAR.md). The\
+      \ merge logic must preserve user content that guard may reference.\n\nFile:\
+      \ src/invar/shell/commands/init.py\n\nMerge behavior (from DX-91-claude-md-draft.md):\n\
+      | Scenario | Action |\n|----------|--------|\n| Target file doesn't exist |\
+      \ Create with only the managed section |\n| Target exists, no invar markers\
+      \ | Append managed section at end |\n| Target exists, has invar markers | Replace\
+      \ content between markers (idempotent) |\n| User content outside markers | Preserved\
+      \ unchanged |\n\nImplementation:\n1. Read target file (or empty string if not\
+      \ exists)\n2. Search for <!--invar:begin--> and <!--invar:end--> markers\n3.\
+      \ If found: replace everything between markers (inclusive) with new managed\
+      \ section\n4. If not found: append managed section at end of file (with blank\
+      \ line separator)\n5. Write result\n\nThis is a pure string operation. Consider\
+      \ extracting a helper function for testability:\n  def merge_managed_section(existing:\
+      \ str, managed: str) -> str\n\nTest: running `invar init` twice produces identical\
+      \ output. User content before/after markers is preserved."
     verification: '- invar init twice in same directory produces identical files (diff
       returns empty)
 
@@ -2674,21 +3389,25 @@ phases:
     status: pending
     description: "As an INDEPENDENT TESTER (integration-verifier), validate the init\
       \ command rewrite.\n\nYOUR GOAL IS TO FIND PROBLEMS, not to confirm it works.\n\
-      \nTest scenarios:\n1. Fresh init: run invar init in empty temp directory\n \
-      \  - CLAUDE.md created with invar:begin/end markers and ~50 lines managed section\n\
-      \   - INVAR.md created with ~150 lines reference doc\n   - .pre-commit-config.yaml\
-      \ created with invar guard hook\n2. Idempotent: run invar init twice\n   - diff\
-      \ on all files returns empty (no changes)\n3. Append mode: create CLAUDE.md\
-      \ with user content, run invar init\n   - User content preserved, managed section\
-      \ appended\n4. Replace mode: run invar init, edit user content above markers,\
-      \ run invar init again\n   - User content preserved, managed section updated\n\
-      5. v1 migration: create v1 layout (.claude/skills/, 4-region CLAUDE.md), run\
-      \ invar init\n   - Backup created, stale dirs removed, user content preserved\n\
-      6. --file flag: invar init --file AGENTS.md\n   - AGENTS.md created instead\
-      \ of CLAUDE.md\n7. Edge cases: CLAUDE.md with malformed markers, empty CLAUDE.md\n\
-      \nIndependence Level: L2 (cross-module change, init generates content referencing\
-      \ guard behavior)"
-    verification: '- All 7 test scenarios pass
+      \nFREEZE REQUIREMENT (L2): Before running any tests, record git rev-parse HEAD,\
+      \ verify git status is clean, and confirm no code changes will be made during\
+      \ this step.\n\nTest scenarios:\n1. Fresh init: run invar init in empty temp\
+      \ directory\n   - CLAUDE.md created with invar:begin/end markers and ~50 lines\
+      \ managed section\n   - INVAR.md created with ~150 lines reference doc\n   -\
+      \ .pre-commit-config.yaml created with invar guard hook\n2. Idempotent: run\
+      \ invar init twice\n   - diff on all files returns empty (no changes)\n3. Append\
+      \ mode: create CLAUDE.md with user content, run invar init\n   - User content\
+      \ preserved, managed section appended\n4. Replace mode: run invar init, edit\
+      \ user content above markers, run invar init again\n   - User content preserved,\
+      \ managed section updated\n5. v1 migration: create v1 layout (.claude/skills/,\
+      \ 4-region CLAUDE.md), run invar init\n   - Backup created, stale dirs removed,\
+      \ user content preserved\n6. --file flag: invar init --file AGENTS.md\n   -\
+      \ AGENTS.md created instead of CLAUDE.md\n7. Edge cases: CLAUDE.md with malformed\
+      \ markers, empty CLAUDE.md\n\nIndependence Level: L2 (cross-module change, init\
+      \ generates content referencing guard behavior)"
+    verification: '- Freeze evidence: git SHA recorded, clean git status confirmed
+
+      - All 7 test scenarios pass
 
       - No data loss in any migration scenario
 
@@ -2801,6 +3520,8 @@ phases:
 
       KEEP in docs/proposals/ (not archived):
 
+      - DX-91-simplification.md (main spec - MUST keep)
+
       - DX-91-claude-md-draft.md (active)
 
       - DX-91-invar-md-draft.md (active)
@@ -2815,9 +3536,12 @@ phases:
 
       - docs/proposals/ contains only: archive/, completed/, DX-91-*.md, index.md
 
+      - DX-91-simplification.md is NOT archived (it''s the main spec)
+
       - git status shows renames (not deletes)'
     refs:
     - docs/proposals/
+    - docs/proposals/DX-91-simplification.md
     agent: python-executor
   - id: dx-91-docs.rewrite-readme
     name: rewrite-readme
@@ -2976,30 +3700,34 @@ phases:
     status: pending
     description: "As an INDEPENDENT TESTER (integration-verifier), perform comprehensive\
       \ final validation of Invar v2.0.\n\nYOUR GOAL IS TO FIND ANY REMAINING PROBLEMS\
-      \ before v2.0.0 release.\n\nTest suite:\n\n1. **Guard full pass**: invar guard\
-      \ --all\n   - Must exit 0 with no errors\n\n2. **Init on clean project**:\n\
+      \ before v2.0.0 release.\n\nFREEZE REQUIREMENT (L2): Before running any tests,\
+      \ record git rev-parse HEAD, verify git status is clean, and confirm no code\
+      \ changes will be made during this step.\n\nTest suite:\n\n1. **Guard full pass**:\
+      \ invar guard --all\n   - Must exit 0 with no errors\n\n2. **Init on clean project**:\n\
       \   - Create temp directory, run invar init\n   - Verify: CLAUDE.md, INVAR.md,\
       \ .pre-commit-config.yaml created\n   - Verify content matches DX-91 drafts\n\
       \n3. **Init on v1 project**:\n   - Create temp directory with v1 layout (4-region\
       \ CLAUDE.md, .claude/skills/, .claude/hooks/)\n   - Run invar init\n   - Verify:\
       \ migration runs, backup created, stale dirs removed\n\n4. **CLI command inventory**:\n\
       \   - invar --help\n   - Expected commands: guard, init, doc, map, sig, refs,\
-      \ mcp, version\n   - NO: update, uninstall, test, verify, mutate, hooks, skill,\
-      \ dev, feedback, sync-self\n\n5. **Stale reference sweep**:\n   - grep -ri 'typescript\\\
-      |usbv\\|skills system\\|hooks system\\|check-in protocol\\|six laws\\|onboarding\\\
-      |feedback collection' across src/, tests/, docs/ (excluding archive/)\n   -\
-      \ Expected: zero matches\n\n6. **Import integrity**:\n   - python -c 'import\
-      \ invar; from invar.shell.commands.guard import app; from invar.mcp.server import\
-      \ run_server'\n\n7. **Test suite**:\n   - pytest --collect-only (no broken imports)\n\
-      \   - pytest (if applicable, run remaining tests)\n\n8. **Version bump check**:\n\
-      \   - Verify pyproject.toml or version file shows 2.0.0 (or note if bump is\
-      \ needed as a follow-up)\n\nIndependence Level: L2 (comprehensive cross-module\
-      \ validation)"
-    verification: '- invar guard --all passes
+      \ mcp\n   - NO: update, uninstall, test, verify, mutate, hooks, skill, dev,\
+      \ feedback, sync-self, version, rules\n\n5. **Stale reference sweep**:\n   -\
+      \ grep -ri 'typescript\\|usbv\\|skills system\\|hooks system\\|check-in protocol\\\
+      |six laws\\|onboarding\\|feedback collection' across src/, tests/, docs/ (excluding\
+      \ archive/)\n   - Expected: zero matches\n\n6. **Import integrity**:\n   - python\
+      \ -c 'import invar; from invar.shell.commands.guard import app; from invar.mcp.server\
+      \ import run_server'\n\n7. **Test suite**:\n   - pytest --collect-only (no broken\
+      \ imports)\n   - pytest (if applicable, run remaining tests)\n\n8. **Version\
+      \ bump check**:\n   - Verify pyproject.toml or version file shows 2.0.0 (or\
+      \ note if bump is needed as a follow-up)\n\nIndependence Level: L2 (comprehensive\
+      \ cross-module validation)"
+    verification: '- Freeze evidence: git SHA recorded, clean git status confirmed
+
+      - invar guard --all passes
 
       - invar init works on clean and v1 projects
 
-      - CLI has exactly the expected commands
+      - CLI has exactly the expected commands (no version, no rules)
 
       - Zero stale references to removed features
 
@@ -3015,6 +3743,7 @@ phases:
     - README.md
     - CLAUDE.md
     - INVAR.md
+    - docs/proposals/DX-91-simplification.md
     agent: integration-verifier
   - id: dx-91-gate.dx-91-gate-gate
     name: dx-91-gate.gate
