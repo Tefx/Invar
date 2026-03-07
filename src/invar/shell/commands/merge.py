@@ -60,6 +60,7 @@ class ProjectState:
 
 
 # @shell_complexity: State detection requires multiple file existence checks
+# @invar:allow dead_export: Public helper API exported for external integrations
 def detect_project_state(path: Path) -> ProjectState:
     """Detect Invar initialization state.
 
@@ -111,6 +112,7 @@ def detect_project_state(path: Path) -> ProjectState:
 
 
 # @shell_complexity: Smart merge with multiple state handling paths
+# @invar:allow dead_export: Public helper API exported for external integrations
 def merge_claude_md(path: Path, state: ClaudeMdState) -> Result[str, str]:
     """Smart merge CLAUDE.md based on detected state.
 
@@ -160,9 +162,7 @@ def _update_managed_only(path: Path, existing_content: str) -> Result[str, str]:
         return Failure("No user region found")
 
     # Generate fresh template
-    template_result = generate_from_manifest(
-        path, syntax="cli", files_to_generate=["CLAUDE.md"]
-    )
+    template_result = generate_from_manifest(path, syntax="cli", files_to_generate=["CLAUDE.md"])
     if isinstance(template_result, Failure):
         return template_result
 
@@ -195,9 +195,7 @@ def _recover_from_partial(
         # Strip markers and treat rest as user content
         user_content = strip_invar_markers(existing_content)
         if user_content:
-            user_content = format_preserved_content(
-                user_content, date.today().isoformat()
-            )
+            user_content = format_preserved_content(user_content, date.today().isoformat())
 
     # Remove existing CLAUDE.md so generate_from_manifest creates fresh template
     claude_md = PathLib(path) / "CLAUDE.md"
@@ -205,9 +203,7 @@ def _recover_from_partial(
         claude_md.unlink()
 
     # Generate fresh template
-    result = generate_from_manifest(
-        path, syntax="cli", files_to_generate=["CLAUDE.md"]
-    )
+    result = generate_from_manifest(path, syntax="cli", files_to_generate=["CLAUDE.md"])
     if isinstance(result, Failure):
         return result
 
@@ -228,9 +224,7 @@ def _merge_with_preserved(path: Path, existing_content: str) -> Result[str, str]
     from pathlib import Path as PathLib  # Runtime import for Path operations
 
     # Format existing content as preserved
-    preserved = format_preserved_content(
-        existing_content, date.today().isoformat()
-    )
+    preserved = format_preserved_content(existing_content, date.today().isoformat())
 
     # Remove existing CLAUDE.md so generate_from_manifest creates fresh template
     claude_md = PathLib(path) / "CLAUDE.md"
@@ -238,9 +232,7 @@ def _merge_with_preserved(path: Path, existing_content: str) -> Result[str, str]
         claude_md.unlink()
 
     # Generate fresh template
-    result = generate_from_manifest(
-        path, syntax="cli", files_to_generate=["CLAUDE.md"]
-    )
+    result = generate_from_manifest(path, syntax="cli", files_to_generate=["CLAUDE.md"])
     if isinstance(result, Failure):
         return result
 

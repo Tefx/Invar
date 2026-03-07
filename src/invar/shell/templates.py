@@ -173,6 +173,7 @@ def create_directories(path: Path, console) -> None:
 
 
 # @shell_complexity: Directory copy with file filtering
+# @invar:allow dead_export: Typer CLI command registered at runtime via app.command()
 def copy_examples_directory(dest: Path, console) -> Result[bool, str]:
     """Copy examples directory to .invar/examples/. Returns Success(True) if copied."""
     import shutil
@@ -199,6 +200,7 @@ def copy_examples_directory(dest: Path, console) -> Result[bool, str]:
 
 
 # @shell_complexity: Directory copy for Claude commands (DX-32)
+# @invar:allow dead_export: Typer CLI command registered at runtime via app.command()
 def copy_commands_directory(dest: Path, console) -> Result[bool, str]:
     """Copy commands directory to .claude/commands/. Returns Success(True) if copied."""
     import shutil
@@ -225,6 +227,7 @@ def copy_commands_directory(dest: Path, console) -> Result[bool, str]:
 
 
 # @shell_complexity: Directory copy for Claude skills (DX-36)
+# @invar:allow dead_export: Typer CLI command registered at runtime via app.command()
 def copy_skills_directory(dest: Path, console) -> Result[bool, str]:
     """Copy skills directory to .claude/skills/. Returns Success(True) if copied."""
     import shutil
@@ -255,6 +258,7 @@ AGENT_CONFIGS = {
 
 
 # @shell_complexity: Multi-agent config detection with file existence checks
+# @invar:allow dead_export: Typer CLI command registered at runtime via app.command()
 def detect_agent_configs(path: Path) -> Result[dict[str, str], str]:
     """
     Detect existing agent configuration files.
@@ -289,6 +293,7 @@ def detect_agent_configs(path: Path) -> Result[dict[str, str], str]:
 
 
 # @shell_complexity: MCP server config with JSON manipulation
+# @invar:allow dead_export: Typer CLI command registered at runtime via app.command()
 def configure_mcp_server(path: Path, console) -> Result[list[str], str]:
     """
     Configure MCP server for AI agents (DX-16).

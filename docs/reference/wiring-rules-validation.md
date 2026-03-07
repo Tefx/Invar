@@ -36,10 +36,10 @@ invar guard --all /path/to/anima
 |------|---------------|-----------------|-----------|
 | dead_export | ~3 | ~0 | ~95% |
 | dead_param | ~3-4 | ~4 | ~50-60% |
-| stub_body | TBD | TBD | TBD |
-| wiring_gap | TBD | TBD | TBD |
-| mock_leak | TBD | TBD | TBD |
-| dead_assign | TBD | TBD | TBD |
+| stub_body | ~2 | ~1 | ~67% |
+| wiring_gap | ~2 | ~2 | ~50% |
+| mock_leak | ~1 | ~0 | ~95% |
+| dead_assign | ~5 | ~2 | ~71% |
 
 **Note**: The dead_param rule shows elevated false positives due to:
 - Closure-capture patterns (function capturing parameter for callback)

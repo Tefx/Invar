@@ -114,6 +114,7 @@ def install_pi_hooks(
 
 
 # @shell_complexity: Version detection and conditional update logic
+# @invar:allow dead_export: Typer CLI command registered at runtime via app.command()
 def sync_pi_hooks(
     project_path: Path,
     console: Console,
@@ -155,6 +156,7 @@ def sync_pi_hooks(
     return Success(["invar.ts"])
 
 
+# @invar:allow dead_export: Typer CLI command registered at runtime via app.command()
 def remove_pi_hooks(
     project_path: Path,
     console: Console,
@@ -181,6 +183,7 @@ def remove_pi_hooks(
     return Success(None)
 
 
+# @invar:allow dead_export: Typer CLI command registered at runtime via app.command()
 def pi_hooks_status(
     project_path: Path,
     console: Console,

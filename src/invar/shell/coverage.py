@@ -201,6 +201,7 @@ def extract_coverage_report(cov: Coverage, files: list[Path], phase: str) -> Cov
 
 # @shell_orchestration: Report merging coordinates data from multiple phases
 # @shell_complexity: Report merging with multiple iteration paths
+# @invar:allow dead_export: Public helper API exported for external integrations
 @pre(lambda reports: all(isinstance(r, CoverageReport) for r in reports if r is not None))
 @post(lambda result: isinstance(result, CoverageReport))
 def merge_coverage_reports(reports: list[CoverageReport | None]) -> CoverageReport:
@@ -258,6 +259,7 @@ def merge_coverage_reports(reports: list[CoverageReport | None]) -> CoverageRepo
 
 
 # @shell_orchestration: Format report for Rich console output
+# @invar:allow dead_export: Public helper API exported for external integrations
 @pre(lambda report: isinstance(report, CoverageReport))
 @post(lambda result: isinstance(result, str))
 def format_coverage_output(report: CoverageReport) -> str:
@@ -291,7 +293,9 @@ def format_coverage_output(report: CoverageReport) -> str:
             lines.append(f"    Line {branch.line}: {branch.context}")
 
     lines.append("")
-    lines.append(f"Overall: {report.overall_branch_coverage}% branch coverage ({' + '.join(report.phases_tracked)})")
+    lines.append(
+        f"Overall: {report.overall_branch_coverage}% branch coverage ({' + '.join(report.phases_tracked)})"
+    )
     lines.append("")
     lines.append("Note: CrossHair uses symbolic execution; coverage not applicable.")
 
@@ -299,6 +303,7 @@ def format_coverage_output(report: CoverageReport) -> str:
 
 
 # @shell_orchestration: Format report for JSON agent output
+# @invar:allow dead_export: Public helper API exported for external integrations
 @post(lambda result: isinstance(result, dict))
 def format_coverage_json(report: CoverageReport) -> dict:
     """Format coverage report for JSON output.

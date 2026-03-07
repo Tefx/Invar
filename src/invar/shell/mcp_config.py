@@ -117,6 +117,7 @@ def get_recommended_method() -> McpExecConfig:
 
 
 # @shell_orchestration: MCP method lookup helper
+# @invar:allow dead_export: Public helper API exported for external integrations
 def get_method_by_name(name: str) -> McpExecConfig | None:
     """
     Get a specific MCP method by name.

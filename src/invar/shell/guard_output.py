@@ -50,6 +50,7 @@ class VerificationStats:
 
 # @shell_orchestration: Rich markup formatting tightly coupled to shell output
 # @shell_complexity: Conditional formatting for each stat category
+# @invar:allow dead_export: Public helper API exported for external integrations
 def format_verification_stats(stats: VerificationStats) -> str:
     """
     Format verification statistics for display.

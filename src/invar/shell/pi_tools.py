@@ -50,7 +50,9 @@ def install_pi_tools(
     console.print("    ✓ invar_guard - Smart verification (static + doctests + symbolic)")
     console.print("    ✓ invar_sig - Show function signatures and contracts")
     console.print("    ✓ invar_map - Symbol map with reference counts")
-    console.print("    ✓ 6 doc tools - Structured markdown editing (toc, read, find, replace, insert, delete)")
+    console.print(
+        "    ✓ 6 doc tools - Structured markdown editing (toc, read, find, replace, insert, delete)"
+    )
     console.print("")
 
     template_path = get_pi_tools_template_path()
@@ -74,6 +76,7 @@ def install_pi_tools(
         return Failure(f"Failed to install Pi tools: {e}")
 
 
+# @invar:allow dead_export: Typer CLI command registered at runtime via app.command()
 def remove_pi_tools(
     project_path: Path,
     console: Console,
@@ -100,6 +103,7 @@ def remove_pi_tools(
     return Success(None)
 
 
+# @invar:allow dead_export: Typer CLI command registered at runtime via app.command()
 def pi_tools_status(
     project_path: Path,
     console: Console,

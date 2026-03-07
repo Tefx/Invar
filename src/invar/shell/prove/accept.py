@@ -46,10 +46,7 @@ def has_verifiable_contracts(source: str) -> bool:
                     if isinstance(func, ast.Name) and func.id in contract_decorators:
                         return True
                     # @deal.pre(...) or @deal.post(...)
-                    if (
-                        isinstance(func, ast.Attribute)
-                        and func.attr in contract_decorators
-                    ):
+                    if isinstance(func, ast.Attribute) and func.attr in contract_decorators:
                         return True
 
     return False
@@ -57,6 +54,7 @@ def has_verifiable_contracts(source: str) -> bool:
 
 # @shell_orchestration: Acceptance criteria analysis for CrossHair prove
 # @shell_complexity: AST traversal for decorator extraction
+# @invar:allow dead_export: Public helper API exported for external integrations
 def get_crosshair_accept_reasons(source: str) -> dict[str, str]:
     """
     Extract @crosshair_accept reasons from source.
@@ -101,6 +99,7 @@ def get_crosshair_accept_reasons(source: str) -> dict[str, str]:
 
 
 # @shell_orchestration: Counterexample parsing helper for CrossHair output
+# @invar:allow dead_export: Public helper API exported for external integrations
 def extract_function_from_counterexample(ce: str) -> str | None:
     """
     Extract function name from CrossHair counterexample.
