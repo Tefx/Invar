@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.19.1] - 2026-03-08
+
+### Fixed
+- **Packaged `uvx` parity for self-validation imports**
+  - Prefer the local checkout source when `uvx` is running from an installed `invar-tools` package inside an Invar repo
+  - Fixes the packaged/property-test path that failed to resolve `invar.core.dead_param_helpers` while the repo-local control path still passed
+  - Added focused subprocess environment regressions for checkout-root detection and local-source respawn behavior
+
 ## [1.19.0] - 2026-03-07
 
 ### Added
@@ -493,7 +501,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[Unreleased]: https://github.com/yourusername/invar/compare/v1.19.0...HEAD
+[Unreleased]: https://github.com/yourusername/invar/compare/v1.19.1...HEAD
+[1.19.1]: https://github.com/yourusername/invar/compare/v1.19.0...v1.19.1
 [1.19.0]: https://github.com/yourusername/invar/compare/v1.18.1...v1.19.0
 [1.15.5]: https://github.com/yourusername/invar/compare/v1.15.4...v1.15.5
 [1.15.4]: https://github.com/yourusername/invar/compare/v1.15.3...v1.15.4
