@@ -11,7 +11,22 @@ import ast
 
 from deal import post, pre
 
-from invar.core.models import FileInfo, RuleConfig, Severity, Violation
+from invar.core.entry_points import has_allow_marker, is_entry_point
+from invar.core.models import FileInfo, RuleConfig, Severity, Symbol, SymbolKind, Violation
+
+CALLBACK_REGISTRAR_SUFFIXES: frozenset[str] = frozenset(
+    {
+        "signal",
+        "connect",
+        "register",
+        "add_signal_handler",
+        "set_exception_handler",
+        "command",
+        "callback",
+        "route",
+        "custom_route",
+    }
+)
 
 
 @pre(lambda decorator: isinstance(decorator, ast.expr))
@@ -245,8 +260,79 @@ def _collect_used_names(node: ast.FunctionDef | ast.AsyncFunctionDef) -> set[str
         _collect_names_from_node(node.returns, used_names)
 
     for stmt in node.body:
+        if isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            _collect_names_from_node(stmt, used_names)
+            for nested_stmt in stmt.body:
+                _collect_names_from_node(nested_stmt, used_names)
+            continue
         _collect_names_from_node(stmt, used_names)
     return used_names
+
+
+@pre(lambda node: isinstance(node, ast.AST))
+@post(lambda result: result is None or isinstance(result, str))
+def _call_target_name(node: ast.AST) -> str | None:
+    if isinstance(node, ast.Name):
+        return node.id
+    if isinstance(node, ast.Attribute):
+        parent = _call_target_name(node.value)
+        return f"{parent}.{node.attr}" if parent else node.attr
+    if isinstance(node, ast.Call):
+        return _call_target_name(node.func)
+    return None
+
+
+@pre(lambda call_name: len(call_name) > 0)
+@post(lambda result: isinstance(result, bool))
+def _is_callback_registrar(call_name: str) -> bool:
+    tail = call_name.split(".")[-1]
+    return tail in CALLBACK_REGISTRAR_SUFFIXES
+
+
+@pre(lambda tree: isinstance(tree, ast.AST))
+@post(lambda result: all(isinstance(name, str) for name in result))
+def _collect_registered_callback_names(tree: ast.AST) -> set[str]:
+    callback_names: set[str] = set()
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call):
+            continue
+        call_name = _call_target_name(node.func)
+        if call_name is None or not _is_callback_registrar(call_name):
+            continue
+
+        for arg in node.args:
+            if isinstance(arg, ast.Name):
+                callback_names.add(arg.id)
+            elif isinstance(arg, ast.Attribute):
+                callback_names.add(arg.attr)
+        for keyword in node.keywords:
+            value = keyword.value
+            if isinstance(value, ast.Name):
+                callback_names.add(value.id)
+            elif isinstance(value, ast.Attribute):
+                callback_names.add(value.attr)
+    return callback_names
+
+
+@pre(
+    lambda node, class_name: (
+        isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+        and isinstance(getattr(node, "name", None), str)
+        and (class_name is None or isinstance(class_name, str))
+    )
+)
+@post(lambda result: result is not None)
+def _symbol_for_node(
+    node: ast.FunctionDef | ast.AsyncFunctionDef,
+    class_name: str | None,
+) -> Symbol:
+    kind = SymbolKind.METHOD if class_name is not None else SymbolKind.FUNCTION
+    return Symbol(
+        name=node.name,
+        kind=kind,
+        line=node.lineno,
+        end_line=getattr(node, "end_lineno", node.lineno),
+    )
 
 
 @pre(
@@ -264,6 +350,8 @@ def check_dead_params(file_infos: list[FileInfo], config: RuleConfig) -> list[Vi
     - ``@property`` and ``@abstractmethod`` methods
     - methods declared on Protocol classes
     - parameters consumed by decorator expressions in nested definitions
+    - framework entry points and registered callback functions
+    - explicit ``# @invar:allow dead_param: <reason>`` markers
 
     Examples:
         >>> from invar.core.models import FileInfo, RuleConfig
@@ -310,6 +398,16 @@ def check_dead_params(file_infos: list[FileInfo], config: RuleConfig) -> list[Vi
         >>> file8 = FileInfo(path="core/h.py", lines=2, source=source8)
         >>> check_dead_params([file8], RuleConfig())
         []
+
+        >>> source9 = "def create_handler(token):" + nl + "    def handle():" + nl + "        return token" + nl + "    return handle" + nl
+        >>> file9 = FileInfo(path="core/i.py", lines=4, source=source9)
+        >>> check_dead_params([file9], RuleConfig())
+        []
+
+        >>> source10 = "import signal" + nl + "def setup():" + nl + "    def handle_signal(signum, frame):" + nl + "        return 0" + nl + "    signal.signal(signal.SIGINT, handle_signal)" + nl
+        >>> file10 = FileInfo(path="core/j.py", lines=5, source=source10)
+        >>> check_dead_params([file10], RuleConfig())
+        []
     """
     _ = config
 
@@ -325,6 +423,7 @@ def check_dead_params(file_infos: list[FileInfo], config: RuleConfig) -> list[Vi
 
         protocol_classes = _collect_protocol_classes(tree)
         parent_map = _build_parent_map(tree)
+        callback_names = _collect_registered_callback_names(tree)
 
         for node in ast.walk(tree):
             if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
@@ -337,6 +436,15 @@ def check_dead_params(file_infos: list[FileInfo], config: RuleConfig) -> list[Vi
             if class_name is not None and class_name in protocol_classes:
                 continue
 
+            symbol = _symbol_for_node(node, class_name)
+            if has_allow_marker(symbol, file_info.source, "dead_param"):
+                continue
+
+            if is_entry_point(symbol, file_info.source):
+                continue
+
+            is_registered_callback = node.name in callback_names
+
             checked_params = _iter_checked_params(node.args)
             if not checked_params:
                 continue
@@ -347,6 +455,9 @@ def check_dead_params(file_infos: list[FileInfo], config: RuleConfig) -> list[Vi
                     continue
 
                 if _is_config_shape_param(node.name, param_name, param_node):
+                    continue
+
+                if is_registered_callback:
                     continue
 
                 if param_name in used_names:

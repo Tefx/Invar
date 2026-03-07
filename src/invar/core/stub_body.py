@@ -9,6 +9,8 @@ Flags function-like definitions whose body is a placeholder only:
 Exemptions:
 - abstract methods (``@abstractmethod`` / ``@abc.abstractmethod``)
 - anything defined inside protocol classes
+- framework entry points (Click/Typer/Flask/FastAPI/etc.)
+- explicit ``# @invar:allow stub_body: <reason>`` markers
 
 Core module: pure logic, no I/O.
 """
@@ -19,7 +21,8 @@ import ast
 
 from deal import post, pre
 
-from invar.core.models import FileInfo, RuleConfig, Severity, Violation
+from invar.core.entry_points import has_allow_marker, is_entry_point
+from invar.core.models import FileInfo, RuleConfig, Severity, Symbol, SymbolKind, Violation
 
 
 @pre(
@@ -68,6 +71,23 @@ def check_stub_bodies(file_infos: list[FileInfo], config: RuleConfig) -> list[Vi
         ... '''
         >>> len(check_stub_bodies([FileInfo(path="src/proto.py", lines=5, source=source6)], RuleConfig()))
         0
+
+        >>> source7 = '''
+        ... import click
+        ... @click.group()
+        ... def main():
+        ...     pass
+        ... '''
+        >>> len(check_stub_bodies([FileInfo(path="src/cli.py", lines=4, source=source7)], RuleConfig()))
+        0
+
+        >>> source8 = '''
+        ... # @invar:allow stub_body: compatibility shim
+        ... def shim():
+        ...     ...
+        ... '''
+        >>> len(check_stub_bodies([FileInfo(path="src/shim.py", lines=3, source=source8)], RuleConfig()))
+        0
     """
     _ = config
     violations: list[Violation] = []
@@ -86,6 +106,7 @@ def check_stub_bodies(file_infos: list[FileInfo], config: RuleConfig) -> list[Vi
         violations.extend(
             _collect_stub_violations(
                 path=file_info.path,
+                source=source,
                 statements=tree.body,
                 protocol_names=protocol_names,
                 name_prefix=(),
@@ -165,8 +186,9 @@ def _is_protocol_base_class(class_def: ast.ClassDef) -> bool:
 
 
 @pre(
-    lambda path, statements, protocol_names, name_prefix, in_protocol, in_class: (
+    lambda path, source, statements, protocol_names, name_prefix, in_protocol, in_class: (
         isinstance(path, str)
+        and isinstance(source, str)
         and all(isinstance(stmt, ast.stmt) for stmt in statements)
         and isinstance(protocol_names, set)
         and all(isinstance(name, str) for name in protocol_names)
@@ -179,6 +201,7 @@ def _is_protocol_base_class(class_def: ast.ClassDef) -> bool:
 @post(lambda result: all(v.rule == "stub_body" for v in result))
 def _collect_stub_violations(
     path: str,
+    source: str,
     statements: list[ast.stmt],
     protocol_names: set[str],
     name_prefix: tuple[str, ...],
@@ -191,6 +214,7 @@ def _collect_stub_violations(
         >>> tree = ast.parse("def outer():\\n    def inner():\\n        ...\\n    return 1")
         >>> violations = _collect_stub_violations(
         ...     path="src/mod.py",
+        ...     source="def outer():\\n    def inner():\\n        ...\\n    return 1",
         ...     statements=tree.body,
         ...     protocol_names=set(),
         ...     name_prefix=(),
@@ -213,6 +237,7 @@ def _collect_stub_violations(
             violations.extend(
                 _collect_stub_violations(
                     path,
+                    source,
                     class_body,
                     protocol_names,
                     (*name_prefix, class_name),
@@ -230,8 +255,23 @@ def _collect_stub_violations(
 
             symbol_name = ".".join((*name_prefix, func_name))
             exempt_abstract_method = in_class and _is_abstract_method(statement)
+            symbol_kind = SymbolKind.METHOD if in_class else SymbolKind.FUNCTION
+            symbol = Symbol(
+                name=func_name,
+                kind=symbol_kind,
+                line=statement.lineno,
+                end_line=getattr(statement, "end_lineno", statement.lineno),
+            )
+            exempt_entry_point = is_entry_point(symbol, source)
+            has_stub_allow = has_allow_marker(symbol, source, "stub_body")
 
-            if (not in_protocol) and (not exempt_abstract_method) and _is_stub_body(statement):
+            if (
+                (not in_protocol)
+                and (not exempt_abstract_method)
+                and (not exempt_entry_point)
+                and (not has_stub_allow)
+                and _is_stub_body(statement)
+            ):
                 violations.append(
                     Violation(
                         rule="stub_body",
@@ -245,7 +285,13 @@ def _collect_stub_violations(
 
             violations.extend(
                 _collect_stub_violations(
-                    path, func_body, protocol_names, (*name_prefix, func_name), in_protocol, False
+                    path,
+                    source,
+                    func_body,
+                    protocol_names,
+                    (*name_prefix, func_name),
+                    in_protocol,
+                    False,
                 )
             )
 

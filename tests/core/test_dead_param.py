@@ -91,3 +91,61 @@ class Repository(Protocol):
 """
     violations = _check_source(source)
     assert violations == []
+
+
+def test_nested_closure_capture_counts_as_usage() -> None:
+    source = """
+def create_handler(token):
+    def handle() -> str:
+        return token
+    return handle
+"""
+    violations = _check_source(source)
+    assert violations == []
+
+
+def test_signal_registered_callback_signature_is_exempt() -> None:
+    source = """
+import signal
+
+def setup():
+    def handle_signal(signum, frame):
+        return 0
+    signal.signal(signal.SIGINT, handle_signal)
+"""
+    violations = _check_source(source)
+    assert violations == []
+
+
+def test_entry_point_decorated_function_is_exempt() -> None:
+    source = """
+import click
+
+@click.command()
+def cli(ctx):
+    return 1
+"""
+    violations = _check_source(source)
+    assert violations == []
+
+
+def test_allow_marker_suppresses_dead_param() -> None:
+    source = """
+# @invar:allow dead_param: framework callback signature
+def callback(request):
+    return 1
+"""
+    violations = _check_source(source)
+    assert violations == []
+
+
+def test_non_registrar_callback_still_reports_dead_param() -> None:
+    source = """
+def setup():
+    def callback(request):
+        return 1
+    run(callback)
+"""
+    violations = _check_source(source)
+    assert len(violations) == 1
+    assert "request" in violations[0].message

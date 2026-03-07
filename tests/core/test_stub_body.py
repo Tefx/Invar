@@ -86,3 +86,23 @@ class Child(Base):
         ...
 """
     assert _violation_count(source) == 0
+
+
+def test_exempts_click_entry_point_stub() -> None:
+    source = """
+import click
+
+@click.group()
+def main():
+    pass
+"""
+    assert _violation_count(source) == 0
+
+
+def test_allow_marker_suppresses_stub_body() -> None:
+    source = """
+# @invar:allow stub_body: compatibility shim
+def shim():
+    ...
+"""
+    assert _violation_count(source) == 0
