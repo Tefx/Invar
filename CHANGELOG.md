@@ -7,8 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.19.0] - 2026-03-07
+
+### Added
+- **DX-89 wiring integrity suite completed**
+  - Finalized all Wave 1 and Wave 2 checks and gate flows
+  - Added comprehensive cross-project validation coverage on `../anima`
+
 ### Fixed
-- **init: Language-specific config.toml (LX-05)** - Generate correct config for TypeScript
+- **Guard pipeline integration and diagnostics**
+  - Wired and stabilized `dead_param`, `stub_body`, `wiring_gap`, `mock_leak`, and `dead_assign` checks in guard workflows
+  - Added verbose wiring-gap context rendering for easier triage
+  - Reduced false positives across dead-parameter and dead-assignment analysis
+
+- **init: Language-specific config.toml (LX-05)**
   - TypeScript projects now get TypeScript-specific `forbidden_imports`: `fs`, `path`, `http`, etc.
   - TypeScript projects get `require_doctests = false` (uses JSDoc instead)
   - TypeScript-specific `exclude_paths`: `node_modules`, `.next`, `coverage`
@@ -481,7 +493,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[Unreleased]: https://github.com/yourusername/invar/compare/v1.15.5...HEAD
+[Unreleased]: https://github.com/yourusername/invar/compare/v1.19.0...HEAD
+[1.19.0]: https://github.com/yourusername/invar/compare/v1.18.1...v1.19.0
 [1.15.5]: https://github.com/yourusername/invar/compare/v1.15.4...v1.15.5
 [1.15.4]: https://github.com/yourusername/invar/compare/v1.15.3...v1.15.4
 [1.15.3]: https://github.com/yourusername/invar/compare/v1.15.2...v1.15.3

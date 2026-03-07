@@ -60,6 +60,7 @@ def _count_core_functions(file_info) -> tuple[int, int]:
     return (total, with_contracts)
 
 
+# @shell_orchestration: CLI-level scan filter for dependencies/venv locations
 def _is_dependency_or_env_path(relative_path: str) -> bool:
     normalized = relative_path.replace("\\", "/")
     return (
@@ -81,7 +82,7 @@ def _scan_and_check(
     path: Path,
     config: RuleConfig,
     only_files: set[Path] | None = None,
-    include_verbose_wiring: bool = False,
+    verbose: bool = False,
 ) -> Result[GuardReport, str]:
     """Scan project files and check against rules."""
     from invar.core.dead_export import check_dead_exports
@@ -153,9 +154,7 @@ def _scan_and_check(
     # WIRING-GAP: Check for local assignments that should be passed to optional params
     from invar.core.wiring_gap import check_wiring_gaps
 
-    for wiring_gap_violation in check_wiring_gaps(
-        all_file_infos, config, verbose=include_verbose_wiring
-    ):
+    for wiring_gap_violation in check_wiring_gaps(all_file_infos, config, verbose=verbose):
         report.add_violation(wiring_gap_violation)
 
     # MOCK-LEAK: Check for test utilities in production code
@@ -415,7 +414,7 @@ def guard(
         only_files, checked_files = changed_result.unwrap()
 
     # Run static analysis
-    scan_result = _scan_and_check(path, config, only_files, include_verbose_wiring=verbose)
+    scan_result = _scan_and_check(path, config, only_files, verbose=verbose)
     if isinstance(scan_result, Failure):
         console.print(f"[red]Error:[/red] {scan_result.failure()}")
         raise typer.Exit(1)
