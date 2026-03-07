@@ -1,4 +1,5 @@
 """dead_assign rule implementation. Spec: plan.yaml:wiring-integrity-2.dead-assign-core, rule_meta:dead_assign."""
+# @invar:allow file_size: AST walker stays explicit to keep rule behavior auditable.
 
 from __future__ import annotations
 
@@ -123,7 +124,11 @@ def _walk_expr(node: ast.AST, pending: dict[str, DeadWrite], dead_writes: list[D
             _record_write(name, line, pending, dead_writes)
         return
 
-    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Lambda)):
+    if isinstance(node, ast.Lambda):
+        _walk_expr(node.body, pending, dead_writes)
+        return
+
+    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
         return
 
     for child in ast.iter_child_nodes(node):
@@ -143,6 +148,7 @@ def _walk_assignment(
 ) -> None:
     _walk_expr(node.value, pending, dead_writes)
     for target in node.targets:
+        _walk_expr(target, pending, dead_writes)
         for name, line in _collect_target_writes(target):
             _record_write(name, line, pending, dead_writes)
 
@@ -180,6 +186,8 @@ def _walk_aug_assignment(
 ) -> None:
     if isinstance(node.target, ast.Name):
         _record_read(node.target.id, pending)
+    else:
+        _walk_expr(node.target, pending, dead_writes)
     _walk_expr(node.value, pending, dead_writes)
     for name, line in _collect_target_writes(node.target):
         _record_write(name, line, pending, dead_writes)

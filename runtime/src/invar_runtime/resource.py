@@ -70,7 +70,7 @@ def must_close(cls: type[T]) -> type[T]:
 
     if not hasattr(cls, "__exit__"):
 
-        def __exit__(self: Any, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        def __exit__(self: Any, _exc_type: Any, _exc_val: Any, _exc_tb: Any) -> None:
             if hasattr(self, "close") and callable(self.close):
                 self.close()
 

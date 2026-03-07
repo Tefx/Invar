@@ -121,7 +121,6 @@ def parse_invar_regions(content: str) -> ParsedFile:
     before = ""
     after = ""
     last_end = 0
-    first_start: int | None = None
 
     # Find all region starts
     for start_match in REGION_START_PATTERN.finditer(content):
@@ -129,8 +128,7 @@ def parse_invar_regions(content: str) -> ParsedFile:
         version = start_match.group(2) or ""
         region_start = start_match.start()
 
-        if first_start is None:
-            first_start = region_start
+        if not regions:
             before = content[:region_start]
 
         # Find corresponding end marker
@@ -156,8 +154,9 @@ def parse_invar_regions(content: str) -> ParsedFile:
 
 
 @pre(
-    lambda parsed, updates: isinstance(updates, dict)
-    and all(k == v.name for k, v in parsed.regions.items())
+    lambda parsed, updates: (
+        isinstance(updates, dict) and all(k == v.name for k, v in parsed.regions.items())
+    )
 )  # Keys must match names
 @ensure(
     lambda parsed, updates, result: (
