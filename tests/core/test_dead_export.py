@@ -17,21 +17,20 @@ from invar.core.models import FileInfo, RuleConfig, Severity, Symbol, SymbolKind
 
 
 def test_public_function_used_only_in_test_files_gets_test_only_export():
-    """Public function referenced only from tests/ should get test_only_export sub-category."""
+    """Public function referenced only from test files should get test_only_export sub-category."""
     # Symbol defined in shell (production code)
     sym = Symbol(name="helper_for_test", kind=SymbolKind.FUNCTION, line=1, end_line=3)
     # This is in a shell file (production)
     file_info = FileInfo(path="shell/api.py", lines=10, symbols=[sym], is_shell=True)
 
     # Reference counts show it IS referenced - but only from test files
-    # Currently, this would show 1 reference (from tests/)
-    # The fix should detect that references are ONLY from tests/ directory
     ref_counts = {"shell/api.py::helper_for_test": 1}
+    # Pass reference sources to indicate it's only referenced from test files
+    ref_sources = {"shell/api.py::helper_for_test": ["tests/test_api.py"]}
 
-    violations = check_dead_exports([file_info], ref_counts, RuleConfig())
+    violations = check_dead_exports([file_info], ref_counts, RuleConfig(), ref_sources)
 
-    # Currently there would be no violation (it's referenced)
-    # After fix: should have test_only_export violation
+    # Should have test_only_export violation
     assert len(violations) >= 1, "Expected test_only_export violation for test-only function"
     v = violations[0]
     # The rule should indicate test_only_export sub-category
@@ -48,8 +47,10 @@ def test_public_function_used_in_production_gets_no_warning():
 
     # Reference count > 0 (referenced from production code)
     ref_counts = {"shell/api.py::used_in_prod": 1}
+    # Referenced from a non-test file
+    ref_sources = {"shell/api.py::used_in_prod": ["shell/other.py"]}
 
-    violations = check_dead_exports([file_info], ref_counts, RuleConfig())
+    violations = check_dead_exports([file_info], ref_counts, RuleConfig(), ref_sources)
 
     # Should have NO violations - it's used in production
     assert len(violations) == 0, (
@@ -81,13 +82,16 @@ def test_test_only_export_message_distinct_from_regular_dead_export():
         path="shell/utils.py", lines=10, symbols=[sym_test_only], is_shell=True
     )
     ref_counts_test = {"shell/utils.py::test_helper": 1}  # Referenced from tests
+    ref_sources_test = {"shell/utils.py::test_helper": ["tests/test_utils.py"]}
 
     # Truly dead function (no references)
     sym_dead = Symbol(name="unused_func", kind=SymbolKind.FUNCTION, line=1, end_line=3)
     file_info_dead = FileInfo(path="shell/api.py", lines=10, symbols=[sym_dead], is_shell=True)
     ref_counts_dead = {"shell/api.py::unused_func": 0}
 
-    violations_test = check_dead_exports([file_info_test], ref_counts_test, RuleConfig())
+    violations_test = check_dead_exports(
+        [file_info_test], ref_counts_test, RuleConfig(), ref_sources_test
+    )
     violations_dead = check_dead_exports([file_info_dead], ref_counts_dead, RuleConfig())
 
     # Get messages
@@ -113,13 +117,16 @@ def test_test_only_export_severity_differs_from_regular_dead_export():
         path="shell/utils.py", lines=10, symbols=[sym_test_only], is_shell=True
     )
     ref_counts_test = {"shell/utils.py::test_helper": 1}
+    ref_sources_test = {"shell/utils.py::test_helper": ["tests/test_utils.py"]}
 
     # Dead function
     sym_dead = Symbol(name="unused_func", kind=SymbolKind.FUNCTION, line=1, end_line=3)
     file_info_dead = FileInfo(path="shell/api.py", lines=10, symbols=[sym_dead], is_shell=True)
     ref_counts_dead = {"shell/api.py::unused_func": 0}
 
-    violations_test = check_dead_exports([file_info_test], ref_counts_test, RuleConfig())
+    violations_test = check_dead_exports(
+        [file_info_test], ref_counts_test, RuleConfig(), ref_sources_test
+    )
     violations_dead = check_dead_exports([file_info_dead], ref_counts_dead, RuleConfig())
 
     # Both should produce violations

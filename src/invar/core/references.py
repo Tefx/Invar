@@ -232,6 +232,59 @@ def count_cross_file_references(
 
 
 @pre(
+    lambda file_infos, sources, include_same_file=False: (
+        isinstance(file_infos, list)
+        and all(isinstance(fi, FileInfo) for fi in file_infos)
+        and isinstance(sources, dict)
+        and isinstance(include_same_file, bool)
+    )
+)
+@post(lambda result: all("::" in k and isinstance(v, list) for k, v in result.items()))
+def get_reference_sources(
+    file_infos: list[FileInfo],
+    sources: dict[str, str],
+    include_same_file: bool = False,
+) -> dict[str, list[str]]:
+    """
+    Get the list of source files that reference each symbol.
+
+    Returns dict of {"file::symbol": [list of referencing file paths]}.
+
+    Examples:
+        >>> from invar.core.models import FileInfo, Symbol, SymbolKind
+        >>> sym = Symbol(name="foo", kind=SymbolKind.FUNCTION, line=1, end_line=2)
+        >>> info = FileInfo(path="a.py", lines=5, symbols=[sym])
+        >>> srcs = {"a.py": "def foo(): pass", "tests/test_a.py": "from a import foo"}
+        >>> info2 = FileInfo(path="tests/test_a.py", lines=5, symbols=[])
+        >>> ref_sources = get_reference_sources([info, info2], srcs)
+        >>> sorted(ref_sources.get("a.py::foo", []))
+        ['tests/test_a.py']
+    """
+    # Build symbol index: name -> defining files
+    symbol_index = build_symbol_index(file_infos)
+    known_symbols = set(symbol_index.keys())
+
+    # Track reference sources: key -> list of source files
+    ref_sources: dict[str, list[str]] = defaultdict(list)
+
+    for file_info in file_infos:
+        source = sources.get(file_info.path, "")
+        if not source:
+            continue
+
+        references = find_references_in_source(source, known_symbols)
+
+        for symbol_name, _ in references:
+            defining_files = symbol_index.get(symbol_name, set())
+            for defining_file in defining_files:
+                if include_same_file or defining_file != file_info.path:
+                    key = f"{defining_file}::{symbol_name}"
+                    ref_sources[key].append(file_info.path)
+
+    return dict(ref_sources)
+
+
+@pre(
     lambda file_infos, sources, project_root: (
         isinstance(file_infos, list)
         and all(isinstance(fi, FileInfo) for fi in file_infos)

@@ -17,25 +17,55 @@ from invar.core.entry_points import has_allow_marker, is_entry_point
 from invar.core.models import FileInfo, RuleConfig, Severity, SymbolKind, Violation
 
 
+@pre(lambda path: isinstance(path, str) and len(path) > 0)
+@post(lambda result: isinstance(result, bool))
+def _is_test_file(path: str) -> bool:
+    """
+    Check if a file path is a test file.
+
+    Examples:
+        >>> _is_test_file("tests/test_foo.py")
+        True
+        >>> _is_test_file("src/core/logic.py")
+        False
+    """
+    path_lower = path.replace("\\", "/").lower()
+    filename = path_lower.rsplit("/", 1)[-1]
+    return (
+        "/tests/" in path_lower
+        or "/test/" in path_lower
+        or filename.startswith("test_")
+        or filename.endswith("_test.py")
+    )
+
+
 @pre(
-    lambda file_infos, ref_counts, config: (
+    lambda file_infos, ref_counts, config, ref_sources=None: (
         all(isinstance(fi, FileInfo) for fi in file_infos)
         and all(
             isinstance(name, str) and isinstance(count, int) and count >= 0
             for name, count in ref_counts.items()
         )
         and isinstance(config, RuleConfig)
+        and (ref_sources is None or isinstance(ref_sources, dict))
     )
 )
-@post(lambda result: all(v.rule == "dead_export" for v in result))
+@post(lambda result: all(v.rule in ("dead_export", "test_only_export") for v in result))
 def check_dead_exports(
-    file_infos: list[FileInfo], ref_counts: dict[str, int], config: RuleConfig
+    file_infos: list[FileInfo],
+    ref_counts: dict[str, int],
+    config: RuleConfig,
+    ref_sources: dict[str, list[str]] | None = None,
 ) -> list[Violation]:
     """
     Check for dead exports in Shell functions.
 
     Identifies Shell functions that are never referenced elsewhere.
     Only checks public functions (not starting with _).
+
+    Two categories:
+    - dead_export: Function has zero cross-file references (WARNING)
+    - test_only_export: Function is only referenced from test files (INFO)
 
     Exclusions:
     - Private functions (name.startswith("_"))
@@ -145,6 +175,20 @@ def check_dead_exports(
         0
         >>> check_dead_exports([info10], refs10, RuleConfig())
         []
+
+        >>> # Case 11: test_only_export - function only used in test files
+        >>> sym11 = Symbol(name="test_helper", kind=SymbolKind.FUNCTION, line=1, end_line=3)
+        >>> info11 = FileInfo(path="shell/utils.py", lines=10, symbols=[sym11], is_shell=True)
+        >>> # Simulate ref_counts with test-only references
+        >>> ref_counts11 = {"shell/utils.py::test_helper": 1}
+        >>> ref_sources11 = {"shell/utils.py::test_helper": ["tests/test_utils.py"]}
+        >>> violations11 = check_dead_exports([info11], ref_counts11, RuleConfig(), ref_sources11)
+        >>> len(violations11) >= 1
+        True
+        >>> violations11[0].rule
+        'test_only_export'
+        >>> violations11[0].severity
+        <Severity.INFO: 'info'>
     """
     violations: list[Violation] = []
 
@@ -217,5 +261,19 @@ def check_dead_exports(
                         suggestion="Remove unused function, or add: # @invar:allow dead_export: <reason>",
                     )
                 )
+            elif ref_sources:
+                # Check if all references are only from test files
+                sources = ref_sources.get(key, [])
+                if sources and all(_is_test_file(src) for src in sources):
+                    violations.append(
+                        Violation(
+                            rule="test_only_export",
+                            severity=Severity.INFO,
+                            file=file_info.path,
+                            line=symbol.line,
+                            message=f"Shell function '{symbol.name}' is only referenced from test files",
+                            suggestion="Consider moving to tests/ or adding: # @invar:allow dead_export: <reason>",
+                        )
+                    )
 
     return violations
