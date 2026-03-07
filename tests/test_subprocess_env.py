@@ -5,6 +5,7 @@ Tests PYTHONPATH injection, re-spawn detection, and version mismatch detection.
 
 from __future__ import annotations
 
+import importlib
 import os
 import sys
 from types import SimpleNamespace
@@ -17,7 +18,7 @@ if TYPE_CHECKING:
 from returns.result import Success
 
 from invar.shell.guard_helpers import collect_files_to_check
-from invar.shell.property_tests import run_property_tests_on_file
+from invar.shell.property_tests import _import_module_from_path, run_property_tests_on_file
 from invar.shell.subprocess_env import (
     build_subprocess_env,
     check_version_mismatch,
@@ -225,6 +226,36 @@ def f(x: int) -> int:
 
         result = run_property_tests_on_file(mod, max_examples=1, project_root=tmp_path)
         assert isinstance(result, Success)
+
+    def test_import_module_from_path_extends_loaded_package_paths(self, tmp_path: Path) -> None:
+        site_root = tmp_path / "site"
+        installed_pkg = site_root / "demo" / "core"
+        installed_pkg.mkdir(parents=True)
+        (site_root / "demo" / "__init__.py").write_text("")
+        (installed_pkg / "__init__.py").write_text("")
+
+        local_module = tmp_path / "src" / "demo" / "core" / "dead_param.py"
+        local_module.parent.mkdir(parents=True)
+        (local_module.parent / "__init__.py").write_text("")
+        (local_module.parent / "dead_param_helpers.py").write_text("VALUE = 7\n")
+        local_module.write_text("from demo.core.dead_param_helpers import VALUE\nANSWER = VALUE\n")
+
+        inserted = str(site_root)
+        sys.path.insert(0, inserted)
+        try:
+            demo_core = importlib.import_module("demo.core")
+            module = _import_module_from_path(local_module, project_root=tmp_path)
+
+            assert module is not None
+            assert getattr(module, "ANSWER", None) == 7
+            assert str(tmp_path / "src" / "demo" / "core") in list(demo_core.__path__)
+        finally:
+            sys.modules.pop("demo.core.dead_param", None)
+            sys.modules.pop("demo.core.dead_param_helpers", None)
+            sys.modules.pop("demo.core", None)
+            sys.modules.pop("demo", None)
+            if inserted in sys.path:
+                sys.path.remove(inserted)
 
 
 # =============================================================================

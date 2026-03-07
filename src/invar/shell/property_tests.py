@@ -367,6 +367,7 @@ def _extend_loaded_package_paths(module_name: str, module_root: Path) -> None:
     only inside the loaded package path unless we extend it.
     """
     package_parts = module_name.split(".")[:-1]
+    path_added = False
     for depth in range(1, len(package_parts) + 1):
         package_name = ".".join(package_parts[:depth])
         package = sys.modules.get(package_name)
@@ -381,6 +382,12 @@ def _extend_loaded_package_paths(module_name: str, module_root: Path) -> None:
         path_list = list(existing_paths)
         if package_path not in path_list:
             package.__path__ = [*path_list, package_path]
+            path_added = True
+
+    if path_added:
+        import importlib
+
+        importlib.invalidate_caches()
 
 
 # @shell_complexity: BUG-57 fix requires package hierarchy setup for relative imports
