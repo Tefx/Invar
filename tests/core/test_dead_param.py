@@ -217,3 +217,308 @@ class AgentServer:
     violations = _check_source(source)
     assert len(violations) == 1
     assert "request" in violations[0].message
+
+
+# Regression tests for interface/protocol-shaped parameters (DX-92)
+# These tests capture known false-positive patterns that should NOT trigger dead_param
+
+
+def test_class_implementing_protocol_is_exempt() -> None:
+    """A class that implements a Protocol should have its methods exempt."""
+    source = """
+from typing import Protocol
+
+class Repository(Protocol):
+    def save(self, data: str) -> None:
+        ...
+
+class ConcreteRepository:
+    def save(self, data: str) -> None:
+        print(data)
+"""
+    violations = _check_source(source)
+    # The save method in ConcreteRepository uses 'data', so no violation expected
+    # But the Protocol definition itself should also be exempt
+    assert violations == []
+
+
+def test_runtime_checkable_protocol_is_exempt() -> None:
+    """A runtime_checkable Protocol should have its methods exempt."""
+    source = """
+from typing import Protocol, runtime_checkable
+
+@runtime_checkable
+class Comparable(Protocol):
+    def __gt__(self, other: "Comparable") -> bool:
+        ...
+"""
+    violations = _check_source(source)
+    assert violations == []
+
+
+def test_generic_protocol_is_exempt() -> None:
+    """A generic Protocol should have its methods exempt."""
+    source = """
+from typing import Protocol, TypeVar
+
+T = TypeVar("T")
+
+class Container(Protocol[T]):
+    def get(self) -> T:
+        ...
+"""
+    violations = _check_source(source)
+    assert violations == []
+
+
+def test_class_inheriting_from_protocol_subclass_is_exempt() -> None:
+    """A class inheriting from a subclass of Protocol should be exempt."""
+    source = """
+from typing import Protocol
+
+class BaseRepository(Protocol):
+    def save(self, data: str) -> None:
+        ...
+
+class ConcreteRepository(BaseRepository):
+    def save(self, data: str) -> None:
+        print(data)
+"""
+    violations = _check_source(source)
+    assert violations == []
+
+
+def test_class_satisfying_protocol_in_same_file_is_exempt() -> None:
+    """A class that satisfies a Protocol defined in same file should be exempt.
+
+    This is a known false-positive pattern: when a class implements a Protocol
+    interface in the same file as the Protocol definition, the implementation's
+    parameters should not be flagged as dead.
+    """
+    source = """
+from typing import Protocol
+
+class Repository(Protocol):
+    def get(self, key: str) -> str: ...
+
+class ConcreteRepository:
+    def get(self, key: str) -> str:
+        return key
+"""
+    violations = _check_source(source)
+    # key is used, so no violation - but this tests the pattern
+    assert violations == []
+
+
+def test_class_satisfying_protocol_method_not_used_is_exempt() -> None:
+    """A class implementing Protocol method that's not used should be exempt.
+
+    This is the actual false positive: a class that implements a Protocol
+    interface has a method parameter that's not used in the implementation,
+    but it's part of the interface contract so shouldn't be flagged.
+    """
+    source = """
+from typing import Protocol
+
+class Repository(Protocol):
+    def get(self, key: str) -> str: ...
+
+class ConcreteRepository:
+    def get(self, key: str) -> str:
+        return "constant"
+"""
+    violations = _check_source(source)
+    # The 'key' parameter is not used in the implementation but is part of
+    # the Protocol interface contract, so it should NOT be flagged as dead
+    assert violations == []
+
+
+def test_subclass_of_protocol_implementation_is_exempt() -> None:
+    """A subclass of a class that implements a Protocol should be exempt."""
+    source = """
+from typing import Protocol
+
+class Repository(Protocol):
+    def save(self, data: str) -> None: ...
+
+class BaseRepo:
+    def save(self, data: str) -> None:
+        print(data)
+
+class MyRepo(BaseRepo):
+    def save(self, data: str) -> None:
+        print(data.upper())
+"""
+    violations = _check_source(source)
+    assert violations == []
+
+
+def test_class_implementing_protocol_from_another_module_is_exempt() -> None:
+    """A class implementing a Protocol from another module should be exempt.
+
+    This tests when Protocol is imported - the implementation's parameters
+    should not be flagged as dead since they satisfy the interface.
+    """
+    source = """
+from typing import Protocol
+
+# Simulating import from another module
+class ExternalProtocol(Protocol):
+    def fetch(self, url: str, timeout: int) -> bytes: ...
+
+class HTTPClient:
+    def fetch(self, url: str, timeout: int) -> bytes:
+        return b"response"
+"""
+    violations = _check_source(source)
+    # timeout is not used but it's part of the Protocol interface
+    assert violations == []
+
+
+def test_class_with_protocol_method_variadic_unused_is_exempt() -> None:
+    """A class implementing Protocol with variadic params not used should be exempt."""
+    source = """
+from typing import Protocol
+
+class VariadicHandler(Protocol):
+    def handle(self, *args, **kwargs): ...
+
+class Handler:
+    def handle(self, *args, **kwargs):
+        return "handled"
+"""
+    violations = _check_source(source)
+    assert violations == []
+
+
+def test_protocol_method_with_only_optional_params_is_exempt() -> None:
+    """Protocol method with only optional params should be exempt."""
+    source = """
+from typing import Protocol
+
+class OptionalHandler(Protocol):
+    def process(self, data: str = "default"): ...
+
+class Handler:
+    def process(self, data: str = "default"):
+        return data
+"""
+    violations = _check_source(source)
+    assert violations == []
+
+
+def test_multiple_protocol_implementations_in_same_class_is_exempt() -> None:
+    """A class implementing multiple Protocols should be exempt for all methods."""
+    source = """
+from typing import Protocol
+
+class Reader(Protocol):
+    def read(self, path: str) -> str: ...
+
+class Writer(Protocol):
+    def write(self, path: str, content: str) -> None: ...
+
+class FileHandler:
+    def read(self, path: str) -> str:
+        return "content"
+    
+    def write(self, path: str, content: str) -> None:
+        pass
+"""
+    violations = _check_source(source)
+    # path and content are unused but part of Protocol interface
+    assert violations == []
+
+
+def test_abc_abstract_method_is_exempt() -> None:
+    """An abstract method in an ABC should be exempt."""
+    source = """
+from abc import ABC, abstractmethod
+
+class BaseService(ABC):
+    @abstractmethod
+    def execute(self, request):
+        pass
+"""
+    violations = _check_source(source)
+    assert violations == []
+
+
+def test_protocol_with_variadic_parameters_is_exempt() -> None:
+    """Protocol methods with *args, **kwargs should be exempt."""
+    source = """
+from typing import Protocol
+
+class Callable(Protocol):
+    def __call__(self, *args, **kwargs):
+        ...
+"""
+    violations = _check_source(source)
+    assert violations == []
+
+
+def test_class_method_on_protocol_implementation_is_exempt() -> None:
+    """A classmethod on a class implementing Protocol should be exempt."""
+    source = """
+from typing import Protocol
+
+class Builder(Protocol):
+    @classmethod
+    def build(cls, config):
+        ...
+
+class ConcreteBuilder:
+    @classmethod
+    def build(cls, config):
+        return config
+"""
+    violations = _check_source(source)
+    assert violations == []
+
+
+def test_nested_protocol_definition_is_exempt() -> None:
+    """Nested Protocol class should have its methods exempt."""
+    source = """
+from typing import Protocol
+
+class Outer:
+    class Inner(Protocol):
+        def process(self, data):
+            ...
+"""
+    violations = _check_source(source)
+    assert violations == []
+
+
+def test_protocol_method_with_multiple_parameters_is_exempt() -> None:
+    """Protocol method with multiple parameters should be exempt."""
+    source = """
+from typing import Protocol
+
+class Adder(Protocol):
+    def add(self, x: int, y: int, *, verbose: bool = False) -> int:
+        ...
+"""
+    violations = _check_source(source)
+    assert violations == []
+
+
+def test_protocol_in_multiple_inheritance_is_exempt() -> None:
+    """Class with multiple inheritance including Protocol should be exempt."""
+    source = """
+from typing import Protocol
+
+class Serializable(Protocol):
+    def to_json(self) -> str:
+        ...
+
+class Base:
+    def base_method(self):
+        pass
+
+class MyClass(Base, Serializable):
+    def to_json(self) -> str:
+        return "{}"
+"""
+    violations = _check_source(source)
+    assert violations == []
