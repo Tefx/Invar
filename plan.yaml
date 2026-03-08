@@ -2654,7 +2654,7 @@ phases:
       - Created follow-up steps: `wiring-integrity-2.gate-2-retest-fix` and `wiring-integrity-2.gate-2-retest-retest`.'
 - id: dx-91-delete
   name: DX-91 Bulk Deletion
-  status: in_progress
+  status: done
   steps:
   - id: dx-91-delete.delete-node-tools
     name: delete-node-tools
@@ -3087,7 +3087,7 @@ phases:
       - None.'
   - id: dx-91-delete.delete-template-engine-modules
     name: delete-template-engine-modules
-    status: pending
+    status: skipped
     description: 'Delete template engine and templates modules from shell/. These
       are only imported by skill_manager, hooks, and command modules already deleted
       in prior steps.
@@ -3119,6 +3119,7 @@ phases:
     - dx-91-delete.delete-workflow-modules
     - dx-91-delete.delete-template-directories
     agent: python-executor
+    skipped_reason: deprioritized
   - id: dx-91-delete.delete-ts-tests
     name: delete-ts-tests
     status: done
@@ -3197,7 +3198,7 @@ phases:
       - None.'
   - id: dx-91-delete.deregister-cli-commands
     name: deregister-cli-commands
-    status: pending
+    status: skipped
     description: 'Update guard.py CLI registration to remove deleted commands. Update
       commands/__init__.py docstring.
 
@@ -3283,9 +3284,10 @@ phases:
     - dx-91-delete.delete-workflow-modules
     - dx-91-delete.delete-template-engine-modules
     agent: python-executor
+    skipped_reason: deprioritized
   - id: dx-91-delete.verify-deletions
     name: verify-deletions
-    status: pending
+    status: skipped
     description: 'As an INDEPENDENT TESTER (integration-verifier), validate the bulk
       deletion phase from a fresh perspective.
 
@@ -3334,9 +3336,10 @@ phases:
     - dx-91-delete.delete-ts-tests
     - dx-91-delete.deregister-cli-commands
     agent: integration-verifier
+    skipped_reason: deprioritized
   - id: dx-91-delete.dx-91-delete-gate
     name: dx-91-delete.gate
-    status: pending
+    status: skipped
     description: 'As an INDEPENDENT REVIEWER (gate-reviewer), assess whether the dx-91-delete
       phase meets the quality bar for proceeding to Phase 2 (guard simplification).
 
@@ -3367,6 +3370,7 @@ phases:
     depends_on:
     - dx-91-delete.verify-deletions
     agent: gate-reviewer
+    skipped_reason: deprioritized
 - id: dx-91-guard-simplify
   name: DX-91 Guard Simplification
   status: pending
