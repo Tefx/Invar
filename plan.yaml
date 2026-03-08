@@ -8456,6 +8456,41 @@ phases:
     depends_on:
     - mcp-full-guard-design.verify-design
     agent: python-senior
+  - id: mcp-full-guard-design.verify-design-retest
+    name: verify-design.retest
+    status: pending
+    description: 'As an INDEPENDENT TESTER (`integration-verifier`), re-review the
+      updated design after remediation of the issues found in `mcp-full-guard-design.verify-design`.
+
+
+      YOUR GOAL IS TO FIND REMAINING PROBLEMS, not to confirm it works.
+
+
+      Re-test for:
+
+      - cancellation API/contract completeness
+
+      - wait-timeout non-terminal response schema clarity
+
+      - partial-result semantics for deferred full-scan behavior
+
+      - failure-mode coverage completeness for deferred full-scan execution
+
+
+      Priority: MEDIUM
+
+
+      Independence Level: L1'
+    verification: '- Review evidence confirms whether the clarified design fully specifies
+      cancellation, timeout-state responses, partial-result semantics, and deferred
+      full-scan failure modes
+
+      - Any remaining ambiguity or client-compatibility risk is reported explicitly
+
+      - Verification uses the updated proposal as the source of truth'
+    depends_on:
+    - mcp-full-guard-design.verify-design-fix
+    agent: integration-verifier
 - id: mcp-full-guard-implement
   name: MCP Full Guard Implementation
   status: pending
