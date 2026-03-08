@@ -9570,3 +9570,34 @@ phases:
 
       - Backward-compatibility expectations are documented'
     agent: python-senior
+  - id: mcp-full-guard-design.verify-design
+    name: verify-design
+    status: pending
+    description: 'As an INDEPENDENT TESTER (`integration-verifier`), review the proposed
+      full-MCP-guard support model for feasibility and failure coverage.
+
+
+      YOUR GOAL IS TO FIND PROBLEMS, not to confirm it works.
+
+
+      Test for:
+
+      - happy path: design can return full-project results for large repos without
+      request timeout
+
+      - edge cases: small/changed-only calls remain simple and backward-compatible
+
+      - failure scenarios: cancellation, timeout reporting, partial-result handling,
+      and client compatibility are addressed
+
+
+      Independence Level: L1'
+    verification: '- Review evidence explicitly assesses whether the design closes
+      the request-timeout gap seen on `../tasca`
+
+      - Any ambiguity in API contract or client compatibility is reported
+
+      - No implementation assumptions are left unstated'
+    depends_on:
+    - mcp-full-guard-design.specify-support-model
+    agent: integration-verifier
