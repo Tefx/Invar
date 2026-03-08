@@ -9743,3 +9743,18 @@ phases:
 - id: mcp-full-guard-field-verify
   name: MCP Full Guard Field Validation
   status: pending
+  steps:
+  - id: mcp-full-guard-field-verify.freeze
+    name: freeze
+    status: pending
+    description: 'Freeze: lock the snapshot before L2 validation of full MCP guard
+      on external repos.'
+    verification: '- Record `git rev-parse HEAD`
+
+      - Record `git status` clean
+
+      - Record the env/tooling declaration used for field validation
+
+      - State explicitly that no code changes are allowed until the subsequent verification
+      step completes'
+    agent: integration-verifier
