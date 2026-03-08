@@ -8636,7 +8636,7 @@ phases:
       path.'
   - id: mcp-full-guard-implement.add-regressions
     name: add-regressions
-    status: claimed
+    status: done
     description: 'Add focused regression coverage for MCP full-guard support.
 
 
@@ -8669,6 +8669,33 @@ phases:
     agent: python-executor
     claimed_by: python-executor
     claimed_at: '2026-03-08T19:27:45.206081+00:00'
+    done_at: '2026-03-08T19:43:23.866599+00:00'
+    evidence: 'Commit hash(es): ef88637ee824839abe3f5e1310a98f0821a4351c (worker),
+      abdc06d (squash merge on main)
+
+      Files changed:
+
+      - tests/integration/test_mcp_full_guard_regressions.py
+
+      Verification:
+
+      - Run: pytest tests/integration/test_mcp_full_guard_regressions.py -> 23 passed,
+      0 failed
+
+      - Run: invar guard --changed -> passed (0 errors, 0 warnings)
+
+      Spec link:
+
+      - plan:mcp-full-guard-implement.add-regressions
+
+      Gaps/Notes:
+
+      - Added focused regressions for deferred full scan, changed-only and targeted
+      paths, lifecycle/status/wait/error envelopes, timeout/path validation, and end-to-end
+      flow.
+
+      - Worker reported a pre-existing unrelated hang in test_mcp_guard_changed_flag.py::test_run_guard_changed_false_uses_all_flag
+      due missing deferral mock.'
   - id: mcp-full-guard-implement.verify-implementation
     name: verify-implementation
     status: pending
