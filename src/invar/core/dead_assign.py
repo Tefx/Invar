@@ -269,6 +269,10 @@ def _walk_while(
         _walk_stmt(body_stmt, pending, dead_writes)
     # Simulate next-iteration condition check in read-only mode.
     _walk_expr_read_only(node.test, pending)
+    # Simulate one additional iteration body pass in read-only mode so
+    # loop-carried reads clear pending writes from the previous iteration.
+    for body_stmt in node.body:
+        _walk_stmt_read_only(body_stmt, pending)
     for else_stmt in node.orelse:
         _walk_stmt(else_stmt, pending, dead_writes)
 
