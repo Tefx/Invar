@@ -9941,3 +9941,18 @@ phases:
     depends_on:
     - da-while-repro.verify-pre-fix-failures
     agent: integration-verifier
+  - id: da-while-repro.gate
+    name: da-while-repro.gate
+    status: pending
+    description: 'Gate review: verify the while-loop reproductions are precise, minimal,
+      and sufficient to constrain the fix scope.'
+    verification: '- The three confirmed false-positive patterns are reproduced locally
+
+      - The negative control remains a true positive
+
+      - No unresolved ambiguity remains before the detector fix phase'
+    depends_on:
+    - da-while-repro.add-focused-repros
+    - da-while-repro.verify-pre-fix-failures
+    - da-while-repro.freeze-for-gate
+    agent: gate-reviewer
