@@ -8846,7 +8846,7 @@ phases:
     depends_on:
     - mcp-full-guard-implement.implement-execution-model
     - mcp-full-guard-implement.add-regressions
-    - mcp-full-guard-implement.verify-implementation
+    - mcp-full-guard-implement.verify-implementation-retest
     agent: gate-reviewer
   - id: mcp-full-guard-implement.verify-implementation-fix
     name: verify-implementation-fix
