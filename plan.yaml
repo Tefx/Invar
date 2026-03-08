@@ -2707,7 +2707,7 @@ phases:
       explicit user authorization before completion.'
   - id: dx-91-delete.delete-ts-core-modules
     name: delete-ts-core-modules
-    status: claimed
+    status: done
     description: "Delete TypeScript-specific Python modules from core/ and shell/.\n\
       \nFiles to delete:\n- src/invar/core/ts_parsers.py (290 LOC) - TS AST parsing\n\
       - src/invar/core/ts_sig_parser.py (318 LOC) - TS signature parser\n- src/invar/shell/ts_compiler.py\
@@ -2737,6 +2737,39 @@ phases:
     agent: python-executor
     claimed_by: python-executor
     claimed_at: '2026-03-08T17:58:00.004911+00:00'
+    done_at: '2026-03-08T18:02:49.736886+00:00'
+    evidence: 'Commit hash(es): 694f4c06cd96fcb98226996a48bbcff23d023dfc (worker),
+      b950312 (squash merge on main)
+
+      Files changed:
+
+      - src/invar/core/ts_parsers.py (deleted)
+
+      - src/invar/core/ts_sig_parser.py (deleted)
+
+      - src/invar/shell/ts_compiler.py (deleted)
+
+      - src/invar/shell/prove/guard_ts.py (deleted)
+
+      Verification:
+
+      - Run: ls src/invar/core/language.py -> exists (kept as required)
+
+      - Run: ls src/invar/core/ts_parsers.py src/invar/core/ts_sig_parser.py src/invar/shell/ts_compiler.py
+      src/invar/shell/prove/guard_ts.py -> all 4 paths absent
+
+      - Run: grep -rn ''ts_parsers|ts_sig_parser|ts_compiler|guard_ts'' src/invar/
+      --include=''*.py'' -> dangling references in guard.py and perception.py observed
+      and expected per step notes
+
+      Spec link:
+
+      - docs/proposals/DX-91-simplification.md
+
+      Gaps/Notes:
+
+      - Expected residual references remain for Phase 2 cleanup; no additional edits
+      done.'
   - id: dx-91-delete.delete-skills-hooks-modules
     name: delete-skills-hooks-modules
     status: done
