@@ -8453,7 +8453,7 @@ phases:
     agent: gate-reviewer
   - id: mcp-full-guard-design.verify-design-fix
     name: verify-design.fix
-    status: claimed
+    status: done
     description: 'Fix the design gaps reported by `mcp-full-guard-design.verify-design`
       in `docs/proposals/DX-94-mcp-full-guard-support-model.md`.
 
@@ -8488,6 +8488,39 @@ phases:
     agent: python-senior
     claimed_by: python-senior
     claimed_at: '2026-03-08T19:27:42.651385+00:00'
+    done_at: '2026-03-08T19:42:53.201955+00:00'
+    evidence: 'Commit hash(es): 781db7157b3fe94801d464baaf508a1c9047a455 (worker),
+      14f578d (squash merge on main)
+
+      Files changed:
+
+      - docs/proposals/DX-94-mcp-full-guard-support-model.md
+
+      Verification:
+
+      - Run: grep "invar_guard_cancel|Cancellation contract|cancelled" docs/proposals/DX-94-mcp-full-guard-support-model.md
+      -> cancellation API/contract coverage present
+
+      - Run: grep "wait_timeout|next_poll_after_ms|Non-terminal wait-timeout" docs/proposals/DX-94-mcp-full-guard-support-model.md
+      -> non-terminal wait-timeout schema clarified
+
+      - Run: grep "partial_report|Partial-result semantics" docs/proposals/DX-94-mcp-full-guard-support-model.md
+      -> partial-result semantics documented
+
+      - Run: grep "planner_error|queue_persist_error|run_expired|failure-mode coverage"
+      docs/proposals/DX-94-mcp-full-guard-support-model.md -> extended deferred failure
+      coverage documented
+
+      Spec link:
+
+      - plan:mcp-full-guard-design.verify-design-fix
+
+      Gaps/Notes:
+
+      - Docs-only change; high-level execution model preserved.
+
+      - Worker guard commands were blocked by local packaging environment, but acceptance
+      for this step is document-contract completeness.'
   - id: mcp-full-guard-design.verify-design-retest
     name: verify-design.retest
     status: pending
