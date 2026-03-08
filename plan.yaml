@@ -9281,7 +9281,7 @@ phases:
     agent: gate-reviewer
   - id: da-while-field.fix-anima-residual-dead-assign
     name: fix-anima-residual-dead-assign
-    status: claimed
+    status: done
     description: 'Fix residual `dead_assign` false positives still reproduced by the
       real `../anima` guard run for target variables `was_awaiting_approval`, `seen_count`,
       and `message_history` in `src/invar/core/dead_assign.py`, updating `tests/core/test_dead_assign.py`
@@ -9327,6 +9327,30 @@ phases:
     agent: python-senior
     claimed_by: python-senior
     claimed_at: '2026-03-08T20:00:09.222544+00:00'
+    done_at: '2026-03-08T20:01:02.598097+00:00'
+    evidence: 'Commit hash(es): ced4c0f (worker), be8b9fb (squash merge on main)
+
+      Files changed:
+
+      - tests/core/test_dead_assign.py
+
+      Verification:
+
+      - Run: uv run pytest -q tests/core/test_dead_assign.py -> 25 passed, 0 failed
+
+      - Run: uv run python check against anima target files (talk_runtime.py, inspect_collect.py,
+      agent.py) -> TOTAL 0 matching dead_assign violations for was_awaiting_approval/seen_count/message_history
+
+      - Run: uv run invar guard --human -> passed (0 errors, 0 warnings)
+
+      Spec link:
+
+      - plan:da-while-field.fix-anima-residual-dead-assign
+
+      Gaps/Notes:
+
+      - Worker did not need core algorithm changes; added focused regression protections
+      for reported external while-loop patterns while preserving true-positive behavior.'
   - id: da-while-field.retest-anima-guard
     name: retest-anima-guard
     status: pending
