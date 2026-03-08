@@ -160,9 +160,9 @@ RULE_META: dict[str, RuleMeta] = {
         name="entry_point_too_thick",
         severity=Severity.ERROR,  # DX-22: Architecture rule, must fix or explain
         category=RuleCategory.SHELL,
-        detects="Entry point (Flask route, Typer command, etc.) exceeds max lines",
+        detects="Entry point (Flask route, Typer command, MCP tool, etc.) exceeds max lines",
         cannot_detect=("Whether complexity is unavoidable", "Framework constraints"),
-        hint="Move logic to Shell function, or add: # @invar:allow entry_point_too_thick: <reason>",
+        hint="Move business logic to Shell function. MCP tools have higher threshold (35 lines) for protocol adaptation, but pure logic should still be extracted.",
     ),
     "shell_pure_logic": RuleMeta(
         name="shell_pure_logic",

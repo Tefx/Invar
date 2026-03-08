@@ -470,14 +470,26 @@ def check_entry_point_thin(file_info: FileInfo, config: RuleConfig) -> list[Viol
         max_lines = config.entry_point_thresholds.get(kind, config.entry_max_lines)
         lines = get_symbol_lines(symbol)
         if lines > max_lines:
+            # DX-93: Provide MCP-specific guidance vs traditional entry-point guidance
+            if kind == "mcp_tool":
+                message = f"MCP tool '{symbol.name}' has {lines} lines (max: {max_lines})"
+                suggestion = (
+                    "Move business logic to Shell function. "
+                    "MCP tools have higher threshold (35 lines) for protocol adaptation, "
+                    "but pure logic should still be extracted. "
+                    "Avoid single-use helpers just to satisfy line count."
+                )
+            else:
+                message = f"Entry point '{symbol.name}' has {lines} lines (max: {max_lines})"
+                suggestion = "Move logic to Shell function, or add: # @invar:allow entry_point_too_thick: <reason>"
             violations.append(
                 Violation(
                     rule="entry_point_too_thick",
                     severity=Severity.ERROR,  # DX-22: Architecture rule
                     file=file_info.path,
                     line=symbol.line,
-                    message=f"Entry point '{symbol.name}' has {lines} lines (max: {max_lines})",
-                    suggestion="Move logic to Shell function, or add: # @invar:allow entry_point_too_thick: <reason>",
+                    message=message,
+                    suggestion=suggestion,
                 )
             )
 
