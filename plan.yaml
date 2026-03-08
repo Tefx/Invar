@@ -8776,7 +8776,7 @@ phases:
   steps:
   - id: da-while-repro.add-focused-repros
     name: add-focused-repros
-    status: claimed
+    status: done
     description: 'Add focused regression cases for confirmed while-loop dead_assign
       false positives in `tests/core/test_dead_assign.py`.
 
@@ -8808,6 +8808,28 @@ phases:
     agent: python-executor
     claimed_by: python-executor
     claimed_at: '2026-03-08T18:32:49.935482+00:00'
+    done_at: '2026-03-08T19:22:21.941279+00:00'
+    evidence: 'Commit hash(es): cdf191a (worker), 999d3ad (main equivalent)
+
+      Files changed:
+
+      - tests/core/test_dead_assign.py
+
+      Verification:
+
+      - Run: uv run pytest tests/core/test_dead_assign.py -v -> 22 passed
+
+      Spec link:
+
+      - plan:da-while-repro.add-focused-repros
+
+      Gaps/Notes:
+
+      - Added focused while-loop repro tests for boolean flag, cursor update, helper-accumulated
+      state, plus a true dead-write negative control.
+
+      - Related issue reported by worker: next-iteration while-read false positive
+      remains for detector fix step.'
   - id: da-while-repro.verify-pre-fix-failures
     name: verify-pre-fix-failures
     status: pending
