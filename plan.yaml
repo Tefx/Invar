@@ -10100,3 +10100,18 @@ phases:
     depends_on:
     - da-while-field.freeze-anima-snapshot
     agent: integration-verifier
+  - id: da-while-field.gate
+    name: da-while-field.gate
+    status: pending
+    description: 'Gate review: verify the real anima field evidence closes the confirmed
+      dead_assign false positives.'
+    verification: '- Real `../anima` guard evidence is present
+
+      - The three confirmed false positives are cleared
+
+      - Any remaining findings are explicitly classified as unrelated or residual
+      blocker evidence'
+    depends_on:
+    - da-while-field.freeze-anima-snapshot
+    - da-while-field.run-anima-guard
+    agent: gate-reviewer
