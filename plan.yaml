@@ -9862,3 +9862,6 @@ phases:
     - mcp-full-guard-field-verify.run-real-mcp-full-guard
     - mcp-full-guard-field-verify.review-results
     agent: gate-reviewer
+- id: da-while-repro
+  name: dead_assign While Repros
+  status: pending
