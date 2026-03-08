@@ -9197,15 +9197,20 @@ phases:
     status: pending
     description: 'Gate review: verify the real anima field evidence closes the confirmed
       dead_assign false positives.'
-    verification: '- Real `../anima` guard evidence is present
+    verification: '- Real `../anima` guard evidence is present from the remediation
+      retest
 
       - The three confirmed false positives are cleared
 
       - Any remaining findings are explicitly classified as unrelated or residual
-      blocker evidence'
+      blocker evidence
+
+      - Remediation evidence shows the detector/test-surface fix remained focused'
     depends_on:
     - da-while-field.freeze-anima-snapshot
     - da-while-field.run-anima-guard
+    - da-while-field.fix-anima-residual-dead-assign
+    - da-while-field.retest-anima-guard
     agent: gate-reviewer
   - id: da-while-field.fix-anima-residual-dead-assign
     name: fix-anima-residual-dead-assign
