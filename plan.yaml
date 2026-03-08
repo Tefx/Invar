@@ -8928,7 +8928,7 @@ phases:
       remains for detector fix step.'
   - id: da-while-repro.verify-pre-fix-failures
     name: verify-pre-fix-failures
-    status: claimed
+    status: skipped
     description: 'As an INDEPENDENT TESTER (`integration-verifier`), prove the new
       while-loop repros fail before the detector fix and that the negative control
       remains a true dead-write case.
@@ -8959,6 +8959,7 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-08T19:26:45.059183+00:00'
+    skipped_reason: superseded
   - id: da-while-repro.freeze-for-gate
     name: freeze-for-gate
     status: pending
