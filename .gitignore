@@ -66,3 +66,4 @@ typescript/**/*.tsbuildinfo
 typescript/pnpm-lock.yaml
 
 plan-dashboard.html
+.vectl/

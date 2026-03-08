@@ -5348,3 +5348,721 @@ phases:
     depends_on:
     - guard-fp-field-verify.guard-fp-field-verify-fix-field-blockers-after-publish-rerun
     agent: integration-verifier
+- id: dx-93-engine
+  name: DX-93 MCP Entry Point Policy Engine
+  status: pending
+  steps:
+  - id: dx-93-engine.classify-entry-point-kind
+    name: classify-entry-point-kind
+    status: pending
+    description: 'Extend entry-point detection so the guard can distinguish traditional
+      entry points from MCP tools.
+
+
+      Scope:
+
+      - `src/invar/core/entry_points.py`
+
+      - any supporting core model/helper needed to represent entry-point kind
+
+      - focused tests proving `mcp.tool` is classified as `mcp_tool` while Flask/FastAPI/Typer/Click
+      remain on the traditional path
+
+
+      Constraints:
+
+      - preserve existing `is_entry_point()` behavior for callers that only need boolean
+      detection
+
+      - avoid broad framework taxonomy expansion beyond what DX-93 requires
+
+
+      Out of scope:
+
+      - threshold changes
+
+      - severity changes
+
+      - docs refresh'
+    verification: '- Focused tests prove `mcp.tool` resolves to an MCP-specific kind
+      and traditional entry points still classify correctly
+
+      - Existing boolean entry-point detection callers do not regress
+
+      - `invar_guard(changed=true)` passes for touched files'
+    agent: python-senior
+  - id: dx-93-engine.add-kind-aware-threshold-resolution
+    name: add-kind-aware-threshold-resolution
+    status: pending
+    description: 'Implement type-aware threshold lookup for `entry_point_too_thick`.
+
+
+      Scope:
+
+      - `src/invar/core/rules.py`
+
+      - relevant config/model surface needed to preserve `entry_max_lines` as the
+      fallback
+
+      - apply `mcp_tool = 35` while keeping traditional entry points at 15 unless
+      explicitly overridden
+
+
+      Constraints:
+
+      - preserve backward compatibility for projects using the current global threshold
+
+      - do not globally relax non-MCP entry points
+
+      - keep severity behavior unchanged in this slice unless implementation requires
+      an explicit no-op metadata touch
+
+
+      Out of scope:
+
+      - semantic line counting redesign
+
+      - per-project config syntax expansion beyond what is required for fallback compatibility'
+    verification: '- Focused tests show MCP tools use 35 while traditional entry points
+      remain at 15
+
+      - Existing global `entry_max_lines` fallback still works
+
+      - No regression in unrelated shell rules'
+    depends_on:
+    - dx-93-engine.classify-entry-point-kind
+    agent: python-senior
+  - id: dx-93-engine.improve-mcp-diagnostic-message
+    name: improve-mcp-diagnostic-message
+    status: pending
+    description: 'Update `entry_point_too_thick` diagnostics so MCP tool violations
+      explain the MCP-specific policy and discourage single-use helper extraction
+      done only to satisfy line count.
+
+
+      Scope:
+
+      - `src/invar/core/rule_meta.py`
+
+      - any rule-message assembly path touched by `entry_point_too_thick`
+
+      - focused tests for MCP-specific fix hint content
+
+
+      Constraints:
+
+      - traditional entry-point messaging should remain appropriate for web/CLI boundaries
+
+      - MCP guidance must still tell users to move true business logic out of the
+      tool body
+
+
+      Out of scope:
+
+      - docs updates
+
+      - changing severity semantics'
+    verification: '- MCP-specific violations include targeted guidance and reduce
+      pressure toward single-use helper splitting
+
+      - Traditional entry-point diagnostics remain intact
+
+      - Relevant message/rendering tests pass'
+    depends_on:
+    - dx-93-engine.add-kind-aware-threshold-resolution
+    agent: python-executor
+  - id: dx-93-engine.gate
+    name: dx-93-engine.gate
+    status: pending
+    description: 'Gate review: verify the DX-93 engine changes correctly distinguish
+      MCP tools, apply the calibrated threshold, and preserve traditional entry-point
+      enforcement.'
+    verification: '- All engine steps completed successfully
+
+      - Evidence shows MCP tools and traditional entry points now follow the intended
+      policies
+
+      - No unresolved blocker remains before regression and documentation work'
+    depends_on:
+    - dx-93-engine.classify-entry-point-kind
+    - dx-93-engine.add-kind-aware-threshold-resolution
+    - dx-93-engine.improve-mcp-diagnostic-message
+    agent: gate-reviewer
+- id: dx-93-regression
+  name: DX-93 Regression and Documentation
+  status: pending
+  steps:
+  - id: dx-93-regression.add-focused-policy-regressions
+    name: add-focused-policy-regressions
+    status: pending
+    description: 'Add focused regression coverage for the new entry-point policy.
+
+
+      Scope:
+
+      - MCP tool examples below and above the new threshold
+
+      - traditional Flask/FastAPI/Typer/Click entry points still enforced at 15
+
+      - control cases proving genuinely thick MCP handlers still trigger
+
+      - coverage for diagnostic text where policy branches differ
+
+
+      Constraints:
+
+      - tests must remain self-contained and not depend on sibling repos
+
+      - avoid broad rewrites of existing guard integration fixtures outside what DX-93
+      needs'
+    verification: '- Focused tests cover MCP-under-threshold, MCP-over-threshold,
+      and traditional-entry-point control cases
+
+      - The policy branches are visible in assertions, not inferred indirectly
+
+      - `invar_guard(changed=true)` passes for touched files'
+    agent: python-executor
+  - id: dx-93-regression.update-rule-docs
+    name: update-rule-docs
+    status: pending
+    description: 'Update user-facing rule documentation to explain the MCP-specific
+      entry-point policy.
+
+
+      Scope:
+
+      - `docs/reference/rules/index.md`
+
+      - any protocol/troubleshooting docs that currently present `entry_point_too_thick`
+      as universally 15 lines
+
+      - document that MCP tools have higher protocol overhead and a different threshold
+      while preserving the same architectural goal
+
+
+      Constraints:
+
+      - keep the docs aligned with the implemented policy
+
+      - do not over-promise future semantic counting work in this slice'
+    verification: '- Rule docs describe the MCP-specific threshold accurately
+
+      - Traditional entry-point guidance remains unchanged where applicable
+
+      - No conflicting threshold statements remain in touched docs'
+    depends_on:
+    - dx-93-regression.add-focused-policy-regressions
+    agent: doc-reviewer
+  - id: dx-93-regression.verify-regressions-and-docs
+    name: verify-regressions-and-docs
+    status: pending
+    description: 'As an INDEPENDENT TESTER (`integration-verifier`), validate the
+      new MCP entry-point policy regressions and the corresponding documentation updates
+      from a fresh perspective.
+
+
+      YOUR GOAL IS TO FIND PROBLEMS, not to confirm it works.
+
+
+      Test for:
+
+      - happy path: MCP tools below threshold stop triggering while truly thick MCP
+      handlers still do
+
+      - edge cases: traditional entry points still trigger at 15 when appropriate
+
+      - error scenarios: docs drift from implementation, or policy branches are under-specified
+      in tests
+
+
+      Independence Level: L1'
+    verification: '- Run focused DX-93 regression tests and cite exact outcomes
+
+      - Confirm touched documentation matches implemented behavior
+
+      - Report any policy/documentation mismatch explicitly'
+    depends_on:
+    - dx-93-regression.update-rule-docs
+    agent: integration-verifier
+  - id: dx-93-regression.gate
+    name: dx-93-regression.gate
+    status: pending
+    description: 'Gate review: verify DX-93 regression coverage and documentation
+      are complete before field validation.'
+    verification: '- All regression/documentation steps completed successfully
+
+      - Evidence shows the policy is locked in by tests and explained correctly in
+      docs
+
+      - No unresolved blocker remains before cross-project validation'
+    depends_on:
+    - dx-93-regression.add-focused-policy-regressions
+    - dx-93-regression.update-rule-docs
+    - dx-93-regression.verify-regressions-and-docs
+    agent: gate-reviewer
+- id: dx-93-field-verify
+  name: DX-93 Cross-Project Validation
+  status: pending
+  steps:
+  - id: dx-93-field-verify.freeze
+    name: freeze
+    status: pending
+    description: 'Freeze: lock the snapshot before L2 cross-project validation of
+      the DX-93 policy.'
+    verification: '- Record `git rev-parse HEAD`
+
+      - Record `git status` clean
+
+      - Record the env/tooling declaration used for field verification
+
+      - State explicitly that no code changes are allowed until the subsequent verification
+      step completes'
+    agent: integration-verifier
+  - id: dx-93-field-verify.run-cross-project-guard
+    name: run-cross-project-guard
+    status: pending
+    description: 'As an INDEPENDENT TESTER (`integration-verifier`), run real full-guard
+      validation against representative external repos after the DX-93 changes.
+
+
+      YOUR GOAL IS TO FIND PROBLEMS, not to confirm it works.
+
+
+      Targets:
+
+      - one MCP-heavy repo (for example `../tasca`)
+
+      - one non-MCP project where traditional entry-point behavior should remain stable
+
+
+      Test for:
+
+      - happy path: MCP tool entry-point thickness findings are materially reduced
+      or correctly reclassified
+
+      - edge cases: traditional entry points still trigger with the old expectations
+      where they should
+
+      - error scenarios: new false negatives or over-relaxed MCP handlers are captured
+      with exact evidence
+
+
+      Independence Level: L2'
+    verification: '- Main path: run real `uvx invar-tools guard --all` against the
+      selected projects
+
+      - Failure path: capture exact remaining `entry_point_too_thick` findings with
+      repo/file context
+
+      - Proof: compare MCP-heavy output against prior complaint pattern and state
+      what improved versus what remains'
+    evidence_template: '## Integration Evidence
+
+
+      **Command or test exercising the full path**:
+
+      ```
+
+      uvx invar-tools guard --all
+
+      ```
+
+
+      **Actual output** (paste, not "tests pass"):
+
+      ```
+
+      <repo-by-repo output excerpts>
+
+      ```
+
+
+      **Path exercised**: invar guard pipeline -> entry point detection -> thickness
+      policy -> report classification'
+    depends_on:
+    - dx-93-field-verify.freeze
+    agent: integration-verifier
+  - id: dx-93-field-verify.review-cross-project-results
+    name: review-cross-project-results
+    status: pending
+    description: 'As an INDEPENDENT REVIEWER (`gate-reviewer`), assess whether the
+      DX-93 field-validation results demonstrate real improvement without creating
+      unacceptable regressions.
+
+
+      YOU ARE THE QUALITY GATE. Your job is to BLOCK if the evidence is weak, over-claims
+      success, or shows that the MCP threshold relaxed away real architecture problems.
+
+
+      Review criteria:
+
+      1. Real MCP-heavy runs show reduced false pressure
+
+      2. Traditional entry-point expectations remain intact
+
+      3. Remaining limitations are explicitly documented
+
+      4. No conclusion relies only on local synthetic tests'
+    verification: '- Review both the original field-run evidence and the post-publish
+      retest evidence project by project
+
+      - Decide whether the published artifact now demonstrates real MCP-policy rollout
+      without regressing traditional enforcement
+
+      - Block if the post-publish rerun still lacks concrete cross-project evidence
+      or shows unresolved blocker behavior'
+    depends_on:
+    - dx-93-field-verify.rerun-cross-project-guard-post-publish
+    agent: gate-reviewer
+  - id: dx-93-field-verify.gate
+    name: dx-93-field-verify.gate
+    status: pending
+    description: 'Gate review: verify DX-93 cross-project validation is complete and
+      the policy change is ready for sign-off.'
+    verification: '- All field-verification and remediation steps completed successfully
+
+      - Evidence shows the distributed artifact used by external repos includes the
+      DX-93 MCP threshold policy
+
+      - Post-publish cross-project evidence shows MCP-specific false pressure was
+      reduced while traditional enforcement remained intact
+
+      - No unresolved blocker remains in the DX-93 slice'
+    depends_on:
+    - dx-93-field-verify.freeze
+    - dx-93-field-verify.run-cross-project-guard
+    - dx-93-field-verify.publish-distributed-artifact
+    - dx-93-field-verify.rerun-cross-project-guard-post-publish
+    - dx-93-field-verify.review-cross-project-results
+    - dx-93-field-verify.collect-reduced-pressure-field-delta
+    - dx-93-field-verify.recheck-cross-project-results-after-field-delta
+    agent: gate-reviewer
+  - id: dx-93-field-verify.publish-distributed-artifact
+    name: publish-distributed-artifact
+    status: pending
+    description: 'Fix: publish or otherwise update the distributed `uvx invar-tools`
+      artifact so field runs consume the DX-93 MCP threshold policy instead of the
+      stale artifact.
+
+
+      Issue context:
+
+      - `../tasca` still reports `entry_point_too_thick` max 15 on MCP endpoints (17
+      errors), so the distributed guard path did not exercise the new MCP threshold
+      rollout.
+
+      - `../anima` passing is not sufficient evidence because it does not prove the
+      MCP policy reached the distributed artifact used by field runs.
+
+
+      Tasks:
+
+      - Identify the packaging/release path that feeds `uvx invar-tools` for external
+      repos.
+
+      - Publish or update the artifact/version so the distributed install includes
+      the DX-93 engine and regression changes.
+
+      - Record the exact version/build identifier and how field validation can force
+      that version.
+
+      - Preserve existing non-MCP guard behavior; this step is about artifact rollout,
+      not further policy relaxation.
+
+
+      Remediation context:
+
+      - prior_loop: `dx-93-field-verify.run-cross-project-guard`
+
+      - remaining_blocker: field verification is still exercising a stale distributed
+      artifact, so MCP threshold rollout is unproven.
+
+      - why_new_loop: the blocker is outside the already-run validation step; publishing
+      the artifact is required before retesting can produce meaningful evidence.'
+    verification: '- Main path: identify and execute the release/update path that
+      makes `uvx invar-tools` resolve to an artifact containing DX-93 changes
+
+      - Failure path: prove the old artifact/version is no longer the one used by
+      external field runs, or capture the remaining publication blocker with exact
+      command/output
+
+      - Evidence: published version/build identifier, distribution target updated,
+      and explicit install/resolve command external repos can use for the retest'
+    evidence_template: '## Artifact Rollout Evidence
+
+
+      **Distribution path updated**:
+
+      ```
+
+      <publish/build/update command(s)>
+
+      ```
+
+
+      **Published identifier**:
+
+      ```
+
+      <version, build id, or artifact reference>
+
+      ```
+
+
+      **External resolution proof**:
+
+      ```
+
+      <exact command showing `uvx invar-tools` or equivalent resolves to the updated
+      artifact>
+
+      ```
+
+
+      **Rollback / remaining blocker**:
+
+      ```
+
+      <any unresolved publishing issue or "none">
+
+      ```'
+    depends_on:
+    - dx-93-field-verify.run-cross-project-guard
+    agent: python-senior
+  - id: dx-93-field-verify.rerun-cross-project-guard-post-publish
+    name: rerun-cross-project-guard-post-publish
+    status: pending
+    description: 'Re-test after artifact publish: rerun the DX-93 cross-project guard
+      against the same external projects using the updated distributed artifact.
+
+
+      As an INDEPENDENT TESTER (`integration-verifier`), validate from a fresh perspective
+      whether the published artifact now exercises the MCP threshold policy in real
+      field conditions.
+
+
+      Targets:
+
+      - same MCP-heavy repo used before (expected: `../tasca` or equivalent)
+
+      - same traditional/non-MCP comparison repo used before (expected: `../anima`
+      or equivalent)
+
+
+      Test for:
+
+      - Happy path: MCP endpoint findings are reduced, reclassified, or otherwise
+      aligned with the DX-93 threshold intent when run through the distributed artifact.
+
+      - Edge cases: traditional entry-point enforcement remains materially unchanged.
+
+      - Error scenarios: stale artifact resolution, publish drift, or over-relaxed
+      MCP behavior are captured with exact evidence.
+
+
+      Remediation context:
+
+      - prior_loop: `dx-93-field-verify.run-cross-project-guard`, `dx-93-field-verify.publish-distributed-artifact`
+
+      - remaining_blocker: cross-project field evidence does not yet prove the distributed
+      rollout of the MCP policy.
+
+      - why_new_loop: only a post-publish rerun can validate the distributed path
+      that failed in the original field run.
+
+
+      Independence Level: L2'
+    verification: '- Main path: rerun real `uvx invar-tools guard --all` field validation
+      against the selected external repos using the published artifact
+
+      - Failure path: capture exact remaining `entry_point_too_thick` MCP findings
+      and the resolved artifact/version if the rollout still does not take effect
+
+      - Proof: compare post-publish MCP-heavy output against the original blocker
+      and state whether the distributed artifact now reflects DX-93 behavior'
+    evidence_template: '## Post-Publish Cross-Project Retest
+
+
+      **Artifact resolved during run**:
+
+      ```
+
+      <exact version / build / resolution output>
+
+      ```
+
+
+      **Command(s) executed**:
+
+      ```bash
+
+      <exact guard commands against external repos>
+
+      ```
+
+
+      **Actual output excerpts**:
+
+      ```
+
+      <key `../tasca` and `../anima` results>
+
+      ```
+
+
+      **Comparison to original blocker**:
+
+      - Original blocker: MCP endpoints in `../tasca` still hit `entry_point_too_thick`
+      max 15 (17 errors)
+
+      - Post-publish result: <what changed or what still failed>
+
+
+      **Verdict**:
+
+      - MCP rollout proven: yes/no
+
+      - Traditional behavior preserved: yes/no'
+    depends_on:
+    - dx-93-field-verify.publish-distributed-artifact
+    agent: integration-verifier
+  - id: dx-93-field-verify.collect-reduced-pressure-field-delta
+    name: collect-reduced-pressure-field-delta
+    status: pending
+    description: 'Remediation evidence collection for the blocked review.
+
+
+      prior_loop: [dx-93-field-verify.review-cross-project-results]
+
+      remaining_blocker: Post-publish rerun proved artifact rollout (max 35 messages)
+      but did not prove reduced false pressure with an objective field delta.
+
+      why_new_loop: The existing review can only judge the current evidence set; it
+      cannot close the blocker until a real external-repo delta is collected.
+
+
+      Collect objective reduced-pressure field evidence from real external repositories
+      (not local synthetic fixtures).
+
+
+      Required proof:
+
+      - At least one real MCP handler that previously sat in the 16-35 message range
+      now passes under the distributed artifact, OR equivalent concrete reduction
+      proof that shows false pressure decreased with an objective before/after delta
+
+      - A traditional 15-line enforcement check on the distributed artifact still
+      blocks as expected in an external repo
+
+      - Evidence must identify the external repo(s), the handler(s), the before/after
+      counts or comparable concrete metric, and the exact distributed artifact version
+      exercised
+
+      - Do not rely on local fixtures, synthetic examples, or only republished package
+      metadata
+
+
+      Integration Evidence
+
+      - Exercise the distributed artifact from real external repositories end to end
+
+      - Capture the actual command(s), actual output, and the path exercised from
+      distributed artifact -> external repo MCP handler evaluation'
+    verification: '- Main path: collect real external-repo evidence showing at least
+      one MCP handler in the 16-35 range now passes, or equivalent objective reduced-pressure
+      delta, using the distributed artifact
+
+      - Failure path: include the traditional 15-line enforcement check on the distributed
+      artifact and show it still blocks in an external repo
+
+      - Proof: evidence includes repo identity, handler identity, exact commands,
+      actual outputs, artifact version, and concrete before/after metric rather than
+      summary claims'
+    evidence_template: '## Field Delta Evidence
+
+
+      **External repo(s)**: <repo names/links>
+
+      **Distributed artifact**: <version / install source>
+
+      **Path exercised**: distributed artifact -> external repo -> MCP handler evaluation
+
+
+      ### Reduced-pressure proof
+
+      **Handler now passing in 16-35 range or equivalent delta**:
+
+      ```
+
+      <paste exact command>
+
+      <paste actual output>
+
+      ```
+
+
+      **Objective before/after metric**:
+
+      - Before: <count/threshold result>
+
+      - After: <count/threshold result>
+
+      - Delta: <why this proves reduced false pressure>
+
+
+      ### Traditional 15-line enforcement proof
+
+      ```
+
+      <paste exact command>
+
+      <paste actual output showing 15-line enforcement behavior>
+
+      ```
+
+
+      ### Notes
+
+      - No local synthetic fixtures used
+
+      - Remaining ambiguity or limitations: <if any>'
+    depends_on:
+    - dx-93-field-verify.review-cross-project-results
+    agent: integration-verifier
+  - id: dx-93-field-verify.recheck-cross-project-results-after-field-delta
+    name: recheck-cross-project-results-after-field-delta
+    status: pending
+    description: 'As an INDEPENDENT REVIEWER (`gate-reviewer`), reassess the blocked
+      DX-93 field-validation conclusion after the new field-delta evidence is collected.
+
+
+      prior_loop: [dx-93-field-verify.review-cross-project-results]
+
+      remaining_blocker: Need objective cross-project proof that reduced false pressure
+      is real, plus confirmation that traditional 15-line enforcement still holds
+      on the distributed artifact.
+
+      why_new_loop: The original review is blocked on missing evidence; this re-review
+      decides whether the new evidence closes that blocker.
+
+
+      Review criteria:
+
+      1. At least one real external-repo MCP handler in the 16-35 range now passes,
+      or an equivalent concrete reduction proof is provided
+
+      2. The evidence is objective, field-based, and tied to the distributed artifact
+      rather than local fixtures
+
+      3. Traditional 15-line enforcement remains intact in the distributed artifact
+
+      4. Remaining limitations are explicitly documented without overstating the rollout'
+    verification: '- Review the new field-delta evidence and determine whether it
+      closes the reduced-pressure blocker from dx-93-field-verify.review-cross-project-results
+
+      - Block if the evidence still lacks an objective external delta, lacks a real
+      16-35 MCP handler pass (or equivalent concrete reduction proof), or fails to
+      prove traditional 15-line enforcement on the distributed artifact'
+    depends_on:
+    - dx-93-field-verify.collect-reduced-pressure-field-delta
+    agent: gate-reviewer
