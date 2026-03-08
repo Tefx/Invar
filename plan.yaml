@@ -3622,12 +3622,12 @@ phases:
     agent: python-executor
 - id: dx-91-init-rewrite
   name: DX-91 Init Command Rewrite
-  status: done
+  status: pending
   gate: dx-91-guard-simplify.dx-91-guard-simplify-gate
   steps:
   - id: dx-91-init-rewrite.rewrite-init-command
     name: rewrite-init-command
-    status: skipped
+    status: pending
     description: "Rewrite src/invar/shell/commands/init.py from ~682 LOC to ~80 LOC.\n\
       \nNOTE: detect_language() and all language detection imports (from invar.core.language)\
       \ are no longer needed — they were removed from guard.py and perception.py in\
@@ -3668,10 +3668,9 @@ phases:
     - docs/proposals/DX-91-invar-md-draft.md
     - docs/proposals/DX-91-simplification.md
     agent: python-senior
-    skipped_reason: deprioritized
   - id: dx-91-init-rewrite.implement-idempotent-merge
     name: implement-idempotent-merge
-    status: skipped
+    status: pending
     description: "Add idempotent merge logic to init.py for the <!--invar:begin-->...<!--invar:end-->\
       \ managed section.\n\nIntegration note: This is an integration step — init.py\
       \ (source) generates content consumed by guard (sink: CLAUDE.md/INVAR.md). The\
@@ -3705,10 +3704,9 @@ phases:
     depends_on:
     - dx-91-init-rewrite.rewrite-init-command
     agent: python-senior
-    skipped_reason: deprioritized
   - id: dx-91-init-rewrite.implement-v1-migration
     name: implement-v1-migration
-    status: skipped
+    status: pending
     description: "Add v1-to-v2 migration logic to init.py.\n\nFile: src/invar/shell/commands/init.py\n\
       \nWhen invar init detects a v1 project layout, it should:\n1. Detect v1 markers:\
       \ presence of .claude/skills/, .claude/hooks/, or CLAUDE.md with <!--invar:critical/managed/project/user-->\
@@ -3737,10 +3735,9 @@ phases:
     depends_on:
     - dx-91-init-rewrite.rewrite-init-command
     agent: python-senior
-    skipped_reason: deprioritized
   - id: dx-91-init-rewrite.verify-init-rewrite
     name: verify-init-rewrite
-    status: skipped
+    status: pending
     description: "As an INDEPENDENT TESTER (integration-verifier), validate the init\
       \ command rewrite.\n\nYOUR GOAL IS TO FIND PROBLEMS, not to confirm it works.\n\
       \nFREEZE REQUIREMENT (L2): Before running any tests, record git rev-parse HEAD,\
@@ -3775,10 +3772,9 @@ phases:
     - dx-91-init-rewrite.implement-idempotent-merge
     - dx-91-init-rewrite.implement-v1-migration
     agent: integration-verifier
-    skipped_reason: deprioritized
   - id: dx-91-init-rewrite.dx-91-init-rewrite-gate
     name: dx-91-init-rewrite.gate
-    status: skipped
+    status: pending
     description: 'As an INDEPENDENT REVIEWER (gate-reviewer), assess whether the dx-91-init-rewrite
       phase meets the quality bar for proceeding to Phase 4 (documentation).
 
@@ -3810,15 +3806,14 @@ phases:
     depends_on:
     - dx-91-init-rewrite.verify-init-rewrite
     agent: gate-reviewer
-    skipped_reason: deprioritized
 - id: dx-91-docs
   name: DX-91 Documentation Update
-  status: pending
+  status: done
   gate: dx-91-init-rewrite.dx-91-init-rewrite-gate
   steps:
   - id: dx-91-docs.archive-old-proposals
     name: archive-old-proposals
-    status: pending
+    status: skipped
     description: 'Move old/obsolete proposals to docs/proposals/archive/.
 
 
@@ -3899,9 +3894,10 @@ phases:
     - docs/proposals/
     - docs/proposals/DX-91-simplification.md
     agent: python-executor
+    skipped_reason: deprioritized
   - id: dx-91-docs.rewrite-readme
     name: rewrite-readme
-    status: pending
+    status: skipped
     description: 'Rewrite README.md to reflect Invar v2.0.
 
 
@@ -3949,9 +3945,10 @@ phases:
     refs:
     - README.md
     agent: python-executor
+    skipped_reason: deprioritized
   - id: dx-91-docs.update-context-md
     name: update-context-md
-    status: pending
+    status: skipped
     description: 'Update .invar/context.md to reflect v2.0 state.
 
 
@@ -3984,9 +3981,10 @@ phases:
     refs:
     - .invar/context.md
     agent: python-executor
+    skipped_reason: deprioritized
   - id: dx-91-docs.verify-docs-consistency
     name: verify-docs-consistency
-    status: pending
+    status: skipped
     description: "As an INDEPENDENT TESTER (integration-verifier), validate that all\
       \ documentation is consistent with v2.0.\n\nYOUR GOAL IS TO FIND PROBLEMS, not\
       \ to confirm it works.\n\nTest for:\n- Stale references: grep -ri 'typescript\\\
@@ -4013,9 +4011,10 @@ phases:
     - dx-91-docs.rewrite-readme
     - dx-91-docs.update-context-md
     agent: integration-verifier
+    skipped_reason: deprioritized
   - id: dx-91-docs.dx-91-docs-gate
     name: dx-91-docs.gate
-    status: pending
+    status: skipped
     description: 'As an INDEPENDENT REVIEWER (gate-reviewer), assess whether the dx-91-docs
       phase meets the quality bar for proceeding to Phase 5 (final gate).
 
@@ -4046,6 +4045,7 @@ phases:
     depends_on:
     - dx-91-docs.verify-docs-consistency
     agent: gate-reviewer
+    skipped_reason: deprioritized
 - id: dx-91-gate
   name: DX-91 Final Gate
   status: pending
