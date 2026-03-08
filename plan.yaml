@@ -8603,7 +8603,7 @@ phases:
       path.'
   - id: mcp-full-guard-implement.add-regressions
     name: add-regressions
-    status: pending
+    status: claimed
     description: 'Add focused regression coverage for MCP full-guard support.
 
 
@@ -8634,6 +8634,8 @@ phases:
     depends_on:
     - mcp-full-guard-implement.implement-execution-model
     agent: python-executor
+    claimed_by: python-executor
+    claimed_at: '2026-03-08T19:27:45.206081+00:00'
   - id: mcp-full-guard-implement.verify-implementation
     name: verify-implementation
     status: pending
