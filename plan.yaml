@@ -9898,3 +9898,34 @@ phases:
 
       - Negative control is preserved alongside the false-positive cases'
     agent: python-executor
+  - id: da-while-repro.verify-pre-fix-failures
+    name: verify-pre-fix-failures
+    status: pending
+    description: 'As an INDEPENDENT TESTER (`integration-verifier`), prove the new
+      while-loop repros fail before the detector fix and that the negative control
+      remains a true dead-write case.
+
+
+      YOUR GOAL IS TO FIND PROBLEMS, not to confirm it works.
+
+
+      Test for:
+
+      - the three confirmed while-loop carried-state/cursor/session-state cases reproduce
+      the false-positive behavior
+
+      - the negative control still reports as a real dead write
+
+      - no accidental overlap or ambiguity exists in the new harness
+
+
+      Independence Level: L1'
+    verification: '- Targeted pytest run shows the expected pre-fix failures for the
+      three while-loop cases
+
+      - Negative control remains a true positive
+
+      - Any ambiguity in the harness is reported explicitly'
+    depends_on:
+    - da-while-repro.add-focused-repros
+    agent: integration-verifier
