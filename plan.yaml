@@ -9740,3 +9740,6 @@ phases:
     - mcp-full-guard-implement.add-regressions
     - mcp-full-guard-implement.verify-implementation
     agent: gate-reviewer
+- id: mcp-full-guard-field-verify
+  name: MCP Full Guard Field Validation
+  status: pending
