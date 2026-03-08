@@ -8421,6 +8421,41 @@ phases:
     - mcp-full-guard-design.specify-support-model
     - mcp-full-guard-design.verify-design
     agent: gate-reviewer
+  - id: mcp-full-guard-design.verify-design-fix
+    name: verify-design.fix
+    status: pending
+    description: 'Fix the design gaps reported by `mcp-full-guard-design.verify-design`
+      in `docs/proposals/DX-94-mcp-full-guard-support-model.md`.
+
+
+      Scope:
+
+      - specify the cancellation API and contract end-to-end
+
+      - disambiguate the non-terminal wait-timeout response schema
+
+      - define partial-result semantics for deferred full-scan execution
+
+      - extend failure-mode coverage for the deferred full-scan model
+
+
+      Priority: MEDIUM
+
+
+      Deliverable: an implementation-ready design update that closes the reported
+      ambiguities without changing the chosen high-level execution model unless required
+      by the clarified contract.'
+    verification: '- The proposal explicitly defines cancellation requests, responses,
+      and client expectations
+
+      - The proposal distinguishes terminal vs non-terminal wait-timeout responses
+      unambiguously
+
+      - Partial-result semantics and deferred full-scan failure modes are documented
+      with acceptance coverage'
+    depends_on:
+    - mcp-full-guard-design.verify-design
+    agent: python-senior
 - id: mcp-full-guard-implement
   name: MCP Full Guard Implementation
   status: pending
