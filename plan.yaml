@@ -8525,7 +8525,7 @@ phases:
       for this step is document-contract completeness.'
   - id: mcp-full-guard-design.verify-design-retest
     name: verify-design.retest
-    status: done
+    status: claimed
     description: 'As an INDEPENDENT TESTER (`integration-verifier`), re-review the
       updated design after remediation of the issues found in `mcp-full-guard-design.verify-design`.
 
@@ -8560,32 +8560,6 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-08T19:48:32.400254+00:00'
-    done_at: '2026-03-08T20:03:21.054031+00:00'
-    evidence: 'Commit hash(es): none
-
-      Files changed:
-
-      - none
-
-      Verification:
-
-      - Run: targeted grep/read review of docs/proposals/DX-94-mcp-full-guard-support-model.md
-      -> cancellation API, wait-timeout schema, and partial-result semantics present
-
-      - Run: consistency check -> found contradiction: unknown/expired cancellation
-      path mapped to run_not_found while failure taxonomy requires distinct run_expired
-
-      Spec link:
-
-      - plan:mcp-full-guard-design.verify-design-retest
-
-      Gaps/Notes:
-
-      - should_fix issue detected.
-
-      - Planner remediation created: mcp-full-guard-design.verify-design-retest-fix
-      and mcp-full-guard-design.verify-design-retest-retest; gate updated to depend
-      on remediation chain.'
   - id: mcp-full-guard-design.verify-design-retest-fix
     name: verify-design-retest.fix
     status: pending
@@ -9020,7 +8994,7 @@ phases:
       - No code changes allowed until subsequent verification step completes.'
   - id: mcp-full-guard-field-verify.run-real-mcp-full-guard
     name: run-real-mcp-full-guard
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT TESTER (`integration-verifier`), validate the
       supported full-guard behavior over the real MCP path on an external large repo
       such as `../tasca`.
@@ -9079,6 +9053,33 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-08T19:47:17.845001+00:00'
+    done_at: '2026-03-08T20:03:21.110586+00:00'
+    evidence: 'Commit hash(es): none
+
+      Files changed:
+
+      - none
+
+      Verification:
+
+      - Run: real MCP call invar_guard(path=/Users/tefx/Projects/tasca, changed=false)
+      plus wait -> terminal failed with error_kind=execution_error, message includes
+      "An executable named ''guard.py'' is not provided by package ''invar-tools''"
+
+      - Run: CLI comparison uvx invar-tools guard --all /Users/tefx/Projects/tasca
+      -> fails with ModuleNotFoundError: invar.shell.commands.hooks
+
+      Spec link:
+
+      - plan:mcp-full-guard-field-verify.run-real-mcp-full-guard
+
+      Gaps/Notes:
+
+      - blocker issue detected: MCP large-run and CLI comparison paths both broken.
+
+      - Planner remediation created: mcp-full-guard-field-verify.fix-real-mcp-full-guard-entrypoints
+      and mcp-full-guard-field-verify.retest-real-mcp-full-guard; downstream review/gate
+      rewired to remediation chain.'
   - id: mcp-full-guard-field-verify.review-results
     name: review-results
     status: pending
