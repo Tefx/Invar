@@ -9846,3 +9846,19 @@ phases:
     depends_on:
     - mcp-full-guard-field-verify.run-real-mcp-full-guard
     agent: gate-reviewer
+  - id: mcp-full-guard-field-verify.gate
+    name: mcp-full-guard-field-verify.gate
+    status: pending
+    description: 'Gate review: verify the full-MCP-guard support slice is complete
+      and no unresolved timeout blocker remains.'
+    verification: '- All field-validation steps completed successfully
+
+      - Evidence shows full MCP guard is supported on large repos via the real MCP
+      path
+
+      - No unresolved blocker remains in this slice'
+    depends_on:
+    - mcp-full-guard-field-verify.freeze
+    - mcp-full-guard-field-verify.run-real-mcp-full-guard
+    - mcp-full-guard-field-verify.review-results
+    agent: gate-reviewer
