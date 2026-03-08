@@ -8523,7 +8523,7 @@ phases:
       for this step is document-contract completeness.'
   - id: mcp-full-guard-design.verify-design-retest
     name: verify-design.retest
-    status: pending
+    status: claimed
     description: 'As an INDEPENDENT TESTER (`integration-verifier`), re-review the
       updated design after remediation of the issues found in `mcp-full-guard-design.verify-design`.
 
@@ -8556,6 +8556,8 @@ phases:
     depends_on:
     - mcp-full-guard-design.verify-design-fix
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-08T19:48:32.400254+00:00'
 - id: mcp-full-guard-implement
   name: MCP Full Guard Implementation
   status: in_progress
