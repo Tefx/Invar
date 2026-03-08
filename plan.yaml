@@ -8848,6 +8848,50 @@ phases:
     depends_on:
     - mcp-full-guard-implement.verify-implementation
     agent: python-senior
+  - id: mcp-full-guard-implement.verify-implementation-retest
+    name: verify-implementation-retest
+    status: pending
+    description: 'Re-test the MCP full-guard implementation after `mcp-full-guard-implement.verify-implementation-fix`.
+
+
+      Retest focus:
+
+      - `tests/integration/test_mcp_guard_changed_flag.py::test_run_guard_changed_false_uses_all_flag[asyncio]`
+
+      - any focused MCP integration checks needed to confirm changed-only and full-project
+      guard semantics still align
+
+
+      Priority: MEDIUM
+
+
+      prior_loop:
+
+      - `mcp-full-guard-implement.verify-implementation`
+
+      - `mcp-full-guard-implement.verify-implementation-fix`
+
+
+      remaining_blocker:
+
+      - Confirm the `KeyError(''cmd'')` regression is resolved without reintroducing
+      request-contract mismatches.
+
+
+      why_new_loop:
+
+      - Fresh independent verification is required after the targeted fix before the
+      phase gate can rely on this evidence.'
+    verification: '- Re-run `tests/integration/test_mcp_guard_changed_flag.py::test_run_guard_changed_false_uses_all_flag[asyncio]`
+      and include actual output
+
+      - Re-run any focused MCP integration checks needed to confirm changed=false/full-project
+      semantics and report actual outputs
+
+      - Report any remaining contract mismatch between implementation and tool schema'
+    depends_on:
+    - mcp-full-guard-implement.verify-implementation-fix
+    agent: integration-verifier
 - id: mcp-full-guard-field-verify
   name: MCP Full Guard Field Validation
   status: in_progress
