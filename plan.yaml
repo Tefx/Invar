@@ -8746,6 +8746,56 @@ phases:
     - mcp-full-guard-implement.add-regressions
     - mcp-full-guard-implement.verify-implementation
     agent: gate-reviewer
+  - id: mcp-full-guard-implement.verify-implementation-fix
+    name: verify-implementation-fix
+    status: pending
+    description: 'Fix the integration issue found by `mcp-full-guard-implement.verify-implementation`.
+
+
+      Issue:
+
+      - `tests/integration/test_mcp_guard_changed_flag.py::test_run_guard_changed_false_uses_all_flag[asyncio]`
+      fails with `KeyError(''cmd'')`
+
+
+      Likely scope:
+
+      - `src/invar/mcp/handlers.py`
+
+      - `tests/integration/test_mcp_guard_changed_flag.py`
+
+
+      Priority: MEDIUM
+
+
+      remaining_blocker:
+
+      - MCP handler/test contract mismatch leaves the full-guard changed=false integration
+      path unable to assert the expected command payload.
+
+
+      why_new_loop:
+
+      - Independent verification surfaced a concrete regression after implementation
+      completed; this targeted remediation is narrower than the original implementation
+      step and should be fixed before gate review.
+
+
+      Out of scope:
+
+      - unrelated MCP guard execution-model changes
+
+      - unrelated integration test rewrites'
+    verification: '- Update the affected handler/test path so the failing integration
+      assertion no longer raises `KeyError(''cmd'')`
+
+      - Add or adjust focused regression coverage for the changed=false MCP guard
+      path
+
+      - Capture the exact test command(s) that should pass before retest'
+    depends_on:
+    - mcp-full-guard-implement.verify-implementation
+    agent: python-senior
 - id: mcp-full-guard-field-verify
   name: MCP Full Guard Field Validation
   status: in_progress
