@@ -8589,7 +8589,7 @@ phases:
       chain.'
   - id: mcp-full-guard-design.verify-design-retest-fix
     name: verify-design-retest.fix
-    status: claimed
+    status: pending
     description: 'Fix the remaining design inconsistency reported by `mcp-full-guard-design.verify-design-retest`
       in `docs/proposals/DX-94-mcp-full-guard-support-model.md`.
 
@@ -8639,8 +8639,6 @@ phases:
     depends_on:
     - mcp-full-guard-design.verify-design-retest
     agent: python-senior
-    claimed_by: python-senior
-    claimed_at: '2026-03-08T20:10:30.719019+00:00'
   - id: mcp-full-guard-design.verify-design-retest-retest
     name: verify-design-retest.retest
     status: pending
@@ -8906,7 +8904,7 @@ phases:
     agent: gate-reviewer
   - id: mcp-full-guard-implement.verify-implementation-fix
     name: verify-implementation-fix
-    status: pending
+    status: claimed
     description: 'Fix the integration issue found by `mcp-full-guard-implement.verify-implementation`.
 
 
@@ -8954,6 +8952,8 @@ phases:
     depends_on:
     - mcp-full-guard-implement.verify-implementation
     agent: python-senior
+    claimed_by: python-senior
+    claimed_at: '2026-03-08T20:10:30.763647+00:00'
   - id: mcp-full-guard-implement.verify-implementation-retest
     name: verify-implementation-retest
     status: pending
