@@ -2911,7 +2911,7 @@ phases:
     agent: python-executor
   - id: dx-91-delete.delete-ts-tests
     name: delete-ts-tests
-    status: pending
+    status: claimed
     description: 'Delete test files for removed TypeScript/skills features.
 
 
@@ -2945,6 +2945,8 @@ phases:
     - tests/integration/test_dx56_sync.py
     - tests/integration/test_dx55_regression.py
     agent: python-executor
+    claimed_by: python-executor
+    claimed_at: '2026-03-08T17:41:21.200793+00:00'
   - id: dx-91-delete.deregister-cli-commands
     name: deregister-cli-commands
     status: pending
