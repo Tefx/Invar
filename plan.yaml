@@ -2658,7 +2658,7 @@ phases:
   steps:
   - id: dx-91-delete.delete-node-tools
     name: delete-node-tools
-    status: pending
+    status: claimed
     description: "Delete the entire src/invar/node_tools/ directory (69 files, ~6,329\
       \ LOC).\n\nThis is the TypeScript/JS tooling: eslint-plugin, ts-analyzer, fc-runner,\
       \ quick-check, ts-query.js.\n\nFiles to delete:\n- src/invar/node_tools/ (entire\
@@ -2675,6 +2675,8 @@ phases:
     - src/invar/node_tools/
     - docs/proposals/DX-91-simplification.md
     agent: python-executor
+    claimed_by: Main
+    claimed_at: '2026-03-08T17:49:36.262836+00:00'
   - id: dx-91-delete.delete-ts-core-modules
     name: delete-ts-core-modules
     status: pending
