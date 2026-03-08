@@ -2654,7 +2654,7 @@ phases:
       - Created follow-up steps: `wiring-integrity-2.gate-2-retest-fix` and `wiring-integrity-2.gate-2-retest-retest`.'
 - id: dx-91-delete
   name: DX-91 Bulk Deletion
-  status: done
+  status: in_progress
   steps:
   - id: dx-91-delete.delete-node-tools
     name: delete-node-tools
@@ -3087,7 +3087,7 @@ phases:
       - None.'
   - id: dx-91-delete.delete-template-engine-modules
     name: delete-template-engine-modules
-    status: skipped
+    status: pending
     description: 'Delete template engine and templates modules from shell/. These
       are only imported by skill_manager, hooks, and command modules already deleted
       in prior steps.
@@ -3119,7 +3119,6 @@ phases:
     - dx-91-delete.delete-workflow-modules
     - dx-91-delete.delete-template-directories
     agent: python-executor
-    skipped_reason: deprioritized
   - id: dx-91-delete.delete-ts-tests
     name: delete-ts-tests
     status: done
@@ -3198,7 +3197,7 @@ phases:
       - None.'
   - id: dx-91-delete.deregister-cli-commands
     name: deregister-cli-commands
-    status: skipped
+    status: pending
     description: 'Update guard.py CLI registration to remove deleted commands. Update
       commands/__init__.py docstring.
 
@@ -3284,10 +3283,9 @@ phases:
     - dx-91-delete.delete-workflow-modules
     - dx-91-delete.delete-template-engine-modules
     agent: python-executor
-    skipped_reason: deprioritized
   - id: dx-91-delete.verify-deletions
     name: verify-deletions
-    status: skipped
+    status: pending
     description: 'As an INDEPENDENT TESTER (integration-verifier), validate the bulk
       deletion phase from a fresh perspective.
 
@@ -3336,10 +3334,9 @@ phases:
     - dx-91-delete.delete-ts-tests
     - dx-91-delete.deregister-cli-commands
     agent: integration-verifier
-    skipped_reason: deprioritized
   - id: dx-91-delete.dx-91-delete-gate
     name: dx-91-delete.gate
-    status: skipped
+    status: pending
     description: 'As an INDEPENDENT REVIEWER (gate-reviewer), assess whether the dx-91-delete
       phase meets the quality bar for proceeding to Phase 2 (guard simplification).
 
@@ -3370,7 +3367,6 @@ phases:
     depends_on:
     - dx-91-delete.verify-deletions
     agent: gate-reviewer
-    skipped_reason: deprioritized
 - id: dx-91-guard-simplify
   name: DX-91 Guard Simplification
   status: pending
@@ -3626,12 +3622,12 @@ phases:
     agent: python-executor
 - id: dx-91-init-rewrite
   name: DX-91 Init Command Rewrite
-  status: pending
+  status: done
   gate: dx-91-guard-simplify.dx-91-guard-simplify-gate
   steps:
   - id: dx-91-init-rewrite.rewrite-init-command
     name: rewrite-init-command
-    status: pending
+    status: skipped
     description: "Rewrite src/invar/shell/commands/init.py from ~682 LOC to ~80 LOC.\n\
       \nNOTE: detect_language() and all language detection imports (from invar.core.language)\
       \ are no longer needed — they were removed from guard.py and perception.py in\
@@ -3672,9 +3668,10 @@ phases:
     - docs/proposals/DX-91-invar-md-draft.md
     - docs/proposals/DX-91-simplification.md
     agent: python-senior
+    skipped_reason: deprioritized
   - id: dx-91-init-rewrite.implement-idempotent-merge
     name: implement-idempotent-merge
-    status: pending
+    status: skipped
     description: "Add idempotent merge logic to init.py for the <!--invar:begin-->...<!--invar:end-->\
       \ managed section.\n\nIntegration note: This is an integration step — init.py\
       \ (source) generates content consumed by guard (sink: CLAUDE.md/INVAR.md). The\
@@ -3708,9 +3705,10 @@ phases:
     depends_on:
     - dx-91-init-rewrite.rewrite-init-command
     agent: python-senior
+    skipped_reason: deprioritized
   - id: dx-91-init-rewrite.implement-v1-migration
     name: implement-v1-migration
-    status: pending
+    status: skipped
     description: "Add v1-to-v2 migration logic to init.py.\n\nFile: src/invar/shell/commands/init.py\n\
       \nWhen invar init detects a v1 project layout, it should:\n1. Detect v1 markers:\
       \ presence of .claude/skills/, .claude/hooks/, or CLAUDE.md with <!--invar:critical/managed/project/user-->\
@@ -3739,9 +3737,10 @@ phases:
     depends_on:
     - dx-91-init-rewrite.rewrite-init-command
     agent: python-senior
+    skipped_reason: deprioritized
   - id: dx-91-init-rewrite.verify-init-rewrite
     name: verify-init-rewrite
-    status: pending
+    status: skipped
     description: "As an INDEPENDENT TESTER (integration-verifier), validate the init\
       \ command rewrite.\n\nYOUR GOAL IS TO FIND PROBLEMS, not to confirm it works.\n\
       \nFREEZE REQUIREMENT (L2): Before running any tests, record git rev-parse HEAD,\
@@ -3776,9 +3775,10 @@ phases:
     - dx-91-init-rewrite.implement-idempotent-merge
     - dx-91-init-rewrite.implement-v1-migration
     agent: integration-verifier
+    skipped_reason: deprioritized
   - id: dx-91-init-rewrite.dx-91-init-rewrite-gate
     name: dx-91-init-rewrite.gate
-    status: pending
+    status: skipped
     description: 'As an INDEPENDENT REVIEWER (gate-reviewer), assess whether the dx-91-init-rewrite
       phase meets the quality bar for proceeding to Phase 4 (documentation).
 
@@ -3810,6 +3810,7 @@ phases:
     depends_on:
     - dx-91-init-rewrite.verify-init-rewrite
     agent: gate-reviewer
+    skipped_reason: deprioritized
 - id: dx-91-docs
   name: DX-91 Documentation Update
   status: pending
