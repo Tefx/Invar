@@ -9096,6 +9096,8 @@ phases:
     depends_on:
     - mcp-full-guard-field-verify.freeze
     - mcp-full-guard-field-verify.run-real-mcp-full-guard
+    - mcp-full-guard-field-verify.fix-real-mcp-full-guard-entrypoints
+    - mcp-full-guard-field-verify.retest-real-mcp-full-guard
     - mcp-full-guard-field-verify.review-results
     agent: gate-reviewer
   - id: mcp-full-guard-field-verify.fix-real-mcp-full-guard-entrypoints
