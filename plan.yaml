@@ -2875,7 +2875,7 @@ phases:
     agent: python-executor
   - id: dx-91-delete.delete-template-directories
     name: delete-template-directories
-    status: claimed
+    status: done
     description: 'Delete template directories for removed features. Keep only templates
       needed by init (will be replaced in Phase 3).
 
@@ -2935,6 +2935,55 @@ phases:
     agent: python-executor
     claimed_by: python-executor
     claimed_at: '2026-03-08T17:41:00.757474+00:00'
+    done_at: '2026-03-08T17:51:04.322469+00:00'
+    evidence: 'Commit hash(es): 433cc43 (worker), f63ff0d3 (squash merge on main)
+
+      Files changed:
+
+      - src/invar/templates/skills/ (deleted)
+
+      - src/invar/templates/hooks/ (deleted)
+
+      - src/invar/templates/examples/ (deleted)
+
+      - src/invar/templates/onboard/ (deleted)
+
+      - src/invar/templates/claude-md/ (deleted)
+
+      - src/invar/templates/protocol/ (deleted)
+
+      - src/invar/templates/pi-tools/ (deleted)
+
+      - src/invar/templates/config/AGENT.md.jinja (deleted)
+
+      - src/invar/templates/config/context.md.jinja (deleted)
+
+      - src/invar/templates/config/CLAUDE.md.jinja (deleted)
+
+      - src/invar/templates/commands/ (deleted)
+
+      - src/invar/templates/CLAUDE.md.template (deleted)
+
+      - src/invar/templates/proposal.md.template (deleted)
+
+      - src/invar/templates/context.md.template (deleted)
+
+      Verification:
+
+      - Run: ls src/invar/templates/ -> config/ manifest.toml __init__.py
+
+      - Run: ls src/invar/templates/config/ -> pre-commit.yaml.jinja
+
+      - Run: deleted paths absent; kept files __init__.py, manifest.toml, config/pre-commit.yaml.jinja
+      present -> confirmed
+
+      Spec link:
+
+      - DX-91 delete template directories
+
+      Gaps/Notes:
+
+      - None.'
   - id: dx-91-delete.delete-template-engine-modules
     name: delete-template-engine-modules
     status: pending
