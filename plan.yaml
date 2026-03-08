@@ -2802,7 +2802,7 @@ phases:
       - None.'
   - id: dx-91-delete.delete-removed-commands
     name: delete-removed-commands
-    status: pending
+    status: claimed
     description: 'Delete CLI command modules that are being removed.
 
 
@@ -2839,6 +2839,8 @@ phases:
     - src/invar/shell/commands/merge.py
     - src/invar/shell/commands/template_sync.py
     agent: python-executor
+    claimed_by: python-executor
+    claimed_at: '2026-03-08T17:56:42.550050+00:00'
   - id: dx-91-delete.delete-workflow-modules
     name: delete-workflow-modules
     status: pending
