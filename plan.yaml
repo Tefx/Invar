@@ -8378,7 +8378,7 @@ phases:
       coverage.'
   - id: mcp-full-guard-design.verify-design
     name: verify-design
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT TESTER (`integration-verifier`), review the proposed
       full-MCP-guard support model for feasibility and failure coverage.
 
@@ -8409,6 +8409,32 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-08T18:54:13.072688+00:00'
+    done_at: '2026-03-08T18:54:35.441858+00:00'
+    evidence: 'Commit hash(es): none
+
+      Files changed:
+
+      - none
+
+      Verification:
+
+      - Run: review docs/proposals/DX-94-mcp-full-guard-support-model.md -> design
+      feasible but failed acceptance due missing cancellation API details, ambiguous
+      wait-timeout non-terminal schema, missing partial-result semantics, and incomplete
+      deferred-run failure coverage
+
+      - Run: vectl-planner remediation -> created mcp-full-guard-design.verify-design-fix
+      and mcp-full-guard-design.verify-design-retest; gate updated to depend on both
+
+      Spec link:
+
+      - plan:mcp-full-guard-design.verify-design
+
+      Gaps/Notes:
+
+      - Classified as should_fix verification issue.
+
+      - Remediation chain added before gate progression.'
   - id: mcp-full-guard-design.gate
     name: mcp-full-guard-design.gate
     status: pending
