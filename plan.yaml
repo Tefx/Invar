@@ -8922,11 +8922,11 @@ phases:
     agent: gate-reviewer
 - id: da-while-fix
   name: dead_assign While Fix
-  status: in_progress
+  status: pending
   steps:
   - id: da-while-fix.patch-walk-while-next-iteration
     name: patch-walk-while-next-iteration
-    status: claimed
+    status: pending
     description: 'Implement the minimal behavior-preserving fix in `src/invar/core/dead_assign.py::_walk_while()`
       by simulating next-iteration while-body reads in read-only mode, mirroring `_walk_loop()`
       where appropriate.
@@ -8952,8 +8952,6 @@ phases:
 
       - The patch remains localized to while-loop next-iteration semantics'
     agent: python-senior
-    claimed_by: python-senior
-    claimed_at: '2026-03-08T19:25:24.818520+00:00'
   - id: da-while-fix.verify-local-regression
     name: verify-local-regression
     status: pending
@@ -9057,7 +9055,7 @@ phases:
       proceed in degraded mode per freeze policy.'
   - id: da-while-field.run-anima-guard
     name: run-anima-guard
-    status: pending
+    status: claimed
     description: "As an INDEPENDENT TESTER (`integration-verifier`), validate the\
       \ fix via the real guard pipeline against `../anima`.\n\nYOUR GOAL IS TO FIND\
       \ PROBLEMS, not to confirm it works.\n\nRequirements:\n- run real `uvx invar-tools\
@@ -9097,6 +9095,8 @@ phases:
     depends_on:
     - da-while-field.freeze-anima-snapshot
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-08T19:25:24.872076+00:00'
   - id: da-while-field.gate
     name: da-while-field.gate
     status: pending
