@@ -9615,3 +9615,6 @@ phases:
     - mcp-full-guard-design.specify-support-model
     - mcp-full-guard-design.verify-design
     agent: gate-reviewer
+- id: mcp-full-guard-implement
+  name: MCP Full Guard Implementation
+  status: pending
