@@ -29,6 +29,7 @@ from invar.shell.subprocess_env import (
     detect_local_invar_source,
     detect_project_python_with_invar,
     detect_project_venv,
+    detect_running_invar_source,
     find_site_packages,
     get_uvx_respawn_command,
     get_venv_python_version,
@@ -414,6 +415,11 @@ class TestUvxRespawnCommand:
                 "invar.shell.subprocess_env.detect_local_invar_source",
                 return_value=None,
             ),
+            patch("invar.shell.subprocess_env.detect_running_invar_source", return_value=None),
+            patch(
+                "invar.shell.subprocess_env.subprocess.run",
+                return_value=SimpleNamespace(returncode=0),
+            ),
         ):
             cmd = get_uvx_respawn_command(
                 project_root=tmp_path,
@@ -454,6 +460,88 @@ class TestUvxRespawnCommand:
                 invar_tools_version="1.2.3",
             )
         assert cmd is None
+
+    def test_skips_respawn_when_pinned_source_cannot_resolve(self, tmp_path: Path) -> None:
+        (tmp_path / "pyproject.toml").write_text("[project]\nname='x'\nversion='0.0.0'\n")
+        venv = tmp_path / ".venv"
+        venv.mkdir()
+        (venv / "pyvenv.cfg").write_text("version = 3.12.0\n")
+        python_path = venv / "bin" / "python"
+        python_path.parent.mkdir(parents=True)
+        python_path.write_text("")
+
+        with (
+            patch.dict(os.environ, {}, clear=True),
+            patch("shutil.which", return_value="uvx"),
+            patch(
+                "invar.shell.subprocess_env.sys.version_info",
+                SimpleNamespace(major=3, minor=11),
+            ),
+            patch(
+                "invar.shell.subprocess_env.detect_local_invar_source",
+                return_value=None,
+            ),
+            patch("invar.shell.subprocess_env.detect_running_invar_source", return_value=None),
+            patch(
+                "invar.shell.subprocess_env.subprocess.run",
+                return_value=SimpleNamespace(returncode=1),
+            ) as probe,
+        ):
+            cmd = get_uvx_respawn_command(
+                project_root=tmp_path,
+                argv=["guard", str(tmp_path), "--all"],
+                tool_name="invar-tools",
+                invar_tools_version="1.2.3",
+            )
+
+        assert cmd is None
+        probe.assert_called_once()
+
+    def test_builds_respawn_when_pinned_source_probe_passes(self, tmp_path: Path) -> None:
+        (tmp_path / "pyproject.toml").write_text("[project]\nname='x'\nversion='0.0.0'\n")
+        venv = tmp_path / ".venv"
+        venv.mkdir()
+        (venv / "pyvenv.cfg").write_text("version = 3.12.0\n")
+        python_path = venv / "bin" / "python"
+        python_path.parent.mkdir(parents=True)
+        python_path.write_text("")
+
+        with (
+            patch.dict(os.environ, {}, clear=True),
+            patch("shutil.which", return_value="uvx"),
+            patch(
+                "invar.shell.subprocess_env.sys.version_info",
+                SimpleNamespace(major=3, minor=11),
+            ),
+            patch(
+                "invar.shell.subprocess_env.detect_local_invar_source",
+                return_value=None,
+            ),
+            patch("invar.shell.subprocess_env.detect_running_invar_source", return_value=None),
+            patch(
+                "invar.shell.subprocess_env.subprocess.run",
+                return_value=SimpleNamespace(returncode=0),
+            ) as probe,
+        ):
+            cmd = get_uvx_respawn_command(
+                project_root=tmp_path,
+                argv=["guard", str(tmp_path), "--all"],
+                tool_name="invar-tools",
+                invar_tools_version="1.2.3",
+            )
+
+        assert cmd == [
+            "uvx",
+            "--python",
+            str(python_path),
+            "--from",
+            "invar-tools==1.2.3",
+            "invar-tools",
+            "guard",
+            str(tmp_path),
+            "--all",
+        ]
+        probe.assert_called_once()
 
     def test_prefers_local_source_checkout(self, tmp_path: Path) -> None:
         (tmp_path / "pyproject.toml").write_text("[project]\nname='x'\nversion='0.0.0'\n")
@@ -523,6 +611,7 @@ class TestUvxRespawnCommand:
                 "invar.shell.subprocess_env.detect_local_invar_source",
                 side_effect=[local_src, None],
             ),
+            patch("invar.shell.subprocess_env.detect_running_invar_source", return_value=None),
             patch(
                 "invar.shell.subprocess_env.sys.version_info",
                 SimpleNamespace(major=3, minor=12),
@@ -546,6 +635,72 @@ class TestUvxRespawnCommand:
             str(tmp_path),
             "--all",
         ]
+
+    def test_uses_running_source_for_version_mismatch_respawn(self, tmp_path: Path) -> None:
+        (tmp_path / "pyproject.toml").write_text("[project]\nname='x'\nversion='0.0.0'\n")
+        venv = tmp_path / ".venv"
+        venv.mkdir()
+        (venv / "pyvenv.cfg").write_text("version = 3.12.0\n")
+        python_path = venv / "bin" / "python"
+        python_path.parent.mkdir(parents=True)
+        python_path.write_text("")
+
+        running_src = tmp_path / "running-invar"
+        (running_src / "src" / "invar").mkdir(parents=True)
+        (running_src / "pyproject.toml").write_text(
+            '[project]\nname = "invar-tools"\nversion = "1.2.3"\n'
+        )
+
+        with (
+            patch.dict(os.environ, {}, clear=True),
+            patch("shutil.which", return_value="uvx"),
+            patch(
+                "invar.shell.subprocess_env.sys.version_info",
+                SimpleNamespace(major=3, minor=11),
+            ),
+            patch(
+                "invar.shell.subprocess_env.detect_local_invar_source",
+                side_effect=[None, running_src],
+            ),
+            patch(
+                "invar.shell.subprocess_env.detect_running_invar_source", return_value=running_src
+            ),
+        ):
+            cmd = get_uvx_respawn_command(
+                project_root=tmp_path,
+                argv=["guard", str(tmp_path), "--all"],
+                tool_name="invar-tools",
+                invar_tools_version="1.2.3",
+            )
+
+        assert cmd == [
+            "uvx",
+            "--python",
+            str(python_path),
+            "--from",
+            str(running_src),
+            "invar-tools",
+            "guard",
+            str(tmp_path),
+            "--all",
+        ]
+
+
+class TestDetectRunningInvarSource:
+    def test_returns_none_when_direct_url_missing(self) -> None:
+        dist = SimpleNamespace(read_text=lambda _name: None)
+        with patch("invar.shell.subprocess_env.metadata.distribution", return_value=dist):
+            assert detect_running_invar_source() is None
+
+    def test_detects_local_source_from_direct_url(self, tmp_path: Path) -> None:
+        repo = tmp_path / "invar-repo"
+        (repo / "src" / "invar").mkdir(parents=True)
+        (repo / "pyproject.toml").write_text('[project]\nname = "invar-tools"\nversion = "0.0.0"\n')
+
+        direct_url = '{"url":"file://' + str(repo) + '"}'
+        dist = SimpleNamespace(read_text=lambda _name: direct_url)
+        with patch("invar.shell.subprocess_env.metadata.distribution", return_value=dist):
+            assert detect_running_invar_source() == repo
 
 
 class TestDetectLocalInvarSource:

@@ -437,12 +437,14 @@ def format_suggestion_for_violation(symbol: Symbol, violation_type: str) -> str:
         >>> msg2 = format_suggestion_for_violation(sym2, "missing_contract")
         >>> "@pre(lambda data, config: <condition>)" in msg2
         True
-        >>> # Return-type-aware @post for redundant_type_contract
+        >>> # Redundant type contract suggestions stay single-line and actionable
         >>> sym3 = Symbol(name="check", kind=SymbolKind.FUNCTION, line=1, end_line=5,
         ...     signature="(x: int) -> list[Violation]")
         >>> msg3 = format_suggestion_for_violation(sym3, "redundant_type_contract")
-        >>> 'v.rule == "redundant_type_contract"' in msg3
-        True
+        >>> msg3
+        'Replace with business logic: @pre(lambda x: x >= 0)'
+        >>> "\\n" in msg3
+        False
     """
     if symbol.kind not in (SymbolKind.FUNCTION, SymbolKind.METHOD):
         return ""
@@ -459,13 +461,13 @@ def format_suggestion_for_violation(symbol: Symbol, violation_type: str) -> str:
     patterns = generate_pattern_options(sig)
     suggestion = generate_contract_suggestion(sig)
 
-    # For redundant_type_contract, include return-type-aware @post suggestion
+    # For redundant_type_contract, emit a single actionable decorator snippet.
+    # Source: field verification requires fix.code to avoid multiline payloads.
     if violation_type == "redundant_type_contract":
         return_type = extract_return_type(sig)
         post_suggestion = generate_post_suggestion(return_type)
         if suggestion:
-            full_suggestion = f"{suggestion}\n  or {post_suggestion}"
-            return _format_with_patterns(suggestion_prefix, full_suggestion, patterns)
+            return f"{suggestion_prefix}{suggestion}"
         return f"{skeleton_prefix}{post_suggestion}"
 
     if suggestion:

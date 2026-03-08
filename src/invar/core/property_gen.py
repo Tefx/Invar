@@ -253,6 +253,7 @@ def find_contracted_functions(source: str) -> list[dict[str, Any]]:
                 functions.append(
                     {
                         "name": node.name,
+                        "is_async": isinstance(node, ast.AsyncFunctionDef),
                         "lineno": node.lineno,
                         "has_pre": has_pre,
                         "has_post": has_post,
@@ -288,9 +289,9 @@ def _extract_return_type(node: ast.FunctionDef | ast.AsyncFunctionDef) -> str | 
 
 
 @pre(
-    lambda func, strategies, max_examples=100: callable(func)
-    and isinstance(strategies, dict)
-    and max_examples > 0
+    lambda func, strategies, max_examples=100: (
+        callable(func) and isinstance(strategies, dict) and max_examples > 0
+    )
 )
 @post(lambda result: result is None or callable(result))
 def build_test_function(

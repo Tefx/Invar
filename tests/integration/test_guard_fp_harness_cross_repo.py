@@ -63,9 +63,13 @@ def test_redundant_type_contract_suggestion_payload_contains_unresolved_placehol
     assert "<semantic_predicate>" not in code, f"Found unresolved <semantic_predicate> in: {code}"
     assert "<condition>" not in code, f"Found unresolved <condition> in: {code}"
 
-    # Verify actual fix code is present
-    assert "redundant_type_contract" in code, f"Missing actual fix in: {code}"
-    assert "Patterns:" in code, f"Missing Patterns in: {code}"
+    # Verify actionable fix code is syntactically focused
+    assert code.startswith("@pre("), f"Expected concrete decorator code, got: {code}"
+    assert "\n" not in code, f"Fix code should be single-line actionable snippet: {code}"
+    assert "or @" not in code, f"Fix code should not embed alternatives inline: {code}"
+
+    context = fix.get("context")
+    assert context is None or isinstance(context, str)
 
 
 def test_mcp_style_helper_prefers_shell_result_without_overlap() -> None:

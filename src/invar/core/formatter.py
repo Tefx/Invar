@@ -314,17 +314,40 @@ def _parse_suggestion(suggestion: str | None, _rule: str) -> dict | None:
     if not suggestion:
         return None
 
+    def _extract_replace_code(text: str) -> tuple[str, str | None]:
+        """Extract actionable decorator code and optional context lines.
+
+        Keeps fix["code"] as syntactically valid Python snippet for auto-apply
+        consumers, while preserving additional guidance in "context".
+        """
+        lines = [line for line in text.splitlines() if line.strip()]
+        if not lines:
+            return ("", None)
+
+        code = lines[0].strip()
+        context_lines = [line.strip() for line in lines[1:]]
+        context = "\n".join(context_lines) if context_lines else None
+        return (code, context)
+
     # Parse "Add: @pre(...)" style suggestions
     if suggestion.startswith("Add: "):
         return {"action": "add_decorator", "code": suggestion[5:]}
 
     # Parse "Replace with: @pre(...)" style suggestions
     if suggestion.startswith("Replace with: "):
-        return {"action": "replace_decorator", "code": suggestion[14:]}
+        code, context = _extract_replace_code(suggestion[14:])
+        fix = {"action": "replace_decorator", "code": code}
+        if context:
+            fix["context"] = context
+        return fix
 
     # Parse "Replace with business logic: @pre(...)" style
     if suggestion.startswith("Replace with business logic: "):
-        return {"action": "replace_decorator", "code": suggestion[29:]}
+        code, context = _extract_replace_code(suggestion[29:])
+        fix = {"action": "replace_decorator", "code": code}
+        if context:
+            fix["context"] = context
+        return fix
 
     # Default: return as instruction text
     return {"action": "manual", "instruction": suggestion}

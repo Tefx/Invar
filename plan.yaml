@@ -5066,27 +5066,285 @@ phases:
       3. No claimed fix relies only on local synthetic evidence
 
       4. Remaining limitations are explicitly documented'
-    verification: '- Review the field-verification evidence repo by repo
+    verification: '- Review the post-publish field-verification evidence repo by repo
 
       - Decide whether each prior suspected Invar issue is fixed, reduced, unchanged,
-      or reclassified
+      or reclassified after the updated artifact rerun
 
-      - Block if any claimed improvement lacks concrete cross-repo evidence'
+      - Block if any claimed improvement lacks concrete cross-repo evidence from the
+      rerun against the updated distributed artifact'
     depends_on:
-    - guard-fp-field-verify.run-cross-repo-guard
+    - guard-fp-field-verify.guard-fp-field-verify-retest-cross-repo-guard-without-workaround
     agent: gate-reviewer
   - id: guard-fp-field-verify.gate
     name: guard-fp-field-verify.gate
     status: pending
     description: 'Gate review: verify cross-repo field validation is complete and
       the Invar false-positive remediation slice is ready for sign-off.'
-    verification: '- All field-verification steps completed successfully
+    verification: '- All field-verification remediation steps completed successfully
+
+      - Evidence shows the rerun exercised the updated distributed artifact, not the
+      stale published build
 
       - Evidence shows real cross-repo improvement or precise residual limitations
+      after publish
 
       - No unresolved blocker remains in this remediation slice'
     depends_on:
     - guard-fp-field-verify.freeze
     - guard-fp-field-verify.run-cross-repo-guard
+    - guard-fp-field-verify.publish-updated-guard-toolchain
+    - guard-fp-field-verify.rerun-cross-repo-guard-after-publish
+    - guard-fp-field-verify.guard-fp-field-verify-fix-field-blockers-after-publish-rerun
+    - guard-fp-field-verify.guard-fp-field-verify-retest-cross-repo-guard-without-workaround
     - guard-fp-field-verify.review-cross-repo-results
     agent: gate-reviewer
+  - id: guard-fp-field-verify.publish-updated-guard-toolchain
+    name: publish-updated-guard-toolchain
+    status: pending
+    description: 'Fix: publish or otherwise distribute an updated Invar guard toolchain
+      so cross-repo field verification runs against the current workspace fixes rather
+      than a stale released `uvx invar-tools` build.
+
+
+      remaining_blocker: field verification exercised a published toolchain that still
+      shows malformed suggestions, shell overlap, dynamic `dead_export` false positives,
+      duplicate aggregation mismatch, and async `RuntimeWarning`, so current evidence
+      cannot prove real-world improvement.
+
+      prior_loop: guard-fp-field-verify.run-cross-repo-guard
+
+      why_new_loop: the original field-verify step correctly exposed that packaging/distribution,
+      not the verification harness itself, is the blocker; a release/distribution
+      remediation is required before any meaningful rerun.
+
+
+      Scope:
+
+      - update the packaging/release path used by `uvx invar-tools guard --all` so
+      the published artifact includes the current workspace fixes
+
+      - record the exact version/build identifier that downstream repos must consume
+
+      - state any temporary equivalent distribution path only if a real publish is
+      not yet possible, and ensure the rerun uses that exact updated artifact
+
+
+      Out of scope:
+
+      - new false-positive logic changes unrelated to packaging/distribution
+
+      - reclassifying old field results as success without a rerun against the updated
+      artifact'
+    verification: '- Main path: evidence identifies the exact released or distributed
+      artifact/version now containing the workspace fixes and shows the cross-repo
+      command path will resolve to it
+
+      - Failure path: prove the stale-artifact condition is eliminated by showing
+      the old published build is no longer the one exercised for rerun
+
+      - Proof: document the publish/distribution mechanism, resulting version identifier,
+      and the exact `uvx invar-tools` resolution strategy the retest will use'
+    evidence_template: '## Packaging Remediation Evidence
+
+
+      **Updated artifact**:
+
+      - Version/build: <version or immutable reference>
+
+      - Distribution path: <PyPI/private index/local equivalent used by uvx>
+
+
+      **Why prior evidence was blocked**:
+
+      - Prior field verify hit: <old version/reference>
+
+      - Mismatch to workspace fixes: <one line>
+
+
+      **Proof rerun will exercise updated code**:
+
+      ```bash
+
+      <exact command to inspect/resolve installed uvx artifact>
+
+      <exact command or metadata showing updated version>
+
+      ```
+
+
+      **Scope guardrails**:
+
+      - No new guard logic shipped beyond the already-approved workspace fixes
+
+      - Any temporary distribution workaround is explicitly named and reproducible'
+    depends_on:
+    - guard-fp-field-verify.run-cross-repo-guard
+    agent: software-architect
+  - id: guard-fp-field-verify.rerun-cross-repo-guard-after-publish
+    name: rerun-cross-repo-guard-after-publish
+    status: pending
+    description: 'Re-test after publish: rerun cross-repo `uvx invar-tools guard --all`
+      field verification against `../anima`, `../tasca`, and `../lattice` using the
+      updated distributed Invar artifact, then compare results to the failed stale-artifact
+      run.
+
+
+      As an INDEPENDENT TESTER (`integration-verifier`), your goal is to find problems,
+      not to confirm it works.
+
+
+      Test for:
+
+      - happy path: previously unchanged Invar-tool findings are reduced or removed
+      when the updated artifact is actually exercised
+
+      - edge cases: any remaining findings are clearly separated into true project
+      issues versus still-open Invar-tool defects
+
+      - error scenarios: if malformed suggestions, shell overlap, dynamic `dead_export`
+      false positives, duplicate aggregation mismatch, or async `RuntimeWarning` remain,
+      capture them with exact repo/output evidence and confirm they come from the
+      updated artifact'
+    verification: '- Main path: run the real full-guard commands against `../anima`,
+      `../tasca`, and `../lattice` using the published/distributed updated artifact
+
+      - Failure path: capture exact remaining Invar-side issues with output snippets,
+      repo/file context, and artifact version evidence
+
+      - Proof: compare results against the earlier stale-artifact field run and state
+      which issues are fixed, reduced, or unchanged after publish'
+    evidence_template: '## Post-Publish Field Verification
+
+
+      **Artifact under test**: <version/build identifier>
+
+
+      **Commands executed**:
+
+      ```bash
+
+      <exact uvx commands per repo>
+
+      ```
+
+
+      **Actual output**:
+
+      ```text
+
+      <paste key stdout/stderr snippets>
+
+      ```
+
+
+      **Comparison to prior failed run**:
+
+      - malformed suggestions: fixed|reduced|unchanged
+
+      - shell overlap: fixed|reduced|unchanged
+
+      - dynamic dead_export FP: fixed|reduced|unchanged
+
+      - duplicate aggregation mismatch: fixed|reduced|unchanged
+
+      - async RuntimeWarning: fixed|reduced|unchanged
+
+
+      **Classification**:
+
+      - Residual Invar-tool defects: <list>
+
+      - Genuine repo findings: <list>'
+    depends_on:
+    - guard-fp-field-verify.publish-updated-guard-toolchain
+    agent: integration-verifier
+  - id: guard-fp-field-verify.guard-fp-field-verify-fix-field-blockers-after-publish-rerun
+    name: guard-fp-field-verify.fix-field-blockers-after-publish-rerun
+    status: pending
+    description: 'Fix: address the remaining cross-repo field blockers exposed by
+      `guard-fp-field-verify.rerun-cross-repo-guard-after-publish`, including malformed
+      `redundant_type_contract` suggestions that remain unchanged, the async `RuntimeWarning`
+      leak in the `../anima` field run, and the resolver respawn path failure that
+      still requires the `INVAR_UVX_RESPAWNED=1` workaround for 1.19.2.
+
+
+      prior_loop: guard-fp-field-verify.publish-updated-guard-toolchain, guard-fp-field-verify.rerun-cross-repo-guard-after-publish
+
+      remaining_blocker: the published field artifact still fails real cross-repo
+      execution because malformed field suggestions persist, the anima async warning
+      leaks, and the respawn resolver path is not reliable without the environment
+      workaround.
+
+      why_new_loop: the publish rerun produced concrete blocker evidence against the
+      real distributed path; that evidence now needs a focused remediation step rather
+      than another blind rerun.
+
+
+      Scope:
+
+      - fix the remaining field-only guard defects surfaced by the post-publish rerun
+
+      - include the resolver respawn path so the retest can run without relying on
+      `INVAR_UVX_RESPAWNED=1` if the defect is actually resolved
+
+      - preserve the published/distributed execution path used by downstream repos
+      so the retest proves real field behavior
+
+
+      Out of scope:
+
+      - unrelated false-positive remediation not implicated by the rerun evidence
+
+      - accepting the workaround as the final success condition unless the retest
+      explicitly documents that no safe no-workaround path is yet possible'
+    verification: '- Main path: targeted regressions or field-focused checks cover
+      malformed `redundant_type_contract` suggestions, the anima async warning leak,
+      and the resolver respawn path on the published/distributed execution path
+
+      - Failure path: explicit evidence shows whether the no-workaround respawn path
+      still fails, with exact version/output if any blocker remains
+
+      - Proof: the follow-up retest can exercise cross-repo `uvx invar-tools guard
+      --all` without depending on stale-artifact assumptions and, if possible, without
+      `INVAR_UVX_RESPAWNED=1`'
+    depends_on:
+    - guard-fp-field-verify.rerun-cross-repo-guard-after-publish
+    agent: python-senior
+  - id: guard-fp-field-verify.guard-fp-field-verify-retest-cross-repo-guard-without-workaround
+    name: guard-fp-field-verify.retest-cross-repo-guard-without-workaround
+    status: pending
+    description: 'Re-test after fix: rerun cross-repo `uvx invar-tools guard --all`
+      against `../anima`, `../tasca`, and `../lattice` using the remediated published
+      artifact, and attempt the resolver path without `INVAR_UVX_RESPAWNED=1` unless
+      the fix step documents a still-open external blocker.
+
+
+      As an INDEPENDENT TESTER (`integration-verifier`), your goal is to find problems,
+      not to confirm it works.
+
+
+      Test for:
+
+      - happy path: malformed `redundant_type_contract` suggestions are corrected
+      or removed in the cross-repo field run
+
+      - edge cases: the `../anima` field run no longer leaks the async `RuntimeWarning`,
+      and remaining findings are clearly separated into project issues versus Invar
+      defects
+
+      - error scenarios: the respawn resolver path is exercised without the workaround
+      when possible; if it still fails, capture the exact no-workaround failure and
+      state whether fallback/workaround use was required to continue evidence collection'
+    verification: '- Main path: run the real cross-repo full-guard commands against
+      `../anima`, `../tasca`, and `../lattice` on the remediated published artifact
+
+      - Failure path: explicitly attempt the no-workaround resolver respawn path first
+      and capture exact output if `INVAR_UVX_RESPAWNED=1` is still required
+
+      - Proof: compare results against `guard-fp-field-verify.rerun-cross-repo-guard-after-publish`
+      and state which blockers are fixed, which remain, and whether the workaround
+      was eliminated'
+    depends_on:
+    - guard-fp-field-verify.guard-fp-field-verify-fix-field-blockers-after-publish-rerun
+    agent: integration-verifier

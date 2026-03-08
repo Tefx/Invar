@@ -10,12 +10,15 @@ This module provides three phases of dependency injection:
 
 from __future__ import annotations
 
+import json
 import os
 import shutil
 import subprocess
 import sys
 from datetime import datetime, timedelta
+from importlib import metadata
 from pathlib import Path
+from urllib.parse import unquote, urlparse
 
 from deal import post, pre
 
@@ -260,6 +263,81 @@ def _detect_venv_python(venv: Path) -> Path | None:
     return python_path if python_path.exists() else None
 
 
+def detect_running_invar_source() -> Path | None:
+    """Detect source path for currently running invar-tools package.
+
+    When launched via `uvx --from /path/to/repo`, package metadata includes
+    direct_url.json pointing to that local source path.
+    """
+    try:
+        distribution = metadata.distribution("invar-tools")
+        direct_url_raw = distribution.read_text("direct_url.json")
+    except metadata.PackageNotFoundError:
+        return None
+
+    if not direct_url_raw:
+        return None
+
+    try:
+        direct_url = json.loads(direct_url_raw)
+    except json.JSONDecodeError:
+        return None
+
+    url = direct_url.get("url")
+    if not isinstance(url, str):
+        return None
+
+    parsed = urlparse(url)
+    if parsed.scheme != "file":
+        return None
+
+    raw_path = parsed.path
+    if parsed.netloc:
+        raw_path = f"//{parsed.netloc}{parsed.path}"
+    source_root = Path(unquote(raw_path)).resolve()
+
+    pyproject = source_root / "pyproject.toml"
+    src_pkg = source_root / "src" / "invar"
+    if not (pyproject.exists() and src_pkg.exists()):
+        return None
+
+    try:
+        pyproject_text = pyproject.read_text(encoding="utf-8")
+    except OSError:
+        return None
+    if 'name = "invar-tools"' not in pyproject_text:
+        return None
+
+    return source_root
+
+
+def _can_resolve_uvx_source(
+    uvx_path: str,
+    python_path: Path,
+    source_spec: str,
+    tool_name: str,
+) -> bool:
+    """Check whether uvx can resolve source_spec for target Python.
+
+    Uses a lightweight `version` probe so guard can gracefully skip respawn
+    when the pinned artifact cannot be resolved for the project interpreter.
+    """
+    probe_cmd = [
+        uvx_path,
+        "--python",
+        str(python_path),
+        "--from",
+        source_spec,
+        tool_name,
+        "version",
+    ]
+    try:
+        probe = subprocess.run(probe_cmd, capture_output=True, timeout=8)
+    except (OSError, subprocess.TimeoutExpired):
+        return False
+    return probe.returncode == 0
+
+
 # @shell_complexity: Guardrails for respawn loop, venv detection, version mismatch, and uvx availability
 def get_uvx_respawn_command(
     project_root: Path,
@@ -275,12 +353,8 @@ def get_uvx_respawn_command(
         return None
 
     local_source = detect_local_invar_source(project_root=project_root)
-    running_source = detect_local_invar_source()
-    if (
-        local_source is not None
-        and running_source is None
-        and tool_name in {"invar", "invar-tools"}
-    ):
+    running_source = detect_local_invar_source() or detect_running_invar_source()
+    if local_source is not None and tool_name in {"invar", "invar-tools"}:
         venv = detect_project_venv(project_root)
         project_python = _detect_venv_python(venv) if venv is not None else None
         python_for_uvx = project_python or Path(sys.executable)
@@ -310,23 +384,28 @@ def get_uvx_respawn_command(
     if project_python is None:
         return None
 
-    if local_source is not None:
+    preferred_source = local_source or running_source
+    if preferred_source is not None:
         return [
             uvx_path,
             "--python",
             str(project_python),
             "--from",
-            str(local_source),
+            str(preferred_source),
             tool_name,
             *argv,
         ]
+
+    source_spec = f"invar-tools=={invar_tools_version}"
+    if not _can_resolve_uvx_source(uvx_path, project_python, source_spec, tool_name):
+        return None
 
     return [
         uvx_path,
         "--python",
         str(project_python),
         "--from",
-        f"invar-tools=={invar_tools_version}",
+        source_spec,
         tool_name,
         *argv,
     ]
@@ -501,7 +580,7 @@ def _update_prompt_marker(project_root: Path) -> None:
 
 
 @pre(lambda project_root, console: isinstance(project_root, Path))
-def maybe_show_upgrade_prompt(project_root: Path, console: object) -> None:
+def maybe_show_upgrade_prompt(project_root: Path, console: object | None) -> None:
     """Show upgrade prompt if conditions are met.
 
     Args:
@@ -525,5 +604,6 @@ def maybe_show_upgrade_prompt(project_root: Path, console: object) -> None:
     _update_prompt_marker(project_root)
 
     # Print warning if console is available
-    if console is not None and hasattr(console, "print"):
-        console.print(msg)
+    printer = getattr(console, "print", None)
+    if callable(printer):
+        printer(msg)

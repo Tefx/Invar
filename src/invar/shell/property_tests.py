@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import sys
 import tomllib
+import warnings
 from contextlib import contextmanager, suppress
 from inspect import iscoroutinefunction
 from pathlib import Path
@@ -223,7 +224,9 @@ def run_property_tests_on_file(
 
         # Async functions are currently unsupported by deal.cases() in sync mode.
         # Running them emits RuntimeWarning: coroutine was never awaited.
-        if iscoroutinefunction(func):
+        # Source-level async detection handles decorator wrappers where
+        # inspect.iscoroutinefunction(func) can be false.
+        if func_info.get("is_async", False) or iscoroutinefunction(func):
             report.functions_skipped += 1
             report.results.append(
                 PropertyTestResult(
@@ -237,7 +240,27 @@ def run_property_tests_on_file(
             continue
 
         # Run property test
-        result = run_property_test(func, max_examples)
+        with warnings.catch_warnings(record=True) as runtime_warnings:
+            warnings.simplefilter("always", RuntimeWarning)
+            result = run_property_test(func, max_examples)
+
+        leaked_async_warning = any(
+            isinstance(w.message, RuntimeWarning) and "was never awaited" in str(w.message)
+            for w in runtime_warnings
+        )
+        if leaked_async_warning:
+            report.functions_skipped += 1
+            report.results.append(
+                PropertyTestResult(
+                    function_name=func_name,
+                    passed=True,
+                    examples_run=0,
+                    file_path=file_path_str,
+                    hint="Skipped: async warning leak detected from property backend",
+                )
+            )
+            continue
+
         # DX-26: Set file_path for actionable failure output
         result.file_path = file_path_str
         report.results.append(result)
