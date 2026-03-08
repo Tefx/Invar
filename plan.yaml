@@ -9694,3 +9694,33 @@ phases:
     depends_on:
     - mcp-full-guard-implement.implement-execution-model
     agent: python-executor
+  - id: mcp-full-guard-implement.verify-implementation
+    name: verify-implementation
+    status: pending
+    description: 'As an INDEPENDENT TESTER (`integration-verifier`), validate the
+      MCP full-guard implementation from a fresh perspective.
+
+
+      YOUR GOAL IS TO FIND PROBLEMS, not to confirm it works.
+
+
+      Test for:
+
+      - happy path: full-project MCP guard can complete without request-layer timeout
+      on a realistic repo
+
+      - edge cases: changed-only and targeted-path calls retain their current semantics
+
+      - failure scenarios: long-running errors are reported according to the new contract
+      rather than being lost behind request timeout
+
+
+      Independence Level: L2'
+    verification: '- Run focused MCP integration tests and include actual outputs
+
+      - Prove the old timeout symptom is closed under the supported model
+
+      - Report any contract mismatch between implementation and tool schema'
+    depends_on:
+    - mcp-full-guard-implement.add-regressions
+    agent: integration-verifier
