@@ -9050,7 +9050,7 @@ phases:
       simulation of node.body; while-test and orelse handling preserved.'
   - id: da-while-fix.verify-local-regression
     name: verify-local-regression
-    status: pending
+    status: claimed
     description: 'As an INDEPENDENT TESTER (`integration-verifier`), validate the
       local dead_assign repair.
 
@@ -9077,6 +9077,8 @@ phases:
     depends_on:
     - da-while-fix.patch-walk-while-next-iteration
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-08T19:46:41.456967+00:00'
   - id: da-while-fix.freeze-for-gate
     name: freeze-for-gate
     status: pending
@@ -9243,7 +9245,7 @@ phases:
     agent: gate-reviewer
   - id: da-while-field.fix-anima-residual-dead-assign
     name: fix-anima-residual-dead-assign
-    status: claimed
+    status: pending
     description: 'Fix residual `dead_assign` false positives still reproduced by the
       real `../anima` guard run for target variables `was_awaiting_approval`, `seen_count`,
       and `message_history` in `src/invar/core/dead_assign.py`, updating `tests/core/test_dead_assign.py`
@@ -9287,8 +9289,6 @@ phases:
     depends_on:
     - da-while-field.run-anima-guard
     agent: python-senior
-    claimed_by: python-senior
-    claimed_at: '2026-03-08T19:46:41.435698+00:00'
   - id: da-while-field.retest-anima-guard
     name: retest-anima-guard
     status: pending
