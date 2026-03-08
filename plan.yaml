@@ -10044,3 +10044,6 @@ phases:
     - da-while-fix.verify-local-regression
     - da-while-fix.freeze-for-gate
     agent: gate-reviewer
+- id: da-while-field
+  name: dead_assign While Field Validation
+  status: pending
