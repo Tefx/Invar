@@ -8864,7 +8864,7 @@ phases:
       remains for detector fix step.'
   - id: da-while-repro.verify-pre-fix-failures
     name: verify-pre-fix-failures
-    status: pending
+    status: claimed
     description: 'As an INDEPENDENT TESTER (`integration-verifier`), prove the new
       while-loop repros fail before the detector fix and that the negative control
       remains a true dead-write case.
@@ -8893,6 +8893,8 @@ phases:
     depends_on:
     - da-while-repro.add-focused-repros
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-08T19:26:45.059183+00:00'
   - id: da-while-repro.freeze-for-gate
     name: freeze-for-gate
     status: pending
@@ -8922,11 +8924,11 @@ phases:
     agent: gate-reviewer
 - id: da-while-fix
   name: dead_assign While Fix
-  status: in_progress
+  status: pending
   steps:
   - id: da-while-fix.patch-walk-while-next-iteration
     name: patch-walk-while-next-iteration
-    status: claimed
+    status: pending
     description: 'Implement the minimal behavior-preserving fix in `src/invar/core/dead_assign.py::_walk_while()`
       by simulating next-iteration while-body reads in read-only mode, mirroring `_walk_loop()`
       where appropriate.
@@ -8952,8 +8954,6 @@ phases:
 
       - The patch remains localized to while-loop next-iteration semantics'
     agent: python-senior
-    claimed_by: python-senior
-    claimed_at: '2026-03-08T19:26:45.033427+00:00'
   - id: da-while-fix.verify-local-regression
     name: verify-local-regression
     status: pending
