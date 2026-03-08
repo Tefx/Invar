@@ -12,12 +12,15 @@ from __future__ import annotations
 import ast
 import re
 import tokenize
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 from deal import post, pre
 
 if TYPE_CHECKING:
     from invar.core.models import Symbol
+
+
+EntryPointKind = Literal["traditional", "mcp_tool"]
 
 
 # Decorator patterns that indicate framework entry points
@@ -65,6 +68,11 @@ ENTRY_POINT_DECORATORS: frozenset[str] = frozenset(
         "admin.register",
         "receiver",
     ]
+)
+
+MCP_TOOL_DECORATORS: frozenset[str] = frozenset(["mcp.tool"])
+TRADITIONAL_ENTRY_POINT_DECORATORS: frozenset[str] = frozenset(
+    [pattern for pattern in ENTRY_POINT_DECORATORS if pattern not in MCP_TOOL_DECORATORS]
 )
 
 # Explicit marker comment for edge cases
@@ -184,12 +192,47 @@ def is_entry_point(symbol: Symbol, source: str) -> bool:
         >>> is_entry_point(sym3, source3)
         True
     """
-    # Check decorator patterns
-    if _has_entry_decorator(symbol, source):
-        return True
+    return get_entry_point_kind(symbol, source) is not None
 
-    # Check explicit marker
-    return _has_entry_marker(symbol, source)
+
+@pre(lambda symbol, source: symbol is not None and isinstance(source, str))
+@post(lambda result: result in ("traditional", "mcp_tool", None))
+def get_entry_point_kind(symbol: Symbol, source: str) -> EntryPointKind | None:
+    """
+    Classify entry-point kind for a symbol.
+
+    Returns:
+        "mcp_tool" for @mcp.tool handlers, "traditional" for all other
+        entry points, or None when symbol is not an entry point.
+
+    Examples:
+        >>> from invar.core.models import Symbol, SymbolKind
+        >>> mcp_symbol = Symbol(name="tool", kind=SymbolKind.FUNCTION, line=3, end_line=4)
+        >>> mcp_source = '''
+        ... @mcp.tool()
+        ... def tool():
+        ...     return {"ok": True}
+        ... '''
+        >>> get_entry_point_kind(mcp_symbol, mcp_source)
+        'mcp_tool'
+
+        >>> route_symbol = Symbol(name="index", kind=SymbolKind.FUNCTION, line=3, end_line=4)
+        >>> route_source = '''
+        ... @app.route("/")
+        ... def index():
+        ...     return "ok"
+        ... '''
+        >>> get_entry_point_kind(route_symbol, route_source)
+        'traditional'
+    """
+    decorator_kind = _get_entry_decorator_kind(symbol, source)
+    if decorator_kind is not None:
+        return decorator_kind
+
+    if _has_entry_marker(symbol, source):
+        return "traditional"
+
+    return None
 
 
 @post(lambda result: isinstance(result, str))
@@ -247,10 +290,17 @@ def _has_entry_decorator(symbol: Symbol, source: str) -> bool:
         >>> _has_entry_decorator(sym2, source2)
         False
     """
+    return _get_entry_decorator_kind(symbol, source) is not None
+
+
+@pre(lambda symbol, source: symbol is not None and isinstance(source, str))
+@post(lambda result: result in ("traditional", "mcp_tool", None))
+def _get_entry_decorator_kind(symbol: Symbol, source: str) -> EntryPointKind | None:
+    """Return decorator-based entry-point kind, if any."""
     try:
         tree = ast.parse(source)
     except SyntaxError:
-        return False
+        return None
 
     # Find the function definition at the symbol's line
     for node in ast.walk(tree):
@@ -259,12 +309,21 @@ def _has_entry_decorator(symbol: Symbol, source: str) -> bool:
                 # Check decorators
                 for decorator in node.decorator_list:
                     decorator_str = _decorator_to_string(decorator)
-                    if decorator_str:
-                        for pattern in ENTRY_POINT_DECORATORS:
-                            if pattern in decorator_str or decorator_str.endswith(
-                                "." + pattern.split(".")[-1]
-                            ):
-                                return True
+                    if not decorator_str:
+                        continue
+                    if _matches_decorator_set(decorator_str, MCP_TOOL_DECORATORS):
+                        return "mcp_tool"
+                    if _matches_decorator_set(decorator_str, TRADITIONAL_ENTRY_POINT_DECORATORS):
+                        return "traditional"
+    return None
+
+
+@post(lambda result: isinstance(result, bool))
+def _matches_decorator_set(decorator_str: str, patterns: frozenset[str]) -> bool:
+    """Match decorator string against configured entry-point patterns."""
+    for pattern in patterns:
+        if pattern in decorator_str or decorator_str.endswith("." + pattern.split(".")[-1]):
+            return True
     return False
 
 
