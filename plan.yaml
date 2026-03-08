@@ -2911,7 +2911,7 @@ phases:
       - None.'
   - id: dx-91-delete.delete-workflow-modules
     name: delete-workflow-modules
-    status: claimed
+    status: done
     description: 'Delete USBV workflow, review trigger, and related core modules.
 
 
@@ -2945,6 +2945,35 @@ phases:
     agent: python-executor
     claimed_by: python-executor
     claimed_at: '2026-03-08T18:06:05.542288+00:00'
+    done_at: '2026-03-08T18:06:47.572468+00:00'
+    evidence: 'Commit hash(es): 7662f0c (worker), 2efe0b9 (squash merge on main)
+
+      Files changed:
+
+      - src/invar/core/review_trigger.py (deleted)
+
+      - src/invar/core/verification_routing.py (deleted)
+
+      - src/invar/core/feedback.py (deleted)
+
+      - src/invar/core/sync_helpers.py (deleted)
+
+      - src/invar/core/template_helpers.py (deleted)
+
+      - src/invar/core/template_parser.py (deleted)
+
+      Verification:
+
+      - Run: ls src/invar/core/ | grep -E ''(review_trigger|verification_routing|feedback|sync_helpers|template_helpers|template_parser)''
+      -> no matches
+
+      Spec link:
+
+      - docs/proposals/DX-91-simplification.md
+
+      Gaps/Notes:
+
+      - None.'
   - id: dx-91-delete.delete-template-directories
     name: delete-template-directories
     status: done
