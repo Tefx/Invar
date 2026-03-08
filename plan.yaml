@@ -10017,3 +10017,15 @@ phases:
     depends_on:
     - da-while-fix.patch-walk-while-next-iteration
     agent: integration-verifier
+  - id: da-while-fix.freeze-for-gate
+    name: freeze-for-gate
+    status: pending
+    description: Freeze snapshot for dead_assign while-fix gate review.
+    verification: '- Record `git rev-parse HEAD`
+
+      - Record clean `git status`
+
+      - State explicitly that no code changes are allowed until gate review completes'
+    depends_on:
+    - da-while-fix.verify-local-regression
+    agent: integration-verifier
