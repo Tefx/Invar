@@ -2837,7 +2837,7 @@ phases:
       - None.'
   - id: dx-91-delete.delete-removed-commands
     name: delete-removed-commands
-    status: claimed
+    status: done
     description: 'Delete CLI command modules that are being removed.
 
 
@@ -2876,6 +2876,39 @@ phases:
     agent: python-executor
     claimed_by: python-executor
     claimed_at: '2026-03-08T18:04:03.631546+00:00'
+    done_at: '2026-03-08T18:04:58.106747+00:00'
+    evidence: 'Commit hash(es): 4f8956b (worker), f2a9e7c (squash merge on main)
+
+      Files changed:
+
+      - src/invar/shell/commands/update.py (deleted)
+
+      - src/invar/shell/commands/uninstall.py (deleted)
+
+      - src/invar/shell/commands/test.py (deleted)
+
+      - src/invar/shell/commands/mutate.py (deleted)
+
+      - src/invar/shell/commands/feedback.py (deleted)
+
+      - src/invar/shell/commands/sync_self.py (deleted)
+
+      - src/invar/shell/commands/merge.py (deleted)
+
+      - src/invar/shell/commands/template_sync.py (deleted)
+
+      Verification:
+
+      - Run: ls src/invar/shell/commands/ | grep -E ''(update|uninstall|test|mutate|feedback|sync_self|merge|template_sync)\.py''
+      -> no matches
+
+      Spec link:
+
+      - docs/proposals/DX-91-simplification.md
+
+      Gaps/Notes:
+
+      - None.'
   - id: dx-91-delete.delete-workflow-modules
     name: delete-workflow-modules
     status: pending
