@@ -8378,7 +8378,7 @@ phases:
       coverage.'
   - id: mcp-full-guard-design.verify-design
     name: verify-design
-    status: claimed
+    status: pending
     description: 'As an INDEPENDENT TESTER (`integration-verifier`), review the proposed
       full-MCP-guard support model for feasibility and failure coverage.
 
@@ -8407,8 +8407,6 @@ phases:
     depends_on:
     - mcp-full-guard-design.specify-support-model
     agent: integration-verifier
-    claimed_by: integration-verifier
-    claimed_at: '2026-03-08T18:32:49.530434+00:00'
   - id: mcp-full-guard-design.gate
     name: mcp-full-guard-design.gate
     status: pending
@@ -8425,11 +8423,11 @@ phases:
     agent: gate-reviewer
 - id: mcp-full-guard-implement
   name: MCP Full Guard Implementation
-  status: pending
+  status: in_progress
   steps:
   - id: mcp-full-guard-implement.implement-execution-model
     name: implement-execution-model
-    status: pending
+    status: claimed
     description: 'Implement the supported full-MCP-guard execution model.
 
 
@@ -8469,6 +8467,8 @@ phases:
 
       - `invar_guard(changed=true)` on touched files passes for implementation changes'
     agent: python-senior
+    claimed_by: python-senior
+    claimed_at: '2026-03-08T18:32:49.607231+00:00'
   - id: mcp-full-guard-implement.add-regressions
     name: add-regressions
     status: pending
