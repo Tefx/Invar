@@ -9865,3 +9865,36 @@ phases:
 - id: da-while-repro
   name: dead_assign While Repros
   status: pending
+  steps:
+  - id: da-while-repro.add-focused-repros
+    name: add-focused-repros
+    status: pending
+    description: 'Add focused regression cases for confirmed while-loop dead_assign
+      false positives in `tests/core/test_dead_assign.py`.
+
+
+      Required repro patterns:
+
+      - loop-carried boolean state like `was_awaiting_approval`
+
+      - follow-mode cursor update like `seen_count`
+
+      - helper-returned accumulated session state like `message_history`
+
+      - one negative control that is a truly dead write in a while loop
+
+
+      Constraints:
+
+      - extend the existing dead_assign analyzer harness instead of creating a broad
+      new framework
+
+      - keep the cases minimal and directly tied to the confirmed external reports
+
+      - do not fix detector behavior in this step'
+    verification: '- New focused tests exist in `tests/core/test_dead_assign.py`
+
+      - Each repro names the intended variable/state pattern explicitly
+
+      - Negative control is preserved alongside the false-positive cases'
+    agent: python-executor
