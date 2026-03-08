@@ -8525,7 +8525,7 @@ phases:
       for this step is document-contract completeness.'
   - id: mcp-full-guard-design.verify-design-retest
     name: verify-design.retest
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT TESTER (`integration-verifier`), re-review the
       updated design after remediation of the issues found in `mcp-full-guard-design.verify-design`.
 
@@ -8560,6 +8560,32 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-08T19:48:32.400254+00:00'
+    done_at: '2026-03-08T20:03:21.054031+00:00'
+    evidence: 'Commit hash(es): none
+
+      Files changed:
+
+      - none
+
+      Verification:
+
+      - Run: targeted grep/read review of docs/proposals/DX-94-mcp-full-guard-support-model.md
+      -> cancellation API, wait-timeout schema, and partial-result semantics present
+
+      - Run: consistency check -> found contradiction: unknown/expired cancellation
+      path mapped to run_not_found while failure taxonomy requires distinct run_expired
+
+      Spec link:
+
+      - plan:mcp-full-guard-design.verify-design-retest
+
+      Gaps/Notes:
+
+      - should_fix issue detected.
+
+      - Planner remediation created: mcp-full-guard-design.verify-design-retest-fix
+      and mcp-full-guard-design.verify-design-retest-retest; gate updated to depend
+      on remediation chain.'
   - id: mcp-full-guard-design.verify-design-retest-fix
     name: verify-design-retest.fix
     status: pending
