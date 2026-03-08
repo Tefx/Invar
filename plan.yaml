@@ -9956,3 +9956,6 @@ phases:
     - da-while-repro.verify-pre-fix-failures
     - da-while-repro.freeze-for-gate
     agent: gate-reviewer
+- id: da-while-fix
+  name: dead_assign While Fix
+  status: pending
