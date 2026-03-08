@@ -9778,11 +9778,11 @@ phases:
       Verdict: OPEN'
 - id: mcp-full-guard-design
   name: MCP Full Guard Support Design
-  status: pending
+  status: in_progress
   steps:
   - id: mcp-full-guard-design.specify-support-model
     name: specify-support-model
-    status: pending
+    status: claimed
     description: 'Design the supported execution model for full MCP guard on large
       repos.
 
@@ -9824,6 +9824,8 @@ phases:
 
       - Backward-compatibility expectations are documented'
     agent: python-senior
+    claimed_by: python-senior
+    claimed_at: '2026-03-08T18:08:03.819214+00:00'
   - id: mcp-full-guard-design.verify-design
     name: verify-design
     status: pending
