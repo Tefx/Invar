@@ -1,0 +1,116 @@
+/**
+ * Invar Pi Hook
+ * Protocol: v{{ protocol_version }} | Generated: {{ generated_date }}
+ * LX-04: Full feature parity with Claude Code hooks
+ * DX-79: Automatic feedback trigger via message count
+ *
+ * Features:
+ * - pytest/crosshair blocking via tool_call
+ * - Protocol injection via pi.send() for long conversations
+ * - Automatic /invar-reflect trigger at message threshold
+ */
+
+import type { HookAPI } from "@mariozechner/pi-coding-agent/hooks";
+import * as fs from "fs";
+
+// Blocked commands (same as Claude Code)
+{% if language == "python" -%}
+const BLOCKED_CMDS = [/^pytest\b/, /^python\s+-m\s+pytest/, /^crosshair\b/];
+const ALLOWED_FLAGS = [/--pdb/, /--cov/, /--debug/];
+{% elif language == "typescript" -%}
+const BLOCKED_CMDS = [/^jest\b/, /^vitest\b/, /^npx\s+(jest|vitest)\b/, /^npm\s+(run\s+)?test\b/];
+const ALLOWED_FLAGS = [/--inspect/, /--coverage/, /--debug/];
+{% endif -%}
+
+// Protocol content for injection (escaped for JS)
+const INVAR_PROTOCOL = `{{ invar_protocol_escaped }}`;
+
+// DX-79: Helper to read feedback configuration
+function readFeedbackConfig() {
+  try {
+    const settingsPath = ".claude/settings.local.json";
+    const settings = JSON.parse(fs.readFileSync(settingsPath, "utf-8"));
+    return {
+      enabled: settings.feedback?.enabled ?? true,
+      min_messages: settings.feedback?.min_messages ?? 30,
+    };
+  } catch {
+    // File doesn't exist or other error, use defaults
+  }
+  return { enabled: true, min_messages: 30 };
+}
+
+export default function (pi: HookAPI) {
+  let msgCount = 0;
+
+  // ============================================
+  // Session Management
+  // ============================================
+  pi.on("session", async (event) => {
+    // Reset count on session start/restore
+    if (event.reason === "start" || event.reason === "branch") {
+      msgCount = 0;
+    }
+  });
+
+  // ============================================
+  // Long Conversation Protocol Refresh
+  // ============================================
+  pi.on("agent_start", async () => {
+    msgCount++;
+
+    // Message 15: Lightweight checkpoint
+    if (msgCount === 15) {
+      pi.send(
+        "<system-reminder>Checkpoint: guard=verify, sig=contracts, USBV workflow.</system-reminder>"
+      );
+    }
+
+    // Message 25+: Full protocol injection every 10 messages
+    if (msgCount >= 25 && msgCount % 10 === 0) {
+      pi.send(`<system-reminder>
+=== Protocol Refresh (message ${msgCount}) ===
+${INVAR_PROTOCOL}
+</system-reminder>`);
+    }
+
+    // DX-79: Feedback trigger at threshold
+    const feedbackConfig = readFeedbackConfig();
+    if (msgCount === feedbackConfig.min_messages && feedbackConfig.enabled) {
+      pi.send(`<system-reminder>
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 Invar: Auto-triggering usage feedback (${msgCount} messages)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Session has reached ${msgCount} messages. Consider running /invar-reflect
+to generate usage feedback.
+
+To disable: Set feedback.enabled=false in .claude/settings.local.json
+</system-reminder>`);
+    }
+  });
+
+  // ============================================
+  // pytest/crosshair Blocking
+  // ============================================
+  pi.on("tool_call", async (event) => {
+    if (event.toolName !== "bash") return;
+    const input = event.input as Record<string, unknown>;
+    const cmd = (typeof input?.command === "string" ? input.command : "").trim();
+
+    // Skip if not a blocked command
+    if (!BLOCKED_CMDS.some((p) => p.test(cmd))) return;
+
+    // Allow if has debug/test flags
+    if (ALLOWED_FLAGS.some((p) => p.test(cmd))) return;
+
+    return {
+      block: true,
+{% if language == "python" -%}
+      reason: "Use `{{ guard_cmd }}` instead of pytest/crosshair.",
+{% elif language == "typescript" -%}
+      reason: "Use `{{ guard_cmd }}` instead of jest/vitest.",
+{% endif -%}
+    };
+  });
+}

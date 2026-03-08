@@ -1,0 +1,126 @@
+# Common Security Patterns (Cross-Language)
+# These patterns apply to all languages
+
+version: "1.0"
+
+patterns:
+  # A02: Cryptographic Failures
+  hardcoded_secrets:
+    category: A02
+    severity: High
+    description: "Hardcoded credentials in source code"
+    regex:
+      - "password\\s*=\\s*[\"'][^\"']{4,}[\"']"
+      - "passwd\\s*=\\s*[\"'][^\"']{4,}[\"']"
+      - "api_key\\s*=\\s*[\"'][^\"']{8,}[\"']"
+      - "apikey\\s*=\\s*[\"'][^\"']{8,}[\"']"
+      - "secret\\s*=\\s*[\"'][^\"']{8,}[\"']"
+      - "token\\s*=\\s*[\"'][^\"']{8,}[\"']"
+      - "private_key\\s*=\\s*[\"']"
+      - "AWS_SECRET_ACCESS_KEY\\s*=\\s*[\"']"
+      - "GITHUB_TOKEN\\s*=\\s*[\"']"
+    exclude:
+      - '*_test.*'
+      - '*.test.*'
+      - '*.spec.*'
+      - '*.example.*'
+      - '.env.example'
+    false_positive_hints:
+      - "Check if value is a placeholder or environment variable reference"
+      - "Verify if file is meant for testing only"
+
+  weak_crypto_algorithms:
+    category: A02
+    severity: Medium
+    description: "Weak cryptographic algorithm usage"
+    regex:
+      - '\bmd5\b'
+      - '\bMD5\b'
+      - '\bsha1\b'
+      - '\bSHA1\b'
+      - '\bDES\b'
+      - '\bRC4\b'
+      - '\bRC2\b'
+    false_positive_hints:
+      - "MD5/SHA1 acceptable for non-security checksums"
+      - "Check if used for password hashing (bad) vs file integrity (ok)"
+
+  weak_random:
+    category: A02
+    severity: Medium
+    description: "Weak random number generation for security purposes"
+    regex:
+      - 'Math\.random\s*\('
+      - 'random\.random\s*\('
+      - 'rand\s*\('
+    false_positive_hints:
+      - "Check if used for security-sensitive purposes (tokens, keys)"
+      - "Non-security randomness (UI, tests) is acceptable"
+
+  # A03: Injection (generic patterns)
+  dangerous_regex:
+    category: A03
+    severity: Medium
+    description: "Potentially dangerous regular expression (ReDoS)"
+    regex:
+      - '\(\.\*\)\+'
+      - '\(\.\+\)\+'
+      - '\(\[.*\]\+\)\+'
+    false_positive_hints:
+      - "Check if regex is applied to untrusted input"
+      - "Consider regex timeout or input length limits"
+
+  # A05: Security Misconfiguration
+  debug_enabled:
+    category: A05
+    severity: Medium
+    description: "Debug mode potentially enabled in production"
+    regex:
+      - "DEBUG\\s*=\\s*[Tt]rue"
+      - "debug\\s*:\\s*true"
+      - "NODE_ENV\\s*=\\s*[\"']development[\"']"
+    false_positive_hints:
+      - "Check if this is production configuration"
+      - "Development-only files are acceptable"
+
+  verbose_errors:
+    category: A05
+    severity: Low
+    description: "Verbose error messages may leak information"
+    regex:
+      - 'stack\s*:\s*true'
+      - 'showStackTrace'
+      - 'print_exc\s*\('
+      - 'traceback\.print'
+    false_positive_hints:
+      - "Check if exposed to end users in production"
+
+  # A09: Logging Failures
+  sensitive_logging:
+    category: A09
+    severity: Medium
+    description: "Potentially logging sensitive data"
+    regex:
+      - 'log.*password'
+      - 'log.*token'
+      - 'log.*secret'
+      - 'log.*credit.?card'
+      - 'console\.log.*password'
+      - 'print.*password'
+    false_positive_hints:
+      - "Check if actual values are logged vs field names"
+      - "Verify log level and production exposure"
+
+  # A10: SSRF
+  ssrf_risk:
+    category: A10
+    severity: High
+    description: "User-controlled URL being fetched"
+    regex:
+      - 'fetch\s*\(\s*\w+\s*\)'
+      - 'requests\.get\s*\(\s*\w+\s*\)'
+      - 'http\.get\s*\(\s*\w+\s*\)'
+      - 'urllib\.request\.urlopen\s*\(\s*\w+\s*\)'
+    false_positive_hints:
+      - "Check if URL is user-controlled or hardcoded"
+      - "Verify URL validation/allowlisting exists"

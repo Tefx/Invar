@@ -1,0 +1,115 @@
+#!/bin/bash
+# Invar UserPromptSubmit Hook
+# Protocol: v{{ protocol_version }} | Generated: {{ generated_date }}
+# DX-57: Protocol refresh with full INVAR.md injection
+# DX-79: Automatic feedback trigger via message count
+
+USER_MESSAGE="$1"
+
+# Check if hooks are disabled
+[[ -f ".claude/hooks/.invar_disabled" ]] && exit 0
+
+# Use session-specific state
+STATE_DIR="${CLAUDE_STATE_DIR:-/tmp/invar_hooks_$(id -u)}"
+mkdir -p "$STATE_DIR" 2>/dev/null
+
+# Session detection: Reset if state is stale (>4 hours)
+SESSION_MARKER="$STATE_DIR/session_start"
+MAX_AGE_SECONDS=14400  # 4 hours
+
+reset_session() {
+  rm -f "$STATE_DIR/msg_count" "$STATE_DIR/changes" 2>/dev/null
+  date +%s > "$SESSION_MARKER"
+}
+
+if [[ -f "$SESSION_MARKER" ]]; then
+  MARKER_TIME=$(cat "$SESSION_MARKER" 2>/dev/null || echo 0)
+  NOW=$(date +%s)
+  AGE=$((NOW - MARKER_TIME))
+  if [[ $AGE -gt $MAX_AGE_SECONDS ]]; then
+    reset_session
+  fi
+else
+  reset_session
+fi
+
+COUNT_FILE="$STATE_DIR/msg_count"
+COUNT=$(cat "$COUNT_FILE" 2>/dev/null || echo 0)
+COUNT=$((COUNT + 1))
+echo "$COUNT" > "$COUNT_FILE"
+
+# ============================================
+# Keyword triggers (independent of count)
+# ============================================
+
+{% if language == "python" -%}
+# pytest intent → immediate correction
+if echo "$USER_MESSAGE" | grep -qiE "run.*pytest|pytest.*test|用.*pytest"; then
+  echo "<system-reminder>Use {{ guard_cmd }}, not pytest.</system-reminder>"
+fi
+{% elif language == "typescript" -%}
+# jest/vitest intent → immediate correction
+if echo "$USER_MESSAGE" | grep -qiE "run.*jest|run.*vitest|npm.*test|用.*jest|用.*vitest"; then
+  echo "<system-reminder>Use {{ guard_cmd }}, not jest/vitest directly.</system-reminder>"
+fi
+{% endif -%}
+
+# Implementation intent → workflow reminder (after warmup)
+if [[ $COUNT -gt 3 ]]; then
+  if echo "$USER_MESSAGE" | grep -qiE "^implement|^fix|^add|^实现|^修复|^添加"; then
+    echo "<system-reminder>USBV: Specify contracts → Build → Validate</system-reminder>"
+  fi
+fi
+
+# ============================================
+# Progressive refresh based on message count
+# ============================================
+
+# Message 15: Lightweight checkpoint
+if [[ $COUNT -eq 15 ]]; then
+  echo "<system-reminder>"
+  echo "Checkpoint: guard=verify, sig=contracts, USBV workflow."
+  echo "</system-reminder>"
+fi
+
+# Message 25+: Full INVAR.md injection every 10 messages
+# SSOT: Inject entire protocol to ensure no content drift
+if [[ $COUNT -ge 25 && $((COUNT % 10)) -eq 0 ]]; then
+  echo "<system-reminder>"
+  echo "=== Protocol Refresh (message $COUNT) ==="
+  echo ""
+  cat << 'INVAR_EOF'
+{{ invar_protocol }}
+INVAR_EOF
+  echo "</system-reminder>"
+fi
+
+# ============================================
+# DX-79: Feedback trigger at threshold
+# ============================================
+
+# Read feedback configuration
+FEEDBACK_ENABLED=true
+MIN_MESSAGES=30
+
+if [[ -f ".claude/settings.local.json" ]]; then
+  # Try to parse with jq if available, otherwise use defaults
+  if command -v jq &> /dev/null; then
+    FEEDBACK_ENABLED=$(jq -r '.feedback.enabled // true' .claude/settings.local.json 2>/dev/null)
+    MIN_MESSAGES=$(jq -r '.feedback.min_messages // 30' .claude/settings.local.json 2>/dev/null)
+  fi
+fi
+
+# Trigger feedback prompt at threshold
+if [[ "$FEEDBACK_ENABLED" == "true" && $COUNT -eq $MIN_MESSAGES ]]; then
+  echo "<system-reminder>"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo "📊 Invar: Auto-triggering usage feedback ($COUNT messages)"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo ""
+  echo "Session has reached $COUNT messages. Consider running /invar-reflect"
+  echo "to generate usage feedback."
+  echo ""
+  echo "To disable: Set feedback.enabled=false in .claude/settings.local.json"
+  echo "</system-reminder>"
+fi

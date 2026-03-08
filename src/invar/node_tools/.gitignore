@@ -1,0 +1,21 @@
+# Embedded Node.js tools - runtime dependencies
+# node_modules are added during GitHub Actions build (see .github/workflows/publish.yml)
+
+# Ignore node_modules everywhere
+**/node_modules/
+
+# Ignore package.json/package-lock.json (not needed in git, copied during build)
+*/package.json
+*/package-lock.json
+
+# eslint-plugin: Ignore TypeScript definition files and bundle (not needed at runtime)
+**/*.d.ts
+**/*.d.ts.map
+eslint-plugin/bundle.js
+
+# Common generated/temp files
+*.log
+.DS_Store
+.npm/
+npm-debug.log*
+node_modules/.cache/

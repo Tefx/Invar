@@ -1,0 +1,112 @@
+#!/bin/bash
+# Invar PreToolUse Hook
+# Protocol: v{{ protocol_version }} | Generated: {{ generated_date }}
+# DX-57: Smart blocking with auto-escape for pytest/crosshair
+
+TOOL_NAME="$1"
+TOOL_INPUT="$2"
+
+# Check if hooks are disabled
+[[ -f ".claude/hooks/.invar_disabled" ]] && exit 0
+
+# Only process Bash commands
+[[ "$TOOL_NAME" != "Bash" ]] && exit 0
+
+# Parse command from JSON input
+# Primary: jq (accurate), Fallback: grep/sed (basic)
+if command -v jq &>/dev/null; then
+  CMD=$(echo "$TOOL_INPUT" | jq -r '.command // empty' 2>/dev/null)
+else
+  # Fallback: Extract command field using grep/sed (handles simple cases)
+  CMD=$(echo "$TOOL_INPUT" | grep -o '"command"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*: *"\(.*\)"/\1/')
+fi
+[[ -z "$CMD" ]] && exit 0
+
+{% if language == "python" -%}
+# ============================================
+# pytest blocking with smart escape
+# ============================================
+if echo "$CMD" | grep -qE '\bpytest\b|python.*-m\s+pytest\b'; then
+
+  # Auto-escape 1: Debugging mode (--pdb, --debug, --tb=long)
+  if echo "$CMD" | grep -qE '\-\-pdb|\-\-debug|\-\-tb='; then
+    echo "⚠️ pytest debugging allowed. Run {{ guard_cmd }} after."
+    exit 0
+  fi
+
+  # Auto-escape 2: External/vendor tests
+  if echo "$CMD" | grep -qE 'vendor/|third_party/|external/|node_modules/'; then
+    exit 0
+  fi
+
+  # Auto-escape 3: Explicit coverage collection
+  if echo "$CMD" | grep -qE '\-\-cov'; then
+    echo "⚠️ pytest coverage allowed. Run {{ guard_cmd }} for contract verification."
+    exit 0
+  fi
+
+  # Auto-escape 4: Environment variable override
+  if [[ "$INVAR_ALLOW_PYTEST" == "1" ]]; then
+    exit 0
+  fi
+
+  # Default: Block with helpful message
+  echo "❌ Use {{ guard_cmd }} instead of pytest"
+  echo "   {{ guard_cmd }} = static + doctests + CrossHair + Hypothesis"
+  echo ""
+  echo "   Auto-allowed: pytest --pdb (debug), pytest --cov (coverage)"
+  echo "   Manual escape: INVAR_ALLOW_PYTEST=1 pytest ..."
+  exit 1
+fi
+
+# ============================================
+# crosshair blocking (always redirect)
+# ============================================
+if echo "$CMD" | grep -qE '\bcrosshair\b'; then
+  if [[ "$INVAR_ALLOW_CROSSHAIR" == "1" ]]; then
+    exit 0
+  fi
+
+  echo "❌ Use {{ guard_cmd }} (includes CrossHair by default)"
+  echo "   Manual escape: INVAR_ALLOW_CROSSHAIR=1 crosshair ..."
+  exit 1
+fi
+{% elif language == "typescript" -%}
+# ============================================
+# jest/vitest blocking with smart escape
+# ============================================
+if echo "$CMD" | grep -qE '\bjest\b|\bvitest\b|npx\s+(jest|vitest)\b|npm\s+(run\s+)?test\b'; then
+
+  # Auto-escape 1: Debugging mode
+  if echo "$CMD" | grep -qE '\-\-inspect|\-\-debug'; then
+    echo "⚠️ Test debugging allowed. Run {{ guard_cmd }} after."
+    exit 0
+  fi
+
+  # Auto-escape 2: External/vendor tests
+  if echo "$CMD" | grep -qE 'vendor/|third_party/|external/'; then
+    exit 0
+  fi
+
+  # Auto-escape 3: Explicit coverage collection
+  if echo "$CMD" | grep -qE '\-\-coverage'; then
+    echo "⚠️ Test coverage allowed. Run {{ guard_cmd }} for contract verification."
+    exit 0
+  fi
+
+  # Auto-escape 4: Environment variable override
+  if [[ "$INVAR_ALLOW_JEST" == "1" ]]; then
+    exit 0
+  fi
+
+  # Default: Block with helpful message
+  echo "❌ Use {{ guard_cmd }} instead of jest/vitest"
+  echo "   {{ guard_cmd }} = tsc + eslint + vitest + fast-check"
+  echo ""
+  echo "   Auto-allowed: --inspect (debug), --coverage"
+  echo "   Manual escape: INVAR_ALLOW_JEST=1 jest ..."
+  exit 1
+fi
+{% endif -%}
+
+exit 0

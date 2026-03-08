@@ -1,0 +1,214 @@
+{#
+  Expected variables:
+  - project_name: str
+  - timestamp: str
+  - invar_version: str
+  - language: str
+  - framework?: str (default "N/A")
+  - loc: int
+  - files: int
+  - test_type: str
+  - test_count: int
+  - compatibility: int (0-100)
+  - total_days: int
+  - risk_level: str ("Low" | "Medium" | "High")
+  - architecture_diagram: str
+  - dependency_map?: str
+  - current_error, gap_error: str
+  - current_validation, gap_validation: str
+  - current_separation, gap_separation: str
+  - current_test, gap_test: str
+  - error_patterns?: [{type: str, count: int, locations: [str]}]
+  - validation_patterns?: [{library: str, usage: str, files: [str]}]
+  - high_risk_areas?: [{name: str, reason: str, files: [str], impact: str}]
+  - blockers?: [{name: str, description: str, mitigation: str}]
+  - dependency_risks?: [{name: str, risk_level: str, reason: str}]
+  - phase1_days, phase2_days, phase3_days, phase4_days, phase5_days: int
+  - contract_type: str
+  - base_effort: float
+  - adjustments: [{factor: str, reason: str}]
+  - adjustment_formula: str
+  - recommendation: str
+  - result_library: str
+  - additional_prereqs?: [str]
+  - quick_wins?: [{name: str, description: str, effort: str, impact: str}]
+  - layers: [{name: str, files: int, loc: int, notes?: str}]
+  - priority_files: [{path: str, loc: int, current_state: str, target_state: str, dependencies?: [str]}]
+#}
+# Invar Onboarding Assessment
+
+> Project: {{ project_name }}
+> Assessed: {{ timestamp }}
+> Invar Version: {{ invar_version }}
+
+## 1. Summary
+
+| Metric | Value |
+|--------|-------|
+| Primary Language | {{ language }} |
+| Framework | {{ framework | default("N/A") }} |
+| Code Size | {{ loc }} lines / {{ files }} files |
+| Test Coverage | {{ test_type }}: {{ test_count }} tests |
+| **Invar Compatibility** | **{{ compatibility }}%** |
+| **Estimated Effort** | **{{ total_days }} days** |
+| **Risk Level** | **{{ risk_level }}** |
+
+## 2. Architecture Analysis
+
+### 2.1 Layer Structure
+
+```
+{{ architecture_diagram }}
+```
+
+### 2.2 Dependency Map
+
+{% if dependency_map %}
+{{ dependency_map }}
+{% else %}
+*No complex dependencies detected.*
+{% endif %}
+
+## 3. Pattern Analysis
+
+| Dimension | Current | Invar Target | Gap |
+|-----------|---------|--------------|-----|
+| Error Handling | {{ current_error }} | Result[T, E] / Result<T, E> | {{ gap_error }} |
+| Validation | {{ current_validation }} | @pre/@post / Zod | {{ gap_validation }} |
+| Core/Shell | {{ current_separation }} | Explicit separation | {{ gap_separation }} |
+| Testing | {{ current_test }} | Doctest + Property | {{ gap_test }} |
+
+### 3.1 Error Handling Details
+
+{% if error_patterns %}
+| Pattern | Count | Location |
+|---------|-------|----------|
+{% for pattern in error_patterns %}
+| {{ pattern.type }} | {{ pattern.count }} | {{ pattern.locations | join(", ") }} |
+{% endfor %}
+{% else %}
+*No error handling patterns detected.*
+{% endif %}
+
+### 3.2 Validation Details
+
+{% if validation_patterns %}
+| Library | Usage | Files |
+|---------|-------|-------|
+{% for pattern in validation_patterns %}
+| {{ pattern.library }} | {{ pattern.usage }} | {{ pattern.files | join(", ") }} |
+{% endfor %}
+{% else %}
+*No validation libraries detected.*
+{% endif %}
+
+## 4. Risk Assessment
+
+### 4.1 High Risk Areas
+
+{% if high_risk_areas %}
+{% for area in high_risk_areas %}
+- **{{ area.name }}**: {{ area.reason }}
+  - Files: {{ area.files | join(", ") }}
+  - Impact: {{ area.impact }}
+{% endfor %}
+{% else %}
+*No high risk areas identified.*
+{% endif %}
+
+### 4.2 Blockers
+
+{% if blockers %}
+{% for blocker in blockers %}
+- [ ] **{{ blocker.name }}**: {{ blocker.description }}
+  - Mitigation: {{ blocker.mitigation }}
+{% endfor %}
+{% else %}
+*No blockers identified.*
+{% endif %}
+
+### 4.3 Dependency Risks
+
+{% if dependency_risks %}
+| Dependency | Risk | Reason |
+|------------|------|--------|
+{% for dep in dependency_risks %}
+| {{ dep.name }} | {{ dep.risk_level }} | {{ dep.reason }} |
+{% endfor %}
+{% else %}
+*No dependency risks identified.*
+{% endif %}
+
+## 5. Effort Breakdown
+
+| Phase | Scope | Estimate |
+|-------|-------|----------|
+| Foundation | Error types, Result infrastructure | {{ phase1_days }} days |
+| Core Extraction | Pure function isolation | {{ phase2_days }} days |
+| Shell Refactor | I/O layer Result conversion | {{ phase3_days }} days |
+| Contracts | {{ contract_type }} | {{ phase4_days }} days |
+| Validation | Guard integration, test coverage | {{ phase5_days }} days |
+| **Total** | | **{{ total_days }} days** |
+
+### 5.1 Estimation Factors
+
+```
+Base effort: {{ base_effort }} days ({{ loc }} LOC / 100)
+
+Adjustments:
+{% for adj in adjustments %}
+{{ adj.factor }} {{ adj.reason }}
+{% endfor %}
+
+Final: {{ base_effort }} {{ adjustment_formula }} = {{ total_days }} days
+```
+
+## 6. Recommendations
+
+### 6.1 Suggested Approach
+
+{{ recommendation }}
+
+### 6.2 Prerequisites
+
+- [ ] E2E test coverage > 80% for critical paths
+- [ ] Result library installed ({{ result_library }})
+- [ ] Error type hierarchy defined
+{% for prereq in additional_prereqs %}
+- [ ] {{ prereq }}
+{% endfor %}
+
+### 6.3 Quick Wins
+
+{% if quick_wins %}
+{% for win in quick_wins %}
+1. **{{ win.name }}**: {{ win.description }}
+   - Effort: {{ win.effort }}
+   - Impact: {{ win.impact }}
+{% endfor %}
+{% else %}
+*No quick wins identified.*
+{% endif %}
+
+## 7. File Analysis
+
+### 7.1 Files by Layer (Proposed)
+
+| Layer | Files | LOC | Notes |
+|-------|-------|-----|-------|
+{% for layer in layers %}
+| {{ layer.name }} | {{ layer.files }} | {{ layer.loc }} | {{ layer.notes | default("") }} |
+{% endfor %}
+
+### 7.2 Migration Priority
+
+{% for file in priority_files %}
+{{ loop.index }}. `{{ file.path }}` ({{ file.loc }} lines)
+   - Current: {{ file.current_state }}
+   - Target: {{ file.target_state }}
+   - Dependencies: {{ file.dependencies | join(", ") | default("None") }}
+{% endfor %}
+
+---
+
+*Generated by /invar-onboard*

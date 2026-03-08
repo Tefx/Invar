@@ -1,0 +1,256 @@
+<!--invar:critical-->
+## ⚡ Critical Rules
+
+| Always | Remember |
+|--------|----------|
+{% if syntax == "mcp" -%}
+| **Verify** | `invar_guard` — NOT pytest, NOT crosshair |
+{% else -%}
+| **Verify** | `invar guard` — NOT pytest, NOT crosshair |
+{% endif -%}
+{% if language == "python" -%}
+| **Core** | `@pre/@post` + doctests, NO I/O imports |
+| **Shell** | Returns `Result[T, E]` from `returns` library |
+{% elif language == "typescript" -%}
+| **Core** | Zod schemas + JSDoc examples, NO I/O imports |
+| **Shell** | Returns `Result<T, E>` from `neverthrow` library |
+{% endif -%}
+| **Flow** | USBV: Understand → Specify → Build → Validate |
+
+### Contract Rules (CRITICAL)
+
+{% if language == "python" -%}
+```python
+# ❌ WRONG: Lambda must include ALL parameters
+@pre(lambda x: x >= 0)
+def calc(x: int, y: int = 0): ...
+
+# ✅ CORRECT: Include defaults too
+@pre(lambda x, y=0: x >= 0)
+def calc(x: int, y: int = 0): ...
+
+# ❌ WRONG: @post cannot access parameters
+@post(lambda result: result > x)  # 'x' not available!
+
+# ✅ CORRECT: @post only sees 'result'
+@post(lambda result: result >= 0)
+```
+{% elif language == "typescript" -%}
+```typescript
+// ❌ WRONG: Type-only validation (no semantic value)
+const Input = z.number();
+
+// ✅ CORRECT: Semantic constraints
+const Input = z.number().nonnegative().max(100);
+
+// ❌ WRONG: Output schema cannot reference input
+const Output = z.number().min(x);  // 'x' not available!
+
+// ✅ CORRECT: Output schema only validates result
+const Output = z.number().nonnegative();
+```
+{% endif -%}
+
+<!--/invar:critical-->
+
+<!--invar:managed version="{{ version }}"-->
+# Project Development Guide
+
+> **Protocol:** Follow [INVAR.md](./INVAR.md) — includes Check-In, USBV workflow, and Task Completion requirements.
+
+## Check-In
+
+> See [INVAR.md#check-in](./INVAR.md#check-in-required) for full protocol.
+
+**Your first message MUST display:** `✓ Check-In: [project] | [branch] | [clean/dirty]`
+
+**Actions:** Read `.invar/context.md`, then show status. Do NOT run guard at Check-In.
+
+---
+
+## Final
+
+Your last message for an implementation task MUST display:
+
+```
+✓ Final: guard PASS | 0 errors, 2 warnings
+```
+
+{% if syntax == "mcp" -%}
+Execute `invar_guard()` and show this one-line summary.
+{% else -%}
+Execute `invar guard` and show this one-line summary.
+{% endif %}
+
+This is your sign-out. Completes the Check-In/Final pair.
+
+---
+
+## Project Structure
+
+{% if language == "python" -%}
+```
+src/{project}/
+├── core/    # Pure logic (@pre/@post, doctests, no I/O)
+└── shell/   # I/O operations (Result[T, E] return type)
+```
+{% elif language == "typescript" -%}
+```
+src/
+├── core/    # Pure logic (Zod schemas, JSDoc examples, no I/O)
+└── shell/   # I/O operations (Result<T, E> return type)
+```
+{% endif -%}
+
+**Key insight:** Core receives data (strings), Shell handles I/O (paths, files).
+
+## Quick Reference
+
+| Zone | Requirements |
+|------|-------------|
+{% if language == "python" -%}
+| Core | `@pre`/`@post` + doctests, pure (no I/O) |
+| Shell | Returns `Result[T, E]` from `returns` library |
+{% elif language == "typescript" -%}
+| Core | Zod schemas + JSDoc examples, pure (no I/O) |
+| Shell | Returns `Result<T, E>` from `neverthrow` library |
+{% endif -%}
+
+### Core vs Shell (Edge Cases)
+
+- File/network/env vars → **Shell**
+- `datetime.now()`, `random` → **Inject param** OR Shell
+- Pure logic → **Core**
+
+> Full decision tree: [INVAR.md#core-shell](./INVAR.md#decision-tree-core-vs-shell)
+
+## Documentation Structure
+
+| File | Owner | Edit? | Purpose |
+|------|-------|-------|---------|
+| INVAR.md | Invar | No | Protocol (`invar update` to sync) |
+| AGENT.md | User | Yes | Project customization (this file) |
+| .invar/context.md | User | Yes | Project state, lessons learned |
+| .invar/examples/ | Invar | No | **Must read:** Core/Shell patterns, workflow |
+
+> **Before writing code:** Check Task Router in `.invar/context.md`
+
+## USBV Workflow
+
+For complex tasks (3+ functions), follow these phases:
+
+### 1. UNDERSTAND
+
+- **Intent:** What exactly needs to be done?
+{% if syntax == "mcp" -%}
+- **Inspect:** Use `invar_sig` to see existing contracts
+{% else -%}
+- **Inspect:** Use `invar sig` to see existing contracts
+{% endif -%}
+- **Context:** Read relevant code, understand patterns
+- **Constraints:** What must NOT change?
+
+### 2. SPECIFY
+
+{% if language == "python" -%}
+- **Contracts FIRST:** Write `@pre`/`@post` before implementation
+- **Doctests:** Add examples for expected behavior
+{% elif language == "typescript" -%}
+- **Contracts FIRST:** Write Zod schemas before implementation
+- **JSDoc Examples:** Add `@example` for expected behavior
+{% endif -%}
+- **Design:** Decompose complex tasks into sub-functions
+
+{% if language == "python" -%}
+```python
+# SPECIFY before BUILD:
+@pre(lambda x: x > 0)
+@post(lambda result: result >= 0)
+def calculate(x: int) -> int:
+    """
+    >>> calculate(10)
+    100
+    """
+    ...  # Implementation comes in BUILD
+```
+{% elif language == "typescript" -%}
+```typescript
+// SPECIFY before BUILD:
+import { z } from 'zod';
+
+const CalculateInput = z.number().positive();
+const CalculateOutput = z.number().nonnegative();
+
+/**
+ * @example calculate(10) // => 100
+ */
+function calculate(x: number): number {
+    const validated = CalculateInput.parse(x);
+    // Implementation comes in BUILD
+    return CalculateOutput.parse(result);
+}
+```
+{% endif -%}
+
+### 3. BUILD
+
+- Follow the contracts written in SPECIFY
+{% if syntax == "mcp" -%}
+- Run `invar_guard(changed=true)` frequently
+{% else -%}
+- Run `invar guard --changed` frequently
+{% endif -%}
+- Commit after each logical unit
+
+### 4. VALIDATE
+
+{% if syntax == "mcp" -%}
+- Run `invar_guard()` (full verification)
+{% else -%}
+- Run `invar guard` (full verification)
+{% endif -%}
+- Integration works (if applicable)
+
+---
+
+## Tool Selection
+
+| I want to... | Use |
+|--------------|-----|
+{% if syntax == "mcp" -%}
+| See contracts | `invar_sig(target="<file>")` |
+| Find entry points | `invar_map(top=10)` |
+| Verify code | `invar_guard()` |
+{% else -%}
+| See contracts | `invar sig <file>` |
+| Find entry points | `invar map --top 10` |
+| Verify code | `invar guard` |
+{% endif -%}
+
+---
+
+## Task Completion
+
+A task is complete only when ALL conditions are met:
+- Check-In displayed: `✓ Check-In: [project] | [branch] | [clean/dirty]`
+- Intent explicitly stated
+- Contract written before implementation
+- Final displayed: `✓ Final: guard PASS | <errors>, <warnings>`
+- User requirement satisfied
+
+**Missing any = Task incomplete.**
+
+<!--/invar:managed-->
+<!--invar:project-->
+<!--/invar:project-->
+<!--invar:user-->
+<!-- ========================================================================
+     USER REGION - EDITABLE
+     Add your team conventions and project-specific rules below.
+     This section is preserved across `invar update` and `invar dev sync`.
+     ======================================================================== -->
+<!--/invar:user-->
+
+---
+
+*Generated by `invar init` v{{ version }}. Customize the user section freely.*
