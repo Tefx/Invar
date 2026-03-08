@@ -10029,3 +10029,18 @@ phases:
     depends_on:
     - da-while-fix.verify-local-regression
     agent: integration-verifier
+  - id: da-while-fix.gate
+    name: da-while-fix.gate
+    status: pending
+    description: 'Gate review: verify the dead_assign while-loop repair is minimal,
+      evidence-backed, and safe before field validation.'
+    verification: '- Focused repros pass and negative control remains intact
+
+      - The fix is limited to while-loop carried-state handling
+
+      - No unresolved blocker remains before external field validation'
+    depends_on:
+    - da-while-fix.patch-walk-while-next-iteration
+    - da-while-fix.verify-local-regression
+    - da-while-fix.freeze-for-gate
+    agent: gate-reviewer
