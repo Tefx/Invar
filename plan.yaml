@@ -9525,3 +9525,48 @@ phases:
 - id: mcp-full-guard-design
   name: MCP Full Guard Support Design
   status: pending
+  steps:
+  - id: mcp-full-guard-design.specify-support-model
+    name: specify-support-model
+    status: pending
+    description: 'Design the supported execution model for full MCP guard on large
+      repos.
+
+
+      Requirements:
+
+      - `invar_guard(changed=false)` must be usable for full-project scans on repos
+      like `../tasca`
+
+      - design must avoid request-layer timeout failure for long-running scans
+
+      - preserve current fast path for small/changed-only scans
+
+      - define external contract precisely: synchronous timeout extension, async job/poll,
+      streaming, or a hybrid
+
+      - specify backward-compatibility for current MCP clients and tool schema
+
+
+      Deliverables:
+
+      - chosen execution model and API contract
+
+      - acceptance criteria for large-repo full scans
+
+      - explicit non-goals and migration constraints
+
+
+      Out of scope:
+
+      - implementation
+
+      - release/publish work'
+    verification: '- Design note or implementation-ready evidence identifies the chosen
+      MCP full-guard model and why it avoids current timeout failure
+
+      - Acceptance criteria explicitly cover `../tasca` full scan behavior and current
+      changed-only behavior
+
+      - Backward-compatibility expectations are documented'
+    agent: python-senior
