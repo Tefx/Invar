@@ -9959,3 +9959,32 @@ phases:
 - id: da-while-fix
   name: dead_assign While Fix
   status: pending
+  steps:
+  - id: da-while-fix.patch-walk-while-next-iteration
+    name: patch-walk-while-next-iteration
+    status: pending
+    description: 'Implement the minimal behavior-preserving fix in `src/invar/core/dead_assign.py::_walk_while()`
+      by simulating next-iteration while-body reads in read-only mode, mirroring `_walk_loop()`
+      where appropriate.
+
+
+      Requirements:
+
+      - clear pending writes that are consumed in the next while-body iteration
+
+      - preserve current handling for while-test reads and `orelse`
+
+      - do not broaden into unrelated dead_assign redesign
+
+
+      Out of scope:
+
+      - changing for-loop behavior
+
+      - heuristic redesign outside next-iteration while semantics'
+    verification: '- Focused repro tests pass after the patch
+
+      - Negative control still reports as dead_assign
+
+      - The patch remains localized to while-loop next-iteration semantics'
+    agent: python-senior
