@@ -9151,7 +9151,7 @@ phases:
       proceed in degraded mode per freeze policy.'
   - id: da-while-field.run-anima-guard
     name: run-anima-guard
-    status: claimed
+    status: done
     description: "As an INDEPENDENT TESTER (`integration-verifier`), validate the\
       \ fix via the real guard pipeline against `../anima`.\n\nYOUR GOAL IS TO FIND\
       \ PROBLEMS, not to confirm it works.\n\nRequirements:\n- run real `uvx invar-tools\
@@ -9193,6 +9193,34 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-08T19:25:24.872076+00:00'
+    done_at: '2026-03-08T19:46:25.627475+00:00'
+    evidence: 'Commit hash(es): none
+
+      Files changed:
+
+      - none
+
+      Verification:
+
+      - Run: uvx invar-tools guard --all ../../../../anima -> failed before analysis
+      with ModuleNotFoundError: No module named ''invar.shell.commands.hooks''
+
+      - Run: uv run invar guard --all ../../../../anima -> status passed with warnings;
+      dead_assign findings still include target locals
+
+      - Run: evidence grep on captured guard output -> confirmed residual dead_assign
+      blockers for message_history, was_awaiting_approval, seen_count
+
+      Spec link:
+
+      - plan:da-while-field.run-anima-guard
+
+      Gaps/Notes:
+
+      - Blocker detected: three target external false positives still reported.
+
+      - Planner remediation created: da-while-field.fix-anima-residual-dead-assign
+      and da-while-field.retest-anima-guard; phase gate updated to require retest.'
   - id: da-while-field.gate
     name: da-while-field.gate
     status: pending
