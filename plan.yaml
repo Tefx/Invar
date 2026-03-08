@@ -8552,7 +8552,7 @@ phases:
   steps:
   - id: mcp-full-guard-field-verify.freeze
     name: freeze
-    status: done
+    status: claimed
     description: 'Freeze: lock the snapshot before L2 validation of full MCP guard
       on external repos.'
     verification: '- Record `git rev-parse HEAD`
@@ -8566,36 +8566,6 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-08T18:09:27.916089+00:00'
-    done_at: '2026-03-08T18:51:58.227056+00:00'
-    evidence: 'Commit hash(es): none
-
-      Files changed:
-
-      - none
-
-      Verification:
-
-      - Run: pwd -> /Users/tefx/Projects/Invar/.vectl/worktrees/mcp-full-guard-field-verify.freeze
-
-      - Run: git rev-parse HEAD -> dd2055f00f241f93e2d01053a5eb0e46bbadcf7d
-
-      - Run: git status --short --branch -> vectl/step-mcp-full-guard-field-verify.freeze
-      (clean)
-
-      - Run: git status --porcelain -> empty
-
-      - Run: python3 --version; uv --version; node --version; npm --version; uvx --version
-      -> Python 3.14.3; uv 0.10.9; node v25.8.0; npm 11.11.0; uvx 0.10.9
-
-      Spec link:
-
-      - plan:mcp-full-guard-field-verify.freeze
-
-      Gaps/Notes:
-
-      - Freeze snapshot recorded; verify-only purity maintained.
-
-      - No code changes allowed until subsequent verification step completes.'
   - id: mcp-full-guard-field-verify.run-real-mcp-full-guard
     name: run-real-mcp-full-guard
     status: pending
@@ -8890,7 +8860,7 @@ phases:
   steps:
   - id: da-while-field.freeze-anima-snapshot
     name: freeze-anima-snapshot
-    status: claimed
+    status: done
     description: Freeze both Invar and `../anima` before L2 field validation.
     verification: '- Record `git rev-parse HEAD` and clean `git status` for both repos
 
@@ -8900,6 +8870,35 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-08T18:11:19.078492+00:00'
+    done_at: '2026-03-08T18:51:58.249084+00:00'
+    evidence: 'Commit hash(es): none
+
+      Files changed:
+
+      - none
+
+      Verification:
+
+      - Run: git rev-parse HEAD && git status --short --branch (Invar worktree) ->
+      HEAD dd2055f00f241f93e2d01053a5eb0e46bbadcf7d; branch vectl/step-da-while-field.freeze-anima-snapshot;
+      clean
+
+      - Run: git rev-parse HEAD && git status --short --branch (../anima) -> HEAD
+      dda14ba4f090afa10639e171645b1f142d22063b; branch main; dirty with M src/anima/shell/cli_commands/talk_runtime.py
+
+      - Run: uname -a && python3 --version && git --version && uv --version -> Darwin
+      25.1.0 arm64; Python 3.14.3; Git 2.50.1; uv 0.10.9
+
+      Spec link:
+
+      - plan:da-while-field.freeze-anima-snapshot
+
+      Gaps/Notes:
+
+      - Freeze captured for both repos.
+
+      - Detected state_conflict: ../anima not clean at freeze time; no code/docs modified;
+      proceed in degraded mode per freeze policy.'
   - id: da-while-field.run-anima-guard
     name: run-anima-guard
     status: pending
