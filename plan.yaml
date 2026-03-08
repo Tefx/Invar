@@ -8802,7 +8802,7 @@ phases:
       due missing deferral mock.'
   - id: mcp-full-guard-implement.verify-implementation
     name: verify-implementation
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT TESTER (`integration-verifier`), validate the
       MCP full-guard implementation from a fresh perspective.
 
@@ -8832,6 +8832,33 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-08T19:49:06.989080+00:00'
+    done_at: '2026-03-08T20:03:44.631912+00:00'
+    evidence: 'Commit hash(es): none
+
+      Files changed:
+
+      - none
+
+      Verification:
+
+      - Run: uv run pytest -v tests/integration/test_mcp_full_guard_regressions.py
+      tests/integration/test_mcp_guard_deferred.py tests/integration/test_mcp_guard_changed_flag.py
+      -> 1 failed, 32 passed
+
+      - Failure detail: tests/integration/test_mcp_guard_changed_flag.py::test_run_guard_changed_false_uses_all_flag[asyncio]
+      raised KeyError(''cmd'')
+
+      Spec link:
+
+      - plan:mcp-full-guard-implement.verify-implementation
+
+      Gaps/Notes:
+
+      - should_fix issue detected.
+
+      - Planner remediation created: mcp-full-guard-implement.verify-implementation-fix
+      and mcp-full-guard-implement.verify-implementation-retest; phase gate now depends
+      on retest.'
   - id: mcp-full-guard-implement.gate
     name: mcp-full-guard-implement.gate
     status: pending
