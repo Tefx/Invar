@@ -10058,3 +10058,45 @@ phases:
 
       - State explicitly that no code changes are allowed until field validation completes'
     agent: integration-verifier
+  - id: da-while-field.run-anima-guard
+    name: run-anima-guard
+    status: pending
+    description: "As an INDEPENDENT TESTER (`integration-verifier`), validate the\
+      \ fix via the real guard pipeline against `../anima`.\n\nYOUR GOAL IS TO FIND\
+      \ PROBLEMS, not to confirm it works.\n\nRequirements:\n- run real `uvx invar-tools\
+      \ guard --all` (or equivalent released path) against `../anima`\n- verify no\
+      \ `dead_assign` finding remains for:\n  - `was_awaiting_approval`\n  - `seen_count`\n\
+      \  - `message_history`\n- capture exact command and exact guard output excerpts\n\
+      - classify any remaining dead_assign findings as unrelated or residual blocker\
+      \ evidence\n\nIndependence Level: L2"
+    verification: '- Real guard output from `../anima` is attached
+
+      - The three confirmed external false positives are absent
+
+      - Any remaining dead_assign findings are explicitly classified'
+    evidence_template: '## Integration Evidence
+
+
+      **Command or test exercising the full path**:
+
+      ```
+
+      uvx invar-tools guard --all
+
+      ```
+
+
+      **Actual output**:
+
+      ```
+
+      <guard output excerpts showing absence/presence of the three target findings>
+
+      ```
+
+
+      **Path exercised**: invar guard pipeline -> dead_assign detector -> real anima
+      files'
+    depends_on:
+    - da-while-field.freeze-anima-snapshot
+    agent: integration-verifier
