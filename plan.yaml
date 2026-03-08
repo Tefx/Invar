@@ -9522,3 +9522,6 @@ phases:
       pass across all unrelated rules.
 
       Verdict: OPEN'
+- id: mcp-full-guard-design
+  name: MCP Full Guard Support Design
+  status: pending
