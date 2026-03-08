@@ -9464,7 +9464,7 @@ phases:
     skipped_reason: superseded
   - id: da-while-repro.freeze-for-gate
     name: freeze-for-gate
-    status: claimed
+    status: done
     description: Freeze snapshot for repro gate review.
     verification: '- Record `git rev-parse HEAD`
 
@@ -9476,6 +9476,36 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-08T20:05:25.290705+00:00'
+    done_at: '2026-03-08T20:09:23.044211+00:00'
+    evidence: 'Artifact:
+
+      - PR: 864cbaa98ec4198d234d3b5de4a08f7438243a54
+
+
+      Verification:
+
+      - Run: `git rev-parse HEAD` -> `864cbaa98ec4198d234d3b5de4a08f7438243a54`
+
+      - Run: `git status --short` -> `(no output; clean working tree)`
+
+      - Run: `git status --branch` -> `On branch vectl/step-da-while-repro.freeze-for-gate;
+      nothing to commit, working tree clean`
+
+      - Run: gate freeze assertion -> `No code changes are allowed until gate review
+      completes.`
+
+
+      Spec link:
+
+      - Step `da-while-repro.freeze-for-gate` verification requirements (record HEAD,
+      record clean status, freeze until gate review)
+
+      Commit hash(es): none + reason (no file changes required for snapshot freeze
+      task)
+
+      Files changed: []
+
+      Gaps/Notes: none'
   - id: da-while-repro.gate
     name: da-while-repro.gate
     status: pending
