@@ -2658,7 +2658,7 @@ phases:
   steps:
   - id: dx-91-delete.delete-node-tools
     name: delete-node-tools
-    status: claimed
+    status: pending
     description: "Delete the entire src/invar/node_tools/ directory (69 files, ~6,329\
       \ LOC).\n\nThis is the TypeScript/JS tooling: eslint-plugin, ts-analyzer, fc-runner,\
       \ quick-check, ts-query.js.\n\nFiles to delete:\n- src/invar/node_tools/ (entire\
@@ -2675,8 +2675,6 @@ phases:
     - src/invar/node_tools/
     - docs/proposals/DX-91-simplification.md
     agent: python-executor
-    claimed_by: python-executor
-    claimed_at: '2026-03-08T17:40:37.269955+00:00'
   - id: dx-91-delete.delete-ts-core-modules
     name: delete-ts-core-modules
     status: pending
@@ -2709,7 +2707,7 @@ phases:
     agent: python-executor
   - id: dx-91-delete.delete-skills-hooks-modules
     name: delete-skills-hooks-modules
-    status: pending
+    status: claimed
     description: 'Delete skills system and hooks system Python modules.
 
 
@@ -2740,6 +2738,8 @@ phases:
     - src/invar/shell/commands/skill.py
     - src/invar/shell/commands/hooks.py
     agent: python-executor
+    claimed_by: python-executor
+    claimed_at: '2026-03-08T17:40:37.287571+00:00'
   - id: dx-91-delete.delete-removed-commands
     name: delete-removed-commands
     status: pending
