@@ -2707,7 +2707,7 @@ phases:
       explicit user authorization before completion.'
   - id: dx-91-delete.delete-ts-core-modules
     name: delete-ts-core-modules
-    status: claimed
+    status: pending
     description: "Delete TypeScript-specific Python modules from core/ and shell/.\n\
       \nFiles to delete:\n- src/invar/core/ts_parsers.py (290 LOC) - TS AST parsing\n\
       - src/invar/core/ts_sig_parser.py (318 LOC) - TS signature parser\n- src/invar/shell/ts_compiler.py\
@@ -2735,8 +2735,6 @@ phases:
     - src/invar/shell/ts_compiler.py
     - src/invar/shell/prove/guard_ts.py
     agent: python-executor
-    claimed_by: python-executor
-    claimed_at: '2026-03-08T17:56:32.563197+00:00'
   - id: dx-91-delete.delete-skills-hooks-modules
     name: delete-skills-hooks-modules
     status: done
