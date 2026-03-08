@@ -9758,3 +9758,62 @@ phases:
       - State explicitly that no code changes are allowed until the subsequent verification
       step completes'
     agent: integration-verifier
+  - id: mcp-full-guard-field-verify.run-real-mcp-full-guard
+    name: run-real-mcp-full-guard
+    status: pending
+    description: 'As an INDEPENDENT TESTER (`integration-verifier`), validate the
+      supported full-guard behavior over the real MCP path on an external large repo
+      such as `../tasca`.
+
+
+      YOUR GOAL IS TO FIND PROBLEMS, not to confirm it works.
+
+
+      Requirements:
+
+      - exercise the real MCP `invar_guard(path=''.'', changed=false)` path, not a
+      CLI substitute
+
+      - prove the request returns according to the supported contract rather than
+      failing with MCP timeout
+
+      - compare result fidelity against CLI `uvx invar-tools guard --all`
+
+      - include at least one large-repo run and one smaller control run
+
+
+      Independence Level: L2'
+    verification: '- Main path: real MCP full guard on `../tasca` completes according
+      to the supported contract
+
+      - Control path: CLI full guard and MCP result are materially consistent for
+      status/summary
+
+      - Failure path: any remaining timeout or contract mismatch is captured with
+      exact evidence'
+    evidence_template: '## Integration Evidence
+
+
+      **Command or test exercising the full path**:
+
+      ```
+
+      <real MCP call for invar_guard(path=''.'', changed=false)>
+
+      ```
+
+
+      **Actual output**:
+
+      ```
+
+      <MCP response excerpts and comparison CLI excerpts>
+
+      ```
+
+
+      **Path exercised**: MCP client -> Invar MCP server -> guard execution model
+      -> result delivery'
+    depends_on:
+    - mcp-full-guard-field-verify.freeze
+    agent: integration-verifier
