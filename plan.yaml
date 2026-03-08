@@ -10337,11 +10337,11 @@ phases:
     agent: gate-reviewer
 - id: da-while-field
   name: dead_assign While Field Validation
-  status: pending
+  status: in_progress
   steps:
   - id: da-while-field.freeze-anima-snapshot
     name: freeze-anima-snapshot
-    status: pending
+    status: claimed
     description: Freeze both Invar and `../anima` before L2 field validation.
     verification: '- Record `git rev-parse HEAD` and clean `git status` for both repos
 
@@ -10349,6 +10349,8 @@ phases:
 
       - State explicitly that no code changes are allowed until field validation completes'
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-08T18:11:19.078492+00:00'
   - id: da-while-field.run-anima-guard
     name: run-anima-guard
     status: pending
