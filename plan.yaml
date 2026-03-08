@@ -9194,6 +9194,97 @@ phases:
     depends_on:
     - mcp-full-guard-field-verify.run-real-mcp-full-guard
     agent: python-executor
+  - id: mcp-full-guard-field-verify.retest-real-mcp-full-guard
+    name: retest-real-mcp-full-guard
+    status: pending
+    description: 'HIGH priority retest after `mcp-full-guard-field-verify.fix-real-mcp-full-guard-entrypoints`.
+
+
+      As an INDEPENDENT TESTER (`integration-verifier`), re-run the real MCP full-guard
+      field validation from a fresh perspective.
+
+
+      Re-test for:
+
+      - Happy path: the real MCP `invar_guard(path=''.'', changed=false)` path completes
+      on a large repo such as `../tasca`
+
+      - Control path: the CLI comparison path `uvx invar-tools guard --all` executes
+      successfully and is materially consistent with MCP output
+
+      - Error scenarios: no `guard.py` executable lookup failure and no `ModuleNotFoundError`
+      for `invar.shell.commands.hooks`
+
+
+      Document all findings. Finding remaining issues is a successful retest outcome.
+
+
+      Independence Level: L2'
+    verification: '- Main path: real MCP full guard on `../tasca` completes according
+      to the supported contract
+
+      - Control path: CLI full guard and MCP result are materially consistent for
+      status/summary
+
+      - Failure path: no remaining `guard.py` executable lookup failure and no `invar.shell.commands.hooks`
+      import failure; any new blocker is captured with exact evidence'
+    evidence_template: '## Verification Report
+
+
+      **Tester**: integration-verifier (independent of implementation)
+
+      **Scope**: retest of real MCP full guard and CLI comparison after entrypoint/package
+      fix
+
+      **Independence Level**: L2
+
+
+      ### Test Execution
+
+      - Commands executed:
+
+      ```bash
+
+      <actual MCP invocation and CLI comparison command>
+
+      ```
+
+      - Output summary: <key results>
+
+
+      ### Issues Found
+
+
+      | Severity | Description | Location | Reproduction |
+
+      | --- | --- | --- | --- |
+
+      | blocker | <issue> | <path or interface> | <steps> |
+
+      | should_fix | <issue> | <path or interface> | <steps> |
+
+
+      ### Coverage Assessment
+
+      - Large-repo MCP path verified: ✅/❌
+
+      - CLI comparison path verified: ✅/❌
+
+      - Original blocker signatures absent: ✅/❌
+
+
+      ### Verdict
+
+      - [ ] PASS
+
+      - [ ] ISSUES_FOUND
+
+      - [ ] INCOMPLETE
+
+      '
+    depends_on:
+    - mcp-full-guard-field-verify.fix-real-mcp-full-guard-entrypoints
+    agent: integration-verifier
 - id: da-while-repro
   name: dead_assign While Repros
   status: in_progress
