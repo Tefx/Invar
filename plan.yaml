@@ -9253,3 +9253,46 @@ phases:
     depends_on:
     - da-while-field.run-anima-guard
     agent: python-senior
+  - id: da-while-field.retest-anima-guard
+    name: retest-anima-guard
+    status: pending
+    description: 'As an INDEPENDENT TESTER (`integration-verifier`), re-run the real
+      guard pipeline against `../anima` after the residual dead_assign fix.
+
+
+      YOUR GOAL IS TO FIND PROBLEMS, not to confirm it works.
+
+
+      Test for:
+
+      - happy path: the real `../anima` guard no longer reports `dead_assign` for
+      `was_awaiting_approval`, `seen_count`, or `message_history`
+
+      - edge case: the repaired while/state shape still behaves correctly when exercised
+      through the released guard path rather than only local unit tests
+
+      - error scenario: any remaining `dead_assign` findings are captured verbatim
+      and classified as residual blocker vs unrelated noise
+
+
+      Document exact command and exact output excerpts.
+
+      Independence Level: L2'
+    verification: '- Real guard output from `../anima` is attached
+
+      - The three residual blocker variables are absent from `dead_assign` findings
+
+      - Any remaining findings are explicitly classified'
+    evidence_template: "## Verification Report\n\n**Tester**: integration-verifier\
+      \ (independent of implementation)\n**Scope**: real `../anima` guard retest after\
+      \ residual dead_assign fix\n**Independence Level**: L2\n\n### Test Execution\n\
+      - Commands executed:\n  ```\n  <actual guard command>\n  ```\n- Output summary:\n\
+      \  ```\n  <actual guard output excerpts>\n  ```\n\n### Issues Found\n| Severity\
+      \ | Description | Location | Reproduction |\n| --- | --- | --- | --- |\n| blocker\
+      \ | <issue if any> | <file:line or guard finding> | <steps> |\n\n### Coverage\
+      \ Assessment\n- Happy path verified: ✅/❌\n- Edge cases tested: 1\n- NOT tested:\
+      \ <areas not covered and why>\n\n### Verdict\n- [ ] PASS\n- [ ] ISSUES_FOUND\n\
+      - [ ] INCOMPLETE\n\n**Confidence**: high/medium/low"
+    depends_on:
+    - da-while-field.fix-anima-residual-dead-assign
+    agent: integration-verifier
