@@ -3020,7 +3020,7 @@ phases:
     agent: python-executor
   - id: dx-91-delete.delete-ts-tests
     name: delete-ts-tests
-    status: claimed
+    status: done
     description: 'Delete test files for removed TypeScript/skills features.
 
 
@@ -3056,6 +3056,44 @@ phases:
     agent: python-executor
     claimed_by: python-executor
     claimed_at: '2026-03-08T17:41:21.200793+00:00'
+    done_at: '2026-03-08T17:51:29.095837+00:00'
+    evidence: 'Commit hash(es): 761fdba (worker), df33079 (squash merge on main)
+
+      Files changed:
+
+      - tests/integration/test_lx05_detection.py (deleted)
+
+      - tests/integration/test_lx05_templates.py (deleted)
+
+      - tests/integration/test_lx05_integration.py (deleted)
+
+      - tests/integration/test_lx06_typescript.py (deleted)
+
+      - tests/integration/test_lx07_skills.py (deleted)
+
+      - tests/integration/test_dx78_ts_compiler.py (deleted)
+
+      - tests/integration/test_dx56_sync.py (deleted)
+
+      - tests/integration/test_dx55_regression.py (deleted)
+
+      Verification:
+
+      - Run: ls -la tests/integration/test_lx05_detection.py tests/integration/test_lx05_templates.py
+      tests/integration/test_lx05_integration.py tests/integration/test_lx06_typescript.py
+      tests/integration/test_lx07_skills.py tests/integration/test_dx78_ts_compiler.py
+      tests/integration/test_dx56_sync.py tests/integration/test_dx55_regression.py
+      -> all 8 files absent
+
+      - Run: uv run pytest --collect-only -> collected 602 items with no import errors
+
+      Spec link:
+
+      - DX-91 delete TypeScript-related integration tests
+
+      Gaps/Notes:
+
+      - None.'
   - id: dx-91-delete.deregister-cli-commands
     name: deregister-cli-commands
     status: pending
