@@ -9080,7 +9080,7 @@ phases:
 
       - Block if any claim depends on non-MCP fallback behavior'
     depends_on:
-    - mcp-full-guard-field-verify.run-real-mcp-full-guard
+    - mcp-full-guard-field-verify.retest-real-mcp-full-guard
     agent: gate-reviewer
   - id: mcp-full-guard-field-verify.gate
     name: mcp-full-guard-field-verify.gate
