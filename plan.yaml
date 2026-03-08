@@ -9906,11 +9906,11 @@ phases:
     agent: gate-reviewer
 - id: mcp-full-guard-implement
   name: MCP Full Guard Implementation
-  status: in_progress
+  status: pending
   steps:
   - id: mcp-full-guard-implement.implement-execution-model
     name: implement-execution-model
-    status: claimed
+    status: pending
     description: 'Implement the supported full-MCP-guard execution model.
 
 
@@ -9950,8 +9950,6 @@ phases:
 
       - `invar_guard(changed=true)` on touched files passes for implementation changes'
     agent: python-senior
-    claimed_by: python-senior
-    claimed_at: '2026-03-08T18:09:27.408595+00:00'
   - id: mcp-full-guard-implement.add-regressions
     name: add-regressions
     status: pending
@@ -10249,11 +10247,11 @@ phases:
     agent: gate-reviewer
 - id: da-while-fix
   name: dead_assign While Fix
-  status: pending
+  status: in_progress
   steps:
   - id: da-while-fix.patch-walk-while-next-iteration
     name: patch-walk-while-next-iteration
-    status: pending
+    status: claimed
     description: 'Implement the minimal behavior-preserving fix in `src/invar/core/dead_assign.py::_walk_while()`
       by simulating next-iteration while-body reads in read-only mode, mirroring `_walk_loop()`
       where appropriate.
@@ -10279,6 +10277,8 @@ phases:
 
       - The patch remains localized to while-loop next-iteration semantics'
     agent: python-senior
+    claimed_by: python-senior
+    claimed_at: '2026-03-08T18:09:27.777679+00:00'
   - id: da-while-fix.verify-local-regression
     name: verify-local-regression
     status: pending
