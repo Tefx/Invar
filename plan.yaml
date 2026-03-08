@@ -9207,3 +9207,49 @@ phases:
     - da-while-field.freeze-anima-snapshot
     - da-while-field.run-anima-guard
     agent: gate-reviewer
+  - id: da-while-field.fix-anima-residual-dead-assign
+    name: fix-anima-residual-dead-assign
+    status: pending
+    description: 'Fix residual `dead_assign` false positives still reproduced by the
+      real `../anima` guard run for target variables `was_awaiting_approval`, `seen_count`,
+      and `message_history` in `src/invar/core/dead_assign.py`, updating `tests/core/test_dead_assign.py`
+      if needed.
+
+
+      prior_loop: `da-while-fix.patch-walk-while-next-iteration` -> `da-while-field.run-anima-guard`
+
+      remaining_blocker: local while-loop regression coverage passes, but the real
+      anima field case still reports the three target variables as dead assignments.
+
+      why_new_loop: the original local repair did not fully cover the external while/state
+      shape exercised by `../anima`, so a focused follow-up fix is required instead
+      of reusing the closed implementation step.
+
+
+      Requirements:
+
+      - reproduce the residual field case against the real anima code path before
+      changing logic
+
+      - narrow the fix to the while/state analysis path in `src/invar/core/dead_assign.py`
+
+      - preserve the negative-control behavior so genuine dead writes still report
+
+      - add or update focused regression coverage in `tests/core/test_dead_assign.py`
+      for the anima-shaped loop/state pattern
+
+
+      Out of scope:
+
+      - unrelated dead_assign heuristics outside this residual while/state path
+
+      - broad reporting changes not needed to clear the blocker'
+    verification: '- Focused local regression for the anima-shaped while/state case
+      passes
+
+      - Existing negative control still reports as `dead_assign`
+
+      - Diff remains limited to the dead_assign detector/test surface'
+    depends_on:
+    - da-while-field.run-anima-guard
+    agent: python-senior
