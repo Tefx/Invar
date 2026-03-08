@@ -241,6 +241,30 @@ def _parse_severity_overrides(config: dict[str, Any]) -> dict[str, str] | None:
     return defaults
 
 
+@post(lambda result: result is None or isinstance(result, dict))
+def _parse_entry_point_thresholds(config: dict[str, Any]) -> dict[str, int] | None:
+    """Parse kind-aware entry point thresholds from config.
+
+    >>> _parse_entry_point_thresholds({"entry_point_thresholds": {"mcp_tool": 40}})
+    {'mcp_tool': 40}
+    >>> _parse_entry_point_thresholds({"entry_point_thresholds": {"mcp_tool": True}}) is None
+    True
+    >>> _parse_entry_point_thresholds({}) is None
+    True
+    """
+    raw = config.get("entry_point_thresholds")
+    if not isinstance(raw, dict):
+        return None
+
+    thresholds: dict[str, int] = {}
+    for kind, value in raw.items():
+        if isinstance(kind, str) and isinstance(value, int) and not isinstance(value, bool):
+            if value >= 1:
+                thresholds[kind] = int(value)
+
+    return thresholds if thresholds else None
+
+
 @post(lambda result: isinstance(result, RuleConfig))
 def parse_guard_config(guard_config: dict[str, Any]) -> RuleConfig:
     """
@@ -268,6 +292,7 @@ def parse_guard_config(guard_config: dict[str, Any]) -> RuleConfig:
     for key in (
         "max_file_lines",
         "max_function_lines",
+        "entry_max_lines",
         "timeout_doctest",
         "timeout_hypothesis",
         "timeout_crosshair",
@@ -298,6 +323,8 @@ def parse_guard_config(guard_config: dict[str, Any]) -> RuleConfig:
         kwargs["rule_exclusions"] = val
     if (val := _parse_severity_overrides(guard_config)) is not None:
         kwargs["severity_overrides"] = val
+    if (val := _parse_entry_point_thresholds(guard_config)) is not None:
+        kwargs["entry_point_thresholds"] = val
 
     try:
         return RuleConfig(**kwargs)

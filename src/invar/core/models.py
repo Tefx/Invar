@@ -431,7 +431,10 @@ class RuleConfig(BaseModel):
     # BUG-55: These override layer-based limits when set to non-default values
     max_file_lines: int = Field(default=500, ge=1)  # Override all layers if != 500
     max_function_lines: int = Field(default=50, ge=1)  # Override all layers if != 50
-    entry_max_lines: int = Field(default=15, ge=1)  # DX-23: Entry point max lines
+    entry_max_lines: int = Field(default=15, ge=1)  # DX-23: Entry point max lines fallback
+    entry_point_thresholds: dict[str, int] = Field(
+        default_factory=lambda: {"mcp_tool": 35}
+    )  # DX-93: Kind-aware thresholds, fallback to entry_max_lines
     shell_max_branches: int = Field(default=3, ge=1)  # DX-22: Shell function max branches
     shell_complexity_debt_limit: int = Field(default=5, ge=0)  # DX-22: 0 = no limit
     forbidden_imports: tuple[str, ...] = (

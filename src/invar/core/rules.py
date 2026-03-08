@@ -17,6 +17,7 @@ from invar.core.contracts import (
 )
 from invar.core.entry_points import (
     extract_escape_hatches,
+    get_entry_point_kind,
     get_symbol_lines,
     has_allow_marker,
     is_entry_point,
@@ -438,6 +439,9 @@ def check_entry_point_thin(file_info: FileInfo, config: RuleConfig) -> list[Viol
     """
     Check that entry points are thin (DX-23).
 
+    DX-93: Uses kind-aware thresholds. MCP tools default to 35 lines,
+    while traditional entry points use entry_max_lines fallback (default 15).
+
     Entry points should delegate to Shell functions and not contain
     business logic. They serve as "monad runners" at framework boundaries.
 
@@ -453,8 +457,6 @@ def check_entry_point_thin(file_info: FileInfo, config: RuleConfig) -> list[Viol
     if not file_info.is_shell:
         return violations
 
-    max_lines = config.entry_max_lines
-
     for symbol in file_info.symbols:
         if symbol.kind != SymbolKind.FUNCTION:
             continue
@@ -464,6 +466,8 @@ def check_entry_point_thin(file_info: FileInfo, config: RuleConfig) -> list[Viol
             symbol, file_info.source, "entry_point_too_thick"
         ):
             continue
+        kind = get_entry_point_kind(symbol, file_info.source) or "traditional"
+        max_lines = config.entry_point_thresholds.get(kind, config.entry_max_lines)
         lines = get_symbol_lines(symbol)
         if lines > max_lines:
             violations.append(
