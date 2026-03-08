@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.19.3] - 2026-03-08
+
+### Fixed
+- **Cross-repo field verification blockers on distributed `uvx` path**
+  - Finalized redundant-type suggestion formatting on the field output path so `fix.code` no longer emits malformed multiline `or @post(...)` payloads
+  - Preserved async-property guard behavior without leaking unawaited coroutine RuntimeWarnings in the intended path
+  - Improved `uvx` respawn/source resolution robustness so field runs can proceed without the manual `INVAR_UVX_RESPAWNED=1` workaround in normal flow
+
 ## [1.19.2] - 2026-03-08
 
 ### Fixed
@@ -508,7 +516,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[Unreleased]: https://github.com/yourusername/invar/compare/v1.19.2...HEAD
+[Unreleased]: https://github.com/yourusername/invar/compare/v1.19.3...HEAD
+[1.19.3]: https://github.com/yourusername/invar/compare/v1.19.2...v1.19.3
 [1.19.2]: https://github.com/yourusername/invar/compare/v1.19.1...v1.19.2
 [1.19.1]: https://github.com/yourusername/invar/compare/v1.19.0...v1.19.1
 [1.19.0]: https://github.com/yourusername/invar/compare/v1.18.1...v1.19.0
