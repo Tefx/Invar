@@ -2658,7 +2658,7 @@ phases:
   steps:
   - id: dx-91-delete.delete-node-tools
     name: delete-node-tools
-    status: claimed
+    status: done
     description: "Delete the entire src/invar/node_tools/ directory (69 files, ~6,329\
       \ LOC).\n\nThis is the TypeScript/JS tooling: eslint-plugin, ts-analyzer, fc-runner,\
       \ quick-check, ts-query.js.\n\nFiles to delete:\n- src/invar/node_tools/ (entire\
@@ -2677,6 +2677,34 @@ phases:
     agent: python-executor
     claimed_by: python-executor
     claimed_at: '2026-03-08T17:50:12.520307+00:00'
+    done_at: '2026-03-08T17:50:21.052334+00:00'
+    evidence: 'Commit hash(es): 9dddd54f523c2ecbd962a709b38b1bc72bad392e (worker),
+      2450985 (squash merge on main)
+
+      Files changed:
+
+      - src/invar/node_tools/ (entire directory deleted; 69 files)
+
+      Verification:
+
+      - Run: ls -la src/invar/node_tools/ -> Directory does not exist
+
+      - Run: grep -r ''node_tools'' src/invar/ --include=''*.py'' -> 3 matches in
+      ts_compiler.py and guard_ts.py (expected residuals until sibling deletion step)
+
+      - Run: uvx --with . python -c ''import invar'' -> succeeds
+
+      Spec link:
+
+      - docs/proposals/DX-91-simplification.md
+
+      Gaps/Notes:
+
+      - Residual references in ts_compiler.py and guard_ts.py are expected and out
+      of scope for this step.
+
+      - Stale local claim entry in .git/vectl/claims.json was manually cleared with
+      explicit user authorization before completion.'
   - id: dx-91-delete.delete-ts-core-modules
     name: delete-ts-core-modules
     status: pending
