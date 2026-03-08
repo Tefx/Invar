@@ -8794,7 +8794,7 @@ phases:
       - No code changes allowed until subsequent verification step completes.'
   - id: mcp-full-guard-field-verify.run-real-mcp-full-guard
     name: run-real-mcp-full-guard
-    status: pending
+    status: claimed
     description: 'As an INDEPENDENT TESTER (`integration-verifier`), validate the
       supported full-guard behavior over the real MCP path on an external large repo
       such as `../tasca`.
@@ -8851,6 +8851,8 @@ phases:
     depends_on:
     - mcp-full-guard-field-verify.freeze
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-08T19:47:17.845001+00:00'
   - id: mcp-full-guard-field-verify.review-results
     name: review-results
     status: pending
