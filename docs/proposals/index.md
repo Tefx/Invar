@@ -1,6 +1,6 @@
 # Invar Proposals Index
 
-> **Last Updated:** 2026-02-18
+> **Last Updated:** 2026-03-09
 
 This directory contains design proposals for Invar development.
 
@@ -12,12 +12,13 @@ This directory contains design proposals for Invar development.
 
 ---
 
-## Active Proposals (14)
+## Active Proposals (15)
 
 ### DX Series (Developer Experience)
 
 | ID | Name | Status | Description |
 |----|------|--------|-------------|
+| DX-94 | [mcp-full-guard-support-model](DX-94-mcp-full-guard-support-model.md) | Draft | Deferred full-scan model for MCP timeout-safe `invar_guard(changed=false)` |
 | DX-87 | [remove-multi-agent-init](DX-87-remove-multi-agent-init.md) | Draft | Remove combined/multi-select init; enforce single-agent init only |
 | DX-84 | [security-review-backlog](DX-84-security-review-backlog.md) | Active | Security review backlog for TypeScript & Python Guard |
 | DX-83 | [multi-agent-subagent-support](DX-83-multi-agent-subagent-support.md) | Draft | Subagent support and fallback strategy for multi-agent environments |
@@ -146,16 +147,16 @@ This directory contains design proposals for Invar development.
 
 | Category | Count |
 |----------|-------|
-| **Active** | 14 |
+| **Active** | 15 |
 | **Deferred** | 12 |
 | **Archived** | 77 |
-| **Total** | 103 |
+| **Total** | 104 |
 
 ### Active Breakdown
 
 | Status | Count |
 |--------|-------|
-| Draft | 10 |
+| Draft | 11 |
 | Active | 1 |
 | Partial | 2 |
 | Deferred | 12 |
