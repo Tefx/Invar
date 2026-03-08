@@ -9817,3 +9817,32 @@ phases:
     depends_on:
     - mcp-full-guard-field-verify.freeze
     agent: integration-verifier
+  - id: mcp-full-guard-field-verify.review-results
+    name: review-results
+    status: pending
+    description: 'As an INDEPENDENT REVIEWER (`gate-reviewer`), assess whether full
+      MCP guard is now genuinely supported on large repos.
+
+
+      YOU ARE THE QUALITY GATE. Your job is to BLOCK if the field evidence still relies
+      on CLI fallbacks, synthetic-only tests, or hidden timeout trade-offs.
+
+
+      Review criteria:
+
+      1. Real MCP full-guard call succeeds on a large repo according to the supported
+      contract
+
+      2. CLI comparison shows materially consistent result fidelity
+
+      3. Control paths remain intact
+
+      4. Any remaining limitations are explicit and acceptable'
+    verification: '- Review field evidence for real MCP vs CLI behavior
+
+      - Decide whether support is real or only partial
+
+      - Block if any claim depends on non-MCP fallback behavior'
+    depends_on:
+    - mcp-full-guard-field-verify.run-real-mcp-full-guard
+    agent: gate-reviewer
