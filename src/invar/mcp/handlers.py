@@ -72,8 +72,8 @@ async def _run_guard(args: dict[str, Any]) -> list[TextContent] | CombinationCon
     cmd = [sys.executable, "-m", "invar.shell.commands.guard", "guard"]
     cmd.append(path)
 
-    if args.get("changed", True):
-        cmd.append("--changed")
+    changed_mode = args.get("changed", True)
+    cmd.append("--changed" if changed_mode else "--all")
     if args.get("strict", False):
         cmd.append("--strict")
     # DX-37: Optional coverage collection
