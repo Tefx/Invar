@@ -9281,7 +9281,7 @@ phases:
     agent: gate-reviewer
   - id: da-while-field.fix-anima-residual-dead-assign
     name: fix-anima-residual-dead-assign
-    status: pending
+    status: claimed
     description: 'Fix residual `dead_assign` false positives still reproduced by the
       real `../anima` guard run for target variables `was_awaiting_approval`, `seen_count`,
       and `message_history` in `src/invar/core/dead_assign.py`, updating `tests/core/test_dead_assign.py`
@@ -9325,6 +9325,8 @@ phases:
     depends_on:
     - da-while-field.run-anima-guard
     agent: python-senior
+    claimed_by: python-senior
+    claimed_at: '2026-03-08T20:00:09.222544+00:00'
   - id: da-while-field.retest-anima-guard
     name: retest-anima-guard
     status: pending
