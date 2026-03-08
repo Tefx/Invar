@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.19.6] - 2026-03-08
+
+### Fixed
+- **MCP `invar_guard(changed=false)` now correctly maps to full-project mode**
+  - Fixes MCP handler flag mapping so `changed=false` passes `--all` instead of falling back to changed-only behavior
+  - Adds regression tests for MCP guard mode mapping (`default`, `changed=true`, `changed=false`)
+
 ## [1.19.5] - 2026-03-08
 
 ### Changed
@@ -528,7 +535,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[Unreleased]: https://github.com/yourusername/invar/compare/v1.19.5...HEAD
+[Unreleased]: https://github.com/yourusername/invar/compare/v1.19.6...HEAD
+[1.19.6]: https://github.com/yourusername/invar/compare/v1.19.5...v1.19.6
 [1.19.5]: https://github.com/yourusername/invar/compare/v1.19.4...v1.19.5
 [1.19.3]: https://github.com/yourusername/invar/compare/v1.19.2...v1.19.3
 [1.19.2]: https://github.com/yourusername/invar/compare/v1.19.1...v1.19.2
