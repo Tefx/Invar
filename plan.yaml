@@ -4469,3 +4469,624 @@ phases:
     depends_on:
     - fp-self-validate.fp-final-gate-import-path-package-retest-fix
     agent: integration-verifier
+- id: guard-fp-harness
+  name: Guard False-Positive Harness
+  status: pending
+  steps:
+  - id: guard-fp-harness.capture-cross-repo-fixtures
+    name: capture-cross-repo-fixtures
+    status: pending
+    description: 'Create focused regression fixtures and tests that reproduce the
+      suspected Invar issues observed in `../anima`, `../tasca`, and `../lattice`
+      without depending on those repos at runtime.
+
+
+      Scope:
+
+      - malformed `redundant_type_contract` suggestion output
+
+      - overlapping `shell_result` + `shell_pure_logic` classification on MCP-style
+      helpers
+
+      - likely `dead_export` false positives for runtime-registered/reflection-driven
+      handlers
+
+      - `duplicate_escape_reason` count/list aggregation mismatch
+
+      - async RuntimeWarning surfacing during guard/property-tests integration
+
+
+      Deliverables:
+
+      - focused regression tests or fixture files under `tests/`
+
+      - each regression named by detector/reporting surface and external symptom
+
+      - explicit mapping from sibling-repo evidence to local reproduction
+
+
+      Out of scope:
+
+      - fixing rule behavior in this step
+
+      - modifying sibling repos
+
+      - broad guard refactors beyond what is needed to reproduce the issues'
+    verification: '- Focused regression tests exist for each suspected tool issue
+      and reproduce the intended symptom locally
+
+      - Each fixture documents which sibling repo finding it models
+
+      - No product-code fixes are bundled into the harness step'
+    agent: python-senior
+  - id: guard-fp-harness.verify-harness
+    name: verify-harness
+    status: pending
+    description: 'As an INDEPENDENT TESTER (`integration-verifier`), validate that
+      the new harness reproduces the intended Invar issues cleanly and specifically.
+
+
+      YOUR GOAL IS TO FIND PROBLEMS, not to confirm it works.
+
+
+      Test for:
+
+      - happy path: each new fixture targets one specific detector/reporting issue
+
+      - edge cases: no fixture depends on the sibling repos being present
+
+      - error scenarios: malformed suggestion, rule overlap, runtime-registration
+      false positive, aggregation mismatch, and async warning are each independently
+      reproducible or explicitly disproven
+
+
+      Independence Level: L1'
+    verification: '- Run focused pytest targets for the new harness
+
+      - Prove each suspected issue is either reproduced locally or ruled out with
+      explicit evidence
+
+      - Report any fixture ambiguity or accidental overlap between reproductions'
+    depends_on:
+    - guard-fp-harness.capture-cross-repo-fixtures
+    agent: integration-verifier
+  - id: guard-fp-harness.gate
+    name: guard-fp-harness.gate
+    status: pending
+    description: 'Gate review: verify the harness phase captured the cross-repo Invar
+      issues precisely enough for safe remediation planning.'
+    verification: '- All harness steps completed successfully
+
+      - Evidence shows each suspected Invar issue has a focused local reproduction
+      or explicit disproof
+
+      - No unresolved ambiguity blocks the remediation phases'
+    depends_on:
+    - guard-fp-harness.capture-cross-repo-fixtures
+    - guard-fp-harness.verify-harness
+    agent: gate-reviewer
+- id: guard-fp-fix-core
+  name: Guard False-Positive Core Fixes
+  status: pending
+  steps:
+  - id: guard-fp-fix-core.fix-redundant-type-suggestion
+    name: fix-redundant-type-suggestion
+    status: pending
+    description: 'Fix malformed `redundant_type_contract` suggestions so generated
+      `@pre`/`@post` examples are always syntactically valid Python and still preserve
+      useful semantic guidance.
+
+
+      Scope:
+
+      - `src/invar/core/suggestions.py`
+
+      - any directly supporting helper used to format lambda signatures or return-type-aware
+      guidance
+
+      - focused regression tests from the harness
+
+
+      Out of scope:
+
+      - changing the underlying `redundant_type_contract` detector semantics beyond
+      what is required to stop invalid suggestion output'
+    verification: '- Focused regression proves no malformed suggestion strings such
+      as broken lambda parameters are emitted
+
+      - Existing valid suggestion patterns remain intact
+
+      - Guarded tests for the suggestion formatter pass'
+    agent: python-executor
+  - id: guard-fp-fix-core.verify-redundant-type-suggestion
+    name: verify-redundant-type-suggestion
+    status: pending
+    description: 'As an INDEPENDENT TESTER (`integration-verifier`), validate that
+      malformed `redundant_type_contract` suggestions are fixed without regressing
+      current good outputs.
+
+
+      YOUR GOAL IS TO FIND PROBLEMS, not to confirm it works.
+
+
+      Independence Level: L1'
+    verification: '- Run the focused suggestion regression tests
+
+      - Prove generated output is syntactically valid and still includes the intended
+      business-logic guidance
+
+      - Report any remaining malformed signatures or formatting regressions'
+    depends_on:
+    - guard-fp-fix-core.fix-redundant-type-suggestion
+    agent: integration-verifier
+  - id: guard-fp-fix-core.fix-framework-dead-param
+    name: fix-framework-dead-param
+    status: pending
+    description: 'Adjust `dead_param` behavior for framework-mandated but intentionally
+      unused parameters so the rule aligns with its documented `cannot_detect` limitations
+      and reduces false positives without hiding genuine unused parameters.
+
+
+      Scope:
+
+      - dead_param rule implementation and any related helper logic
+
+      - focused framework-handler regressions from the harness
+
+      - rule metadata or explanatory text only if implementation semantics change
+
+
+      Out of scope:
+
+      - broad dead_param redesign unrelated to framework-required signatures'
+    verification: '- Focused framework-signature regressions stop warning for intentional
+      framework parameters
+
+      - Genuine unused-parameter cases still produce `dead_param` findings
+
+      - Rule behavior matches documented limitations more closely'
+    depends_on:
+    - guard-fp-fix-core.verify-redundant-type-suggestion
+    agent: python-senior
+  - id: guard-fp-fix-core.gate
+    name: guard-fp-fix-core.gate
+    status: pending
+    description: 'Gate review: verify core false-positive fixes are complete and evidence-backed.'
+    verification: '- All core-fix steps and remediation retests completed successfully
+
+      - Evidence shows malformed `redundant_type_contract` suggestion output is fixed,
+      placeholder-free, and syntactically valid for representative parameterized return
+      types
+
+      - Evidence shows framework-aware dead_param behavior is validated
+
+      - No unresolved blocker remains before shell/reporting remediation'
+    depends_on:
+    - guard-fp-fix-core.fix-redundant-type-suggestion
+    - guard-fp-fix-core.verify-redundant-type-suggestion
+    - guard-fp-fix-core.fix-framework-dead-param
+    - guard-fp-fix-core.verify-redundant-type-suggestion-retest
+    agent: gate-reviewer
+  - id: guard-fp-fix-core.verify-redundant-type-suggestion-fix
+    name: verify-redundant-type-suggestion.fix
+    status: pending
+    description: 'Fix: resolve the remaining malformed `redundant_type_contract` suggestion
+      outputs identified by `guard-fp-fix-core.verify-redundant-type-suggestion` in
+      `src/invar/core/suggestions.py` and focused regression tests. Scope: replace
+      unresolved template placeholders (`RULE_NAME`, `<predicate>`, `<type>`) with
+      concrete rendered guidance and make the AST-based syntax validation handle parameterized
+      return types such as `list[str]` and `dict[str, int]` without producing invalid
+      templates. Non-goal: do not broaden unrelated suggestion rules or formatter
+      behavior outside this suggestion family.'
+    verification: '- Add or update focused regression coverage for malformed `redundant_type_contract`
+      outputs
+
+      - Prove generated suggestions no longer contain unresolved placeholders
+
+      - Prove syntax validation accepts representative parameterized return types
+      including `list[str]` and `dict[str, int]`'
+    depends_on:
+    - guard-fp-fix-core.verify-redundant-type-suggestion
+    agent: python-executor
+  - id: guard-fp-fix-core.verify-redundant-type-suggestion-retest
+    name: verify-redundant-type-suggestion.retest
+    status: pending
+    description: Re-test after remediation of malformed `redundant_type_contract`
+      suggestion rendering. As an INDEPENDENT TESTER (`integration-verifier`), rerun
+      the focused verification scope from `guard-fp-fix-core.verify-redundant-type-suggestion`
+      and confirm placeholder-free, syntactically valid outputs for representative
+      return-type cases. Finding additional malformed suggestions is a successful
+      outcome.
+    verification: '- Re-run the focused suggestion regression tests for `redundant_type_contract`
+
+      - Confirm generated outputs are syntactically valid for representative return
+      types including `list[str]` and `dict[str, int]`
+
+      - Confirm no unresolved placeholders remain in the emitted suggestion templates
+
+      - Record exact failing or passing examples in evidence'
+    depends_on:
+    - guard-fp-fix-core.verify-redundant-type-suggestion-fix
+    agent: integration-verifier
+- id: guard-fp-fix-shell
+  name: Guard False-Positive Shell Fixes
+  status: pending
+  steps:
+  - id: guard-fp-fix-shell.fix-shell-result-pure-logic-overlap
+    name: fix-shell-result-pure-logic-overlap
+    status: pending
+    description: 'Resolve overlapping `shell_result` and `shell_pure_logic` classifications
+      on MCP-style helpers and protocol-response builders so each function is judged
+      by the correct architectural rule without contradictory findings.
+
+
+      Scope:
+
+      - `src/invar/core/rules.py`
+
+      - `src/invar/core/shell_architecture.py`
+
+      - supporting entry-point/allow-marker helpers only if required
+
+      - focused regressions from the harness modeled after tasca MCP helpers
+
+
+      Out of scope:
+
+      - unrelated shell architecture redesign'
+    verification: '- Focused regressions prove the same function is not simultaneously
+      misclassified by conflicting shell rules unless explicitly intended
+
+      - Genuine shell_result violations still error
+
+      - Genuine shell_pure_logic warnings still surface where appropriate'
+    agent: python-senior
+  - id: guard-fp-fix-shell.fix-dynamic-dead-export
+    name: fix-dynamic-dead-export
+    status: pending
+    description: 'Fix likely `dead_export` false positives for runtime-registered
+      or reflection-driven handlers so the rule better respects its documented dynamic-dispatch
+      limitations while still surfacing truly unreferenced public shell functions.
+
+
+      Scope:
+
+      - dead_export rule implementation and reference-count/wiring helpers it depends
+      on
+
+      - runtime-registration fixtures modeled after tasca MCP handlers
+
+      - any rule metadata wording required to match final behavior
+
+
+      Out of scope:
+
+      - broad dead_export redesign beyond dynamic/runtime registration cases'
+    verification: '- Focused runtime-registration regressions stop warning for modeled
+      MCP/dynamic handlers
+
+      - Truly unreferenced public shell functions still produce dead_export findings
+
+      - Evidence shows the fix works on the real guard pipeline, not only unit helpers'
+    evidence_template: '## Integration Evidence
+
+
+      **Command or test exercising the full path**:
+
+      ```
+
+      <exact command or test name that invokes source through sink>
+
+      ```
+
+
+      **Actual output** (paste, not "tests pass"):
+
+      ```
+
+      <stdout/stderr or test runner output>
+
+      ```
+
+
+      **Path exercised**: <reference/discovery source> -> ... -> <guard report sink>'
+    depends_on:
+    - guard-fp-fix-shell.fix-shell-result-pure-logic-overlap
+    agent: python-senior
+  - id: guard-fp-fix-shell.verify-shell-classification
+    name: verify-shell-classification
+    status: pending
+    description: 'As an INDEPENDENT TESTER (`integration-verifier`), validate the
+      shell-classification and dynamic dead_export fixes from a fresh perspective.
+
+
+      YOUR GOAL IS TO FIND PROBLEMS, not to confirm it works.
+
+
+      Test for:
+
+      - happy path: modeled MCP/helper fixtures no longer produce contradictory shell
+      findings or dynamic-registration dead_export false positives
+
+      - edge cases: true shell_result, shell_pure_logic, and dead_export violations
+      still surface on control fixtures
+
+      - error scenarios: any residual overlap or missed dynamic call path is reported
+      with exact fixture evidence
+
+
+      Independence Level: L1'
+    verification: '- Run focused shell-classification and dead_export regression tests
+
+      - Include actual guard output snippets proving false positives are removed while
+      control violations remain
+
+      - Report any remaining ambiguous rule boundaries'
+    depends_on:
+    - guard-fp-fix-shell.fix-dynamic-dead-export
+    agent: integration-verifier
+  - id: guard-fp-fix-shell.freeze
+    name: freeze
+    status: pending
+    description: 'Freeze: lock the snapshot before downstream L2 cross-repo verification
+      of shell false-positive fixes.'
+    verification: '- Record `git rev-parse HEAD`
+
+      - Record `git status` clean
+
+      - Record the env/tooling declaration used for cross-repo verification
+
+      - State explicitly that no code changes are allowed until the next verification
+      step completes'
+    depends_on:
+    - guard-fp-fix-shell.verify-shell-classification
+    agent: integration-verifier
+  - id: guard-fp-fix-shell.gate
+    name: guard-fp-fix-shell.gate
+    status: pending
+    description: 'Gate review: verify shell false-positive fixes are complete and
+      ready for reporting/runtime and field verification.'
+    verification: '- All shell-fix steps completed successfully
+
+      - Evidence shows shell rule overlap and dynamic dead_export false positives
+      are addressed
+
+      - Freeze evidence exists for downstream L2 verification'
+    depends_on:
+    - guard-fp-fix-shell.fix-shell-result-pure-logic-overlap
+    - guard-fp-fix-shell.fix-dynamic-dead-export
+    - guard-fp-fix-shell.verify-shell-classification
+    - guard-fp-fix-shell.freeze
+    agent: gate-reviewer
+- id: guard-fp-fix-reporting
+  name: Guard Reporting & Runtime Fixes
+  status: pending
+  steps:
+  - id: guard-fp-fix-reporting.fix-duplicate-escape-aggregation
+    name: fix-duplicate-escape-aggregation
+    status: pending
+    description: 'Fix `duplicate_escape_reason` aggregation/reporting so the reported
+      file count and listed file sample are consistent, accurate, and clearly truncated
+      when not all files are shown.
+
+
+      Scope:
+
+      - `src/invar/core/review_trigger.py`
+
+      - any report formatting layer that renders the duplicate escape warning
+
+      - focused reporting regressions from the harness
+
+
+      Out of scope:
+
+      - changing the duplicate-threshold policy itself'
+    verification: '- Focused regression proves count and sample list stay internally
+      consistent
+
+      - Truncation text is accurate when more files exist than are displayed
+
+      - Existing duplicate-reason detection behavior remains intact'
+    agent: python-executor
+  - id: guard-fp-fix-reporting.investigate-async-runtimewarning
+    name: investigate-async-runtimewarning
+    status: pending
+    description: 'Investigate and, if confirmed tool-side, fix the async RuntimeWarning
+      surfaced during `guard --all` runs (`coroutine ... was never awaited`) so property-test/runtime
+      integration either handles async cleanup correctly or documents a proven non-Invar
+      source.
+
+
+      Scope:
+
+      - property-test and guard runtime integration surfaces
+
+      - focused regression/warning-capture harness modeled after the anima run
+
+      - warning classification and cleanup logic if the issue is in Invar
+
+
+      Out of scope:
+
+      - unrelated async refactors beyond what is needed to eliminate or explain this
+      warning'
+    verification: '- Reproduce or explicitly disprove the warning under a focused
+      harness
+
+      - If tool-side, show the warning no longer appears after the fix
+
+      - If not tool-side, provide concrete evidence proving the warning originates
+      outside Invar integration'
+    depends_on:
+    - guard-fp-fix-reporting.fix-duplicate-escape-aggregation
+    agent: python-senior
+  - id: guard-fp-fix-reporting.verify-reporting-runtime
+    name: verify-reporting-runtime
+    status: pending
+    description: 'As an INDEPENDENT TESTER (`integration-verifier`), validate reporting
+      fixes and async warning handling from a fresh perspective.
+
+
+      YOUR GOAL IS TO FIND PROBLEMS, not to confirm it works.
+
+
+      Test for:
+
+      - happy path: duplicate escape aggregation output is internally consistent and
+      async warning behavior matches the implementation claim
+
+      - edge cases: truncation messaging stays accurate and warning capture does not
+      hide genuine runtime issues
+
+      - error scenarios: residual mismatch or warning leakage is reported with exact
+      output evidence
+
+
+      Independence Level: L1'
+    verification: '- Run focused reporting/runtime regression tests
+
+      - Include actual warning or no-warning output for the async case
+
+      - Report any remaining mismatch between reported counts, file samples, and runtime
+      warning behavior'
+    depends_on:
+    - guard-fp-fix-reporting.investigate-async-runtimewarning
+    agent: integration-verifier
+  - id: guard-fp-fix-reporting.gate
+    name: guard-fp-fix-reporting.gate
+    status: pending
+    description: 'Gate review: verify reporting/runtime false-positive work is complete
+      and evidence-backed.'
+    verification: '- All reporting/runtime steps completed successfully
+
+      - Evidence shows duplicate-escape aggregation is accurate and async warning
+      behavior is resolved or conclusively classified
+
+      - No unresolved reporting/runtime blocker remains before field verification'
+    depends_on:
+    - guard-fp-fix-reporting.fix-duplicate-escape-aggregation
+    - guard-fp-fix-reporting.investigate-async-runtimewarning
+    - guard-fp-fix-reporting.verify-reporting-runtime
+    agent: gate-reviewer
+- id: guard-fp-field-verify
+  name: Cross-Repo Guard Field Verification
+  status: pending
+  steps:
+  - id: guard-fp-field-verify.freeze
+    name: freeze
+    status: pending
+    description: 'Freeze: lock the snapshot before L2 cross-repo guard verification
+      against `../anima`, `../tasca`, and `../lattice`.'
+    verification: '- Record `git rev-parse HEAD`
+
+      - Record `git status` clean
+
+      - Record the env/tooling declaration used for field verification
+
+      - State explicitly that no code changes are allowed until the subsequent verification
+      step completes'
+    agent: integration-verifier
+  - id: guard-fp-field-verify.run-cross-repo-guard
+    name: run-cross-repo-guard
+    status: pending
+    description: 'As an INDEPENDENT TESTER (`integration-verifier`), run `guard --all`
+      against `../anima`, `../tasca`, and `../lattice` from a frozen snapshot and
+      classify only likely Invar-tool issues.
+
+
+      YOUR GOAL IS TO FIND PROBLEMS, not to confirm it works.
+
+
+      Test for:
+
+      - happy path: previously observed Invar-side issues are gone or materially reduced
+      in real repo runs
+
+      - edge cases: remaining findings are clearly separated into tool issues versus
+      genuine project issues
+
+      - error scenarios: any residual malformed suggestions, rule overlaps, dynamic-handler
+      false positives, aggregation mismatches, or async warnings are captured with
+      exact evidence
+
+
+      Independence Level: L2'
+    verification: '- Main path: run the real full-guard commands against `../anima`,
+      `../tasca`, and `../lattice`
+
+      - Failure path: capture exact remaining Invar-side issues with output snippets
+      and repo/file context
+
+      - Proof: compare results against the earlier cross-repo findings and state which
+      tool issues are fixed, reduced, or unchanged'
+    evidence_template: '## Integration Evidence
+
+
+      **Command or test exercising the full path**:
+
+      ```
+
+      uvx invar-tools guard --all
+
+      ```
+
+
+      **Actual output** (paste, not "tests pass"):
+
+      ```
+
+      <repo-by-repo output excerpts>
+
+      ```
+
+
+      **Path exercised**: invar guard pipeline -> sibling repo scan -> report classification'
+    depends_on:
+    - guard-fp-field-verify.freeze
+    agent: integration-verifier
+  - id: guard-fp-field-verify.review-cross-repo-results
+    name: review-cross-repo-results
+    status: pending
+    description: 'As an INDEPENDENT REVIEWER (`gate-reviewer`), assess whether the
+      cross-repo guard results actually demonstrate Invar false-positive improvement
+      and whether any residual issues are correctly classified.
+
+
+      YOU ARE THE QUALITY GATE. Your job is to BLOCK if the field evidence is weak,
+      over-claims success, or still shows unresolved tool defects.
+
+
+      Review criteria:
+
+      1. Fixed issues are demonstrated by real repo runs
+
+      2. Residual findings are correctly separated into tool issues vs project issues
+
+      3. No claimed fix relies only on local synthetic evidence
+
+      4. Remaining limitations are explicitly documented'
+    verification: '- Review the field-verification evidence repo by repo
+
+      - Decide whether each prior suspected Invar issue is fixed, reduced, unchanged,
+      or reclassified
+
+      - Block if any claimed improvement lacks concrete cross-repo evidence'
+    depends_on:
+    - guard-fp-field-verify.run-cross-repo-guard
+    agent: gate-reviewer
+  - id: guard-fp-field-verify.gate
+    name: guard-fp-field-verify.gate
+    status: pending
+    description: 'Gate review: verify cross-repo field validation is complete and
+      the Invar false-positive remediation slice is ready for sign-off.'
+    verification: '- All field-verification steps completed successfully
+
+      - Evidence shows real cross-repo improvement or precise residual limitations
+
+      - No unresolved blocker remains in this remediation slice'
+    depends_on:
+    - guard-fp-field-verify.freeze
+    - guard-fp-field-verify.run-cross-repo-guard
+    - guard-fp-field-verify.review-cross-repo-results
+    agent: gate-reviewer

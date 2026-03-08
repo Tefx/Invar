@@ -17,6 +17,63 @@ from deal import post, pre
 from invar.core.models import FileInfo, PerceptionMap, SymbolKind, SymbolRefs
 
 TYPER_DYNAMIC_REGISTRATION_METHODS: frozenset[str] = frozenset({"command", "callback"})
+RUNTIME_REGISTRY_NAME_SUFFIXES: tuple[str, ...] = (
+    "_handlers",
+    "_handler",
+    "_routes",
+    "_route",
+    "_callbacks",
+    "_callback",
+    "_registry",
+    "_registries",
+    "_tools",
+    "_map",
+)
+
+
+@pre(lambda target: isinstance(target, ast.AST))
+@post(lambda result: isinstance(result, bool))
+def _is_runtime_registry_target(target: ast.AST) -> bool:
+    if isinstance(target, ast.Subscript):
+        return True
+    if isinstance(target, ast.Attribute):
+        return target.attr.lower().endswith(
+            (
+                "handlers",
+                "handler",
+                "routes",
+                "route",
+                "callbacks",
+                "callback",
+                "registry",
+                "registries",
+                "tools",
+                "map",
+            )
+        )
+    if isinstance(target, ast.Name):
+        target_name = target.id
+        return target_name.isupper() or target_name.lower().endswith(RUNTIME_REGISTRY_NAME_SUFFIXES)
+    return False
+
+
+@pre(lambda value, known_symbols: isinstance(value, ast.AST) and len(known_symbols) > 0)
+@post(lambda result: all(isinstance(name, str) for name in result))
+def _collect_runtime_registry_value_refs(value: ast.AST, known_symbols: set[str]) -> set[str]:
+    refs: set[str] = set()
+
+    if isinstance(value, ast.Name) and value.id in known_symbols:
+        refs.add(value.id)
+    elif isinstance(value, ast.Dict):
+        for dict_value in value.values:
+            if isinstance(dict_value, ast.Name) and dict_value.id in known_symbols:
+                refs.add(dict_value.id)
+    elif isinstance(value, (ast.List, ast.Tuple, ast.Set)):
+        for elt in value.elts:
+            if isinstance(elt, ast.Name) and elt.id in known_symbols:
+                refs.add(elt.id)
+
+    return refs
 
 
 @pre(lambda source, known_symbols: len(source) > 0 and len(known_symbols) > 0)  # Non-empty inputs
@@ -45,6 +102,12 @@ def find_references_in_source(source: str, known_symbols: set[str]) -> list[tupl
         >>> sorted(refs)
         [('suppress_invalid_state_error', 1)]
         >>> refs = find_references_in_source(
+        ...     "HANDLERS = {}\\n\\ndef on_ping(msg):\\n    return msg\\n\\nHANDLERS['ping'] = on_ping",
+        ...     {"on_ping"},
+        ... )
+        >>> sorted(refs)
+        [('on_ping', 6)]
+        >>> refs = find_references_in_source(
         ...     "def build():\\n    from mod import foo\\n    return 1",
         ...     {"foo"},
         ... )
@@ -61,6 +124,22 @@ def find_references_in_source(source: str, known_symbols: set[str]) -> list[tupl
     seen: set[tuple[str, int]] = set()
 
     for node in ast.walk(tree):
+        if isinstance(node, ast.Assign):
+            if any(_is_runtime_registry_target(target) for target in node.targets):
+                for symbol_name in _collect_runtime_registry_value_refs(node.value, known_symbols):
+                    line = getattr(node.value, "lineno", getattr(node, "lineno", 0))
+                    seen.add((symbol_name, line))
+
+        if isinstance(node, ast.AnnAssign):
+            if (
+                node.value is not None
+                and _is_runtime_registry_target(node.target)
+                and isinstance(node.value, ast.AST)
+            ):
+                for symbol_name in _collect_runtime_registry_value_refs(node.value, known_symbols):
+                    line = getattr(node.value, "lineno", getattr(node, "lineno", 0))
+                    seen.add((symbol_name, line))
+
         # Count explicit imports: from mod import foo
         if isinstance(node, ast.ImportFrom):
             line = getattr(node, "lineno", 0)

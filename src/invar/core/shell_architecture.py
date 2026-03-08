@@ -13,9 +13,10 @@ from __future__ import annotations
 
 from deal import post, pre
 
-from invar.core.entry_points import get_symbol_lines, is_entry_point
+from invar.core.entry_points import get_symbol_lines, has_allow_marker, is_entry_point
 from invar.core.models import FileInfo, RuleConfig, Severity, SymbolKind, Violation
 from invar.core.shell_analysis import (
+    _should_enforce_shell_result,
     count_branches,
     get_symbol_source,
     has_complexity_marker,
@@ -56,6 +57,14 @@ def check_shell_pure_logic(file_info: FileInfo, config: RuleConfig) -> list[Viol
 
         # Skip entry points (they're handled by DX-23)
         if is_entry_point(symbol, file_info.source):
+            continue
+
+        # Avoid contradictory overlap: shell_result is the primary signal for
+        # non-Result value-returning helpers (e.g., MCP/protocol response builders).
+        # If shell_result is explicitly allowed, keep shell_pure_logic visibility.
+        if _should_enforce_shell_result(symbol.signature) and not has_allow_marker(
+            symbol, file_info.source, "shell_result"
+        ):
             continue
 
         # Skip if marked with @shell_orchestration (coordinates other shell modules)

@@ -35,6 +35,7 @@ from invar.core.must_use import check_must_use
 from invar.core.postcondition_scope import check_postcondition_scope
 from invar.core.purity import check_impure_calls, check_internal_imports
 from invar.core.review_trigger import check_contract_quality_ratio, check_review_suggested
+from invar.core.shell_analysis import _should_enforce_shell_result
 from invar.core.shell_architecture import check_shell_pure_logic, check_shell_too_complex
 from invar.core.suggestions import format_suggestion_for_violation
 from invar.core.utils import get_excluded_rules
@@ -412,32 +413,23 @@ def check_shell_result(file_info: FileInfo, config: RuleConfig) -> list[Violatio
     for symbol in file_info.symbols:
         if symbol.kind != SymbolKind.FUNCTION:
             continue
-        # Skip functions with no return type or returning None
-        if "-> None" in symbol.signature or "->" not in symbol.signature:
-            continue
-        # Skip generators (Iterator/Generator/AsyncIterator/AsyncGenerator) - acceptable per protocol
-        # MINOR-11: Added async variants
-        if any(
-            pattern in symbol.signature
-            for pattern in ("Iterator[", "Generator[", "AsyncIterator[", "AsyncGenerator[")
-        ):
+        if not _should_enforce_shell_result(symbol.signature):
             continue
         # DX-23: Skip entry points; DX-22: Skip if @invar:allow marker
         if is_entry_point(symbol, file_info.source) or has_allow_marker(
             symbol, file_info.source, "shell_result"
         ):
             continue
-        if "Result[" not in symbol.signature:
-            violations.append(
-                Violation(
-                    rule="shell_result",
-                    severity=Severity.ERROR,  # DX-22: Architecture rule
-                    file=file_info.path,
-                    line=symbol.line,
-                    message=f"Shell function '{symbol.name}' should return Result[T, E]",
-                    suggestion="Use Result[T, E], or add: # @invar:allow shell_result: <reason>",
-                )
+        violations.append(
+            Violation(
+                rule="shell_result",
+                severity=Severity.ERROR,  # DX-22: Architecture rule
+                file=file_info.path,
+                line=symbol.line,
+                message=f"Shell function '{symbol.name}' should return Result[T, E]",
+                suggestion="Use Result[T, E], or add: # @invar:allow shell_result: <reason>",
             )
+        )
     return violations
 
 

@@ -21,8 +21,8 @@ from invar.core.models import FileInfo, RuleConfig, Severity, SymbolKind, Violat
 
 # Patterns safe to match as substrings (authentication, cryptography are valid matches)
 SECURITY_SUBSTRING_PATTERNS: tuple[str, ...] = (
-    "auth",       # authentication, authorize, authority
-    "crypt",      # cryptography, encrypt, decrypt
+    "auth",  # authentication, authorize, authority
+    "crypt",  # cryptography, encrypt, decrypt
     "secret",
     "password",
     "credential",
@@ -31,10 +31,10 @@ SECURITY_SUBSTRING_PATTERNS: tuple[str, ...] = (
 
 # Patterns that must be exact word matches (to avoid keyboard, tokenizer, accessory)
 SECURITY_WORD_PATTERNS: tuple[str, ...] = (
-    "token",      # not tokenizer
-    "key",        # not keyboard, monkey
-    "session",    # not obsession
-    "access",     # not accessory
+    "token",  # not tokenizer
+    "key",  # not keyboard, monkey
+    "session",  # not obsession
+    "access",  # not accessory
 )
 
 
@@ -73,7 +73,8 @@ def calculate_contract_ratio(file_info: FileInfo) -> tuple[float, int, int]:
     # MINOR-9: This excludes dunder methods (__init__, __str__, etc.) which is intentional.
     # Dunder methods are boilerplate; public API methods are the focus of contract coverage.
     functions = [
-        s for s in file_info.symbols
+        s
+        for s in file_info.symbols
         if s.kind in (SymbolKind.FUNCTION, SymbolKind.METHOD) and not s.name.startswith("_")
     ]
 
@@ -349,21 +350,21 @@ def check_duplicate_escape_reasons(
 
     # Check for duplicates (threshold: 3+ files)
     for reason, files in reason_files.items():
-        if len(files) >= 3:
+        # Deduplicate files - multiple escape entries per file should count once
+        unique_files = sorted(set(files))
+        if len(unique_files) >= 3:
             # Get original reason text from first occurrence
-            original_reason = next(
-                r for f, _, r in escapes if r.strip().lower() == reason
-            )
+            original_reason = next(r for f, _, r in escapes if r.strip().lower() == reason)
             violations.append(
                 Violation(
                     rule="duplicate_escape_reason",
                     severity=Severity.WARNING,
                     file="<project>",
                     line=None,
-                    message=f'{len(files)} files share escape reason: "{original_reason}"',
+                    message=f'{len(unique_files)} files share escape reason: "{original_reason}"',
                     suggestion="Consider fixing the detection rule instead of adding escapes. "
-                    f"Files: {', '.join(sorted(set(files))[:5])}"
-                    + (f" (+{len(files) - 5} more)" if len(files) > 5 else ""),
+                    f"Files: {', '.join(unique_files[:5])}"
+                    + (f" (+{len(unique_files) - 5} more)" if len(unique_files) > 5 else ""),
                 )
             )
 

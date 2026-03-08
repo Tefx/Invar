@@ -34,14 +34,14 @@ CONSTRAINT_PATTERNS: dict[str, list[str]] = {
 
 # Return-type-aware @post patterns for redundant_type_contract suggestions
 RETURN_TYPE_POST_PATTERNS: dict[str, str] = {
-    "list[Violation]": '@post(lambda result: all(v.rule == "RULE_NAME" for v in result))',
-    "list": "@post(lambda result: all(<predicate> for item in result))",
-    "dict": "@post(lambda result: all(isinstance(k, <type>) for k in result))",
-    "set": "@post(lambda result: all(<predicate> for item in result))",
+    "list[Violation]": '@post(lambda result: all(v.rule == "redundant_type_contract" for v in result))',
+    "list": "@post(lambda result: len(result) >= 0)",
+    "dict": "@post(lambda result: isinstance(result, dict))",
+    "set": "@post(lambda result: len(result) >= 0)",
     "int": "@post(lambda result: result >= 0)",
     "float": "@post(lambda result: result >= 0.0)",
     "str": "@post(lambda result: len(result) > 0)",
-    "bool": "@post(lambda result: <semantic_predicate>)",
+    "bool": "@post(lambda result: result is not None)",
     "None": "",  # No meaningful @post for None return
 }
 
@@ -75,23 +75,27 @@ def generate_post_suggestion(return_type: str | None) -> str:
 
     Examples:
         >>> generate_post_suggestion("list[Violation]")
-        '@post(lambda result: all(v.rule == "RULE_NAME" for v in result))'
+        '@post(lambda result: all(v.rule == "redundant_type_contract" for v in result))'
+        >>> generate_post_suggestion("list[str]")
+        '@post(lambda result: len(result) >= 0)'
+        >>> generate_post_suggestion("dict[str, int]")
+        '@post(lambda result: isinstance(result, dict))'
         >>> generate_post_suggestion("int")
         '@post(lambda result: result >= 0)'
         >>> generate_post_suggestion("bool")
-        '@post(lambda result: <semantic_predicate>)'
+        '@post(lambda result: result is not None)'
         >>> generate_post_suggestion("CustomType")
-        '@post(lambda result: <condition>)'
+        '@post(lambda result: result is not None)'
         >>> generate_post_suggestion(None)
-        '@post(lambda result: <condition>)'
+        '@post(lambda result: result is not None)'
     """
     if not return_type:
-        return "@post(lambda result: <condition>)"
+        return "@post(lambda result: result is not None)"
 
     # Exact match
     if return_type in RETURN_TYPE_POST_PATTERNS:
         pattern = RETURN_TYPE_POST_PATTERNS[return_type]
-        return pattern if pattern else "@post(lambda result: <condition>)"
+        return pattern if pattern else "@post(lambda result: result is not None)"
 
     # Generic match (list[X], dict[K,V], etc.)
     base_match = re.match(r"^(list|dict|set)\[", return_type)
@@ -100,7 +104,7 @@ def generate_post_suggestion(return_type: str | None) -> str:
         if base in RETURN_TYPE_POST_PATTERNS:
             return RETURN_TYPE_POST_PATTERNS[base]
 
-    return "@post(lambda result: <condition>)"
+    return "@post(lambda result: result is not None)"
 
 
 @pre(lambda signature: signature.startswith("(") or signature == "")
@@ -437,7 +441,7 @@ def format_suggestion_for_violation(symbol: Symbol, violation_type: str) -> str:
         >>> sym3 = Symbol(name="check", kind=SymbolKind.FUNCTION, line=1, end_line=5,
         ...     signature="(x: int) -> list[Violation]")
         >>> msg3 = format_suggestion_for_violation(sym3, "redundant_type_contract")
-        >>> 'all(v.rule ==' in msg3
+        >>> 'v.rule == "redundant_type_contract"' in msg3
         True
     """
     if symbol.kind not in (SymbolKind.FUNCTION, SymbolKind.METHOD):

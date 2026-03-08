@@ -113,6 +113,37 @@ def has_io_operations(source: str) -> bool:
     return any(indicator in source for indicator in IO_INDICATORS)
 
 
+@post(lambda result: isinstance(result, bool))
+def _should_enforce_shell_result(signature: str) -> bool:
+    """Return True when a shell function signature requires Result[T, E].
+
+    This mirrors shell_result rule intent:
+    - Applies only to value-returning functions with explicit return annotations
+    - Exempts None returns and generator/iterator returns
+    - Enforces when annotation does not include Result[T, E]
+
+    Examples:
+        >>> _should_enforce_shell_result("(x: int) -> list[str]")
+        True
+        >>> _should_enforce_shell_result("(x: int) -> Result[str, str]")
+        False
+        >>> _should_enforce_shell_result("(x: int) -> None")
+        False
+        >>> _should_enforce_shell_result("(x: int) -> Iterator[str]")
+        False
+        >>> _should_enforce_shell_result("(x: int)")
+        False
+    """
+    if "->" not in signature or "-> None" in signature:
+        return False
+    if any(
+        pattern in signature
+        for pattern in ("Iterator[", "Generator[", "AsyncIterator[", "AsyncGenerator[")
+    ):
+        return False
+    return "Result[" not in signature
+
+
 @pre(lambda symbol, source: symbol is not None and isinstance(source, str))  # Symbol must exist
 def has_orchestration_marker(symbol: Symbol, source: str) -> bool:
     """

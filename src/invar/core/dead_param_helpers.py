@@ -362,8 +362,10 @@ def has_framework_signature_exemption(
     parent_map: dict[ast.AST, ast.AST],
 ) -> bool:
     annotation = annotation_name(param_node.annotation)
-    if param_name == "request" and annotation in {"Request", "HTTPConnection", "WebSocket"}:
-        return node.name.startswith(("handle_", "_handle_"))
+    if param_name == "request" and node.name.startswith(("handle_", "_handle_")):
+        if annotation in {"Request", "HTTPConnection", "WebSocket"}:
+            return True
+        return annotation is None and node.name.endswith("_request")
     if param_name in {"ctx", "context"} and node.name in callback_names:
         return annotation in {"RunContext", "Context", "Any", None}
     if param_name == "raw" and any(

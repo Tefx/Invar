@@ -211,12 +211,22 @@ except ImportError:
 def test_request_without_framework_annotation_is_not_exempt() -> None:
     source = """
 class AgentServer:
-    async def _handle_stream_request(self, request):
+    async def process_stream(self, request):
         return {"ok": True}
 """
     violations = _check_source(source)
     assert len(violations) == 1
     assert "request" in violations[0].message
+
+
+def test_framework_handler_request_without_annotation_is_exempt() -> None:
+    source = """
+class AgentServer:
+    async def _handle_stream_request(self, request):
+        return {"ok": True}
+"""
+    violations = _check_source(source)
+    assert violations == []
 
 
 # Regression tests for interface/protocol-shaped parameters (DX-92)

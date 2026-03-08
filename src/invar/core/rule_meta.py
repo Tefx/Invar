@@ -192,10 +192,10 @@ RULE_META: dict[str, RuleMeta] = {
         name="dead_export",
         severity=Severity.WARNING,
         category=RuleCategory.SHELL,
-        detects="Public shell function with zero runtime callers across src/ (excluding tests/)",
+        detects="Public shell function with zero detected callers across src/ (excluding tests/)",
         cannot_detect=(
-            "Dynamic dispatch",
-            "Reflection-based callers",
+            "Arbitrary runtime dispatch",
+            "Reflection-only callers with no static registration site",
             "External consumers outside src/",
         ),
         hint="Add a caller in src/ or mark with: # @invar:allow dead_export: <reason>",

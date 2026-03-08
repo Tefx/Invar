@@ -51,6 +51,8 @@ ENTRY_POINT_DECORATORS: frozenset[str] = frozenset(
         "click.command",
         "click.group",
         "cli.command",
+        # MCP tools (runtime-registered handlers)
+        "mcp.tool",
         # Testing - pytest
         "pytest.fixture",
         "fixture",
@@ -323,9 +325,9 @@ def get_symbol_lines(symbol: Symbol) -> int:
 
 
 @pre(
-    lambda symbol, source, rule: symbol is not None
-    and isinstance(source, str)
-    and isinstance(rule, str)
+    lambda symbol, source, rule: (
+        symbol is not None and isinstance(source, str) and isinstance(rule, str)
+    )
 )
 @post(lambda result: isinstance(result, bool))
 def has_allow_marker(symbol: Symbol, source: str, rule: str) -> bool:

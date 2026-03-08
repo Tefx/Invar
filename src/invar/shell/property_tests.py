@@ -10,12 +10,17 @@ from __future__ import annotations
 import sys
 import tomllib
 from contextlib import contextmanager, suppress
+from inspect import iscoroutinefunction
 from pathlib import Path
 
 from returns.result import Failure, Result, Success
 from rich.console import Console
 
-from invar.core.property_gen import PropertyTestReport, find_contracted_functions
+from invar.core.property_gen import (
+    PropertyTestReport,
+    PropertyTestResult,
+    find_contracted_functions,
+)
 from invar.core.property_runner import run_property_test
 from invar.shell.subprocess_env import detect_project_venv, find_site_packages
 
@@ -214,6 +219,21 @@ def run_property_tests_on_file(
         # Skip functions marked with @skip_property_test
         if hasattr(func, "__invar_skip_property_test__"):
             report.functions_skipped += 1
+            continue
+
+        # Async functions are currently unsupported by deal.cases() in sync mode.
+        # Running them emits RuntimeWarning: coroutine was never awaited.
+        if iscoroutinefunction(func):
+            report.functions_skipped += 1
+            report.results.append(
+                PropertyTestResult(
+                    function_name=func_name,
+                    passed=True,
+                    examples_run=0,
+                    file_path=file_path_str,
+                    hint="Skipped: async functions are not supported in property phase",
+                )
+            )
             continue
 
         # Run property test
