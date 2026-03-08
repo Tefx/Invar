@@ -10031,11 +10031,11 @@ phases:
     agent: gate-reviewer
 - id: mcp-full-guard-field-verify
   name: MCP Full Guard Field Validation
-  status: pending
+  status: in_progress
   steps:
   - id: mcp-full-guard-field-verify.freeze
     name: freeze
-    status: pending
+    status: claimed
     description: 'Freeze: lock the snapshot before L2 validation of full MCP guard
       on external repos.'
     verification: '- Record `git rev-parse HEAD`
@@ -10047,6 +10047,8 @@ phases:
       - State explicitly that no code changes are allowed until the subsequent verification
       step completes'
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-08T18:09:27.916089+00:00'
   - id: mcp-full-guard-field-verify.run-real-mcp-full-guard
     name: run-real-mcp-full-guard
     status: pending
@@ -10247,11 +10249,11 @@ phases:
     agent: gate-reviewer
 - id: da-while-fix
   name: dead_assign While Fix
-  status: in_progress
+  status: pending
   steps:
   - id: da-while-fix.patch-walk-while-next-iteration
     name: patch-walk-while-next-iteration
-    status: claimed
+    status: pending
     description: 'Implement the minimal behavior-preserving fix in `src/invar/core/dead_assign.py::_walk_while()`
       by simulating next-iteration while-body reads in read-only mode, mirroring `_walk_loop()`
       where appropriate.
@@ -10277,8 +10279,6 @@ phases:
 
       - The patch remains localized to while-loop next-iteration semantics'
     agent: python-senior
-    claimed_by: python-senior
-    claimed_at: '2026-03-08T18:09:27.777679+00:00'
   - id: da-while-fix.verify-local-regression
     name: verify-local-regression
     status: pending
