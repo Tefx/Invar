@@ -9618,3 +9618,46 @@ phases:
 - id: mcp-full-guard-implement
   name: MCP Full Guard Implementation
   status: pending
+  steps:
+  - id: mcp-full-guard-implement.implement-execution-model
+    name: implement-execution-model
+    status: pending
+    description: 'Implement the supported full-MCP-guard execution model.
+
+
+      Scope likely includes:
+
+      - `src/invar/mcp/handlers.py`
+
+      - `src/invar/mcp/server.py`
+
+      - any supporting shell/MCP module needed for long-running result delivery
+
+      - focused tests for request lifecycle and full-result delivery
+
+
+      Requirements:
+
+      - full-project `invar_guard(changed=false)` must succeed on large repos without
+      surfacing request timeout as the primary failure mode
+
+      - changed-only and targeted-path behavior must remain intact
+
+      - client-visible result contract must match the design phase
+
+      - if async/job or multi-step behavior is introduced, include cancellation/error/expiry
+      semantics in tests
+
+
+      Out of scope:
+
+      - unrelated guard-rule changes
+
+      - non-MCP CLI redesign'
+    verification: '- Focused MCP tests prove the chosen execution model works for
+      full-project scans
+
+      - Control tests prove changed-only and targeted-path flows still work
+
+      - `invar_guard(changed=true)` on touched files passes for implementation changes'
+    agent: python-senior
