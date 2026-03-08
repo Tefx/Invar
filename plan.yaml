@@ -8527,7 +8527,7 @@ phases:
   steps:
   - id: mcp-full-guard-implement.implement-execution-model
     name: implement-execution-model
-    status: claimed
+    status: done
     description: 'Implement the supported full-MCP-guard execution model.
 
 
@@ -8569,6 +8569,36 @@ phases:
     agent: python-senior
     claimed_by: python-senior
     claimed_at: '2026-03-08T19:23:52.973322+00:00'
+    done_at: '2026-03-08T19:24:43.641079+00:00'
+    evidence: 'Commit hash(es): 8653d02 (worker), add9776 (squash merge on main)
+
+      Files changed:
+
+      - src/invar/mcp/guard_runs.py
+
+      - src/invar/mcp/handlers.py
+
+      - src/invar/mcp/server.py
+
+      - tests/integration/test_mcp_guard_deferred.py
+
+      Verification:
+
+      - Run: .venv/bin/python -m pytest tests/integration/test_mcp_guard_deferred.py
+      -q -> 7 passed in 0.48s
+
+      - Run: invar_guard(changed=true) in worktree -> passed static checks for modified
+      MCP files (0 errors, warnings only)
+
+      Spec link:
+
+      - docs/proposals/DX-94-mcp-full-guard-support-model.md
+
+      Gaps/Notes:
+
+      - Worker initially hit commit blockage from broken hook environment; changes
+      were committed in isolated worktree and merged after user-authorized hook bypass
+      path.'
   - id: mcp-full-guard-implement.add-regressions
     name: add-regressions
     status: pending
