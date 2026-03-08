@@ -8558,6 +8558,58 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-08T19:48:32.400254+00:00'
+  - id: mcp-full-guard-design.verify-design-retest-fix
+    name: verify-design-retest.fix
+    status: pending
+    description: 'Fix the remaining design inconsistency reported by `mcp-full-guard-design.verify-design-retest`
+      in `docs/proposals/DX-94-mcp-full-guard-support-model.md`.
+
+
+      Issue to resolve:
+
+      - cancellation contract currently maps unknown or expired `run_id` to `run_not_found`
+
+      - failure taxonomy requires a distinct `run_expired` outcome for expired runs
+
+
+      Scope:
+
+      - update the proposal so unknown `run_id` and expired `run_id` have explicitly
+      distinct outcomes
+
+      - align cancellation semantics, failure taxonomy, and any response examples
+      or decision tables
+
+      - keep the existing execution model unchanged unless the clarified taxonomy
+      requires wording cleanup
+
+
+      Remediation metadata:
+
+      - prior_loop: [`mcp-full-guard-design.verify-design-fix`, `mcp-full-guard-design.verify-design-retest`]
+
+      - remaining_blocker: expired runs are not distinguished from unknown runs in
+      the cancellation contract
+
+      - why_new_loop: the prior design fix closed broader cancellation coverage gaps
+      but left one taxonomy inconsistency unresolved
+
+
+      Priority: MEDIUM
+
+
+      Deliverable: an implementation-ready proposal update that distinguishes `run_expired`
+      from `run_not_found` consistently across the design.'
+    verification: '- Proposal explicitly distinguishes unknown `run_id` from expired
+      `run_id` in the cancellation contract
+
+      - Failure taxonomy and any examples/tables use `run_expired` consistently for
+      expired runs
+
+      - No new ambiguity is introduced in the MCP client compatibility language'
+    depends_on:
+    - mcp-full-guard-design.verify-design-retest
+    agent: python-senior
 - id: mcp-full-guard-implement
   name: MCP Full Guard Implementation
   status: in_progress
