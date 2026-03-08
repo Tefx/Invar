@@ -8523,11 +8523,11 @@ phases:
     agent: integration-verifier
 - id: mcp-full-guard-implement
   name: MCP Full Guard Implementation
-  status: pending
+  status: in_progress
   steps:
   - id: mcp-full-guard-implement.implement-execution-model
     name: implement-execution-model
-    status: pending
+    status: claimed
     description: 'Implement the supported full-MCP-guard execution model.
 
 
@@ -8567,6 +8567,8 @@ phases:
 
       - `invar_guard(changed=true)` on touched files passes for implementation changes'
     agent: python-senior
+    claimed_by: python-senior
+    claimed_at: '2026-03-08T19:23:52.973322+00:00'
   - id: mcp-full-guard-implement.add-regressions
     name: add-regressions
     status: pending
