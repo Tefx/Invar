@@ -9601,3 +9601,17 @@ phases:
     depends_on:
     - mcp-full-guard-design.specify-support-model
     agent: integration-verifier
+  - id: mcp-full-guard-design.gate
+    name: mcp-full-guard-design.gate
+    status: pending
+    description: 'Gate review: verify the MCP full-guard support model is precise
+      enough to implement safely.'
+    verification: '- All design steps completed successfully
+
+      - A concrete supported model exists for full MCP guard on large repos
+
+      - No unresolved ambiguity remains before implementation'
+    depends_on:
+    - mcp-full-guard-design.specify-support-model
+    - mcp-full-guard-design.verify-design
+    agent: gate-reviewer
