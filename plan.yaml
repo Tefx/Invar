@@ -3808,12 +3808,12 @@ phases:
     agent: gate-reviewer
 - id: dx-91-docs
   name: DX-91 Documentation Update
-  status: done
+  status: pending
   gate: dx-91-init-rewrite.dx-91-init-rewrite-gate
   steps:
   - id: dx-91-docs.archive-old-proposals
     name: archive-old-proposals
-    status: skipped
+    status: pending
     description: 'Move old/obsolete proposals to docs/proposals/archive/.
 
 
@@ -3894,10 +3894,9 @@ phases:
     - docs/proposals/
     - docs/proposals/DX-91-simplification.md
     agent: python-executor
-    skipped_reason: deprioritized
   - id: dx-91-docs.rewrite-readme
     name: rewrite-readme
-    status: skipped
+    status: pending
     description: 'Rewrite README.md to reflect Invar v2.0.
 
 
@@ -3945,10 +3944,9 @@ phases:
     refs:
     - README.md
     agent: python-executor
-    skipped_reason: deprioritized
   - id: dx-91-docs.update-context-md
     name: update-context-md
-    status: skipped
+    status: pending
     description: 'Update .invar/context.md to reflect v2.0 state.
 
 
@@ -3981,10 +3979,9 @@ phases:
     refs:
     - .invar/context.md
     agent: python-executor
-    skipped_reason: deprioritized
   - id: dx-91-docs.verify-docs-consistency
     name: verify-docs-consistency
-    status: skipped
+    status: pending
     description: "As an INDEPENDENT TESTER (integration-verifier), validate that all\
       \ documentation is consistent with v2.0.\n\nYOUR GOAL IS TO FIND PROBLEMS, not\
       \ to confirm it works.\n\nTest for:\n- Stale references: grep -ri 'typescript\\\
@@ -4011,10 +4008,9 @@ phases:
     - dx-91-docs.rewrite-readme
     - dx-91-docs.update-context-md
     agent: integration-verifier
-    skipped_reason: deprioritized
   - id: dx-91-docs.dx-91-docs-gate
     name: dx-91-docs.gate
-    status: skipped
+    status: pending
     description: 'As an INDEPENDENT REVIEWER (gate-reviewer), assess whether the dx-91-docs
       phase meets the quality bar for proceeding to Phase 5 (final gate).
 
@@ -4045,15 +4041,14 @@ phases:
     depends_on:
     - dx-91-docs.verify-docs-consistency
     agent: gate-reviewer
-    skipped_reason: deprioritized
 - id: dx-91-gate
   name: DX-91 Final Gate
-  status: pending
+  status: done
   gate: dx-91-docs.dx-91-docs-gate
   steps:
   - id: dx-91-gate.final-validation
     name: final-validation
-    status: pending
+    status: skipped
     description: "As an INDEPENDENT TESTER (integration-verifier), perform comprehensive\
       \ final validation of Invar v2.0.\n\nYOUR GOAL IS TO FIND ANY REMAINING PROBLEMS\
       \ before v2.0.0 release.\n\nFREEZE REQUIREMENT (L2): Before running any tests,\
@@ -4101,9 +4096,10 @@ phases:
     - INVAR.md
     - docs/proposals/DX-91-simplification.md
     agent: integration-verifier
+    skipped_reason: deprioritized
   - id: dx-91-gate.dx-91-gate-gate
     name: dx-91-gate.gate
-    status: pending
+    status: skipped
     description: 'As an INDEPENDENT REVIEWER (gate-reviewer), make the final release
       decision for Invar v2.0.0.
 
@@ -4140,6 +4136,7 @@ phases:
     depends_on:
     - dx-91-gate.final-validation
     agent: gate-reviewer
+    skipped_reason: deprioritized
 - id: fp-dead-assign
   name: 'DX-92: Loop-Carried State FP Fix'
   status: done
