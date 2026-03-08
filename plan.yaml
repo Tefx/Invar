@@ -2841,7 +2841,7 @@ phases:
     agent: python-executor
   - id: dx-91-delete.delete-workflow-modules
     name: delete-workflow-modules
-    status: pending
+    status: claimed
     description: 'Delete USBV workflow, review trigger, and related core modules.
 
 
@@ -2873,6 +2873,8 @@ phases:
     - src/invar/core/template_helpers.py
     - src/invar/core/template_parser.py
     agent: python-executor
+    claimed_by: python-executor
+    claimed_at: '2026-03-08T17:56:52.563146+00:00'
   - id: dx-91-delete.delete-template-directories
     name: delete-template-directories
     status: done
