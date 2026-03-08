@@ -8423,11 +8423,11 @@ phases:
     agent: gate-reviewer
 - id: mcp-full-guard-implement
   name: MCP Full Guard Implementation
-  status: in_progress
+  status: pending
   steps:
   - id: mcp-full-guard-implement.implement-execution-model
     name: implement-execution-model
-    status: claimed
+    status: pending
     description: 'Implement the supported full-MCP-guard execution model.
 
 
@@ -8467,8 +8467,6 @@ phases:
 
       - `invar_guard(changed=true)` on touched files passes for implementation changes'
     agent: python-senior
-    claimed_by: python-senior
-    claimed_at: '2026-03-08T18:32:49.607231+00:00'
   - id: mcp-full-guard-implement.add-regressions
     name: add-regressions
     status: pending
@@ -8674,11 +8672,11 @@ phases:
     agent: gate-reviewer
 - id: da-while-repro
   name: dead_assign While Repros
-  status: pending
+  status: in_progress
   steps:
   - id: da-while-repro.add-focused-repros
     name: add-focused-repros
-    status: pending
+    status: claimed
     description: 'Add focused regression cases for confirmed while-loop dead_assign
       false positives in `tests/core/test_dead_assign.py`.
 
@@ -8708,6 +8706,8 @@ phases:
 
       - Negative control is preserved alongside the false-positive cases'
     agent: python-executor
+    claimed_by: python-executor
+    claimed_at: '2026-03-08T18:32:49.935482+00:00'
   - id: da-while-repro.verify-pre-fix-failures
     name: verify-pre-fix-failures
     status: pending
