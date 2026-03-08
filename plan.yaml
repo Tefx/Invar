@@ -9782,7 +9782,7 @@ phases:
   steps:
   - id: mcp-full-guard-design.specify-support-model
     name: specify-support-model
-    status: claimed
+    status: done
     description: 'Design the supported execution model for full MCP guard on large
       repos.
 
@@ -9826,6 +9826,39 @@ phases:
     agent: python-senior
     claimed_by: python-senior
     claimed_at: '2026-03-08T18:08:03.819214+00:00'
+    done_at: '2026-03-08T18:09:01.420575+00:00'
+    evidence: 'Commit hash(es): 54e97b8, 8184ce5 (worker), 5c2f0af (squash merge on
+      main)
+
+      Files changed:
+
+      - docs/proposals/DX-94-mcp-full-guard-support-model.md (added)
+
+      - docs/proposals/index.md (updated)
+
+      Verification:
+
+      - Run: invar_doc_toc(file=''docs/proposals/DX-94-mcp-full-guard-support-model.md'',
+      depth=2) -> required sections present (execution model/API, timeout strategy,
+      changed-only fast path preservation, backward compatibility, acceptance criteria
+      incl ../tasca, non-goals/migration constraints)
+
+      - Run: invar_guard(changed=true) -> failed with ModuleNotFoundError: No module
+      named ''invar.shell.commands.hooks''
+
+      - Run: uvx invar-tools guard -> failed with same ModuleNotFoundError
+
+      Spec link:
+
+      - docs/proposals/DX-94-mcp-full-guard-support-model.md#decision-split-phase-execution-model-deferred-full-scan
+
+      - docs/proposals/DX-94-mcp-full-guard-support-model.md#acceptance-criteria
+
+      Gaps/Notes:
+
+      - Guard toolchain currently broken in workspace due missing module imports after
+      DX-91 deletions; design step verified via artifact completeness and section
+      coverage.'
   - id: mcp-full-guard-design.verify-design
     name: verify-design
     status: pending
