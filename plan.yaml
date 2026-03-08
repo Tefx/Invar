@@ -2737,7 +2737,7 @@ phases:
     agent: python-executor
   - id: dx-91-delete.delete-skills-hooks-modules
     name: delete-skills-hooks-modules
-    status: claimed
+    status: done
     description: 'Delete skills system and hooks system Python modules.
 
 
@@ -2770,6 +2770,36 @@ phases:
     agent: python-executor
     claimed_by: python-executor
     claimed_at: '2026-03-08T17:40:37.287571+00:00'
+    done_at: '2026-03-08T17:50:46.829750+00:00'
+    evidence: 'Commit hash(es): 000f5a1 (worker), d666c01 (squash merge on main)
+
+      Files changed:
+
+      - src/invar/shell/claude_hooks.py (deleted)
+
+      - src/invar/shell/commands/hooks.py (deleted)
+
+      - src/invar/shell/commands/skill.py (deleted)
+
+      - src/invar/shell/pi_hooks.py (deleted)
+
+      - src/invar/shell/pi_tools.py (deleted)
+
+      - src/invar/shell/skill_manager.py (deleted)
+
+      Verification:
+
+      - Run: ls -la src/invar/shell/skill_manager.py src/invar/shell/claude_hooks.py
+      src/invar/shell/pi_hooks.py src/invar/shell/pi_tools.py src/invar/shell/commands/skill.py
+      src/invar/shell/commands/hooks.py -> all 6 files return no such file or directory
+
+      Spec link:
+
+      - DX-91 delete unused skills/hooks modules
+
+      Gaps/Notes:
+
+      - None.'
   - id: dx-91-delete.delete-removed-commands
     name: delete-removed-commands
     status: pending
