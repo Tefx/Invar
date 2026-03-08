@@ -153,14 +153,52 @@ def generate_contract_suggestion(signature: str) -> str:
     return f"@pre(lambda {params_str}: {constraints_str})"
 
 
+@pre(lambda text: isinstance(text, str))
+@post(lambda result: isinstance(result, list) and all(isinstance(x, str) for x in result))
+def _split_params_by_comma(text: str) -> list[str]:
+    """Split by comma, but not inside brackets.
+
+    Examples:
+        >>> _split_params_by_comma("x: int, y: str")
+        ['x: int', 'y: str']
+        >>> _split_params_by_comma("x: dict[str, int], y: str")
+        ['x: dict[str, int]', 'y: str']
+        >>> _split_params_by_comma("x: tuple[int, str, float]")
+        ['x: tuple[int, str, float]']
+    """
+
+    # Track bracket depth to avoid splitting inside generic type params
+    @post(lambda r: isinstance(r, list) and all(isinstance(x, str) for x in r))
+    def _split_impl(text: str) -> list[str]:
+        result = []
+        current = ""
+        depth = 0
+        for char in text:
+            if char in "([{<":
+                depth += 1
+                current += char
+            elif char in ")]}>":
+                depth -= 1
+                current += char
+            elif char == "," and depth == 0:
+                result.append(current.strip())
+                current = ""
+            else:
+                current += char
+        if current.strip():
+            result.append(current.strip())
+        return result
+
+    return _split_impl(text)
+
+
 @pre(lambda signature: signature.startswith("(") or signature == "")
 def _extract_params(signature: str) -> list[tuple[str, str | None]]:
     """
     Extract parameters and their types from a signature.
 
-    MINOR-2 Limitation: Uses naive comma splitting which breaks for complex types
-    like Callable[[int, str], bool] where commas appear inside nested brackets.
-    This is acceptable since suggestions are advisory, not strict validation.
+    Uses bracket-aware comma splitting to handle complex types like
+    dict[str, int] and tuple[int, str, float].
 
     Examples:
         >>> _extract_params("(x: int, y: str) -> bool")
@@ -169,6 +207,8 @@ def _extract_params(signature: str) -> list[tuple[str, str | None]]:
         [('x', None), ('y', None)]
         >>> _extract_params("(items: list[int], n: int = 10) -> list")
         [('items', 'list[int]'), ('n', 'int')]
+        >>> _extract_params("(x: dict[str, int], y: tuple[int, str])")
+        [('x', 'dict[str, int]'), ('y', 'tuple[int, str]')]
     """
     if not signature:
         return []
@@ -178,7 +218,7 @@ def _extract_params(signature: str) -> list[tuple[str, str | None]]:
         return []
 
     params = []
-    for param in match.group(1).split(","):
+    for param in _split_params_by_comma(match.group(1)):
         param = param.strip()
         if not param:
             continue
@@ -339,9 +379,9 @@ _VIOLATION_PREFIXES = {
 
 
 @pre(
-    lambda prefix, suggestion, patterns: bool(prefix)
-    and bool(suggestion)
-    and isinstance(patterns, str)
+    lambda prefix, suggestion, patterns: (
+        bool(prefix) and bool(suggestion) and isinstance(patterns, str)
+    )
 )
 @post(lambda result: isinstance(result, str) and len(result) > 0)
 def _format_with_patterns(prefix: str, suggestion: str, patterns: str) -> str:
@@ -357,9 +397,17 @@ def _format_with_patterns(prefix: str, suggestion: str, patterns: str) -> str:
 
 
 @pre(
-    lambda symbol, violation_type: symbol is not None
-    and violation_type
-    in ("missing_contract", "empty_contract", "redundant_type_contract", "semantic_tautology", "")
+    lambda symbol, violation_type: (
+        symbol is not None
+        and violation_type
+        in (
+            "missing_contract",
+            "empty_contract",
+            "redundant_type_contract",
+            "semantic_tautology",
+            "",
+        )
+    )
 )
 def format_suggestion_for_violation(symbol: Symbol, violation_type: str) -> str:
     """
