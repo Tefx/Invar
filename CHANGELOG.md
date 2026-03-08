@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.19.2] - 2026-03-08
+
+### Fixed
+- **Guard field verification parity for packaged `uvx` runs**
+  - Ships the current `guard-fp-field-verify` remediation so `uvx invar-tools guard --all` resolves the same guard behavior as this workspace
+  - Includes malformed lambda suggestion fix and guard/core/shell/reporting remediation from the post-`v1.19.1` workspace commits
+
 ## [1.19.1] - 2026-03-08
 
 ### Fixed
@@ -501,7 +508,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[Unreleased]: https://github.com/yourusername/invar/compare/v1.19.1...HEAD
+[Unreleased]: https://github.com/yourusername/invar/compare/v1.19.2...HEAD
+[1.19.2]: https://github.com/yourusername/invar/compare/v1.19.1...v1.19.2
 [1.19.1]: https://github.com/yourusername/invar/compare/v1.19.0...v1.19.1
 [1.19.0]: https://github.com/yourusername/invar/compare/v1.18.1...v1.19.0
 [1.15.5]: https://github.com/yourusername/invar/compare/v1.15.4...v1.15.5
