@@ -8420,6 +8420,8 @@ phases:
     depends_on:
     - mcp-full-guard-design.specify-support-model
     - mcp-full-guard-design.verify-design
+    - mcp-full-guard-design.verify-design-fix
+    - mcp-full-guard-design.verify-design-retest
     agent: gate-reviewer
   - id: mcp-full-guard-design.verify-design-fix
     name: verify-design.fix
