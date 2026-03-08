@@ -9661,3 +9661,36 @@ phases:
 
       - `invar_guard(changed=true)` on touched files passes for implementation changes'
     agent: python-senior
+  - id: mcp-full-guard-implement.add-regressions
+    name: add-regressions
+    status: pending
+    description: 'Add focused regression coverage for MCP full-guard support.
+
+
+      Coverage must include:
+
+      - full-project call that previously timed out at request layer
+
+      - changed-only control path
+
+      - targeted-path control path
+
+      - result/error behavior for long-running scans according to the chosen model
+
+      - protocol/schema-level tests if MCP tool contract changes
+
+
+      Constraints:
+
+      - tests should isolate request-layer timeout behavior from guard-rule correctness
+
+      - avoid relying only on synthetic tiny repos for long-running behavior'
+    verification: '- Regression tests directly exercise the supported MCP full-guard
+      path
+
+      - Previously failing timeout scenario is covered by assertions
+
+      - Control-path regressions remain green'
+    depends_on:
+    - mcp-full-guard-implement.implement-execution-model
+    agent: python-executor
