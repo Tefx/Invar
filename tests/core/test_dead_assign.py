@@ -288,3 +288,57 @@ def f(items):
     violations = _check_source(source)
     assert len(violations) == 1
     assert "unused_value" in violations[0].message
+
+
+def test_while_loop_approval_gate_state_not_reported() -> None:
+    """Regression: was_awaiting_approval style gate state stays live across iterations."""
+    source = """
+def f() -> bool:
+    was_awaiting_approval = False
+    while True:
+        current = read_state()
+        if current.awaiting and not was_awaiting_approval:
+            notify()
+        was_awaiting_approval = current.awaiting
+        if should_exit(current):
+            return was_awaiting_approval
+"""
+    violations = _check_source(source)
+    assert violations == []
+
+
+def test_while_loop_follow_cursor_not_reported() -> None:
+    """Regression: seen_count style follow cursor update stays live across iterations."""
+    source = """
+def f(initial_entries) -> int:
+    seen_count = len(initial_entries)
+    while True:
+        latest_entries = read_entries()
+        if len(latest_entries) < seen_count:
+            seen_count = 0
+        if len(latest_entries) > seen_count:
+            emit(latest_entries[seen_count:])
+            seen_count = len(latest_entries)
+        if done(latest_entries):
+            return seen_count
+"""
+    violations = _check_source(source)
+    assert violations == []
+
+
+def test_while_loop_message_history_chain_not_reported() -> None:
+    """Regression: message_history reassigned through helper chain stays live."""
+    source = """
+def f(agent):
+    message_history = []
+    while True:
+        pending_message = poll()
+        if pending_message is not None:
+            response = process(agent, pending_message, message_history)
+            message_history = response
+            message_history = compact(agent, message_history)
+        if should_stop(message_history):
+            return message_history
+"""
+    violations = _check_source(source)
+    assert violations == []
