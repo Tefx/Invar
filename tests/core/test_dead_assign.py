@@ -227,3 +227,64 @@ def f(items):
     violations = _check_source(source)
     assert len(violations) == 2
     assert "unused" in violations[0].message
+
+
+# Regression tests for while-loop false positives (da-while-repro)
+def test_while_loop_boolean_flag_carried_state() -> None:
+    """Loop-carried boolean state like was_awaiting_approval should not be reported."""
+    source = """
+def f(approvals) -> bool:
+    was_awaiting_approval = False
+    while approvals:
+        item = approvals.pop()
+        if item.requires_approval:
+            was_awaiting_approval = True
+    return was_awaiting_approval
+"""
+    violations = _check_source(source)
+    assert violations == []
+
+
+def test_while_loop_cursor_update_carried_state() -> None:
+    """Follow-mode cursor update like seen_count should not be reported."""
+    source = """
+def f(items, limit: int) -> int:
+    seen_count = 0
+    while items and seen_count < limit:
+        item = items.pop()
+        seen_count += 1
+        process(item)
+    return seen_count
+"""
+    violations = _check_source(source)
+    assert violations == []
+
+
+def test_while_loop_accumulated_state_via_helper() -> None:
+    """Helper-returned accumulated state like message_history should not be reported."""
+    source = """
+def f(events) -> list:
+    message_history = []
+    while events:
+        event = events.pop()
+        msg = format_message(event)
+        message_history = append_message(message_history, msg)
+    return message_history
+"""
+    violations = _check_source(source)
+    assert violations == []
+
+
+def test_while_loop_true_dead_write_still_reported() -> None:
+    """Negative control: truly dead write in while loop should still be reported."""
+    source = """
+def f(items):
+    while items:
+        item = items.pop()
+        process(item)
+        unused_value = item.id
+    return items
+"""
+    violations = _check_source(source)
+    assert len(violations) == 1
+    assert "unused_value" in violations[0].message
