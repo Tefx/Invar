@@ -9464,7 +9464,7 @@ phases:
     skipped_reason: superseded
   - id: da-while-repro.freeze-for-gate
     name: freeze-for-gate
-    status: pending
+    status: claimed
     description: Freeze snapshot for repro gate review.
     verification: '- Record `git rev-parse HEAD`
 
@@ -9474,6 +9474,8 @@ phases:
     depends_on:
     - da-while-repro.verify-pre-fix-failures
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-08T20:05:25.290705+00:00'
   - id: da-while-repro.gate
     name: da-while-repro.gate
     status: pending
@@ -9845,7 +9847,7 @@ phases:
       for reported external while-loop patterns while preserving true-positive behavior.'
   - id: da-while-field.retest-anima-guard
     name: retest-anima-guard
-    status: claimed
+    status: pending
     description: 'As an INDEPENDENT TESTER (`integration-verifier`), re-run the real
       guard pipeline against `../anima` after the residual dead_assign fix.
 
@@ -9886,5 +9888,3 @@ phases:
     depends_on:
     - da-while-field.fix-anima-residual-dead-assign
     agent: integration-verifier
-    claimed_by: integration-verifier
-    claimed_at: '2026-03-08T20:05:25.247957+00:00'
