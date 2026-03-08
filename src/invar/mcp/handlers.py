@@ -8,6 +8,7 @@ Contains all _run_* handler functions.
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -15,6 +16,8 @@ from typing import TYPE_CHECKING, Any, Literal
 
 from mcp.types import TextContent
 from returns.result import Success
+
+from invar.mcp.guard_runs import GUARD_RUNS
 
 if TYPE_CHECKING:
     from mcp.server.lowlevel.server import CombinationContent
@@ -86,7 +89,67 @@ async def _run_guard(args: dict[str, Any]) -> list[TextContent] | CombinationCon
     # DX-26: TTY auto-detection - MCP runs in non-TTY, so agent JSON output is automatic
     # No explicit flag needed
 
+    # DX-94 source: changed=true remains synchronous unchanged.
+    # For changed=false, defer when full-scan estimate exceeds sync budget.
+    if not changed_mode:
+        sync_budget_ms = _read_sync_budget_ms(args)
+        if _should_defer_full_scan(path, args, sync_budget_ms):
+            run = await GUARD_RUNS.start(
+                cmd=cmd,
+                path=path,
+                changed=False,
+                timeout_reason="estimated_duration_exceeds_sync_budget",
+            )
+            deferred = {
+                "status": "deferred",
+                "run_id": run.run_id,
+                "mode": "full_scan",
+                "path": path,
+                "changed": False,
+                "accepted_at": run.accepted_at,
+                "poll_after_ms": 1000,
+                "timeout_reason": run.timeout_reason,
+            }
+            return [TextContent(type="text", text=json.dumps(deferred, indent=2))]
+
     return await _execute_command(cmd)
+
+
+# @shell_orchestration: MCP handler - reads deferred run status
+# @invar:allow shell_result: MCP handler for guard status tool
+async def _run_guard_status(args: dict[str, Any]) -> list[TextContent] | CombinationContent:
+    """Return status snapshot for a deferred guard run."""
+    run_id = args.get("run_id", "")
+    if not run_id or not isinstance(run_id, str):
+        return [TextContent(type="text", text="Error: run_id is required")]
+
+    status = await GUARD_RUNS.status(run_id)
+    return [TextContent(type="text", text=json.dumps(status, indent=2))]
+
+
+# @shell_orchestration: MCP handler - bounded long-poll for deferred runs
+# @shell_complexity: wait_ms normalization and bounded long-poll handling
+# @invar:allow shell_result: MCP handler for guard wait tool
+async def _run_guard_wait(args: dict[str, Any]) -> list[TextContent] | CombinationContent:
+    """Wait for deferred guard run completion with bounded timeout."""
+    run_id = args.get("run_id", "")
+    if not run_id or not isinstance(run_id, str):
+        return [TextContent(type="text", text="Error: run_id is required")]
+
+    wait_ms_raw = args.get("wait_ms", 8000)
+    wait_ms = 8000
+    if isinstance(wait_ms_raw, int):
+        wait_ms = wait_ms_raw
+    elif isinstance(wait_ms_raw, float):
+        wait_ms = int(wait_ms_raw)
+
+    if wait_ms < 0:
+        wait_ms = 0
+    if wait_ms > 10000:
+        wait_ms = 10000
+
+    status = await GUARD_RUNS.wait(run_id, wait_ms)
+    return [TextContent(type="text", text=json.dumps(status, indent=2))]
 
 
 # @shell_orchestration: MCP handler - subprocess is called inside
@@ -498,3 +561,72 @@ def _fix_json_newlines(text: str) -> str:
             result.append(text[i])
             i += 1  # @invar:allow dead_assign: loop index consumed by next while iteration
     return "".join(result)
+
+
+# @invar:allow shell_result: Pure argument parsing helper for MCP
+def _read_sync_budget_ms(args: dict[str, Any]) -> int:
+    """Read optional sync budget in milliseconds with safe fallback."""
+    budget_raw = args.get("sync_budget_ms")
+    if isinstance(budget_raw, int):
+        return max(1000, min(60000, budget_raw))
+    if isinstance(budget_raw, float):
+        return max(1000, min(60000, int(budget_raw)))
+    return 8000
+
+
+# @invar:allow shell_result: Planner returns bool for handler branching
+def _should_defer_full_scan(path: str, args: dict[str, Any], sync_budget_ms: int) -> bool:
+    """Estimate whether a full scan should defer under DX-94 sync budget."""
+    estimated_ms = _estimate_full_scan_duration_ms(path, args)
+    return estimated_ms > sync_budget_ms
+
+
+# @shell_complexity: Runtime planning combines feature flags and file estimates
+# @invar:allow shell_result: Planner computes scalar estimate only
+def _estimate_full_scan_duration_ms(path: str, args: dict[str, Any]) -> int:
+    """Cheap estimator for full guard runtime in MCP context.
+
+    Source: DX-94 timeout-avoidance strategy requires a planning pass and
+    `sync_budget_ms` comparison for changed=false calls.
+    """
+    root = Path(path)
+    file_count = _estimate_candidate_file_count(root)
+
+    if args.get("contracts_only", False):
+        base = 500
+        per_file = 20
+    else:
+        base = 1200
+        per_file = 120
+
+    if args.get("coverage", False):
+        per_file += 50
+    if args.get("strict", False):
+        base += 100
+
+    return base + (file_count * per_file)
+
+
+# @shell_complexity: Directory walk with bounded scan and exclusions
+# @invar:allow shell_result: Planner helper returns file count scalar
+def _estimate_candidate_file_count(root: Path) -> int:
+    """Count Python candidates with bounded scan effort for planning."""
+    if root.is_file():
+        return 1 if root.suffix == ".py" else 0
+
+    if not root.exists():
+        return 1
+
+    count = 0
+    for _dirpath, dirnames, filenames in os.walk(root):
+        dirnames[:] = [
+            d
+            for d in dirnames
+            if d not in {".git", ".venv", "venv", "node_modules", ".mypy_cache", ".pytest_cache"}
+        ]
+        for filename in filenames:
+            if filename.endswith(".py"):
+                count += 1
+                if count >= 5000:
+                    return 5000
+    return count

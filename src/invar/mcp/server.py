@@ -25,6 +25,8 @@ from invar.mcp.handlers import (
     _run_doc_replace,
     _run_doc_toc,
     _run_guard,
+    _run_guard_status,
+    _run_guard_wait,
     _run_map,
     _run_refs,
     _run_sig,
@@ -163,12 +165,85 @@ def _get_guard_tool() -> Tool:
         inputSchema={
             "type": "object",
             "properties": {
-                "path": {"type": "string", "description": "Project path (default: .)", "default": "."},
-                "changed": {"type": "boolean", "description": "Only verify git-changed files", "default": True},
-                "strict": {"type": "boolean", "description": "Treat warnings as errors", "default": False},
-                "coverage": {"type": "boolean", "description": "DX-37: Collect branch coverage from doctest + hypothesis", "default": False},
-                "contracts_only": {"type": "boolean", "description": "DX-63: Contract coverage check only (skip tests)", "default": False},
+                "path": {
+                    "type": "string",
+                    "description": "Project path (default: .)",
+                    "default": ".",
+                },
+                "changed": {
+                    "type": "boolean",
+                    "description": "Only verify git-changed files",
+                    "default": True,
+                },
+                "strict": {
+                    "type": "boolean",
+                    "description": "Treat warnings as errors",
+                    "default": False,
+                },
+                "coverage": {
+                    "type": "boolean",
+                    "description": "DX-37: Collect branch coverage from doctest + hypothesis",
+                    "default": False,
+                },
+                "contracts_only": {
+                    "type": "boolean",
+                    "description": "DX-63: Contract coverage check only (skip tests)",
+                    "default": False,
+                },
             },
+        },
+    )
+
+
+# @shell_orchestration: MCP tool factory - creates Tool objects
+# @invar:allow shell_result: MCP tool factory for guard status command
+def _get_guard_status_tool() -> Tool:
+    """Define the invar_guard_status tool."""
+    return Tool(
+        name="invar_guard_status",
+        title="Guard Run Status",
+        description=(
+            "Get status snapshot for a deferred invar_guard full scan run. "
+            "Use this after invar_guard returns status=deferred."
+        ),
+        inputSchema={
+            "type": "object",
+            "properties": {
+                "run_id": {
+                    "type": "string",
+                    "description": "Deferred run ID returned by invar_guard",
+                },
+            },
+            "required": ["run_id"],
+        },
+    )
+
+
+# @shell_orchestration: MCP tool factory - creates Tool objects
+# @invar:allow shell_result: MCP tool factory for guard wait command
+def _get_guard_wait_tool() -> Tool:
+    """Define the invar_guard_wait tool."""
+    return Tool(
+        name="invar_guard_wait",
+        title="Wait For Guard Run",
+        description=(
+            "Wait for deferred invar_guard full-scan completion with bounded polling. "
+            "Returns running/complete/failed/cancelled/expired status."
+        ),
+        inputSchema={
+            "type": "object",
+            "properties": {
+                "run_id": {
+                    "type": "string",
+                    "description": "Deferred run ID returned by invar_guard",
+                },
+                "wait_ms": {
+                    "type": "integer",
+                    "description": "Long-poll duration in milliseconds (0-10000)",
+                    "default": 8000,
+                },
+            },
+            "required": ["run_id"],
         },
     )
 
@@ -215,7 +290,6 @@ def _get_map_tool() -> Tool:
             },
         },
     )
-
 
 
 # @shell_orchestration: MCP tool factory - creates tool definition for framework
@@ -323,9 +397,7 @@ def _get_doc_read_many_tool() -> Tool:
                 "sections": {
                     "type": "array",
                     "items": {"type": "string"},
-                    "description": (
-                        "List of section paths (slug, fuzzy, index, or line anchor)"
-                    ),
+                    "description": ("List of section paths (slug, fuzzy, index, or line anchor)"),
                 },
                 "include_children": {
                     "type": "boolean",
@@ -388,7 +460,10 @@ def _get_doc_replace_tool() -> Tool:
                     "type": "string",
                     "description": "Section path to replace (slug, fuzzy, index, or line anchor)",
                 },
-                "content": {"type": "string", "description": "New content to replace the section with"},
+                "content": {
+                    "type": "string",
+                    "description": "New content to replace the section with",
+                },
                 "keep_heading": {
                     "type": "boolean",
                     "description": "If true, preserve the original heading line",
@@ -419,7 +494,10 @@ def _get_doc_insert_tool() -> Tool:
                     "type": "string",
                     "description": "Section path for the anchor (slug, fuzzy, index, or line anchor)",
                 },
-                "content": {"type": "string", "description": "Content to insert (include heading if new section)"},
+                "content": {
+                    "type": "string",
+                    "description": "Content to insert (include heading if new section)",
+                },
                 "position": {
                     "type": "string",
                     "description": "Where to insert: 'before', 'after', 'first_child', 'last_child'",
@@ -467,6 +545,8 @@ def create_server() -> Server:
     async def list_tools() -> list[Tool]:
         return [
             _get_guard_tool(),
+            _get_guard_status_tool(),
+            _get_guard_wait_tool(),
             _get_sig_tool(),
             _get_map_tool(),
             _get_refs_tool(),  # DX-78: Reference finding
@@ -485,6 +565,8 @@ def create_server() -> Server:
     async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
         handlers = {
             "invar_guard": _run_guard,
+            "invar_guard_status": _run_guard_status,
+            "invar_guard_wait": _run_guard_wait,
             "invar_sig": _run_sig,
             "invar_map": _run_map,
             "invar_refs": _run_refs,  # DX-78: Reference finding
