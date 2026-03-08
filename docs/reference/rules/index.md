@@ -47,7 +47,7 @@ Guard enforces architectural rules with configurable severity.
 | Rule | Severity | Escape | Description |
 |------|----------|--------|-------------|
 | `shell_result` | **ERROR** | Yes | Shell function doesn't return Result |
-| `entry_point_too_thick` | **ERROR** | Yes | Entry point exceeds `entry_max_lines` |
+| `entry_point_too_thick` | **ERROR** | Yes | Entry point exceeds kind-specific limit (`entry_point_thresholds` with `entry_max_lines` fallback) |
 | `shell_pure_logic` | WARNING | Marker | Shell function has no I/O operations |
 | `shell_too_complex` | INFO | Marker | Function exceeds `shell_max_branches` |
 | `shell_complexity_debt` | ERROR | No | Project has ≥5 unaddressed complexity warnings |
@@ -57,6 +57,19 @@ Guard enforces architectural rules with configurable severity.
 | Rule | Severity | Escape | Description |
 |------|----------|--------|-------------|
 | `missing_doctest` | WARNING | - | Core function without doctest examples |
+
+### Entry-Point Thresholds
+
+`entry_point_too_thick` uses kind-aware limits while keeping the same architecture goal (thin delegation layer):
+
+| Entry-point kind | Default limit | Config source |
+|------------------|---------------|---------------|
+| Traditional callbacks (routes/CLI commands) | **15 lines** | `entry_max_lines` |
+| MCP tool handlers | **35 lines** | `entry_point_thresholds["mcp_tool"]` |
+
+Notes:
+- Limits are still line-based today (no semantic counting).
+- If a kind has no explicit threshold, Guard falls back to `entry_max_lines`.
 
 ## Escape Hatch Mechanism (DX-22)
 

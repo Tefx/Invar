@@ -6,9 +6,10 @@
 |------|-------|-----|
 | `function_too_long` | **50 lines** | Extract helper: `_impl()` + main with docstring |
 | `file_too_long` | **500 lines** | Split by responsibility |
-| `entry_point_too_thick` | **15 lines** | Delegate to Shell functions |
+| `entry_point_too_thick` (traditional callbacks) | **15 lines** | Delegate to Shell functions |
+| `entry_point_too_thick` (MCP tool handlers) | **35 lines** | Delegate to Shell functions |
 
-*Doctest lines excluded from counts. Limits configurable in `pyproject.toml`.*
+*Doctest lines excluded from counts. Limits are line-based and configurable in `pyproject.toml` (`entry_max_lines`, `entry_point_thresholds`).*
 
 ### Common Errors
 
