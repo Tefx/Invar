@@ -12956,7 +12956,7 @@ phases:
       - plan:da-while-field.retest-anima-guard-with-invar-toolchain'
 - id: release-readiness
   name: Release Readiness
-  status: in_progress
+  status: done
   context: Release boundary validation after active MCP full-guard implementation/field-validation
     and dead_assign remediation phases complete; packaging/build/install evidence
     required before publish. Repro-only evidence no longer blocks release-readiness
@@ -13320,7 +13320,7 @@ phases:
       \ release-readiness.smoke-install-artifacts-retest-provenance"
   - id: release-readiness.release-readiness-rereview-gate
     name: release-readiness-rereview-gate
-    status: claimed
+    status: done
     description: 'Gate re-review for release unblocking after the repeated smoke-install
       provenance blocker. As an INDEPENDENT REVIEWER (`gate-reviewer`), reassess release
       readiness using the original gate evidence plus both provenance remediation
@@ -13357,6 +13357,20 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-09T19:10:54.815387+00:00'
+    done_at: '2026-03-09T19:11:05.688601+00:00'
+    evidence: "Artifact:\n- Gate inputs reviewed:\n  - `release-readiness.release-readiness-gate`\
+      \ (OPEN recommendation)\n  - second remediation chain:\n    - `release-readiness.smoke-install-artifacts-fix-provenance-uv-fallback`\n\
+      \    - `release-readiness.smoke-install-artifacts-retest-provenance-uv-fallback`\
+      \ (independent PASS)\n\nVerification:\n- Original blocker lineage was preserved\
+      \ (initial smoke fail captured with exact fallback indicator), then remediated\
+      \ via two explicit fix/retest loops.\n- Final independent retest confirms:\n\
+      \  - installed wheel + sdist envs pass command smoke\n  - installed module resolves\
+      \ from site-packages\n  - no `Building invar-tools @ file:///...` fallback indicator\n\
+      \  - no `.vectl/worktrees/...` provenance leakage\n- Packaging evidence remains\
+      \ complete (freeze + artifact build + install smoke + blocker closure path).\n\
+      \nSpec link:\n- phase: release-readiness\n- step: release-readiness.release-readiness-rereview-gate\n\
+      \nVerdict:\n- OPEN: release-readiness blocker set is closed with independent\
+      \ retest evidence; candidate is suitable for publish."
   - id: release-readiness.smoke-install-artifacts-fix-provenance-uv-fallback
     name: smoke-install-artifacts-fix-provenance-uv-fallback
     status: done
