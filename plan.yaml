@@ -8935,7 +8935,7 @@ phases:
     agent: gate-reviewer
   - id: mcp-full-guard-implement.verify-implementation-fix
     name: verify-implementation-fix
-    status: claimed
+    status: done
     description: 'Fix the integration issue found by `mcp-full-guard-implement.verify-implementation`.
 
 
@@ -8985,6 +8985,41 @@ phases:
     agent: python-senior
     claimed_by: python-senior
     claimed_at: '2026-03-08T20:10:30.763647+00:00'
+    done_at: '2026-03-09T14:23:51.312632+00:00'
+    evidence: 'Artifact:
+
+      - PR: 0960daccf37129abc5599024e6d6d06b066cc70d
+
+
+      Verification:
+
+      - Run: uv run pytest tests/integration/test_mcp_guard_changed_flag.py::test_run_guard_changed_false_uses_all_flag
+      -v -> PASSED (1 passed)
+
+      - Run: uv run pytest tests/integration/test_mcp_guard_changed_flag.py -v ->
+      PASSED (3 passed)
+
+      - Run: uv run invar guard -> PASSED (status=passed, errors=0, warnings=0)
+
+      - Final: guard PASS | 0 errors, 0 warnings
+
+
+      Spec link:
+
+      - mcp-full-guard-implement.verify-implementation-fix
+
+      Commit hash(es): 0960daccf37129abc5599024e6d6d06b066cc70d
+
+      Files changed:
+
+      - tests/integration/test_mcp_guard_changed_flag.py
+
+      Gaps/Notes:
+
+      - changed=false regression path was forced to non-deferred execution with monkeypatch
+      to assert command payload (`--all` present, `--changed` absent) without KeyError(''cmd'').
+
+      '
   - id: mcp-full-guard-implement.verify-implementation-retest
     name: verify-implementation-retest
     status: pending
