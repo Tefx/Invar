@@ -13157,3 +13157,130 @@ phases:
     - release-readiness.build-release-artifacts
     - release-readiness.smoke-install-artifacts
     agent: gate-reviewer
+  - id: release-readiness.smoke-install-artifacts-fix-provenance
+    name: smoke-install-artifacts-fix-provenance
+    status: pending
+    description: 'HIGH priority blocker fix. Remove ambiguous source-tree involvement
+      from the wheel-installed `invar guard` smoke path so release evidence proves
+      the installed artifact is executing, not a repo-local fallback.
+
+
+      Scope:
+
+      - packaging / install runtime path resolution
+
+      - shell subprocess environment / tool invocation used during artifact smoke
+      runs
+
+      - provenance reporting around build/install execution path
+
+
+      Required outcomes:
+
+      - wheel-installed `invar guard` must not trigger a local `file:///.../.vectl/worktrees/...`
+      build or otherwise involve the checked-out source tree
+
+      - invocation environment must be constrained so the installed artifact is the
+      only code path exercised
+
+      - evidence must make provenance unambiguous enough for release review
+
+
+      Failure modes to close:
+
+      - local source path leakage via subprocess cwd / env / PATH / PYTHONPATH
+
+      - fallback rebuild from local checkout when running installed CLI
+
+      - ambiguous logging that masks whether code came from installed wheel vs local
+      tree
+
+
+      Out of scope:
+
+      - unrelated packaging cleanup or broader release-process refactors beyond what
+      is needed to eliminate this blocker'
+    verification: '- Main path: targeted regression proves wheel-installed `invar
+      guard` runs without building `invar-tools @ file:///...` or otherwise consulting
+      the source tree
+
+      - Failure path: a focused regression or reproduction check fails if cwd/env/path
+      leakage reintroduces local-source fallback during installed-artifact smoke execution
+
+      - Proof: implementation notes identify the exact invocation seam changed and
+      why provenance is now unambiguous'
+    depends_on:
+    - release-readiness.smoke-install-artifacts
+    agent: python-senior
+  - id: release-readiness.smoke-install-artifacts-retest-provenance
+    name: smoke-install-artifacts-retest-provenance
+    status: pending
+    description: 'HIGH priority independent retest. As an INDEPENDENT TESTER (`blind-tester`),
+      rerun the release smoke focused on installed-artifact provenance and attempt
+      to prove the blocker still exists.
+
+
+      YOUR GOAL IS TO FIND ANY remaining source-tree involvement.
+
+
+      Required checks:
+
+      - create a fresh clean environment after the provenance fix
+
+      - install the built wheel and exercise `invar guard` in a way that would previously
+      reveal local source-tree fallback
+
+      - capture full command output and explicitly look for `file:///` source-tree
+      build paths, editable behavior, cwd leakage, or repo-local import resolution
+
+      - classify any ambiguous provenance as still BLOCKED for release
+
+
+      Independence Level: L2'
+    verification: '- Main path: fresh wheel-install smoke shows `invar guard` executing
+      without local source-tree build/output indicators
+
+      - Failure path: any `file:///` worktree/source checkout involvement, editable-style
+      import behavior, or unresolved provenance ambiguity is captured as a release
+      blocker with exact reproduction
+
+      - Proof: attached commands/output demonstrate installed-artifact provenance
+      clearly enough for release review'
+    depends_on:
+    - release-readiness.smoke-install-artifacts-fix-provenance
+    agent: blind-tester
+  - id: release-readiness.release-readiness-rereview-gate
+    name: release-readiness-rereview-gate
+    status: pending
+    description: 'Gate re-review for release unblocking after the smoke-install provenance
+      blocker. As an INDEPENDENT REVIEWER (`gate-reviewer`), reassess release readiness
+      using the original gate evidence plus the provenance fix/retest loop.
+
+
+      BLOCK release unless the new retest makes installed-artifact provenance unambiguous.
+
+
+      Review focus:
+
+      1. Original smoke blocker is documented and not ignored
+
+      2. The fix changed the right runtime-path / invocation seam for installed-artifact
+      isolation
+
+      3. Independent retest proves wheel-installed `invar guard` no longer involves
+      the local worktree/source tree
+
+      4. Release recommendation is explicitly OPEN or BLOCKED based on provenance
+      evidence'
+    verification: '- Original release-readiness gate evidence reviewed alongside the
+      provenance remediation loop
+
+      - No unresolved source-tree fallback, `file:///` build involvement, or provenance
+      ambiguity remains in the installed-artifact smoke path
+
+      - Gate output states OPEN only if release provenance is now unambiguous; otherwise
+      it remains BLOCKED with the specific remaining cause'
+    depends_on:
+    - release-readiness.release-readiness-gate
+    - release-readiness.smoke-install-artifacts-retest-provenance
+    agent: gate-reviewer
