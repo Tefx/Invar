@@ -10268,6 +10268,7 @@ phases:
     - da-while-repro.add-focused-repros
     - da-while-repro.da-while-repro-retest-pre-fix-repros-stabilized
     - da-while-repro.freeze-for-gate
+    - da-while-repro.retest-snapshot-reproduction-anchoring
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-09T13:13:53.301829+00:00'
