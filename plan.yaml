@@ -9001,6 +9001,8 @@ phases:
 - id: mcp-full-guard-field-verify
   name: MCP Full Guard Field Validation
   status: in_progress
+  depends_on:
+  - mcp-full-guard-implement
   steps:
   - id: mcp-full-guard-field-verify.freeze
     name: freeze
