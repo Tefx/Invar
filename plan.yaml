@@ -13134,7 +13134,7 @@ phases:
       \ release-readiness\n- step: release-readiness.smoke-install-artifacts"
   - id: release-readiness.release-readiness-gate
     name: release-readiness.gate
-    status: claimed
+    status: done
     description: 'Gate review: determine whether the current candidate is genuinely
       ready to publish as the next Invar tools release based on packaged-artifact
       evidence, not just source-tree verification.
@@ -13174,6 +13174,23 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-09T19:10:23.242970+00:00'
+    done_at: '2026-03-09T19:10:36.091324+00:00'
+    evidence: "Artifact:\n- Freeze evidence: `release-readiness.freeze-release-candidate`\
+      \ (pinned commit/environment)\n- Artifact build evidence: `release-readiness.build-release-artifacts`\n\
+      - Install smoke evidence chain:\n  - initial `release-readiness.smoke-install-artifacts`\
+      \ (found blocker)\n  - remediation loops completed with independent retest pass\
+      \ at `release-readiness.smoke-install-artifacts-retest-provenance-uv-fallback`\n\
+      \nVerification:\n- Release boundary prerequisites completed before freeze (mcp\
+      \ full-guard implement/field verify + da-while phases).\n- `uv build` produced\
+      \ wheel+sdist; sdist integrity checks showed no `.venv`/invalid symlink leakage.\n\
+      - Clean install smoke demonstrates installed-artifact entrypoints work:\n  -\
+      \ `invar --help`\n  - `invar hooks --help`\n  - `invar guard --help`\n  - `invar\
+      \ guard --all <control path>`\n- Provenance blocker addressed in second remediation\
+      \ chain and independently retested: no `Building invar-tools @ file:///...`\
+      \ fallback indicator and no `.vectl/worktrees/...` path leakage in retest outputs.\n\
+      \nSpec link:\n- phase: release-readiness\n- step: release-readiness.release-readiness-gate\n\
+      \nRecommendation:\n- OPEN for publish, subject to final rereview gate (`release-readiness.release-readiness-rereview-gate`)\
+      \ added by remediation chain."
   - id: release-readiness.smoke-install-artifacts-fix-provenance
     name: smoke-install-artifacts-fix-provenance
     status: done
