@@ -10520,7 +10520,7 @@ phases:
       present and stable; detector logic remained unchanged.'
   - id: da-while-repro.da-while-repro-retest-pre-fix-repros-stabilized
     name: da-while-repro.retest-pre-fix-repros-stabilized
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT TESTER (`integration-verifier`), re-run the tightened
       pre-fix while-loop reproduction set against snapshot `cdf191a1` and confirm
       the three intended false-positive patterns reproduce while the negative control
@@ -10566,6 +10566,23 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-09T15:37:41.462922+00:00'
+    done_at: '2026-03-09T15:51:09.072039+00:00'
+    evidence: "## Verification Report\n\nTester: integration-verifier\nScope: tightened\
+      \ pre-fix while-loop repro set on snapshot cdf191a1\nIndependence Level: L1\n\
+      \n### Test Execution\n- Commands executed:\n  - add detached worktree on `cdf191a1`\n\
+      \  - run focused pytest selection for quartet while-loop tests\n- Output summary:\n\
+      \  - selected 4 tests, result `4 passed` (expected pre-fix reproduction signal\
+      \ not present)\n\n### Issues Found\n- blocker: intended three false-positive\
+      \ pre-fix failures were not reproduced on snapshot; focused methodology still\
+      \ insufficient.\n\n### Coverage Assessment\n- Three intended false-positive\
+      \ patterns reproduced: ❌\n- Negative control stable: ✅\n- NOT tested: broader\
+      \ seam/island scans (out of scope)\n\n### Verdict\n- ISSUES_FOUND\nConfidence:\
+      \ high\nCommit hash(es): none (verification-only)\nFiles changed: none\nSpec\
+      \ link: da-while-repro.da-while-repro-retest-pre-fix-repros-stabilized\nGaps/Notes:\
+      \ snapshot run remained stable but did not produce expected failures.\nRemediation\
+      \ steps created:\n- da-while-repro.da-while-repro-fix-snapshot-reproduction-anchoring\n\
+      - da-while-repro.retest-snapshot-reproduction-anchoring\n- da-while-repro.gate\
+      \ rewired to new retest"
   - id: da-while-repro.da-while-repro-fix-snapshot-reproduction-anchoring
     name: da-while-repro.fix-snapshot-reproduction-anchoring
     status: pending
