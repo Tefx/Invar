@@ -9296,7 +9296,7 @@ phases:
       \ complexity debt threshold; leaves warnings but removes blocking error."
   - id: mcp-full-guard-design.verify-shell-complexity-debt-precondition
     name: verify-shell-complexity-debt-precondition
-    status: pending
+    status: claimed
     description: 'As an INDEPENDENT TESTER (`integration-verifier`), validate that
       the shell-complexity remediation actually clears the pre-commit full-guard blocker
       for changes touching `src/invar/core/rules.py`.
@@ -9346,6 +9346,8 @@ phases:
     depends_on:
     - mcp-full-guard-design.remediate-shell-complexity-debt-precondition
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-09T17:04:35.401009+00:00'
 - id: mcp-full-guard-implement
   name: MCP Full Guard Implementation
   status: done
