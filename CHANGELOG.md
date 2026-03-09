@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.19.7] - 2026-03-10
+
+### Fixed
+- **MCP full-guard deferred runs now expose liveness and complete reliably on large external repos**
+  - Switches deferred MCP guard execution to an asyncio subprocess path so timeouts and cancellations can terminate child processes cleanly
+  - Adds `updated_at` heartbeat progress for running deferred jobs and validates terminal completion against `../tasca`
+
+- **Installed-artifact `invar guard` smoke runs no longer fall back into local worktree builds**
+  - Tightens subprocess-env source detection so site-packages installs do not climb back into repo/worktree checkouts during `uv`/`uvx` respawn
+  - Adds focused provenance regressions and release smoke validation for wheel and sdist installs
+
 ## [1.19.6] - 2026-03-08
 
 ### Fixed
@@ -535,7 +546,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[Unreleased]: https://github.com/yourusername/invar/compare/v1.19.6...HEAD
+[Unreleased]: https://github.com/yourusername/invar/compare/v1.19.7...HEAD
+[1.19.7]: https://github.com/yourusername/invar/compare/v1.19.6...v1.19.7
 [1.19.6]: https://github.com/yourusername/invar/compare/v1.19.5...v1.19.6
 [1.19.5]: https://github.com/yourusername/invar/compare/v1.19.4...v1.19.5
 [1.19.3]: https://github.com/yourusername/invar/compare/v1.19.2...v1.19.3
