@@ -9199,7 +9199,7 @@ phases:
     agent: gate-reviewer
   - id: mcp-full-guard-design.remediate-shell-complexity-debt-precondition
     name: remediate-shell-complexity-debt-precondition
-    status: claimed
+    status: done
     description: 'Reduce or explicitly justify the `shell_complexity_debt` full-guard
       blocker that prevents commits touching `src/invar/core/rules.py` from passing
       pre-commit.
@@ -9284,6 +9284,16 @@ phases:
     agent: python-senior
     claimed_by: python-senior
     claimed_at: '2026-03-09T16:35:57.082521+00:00'
+    done_at: '2026-03-09T17:03:26.032433+00:00'
+    evidence: "Artifact:\n- PR: a2209af\nVerification:\n- Run: `uv run invar guard\
+      \ --all .` -> passed (0 errors) and no `shell_complexity_debt` error\n- Identified\
+      \ prior active sources (shell_too_complex):\n  - src/invar/shell/coverage.py:209\n\
+      \  - src/invar/shell/property_tests.py:406\n  - src/invar/shell/subprocess_env.py:49\n\
+      \  - src/invar/shell/subprocess_env.py:266\n- Applied supported `# @shell_complexity:`\
+      \ justifications; post-change shell_too_complex count -> 0\nCommit hash(es):\
+      \ a2209af\nFiles changed:\n- src/invar/shell/coverage.py\n- src/invar/shell/property_tests.py\n\
+      - src/invar/shell/subprocess_env.py\nNotes: Minimal fix-or-explain to drop below\
+      \ complexity debt threshold; leaves warnings but removes blocking error."
   - id: mcp-full-guard-design.verify-shell-complexity-debt-precondition
     name: verify-shell-complexity-debt-precondition
     status: pending
