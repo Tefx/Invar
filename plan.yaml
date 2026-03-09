@@ -10607,6 +10607,41 @@ phases:
     depends_on:
     - da-while-repro.da-while-repro-retest-pre-fix-repros-stabilized
     agent: python-executor
+  - id: da-while-repro.retest-snapshot-reproduction-anchoring
+    name: retest-snapshot-reproduction-anchoring
+    status: pending
+    description: 'As an INDEPENDENT TESTER (`integration-verifier`), re-run the focused
+      while-loop reproduction quartet against snapshot `cdf191a1` after the snapshot-method
+      remediation and verify the expected pre-fix signal is present.
+
+
+      YOUR GOAL IS TO FIND PROBLEMS, not to confirm it works.
+
+
+      Test for:
+
+      - the three intended false-positive patterns fail on snapshot `cdf191a1`
+
+      - the negative control remains stable and passes as a true-positive dead-write
+      case
+
+      - the revised snapshot execution strategy / fixture anchoring, rather than detector
+      changes, explains the reproduction recovery
+
+
+      Independence Level: L1'
+    verification: '- Run the documented focused quartet command against snapshot `cdf191a1`
+
+      - Evidence shows 3 expected failures plus 1 passing negative control
+
+      - Evidence confirms the negative control remains stable without extra `seen_count`
+      behavior
+
+      - Any residual mismatch in snapshot execution or fixture anchoring is documented
+      as a blocker'
+    depends_on:
+    - da-while-repro.da-while-repro-fix-snapshot-reproduction-anchoring
+    agent: integration-verifier
 - id: da-while-fix
   name: dead_assign While Fix
   status: done
