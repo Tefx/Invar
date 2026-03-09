@@ -10164,6 +10164,52 @@ phases:
     depends_on:
     - da-while-repro.da-while-repro-retest-pre-fix-repros
     agent: python-executor
+  - id: da-while-repro.da-while-repro-retest-pre-fix-repros-stabilized
+    name: da-while-repro.retest-pre-fix-repros-stabilized
+    status: pending
+    description: 'As an INDEPENDENT TESTER (`integration-verifier`), re-run the tightened
+      pre-fix while-loop reproduction set against snapshot `cdf191a1` and confirm
+      the three intended false-positive patterns reproduce while the negative control
+      remains stable.
+
+
+      YOUR GOAL IS TO FIND PROBLEMS, not to confirm it works.
+
+
+      Test for:
+
+      - the three intended false-positive patterns fail on the pre-fix snapshot using
+      the tightened focused methodology
+
+      - the negative control does not over-report `seen_count` and remains a true-positive
+      dead-write case
+
+      - the focused repro evidence is stable enough to constrain the downstream detector
+      fix scope
+
+
+      Independence Level: L1'
+    verification: '- Run the documented focused repro command against snapshot `cdf191a1`
+
+      - Evidence shows the three intended repros fail before the detector fix
+
+      - Evidence shows the negative control remains stable and passing without extra
+      `seen_count` behavior
+
+      - Any remaining instability or mismatch is documented as a blocker'
+    evidence_template: "## Verification Report\n\n**Tester**: integration-verifier\
+      \ (independent of implementation)\n**Scope**: tightened pre-fix while-loop repro\
+      \ set on snapshot `cdf191a1`\n**Independence Level**: L1\n\n### Test Execution\n\
+      - Commands executed:\n  ```\n  <actual focused repro command>\n  ```\n- Output\
+      \ summary: <key results>\n\n### Issues Found\n\n| Severity | Description | Location\
+      \ | Reproduction |\n| --- | --- | --- | --- |\n| blocker | <issue> | <test or\
+      \ fixture> | <steps> |\n\n### Coverage Assessment\n- Three intended false-positive\
+      \ patterns reproduced: ✅/❌\n- Negative control stable: ✅/❌\n- NOT tested: <areas\
+      \ not covered and why>\n\n### Verdict\n- [ ] PASS\n- [ ] ISSUES_FOUND\n- [ ]\
+      \ INCOMPLETE\n\n**Confidence**: high/medium/low"
+    depends_on:
+    - da-while-repro.da-while-repro-tighten-pre-fix-repro-methodology
+    agent: integration-verifier
 - id: da-while-fix
   name: dead_assign While Fix
   status: done
