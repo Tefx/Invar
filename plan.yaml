@@ -13174,7 +13174,7 @@ phases:
     agent: gate-reviewer
   - id: release-readiness.smoke-install-artifacts-fix-provenance
     name: smoke-install-artifacts-fix-provenance
-    status: claimed
+    status: done
     description: 'HIGH priority blocker fix. Remove ambiguous source-tree involvement
       from the wheel-installed `invar guard` smoke path so release evidence proves
       the installed artifact is executing, not a repo-local fallback.
@@ -13229,6 +13229,21 @@ phases:
     agent: python-senior
     claimed_by: python-senior
     claimed_at: '2026-03-09T18:24:57.689791+00:00'
+    done_at: '2026-03-09T18:50:59.778610+00:00'
+    evidence: "Artifact:\n- Worker branch commit: `4a488a98fe4818d5cb89f90d8eeec170dba5b589`\n\
+      - Squash-merged commit on main: `6f9feb4` (`[vectl] step-release-readiness.smoke-install-artifacts-fix-provenance\
+      \ completed`)\n- Files changed:\n  - `src/invar/shell/subprocess_env.py`\n \
+      \ - `tests/test_subprocess_env.py`\n\nVerification:\n- `uv run ruff check src/invar/shell/subprocess_env.py\
+      \ tests/test_subprocess_env.py` -> pass.\n- `uv run pytest -q tests/test_subprocess_env.py\
+      \ -k \"running_wheel_path_for_version_mismatch_respawn or detects_wheel_from_direct_url\
+      \ or prefers_local_source_checkout or prefers_local_source_even_without_version_mismatch\
+      \ or prefers_invocation_root_checkout_for_external_project or uses_running_source_for_version_mismatch_respawn\"\
+      ` -> `6 passed`.\n- `uv run invar guard` -> passed (0 errors, 0 warnings).\n\
+      - Focused smoke repro using built wheel in clean project with forced respawn\
+      \ path no longer shows `Building invar-tools @ file:///...` or worktree-path\
+      \ leakage in output.\n\nSpec link:\n- phase: release-readiness\n- step: release-readiness.smoke-install-artifacts-fix-provenance\n\
+      \nGaps/Notes:\n- Implementation deliberately scoped to subprocess/env provenance\
+      \ seam; no broader release-process refactor."
   - id: release-readiness.smoke-install-artifacts-retest-provenance
     name: smoke-install-artifacts-retest-provenance
     status: pending
