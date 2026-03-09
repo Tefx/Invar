@@ -8437,7 +8437,7 @@ phases:
       - Remediation chain added before gate progression.'
   - id: mcp-full-guard-design.gate
     name: mcp-full-guard-design.gate
-    status: pending
+    status: claimed
     description: 'Gate review: verify the MCP full-guard support model is precise
       enough to implement safely.'
     verification: '- All design steps completed successfully
@@ -8454,6 +8454,8 @@ phases:
     - mcp-full-guard-design.verify-design-retest-retest
     - mcp-full-guard-design.verify-design-retest-retest-retest
     agent: gate-reviewer
+    claimed_by: gate-reviewer
+    claimed_at: '2026-03-09T15:37:48.189085+00:00'
   - id: mcp-full-guard-design.verify-design-fix
     name: verify-design.fix
     status: done
