@@ -10350,7 +10350,7 @@ phases:
       - da-while-repro.gate rewired to stabilized retest'
   - id: da-while-repro.da-while-repro-tighten-pre-fix-repro-methodology
     name: da-while-repro.tighten-pre-fix-repro-methodology
-    status: pending
+    status: claimed
     description: 'Tighten the pre-fix while-loop reproduction methodology and fixtures
       in `tests/core/test_dead_assign.py` so snapshot `cdf191a1` reliably demonstrates
       the three intended false-positive patterns without destabilizing the negative
@@ -10392,6 +10392,8 @@ phases:
     depends_on:
     - da-while-repro.da-while-repro-retest-pre-fix-repros
     agent: python-executor
+    claimed_by: python-executor
+    claimed_at: '2026-03-09T15:21:08.622924+00:00'
   - id: da-while-repro.da-while-repro-retest-pre-fix-repros-stabilized
     name: da-while-repro.retest-pre-fix-repros-stabilized
     status: pending
