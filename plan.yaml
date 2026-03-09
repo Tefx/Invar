@@ -11752,7 +11752,11 @@ phases:
     name: da-while-field.gate
     status: rejected
     description: 'Gate review: verify the real anima field evidence closes the confirmed
-      dead_assign false positives.'
+      dead_assign false positives.
+
+
+      Important: evidence must execute the fixed Invar analyzer/toolchain (not anima''s
+      installed invar) when analyzing ../anima.'
     verification: '- Real `../anima` guard evidence is present from the remediation
       retest
 
@@ -11771,6 +11775,7 @@ phases:
     - da-while-field.retest-anima-guard-loop-carried-state
     - da-while-field.retest-anima-guard-loop-carried-state-repeat
     - da-while-field.retest-anima-guard-runtime-parity
+    - da-while-field.review-anima-retest-with-invar-toolchain
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-09T17:04:29.880154+00:00'
