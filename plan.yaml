@@ -11669,7 +11669,7 @@ phases:
       and da-while-field.retest-anima-guard; phase gate updated to require retest.'
   - id: da-while-field.gate
     name: da-while-field.gate
-    status: pending
+    status: claimed
     description: 'Gate review: verify the real anima field evidence closes the confirmed
       dead_assign false positives.'
     verification: '- Real `../anima` guard evidence is present from the remediation
@@ -11691,6 +11691,8 @@ phases:
     - da-while-field.retest-anima-guard-loop-carried-state-repeat
     - da-while-field.retest-anima-guard-runtime-parity
     agent: gate-reviewer
+    claimed_by: gate-reviewer
+    claimed_at: '2026-03-09T17:04:29.880154+00:00'
   - id: da-while-field.fix-anima-residual-dead-assign
     name: fix-anima-residual-dead-assign
     status: done
