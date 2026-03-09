@@ -9024,7 +9024,7 @@ phases:
       '
   - id: mcp-full-guard-implement.verify-implementation-retest
     name: verify-implementation-retest
-    status: claimed
+    status: done
     description: 'Re-test the MCP full-guard implementation after `mcp-full-guard-implement.verify-implementation-fix`.
 
 
@@ -9068,6 +9068,31 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-09T14:24:33.900499+00:00'
+    done_at: '2026-03-09T14:54:42.841116+00:00'
+    evidence: 'Artifact:
+
+      - PR: a3aeb0e3fa8b3e6ea53c000c8ce70556defa566b
+
+
+      Verification:
+
+      - Run: `uv run pytest -v tests/integration/test_mcp_guard_changed_flag.py::test_run_guard_changed_false_uses_all_flag[asyncio]`
+      -> PASS (1 passed)
+
+      - Run: `uv run pytest -v tests/integration/test_mcp_guard_changed_flag.py tests/integration/test_mcp_guard_deferred.py
+      tests/integration/test_mcp_full_guard_regressions.py` -> PASS (33 passed)
+
+
+      Spec link:
+
+      - mcp-full-guard-implement.verify-implementation-retest
+
+      Commit hash(es): none + reason (retest-only scope)
+
+      Files changed: none
+
+      Gaps/Notes: no remaining request-contract mismatch detected for changed=false/full-project
+      semantics.'
 - id: mcp-full-guard-field-verify
   name: MCP Full Guard Field Validation
   status: in_progress
