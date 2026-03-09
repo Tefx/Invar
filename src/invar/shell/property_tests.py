@@ -403,6 +403,7 @@ def _find_module_root(file_path: Path, project_root: Path | None) -> Path | None
     return project_root
 
 
+# @shell_complexity: Walks loaded package hierarchy and rewrites __path__ for uvx import correctness
 def _extend_loaded_package_paths(module_name: str, module_root: Path) -> None:
     """Allow already-loaded packages to resolve modules from module_root.
 

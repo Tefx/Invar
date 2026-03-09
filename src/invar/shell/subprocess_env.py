@@ -45,6 +45,7 @@ __all__ = [
 VENV_NAMES: tuple[str, ...] = (".venv", "venv", ".env", "env")
 
 
+# @shell_complexity: Checkout/source probing validates pyproject and handles filesystem fallbacks
 @post(lambda result: result is None or result.exists())
 def detect_local_invar_source(
     module_file: Path | None = None,
@@ -263,6 +264,7 @@ def _detect_venv_python(venv: Path) -> Path | None:
     return python_path if python_path.exists() else None
 
 
+# @shell_complexity: Parses direct_url metadata with robust scheme/path validation
 def detect_running_invar_source() -> Path | None:
     """Detect source path for currently running invar-tools package.
 

@@ -204,6 +204,7 @@ def extract_coverage_report(cov: Coverage, files: list[Path], phase: str) -> Cov
 # @shell_orchestration: Report merging coordinates data from multiple phases
 # @shell_complexity: Report merging with multiple iteration paths
 # @invar:allow dead_export: Public helper API exported for external integrations
+# @shell_complexity: Merges optional phase reports while preserving best per-file coverage
 @pre(lambda reports: all(isinstance(r, CoverageReport) for r in reports if r is not None))
 @post(lambda result: isinstance(result, CoverageReport))
 def merge_coverage_reports(reports: list[CoverageReport | None]) -> CoverageReport:
