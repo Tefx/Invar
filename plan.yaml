@@ -10279,7 +10279,7 @@ phases:
       evidence, not success assertion.'
   - id: mcp-full-guard-field-verify.review-completed-large-repo-mcp-full-guard-evidence
     name: review-completed-large-repo-mcp-full-guard-evidence
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT REVIEWER (`gate-reviewer`), assess whether the
       follow-up field evidence now proves large-repo MCP full-guard support to terminal
       completion.
@@ -10341,6 +10341,52 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-09T15:37:55.459297+00:00'
+    done_at: '2026-03-09T15:55:04.228345+00:00'
+    evidence: '## Follow-Up Review Report
+
+
+      Reviewer: gate-reviewer
+
+      Scope: completed-evidence review for large-repo MCP full-guard
+
+
+      Checklist outcome:
+
+      - Intended target context confirmed: yes
+
+      - Deferred run observed to terminal status: yes
+
+      - Terminal outputs/artifacts included: yes
+
+      - No worktree-path ambiguity remains: no
+
+
+      Decision:
+
+      - blocker
+
+      - Notes: evidence artifact contains path/provenance inconsistencies (worktree
+      reference mismatch and missing raw outputs for context-proof commands), so ambiguity
+      closure is not auditable.
+
+
+      Spec link:
+
+      - mcp-full-guard-field-verify.review-completed-large-repo-mcp-full-guard-evidence
+
+      Commit hash(es): none (review-only)
+
+      Files changed: none
+
+      Gaps/Notes: remediation chain created for evidence provenance correction.
+
+      Remediation steps created:
+
+      - mcp-full-guard-field-verify.correct-completed-large-repo-mcp-full-guard-evidence-provenance
+
+      - mcp-full-guard-field-verify.review-corrected-completed-large-repo-mcp-full-guard-evidence
+
+      - mcp-full-guard-field-verify.gate rewired to corrected review step'
   - id: mcp-full-guard-field-verify.correct-completed-large-repo-mcp-full-guard-evidence-provenance
     name: correct-completed-large-repo-mcp-full-guard-evidence-provenance
     status: pending
