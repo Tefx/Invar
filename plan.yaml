@@ -10391,7 +10391,7 @@ phases:
       - mcp-full-guard-field-verify.gate rewired to corrected review step'
   - id: mcp-full-guard-field-verify.correct-completed-large-repo-mcp-full-guard-evidence-provenance
     name: correct-completed-large-repo-mcp-full-guard-evidence-provenance
-    status: pending
+    status: claimed
     description: 'Focused evidence remediation for `mcp-full-guard-field-verify.review-completed-large-repo-mcp-full-guard-evidence`.
 
 
@@ -10450,6 +10450,8 @@ phases:
     depends_on:
     - mcp-full-guard-field-verify.review-completed-large-repo-mcp-full-guard-evidence
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-09T15:56:01.300475+00:00'
   - id: mcp-full-guard-field-verify.review-corrected-completed-large-repo-mcp-full-guard-evidence
     name: review-corrected-completed-large-repo-mcp-full-guard-evidence
     status: pending
