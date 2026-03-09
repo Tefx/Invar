@@ -8766,7 +8766,7 @@ phases:
       - mcp-full-guard-design.gate rewired to depend on new retest'
   - id: mcp-full-guard-design.verify-design-retest-retest-fix
     name: verify-design-retest-retest-fix
-    status: pending
+    status: claimed
     description: 'Fix the remaining runtime/spec taxonomy inconsistency reported by
       `mcp-full-guard-design.verify-design-retest-retest`.
 
@@ -8831,6 +8831,8 @@ phases:
     depends_on:
     - mcp-full-guard-design.verify-design-retest-retest
     agent: python-senior
+    claimed_by: python-senior
+    claimed_at: '2026-03-09T14:57:46.137155+00:00'
   - id: mcp-full-guard-design.verify-design-retest-retest-retest
     name: verify-design-retest-retest-retest
     status: pending
