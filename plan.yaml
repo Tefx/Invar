@@ -10459,6 +10459,7 @@ phases:
     - da-while-field.retest-anima-guard
     - da-while-field.fix-loop-carried-state-dead-assign
     - da-while-field.retest-anima-guard-loop-carried-state
+    - da-while-field.retest-anima-guard-loop-carried-state-repeat
     agent: gate-reviewer
   - id: da-while-field.fix-anima-residual-dead-assign
     name: fix-anima-residual-dead-assign
