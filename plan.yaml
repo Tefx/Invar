@@ -9460,7 +9460,7 @@ phases:
       rewired to remediation chain.'
   - id: mcp-full-guard-field-verify.review-results
     name: review-results
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT REVIEWER (`gate-reviewer`), assess whether full
       MCP guard is now genuinely supported on large repos.
 
@@ -9489,6 +9489,42 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-09T14:57:51.939085+00:00'
+    done_at: '2026-03-09T15:20:29.781091+00:00'
+    evidence: 'Artifact:
+
+      - PR: N/A (audit step)
+
+      Verification:
+
+      - Run: `invar_invar_guard(path=<worktree>, changed=true)` -> passed but 0 files
+      checked
+
+      - Run: `uv run python -m invar.shell.commands.guard hooks --help` -> works
+
+      - Run: `uv run python -m invar.shell.commands.guard guard . --changed` -> JSON
+      pass
+
+      - Run: `invar_invar_guard(path=<worktree>, changed=false)` -> deferred; sampled
+      polling remained running without terminal evidence in window
+
+      Spec link:
+
+      - mcp-full-guard-field-verify.review-results
+
+      Commit hash(es): none (review-only)
+
+      Files changed: none
+
+      Gaps/Notes: insufficient large-repo terminal completion evidence to clear blocker
+      claim.
+
+      Remediation chain added:
+
+      - mcp-full-guard-field-verify.capture-completed-large-repo-mcp-full-guard-evidence
+
+      - mcp-full-guard-field-verify.review-completed-large-repo-mcp-full-guard-evidence
+
+      - mcp-full-guard-field-verify.gate rewired to new review step'
   - id: mcp-full-guard-field-verify.gate
     name: mcp-full-guard-field-verify.gate
     status: pending
