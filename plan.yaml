@@ -9983,7 +9983,11 @@ phases:
     name: mcp-full-guard-field-verify.gate
     status: pending
     description: 'Gate review: verify the full-MCP-guard support slice is complete
-      and no unresolved timeout blocker remains.'
+      and no unresolved timeout blocker remains.
+
+
+      Additional requirement: external large-repo (e.g. ../tasca) terminal-completion
+      evidence exists and is independently reviewed (no local-repo-only substitutes).'
     verification: '- All field-validation steps completed successfully
 
       - Evidence covers both the MCP execution-path fix and the CLI comparison-path
@@ -10002,6 +10006,7 @@ phases:
     - mcp-full-guard-field-verify.retest-real-mcp-full-guard
     - mcp-full-guard-field-verify.review-results
     - mcp-full-guard-field-verify.review-corrected-completed-large-repo-mcp-full-guard-evidence
+    - mcp-full-guard-field-verify.review-tasca-terminal-evidence
     agent: gate-reviewer
   - id: mcp-full-guard-field-verify.fix-real-mcp-full-guard-entrypoints
     name: fix-real-mcp-full-guard-entrypoints
