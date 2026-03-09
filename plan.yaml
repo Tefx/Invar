@@ -12498,6 +12498,30 @@ phases:
 
       Gaps/Notes: This command resolves to anima''s installed invar runtime, so external
       parity remains unresolved.'
+  - id: da-while-field.retest-anima-guard-with-invar-toolchain
+    name: retest-anima-guard-with-invar-toolchain
+    status: pending
+    description: 'As an INDEPENDENT TESTER (integration-verifier), re-run guard against
+      the anima codebase using the *Invar* project toolchain (so the fixed analyzer
+      is actually executed), not anima''s installed invar. Requirement: run a real
+      entry-point command starting from Invar that analyzes /Users/tefx/Projects/anima
+      (e.g. `uv run --project /Users/tefx/Projects/Invar invar guard --all /Users/tefx/Projects/anima`).
+      Capture exact command + output excerpts; verify the three tracked locals (message_history,
+      was_awaiting_approval, seen_count) are not flagged as dead_assign. Independence
+      L2; goal is to find problems.'
+    depends_on:
+    - da-while-field.retest-anima-guard-runtime-parity
+  - id: da-while-field.review-anima-retest-with-invar-toolchain
+    name: review-anima-retest-with-invar-toolchain
+    status: pending
+    description: 'As an INDEPENDENT REVIEWER (gate-reviewer), review the corrected
+      anima retest evidence and confirm: (1) the fixed Invar analyzer actually ran,
+      (2) the three tracked dead_assign false positives are cleared, (3) any remaining
+      dead_assign findings are explicitly classified as unrelated/residual, (4) evidence
+      includes raw output. Block if the invocation still uses anima''s installed invar
+      or if output is incomplete.'
+    depends_on:
+    - da-while-field.retest-anima-guard-with-invar-toolchain
 - id: release-readiness
   name: Release Readiness
   status: locked
