@@ -10245,7 +10245,7 @@ phases:
       prior loop-carried-state test additions; detector logic unchanged.'
   - id: da-while-repro.da-while-repro-retest-pre-fix-repros
     name: da-while-repro.retest-pre-fix-repros
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT TESTER (`integration-verifier`), verify the repaired
       focused while-loop reproductions now fail on the pre-fix snapshot `cdf191a1`
       and that the negative control continues to pass as a true positive.
@@ -10279,6 +10279,39 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-09T14:57:41.792353+00:00'
+    done_at: '2026-03-09T15:20:20.662645+00:00'
+    evidence: 'Artifact:
+
+      - PR: none (verification-only)
+
+      Verification:
+
+      - Run: pre-fix snapshot check on `src/invar/core/dead_assign.py` from cdf191a1
+      confirms old `_walk_while` behavior.
+
+      - Run: focused quartet retest -> 4 passed (expected pre-fix 3 fail + negative-control
+      pass not reproduced).
+
+      - Run: alternate anima quartet -> 4 failed including unstable negative control
+      due extra seen_count.
+
+      Spec link:
+
+      - da-while-repro.da-while-repro-retest-pre-fix-repros
+
+      Commit hash(es): none (verification-only)
+
+      Files changed: none
+
+      Gaps/Notes: current repro methodology still not stable for pre-fix assertions.
+
+      Remediation chain added:
+
+      - da-while-repro.da-while-repro-tighten-pre-fix-repro-methodology
+
+      - da-while-repro.da-while-repro-retest-pre-fix-repros-stabilized
+
+      - da-while-repro.gate rewired to stabilized retest'
   - id: da-while-repro.da-while-repro-tighten-pre-fix-repro-methodology
     name: da-while-repro.tighten-pre-fix-repro-methodology
     status: pending
