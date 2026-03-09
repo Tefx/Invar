@@ -13286,37 +13286,39 @@ phases:
   - id: release-readiness.release-readiness-rereview-gate
     name: release-readiness-rereview-gate
     status: pending
-    description: 'Gate re-review for release unblocking after the smoke-install provenance
-      blocker. As an INDEPENDENT REVIEWER (`gate-reviewer`), reassess release readiness
-      using the original gate evidence plus the provenance fix/retest loop.
+    description: 'Gate re-review for release unblocking after the repeated smoke-install
+      provenance blocker. As an INDEPENDENT REVIEWER (`gate-reviewer`), reassess release
+      readiness using the original gate evidence plus both provenance remediation
+      loops, with final emphasis on the second `uv`/`uvx` fallback fix/retest path.
 
 
-      BLOCK release unless the new retest makes installed-artifact provenance unambiguous.
+      BLOCK release unless the latest retest makes installed-artifact provenance unambiguous.
 
 
       Review focus:
 
       1. Original smoke blocker is documented and not ignored
 
-      2. The fix changed the right runtime-path / invocation seam for installed-artifact
-      isolation
+      2. The first remediation loop is preserved as historical evidence, but the second
+      fix explicitly targets the persistent `uv`/`uvx` source fallback seam
 
-      3. Independent retest proves wheel-installed `invar guard` no longer involves
-      the local worktree/source tree
+      3. Independent retest after the second fix proves wheel-installed `invar guard`
+      no longer involves the local worktree/source tree
 
-      4. Release recommendation is explicitly OPEN or BLOCKED based on provenance
-      evidence'
-    verification: '- Original release-readiness gate evidence reviewed alongside the
-      provenance remediation loop
+      4. Release recommendation is explicitly OPEN or BLOCKED based on the latest
+      provenance evidence'
+    verification: '- Original release-readiness gate evidence reviewed alongside both
+      provenance remediation loops
 
-      - No unresolved source-tree fallback, `file:///` build involvement, or provenance
-      ambiguity remains in the installed-artifact smoke path
+      - No unresolved `uv`/`uvx` source fallback, `file:///` build involvement, or
+      provenance ambiguity remains in the installed-artifact smoke path
 
-      - Gate output states OPEN only if release provenance is now unambiguous; otherwise
-      it remains BLOCKED with the specific remaining cause'
+      - Gate output states OPEN only if the second independent retest makes release
+      provenance unambiguous; otherwise it remains BLOCKED with the specific remaining
+      cause'
     depends_on:
     - release-readiness.release-readiness-gate
-    - release-readiness.smoke-install-artifacts-retest-provenance
+    - release-readiness.smoke-install-artifacts-retest-provenance-uv-fallback
     agent: gate-reviewer
   - id: release-readiness.smoke-install-artifacts-fix-provenance-uv-fallback
     name: smoke-install-artifacts-fix-provenance-uv-fallback
