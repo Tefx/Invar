@@ -11362,6 +11362,88 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-09T15:37:14.817597+00:00'
+  - id: da-while-field.fix-anima-environment-runtime-parity
+    name: fix-anima-environment-runtime-parity
+    status: pending
+    description: 'Fix the remaining blocker by aligning the real `/Users/tefx/Projects/anima`
+      execution environment with the intended analyzer/runtime path.
+
+
+      Scope:
+
+      - resolve installed-tool vs repo/runtime-path mismatch so the real anima guard
+      uses the same analyzer behavior validated by the local scanner path and cross-repo
+      harness
+
+      - keep prior scanner/harness fixes intact; do not reopen already-cleared logic
+      unless parity work proves they are bypassed
+
+      - preserve prior remediation history; this is a focused environment/runtime
+      parity follow-up
+
+
+      Remediation chain metadata:
+
+      - prior_loop: `da-while-field.fix-repeated-loop-carried-state-blocker`, `da-while-field.retest-anima-guard-loop-carried-state-repeat`
+
+      - remaining_blocker: real anima guard still reports `message_history`, `was_awaiting_approval`,
+      and `seen_count` as `dead_assign` in the external anima environment
+
+      - why_new_loop: prior remediation proved local scanner and cross-repo harness
+      behavior, but did not eliminate the external runtime parity gap
+
+
+      Deliver evidence identifying the exact parity cause and the focused change that
+      makes real anima execution use the intended analyzer path/version.'
+    verification: '- Main path: evidence shows the real anima invocation resolves
+      to the intended analyzer/runtime path and configuration
+
+      - Failure path: regression evidence covers the prior mismatch mode (installed-tool/runtime-path
+      divergence) and shows it can no longer reproduce silently
+
+      - Proof: focused parity diagnostics and targeted validation are attached before
+      retest handoff'
+    evidence_template: '## Environment/Runtime Parity Fix Evidence
+
+
+      **Parity cause identified**:
+
+      - <installed tool path / runtime / analyzer source mismatch>
+
+
+      **Focused change applied**:
+
+      - <what was changed to force the real anima run onto the intended analyzer behavior>
+
+
+      **Parity proof commands**:
+
+      ```bash
+
+      <exact commands showing interpreter/tool/analyzer resolution>
+
+      ```
+
+
+      **Observed outputs**:
+
+      ```text
+
+      <paste key output proving the real anima environment now resolves to the intended
+      path/version>
+
+      ```
+
+
+      **Prior loop**: `da-while-field.fix-repeated-loop-carried-state-blocker`, `da-while-field.retest-anima-guard-loop-carried-state-repeat`
+
+      **Remaining blocker addressed**: real anima runtime parity mismatch
+
+      **Why new loop**: prior loop validated logic locally but not the external anima
+      runtime path'
+    depends_on:
+    - da-while-field.retest-anima-guard-loop-carried-state-repeat
+    agent: python-senior
 - id: release-readiness
   name: Release Readiness
   status: locked
