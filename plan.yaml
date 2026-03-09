@@ -9183,6 +9183,91 @@ phases:
     depends_on:
     - mcp-full-guard-design.gate-retest-blockers
     agent: gate-reviewer
+  - id: mcp-full-guard-design.remediate-shell-complexity-debt-precondition
+    name: remediate-shell-complexity-debt-precondition
+    status: pending
+    description: 'Reduce or explicitly justify the `shell_complexity_debt` full-guard
+      blocker that prevents commits touching `src/invar/core/rules.py` from passing
+      pre-commit.
+
+
+      Scope:
+
+      - Identify the current shell-complexity warnings that make full guard fail with
+      8 outstanding warnings against the limit of 5.
+
+      - Apply the smallest focused remediation needed so the project falls below the
+      blocking threshold or provide explicit, accepted justification in the codebase/config
+      path that full guard honors today.
+
+      - Keep the remediation scoped to the debt gate needed for this merge; do not
+      broaden into unrelated guard redesign work.
+
+
+      Touch targets to assess first:
+
+      - `src/invar/shell/commands/guard.py`
+
+      - other shell modules currently contributing active complexity warnings
+
+      - the full-guard / smart-guard rule path that is exercised when `src/invar/core/rules.py`
+      changes
+
+
+      Out of scope:
+
+      - Replacing the existing `mcp-full-guard-design.gate-fix-blockers` history
+
+      - Unrelated refactors outside the warnings needed to clear this blocking threshold
+
+      - Changing the semantics of `shell_complexity_debt` itself unless required to
+      match documented current behavior
+
+
+      Success criteria:
+
+      - Full guard no longer blocks on `shell_complexity_debt` for this change path
+
+      - Any remaining complexity warnings are either below the threshold or explicitly
+      justified in the supported mechanism used by full guard'
+    verification: '- The implementation identifies the concrete warning sources or
+      justifications that remove the blocking `shell_complexity_debt` error
+
+      - The remediation is minimal and targeted to the merge blocker, not a broad
+      cleanup
+
+      - The resulting state is sufficient for a later full-guard verification step
+      to prove the pre-commit path passes'
+    evidence_template: '## Shell Complexity Debt Remediation
+
+
+      **Blocking path**: change touching `src/invar/core/rules.py` triggers full guard
+      in pre-commit
+
+
+      **Warnings addressed or justified**:
+
+      - <warning/file>
+
+      - <warning/file>
+
+
+      **Mechanism used**:
+
+      - <code reduction | explicit justification honored by current full guard>
+
+
+      **Non-goals preserved**:
+
+      - No unrelated guard redesign changes
+
+      - No history rewrite of prior remediation loops
+
+
+      **Expected effect**:
+
+      - `shell_complexity_debt` no longer blocks this merge path'
+    agent: python-senior
 - id: mcp-full-guard-implement
   name: MCP Full Guard Implementation
   status: done
