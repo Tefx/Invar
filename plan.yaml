@@ -10951,7 +10951,7 @@ phases:
       - plan:mcp-full-guard-field-verify.capture-tasca-terminal-evidence'
   - id: mcp-full-guard-field-verify.fix-mcp-external-guard-executable
     name: fix-mcp-external-guard-executable
-    status: pending
+    status: claimed
     description: Fix the MCP full-guard subprocess invocation for external repo targets
       so it does not attempt to execute a non-existent `guard.py` from the `invar-tools`
       package. Ensure it calls a supported executable/module entry point (e.g. `invar
@@ -10960,6 +10960,8 @@ phases:
       execution.
     depends_on:
     - mcp-full-guard-field-verify.review-tasca-terminal-evidence
+    claimed_by: gate-reviewer
+    claimed_at: '2026-03-09T17:23:11.777508+00:00'
   - id: mcp-full-guard-field-verify.retest-tasca-terminal-evidence-post-fix
     name: retest-tasca-terminal-evidence-post-fix
     status: pending
