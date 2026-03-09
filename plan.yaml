@@ -9172,14 +9172,18 @@ phases:
       and no unresolved timeout blocker remains.'
     verification: '- All field-validation steps completed successfully
 
-      - Evidence shows full MCP guard is supported on large repos via the real MCP
-      path
+      - Evidence covers both the MCP execution-path fix and the CLI comparison-path
+      import/package fix
 
-      - No unresolved blocker remains in this slice'
+      - Review-results confirms no unresolved blockers remain for the real MCP full-guard
+      slice
+
+      - Ready for downstream release-readiness once dependent phases complete'
     depends_on:
     - mcp-full-guard-field-verify.freeze
     - mcp-full-guard-field-verify.run-real-mcp-full-guard
     - mcp-full-guard-field-verify.fix-real-mcp-full-guard-entrypoints
+    - mcp-full-guard-field-verify.fix-cli-comparison-import-path
     - mcp-full-guard-field-verify.retest-real-mcp-full-guard
     - mcp-full-guard-field-verify.review-results
     agent: gate-reviewer
