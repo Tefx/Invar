@@ -9654,7 +9654,7 @@ phases:
       - No unresolved ambiguity remains before the detector fix phase'
     depends_on:
     - da-while-repro.add-focused-repros
-    - da-while-repro.verify-pre-fix-failures
+    - da-while-repro.da-while-repro-retest-pre-fix-repros
     - da-while-repro.freeze-for-gate
     agent: gate-reviewer
     claimed_by: gate-reviewer
