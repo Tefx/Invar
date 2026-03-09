@@ -10983,7 +10983,7 @@ phases:
       step; full `invar guard --all` timed out in worktree, so focused proof used.'
   - id: da-while-field.retest-anima-guard-loop-carried-state
     name: retest-anima-guard-loop-carried-state
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT TESTER (`integration-verifier`), re-run the exact
       real guard pipeline against `../anima` after the loop-carried-state dead_assign
       fix.
@@ -11026,7 +11026,18 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-09T14:57:26.443290+00:00'
-    evidence: 'priority: HIGH'
+    done_at: '2026-03-09T15:20:09.633063+00:00'
+    evidence: "Artifact:\n- PR: 0f6f86e\nVerification:\n- Run: `uv run --project \"\
+      /Users/tefx/Projects/anima\" invar guard --all \"/Users/tefx/Projects/anima\"\
+      ` -> status passed with warnings; dead_assign findings still include the three\
+      \ tracked variables.\n- Confirmed still present:\n  - `message_history` in src/anima/shell/agent.py:855\n\
+      \  - `was_awaiting_approval` in src/anima/shell/cli_commands/talk_runtime.py:526\n\
+      \  - `seen_count` in src/anima/shell/cli_commands/inspect_collect.py:555\nSpec\
+      \ link:\n- da-while-field.retest-anima-guard-loop-carried-state\nCommit hash(es):\
+      \ none (verification-only)\nFiles changed: none\nGaps/Notes: blocker persists\
+      \ after first remediation loop.\nRemediation chain added:\n- da-while-field.fix-repeated-loop-carried-state-blocker\n\
+      - da-while-field.retest-anima-guard-loop-carried-state-repeat\n- da-while-field.gate\
+      \ rewired to depend on repeat retest"
   - id: da-while-field.fix-repeated-loop-carried-state-blocker
     name: fix-repeated-loop-carried-state-blocker
     status: pending
