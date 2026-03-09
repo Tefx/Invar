@@ -230,48 +230,84 @@ def f(items):
 
 
 # Regression tests for while-loop false positives (da-while-repro)
+# These tests reproduce pre-fix false positives where loop-carried state is incorrectly reported as dead.
+# At pre-fix: violations should be found (tests FAIL).
+# After fix: violations should be empty (tests PASS).
+# Negative control: test_while_loop_true_dead_write_still_reported always expects violations.
+
+
 def test_while_loop_boolean_flag_carried_state() -> None:
-    """Loop-carried boolean state like was_awaiting_approval should not be reported."""
+    """Loop-carried boolean state like was_awaiting_approval should not be reported.
+
+    Pre-fix: FALSE POSITIVE - incorrectly reports was_awaiting_approval as dead.
+    Post-fix: No violations (body-read simulation clears pending writes).
+
+    The key pattern: variable is READ before being REASSIGNED in loop body.
+    At pre-fix, only condition is re-checked, not body reads.
+    """
     source = """
-def f(approvals) -> bool:
+def f() -> bool:
     was_awaiting_approval = False
-    while approvals:
-        item = approvals.pop()
-        if item.requires_approval:
-            was_awaiting_approval = True
-    return was_awaiting_approval
+    while True:
+        current = read_state()
+        if was_awaiting_approval:
+            notify()
+        was_awaiting_approval = current.awaiting
+        if should_exit(current):
+            return was_awaiting_approval
 """
     violations = _check_source(source)
+    # Pre-fix: FAILS (reports was_awaiting_approval as dead)
+    # Post-fix: PASSES (no violations)
     assert violations == []
 
 
 def test_while_loop_cursor_update_carried_state() -> None:
-    """Follow-mode cursor update like seen_count should not be reported."""
+    """Follow-mode cursor update like seen_count should not be reported.
+
+    Pre-fix: FALSE POSITIVE - incorrectly reports seen_count as dead.
+    Post-fix: No violations (body-read simulation clears pending writes).
+    """
     source = """
-def f(items, limit: int) -> int:
+def f() -> int:
     seen_count = 0
-    while items and seen_count < limit:
-        item = items.pop()
-        seen_count += 1
-        process(item)
-    return seen_count
+    while True:
+        latest_entries = read_entries()
+        if len(latest_entries) < seen_count:
+            seen_count = 0
+        if len(latest_entries) > seen_count:
+            emit(latest_entries[seen_count:])
+            seen_count = len(latest_entries)
+        if done(latest_entries):
+            return seen_count
 """
     violations = _check_source(source)
+    # Pre-fix: FAILS (reports seen_count as dead)
+    # Post-fix: PASSES (no violations)
     assert violations == []
 
 
 def test_while_loop_accumulated_state_via_helper() -> None:
-    """Helper-returned accumulated state like message_history should not be reported."""
+    """Helper-returned accumulated state like message_history should not be reported.
+
+    Pre-fix: FALSE POSITIVE - incorrectly reports message_history as dead.
+    Post-fix: No violations (body-read simulation clears pending writes).
+    """
     source = """
-def f(events) -> list:
+def f() -> list:
     message_history = []
-    while events:
-        event = events.pop()
-        msg = format_message(event)
-        message_history = append_message(message_history, msg)
-    return message_history
+    while True:
+        pending_message = poll()
+        if pending_message is not None:
+            response = process(pending_message, message_history)
+            message_history = response
+            message_history = compact(message_history)
+        if should_stop(message_history):
+            return message_history
 """
     violations = _check_source(source)
+    # Pre-fix: FAILS (reports message_history as dead)
+    # Post-fix: PASSES (no violations)
     assert violations == []
 
 
@@ -288,60 +324,6 @@ def f(items):
     violations = _check_source(source)
     assert len(violations) == 1
     assert "unused_value" in violations[0].message
-
-
-def test_while_loop_approval_gate_state_not_reported() -> None:
-    """Regression: was_awaiting_approval style gate state stays live across iterations."""
-    source = """
-def f() -> bool:
-    was_awaiting_approval = False
-    while True:
-        current = read_state()
-        if current.awaiting and not was_awaiting_approval:
-            notify()
-        was_awaiting_approval = current.awaiting
-        if should_exit(current):
-            return was_awaiting_approval
-"""
-    violations = _check_source(source)
-    assert violations == []
-
-
-def test_while_loop_follow_cursor_not_reported() -> None:
-    """Regression: seen_count style follow cursor update stays live across iterations."""
-    source = """
-def f(initial_entries) -> int:
-    seen_count = len(initial_entries)
-    while True:
-        latest_entries = read_entries()
-        if len(latest_entries) < seen_count:
-            seen_count = 0
-        if len(latest_entries) > seen_count:
-            emit(latest_entries[seen_count:])
-            seen_count = len(latest_entries)
-        if done(latest_entries):
-            return seen_count
-"""
-    violations = _check_source(source)
-    assert violations == []
-
-
-def test_while_loop_message_history_chain_not_reported() -> None:
-    """Regression: message_history reassigned through helper chain stays live."""
-    source = """
-def f(agent):
-    message_history = []
-    while True:
-        pending_message = poll()
-        if pending_message is not None:
-            response = process(agent, pending_message, message_history)
-            message_history = response
-            message_history = compact(agent, message_history)
-        if should_stop(message_history):
-            return message_history
-"""
-    violations = _check_source(source)
-    assert violations == []
 
 
 def test_anima_repro_agent_message_history_not_reported() -> None:
