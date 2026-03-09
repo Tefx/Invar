@@ -10810,6 +10810,26 @@ phases:
         needed against new artifact content.
       timestamp: '2026-03-09T17:13:02.934447+00:00'
       reviewer: gate-reviewer
+  - id: mcp-full-guard-field-verify.capture-tasca-terminal-evidence
+    name: capture-tasca-terminal-evidence
+    status: pending
+    description: 'As an INDEPENDENT TESTER (integration-verifier), re-run MCP full-guard
+      against an external large repo (e.g. /Users/tefx/Projects/tasca) until the deferred
+      run reaches terminal state. Capture: exact MCP invocation, run_id, polling/wait
+      transcript, terminal status payload (status/error_kind/message/paths), and at
+      least one CLI comparison run. Independence L2; goal is to find problems.'
+    depends_on:
+    - mcp-full-guard-field-verify.review-corrected-completed-large-repo-mcp-full-guard-evidence
+  - id: mcp-full-guard-field-verify.review-tasca-terminal-evidence
+    name: review-tasca-terminal-evidence
+    status: pending
+    description: 'As an INDEPENDENT REVIEWER (gate-reviewer), audit the external-large-repo
+      (tasca) completion evidence: (1) path provenance unambiguous, (2) terminal completion
+      observed (success or failure), (3) no MCP timeout/fallback, (4) CLI comparison
+      materially consistent. Block if evidence is missing or uses local-repo-only
+      substitutes.'
+    depends_on:
+    - mcp-full-guard-field-verify.capture-tasca-terminal-evidence
 - id: da-while-repro
   name: dead_assign While Repros
   status: done
