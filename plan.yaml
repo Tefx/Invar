@@ -13318,3 +13318,108 @@ phases:
     - release-readiness.release-readiness-gate
     - release-readiness.smoke-install-artifacts-retest-provenance
     agent: gate-reviewer
+  - id: release-readiness.smoke-install-artifacts-fix-provenance-uv-fallback
+    name: smoke-install-artifacts-fix-provenance-uv-fallback
+    status: pending
+    description: 'HIGH priority blocker fix. Eliminate persistent `uv`/`uvx` source
+      fallback during installed-artifact `invar guard` execution so the smoke path
+      cannot rebuild or resolve `invar-tools` from any `.vectl/worktrees/...` checkout.
+
+
+      Remediation consolidation:
+
+      - prior_loop: `release-readiness.smoke-install-artifacts-fix-provenance`, `release-readiness.smoke-install-artifacts-retest-provenance`
+
+      - remaining_blocker: installed-artifact smoke output still shows `Building invar-tools
+      @ file:///.../.vectl/worktrees/...` during guard invocation
+
+      - why_new_loop: the first fix closed subprocess-env leakage evidence but did
+      not remove `uv`/`uvx` source fallback behavior in the actual installed-env guard
+      path
+
+
+      Scope:
+
+      - installed-environment guard invocation path used by release smoke
+
+      - `uv` / `uvx` resolution, respawn, or tool-selection behavior that can re-enter
+      the source checkout
+
+      - provenance logging/evidence needed to distinguish installed-wheel execution
+      from local source fallback
+
+
+      Required outcomes:
+
+      - wheel-installed `invar guard` in smoke execution does not trigger `Building
+      invar-tools @ file:///...`
+
+      - no `.vectl/worktrees/...` or repo-local source checkout appears in the installed-artifact
+      guard path
+
+      - any required invocation change is documented tightly enough that the independent
+      retest can target the exact seam
+
+
+      Failure modes to close:
+
+      - `uv` or `uvx` preferring repo-local build metadata over installed wheel artifacts
+
+      - guard subprocess respawn or helper path selection re-entering the source tree
+      from an installed env
+
+      - provenance output remaining ambiguous even when the installed wheel is present
+
+
+      Out of scope:
+
+      - unrelated release automation cleanup
+
+      - broader packaging refactors beyond the guard provenance seam needed to unblock
+      release'
+    verification: '- Main path: targeted regression or focused smoke proves installed-wheel
+      `invar guard` completes without `Building invar-tools @ file:///...` and without
+      any `.vectl/worktrees/...` provenance indicators
+
+      - Failure path: focused regression demonstrates that if `uv`/`uvx` fallback
+      is reintroduced, the smoke captures the source-tree build indicator and blocks
+      release
+
+      - Proof: implementation evidence names the exact `uv`/`uvx` seam changed and
+      why installed-artifact provenance is now unambiguous'
+    evidence_template: '## Integration Evidence
+
+
+      **Command or test exercising the full path**:
+
+      ```
+
+      <exact wheel-install smoke command that invokes `invar guard` through the installed
+      environment>
+
+      ```
+
+
+      **Actual output**:
+
+      ```
+
+      <paste stdout/stderr including absence of `Building invar-tools @ file:///...`>
+
+      ```
+
+
+      **Path exercised**: built wheel install -> installed `invar guard` -> uv/uvx
+      invocation seam -> guard execution
+
+
+      **Remediation context**:
+
+      - prior_loop: `release-readiness.smoke-install-artifacts-fix-provenance`, `release-readiness.smoke-install-artifacts-retest-provenance`
+
+      - remaining_blocker closed: `uv`/`uvx` source fallback during installed smoke
+
+      '
+    depends_on:
+    - release-readiness.smoke-install-artifacts-retest-provenance
+    agent: python-senior
