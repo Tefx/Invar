@@ -9272,37 +9272,32 @@ phases:
   - id: mcp-full-guard-field-verify.retest-real-mcp-full-guard
     name: retest-real-mcp-full-guard
     status: pending
-    description: 'HIGH priority retest after `mcp-full-guard-field-verify.fix-real-mcp-full-guard-entrypoints`.
+    description: 'As an INDEPENDENT TESTER (`integration-verifier`), re-run the real
+      MCP full-guard validation after both blocker fixes land.
 
 
-      As an INDEPENDENT TESTER (`integration-verifier`), re-run the real MCP full-guard
-      field validation from a fresh perspective.
+      YOUR GOAL IS TO FIND PROBLEMS, not to confirm it works.
 
 
-      Re-test for:
+      Re-test:
 
-      - Happy path: the real MCP `invar_guard(path=''.'', changed=false)` path completes
-      on a large repo such as `../tasca`
+      - the MCP full-guard execution path on a large repo after the entrypoint-resolution
+      fix
 
-      - Control path: the CLI comparison path `uvx invar-tools guard --all` executes
-      successfully and is materially consistent with MCP output
+      - the CLI comparison path after the packaging/import fix
 
-      - Error scenarios: no `guard.py` executable lookup failure and no `ModuleNotFoundError`
+      - any remaining divergence between the MCP path and the CLI comparison path
+
+
+      Document exact commands and exact output excerpts. Finding issues is a successful
+      verification outcome.'
+    verification: '- Main path: the real MCP full-guard path no longer fails with
+      missing `guard.py` executable errors
+
+      - Failure path: the CLI comparison invocation no longer raises `ModuleNotFoundError`
       for `invar.shell.commands.hooks`
 
-
-      Document all findings. Finding remaining issues is a successful retest outcome.
-
-
-      Independence Level: L2'
-    verification: '- Main path: real MCP full guard on `../tasca` completes according
-      to the supported contract
-
-      - Control path: CLI full guard and MCP result are materially consistent for
-      status/summary
-
-      - Failure path: no remaining `guard.py` executable lookup failure and no `invar.shell.commands.hooks`
-      import failure; any new blocker is captured with exact evidence'
+      - Evidence includes exact commands and output excerpts for both paths'
     evidence_template: '## Verification Report
 
 
@@ -9359,6 +9354,7 @@ phases:
       '
     depends_on:
     - mcp-full-guard-field-verify.fix-real-mcp-full-guard-entrypoints
+    - mcp-full-guard-field-verify.fix-cli-comparison-import-path
     agent: integration-verifier
   - id: mcp-full-guard-field-verify.fix-cli-comparison-import-path
     name: fix-cli-comparison-import-path
