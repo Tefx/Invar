@@ -9015,7 +9015,7 @@ phases:
       Gaps/Notes: scoped checks found no remaining mismatch.'
   - id: mcp-full-guard-design.gate-fix-blockers
     name: gate-fix-blockers
-    status: pending
+    status: claimed
     description: 'Fix the remaining blockers that prevent `mcp-full-guard-design.gate`
       from passing.
 
@@ -9069,6 +9069,8 @@ phases:
       - The deferred cross-repo validation requirement is concrete enough for a later
       field-validation step to execute without hidden assumptions'
     agent: python-senior
+    claimed_by: python-senior
+    claimed_at: '2026-03-09T15:55:55.164581+00:00'
   - id: mcp-full-guard-design.gate-retest-blockers
     name: gate-retest-blockers
     status: pending
