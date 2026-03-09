@@ -9268,6 +9268,58 @@ phases:
 
       - `shell_complexity_debt` no longer blocks this merge path'
     agent: python-senior
+  - id: mcp-full-guard-design.verify-shell-complexity-debt-precondition
+    name: verify-shell-complexity-debt-precondition
+    status: pending
+    description: 'As an INDEPENDENT TESTER (`integration-verifier`), validate that
+      the shell-complexity remediation actually clears the pre-commit full-guard blocker
+      for changes touching `src/invar/core/rules.py`.
+
+
+      YOUR GOAL IS TO FIND PROBLEMS, not to confirm it works.
+
+
+      Test for:
+
+      - Happy path: the full-guard invocation exercised by the smart-guard rule-file
+      path completes without a blocking `shell_complexity_debt` error
+
+      - Edge cases: remaining complexity warnings stay at or below the non-blocking
+      threshold, or the accepted justifications are honored by the current implementation
+
+      - Error scenarios: stale justifications, wrong warning counts, or a mismatch
+      between targeted remediation and the actual pre-commit full-guard path
+
+
+      Document ALL findings. A test that discovers issues is a SUCCESS.
+
+      A test that finds nothing must justify the coverage achieved.
+
+
+      Independence Level: L1'
+    verification: '- Main path: the exact full-guard/pre-commit path triggered by
+      `src/invar/core/rules.py` changes is exercised and no longer fails on `shell_complexity_debt`
+
+      - Failure path: if debt still blocks, the evidence identifies the remaining
+      warnings or unsupported justification path precisely enough for a follow-up
+      fix
+
+      - Proof: actual command/output for the guard path is captured, not only a summary'
+    evidence_template: "## Verification Report\n\n**Tester**: integration-verifier\
+      \ (independent of implementation)\n**Scope**: shell complexity debt merge prerequisite\
+      \ for `mcp-full-guard-design.gate-fix-blockers`\n**Independence Level**: L1\n\
+      \n### Test Execution\n- Commands executed:\n  ```\n  <exact full-guard / pre-commit\
+      \ command for the `src/invar/core/rules.py` path>\n  ```\n- Output summary:\n\
+      \  <key lines, including warning count and whether `shell_complexity_debt` fired>\n\
+      \n### Issues Found\n\n| Severity | Description | Location | Reproduction |\n\
+      | -------- | ----------- | -------- | ------------ |\n| blocker | <if still\
+      \ blocked> | <file:line or command> | <steps> |\n\n### Coverage Assessment\n\
+      - Happy path verified: ✅/❌\n- Edge cases tested: <list>\n- NOT tested: <gaps>\n\
+      \n### Verdict\n- [ ] PASS\n- [ ] ISSUES_FOUND\n- [ ] INCOMPLETE\n\n**Confidence**:\
+      \ high/medium/low"
+    depends_on:
+    - mcp-full-guard-design.remediate-shell-complexity-debt-precondition
+    agent: integration-verifier
 - id: mcp-full-guard-implement
   name: MCP Full Guard Implementation
   status: done
