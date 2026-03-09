@@ -10401,6 +10401,79 @@ phases:
     depends_on:
     - mcp-full-guard-field-verify.review-completed-large-repo-mcp-full-guard-evidence
     agent: integration-verifier
+  - id: mcp-full-guard-field-verify.review-corrected-completed-large-repo-mcp-full-guard-evidence
+    name: review-corrected-completed-large-repo-mcp-full-guard-evidence
+    status: pending
+    description: 'As an INDEPENDENT REVIEWER (`gate-reviewer`), assess whether the
+      corrected completed-evidence artifact resolves the provenance blocker for large-repo
+      MCP full-guard validation.
+
+
+      prior_loop: [mcp-full-guard-field-verify.review-completed-large-repo-mcp-full-guard-evidence]
+
+      remaining_blocker: follow-up review found blocker because evidence provenance
+      still used wrong worktree-path references and lacked raw outputs for claimed
+      context-proof commands.
+
+      why_new_loop: a fresh independent review is required after focused evidence
+      correction so the phase gate depends on corrected provenance evidence rather
+      than the failed review alone.
+
+
+      Review criteria:
+
+      1. Corrected artifact references only the intended large-repo target context
+
+      2. Raw outputs are present for each claimed context-proof command
+
+      3. Evidence provenance is traceable from command to output to artifact without
+      worktree-path ambiguity
+
+      4. Prior evidence history is preserved and the correction stays narrowly scoped'
+    verification: '- Independent review confirms no worktree-path ambiguity remains
+
+      - Independent review confirms raw outputs exist for each claimed context-proof
+      command
+
+      - Any residual evidence limitations are explicit and non-blocking'
+    evidence_template: '## Follow-up Evidence Review
+
+
+      **Reviewer**: gate-reviewer
+
+      **Scope**: corrected completed-evidence artifact provenance
+
+
+      ### Checklist
+
+      - [ ] Correct target context only
+
+      - [ ] Raw command outputs attached
+
+      - [ ] No worktree-path ambiguity remains
+
+      - [ ] Prior history preserved
+
+
+      ### Findings
+
+      | Severity | Description | Evidence location | Blocking? |
+
+      | --- | --- | --- | --- |
+
+      | blocker | <issue or none> | <artifact/path> | YES/NO |
+
+      | should_fix | <issue or none> | <artifact/path> | YES/NO |
+
+
+      ### Verdict
+
+      - [ ] OPEN: corrected evidence is sufficient
+
+      - [ ] BLOCKED: provenance or raw-output gaps remain'
+    depends_on:
+    - mcp-full-guard-field-verify.correct-completed-large-repo-mcp-full-guard-evidence-provenance
+    agent: gate-reviewer
 - id: da-while-repro
   name: dead_assign While Repros
   status: in_progress
