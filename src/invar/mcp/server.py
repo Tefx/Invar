@@ -228,7 +228,7 @@ def _get_guard_wait_tool() -> Tool:
         title="Wait For Guard Run",
         description=(
             "Wait for deferred invar_guard full-scan completion with bounded polling. "
-            "Returns running/complete/failed/cancelled/expired status."
+            "Returns running/complete/failed/cancelled status."
         ),
         inputSchema={
             "type": "object",

@@ -197,13 +197,15 @@ class GuardRunRegistry:
             if run is None:
                 if run_id in self._expired:
                     return {
-                        "status": "expired",
+                        "status": "failed",
                         "run_id": run_id,
+                        "error_kind": "run_expired",
                         "message": "Run state has expired",
                     }
                 return {
-                    "status": "expired",
+                    "status": "failed",
                     "run_id": run_id,
+                    "error_kind": "run_not_found",
                     "message": "Run ID not found",
                 }
             return self._snapshot(run)
@@ -215,13 +217,15 @@ class GuardRunRegistry:
             if run is None:
                 if run_id in self._expired:
                     return {
-                        "status": "expired",
+                        "status": "failed",
                         "run_id": run_id,
+                        "error_kind": "run_expired",
                         "message": "Run state has expired",
                     }
                 return {
-                    "status": "expired",
+                    "status": "failed",
                     "run_id": run_id,
+                    "error_kind": "run_not_found",
                     "message": "Run ID not found",
                 }
 
@@ -238,10 +242,18 @@ class GuardRunRegistry:
             self._cleanup_locked(_utc_now())
             run = self._runs.get(run_id)
             if run is None:
+                if run_id in self._expired:
+                    return {
+                        "status": "failed",
+                        "run_id": run_id,
+                        "error_kind": "run_expired",
+                        "message": "Run state has expired",
+                    }
                 return {
-                    "status": "expired",
+                    "status": "failed",
                     "run_id": run_id,
-                    "message": "Run state has expired",
+                    "error_kind": "run_not_found",
+                    "message": "Run ID not found",
                 }
             return self._snapshot(run)
 

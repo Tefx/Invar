@@ -176,7 +176,7 @@ async def test_guard_run_registry_failed_envelope() -> None:
 
 
 async def test_guard_run_registry_expiry_semantics() -> None:
-    """DX-94: terminal run state expires and reports explicit expiry."""
+    """DX-94: terminal run expiry maps to explicit failed+run_expired envelope."""
     registry = GuardRunRegistry(retention_seconds=0, max_runtime_seconds=30)
 
     async def fake_run_guard_command(cmd: list[str]) -> dict[str, object]:
@@ -196,7 +196,18 @@ async def test_guard_run_registry_expiry_semantics() -> None:
     await asyncio.sleep(0.01)
     expired = await registry.status(run.run_id)
 
-    assert expired["status"] == "expired"
+    assert expired["status"] == "failed"
+    assert expired["error_kind"] == "run_expired"
+
+
+async def test_guard_run_registry_unknown_run_id_semantics() -> None:
+    """DX-94: unknown run IDs map to explicit failed+run_not_found envelope."""
+    registry = GuardRunRegistry(retention_seconds=30, max_runtime_seconds=30)
+
+    unknown = await registry.status("grd_missing")
+
+    assert unknown["status"] == "failed"
+    assert unknown["error_kind"] == "run_not_found"
 
 
 async def test_guard_run_registry_cancellation_semantics_for_stale_run() -> None:

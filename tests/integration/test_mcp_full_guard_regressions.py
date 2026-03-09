@@ -304,7 +304,7 @@ async def test_deferred_run_timeout_returns_cancelled(monkeypatch: pytest.Monkey
 
 
 async def test_deferred_run_expired_status(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Expired run should return explicit expired status."""
+    """Expired run should return explicit failed+run_expired status."""
     registry = GuardRunRegistry(retention_seconds=0, max_runtime_seconds=30)
 
     async def fast_command(cmd):
@@ -328,7 +328,18 @@ async def test_deferred_run_expired_status(monkeypatch: pytest.MonkeyPatch) -> N
     await asyncio.sleep(0.01)
     status = await registry.status(run.run_id)
 
-    assert status["status"] == "expired"
+    assert status["status"] == "failed"
+    assert status["error_kind"] == "run_expired"
+
+
+async def test_unknown_run_id_returns_run_not_found() -> None:
+    """Unknown run IDs should return explicit failed+run_not_found envelope."""
+    registry = GuardRunRegistry(retention_seconds=30, max_runtime_seconds=30)
+
+    status = await registry.status("grd_missing")
+
+    assert status["status"] == "failed"
+    assert status["error_kind"] == "run_not_found"
 
 
 # ============================================================================
