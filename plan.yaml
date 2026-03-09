@@ -11321,7 +11321,7 @@ phases:
       path; local scanner logic is now locked with cross-repo regression coverage.'
   - id: da-while-field.retest-anima-guard-loop-carried-state-repeat
     name: retest-anima-guard-loop-carried-state-repeat
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT TESTER (`integration-verifier`), re-run the exact
       real guard pipeline against `../anima` after the repeated-blocker remediation.
 
@@ -11363,6 +11363,18 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-09T15:37:14.817597+00:00'
+    done_at: '2026-03-09T15:49:13.417871+00:00'
+    evidence: "Artifact:\n- PR: da3c899bc5acfce2a1519bfdca2d62b70705fa4d\nVerification:\n\
+      - Run: `uv run --project \"/Users/tefx/Projects/anima\" invar guard --all \"\
+      /Users/tefx/Projects/anima\"` -> status passed with warnings; all three target\
+      \ dead_assign findings still reproduced.\n- Reproduced messages include:\n \
+      \ - message_history (agent.py:855)\n  - was_awaiting_approval (talk_runtime.py:526)\n\
+      \  - seen_count (inspect_collect.py:555)\nSpec link:\n- da-while-field.retest-anima-guard-loop-carried-state-repeat\n\
+      Commit hash(es): none (verification-only)\nFiles changed: none\nGaps/Notes:\
+      \ blocker remains in real anima environment despite local harness/scanner proofs.\n\
+      Remediation steps created:\n- da-while-field.fix-anima-environment-runtime-parity\n\
+      - da-while-field.retest-anima-guard-runtime-parity\n- da-while-field.gate rewired\
+      \ to new parity retest"
   - id: da-while-field.fix-anima-environment-runtime-parity
     name: fix-anima-environment-runtime-parity
     status: pending
