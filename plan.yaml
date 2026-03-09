@@ -10340,6 +10340,67 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-09T15:37:55.459297+00:00'
+  - id: mcp-full-guard-field-verify.correct-completed-large-repo-mcp-full-guard-evidence-provenance
+    name: correct-completed-large-repo-mcp-full-guard-evidence-provenance
+    status: pending
+    description: 'Focused evidence remediation for `mcp-full-guard-field-verify.review-completed-large-repo-mcp-full-guard-evidence`.
+
+
+      prior_loop: [mcp-full-guard-field-verify.capture-completed-large-repo-mcp-full-guard-evidence,
+      mcp-full-guard-field-verify.review-completed-large-repo-mcp-full-guard-evidence]
+
+      remaining_blocker: the completed-evidence artifact still contains wrong worktree-path
+      references and omits raw outputs for the claimed context-proof commands, so
+      provenance remains ambiguous.
+
+      why_new_loop: the blocker is narrowed to artifact provenance and missing raw
+      command output, so a focused evidence-correction step is safer than replacing
+      prior validation history.
+
+
+      Requirements:
+
+      - Regenerate the completed-evidence artifact using the original intended large-repo
+      target context, not a temporary worktree path
+
+      - Correct every path reference so artifact provenance is unambiguous and consistent
+      end to end
+
+      - Include raw stdout/stderr or captured artifact payloads for each claimed context-proof
+      command rather than summaries alone
+
+      - Explicitly map each raw output to the command executed and the target path
+      context it proves
+
+      - Preserve prior history; do not broaden scope into new implementation changes
+      or new validation objectives
+
+
+      Out of scope:
+
+      - No product-code changes
+
+      - No new broad field-validation rerun beyond what is required to regenerate
+      correct provenance evidence'
+    verification: '- Corrected artifact uses only the intended large-repo target context
+      and no ambiguous worktree-local path references remain
+
+      - Raw outputs are attached for each claimed context-proof command
+
+      - Evidence clearly distinguishes command, target path, and observed output
+
+      - Prior validation history remains intact and referenced'
+    evidence_template: "## Evidence Correction Report\n\n**Corrected artifact**: <path\
+      \ or attachment>\n**Target context**: <original large-repo path>\n**Incorrect\
+      \ path(s) removed**: <list>\n\n### Raw command outputs\n- Command: `<exact command>`\n\
+      \  - Target context: `<path>`\n  - Raw output:\n    ```\n    <stdout/stderr\
+      \ or artifact payload>\n    ```\n\n### Provenance check\n- [ ] No worktree-path\
+      \ ambiguity remains\n- [ ] Every claimed context-proof command has raw output\
+      \ attached\n- [ ] Artifact references prior evidence history without rewriting\
+      \ it"
+    depends_on:
+    - mcp-full-guard-field-verify.review-completed-large-repo-mcp-full-guard-evidence
+    agent: integration-verifier
 - id: da-while-repro
   name: dead_assign While Repros
   status: in_progress
