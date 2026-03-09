@@ -10688,7 +10688,7 @@ phases:
       Gaps/Notes: preserved prior run-id/timestamp history while correcting provenance.'
   - id: mcp-full-guard-field-verify.review-corrected-completed-large-repo-mcp-full-guard-evidence
     name: review-corrected-completed-large-repo-mcp-full-guard-evidence
-    status: rejected
+    status: claimed
     description: 'As an INDEPENDENT REVIEWER (`gate-reviewer`), assess whether the
       corrected completed-evidence artifact resolves the provenance blocker for large-repo
       MCP full-guard validation.
@@ -10760,7 +10760,7 @@ phases:
     - mcp-full-guard-field-verify.correct-completed-large-repo-mcp-full-guard-evidence-provenance
     agent: gate-reviewer
     claimed_by: gate-reviewer
-    claimed_at: '2026-03-09T16:36:03.705046+00:00'
+    claimed_at: '2026-03-09T17:13:08.942757+00:00'
     done_at: '2026-03-09T17:04:02.217757+00:00'
     rejection_reason: Artifact provenance updated to remove .vectl/worktrees references;
       re-review needed against new artifact content.
