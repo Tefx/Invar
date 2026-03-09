@@ -9923,3 +9923,33 @@ phases:
 - id: release-readiness
   name: Release Readiness
   status: pending
+  steps:
+  - id: release-readiness.freeze-release-candidate
+    name: freeze-release-candidate
+    status: pending
+    description: 'Freeze: lock the candidate release snapshot after the current MCP
+      full-guard and dead_assign field-validation chains complete, before any packaging
+      L2 validation begins.
+
+
+      Release boundary inputs that must be closed before this freeze:
+
+      - `mcp-full-guard-implement` fix/retest/gate chain complete
+
+      - `mcp-full-guard-field-verify` fix/retest/review/gate chain complete
+
+      - `da-while-*` real-world retest/freeze/gate chain complete
+
+
+      This freeze exists so packaging evidence is gathered from the exact candidate
+      intended for publish, rather than from a moving source tree.'
+    verification: '- Record `git rev-parse HEAD`
+
+      - Record `git status` clean
+
+      - Record packaging environment declaration (`python`, `uv`, `uvx`, build backend
+      versions)
+
+      - State explicitly that no code changes are allowed until packaging smoke validation
+      completes'
+    agent: integration-verifier
