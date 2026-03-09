@@ -11710,7 +11710,7 @@ phases:
       Gaps/Notes: verification-only rerun accepted; no gate-side code edits performed.'
 - id: da-while-field
   name: dead_assign While Field Validation
-  status: in_progress
+  status: done
   steps:
   - id: da-while-field.freeze-anima-snapshot
     name: freeze-anima-snapshot
@@ -11827,7 +11827,7 @@ phases:
       and da-while-field.retest-anima-guard; phase gate updated to require retest.'
   - id: da-while-field.gate
     name: da-while-field.gate
-    status: claimed
+    status: done
     description: 'Gate review: verify the real anima field evidence closes the confirmed
       dead_assign false positives.
 
@@ -11856,7 +11856,34 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-09T17:21:40.067126+00:00'
-    done_at: '2026-03-09T17:07:42.548863+00:00'
+    done_at: '2026-03-09T17:21:48.006058+00:00'
+    evidence: 'Artifact:
+
+      - Evidence: da-while-field.retest-anima-guard-with-invar-toolchain (integration-verifier
+      L2)
+
+
+      Verification:
+
+      - Run: `uv run --project "/Users/tefx/Projects/Invar" invar guard --all "/Users/tefx/Projects/anima"`
+      -> `status: passed`, `files_checked: 84`, and no `dead_assign` findings.
+
+      - Target checks: `message_history|was_awaiting_approval|seen_count` all NOT_FOUND
+      in captured output; `dead_assign` NOT_FOUND.
+
+
+      Decision:
+
+      - Gate criteria satisfied under corrected invocation requirement (fixed Invar
+      toolchain executed against anima).
+
+      - Remaining findings are unrelated warnings and explicitly not part of the dead_assign
+      while-loop FP slice.
+
+
+      Spec link:
+
+      - plan:da-while-field.gate'
     rejection_reason: Gate evidence shows confirmed false positives NOT cleared; do
       not advance phase
     rejection_history:
