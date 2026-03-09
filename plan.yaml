@@ -9738,7 +9738,7 @@ phases:
       - da-while-repro.gate rewired to depend on retest step'
   - id: da-while-repro.da-while-repro-realign-focused-repros
     name: da-while-repro.realign-focused-repros
-    status: pending
+    status: claimed
     description: 'Repair the focused while-loop reproductions in `tests/core/test_dead_assign.py`
       so the pre-fix snapshot `cdf191a1` reproduces the three intended false positives
       while keeping the negative control a true positive.
@@ -9776,6 +9776,8 @@ phases:
     depends_on:
     - da-while-repro.verify-pre-fix-failures
     agent: python-executor
+    claimed_by: python-executor
+    claimed_at: '2026-03-09T14:24:20.289875+00:00'
   - id: da-while-repro.da-while-repro-retest-pre-fix-repros
     name: da-while-repro.retest-pre-fix-repros
     status: pending
