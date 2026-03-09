@@ -12619,7 +12619,7 @@ phases:
       \ no blocker under requested criteria."
   - id: da-while-field.review-anima-retest-with-invar-toolchain
     name: review-anima-retest-with-invar-toolchain
-    status: pending
+    status: claimed
     description: 'As an INDEPENDENT REVIEWER (gate-reviewer), review the corrected
       anima retest evidence and confirm: (1) the fixed Invar analyzer actually ran,
       (2) the three tracked dead_assign false positives are cleared, (3) any remaining
@@ -12628,6 +12628,8 @@ phases:
       or if output is incomplete.'
     depends_on:
     - da-while-field.retest-anima-guard-with-invar-toolchain
+    claimed_by: gate-reviewer
+    claimed_at: '2026-03-09T17:21:12.183916+00:00'
 - id: release-readiness
   name: Release Readiness
   status: locked
