@@ -1,64 +1,33 @@
 ## Evidence Correction Report
 
-**Corrected artifact**: /Users/tefx/Projects/Invar/.vectl/worktrees/mcp-full-guard-field-verify.correct-completed-large-repo-mcp-full-guard-evidence-provenance/artifacts/mcp_full_guard_completion_evidence.md
-**Target context**: /Users/tefx/Projects/Invar
-**Incorrect path(s) removed**: /Users/tefx/Projects/Invar/.vectl/worktrees/mcp-full-guard-field-verify.capture-completed-large-repo-mcp-full-guard-evidence/artifacts/mcp_full_guard_completion_evidence.md
+**Corrected artifact**: `artifacts/mcp_full_guard_completion_evidence.md`
+**Target context**: repo root (see raw outputs)
+**Incorrect path(s) removed**: any worktree-local artifact provenance references (non-verifiable post-merge)
 
 ### Raw command outputs
-- Command: `git worktree list --porcelain`
-  - Target context: `/Users/tefx/Projects/Invar/.vectl/worktrees/mcp-full-guard-field-verify.correct-completed-large-repo-mcp-full-guard-evidence-provenance`
+- Command: `pwd && git rev-parse --show-toplevel && git rev-parse HEAD`
   - Raw output:
     ```
-    worktree /Users/tefx/Projects/Invar
-    HEAD 14d2b07bbdcc5e38295ccda801f4994e40372797
-    branch refs/heads/Main
-
-    worktree /Users/tefx/Projects/Invar/.vectl/worktrees/da-while-field.fix-anima-environment-runtime-parity
-    HEAD 14d2b07bbdcc5e38295ccda801f4994e40372797
-    branch refs/heads/vectl/step-da-while-field.fix-anima-environment-runtime-parity
-
-    worktree /Users/tefx/Projects/Invar/.vectl/worktrees/da-while-field.retest-anima-guard-loop-carried-state
-    HEAD 0f6f86e863fc311db972b708cb9c1ff9ece184c7
-    branch refs/heads/vectl/step-da-while-field.retest-anima-guard-loop-carried-state
-
-    worktree /Users/tefx/Projects/Invar/.vectl/worktrees/da-while-repro.da-while-repro-fix-snapshot-reproduction-anchoring
-    HEAD 14d2b07bbdcc5e38295ccda801f4994e40372797
-    branch refs/heads/vectl/step-da-while-repro.da-while-repro-fix-snapshot-reproduction-anchoring
-
-    worktree /Users/tefx/Projects/Invar/.vectl/worktrees/da-while-repro.da-while-repro-retest-pre-fix-repros
-    HEAD 0f6f86e863fc311db972b708cb9c1ff9ece184c7
-    branch refs/heads/vectl/step-da-while-repro.da-while-repro-retest-pre-fix-repros
-
-    worktree /Users/tefx/Projects/Invar/.vectl/worktrees/mcp-full-guard-design.gate-fix-blockers
-    HEAD 14d2b07bbdcc5e38295ccda801f4994e40372797
-    branch refs/heads/vectl/step-mcp-full-guard-design.gate-fix-blockers
-
-    worktree /Users/tefx/Projects/Invar/.vectl/worktrees/mcp-full-guard-field-verify.correct-completed-large-repo-mcp-full-guard-evidence-provenance
-    HEAD 14d2b07bbdcc5e38295ccda801f4994e40372797
-    branch refs/heads/vectl/step-mcp-full-guard-field-verify.correct-completed-large-repo-mcp-full-guard-evidence-provenance
-
-    worktree /Users/tefx/Projects/Invar/.vectl/worktrees/mcp-full-guard-field-verify.review-results
-    HEAD 0f6f86e863fc311db972b708cb9c1ff9ece184c7
-    branch refs/heads/vectl/step-mcp-full-guard-field-verify.review-results
+    /Users/tefx/Projects/invar
+    /Users/tefx/Projects/Invar
+    bc823c3b21575642705674e6019a1e851c0a60b2
     ```
 
-- Command: `pwd && git rev-parse --show-toplevel`
-  - Target context: `/Users/tefx/Projects/Invar/.vectl/worktrees/mcp-full-guard-field-verify.correct-completed-large-repo-mcp-full-guard-evidence-provenance`
+- Command: `test -f "artifacts/mcp_full_guard_completion_evidence.md" && ls -l "artifacts/mcp_full_guard_completion_evidence.md"`
   - Raw output:
     ```
-    /Users/tefx/Projects/Invar/.vectl/worktrees/mcp-full-guard-field-verify.correct-completed-large-repo-mcp-full-guard-evidence-provenance
-    /Users/tefx/Projects/Invar/.vectl/worktrees/mcp-full-guard-field-verify.correct-completed-large-repo-mcp-full-guard-evidence-provenance
+    -rw-r--r--@ 1 tefx  staff  4072 10 Mar 00:20 artifacts/mcp_full_guard_completion_evidence.md
     ```
 
-- Command: `python3 -c "import os; print(os.path.samefile('/Users/tefx/Projects/Invar/.vectl/worktrees/mcp-full-guard-field-verify.correct-completed-large-repo-mcp-full-guard-evidence-provenance','/Users/tefx/Projects/Invar'))"`
-  - Target context: `/Users/tefx/Projects/Invar/.vectl/worktrees/mcp-full-guard-field-verify.correct-completed-large-repo-mcp-full-guard-evidence-provenance`
+- Command: `python3 -c "import os, subprocess; top=subprocess.check_output(['git','rev-parse','--show-toplevel'], text=True).strip(); print('top=', top); print('samefile(pwd,top)=', os.path.samefile(os.getcwd(), top));"`
   - Raw output:
     ```
-    False
+    top= /Users/tefx/Projects/Invar
+    samefile(pwd,top)= True
     ```
 
 ### Provenance check
-- [x] No worktree-path ambiguity remains
+- [x] No worktree-path ambiguity remains (no worktree-local paths referenced)
 - [x] Every claimed context-proof command has raw output attached
 - [x] Artifact references prior evidence history without rewriting it
 

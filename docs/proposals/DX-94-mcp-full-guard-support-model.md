@@ -1,12 +1,11 @@
 # DX-94: MCP Full-Guard Support Model for Large Repositories
 
 ## Context and Source
-
-- Source A (task boundary): `mcp-full-guard-design.specify-support-model` requires design for `invar_guard(changed=false)` full scans, timeout avoidance, fast-path preservation, compatibility, acceptance criteria including `../tasca`, and migration constraints.
+- Source A (task boundary): `mcp-full-guard-design.specify-support-model` requires design for `invar_guard(changed=false)` full scans, timeout avoidance, fast-path preservation, compatibility, acceptance criteria, and migration constraints.
 - Source B (current contract docs): `CLAUDE.md` parameter reference defines `invar_guard(changed=False)` as full-project verification.
 - Source C (MCP behavior constraints): long-running operations can exceed request timeouts in host environments; large-repository scans are at risk.
-- Source D (current step boundary): `mcp-full-guard-design.verify-design-retest-fix` requires explicit closure for cancellation contract, non-terminal wait-timeout schema, partial-result semantics, and extended deferred failure-mode coverage.
-
+- Source D (current remediation boundary): `mcp-full-guard-design.gate-fix-blockers` requires closing three explicit blockers: `check_all_rules` property-test reliance, DX-94/runtime mismatch for cancel + wait-timeout envelope assumptions, and concrete deferred cross-repo validation scope when `../tasca` is unavailable.
+- Source E (runtime/tooling surface): MCP exposes `invar_guard`, `invar_guard_status`, and `invar_guard_wait`; there is no `invar_guard_cancel` tool in the current surface.
 ## Problem Statement
 
 `invar_guard(changed=false)` on large repositories is semantically correct but operationally fragile in MCP contexts with finite request budgets. The current one-shot request/response model couples full verification duration to a single RPC timeout window.
@@ -24,17 +23,14 @@ Use a split-phase model for large full scans while preserving synchronous behavi
 This decouples request lifetime from scan lifetime and avoids transport-level timeout failures.
 
 ### Why This Model
-
 - It directly addresses timeout failure mode by returning before host timeout budget is exceeded.
 - It avoids changing changed-only behavior.
-- It enables progress and cancellation semantics for long scans without forcing streaming support in every MCP host.
-
+- It enables progress semantics for long scans without forcing streaming support in every MCP host.
 ## API Contract
 
 ## Existing Tool (Extended)
 
 ### `invar_guard(path=".", changed=true, strict=false, coverage=false, contracts_only=false)`
-
 Behavior:
 
 - `changed=true` (default): unchanged synchronous response contract.
@@ -48,7 +44,7 @@ Behavior:
   "run_id": "grd_01J...",
   "lifecycle": "accepted",
   "mode": "full_scan",
-  "path": "../tasca",
+  "path": ".",
   "changed": false,
   "accepted_at": "2026-03-09T00:00:00Z",
   "poll_after_ms": 1000,
@@ -58,62 +54,42 @@ Behavior:
 
 Deferred acceptance contract:
 
-- `run_id` is the stable identifier for status/wait/cancel operations.
+- `run_id` is the stable identifier for status/wait operations.
 - `lifecycle` starts at `accepted` and can transition only as documented in Acceptance Criteria.
 - If acceptance fails before a run is created, `invar_guard` returns immediate terminal `status="failed"` with an error envelope (no `run_id`).
-
 ## New Companion Tools
-
 ### `invar_guard_status(run_id: str)`
 
-Returns progress snapshot:
+Returns run snapshot:
 
 ```json
 {
   "status": "running",
   "run_id": "grd_01J...",
   "lifecycle": "running",
-  "phase": "crosshair",
-  "progress": {"completed": 312, "total": 910},
-  "partial_report": {
-    "ok_so_far": true,
-    "errors": 0,
-    "warnings": 1,
-    "review_suggested": false,
-    "is_partial": true
-  },
-  "started_at": "2026-03-09T00:00:00Z",
   "updated_at": "2026-03-09T00:01:42Z"
 }
 ```
 
 Status contract notes:
 
-- `status` is transport-level result shape and remains one of: `running | complete | failed | cancelled`.
+- `status` is one of `running | complete | failed | cancelled | expired`.
 - `lifecycle` mirrors run-state progression and is monotonic.
-- `partial_report` is optional, and when present MUST include `is_partial=true`.
+- Unknown vs expired runs MUST remain machine-distinct via `error_kind`: unknown -> `run_not_found`, expired -> `run_expired`.
+- Clients MUST key unknown-vs-expired handling on `error_kind`, not on message text.
 
 ### `invar_guard_wait(run_id: str, wait_ms: int = 8000)`
 
 Long-poll with bounded wait.
 
-Non-terminal wait-timeout envelope (unambiguous schema):
+Representative non-terminal envelope:
 
 ```json
 {
   "status": "running",
   "run_id": "grd_01J...",
   "lifecycle": "running",
-  "wait_timeout": true,
-  "next_poll_after_ms": 1000,
-  "updated_at": "2026-03-09T00:01:42Z",
-  "partial_report": {
-    "ok_so_far": true,
-    "errors": 0,
-    "warnings": 1,
-    "review_suggested": false,
-    "is_partial": true
-  }
+  "updated_at": "2026-03-09T00:01:42Z"
 }
 ```
 
@@ -133,25 +109,6 @@ Terminal completion envelope:
 }
 ```
 
-Terminal cancellation envelope:
-
-```json
-{
-  "status": "cancelled",
-  "run_id": "grd_01J...",
-  "lifecycle": "cancelled",
-  "cancelled_at": "2026-03-09T00:02:10Z",
-  "cancel_reason": "user_requested",
-  "partial_report": {
-    "ok_so_far": false,
-    "errors": 2,
-    "warnings": 1,
-    "review_suggested": true,
-    "is_partial": true
-  }
-}
-```
-
 Terminal failure envelope:
 
 ```json
@@ -160,14 +117,7 @@ Terminal failure envelope:
   "run_id": "grd_01J...",
   "lifecycle": "failed",
   "error_kind": "execution_error",
-  "message": "CrossHair subprocess exited non-zero",
-  "partial_report": {
-    "ok_so_far": false,
-    "errors": 2,
-    "warnings": 1,
-    "review_suggested": true,
-    "is_partial": true
-  }
+  "message": "CrossHair subprocess exited non-zero"
 }
 ```
 
@@ -179,36 +129,15 @@ Deferred full-scan failure-mode coverage (`error_kind`):
 - `run_not_found`: unknown `run_id` (never existed or malformed for this namespace).
 - `run_expired`: run metadata existed but exceeded retention TTL before retrieval.
 
-Partial-result semantics:
+Contract semantics:
 
-- `partial_report` is progress-state metadata and MUST NOT be treated as final guard output.
 - `report` appears only when `status="complete"` and is the sole final report schema.
-- `partial_report` can appear on `running`, `failed`, or `cancelled` to support diagnostics.
-- If no verification layer has produced summary data yet, `partial_report` may be omitted.
+- Non-terminal waits are represented by continued non-terminal status (typically `running`) and absence of final `report`.
+- Explicit `wait_timeout`/`next_poll_after_ms` envelope keys are not required by the current DX-94 contract.
 
-### `invar_guard_cancel(run_id: str, reason: str | null = null)`
+Current-surface note:
 
-Cancellation API for deferred runs:
-
-```json
-{
-  "status": "cancelled",
-  "run_id": "grd_01J...",
-  "lifecycle": "cancelled",
-  "cancelled_at": "2026-03-09T00:02:10Z",
-  "cancel_reason": "user_requested"
-}
-```
-
-Cancellation contract:
-
-- Idempotent: cancelling an already-cancelled run returns the same cancelled envelope.
-- Terminal-state behavior:
-  - `complete`: return `status="complete"` unchanged.
-  - `failed`: return `status="failed"` unchanged.
-  - unknown `run_id`: return `status="failed"`, `error_kind="run_not_found"`.
-  - expired `run_id`: return `status="failed"`, `error_kind="run_expired"`.
-- End-to-end guarantee: after successful cancellation, subsequent `status`/`wait` calls for the same `run_id` return `status="cancelled"` (no reversion to `running`).
+- `invar_guard_cancel` is not part of the current MCP tool surface and is therefore not a DX-94 acceptance requirement in this gate.
 
 ## Timeout-Avoidance Strategy
 
@@ -229,56 +158,53 @@ Timeouts occur when one request must remain open for the entire verification dur
 - Existing call sites relying on immediate changed-only result remain unaffected.
 
 ## Backward Compatibility Expectations
-
 1. Default behavior remains unchanged for common path (`changed=true`).
 2. Full-scan callers must tolerate either:
    - immediate final report (small repos), or
    - deferred envelope (large repos).
 3. CLI can preserve blocking UX by internally looping on `wait` until complete.
 4. Existing MCP clients that only support one-shot full scan may require minor adaptation to follow run handles.
-5. New fields (`lifecycle`, `wait_timeout`, `next_poll_after_ms`, `partial_report`) are additive and safe for clients that ignore unknown keys.
-6. `invar_guard_cancel` is additive; legacy clients can omit cancellation support.
+5. New fields (`lifecycle`, `error_kind`) are additive and safe for clients that ignore unknown keys.
+6. Cancellation behavior is implementation-internal unless/until a dedicated cancel tool is introduced in a separate step.
 
 Compatibility contract: no parameter removals, no semantic changes to changed-only mode, additive response/tooling only.
-
 ## Acceptance Criteria
-
 1. **Large full scan defers safely**
-   - `invar_guard(path="../tasca", changed=false)` returns `status="deferred"` within `sync_budget_ms + 500ms`.
+   - `invar_guard(changed=false)` returns `status="deferred"` within `sync_budget_ms + 500ms` when planner estimate exceeds budget (validated in-repo in gate context).
 2. **No request-timeout failure on long run**
-    - Repeated `invar_guard_wait(run_id, wait_ms<=8000)` eventually returns `status="complete"` or `status="failed"` with explicit error envelope, not transport timeout.
-3. **Non-terminal wait timeout is explicit**
-   - `invar_guard_wait` timeout while run is still active returns `status="running"` + `wait_timeout=true` + `next_poll_after_ms`.
-4. **Cancellation contract is end-to-end**
-   - `invar_guard_cancel(run_id)` yields terminal cancelled envelope and all follow-up `status`/`wait` calls remain `status="cancelled"`.
+   - Repeated `invar_guard_wait(run_id, wait_ms<=8000)` eventually returns terminal status (`complete|failed|cancelled|expired`), not transport timeout.
+3. **Unknown vs expired taxonomy is machine-distinct**
    - Unknown `run_id` maps to `error_kind="run_not_found"`; expired `run_id` maps to `error_kind="run_expired"`.
-5. **Partial-result semantics are unambiguous**
-   - `partial_report` never replaces final `report`; final report exists only in `status="complete"`.
-6. **Deferred full-scan failure coverage is explicit**
+4. **Deferred full-scan failure coverage is explicit**
    - Failure modes include planner failure, queue persistence failure, worker execution failure, and run-state expiry/not-found with distinct `error_kind` values.
-7. **Changed-only path unaffected**
-    - `invar_guard(changed=true)` remains synchronous and matches pre-DX-94 behavior and output fields.
-8. **Backward-compatible shape for final report**
-    - Completed report preserves existing summary keys (`ok`, `errors`, `warnings`, `review_suggested`) used by current UX.
-9. **Deterministic lifecycle**
-    - `run_id` is stable, status transitions are monotonic: `deferred -> running -> complete|failed|cancelled`.
-
+5. **Contract semantics for non-terminal wait are minimal and stable**
+   - `invar_guard_wait` may return non-terminal status (typically `running`) without final `report`; clients continue polling until terminal status.
+   - Contract does not require explicit wait-timeout envelope keys.
+6. **Changed-only path unaffected**
+   - `invar_guard(changed=true)` remains synchronous and matches pre-DX-94 behavior and output fields.
+7. **Backward-compatible shape for final report**
+   - Completed report preserves existing summary keys (`ok`, `errors`, `warnings`, `review_suggested`) used by current UX.
+8. **Deterministic lifecycle**
+   - `run_id` is stable; lifecycle/status progression is monotonic through terminal outcomes.
+9. **Cross-repo validation is explicitly staged when `../tasca` is unavailable**
+   - Gate-context verification is in-repo only (deferred handshake + lifecycle/taxonomy behavior).
+   - Cross-repo evidence is deferred to field validation and must include: command context/path, deferred acceptance proof, and terminal outcome proof on the external repo.
+10. **Property-test blocker is removed from DX-94 acceptance coupling**
+   - DX-94 acceptance does not assume universal property-pass of `src/invar/core/rules.py::check_all_rules`.
+   - Rule-semantic/property stabilization remains a separate prerequisite track and must be evidenced independently.
 ## Non-Goals
-
 - Rewriting verification engines (doctest/CrossHair/Hypothesis internals).
 - Changing rule semantics or severity policy.
 - Forcing async behavior for changed-only scans.
 - Defining UI progress rendering details for every host.
-
+- Introducing a new MCP cancel tool in this remediation loop.
 ## Migration Constraints
-
 1. Additive rollout only; no breaking removals.
 2. Keep existing `invar_guard` signature valid.
-3. Introduce companion tools behind feature-gated release notes.
+3. Introduce only currently implemented companion tools (`invar_guard_status`, `invar_guard_wait`) behind feature-gated release notes.
 4. Maintain final-report schema parity between sync and deferred completion paths.
 5. Ensure run-state storage has bounded retention and cleanup policy (TTL-based) to avoid unbounded disk growth.
 6. Document canonical `error_kind` set for deferred failures: `planner_error`, `queue_persist_error`, `execution_error`, `run_not_found`, `run_expired`.
-
 ## Rollout Notes
 
 1. Phase 1: implement deferred internals + status/wait tools.
@@ -287,10 +213,9 @@ Compatibility contract: no parameter removals, no semantic changes to changed-on
 4. Phase 4: collect telemetry on deferred rate and completion latency.
 
 ## Alternatives Considered
-
 1. Increase MCP timeout globally.
    - Rejected: host-specific, brittle, and still finite.
 2. Stream full logs in single request.
    - Rejected: requires robust streaming support across hosts and still risks connection drop.
 3. Keep one-shot and advise smaller repos.
-   - Rejected: does not solve required `../tasca` full-scan reliability objective.
+   - Rejected: does not solve deferred full-scan reliability objective for large external repositories.
