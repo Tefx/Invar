@@ -9189,27 +9189,21 @@ phases:
     description: 'HIGH priority blocker fix for `mcp-full-guard-field-verify.run-real-mcp-full-guard`.
 
 
-      Resolve the broken guard execution and packaging entrypoint path uncovered by
-      field validation.
+      Resolve the MCP full-guard execution-path blocker only.
 
 
-      Blockers to fix:
+      Blocker to fix:
 
       - real MCP full-guard path fails on a large repo with `execution_error: An executable
       named ''guard.py'' is not provided by package ''invar-tools''`
-
-      - CLI comparison path fails with `ModuleNotFoundError: invar.shell.commands.hooks`
 
 
       Likely touch paths:
 
       - MCP guard execution path that resolves or invokes the guard entrypoint
 
-      - `pyproject.toml` or equivalent packaging/console-script configuration for
-      `invar-tools`
-
-      - `src/invar/shell/commands/guard.py` and any related import/wiring modules
-      such as `src/invar/shell/commands/hooks.py`
+      - MCP-side command construction or module/console-script selection used for
+      full-guard execution
 
 
       Requirements:
@@ -9217,24 +9211,20 @@ phases:
       - make the supported MCP full-guard execution path invoke a valid packaged entrypoint/module
       rather than a missing `guard.py` executable
 
-      - restore the CLI comparison path used by field validation so `uvx invar-tools
-      guard --all` resolves imports correctly
+      - keep the fix scoped to MCP execution-path resolution for this validation slice
 
-      - keep the fix scoped to guard execution and packaging/wiring for this validation
-      slice; defer unrelated command cleanup
+      - do not change CLI/package import wiring in this step; that is handled by a
+      separate sibling fix step
 
-      - capture the exact file(s) changed and why the previous entrypoint/import path
-      was invalid
-
-      '
+      - capture the exact file(s) changed and why the previous entrypoint path was
+      invalid'
     verification: '- Main path: targeted regression proves the MCP full-guard execution
       path no longer requests a non-existent `guard.py` executable
 
-      - Failure path: CLI comparison invocation no longer raises `ModuleNotFoundError`
-      for `invar.shell.commands.hooks`
+      - Proof: updated MCP command/entrypoint resolution is identified explicitly
 
-      - Proof: updated packaging/entrypoint wiring is identified explicitly, and downstream
-      real-path retest is ready'
+      - Downstream real-path retest is ready once the sibling CLI import-path fix
+      also lands'
     evidence_template: '## Blocker Fix Evidence
 
 
