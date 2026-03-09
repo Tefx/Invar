@@ -9792,8 +9792,9 @@ phases:
       - Evidence covers both the MCP execution-path fix and the CLI comparison-path
       import/package fix
 
-      - The follow-up completed-evidence review confirms the large-repo MCP full-guard
-      run was observed to terminal status on the intended target context
+      - The corrected follow-up evidence review confirms the large-repo MCP full-guard
+      run was observed to terminal status on the intended target context with unambiguous
+      path provenance and raw context-proof outputs
 
       - Ready for downstream release-readiness once dependent phases complete'
     depends_on:
@@ -9803,7 +9804,7 @@ phases:
     - mcp-full-guard-field-verify.fix-cli-comparison-import-path
     - mcp-full-guard-field-verify.retest-real-mcp-full-guard
     - mcp-full-guard-field-verify.review-results
-    - mcp-full-guard-field-verify.review-completed-large-repo-mcp-full-guard-evidence
+    - mcp-full-guard-field-verify.review-corrected-completed-large-repo-mcp-full-guard-evidence
     agent: gate-reviewer
   - id: mcp-full-guard-field-verify.fix-real-mcp-full-guard-entrypoints
     name: fix-real-mcp-full-guard-entrypoints
