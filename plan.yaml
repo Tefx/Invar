@@ -8452,6 +8452,7 @@ phases:
     - mcp-full-guard-design.verify-design-retest
     - mcp-full-guard-design.verify-design-retest-fix
     - mcp-full-guard-design.verify-design-retest-retest
+    - mcp-full-guard-design.verify-design-retest-retest-retest
     agent: gate-reviewer
   - id: mcp-full-guard-design.verify-design-fix
     name: verify-design.fix
