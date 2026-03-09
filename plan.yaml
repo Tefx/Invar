@@ -10058,8 +10058,8 @@ phases:
     name: release-readiness.gate
     status: pending
     description: 'Gate review: determine whether the current candidate is genuinely
-      ready to publish as the next Invar tools release (likely `1.19.7`) based on
-      packaged-artifact evidence, not just source-tree verification.
+      ready to publish as the next Invar tools release based on packaged-artifact
+      evidence, not just source-tree verification.
 
 
       As an INDEPENDENT REVIEWER (`gate-reviewer`), block release if any packaging,
@@ -10068,27 +10068,27 @@ phases:
 
       Review focus:
 
-      1. Frozen release boundary really followed the active MCP full-guard and dead_assign
-      field-validation closures
+      1. The release freeze happened only after `mcp-full-guard-implement`, `mcp-full-guard-field-verify`,
+      and all active `da-while-*` phases reached their release-boundary gates
 
       2. Artifact build evidence is complete and free of `.venv` / external-symlink
       packaging regressions
 
-      3. Clean-install smoke proves `invar`, `invar hooks`, and `invar guard` work
-      from installed artifacts
+      3. Clean-install smoke proves `invar`, `invar hooks`, `invar guard --help`,
+      and `invar guard` work from installed artifacts
 
-      4. Release recommendation explicitly states whether publish should proceed and
-      why'
+      4. The final recommendation explicitly says OPEN/BLOCKED for publish and names
+      the blocking reason if publish should not proceed'
     verification: '- All release-readiness steps completed successfully
 
       - Evidence shows both artifact build and clean-install smoke passed from the
       frozen snapshot
 
       - No unresolved packaged-entrypoint blocker remains (`guard.py` executable resolution,
-      `invar.shell.commands.hooks`, or repo-local hook-path wiring)
+      `invar.shell.commands.hooks`, or installed-path `invar guard` execution)
 
       - Gate output states OPEN only if the candidate is suitable for publish as the
-      next release'
+      next release; otherwise it must recommend BLOCKED with the specific blocker'
     depends_on:
     - release-readiness.freeze-release-candidate
     - release-readiness.build-release-artifacts
