@@ -12970,7 +12970,7 @@ phases:
   steps:
   - id: release-readiness.freeze-release-candidate
     name: freeze-release-candidate
-    status: claimed
+    status: done
     description: 'Freeze: lock the candidate release snapshot only after the active
       MCP full-guard and dead_assign remediation phases reach their release boundary
       gates.
@@ -13003,6 +13003,19 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-09T18:12:44.121102+00:00'
+    done_at: '2026-03-09T18:15:36.178265+00:00'
+    evidence: "Artifact:\n- Frozen candidate snapshot in isolated worktree: `.vectl/worktrees/release-readiness.freeze-release-candidate`\n\
+      - Candidate commit: `75408afd4fc449715fa35ddb8dd0bcd8128c5075`\n\nVerification:\n\
+      - Run: `git rev-parse --abbrev-ref HEAD && git rev-parse HEAD && git status\
+      \ --short` -> branch `vectl/step-release-readiness.freeze-release-candidate`,\
+      \ clean tree, commit pinned.\n- Run: `git status --porcelain && git status`\
+      \ -> `nothing to commit, working tree clean`.\n- Packaging env declaration:\n\
+      \  - `python3 --version` -> `Python 3.14.3`\n  - `uv --version` -> `uv 0.10.9`\n\
+      \  - `uvx --version` -> `uvx 0.10.9`\n  - Build backend from `pyproject.toml`:\
+      \ `hatchling.build`\n  - `uvx --from hatchling python -c \"...version('hatchling')...\"\
+      ` -> `hatchling 1.29.0`\n- Freeze policy statement: no code changes allowed\
+      \ until packaging smoke validation completes.\n\nSpec link:\n- phase: release-readiness\n\
+      - step: release-readiness.freeze-release-candidate"
   - id: release-readiness.build-release-artifacts
     name: build-release-artifacts
     status: pending
