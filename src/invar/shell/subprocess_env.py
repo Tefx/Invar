@@ -348,6 +348,8 @@ def get_uvx_respawn_command(
     invar_tools_version: str,
     invocation_root: Path | None = None,
 ) -> list[str] | None:
+    tool_exe = tool_name if tool_name in {"invar", "invar-tools"} else "invar"
+
     if os.environ.get("INVAR_UVX_RESPAWNED") == "1":
         return None
 
@@ -359,7 +361,7 @@ def get_uvx_respawn_command(
     if local_source is None and invocation_root is not None:
         local_source = detect_local_invar_source(project_root=invocation_root)
     running_source = detect_local_invar_source() or detect_running_invar_source()
-    if local_source is not None and tool_name in {"invar", "invar-tools"}:
+    if local_source is not None and tool_exe in {"invar", "invar-tools"}:
         venv = detect_project_venv(project_root)
         project_python = _detect_venv_python(venv) if venv is not None else None
         python_for_uvx = project_python or Path(sys.executable)
@@ -369,7 +371,7 @@ def get_uvx_respawn_command(
             str(python_for_uvx),
             "--from",
             str(local_source),
-            tool_name,
+            tool_exe,
             *argv,
         ]
 
@@ -397,12 +399,12 @@ def get_uvx_respawn_command(
             str(project_python),
             "--from",
             str(preferred_source),
-            tool_name,
+            tool_exe,
             *argv,
         ]
 
     source_spec = f"invar-tools=={invar_tools_version}"
-    if not _can_resolve_uvx_source(uvx_path, project_python, source_spec, tool_name):
+    if not _can_resolve_uvx_source(uvx_path, project_python, source_spec, tool_exe):
         return None
 
     return [
@@ -411,7 +413,7 @@ def get_uvx_respawn_command(
         str(project_python),
         "--from",
         source_spec,
-        tool_name,
+        tool_exe,
         *argv,
     ]
 

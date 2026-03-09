@@ -440,6 +440,51 @@ class TestUvxRespawnCommand:
             "--all",
         ]
 
+    def test_normalizes_non_console_tool_name_to_invar(self, tmp_path: Path) -> None:
+        (tmp_path / "pyproject.toml").write_text("[project]\nname='x'\nversion='0.0.0'\n")
+        venv = tmp_path / ".venv"
+        venv.mkdir()
+        (venv / "pyvenv.cfg").write_text("version = 3.12.0\n")
+        python_path = venv / "bin" / "python"
+        python_path.parent.mkdir(parents=True)
+        python_path.write_text("")
+
+        with (
+            patch.dict(os.environ, {}, clear=True),
+            patch("shutil.which", return_value="uvx"),
+            patch(
+                "invar.shell.subprocess_env.sys.version_info",
+                SimpleNamespace(major=3, minor=11),
+            ),
+            patch(
+                "invar.shell.subprocess_env.detect_local_invar_source",
+                return_value=None,
+            ),
+            patch("invar.shell.subprocess_env.detect_running_invar_source", return_value=None),
+            patch(
+                "invar.shell.subprocess_env.subprocess.run",
+                return_value=SimpleNamespace(returncode=0),
+            ),
+        ):
+            cmd = get_uvx_respawn_command(
+                project_root=tmp_path,
+                argv=["guard", str(tmp_path), "--all"],
+                tool_name="guard.py",
+                invar_tools_version="1.2.3",
+            )
+
+        assert cmd == [
+            "uvx",
+            "--python",
+            str(python_path),
+            "--from",
+            "invar-tools==1.2.3",
+            "invar",
+            "guard",
+            str(tmp_path),
+            "--all",
+        ]
+
     def test_loop_guard(self, tmp_path: Path) -> None:
         (tmp_path / "pyproject.toml").write_text("[project]\nname='x'\nversion='0.0.0'\n")
         venv = tmp_path / ".venv"
