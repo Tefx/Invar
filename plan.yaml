@@ -13423,3 +13423,65 @@ phases:
     depends_on:
     - release-readiness.smoke-install-artifacts-retest-provenance
     agent: python-senior
+  - id: release-readiness.smoke-install-artifacts-retest-provenance-uv-fallback
+    name: smoke-install-artifacts-retest-provenance-uv-fallback
+    status: pending
+    description: 'HIGH priority independent retest. As an INDEPENDENT TESTER (`blind-tester`),
+      rerun the installed-artifact smoke specifically to prove whether `uv`/`uvx`
+      source fallback during `invar guard` is finally gone.
+
+
+      Remediation consolidation:
+
+      - prior_loop: `release-readiness.smoke-install-artifacts-fix-provenance`, `release-readiness.smoke-install-artifacts-retest-provenance`
+
+      - remaining_blocker: installed smoke still emitted `Building invar-tools @ file:///.../.vectl/worktrees/...`
+      after the first remediation loop
+
+      - why_new_loop: release cannot reopen until an independent retest verifies the
+      second fix closed the exact fallback seam that persisted
+
+
+      YOUR GOAL IS TO FIND ANY remaining source-tree fallback.
+
+
+      Required checks:
+
+      - create a fresh clean environment after `release-readiness.smoke-install-artifacts-fix-provenance-uv-fallback`
+
+      - install the built wheel and exercise `invar guard` via the same installed-env
+      path that previously surfaced the fallback
+
+      - capture full command output and explicitly look for `Building invar-tools
+      @ file:///...`, `.vectl/worktrees/...`, editable behavior, cwd leakage, or repo-local
+      import resolution
+
+      - classify any ambiguous provenance as still BLOCKED for release
+
+
+      Independence Level: L2'
+    verification: '- Main path: fresh wheel-install smoke shows `invar guard` executing
+      with no `Building invar-tools @ file:///...` output and no other repo-local
+      source fallback indicators
+
+      - Failure path: any `file:///` worktree/source checkout involvement, editable-style
+      import behavior, or unresolved provenance ambiguity is captured as a blocker
+      with exact reproduction
+
+      - Proof: attached commands/output demonstrate the installed-artifact path clearly
+      enough for release rereview'
+    evidence_template: "## Verification Report\n\n**Tester**: blind-tester (independent\
+      \ of implementation)\n**Scope**: installed-artifact `invar guard` provenance\
+      \ after second uv/uvx fallback fix\n**Independence Level**: L2\n\n### Test Execution\n\
+      - Commands executed:\n  ```\n  <exact clean-env install + smoke commands>\n\
+      \  ```\n- Output summary: <key results, including whether any `Building invar-tools\
+      \ @ file:///...` indicator appeared>\n\n### Issues Found\n| Severity | Description\
+      \ | Location | Reproduction |\n| --- | --- | --- | --- |\n| blocker | <remaining\
+      \ provenance/source fallback issue or `none`> | <installed smoke path> | <steps>\
+      \ |\n\n### Coverage Assessment\n- Happy path verified: ✅/❌\n- Edge cases tested:\
+      \ installed wheel smoke, repeated guard invocation, provenance log capture\n\
+      - NOT tested: <anything omitted and why>\n\n### Verdict\n- [ ] PASS\n- [ ] ISSUES_FOUND\n\
+      - [ ] INCOMPLETE\n"
+    depends_on:
+    - release-readiness.smoke-install-artifacts-fix-provenance-uv-fallback
+    agent: blind-tester
