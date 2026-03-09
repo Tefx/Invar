@@ -9985,21 +9985,23 @@ phases:
       - produce both wheel and source distribution artifacts
 
       - confirm the source distribution no longer leaks `.venv` or invalid external
-      symlinks
+      symlink content
 
       - record the exact artifact filenames and sizes
 
       - capture the exact failure if build still breaks before artifact creation
 
 
-      Independence Level: L2'
+      This step is specifically the artifact-build blocker for the newly observed
+      release issue: local `uv build` currently fails when sdist packaging traverses
+      `.venv` or external symlink content.'
     verification: '- Main path: `uv build` completes and emits both wheel and sdist
       artifacts from the frozen snapshot
 
       - Failure path: evidence explicitly shows whether `.venv` inclusion or invalid
       external symlink traversal still blocks sdist creation
 
-      - Proof: artifact names, paths, and build output are attached'
+      - Proof: artifact names, paths, sizes, and build output are attached'
     depends_on:
     - release-readiness.freeze-release-candidate
     agent: integration-verifier
