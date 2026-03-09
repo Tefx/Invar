@@ -13246,7 +13246,7 @@ phases:
       \ seam; no broader release-process refactor."
   - id: release-readiness.smoke-install-artifacts-retest-provenance
     name: smoke-install-artifacts-retest-provenance
-    status: claimed
+    status: done
     description: 'HIGH priority independent retest. As an INDEPENDENT TESTER (`blind-tester`),
       rerun the release smoke focused on installed-artifact provenance and attempt
       to prove the blocker still exists.
@@ -13283,6 +13283,22 @@ phases:
     agent: blind-tester
     claimed_by: blind-tester
     claimed_at: '2026-03-09T18:51:17.248990+00:00'
+    done_at: '2026-03-09T18:55:58.181421+00:00'
+    evidence: "Artifact:\n- Blind-tester independent retest evidence from `.vectl/worktrees/release-readiness.smoke-install-artifacts-retest-provenance`\n\
+      - Worker branch commit with evidence artifact: `e515333`\n\nVerification:\n\
+      - `uv build` produced both wheel and sdist.\n- Clean wheel+sdist env command\
+      \ checks passed functionally (`invar --help`, `invar hooks --help`, `invar guard\
+      \ --help`, `invar guard`).\n- BLOCKER persists: output still includes source\
+      \ fallback indicators:\n  - `Building invar-tools @ file:///Users/tefx/Projects/Invar/.vectl/worktrees/release-readiness.smoke-install-artifacts-retest-provenance`\n\
+      \  - `.vectl/worktrees/...` paths in build/install output.\n- Installed module\
+      \ paths do resolve to site-packages, but fallback indicator violates provenance\
+      \ requirement.\n\nIssue classification:\n- blocker: uv/uvx source-fallback indicators\
+      \ remain after first fix chain.\n\nRemediation steps created (second loop):\n\
+      - `release-readiness.smoke-install-artifacts-fix-provenance-uv-fallback`\n-\
+      \ `release-readiness.smoke-install-artifacts-retest-provenance-uv-fallback`\n\
+      - `release-readiness.release-readiness-rereview-gate` dependency updated to\
+      \ wait for new retest chain.\n\nSpec link:\n- phase: release-readiness\n- step:\
+      \ release-readiness.smoke-install-artifacts-retest-provenance"
   - id: release-readiness.release-readiness-rereview-gate
     name: release-readiness-rereview-gate
     status: pending
