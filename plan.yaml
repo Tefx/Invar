@@ -11254,7 +11254,7 @@ phases:
       flow to avoid masking pre-fix false-positive signal; detector logic unchanged.'
   - id: da-while-repro.retest-snapshot-reproduction-anchoring
     name: retest-snapshot-reproduction-anchoring
-    status: pending
+    status: claimed
     description: 'As an INDEPENDENT TESTER (`integration-verifier`), re-run the focused
       while-loop reproduction quartet against snapshot `cdf191a1` after the snapshot-method
       remediation and verify the expected pre-fix signal is present.
@@ -11287,6 +11287,8 @@ phases:
     depends_on:
     - da-while-repro.da-while-repro-fix-snapshot-reproduction-anchoring
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-09T16:35:52.326571+00:00'
 - id: da-while-fix
   name: dead_assign While Fix
   status: done
