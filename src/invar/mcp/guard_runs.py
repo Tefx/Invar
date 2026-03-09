@@ -32,6 +32,7 @@ def _iso(ts: datetime) -> str:
     return ts.isoformat().replace("+00:00", "Z")
 
 
+# @shell_orchestration: MCP deferred guard JSON normalization (kept local for protocol parity)
 # @shell_complexity: Character-level JSON newline escaping requires stateful scan
 # @invar:allow shell_result: Pure transformation helper used by MCP shell layer
 def _fix_json_newlines(text: str) -> str:
@@ -67,6 +68,7 @@ def _fix_json_newlines(text: str) -> str:
     return "".join(result)
 
 
+# @shell_orchestration: MCP deferred guard JSON parsing (kept local for protocol parity)
 # @invar:allow shell_result: Parses subprocess JSON payload for shell orchestration
 def _parse_guard_json(stdout: str) -> dict[str, Any]:
     text = stdout.strip()
@@ -83,6 +85,7 @@ def _parse_guard_json(stdout: str) -> dict[str, Any]:
     return parsed
 
 
+# @shell_orchestration: MCP deferred guard summary normalization (kept local for protocol parity)
 # @shell_complexity: Review trigger detection branches over nested payload fields
 # @invar:allow shell_result: Helper returns scalar boolean for summary output
 def _review_suggested(payload: dict[str, Any]) -> bool:
@@ -100,6 +103,7 @@ def _review_suggested(payload: dict[str, Any]) -> bool:
     return False
 
 
+# @shell_orchestration: MCP deferred guard report summarization (kept local for protocol parity)
 # @shell_complexity: Summary normalization handles optional/malformed payload fields
 # @invar:allow shell_result: Converts guard payload to report dict for MCP output
 def summarize_guard_payload(payload: dict[str, Any]) -> dict[str, Any]:
@@ -155,10 +159,12 @@ class GuardRunRegistry:
         retention_seconds: int = 900,
         max_runtime_seconds: int = 1800,
         command_timeout_seconds: int = 3600,
+        heartbeat_interval_seconds: float = 2.0,
     ) -> None:
         self._retention_seconds = retention_seconds
         self._max_runtime_seconds = max_runtime_seconds
         self._command_timeout_seconds = command_timeout_seconds
+        self._heartbeat_interval_seconds = heartbeat_interval_seconds
         self._runs: dict[str, GuardRun] = {}
         self._expired: set[str] = set()
         self._lock = asyncio.Lock()
@@ -260,17 +266,30 @@ class GuardRunRegistry:
     async def _execute_run(self, run_id: str, cmd: list[str]) -> None:
         await self._set_running(run_id)
 
+        heartbeat = asyncio.create_task(self._heartbeat(run_id))
+
         try:
-            payload = await self._run_guard_command(cmd)
+            payload = await asyncio.wait_for(
+                self._run_guard_command(cmd),
+                timeout=max(0.0, float(self._max_runtime_seconds)),
+            )
             await self._set_complete(run_id, payload)
         except asyncio.CancelledError:
             await self._set_cancelled(run_id, "run_cancelled", "Run cancelled before completion")
             raise
+        except TimeoutError:
+            await self._set_cancelled(
+                run_id,
+                "run_expired",
+                "Run exceeded max runtime and was cancelled",
+            )
         except subprocess.TimeoutExpired as exc:
             message = f"Guard subprocess timed out ({exc.timeout}s)"
             await self._set_failed(run_id, "execution_error", message)
         except Exception as exc:
             await self._set_failed(run_id, "execution_error", str(exc))
+        finally:
+            heartbeat.cancel()
 
     async def _set_running(self, run_id: str) -> None:
         now = _utc_now()
@@ -327,21 +346,58 @@ class GuardRunRegistry:
             run.done_event.set()
 
     async def _run_guard_command(self, cmd: list[str]) -> dict[str, Any]:
-        result = await asyncio.to_thread(
-            subprocess.run,
-            cmd,
-            capture_output=True,
-            text=True,
-            timeout=self._command_timeout_seconds,
+        """Run guard command and parse JSON output.
+
+        Uses asyncio subprocess so cancellation and timeouts can terminate the child.
+        """
+        proc = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
         )
 
-        if result.returncode != 0:
-            stderr = (result.stderr or "").strip()
+        try:
+            stdout_b, stderr_b = await asyncio.wait_for(
+                proc.communicate(),
+                timeout=max(0.0, float(self._command_timeout_seconds)),
+            )
+        except TimeoutError as exc:
+            with suppress(ProcessLookupError):
+                proc.kill()
+            with suppress(Exception):
+                await proc.wait()
+            raise subprocess.TimeoutExpired(cmd, self._command_timeout_seconds) from exc
+        except asyncio.CancelledError:
+            with suppress(ProcessLookupError):
+                proc.kill()
+            with suppress(Exception):
+                await proc.wait()
+            raise
+
+        stdout = (stdout_b or b"").decode("utf-8", errors="replace")
+        stderr = (stderr_b or b"").decode("utf-8", errors="replace").strip()
+        returncode = proc.returncode
+
+        if returncode != 0:
             if stderr:
                 raise RuntimeError(stderr)
-            raise RuntimeError(f"Guard subprocess failed with code {result.returncode}")
+            raise RuntimeError(f"Guard subprocess failed with code {returncode}")
 
-        return _parse_guard_json(result.stdout)
+        return _parse_guard_json(stdout)
+
+    async def _heartbeat(self, run_id: str) -> None:
+        """Update updated_at periodically while a run is active."""
+        interval = max(0.01, float(self._heartbeat_interval_seconds))
+        while True:
+            await asyncio.sleep(interval)
+            now = _utc_now()
+            async with self._lock:
+                run = self._runs.get(run_id)
+                if run is None:
+                    return
+                if run.status not in ("deferred", "running"):
+                    return
+                run.updated_at = _iso(now)
 
     def _cleanup_locked(self, now: datetime) -> None:
         stale_running: list[GuardRun] = []

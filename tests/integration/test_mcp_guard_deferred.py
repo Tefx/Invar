@@ -152,6 +152,53 @@ async def test_guard_run_registry_completes_with_summary_contract() -> None:
     }
 
 
+async def test_guard_run_registry_updates_updated_at_while_running() -> None:
+    """DX-94: running snapshots should expose liveness via updated_at."""
+    registry = GuardRunRegistry(
+        retention_seconds=30,
+        max_runtime_seconds=30,
+        heartbeat_interval_seconds=0.01,
+    )
+
+    gate = asyncio.Event()
+
+    async def hanging_command(cmd: list[str]) -> dict[str, object]:
+        del cmd
+        await gate.wait()
+        return _payload()
+
+    registry._run_guard_command = hanging_command
+
+    run = await registry.start(
+        cmd=["python", "-m", "invar.shell.commands.guard", "guard", ".", "--all"],
+        path=".",
+        changed=False,
+        timeout_reason="estimated_duration_exceeds_sync_budget",
+    )
+
+    # Ensure the background task has transitioned to running.
+    snap1: dict[str, object] = {}
+    for _ in range(50):
+        snap1 = await registry.status(run.run_id)
+        if snap1.get("status") == "running":
+            break
+        await asyncio.sleep(0.001)
+
+    assert snap1.get("status") == "running"
+    updated1 = snap1.get("updated_at")
+    assert isinstance(updated1, str)
+
+    await asyncio.sleep(0.03)
+    snap2 = await registry.status(run.run_id)
+    assert snap2.get("status") == "running"
+    updated2 = snap2.get("updated_at")
+    assert isinstance(updated2, str)
+
+    gate.set()
+
+    assert updated2 != updated1
+
+
 async def test_guard_run_registry_failed_envelope() -> None:
     """DX-94: failed runs return explicit failure envelope."""
     registry = GuardRunRegistry(retention_seconds=30, max_runtime_seconds=30)
