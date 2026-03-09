@@ -10637,7 +10637,7 @@ phases:
       step; full `invar guard --all` timed out in worktree, so focused proof used.'
   - id: da-while-field.retest-anima-guard-loop-carried-state
     name: retest-anima-guard-loop-carried-state
-    status: pending
+    status: claimed
     description: 'As an INDEPENDENT TESTER (`integration-verifier`), re-run the exact
       real guard pipeline against `../anima` after the loop-carried-state dead_assign
       fix.
@@ -10678,6 +10678,8 @@ phases:
     depends_on:
     - da-while-field.fix-loop-carried-state-dead-assign
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-09T14:57:26.443290+00:00'
     evidence: 'priority: HIGH'
 - id: release-readiness
   name: Release Readiness
