@@ -10951,7 +10951,7 @@ phases:
       - plan:mcp-full-guard-field-verify.capture-tasca-terminal-evidence'
   - id: mcp-full-guard-field-verify.fix-mcp-external-guard-executable
     name: fix-mcp-external-guard-executable
-    status: claimed
+    status: done
     description: Fix the MCP full-guard subprocess invocation for external repo targets
       so it does not attempt to execute a non-existent `guard.py` from the `invar-tools`
       package. Ensure it calls a supported executable/module entry point (e.g. `invar
@@ -10962,6 +10962,32 @@ phases:
     - mcp-full-guard-field-verify.review-tasca-terminal-evidence
     claimed_by: gate-reviewer
     claimed_at: '2026-03-09T17:23:11.777508+00:00'
+    done_at: '2026-03-09T17:27:39.067935+00:00'
+    evidence: 'Artifact:
+
+      - src/invar/shell/subprocess_env.py: normalize tool executable name for uvx
+      respawn (fallback to `invar` when invoked via `python -m ...` where sys.argv[0]
+      becomes a .py filename)
+
+      - tests/test_subprocess_env.py: regression `test_normalizes_non_console_tool_name_to_invar`
+
+
+      Verification:
+
+      - invar_guard(changed=true) -> PASS (0 errors, 0 warnings)
+
+      - Manual smoke: `invar_invar_guard(path="/Users/tefx/Projects/tasca", changed=false)`
+      -> deferred `run_id=grd_475e55922f8641e993a0f523`; follow-up `invar_invar_guard_wait/status`
+      observed `running` (no immediate terminal `execution_error` with missing `guard.py`
+      executable signature).
+
+
+      Spec link:
+
+      - plan:mcp-full-guard-field-verify.capture-tasca-terminal-evidence (blocker
+      signature)
+
+      - plan:mcp-full-guard-field-verify.fix-mcp-external-guard-executable'
   - id: mcp-full-guard-field-verify.retest-tasca-terminal-evidence-post-fix
     name: retest-tasca-terminal-evidence-post-fix
     status: pending
