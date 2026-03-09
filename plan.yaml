@@ -10073,7 +10073,7 @@ phases:
       - mcp-full-guard-field-verify.gate rewired to new review step'
   - id: mcp-full-guard-field-verify.gate
     name: mcp-full-guard-field-verify.gate
-    status: pending
+    status: claimed
     description: 'Gate review: verify the full-MCP-guard support slice is complete
       and no unresolved timeout blocker remains.
 
@@ -10102,6 +10102,8 @@ phases:
     - mcp-full-guard-field-verify.review-tasca-terminal-evidence
     - mcp-full-guard-field-verify.review-tasca-terminal-evidence-post-fix
     agent: gate-reviewer
+    claimed_by: gate-reviewer
+    claimed_at: '2026-03-09T17:38:53.066994+00:00'
   - id: mcp-full-guard-field-verify.fix-real-mcp-full-guard-entrypoints
     name: fix-real-mcp-full-guard-entrypoints
     status: done
