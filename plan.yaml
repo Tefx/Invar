@@ -12509,7 +12509,7 @@ phases:
       parity remains unresolved.'
   - id: da-while-field.retest-anima-guard-with-invar-toolchain
     name: retest-anima-guard-with-invar-toolchain
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT TESTER (integration-verifier), re-run guard against
       the anima codebase using the *Invar* project toolchain (so the fixed analyzer
       is actually executed), not anima''s installed invar. Requirement: run a real
@@ -12522,6 +12522,28 @@ phases:
     - da-while-field.retest-anima-guard-runtime-parity
     claimed_by: integration-verifier
     claimed_at: '2026-03-09T17:15:04.720878+00:00'
+    done_at: '2026-03-09T17:16:45.158130+00:00'
+    evidence: "## Verification Report: da-while-field.retest-anima-guard-with-invar-toolchain\n\
+      \n**Date**: 2026-03-10\n**Verifier**: Integration Verifier\n**Scope**: Re-run\
+      \ Invar analyzer from Invar project toolchain against anima and verify dead_assign\
+      \ findings for `message_history`, `was_awaiting_approval`, `seen_count`.\n\n\
+      ### Results\n\n| Check | Result | Evidence |\n|-------|--------|----------|\n\
+      | Entry point execution | PASS | Command run exactly: `uv run --project \"/Users/tefx/Projects/Invar\"\
+      \ invar guard --all \"/Users/tefx/Projects/anima\"` |\n| Guard completion |\
+      \ PASS | Output: `\"status\": \"passed\"`, `\"errors\": 0`, `\"warnings\": 6`,\
+      \ `\"infos\": 3`, `\"files_checked\": 84` |\n| dead_assign target flags | PASS\
+      \ (none) | Search on captured output file: `rg -n \"message_history|was_awaiting_approval|seen_count\"\
+      \ \"/Users/tefx/.local/share/opencode/tool-output/tool_cd398c1cb001GOLYGTcGucyxuf\"\
+      ` -> `NOT_FOUND`; `rg -n \"dead_assign\" ...` -> `NOT_FOUND` |\n| Blockers |\
+      \ NONE | None of the three target locals were flagged by `dead_assign` |\n\n\
+      ### Key output excerpts\n\n- Primary command result includes:\n  - `\"status\"\
+      : \"passed\"`\n  - `\"summary\": { \"files_checked\": 84, \"errors\": 0, \"\
+      warnings\": 6, \"infos\": 3 }`\n- Findings shown in run were `file_size_warning`,\
+      \ `shell_too_complex`, and `dead_param` (no `dead_assign` entries).\n\n### Evidence\
+      \ Levels\n\n| Level | Status |\n|-------|--------|\n| L2 (Real Wiring) | PASS\
+      \ |\n| L3 (Live Service) | N/A |\n\n### Findings\n\nNo `dead_assign` findings\
+      \ for:\n- `message_history`\n- `was_awaiting_approval`\n- `seen_count`\n\nTherefore\
+      \ no blocker under requested criteria."
   - id: da-while-field.review-anima-retest-with-invar-toolchain
     name: review-anima-retest-with-invar-toolchain
     status: pending
