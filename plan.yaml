@@ -9936,9 +9936,9 @@ phases:
   - id: release-readiness.freeze-release-candidate
     name: freeze-release-candidate
     status: pending
-    description: 'Freeze: lock the candidate release snapshot after the current MCP
-      full-guard and dead_assign field-validation chains complete, before any packaging
-      L2 validation begins.
+    description: 'Freeze: lock the candidate release snapshot only after the active
+      MCP full-guard and dead_assign remediation phases reach their release boundary
+      gates.
 
 
       Release boundary inputs that must be closed before this freeze:
@@ -9947,7 +9947,11 @@ phases:
 
       - `mcp-full-guard-field-verify` fix/retest/review/gate chain complete
 
-      - `da-while-*` real-world retest/freeze/gate chain complete
+      - `da-while-repro` repro gate complete
+
+      - `da-while-fix` freeze/gate chain complete
+
+      - `da-while-field` remediation retest/gate chain complete
 
 
       This freeze exists so packaging evidence is gathered from the exact candidate
