@@ -11444,6 +11444,71 @@ phases:
     depends_on:
     - da-while-field.retest-anima-guard-loop-carried-state-repeat
     agent: python-senior
+  - id: da-while-field.retest-anima-guard-runtime-parity
+    name: retest-anima-guard-runtime-parity
+    status: pending
+    description: 'As an INDEPENDENT TESTER (`integration-verifier`), re-run the same
+      real anima guard command after the environment/runtime parity fix.
+
+
+      YOUR GOAL IS TO FIND PROBLEMS, not to confirm it works.
+
+
+      Reproduction command:
+
+      `uv run --project "/Users/tefx/Projects/anima" invar guard --all "/Users/tefx/Projects/anima"`
+
+
+      Test for:
+
+      - happy path: the real `../anima` guard no longer reports `message_history`,
+      `was_awaiting_approval`, or `seen_count` as `dead_assign`
+
+      - edge case: any remaining `dead_assign` findings are captured verbatim and
+      classified as residual blocker vs unrelated noise
+
+      - error scenario: environment/runtime parity still diverges and the same three
+      blocker findings remain
+
+
+      Document the exact command and exact output excerpts.
+
+      Independence Level: L2'
+    verification: '- Run exactly: `uv run --project "/Users/tefx/Projects/anima" invar
+      guard --all "/Users/tefx/Projects/anima"`
+
+      - Real guard output from `../anima` is attached
+
+      - The three blocker variables are absent from `dead_assign` findings
+
+      - Any remaining findings are explicitly classified as unrelated or residual
+      blocker evidence'
+    evidence_template: '## Integration Evidence
+
+
+      **Command or test exercising the full path**:
+
+      ```bash
+
+      uv run --project "/Users/tefx/Projects/anima" invar guard --all "/Users/tefx/Projects/anima"
+
+      ```
+
+
+      **Actual output** (paste, not "tests pass"):
+
+      ```text
+
+      <paste stdout/stderr or test runner output>
+
+      ```
+
+
+      **Path exercised**: real anima environment -> installed/runtime tool resolution
+      -> analyzer -> dead_assign reporting'
+    depends_on:
+    - da-while-field.fix-anima-environment-runtime-parity
+    agent: integration-verifier
 - id: release-readiness
   name: Release Readiness
   status: locked
