@@ -9659,6 +9659,46 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-09T13:13:53.301829+00:00'
+  - id: da-while-repro.da-while-repro-realign-focused-repros
+    name: da-while-repro.realign-focused-repros
+    status: pending
+    description: 'Repair the focused while-loop reproductions in `tests/core/test_dead_assign.py`
+      so the pre-fix snapshot `cdf191a1` reproduces the three intended false positives
+      while keeping the negative control a true positive.
+
+
+      prior_loop: [da-while-repro.verify-pre-fix-failures, da-while-repro.gate]
+
+      remaining_blocker: the current repro cases pass on the pre-fix snapshot instead
+      of demonstrating the expected false-positive behavior for the three intended
+      patterns
+
+      why_new_loop: the gate failure shows the existing repro set does not constrain
+      the detector fix scope, so the repro inputs must be realigned before gate review
+      can be meaningful
+
+
+      Scope:
+
+      - adjust only the focused while-loop repro fixtures/tests needed to match the
+      confirmed failure shapes
+
+      - do not modify detector logic in this step
+
+      - keep the negative control asserting a real dead write
+
+      - keep the cases minimal and directly tied to the three reported false-positive
+      patterns'
+    verification: '- Focused repro definitions in `tests/core/test_dead_assign.py`
+      are updated without changing detector implementation
+
+      - Targeted repro command for the pre-fix snapshot is identified and documented
+
+      - Negative control expectation remains explicitly covered alongside the three
+      intended false-positive repros'
+    depends_on:
+    - da-while-repro.verify-pre-fix-failures
+    agent: python-executor
 - id: da-while-fix
   name: dead_assign While Fix
   status: in_progress
