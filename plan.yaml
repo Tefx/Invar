@@ -9360,6 +9360,51 @@ phases:
     depends_on:
     - mcp-full-guard-field-verify.fix-real-mcp-full-guard-entrypoints
     agent: integration-verifier
+  - id: mcp-full-guard-field-verify.fix-cli-comparison-import-path
+    name: fix-cli-comparison-import-path
+    status: pending
+    description: 'HIGH priority sibling fix for `mcp-full-guard-field-verify.run-real-mcp-full-guard`.
+
+
+      Resolve the CLI comparison-path packaging/import blocker only.
+
+
+      Blocker to fix:
+
+      - CLI comparison path fails with `ModuleNotFoundError: invar.shell.commands.hooks`
+
+
+      Likely touch paths:
+
+      - `pyproject.toml` or equivalent packaging/console-script configuration for
+      `invar-tools`
+
+      - `src/invar/shell/commands/hooks.py` and any related package export/import
+      wiring
+
+
+      Requirements:
+
+      - restore the CLI comparison path used by field validation so `uvx invar-tools
+      guard --all` resolves imports correctly
+
+      - keep the fix scoped to package/import wiring for this validation slice
+
+      - do not change MCP execution-path command construction in this step; that remains
+      in `mcp-full-guard-field-verify.fix-real-mcp-full-guard-entrypoints`
+
+      - capture the exact file(s) changed and why the previous import/package path
+      was invalid'
+    verification: '- Main path: CLI comparison invocation no longer raises `ModuleNotFoundError`
+      for `invar.shell.commands.hooks`
+
+      - Proof: updated packaging/import wiring is identified explicitly
+
+      - Downstream real-path retest is ready once the sibling MCP execution-path fix
+      also lands'
+    depends_on:
+    - mcp-full-guard-field-verify.run-real-mcp-full-guard
+    agent: python-executor
 - id: da-while-repro
   name: dead_assign While Repros
   status: in_progress
