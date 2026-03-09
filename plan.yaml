@@ -11877,7 +11877,7 @@ phases:
       \ to new parity retest"
   - id: da-while-field.fix-anima-environment-runtime-parity
     name: fix-anima-environment-runtime-parity
-    status: pending
+    status: claimed
     description: 'Fix the remaining blocker by aligning the real `/Users/tefx/Projects/anima`
       execution environment with the intended analyzer/runtime path.
 
@@ -11957,6 +11957,8 @@ phases:
     depends_on:
     - da-while-field.retest-anima-guard-loop-carried-state-repeat
     agent: python-senior
+    claimed_by: python-senior
+    claimed_at: '2026-03-09T15:55:41.727535+00:00'
   - id: da-while-field.retest-anima-guard-runtime-parity
     name: retest-anima-guard-runtime-parity
     status: pending
