@@ -9001,8 +9001,6 @@ phases:
 - id: mcp-full-guard-field-verify
   name: MCP Full Guard Field Validation
   status: in_progress
-  depends_on:
-  - mcp-full-guard-implement
   steps:
   - id: mcp-full-guard-field-verify.freeze
     name: freeze
@@ -9925,9 +9923,10 @@ phases:
 - id: release-readiness
   name: Release Readiness
   status: locked
-  context: Release boundary validation after active MCP full-guard and dead_assign
-    remediation phases complete; packaging/build/install evidence required before
-    publish.
+  context: Release boundary validation after active MCP full-guard implementation/field-validation
+    and dead_assign remediation phases complete; packaging/build/install evidence
+    required before publish. Repro-only evidence no longer blocks release-readiness
+    entry.
   depends_on:
   - mcp-full-guard-implement
   - mcp-full-guard-field-verify
