@@ -9858,7 +9858,7 @@ phases:
       \  - none"
   - id: mcp-full-guard-field-verify.capture-completed-large-repo-mcp-full-guard-evidence
     name: capture-completed-large-repo-mcp-full-guard-evidence
-    status: pending
+    status: claimed
     description: 'Follow-up verification: capture large-repo MCP full-guard evidence
       to terminal completion using the original large-repo target context rather than
       a worktree-local path.
@@ -9952,6 +9952,8 @@ phases:
     depends_on:
     - mcp-full-guard-field-verify.review-results
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-09T15:21:23.021294+00:00'
   - id: mcp-full-guard-field-verify.review-completed-large-repo-mcp-full-guard-evidence
     name: review-completed-large-repo-mcp-full-guard-evidence
     status: pending
