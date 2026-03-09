@@ -9199,7 +9199,7 @@ phases:
     agent: gate-reviewer
   - id: mcp-full-guard-design.remediate-shell-complexity-debt-precondition
     name: remediate-shell-complexity-debt-precondition
-    status: pending
+    status: claimed
     description: 'Reduce or explicitly justify the `shell_complexity_debt` full-guard
       blocker that prevents commits touching `src/invar/core/rules.py` from passing
       pre-commit.
@@ -9282,6 +9282,8 @@ phases:
 
       - `shell_complexity_debt` no longer blocks this merge path'
     agent: python-senior
+    claimed_by: python-senior
+    claimed_at: '2026-03-09T16:35:57.082521+00:00'
   - id: mcp-full-guard-design.verify-shell-complexity-debt-precondition
     name: verify-shell-complexity-debt-precondition
     status: pending
