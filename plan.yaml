@@ -13174,7 +13174,7 @@ phases:
     agent: gate-reviewer
   - id: release-readiness.smoke-install-artifacts-fix-provenance
     name: smoke-install-artifacts-fix-provenance
-    status: pending
+    status: claimed
     description: 'HIGH priority blocker fix. Remove ambiguous source-tree involvement
       from the wheel-installed `invar guard` smoke path so release evidence proves
       the installed artifact is executing, not a repo-local fallback.
@@ -13227,6 +13227,8 @@ phases:
     depends_on:
     - release-readiness.smoke-install-artifacts
     agent: python-senior
+    claimed_by: python-senior
+    claimed_at: '2026-03-09T18:24:57.689791+00:00'
   - id: release-readiness.smoke-install-artifacts-retest-provenance
     name: smoke-install-artifacts-retest-provenance
     status: pending
