@@ -10319,7 +10319,7 @@ phases:
       - Gate updated to depend on remediation loop.'
   - id: da-while-field.fix-loop-carried-state-dead-assign
     name: fix-loop-carried-state-dead-assign
-    status: pending
+    status: claimed
     description: 'Fix the residual loop-carried-state `dead_assign` behavior still
       reproduced by the real `../anima` guard run.
 
@@ -10360,6 +10360,8 @@ phases:
     depends_on:
     - da-while-field.retest-anima-guard
     agent: python-senior
+    claimed_by: python-senior
+    claimed_at: '2026-03-09T14:24:11.871773+00:00'
     evidence: 'priority: HIGH'
   - id: da-while-field.retest-anima-guard-loop-carried-state
     name: retest-anima-guard-loop-carried-state
