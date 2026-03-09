@@ -9699,6 +9699,40 @@ phases:
     depends_on:
     - da-while-repro.verify-pre-fix-failures
     agent: python-executor
+  - id: da-while-repro.da-while-repro-retest-pre-fix-repros
+    name: da-while-repro.retest-pre-fix-repros
+    status: pending
+    description: 'As an INDEPENDENT TESTER (`integration-verifier`), verify the repaired
+      focused while-loop reproductions now fail on the pre-fix snapshot `cdf191a1`
+      and that the negative control continues to pass as a true positive.
+
+
+      YOUR GOAL IS TO FIND PROBLEMS, not to confirm it works.
+
+
+      Test for:
+
+      - the three intended false-positive patterns now fail on the pre-fix snapshot
+
+      - the negative control still passes as a true-positive dead-write case
+
+      - the focused repro set is precise enough to constrain the downstream detector
+      fix scope
+
+
+      Independence Level: L1'
+    verification: '- Run a targeted repro command against snapshot `cdf191a1` covering
+      only the three focused false-positive cases plus the negative control
+
+      - Evidence shows the three intended repros fail before the detector fix
+
+      - Evidence shows the negative control remains passing as a true positive
+
+      - Any mismatch between expected repro behavior and actual output is documented
+      as a blocker'
+    depends_on:
+    - da-while-repro.da-while-repro-realign-focused-repros
+    agent: integration-verifier
 - id: da-while-fix
   name: dead_assign While Fix
   status: in_progress
