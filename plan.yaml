@@ -10054,7 +10054,7 @@ phases:
       evidence, not success assertion.'
   - id: mcp-full-guard-field-verify.review-completed-large-repo-mcp-full-guard-evidence
     name: review-completed-large-repo-mcp-full-guard-evidence
-    status: pending
+    status: claimed
     description: 'As an INDEPENDENT REVIEWER (`gate-reviewer`), assess whether the
       follow-up field evidence now proves large-repo MCP full-guard support to terminal
       completion.
@@ -10114,6 +10114,8 @@ phases:
     depends_on:
     - mcp-full-guard-field-verify.capture-completed-large-repo-mcp-full-guard-evidence
     agent: gate-reviewer
+    claimed_by: gate-reviewer
+    claimed_at: '2026-03-09T15:37:55.459297+00:00'
 - id: da-while-repro
   name: dead_assign While Repros
   status: in_progress
