@@ -11106,7 +11106,7 @@ phases:
       \ zero progress."
   - id: mcp-full-guard-field-verify.review-tasca-terminal-evidence-post-fix
     name: review-tasca-terminal-evidence-post-fix
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT REVIEWER (gate-reviewer), review the post-fix
       tasca evidence and confirm: MCP path reaches terminal completion without `guard.py`
       missing-executable error; no fallback; CLI parity is at least status/summary
@@ -11115,7 +11115,43 @@ phases:
     - mcp-full-guard-field-verify.retest-tasca-terminal-evidence-post-fix
     claimed_by: gate-reviewer
     claimed_at: '2026-03-09T18:07:55.229792+00:00'
-    done_at: '2026-03-09T17:37:41.844795+00:00'
+    done_at: '2026-03-09T18:08:06.329596+00:00'
+    evidence: 'Artifact:
+
+      - Code under test (uncommitted): src/invar/mcp/guard_runs.py (async subprocess
+      + heartbeat) and tests/integration/test_mcp_guard_deferred.py (heartbeat regression)
+
+
+      Verification:
+
+      - MCP kickoff: `invar_invar_guard(path="/Users/tefx/Projects/tasca", changed=false)`
+      -> deferred run_id `grd_789894a07e8345c391e3e58f`.
+
+      - Liveness while running: ✅ `updated_at` advances across polls while `status="running"`
+      (integration-verifier captured multiple polls).
+
+      - Terminal completion observed: ✅ `status="complete"` with report `{ok:true,
+      errors:0, warnings:73, infos:2, files_checked:68, review_suggested:true}`.
+
+      - Prior failure signature absent: ✅ no missing `guard.py` executable error.
+
+      - CLI parity: ✅ `uvx invar-tools guard --all /Users/tefx/Projects/tasca` matches
+      summary-level counts and status.
+
+
+      Spec link:
+
+      - docs/proposals/DX-94-mcp-full-guard-support-model.md (deferred runs: status/wait
+      + liveness semantics)
+
+      - plan:mcp-full-guard-field-verify.retest-tasca-terminal-evidence-post-fix (external
+      repo terminal proof)
+
+
+      Verdict:
+
+      - PASS: external large-repo MCP deferred run reaches terminal completion and
+      exposes liveness signal; parity with CLI at summary level.'
     rejection_reason: New code change adds liveness/async subprocess management; prior
       review evidence (stuck running) is obsolete. Re-review with new terminal-completion
       evidence.
