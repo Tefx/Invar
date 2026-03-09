@@ -9130,7 +9130,7 @@ phases:
       remediation is specification/doc alignment only.'
   - id: mcp-full-guard-design.gate-retest-blockers
     name: gate-retest-blockers
-    status: pending
+    status: claimed
     description: 'As an INDEPENDENT TESTER (`integration-verifier`), re-test the focused
       blocker set after `mcp-full-guard-design.gate-fix-blockers`.
 
@@ -9190,6 +9190,8 @@ phases:
     depends_on:
     - mcp-full-guard-design.gate-fix-blockers
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-09T17:28:24.923537+00:00'
   - id: mcp-full-guard-design.gate-rereview-blockers
     name: gate-rereview-blockers
     status: pending
