@@ -9914,7 +9914,7 @@ phases:
       for reported external while-loop patterns while preserving true-positive behavior.'
   - id: da-while-field.retest-anima-guard
     name: retest-anima-guard
-    status: pending
+    status: claimed
     description: 'As an INDEPENDENT TESTER (`integration-verifier`), re-run the real
       guard pipeline against `../anima` after the residual dead_assign fix.
 
@@ -9955,6 +9955,8 @@ phases:
     depends_on:
     - da-while-field.fix-anima-residual-dead-assign
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-09T13:12:55.805022+00:00'
 - id: release-readiness
   name: Release Readiness
   status: locked
