@@ -10688,7 +10688,7 @@ phases:
       Gaps/Notes: preserved prior run-id/timestamp history while correcting provenance.'
   - id: mcp-full-guard-field-verify.review-corrected-completed-large-repo-mcp-full-guard-evidence
     name: review-corrected-completed-large-repo-mcp-full-guard-evidence
-    status: done
+    status: rejected
     description: 'As an INDEPENDENT REVIEWER (`gate-reviewer`), assess whether the
       corrected completed-evidence artifact resolves the provenance blocker for large-repo
       MCP full-guard validation.
@@ -10762,30 +10762,13 @@ phases:
     claimed_by: gate-reviewer
     claimed_at: '2026-03-09T16:36:03.705046+00:00'
     done_at: '2026-03-09T17:04:02.217757+00:00'
-    evidence: '## Follow-up Evidence Review
-
-
-      Checklist:
-
-      - Correct target context only: ✅
-
-      - Raw command outputs attached: ✅
-
-      - No worktree-path ambiguity remains: ❌
-
-      - Prior history preserved: ✅
-
-
-      Verdict: BLOCKED
-
-      Notes: `artifacts/mcp_full_guard_completion_evidence.md` still contains absolute
-      worktree paths that are not verifiable post-merge (nonexistent on disk in reviewer
-      context). Regenerate evidence using repo-relative paths and include `test -f`
-      / `ls` outputs against referenced paths.
-
-      Files changed: none
-
-      Commit hash(es): none (review-only)'
+    rejection_reason: Artifact provenance updated to remove .vectl/worktrees references;
+      re-review needed against new artifact content.
+    rejection_history:
+    - reason: Artifact provenance updated to remove .vectl/worktrees references; re-review
+        needed against new artifact content.
+      timestamp: '2026-03-09T17:13:02.934447+00:00'
+      reviewer: gate-reviewer
 - id: da-while-repro
   name: dead_assign While Repros
   status: done
