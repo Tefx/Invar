@@ -339,3 +339,97 @@ async def async_identity(x: int) -> int:
         isinstance(w.message, RuntimeWarning) and "was never awaited" in str(w.message)
         for w in caught
     )
+
+
+def test_guard_pipeline_while_loop_carried_state_not_reported_as_dead_assign(
+    tmp_path: Path,
+) -> None:
+    """Guard pipeline should not report anima-style while-loop carried state as dead."""
+    project_root = tmp_path / "guard_dead_assign_fp"
+    shell_dir = project_root / "shell"
+    shell_dir.mkdir(parents=True)
+
+    (shell_dir / "anima_like_runtime.py").write_text(
+        """
+async def _run_agent_loop(agent):
+    message_history = []
+    while True:
+        pending_message = await poll()
+        if pending_message is not None:
+            response_result = await process(agent, pending_message, message_history)
+            message_history = response_result
+            message_history = await compact(agent, message_history)
+            continue
+        await sleep()
+
+
+async def run_talk_session(session):
+    was_awaiting_approval = False
+    while True:
+        (
+            should_return,
+            had_error,
+            was_awaiting_approval,
+        ) = await wait_for_interact_or_input_or_stream(
+            session=session,
+            was_awaiting_approval=was_awaiting_approval,
+        )
+        if should_return:
+            return
+        if had_error:
+            break
+
+
+def logs_impl(instance_id):
+    seen_count = 0
+    while True:
+        latest_entries = read(instance_id)
+        if len(latest_entries) < seen_count:
+            seen_count = 0
+        if len(latest_entries) > seen_count:
+            emit(latest_entries[seen_count:])
+            seen_count = len(latest_entries)
+        sleep()
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    result = _scan_and_check(project_root, RuleConfig())
+
+    report = result.unwrap()
+    dead_assign_violations = [v for v in report.violations if v.rule == "dead_assign"]
+    messages = [v.message for v in dead_assign_violations]
+
+    assert all("message_history" not in message for message in messages)
+    assert all("was_awaiting_approval" not in message for message in messages)
+    assert all("seen_count" not in message for message in messages)
+
+
+def test_guard_pipeline_still_reports_unrelated_true_while_dead_assign(tmp_path: Path) -> None:
+    """Guard pipeline control: unrelated dead write in while loop still reports."""
+    project_root = tmp_path / "guard_dead_assign_control"
+    shell_dir = project_root / "shell"
+    shell_dir.mkdir(parents=True)
+
+    (shell_dir / "control_runtime.py").write_text(
+        """
+def logs_impl(instance_id):
+    seen_count = 0
+    while True:
+        latest_entries = read(instance_id)
+        if len(latest_entries) > seen_count:
+            emit(latest_entries[seen_count:])
+            seen_count = len(latest_entries)
+        stale_snapshot = latest_entries
+        sleep()
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    result = _scan_and_check(project_root, RuleConfig())
+
+    report = result.unwrap()
+    dead_assign_violations = [v for v in report.violations if v.rule == "dead_assign"]
+
+    assert len(dead_assign_violations) == 1
+    assert "stale_snapshot" in dead_assign_violations[0].message
