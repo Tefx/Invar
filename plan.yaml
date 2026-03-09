@@ -10085,6 +10085,50 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-09T13:12:55.805022+00:00'
+  - id: da-while-field.fix-loop-carried-state-dead-assign
+    name: fix-loop-carried-state-dead-assign
+    status: pending
+    description: 'Fix the residual loop-carried-state `dead_assign` behavior still
+      reproduced by the real `../anima` guard run.
+
+
+      prior_loop: [da-while-field.fix-anima-residual-dead-assign, da-while-field.retest-anima-guard]
+
+      remaining_blocker: `dead_assign` still reports expected-absent variables in
+      `../anima` (`src/anima/shell/agent.py:855 -> message_history`, `src/anima/shell/cli_commands/talk_runtime.py:526
+      -> was_awaiting_approval`, `src/anima/shell/cli_commands/inspect_collect.py:555
+      -> seen_count`).
+
+      why_new_loop: the prior remediation narrowed the issue but did not eliminate
+      the reproduced blocker in the full guard pipeline, so a focused follow-up fix
+      is required instead of reopening the previous closed scope.
+
+
+      Scope the fix to residual loop-carried-state handling only; keep phase structure
+      intact and avoid unrelated dead_assign changes.
+
+
+      Verification targets:
+
+      - address the three reproduced residual findings above
+
+      - preserve current behavior for unrelated `dead_assign` cases
+
+      - capture what changed in the analyzer logic or tests to distinguish expected-absent
+      loop state from true dead assignments'
+    verification: '- Main path: focused regression coverage or analyzer proof shows
+      loop-carried-state handling no longer reports the three reproduced variables
+      as dead assignments
+
+      - Failure path: evidence shows unrelated `dead_assign` detections still surface,
+      so the fix does not broadly suppress findings
+
+      - Proof: the remediation remains limited to residual loop-carried-state behavior
+      from the reproduced anima guard failure'
+    depends_on:
+    - da-while-field.retest-anima-guard
+    agent: python-senior
+    evidence: 'priority: HIGH'
 - id: release-readiness
   name: Release Readiness
   status: locked
