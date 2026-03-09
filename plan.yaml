@@ -10992,7 +10992,7 @@ phases:
       - plan:mcp-full-guard-field-verify.fix-mcp-external-guard-executable'
   - id: mcp-full-guard-field-verify.retest-tasca-terminal-evidence-post-fix
     name: retest-tasca-terminal-evidence-post-fix
-    status: claimed
+    status: done
     description: As an INDEPENDENT TESTER (integration-verifier), re-run MCP full-guard
       against /Users/tefx/Projects/tasca after the executable-resolution fix. Capture
       kickoff + polling + terminal status payload; confirm the prior `guard.py` missing-executable
@@ -11001,6 +11001,46 @@ phases:
     - mcp-full-guard-field-verify.fix-mcp-external-guard-executable
     claimed_by: integration-verifier
     claimed_at: '2026-03-09T17:28:22.942989+00:00'
+    done_at: '2026-03-09T17:35:43.830208+00:00'
+    evidence: "Artifact:\n- Commit under test: working tree at /Users/tefx/Projects/Invar\
+      \ (post-fix state with src/invar/shell/subprocess_env.py modified)\n\nVerification:\n\
+      - MCP full guard kickoff:\n  - Run: invar_invar_guard(path=\"/Users/tefx/Projects/tasca\"\
+      , changed=false)\n  - Response:\n    {\n      \"status\": \"deferred\",\n  \
+      \    \"run_id\": \"grd_6a7847cd9e22441c9fa727ed\",\n      \"mode\": \"full_scan\"\
+      ,\n      \"path\": \"/Users/tefx/Projects/tasca\",\n      \"changed\": false,\n\
+      \      \"accepted_at\": \"2026-03-09T17:28:26.177313Z\",\n      \"poll_after_ms\"\
+      : 1000,\n      \"timeout_reason\": \"estimated_duration_exceeds_sync_budget\"\
+      \n    }\n- MCP polling evidence (>=2 polls):\n  - Poll #1 (wait 3000ms):\n \
+      \   {\n      \"status\": \"running\",\n      \"run_id\": \"grd_6a7847cd9e22441c9fa727ed\"\
+      ,\n      \"phase\": \"verification\",\n      \"progress\": {\"completed\": 0,\
+      \ \"total\": 0},\n      \"started_at\": \"2026-03-09T17:28:26.177900Z\",\n \
+      \     \"updated_at\": \"2026-03-09T17:28:26.177900Z\"\n    }\n  - Poll #2 (wait\
+      \ 5000ms):\n    {\n      \"status\": \"running\",\n      \"run_id\": \"grd_6a7847cd9e22441c9fa727ed\"\
+      ,\n      \"phase\": \"verification\",\n      \"progress\": {\"completed\": 0,\
+      \ \"total\": 0},\n      \"started_at\": \"2026-03-09T17:28:26.177900Z\",\n \
+      \     \"updated_at\": \"2026-03-09T17:28:26.177900Z\"\n    }\n  - Additional\
+      \ bounded-time checks (wait 10000ms x2 + status):\n    status remained \"running\"\
+      \ with identical updated_at \"2026-03-09T17:28:26.177900Z\" and progress 0/0.\n\
+      - Terminal payload:\n  - Not reached within bounded polling window (about 38s\
+      \ total waiting + extra status checks).\n  - Bounded-time reason: run appears\
+      \ stuck/frozen (no state/phase/progress/update timestamp change across repeated\
+      \ waits).\n- Prior failure signature absence check (`guard.py` missing executable\
+      \ from invar-tools):\n  - MCP payloads inspected: no missing executable / guard.py\
+      \ error surfaced.\n  - CLI output searched with ripgrep:\n    rg -n \"guard\\\
+      .py|No such file|not found|executable\" /Users/tefx/.local/share/opencode/tool-output/tool_cd3aa64030017WUUFKiIipHzU0\n\
+      \    -> no matches.\n- CLI comparison:\n  - Run: uvx invar-tools guard --all\
+      \ /Users/tefx/Projects/tasca\n  - Result summary (from full captured output\
+      \ file tool_cd3aa64030017WUUFKiIipHzU0):\n    - \"status\": \"passed\"\n   \
+      \ - \"summary\": {\"files_checked\": 68, \"errors\": 0, \"warnings\": 73, \"\
+      infos\": 2}\n    - \"doctest\": {\"passed\": true}\n    - \"crosshair\": {\"\
+      status\": \"verified\", \"from_cache\": true}\n    - \"property_tests\": {\"\
+      status\": \"passed\", \"functions_tested\": 112, \"functions_passed\": 112,\
+      \ \"functions_failed\": 0, \"total_examples\": 10000}\n\nSpec link:\n- Step\
+      \ description in plan: mcp-full-guard-field-verify.retest-tasca-terminal-evidence-post-fix\n\
+      \nVerdict:\n- Prior `guard.py` missing-executable failure signature is absent.\n\
+      - New issue found: MCP async run grd_6a7847cd9e22441c9fa727ed does not reach\
+      \ terminal state in bounded time and appears stuck in running/verification with\
+      \ zero progress."
   - id: mcp-full-guard-field-verify.review-tasca-terminal-evidence-post-fix
     name: review-tasca-terminal-evidence-post-fix
     status: pending
