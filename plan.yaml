@@ -9130,7 +9130,7 @@ phases:
       remediation is specification/doc alignment only.'
   - id: mcp-full-guard-design.gate-retest-blockers
     name: gate-retest-blockers
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT TESTER (`integration-verifier`), re-test the focused
       blocker set after `mcp-full-guard-design.gate-fix-blockers`.
 
@@ -9192,6 +9192,51 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-09T17:28:24.923537+00:00'
+    done_at: '2026-03-09T17:36:16.092335+00:00'
+    evidence: "Artifact:\n- Working tree docs remediation reviewed at `docs/proposals/DX-94-mcp-full-guard-support-model.md`.\n\
+      \nVerification:\n- Run: `vectl_show mcp-full-guard-design.gate-retest-blockers`\
+      \ -> scope confirms independent retest of gate blockers (property coupling,\
+      \ runtime contract alignment, cross-repo deferral clarity).\n- Run: `git diff\
+      \ -- docs/proposals/DX-94-mcp-full-guard-support-model.md` -> confirms remediation\
+      \ edits in exact sections:\n  - `## Context and Source` (lines 3-8): adds Source\
+      \ D/E with explicit blocker list + current MCP surface (`invar_guard`, `invar_guard_status`,\
+      \ `invar_guard_wait`) and no cancel tool.\n  - `## Existing Tool (Extended)`\
+      \ + deferred acceptance contract (lines 33-59): removes cancel references.\n\
+      \  - `## New Companion Tools` (lines 61-141): removes wait-timeout envelope\
+      \ requirement, removes cancel API section, keeps non-terminal minimal semantics.\n\
+      \  - `## Backward Compatibility Expectations` (lines 160-169): cancellation\
+      \ moved to implementation-internal note.\n  - `## Acceptance Criteria` (lines\
+      \ 171-194): adds taxonomy + staged cross-repo criterion + criterion #10 decoupling\
+      \ property blocker from DX-94 acceptance.\n  - `## Non-Goals` (lines 195-200):\
+      \ explicitly excludes new MCP cancel tool.\n  - `## Migration Constraints` (lines\
+      \ 201-207): companion tools restricted to status/wait.\n- Run: `invar_invar_guard(changed=false)`\
+      \ -> `{status:\"deferred\", run_id:\"grd_34ba1b2643f24b658529953e\", ...}` (deferred\
+      \ handshake works).\n- Run: `invar_invar_guard_wait(run_id=\"grd_34ba1b2643f24b658529953e\"\
+      , wait_ms=10000)` (repeated) -> remains `{status:\"running\", phase:\"verification\"\
+      , progress:{0/0}}` with no terminal outcome during retest window.\n- Run: `invar_invar_guard_status(run_id=\"\
+      grd_nonexistent_for_dx94_gate_retest\")` -> `{status:\"expired\", message:\"\
+      Run ID not found\"}`.\n- Run: `invar_invar_guard_wait(run_id=\"grd_nonexistent_for_dx94_gate_retest\"\
+      , wait_ms=1000)` -> `{status:\"expired\", message:\"Run ID not found\"}`.\n\
+      - Run (sanity required): `invar_invar_guard(changed=true)` -> **MCP error -32001:\
+      \ Request timed out** (retried; same timeout).\n\nFindings (remaining contradictions/blockers):\n\
+      1) **Unknown vs expired taxonomy still inconsistent at runtime boundary**\n\
+      \   - DX-94 now requires machine-distinct unknown/expired via `error_kind` (`run_not_found`\
+      \ vs `run_expired`) in `invar_guard_status`/`wait`.\n   - Observed MCP responses\
+      \ for nonexistent run_id return `status:\"expired\"` + message `Run ID not found`\
+      \ with no `error_kind`.\n   - This is internally contradictory (expired status\
+      \ + not-found message) and not machine-distinct as required.\n2) **Lifecycle\
+      \ key mismatch persists**\n   - DX-94 examples/criteria rely on lifecycle progression.\n\
+      \   - Observed deferred and running envelopes from MCP tools do not include\
+      \ `lifecycle` field.\n3) **Sanity guard call unstable**\n   - Required `invar_invar_guard(changed=true)`\
+      \ timed out at MCP boundary (`-32001`) instead of returning synchronous report.\n\
+      \   - This blocks confidence in the changed-only sanity path for this retest.\n\
+      \nResolved from doc remediation (confirmed):\n- Cancel-tool overreach removed\
+      \ from acceptance scope (`Current-surface note`, `Non-Goals`, compatibility/migration\
+      \ text).\n- Explicit wait-timeout envelope keys no longer required (`Contract\
+      \ semantics`, Acceptance #5).\n- Cross-repo deferral scope explicitly staged\
+      \ when `../tasca` unavailable (Acceptance #9).\n- Property blocker decoupled\
+      \ from DX-94 acceptance coupling (Acceptance #10).\n\nSpec link:\n- `docs/proposals/DX-94-mcp-full-guard-support-model.md`\n\
+      - `mcp-full-guard-design.gate-retest-blockers`"
   - id: mcp-full-guard-design.gate-rereview-blockers
     name: gate-rereview-blockers
     status: pending
