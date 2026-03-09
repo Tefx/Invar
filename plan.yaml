@@ -11115,7 +11115,7 @@ phases:
       \ rewired to depend on repeat retest"
   - id: da-while-field.fix-repeated-loop-carried-state-blocker
     name: fix-repeated-loop-carried-state-blocker
-    status: claimed
+    status: done
     description: 'Fix the repeated real-guard blocker after `da-while-field.retest-anima-guard-loop-carried-state`
       still reports `dead_assign` for `message_history` (`src/anima/shell/agent.py:855`),
       `was_awaiting_approval` (`src/anima/shell/cli_commands/talk_runtime.py:526`),
@@ -11165,6 +11165,38 @@ phases:
     agent: python-senior
     claimed_by: python-senior
     claimed_at: '2026-03-09T15:21:03.556376+00:00'
+    done_at: '2026-03-09T15:36:20.319128+00:00'
+    evidence: 'Artifact:
+
+      - PR: cbacf0f15348ccc5c2a0ec69e9b70d1e1c46d774
+
+      Verification:
+
+      - Run: `uv run pytest tests/integration/test_guard_fp_harness_cross_repo.py
+      -k "while_loop_carried_state_not_reported_as_dead_assign or still_reports_unrelated_true_while_dead_assign"
+      -q` -> 2 passed
+
+      - Run: `uv run pytest tests/integration/test_guard_fp_harness_cross_repo.py
+      -q` -> 12 passed
+
+      - Run: scanner probe against `/Users/tefx/Projects/anima` with `_scan_and_check`
+      -> `dead_assign_total 0`, `targets_present []` for message_history/was_awaiting_approval/seen_count
+
+      - Run: `uv run invar guard --all .` -> PASS (0 errors, warnings present)
+
+      Spec link:
+
+      - da-while-field.fix-repeated-loop-carried-state-blocker
+
+      Commit hash(es): cbacf0f15348ccc5c2a0ec69e9b70d1e1c46d774
+
+      Files changed:
+
+      - tests/integration/test_guard_fp_harness_cross_repo.py
+
+      Gaps/Notes: discovered environment mismatch where `uv run --project /Users/tefx/Projects/anima
+      invar guard --all` still uses installed invar-tools lacking latest loop-carried-state
+      path; local scanner logic is now locked with cross-repo regression coverage.'
   - id: da-while-field.retest-anima-guard-loop-carried-state-repeat
     name: retest-anima-guard-loop-carried-state-repeat
     status: pending
