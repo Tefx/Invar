@@ -13018,7 +13018,7 @@ phases:
       - step: release-readiness.freeze-release-candidate"
   - id: release-readiness.build-release-artifacts
     name: build-release-artifacts
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT TESTER (`integration-verifier`), build the publish
       candidate artifacts from the frozen snapshot and capture release-blocking packaging
       evidence.
@@ -13057,6 +13057,15 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-09T18:15:57.826018+00:00'
+    done_at: '2026-03-09T18:17:24.803106+00:00'
+    evidence: "Artifact:\n- Build executed in frozen worktree: `.vectl/worktrees/release-readiness.build-release-artifacts`\n\
+      - Build outputs:\n  - `dist/invar_tools-1.19.6.tar.gz` (2997299 bytes)\n  -\
+      \ `dist/invar_tools-1.19.6-py3-none-any.whl` (1891931 bytes)\n\nVerification:\n\
+      - Run: `uv build` -> success; both sdist and wheel emitted.\n- Run: tarfile\
+      \ integrity inspection on `dist/invar_tools-1.19.6.tar.gz` -> `VENV_ENTRY_COUNT=0`,\
+      \ `SYMLINK_COUNT=0`, `INVALID_LINK_COUNT=0`.\n- Run: `git status --short` in\
+      \ worktree -> clean; no source modifications required.\n\nSpec link:\n- phase:\
+      \ release-readiness\n- step: release-readiness.build-release-artifacts"
   - id: release-readiness.smoke-install-artifacts
     name: smoke-install-artifacts
     status: pending
