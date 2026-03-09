@@ -11586,7 +11586,7 @@ phases:
       Gaps/Notes: verification-only rerun accepted; no gate-side code edits performed.'
 - id: da-while-field
   name: dead_assign While Field Validation
-  status: done
+  status: in_progress
   steps:
   - id: da-while-field.freeze-anima-snapshot
     name: freeze-anima-snapshot
@@ -11703,7 +11703,7 @@ phases:
       and da-while-field.retest-anima-guard; phase gate updated to require retest.'
   - id: da-while-field.gate
     name: da-while-field.gate
-    status: done
+    status: rejected
     description: 'Gate review: verify the real anima field evidence closes the confirmed
       dead_assign false positives.'
     verification: '- Real `../anima` guard evidence is present from the remediation
@@ -11728,20 +11728,13 @@ phases:
     claimed_by: gate-reviewer
     claimed_at: '2026-03-09T17:04:29.880154+00:00'
     done_at: '2026-03-09T17:07:42.548863+00:00'
-    evidence: 'Decision: BLOCKED
-
-      Reasons:
-
-      - Real anima guard evidence still reports dead_assign on confirmed FP targets.
-
-      - Latest rerun still shows at least 2/3 targets flagged (`message_history`,
-      `seen_count`), and prior recorded retest shows all 3 including `was_awaiting_approval`.
-
-      - Therefore "three confirmed false positives cleared" is not satisfied.
-
-      Files changed: none
-
-      Commit hash(es): none'
+    rejection_reason: Gate evidence shows confirmed false positives NOT cleared; do
+      not advance phase
+    rejection_history:
+    - reason: Gate evidence shows confirmed false positives NOT cleared; do not advance
+        phase
+      timestamp: '2026-03-09T17:07:53.491356+00:00'
+      reviewer: orchestrator
   - id: da-while-field.fix-anima-residual-dead-assign
     name: fix-anima-residual-dead-assign
     status: done
