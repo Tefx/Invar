@@ -8873,7 +8873,7 @@ phases:
       and aligned docs/tool status wording.'
   - id: mcp-full-guard-design.verify-design-retest-retest-retest
     name: verify-design-retest-retest-retest
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT TESTER (`integration-verifier`), re-run design/runtime
       consistency verification after `mcp-full-guard-design.verify-design-retest-retest-fix`.
 
@@ -8926,6 +8926,35 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-09T15:21:17.512768+00:00'
+    done_at: '2026-03-09T15:36:41.897369+00:00'
+    evidence: 'Artifact:
+
+      - PR: none (verification-only)
+
+      Verification:
+
+      - Run: `uv run pytest -v tests/integration/test_mcp_guard_deferred.py -k "changed_false_defers_when_estimate_exceeds_budget
+      or guard_run_registry_expiry_semantics or guard_run_registry_unknown_run_id_semantics"`
+      -> 3 passed
+
+      - Run: `uv run pytest -v tests/integration/test_mcp_full_guard_regressions.py
+      -k "deferred_run_expired_status or unknown_run_id_returns_run_not_found"` ->
+      2 passed
+
+      - Runtime source check confirms status/wait taxonomy uses `run_not_found` for
+      unknown and `run_expired` for expired cases.
+
+      - DX-94 spec text checked for consistent status/taxonomy wording.
+
+      Spec link:
+
+      - mcp-full-guard-design.verify-design-retest-retest-retest
+
+      Commit hash(es): none (verification-only)
+
+      Files changed: none
+
+      Gaps/Notes: scoped checks found no remaining mismatch.'
 - id: mcp-full-guard-implement
   name: MCP Full Guard Implementation
   status: done
