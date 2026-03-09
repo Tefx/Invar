@@ -8787,6 +8787,59 @@ phases:
     depends_on:
     - mcp-full-guard-design.verify-design-retest-retest
     agent: python-senior
+  - id: mcp-full-guard-design.verify-design-retest-retest-retest
+    name: verify-design-retest-retest-retest
+    status: pending
+    description: 'As an INDEPENDENT TESTER (`integration-verifier`), re-run design/runtime
+      consistency verification after `mcp-full-guard-design.verify-design-retest-retest-fix`.
+
+
+      YOUR GOAL IS TO FIND REMAINING PROBLEMS, not to confirm it works.
+
+
+      Re-test for:
+
+      - unknown `run_id` and expired `run_id` outcomes are machine-distinct in both
+      proposal and runtime-facing taxonomy
+
+      - `run_not_found` is documented and emitted on MCP runtime status/wait paths
+      for unknown runs
+
+      - DX-94 status-set text, examples, and narrative match the implemented `expired`
+      handling
+
+      - integration coverage explicitly exercises the unknown-run taxonomy path
+
+
+      Remediation metadata:
+
+      - prior_loop: [`mcp-full-guard-design.verify-design-retest-retest`, `mcp-full-guard-design.verify-design-retest-retest-fix`]
+
+      - remaining_blocker: confirm the final runtime/spec taxonomy split is internally
+      consistent and independently verifiable
+
+      - why_new_loop: gate progression must be blocked until an independent verifier
+      confirms the focused taxonomy remediation
+
+
+      Priority: MEDIUM
+
+
+      Independence Level: L1'
+    verification: '- Independent review confirms unknown vs expired run outcomes are
+      machine-distinct everywhere they are specified
+
+      - Runtime status/wait paths and proposal text both use `run_not_found` for unknown
+      runs and `run_expired` for expired runs
+
+      - DX-94 status-set text and examples are consistent with the implemented `expired`
+      handling
+
+      - Integration coverage explicitly asserts the unknown-run taxonomy path and
+      reports any remaining mismatch'
+    depends_on:
+    - mcp-full-guard-design.verify-design-retest-retest-fix
+    agent: integration-verifier
 - id: mcp-full-guard-implement
   name: MCP Full Guard Implementation
   status: in_progress
