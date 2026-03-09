@@ -9644,7 +9644,7 @@ phases:
       Gaps/Notes: none'
   - id: da-while-repro.gate
     name: da-while-repro.gate
-    status: claimed
+    status: done
     description: 'Gate review: verify the while-loop reproductions are precise, minimal,
       and sufficient to constrain the fix scope.'
     verification: '- The three confirmed false-positive patterns are reproduced locally
@@ -9659,6 +9659,48 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-09T13:13:53.301829+00:00'
+    done_at: '2026-03-09T14:23:21.368179+00:00'
+    evidence: 'Artifact:
+
+      - Audited repro snapshot commit: cdf191a1
+
+
+      Verification:
+
+      - Run: `uv run pytest -q tests/core/test_dead_assign.py -k "while_loop_boolean_flag_carried_state
+      or while_loop_cursor_update_carried_state or while_loop_accumulated_state_via_helper
+      or while_loop_true_dead_write_still_reported"` on cdf191a1 -> `4 passed` (pre-fix
+      failures not reproduced)
+
+      - Run: `uv run pytest -q tests/core/test_dead_assign.py::test_while_loop_true_dead_write_still_reported`
+      -> `1 passed` (negative control remains true-positive)
+
+
+      Result:
+
+      - Gate requirement not met: three confirmed false-positive patterns were not
+      reproducible on pre-fix snapshot.
+
+      - Scope-constraining evidence is insufficient until repro set is realigned.
+
+
+      Spec link:
+
+      - da-while-repro.gate
+
+      Commit hash(es): none (gate audit only)
+
+      Files changed: none
+
+      Gaps/Notes: added remediation chain before future gate attempt.
+
+      Remediation steps created:
+
+      - da-while-repro.da-while-repro-realign-focused-repros
+
+      - da-while-repro.da-while-repro-retest-pre-fix-repros
+
+      - da-while-repro.gate rewired to depend on retest step'
   - id: da-while-repro.da-while-repro-realign-focused-repros
     name: da-while-repro.realign-focused-repros
     status: pending
