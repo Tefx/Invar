@@ -9395,7 +9395,7 @@ phases:
     agent: integration-verifier
   - id: mcp-full-guard-field-verify.fix-cli-comparison-import-path
     name: fix-cli-comparison-import-path
-    status: claimed
+    status: done
     description: 'HIGH priority sibling fix for `mcp-full-guard-field-verify.run-real-mcp-full-guard`.
 
 
@@ -9440,6 +9440,14 @@ phases:
     agent: python-executor
     claimed_by: python-executor
     claimed_at: '2026-03-09T13:14:24.915043+00:00'
+    done_at: '2026-03-09T14:19:38.976156+00:00'
+    evidence: "Artifact:\n- PR: N/A\nVerification:\n- Run: uv run invar guard --all\
+      \ --static -> status: passed\n- Run: uv run invar hooks --help -> Works correctly\n\
+      - Run: uvx invar-tools guard --help -> Works correctly\nSpec link:\n- mcp-full-guard-field-verify.fix-cli-comparison-import-path\n\
+      Commit hash(es): none (code already correct in branch)\nFiles changed: none\n\
+      Gaps/Notes: CLI comparison-path working. hooks.py exists and is properly included\
+      \ in package. No packaging/import wiring changes needed.\ndiscovered_issues:\n\
+      \  - none"
 - id: da-while-repro
   name: dead_assign While Repros
   status: in_progress
