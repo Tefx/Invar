@@ -9887,7 +9887,7 @@ phases:
       \  - none"
   - id: mcp-full-guard-field-verify.capture-completed-large-repo-mcp-full-guard-evidence
     name: capture-completed-large-repo-mcp-full-guard-evidence
-    status: claimed
+    status: done
     description: 'Follow-up verification: capture large-repo MCP full-guard evidence
       to terminal completion using the original large-repo target context rather than
       a worktree-local path.
@@ -9983,6 +9983,73 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-09T15:21:23.021294+00:00'
+    done_at: '2026-03-09T15:36:55.379205+00:00'
+    evidence: '## Large-Repo MCP Full-Guard Completion Evidence
+
+
+      Target context: /Users/tefx/Projects/Invar
+
+      Why this is the intended target: verified against worktree listing showing primary
+      checkout path vs isolated worktree path; explicit samefile check returns false
+      for worktree-vs-target.
+
+
+      Exact MCP invocation / observation commands:
+
+      - `git worktree list --porcelain`
+
+      - samefile check between target and worktree path
+
+      - `invar_invar_guard(path="/Users/tefx/Projects/Invar", changed=False)`
+
+      - repeated `invar_invar_guard_wait(..., wait_ms=10000)` and `invar_invar_guard_status(...)`
+
+
+      Deferred run tracking:
+
+      - Initial run id: grd_241421c8ce244860934b07d0
+
+      - Observation method: repeated status/wait polling
+
+      - Terminal status reached: failed
+
+
+      Observation output:
+
+      - Initial response deferred with path `/Users/tefx/Projects/Invar`
+
+      - Intermediate states running
+
+      - Terminal status response: `status=failed`, `error_kind=execution_error`, message
+      `Guard subprocess failed with code 1`, with completed_at/expires_at present
+
+
+      Artifacts / output paths:
+
+      - artifacts/mcp_full_guard_completion_evidence.md (committed evidence transcript)
+
+      - path field in deferred payload points to `/Users/tefx/Projects/Invar`
+
+
+      Failure-path proof:
+
+      - worktree-path ambiguity closed by explicit context proof and samefile false
+      check
+
+      - completion observed directly via terminal `invar_invar_guard_status` response
+      (not inferred)
+
+
+      Commit hash(es): 6b05e1e
+
+      Files changed:
+
+      - artifacts/mcp_full_guard_completion_evidence.md
+
+      Spec link: mcp-full-guard-field-verify.capture-completed-large-repo-mcp-full-guard-evidence
+
+      Gaps/Notes: terminal state reached as FAILED; this step captured completion
+      evidence, not success assertion.'
   - id: mcp-full-guard-field-verify.review-completed-large-repo-mcp-full-guard-evidence
     name: review-completed-large-repo-mcp-full-guard-evidence
     status: pending
