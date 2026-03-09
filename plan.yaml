@@ -10129,6 +10129,50 @@ phases:
     - da-while-field.retest-anima-guard
     agent: python-senior
     evidence: 'priority: HIGH'
+  - id: da-while-field.retest-anima-guard-loop-carried-state
+    name: retest-anima-guard-loop-carried-state
+    status: pending
+    description: 'As an INDEPENDENT TESTER (`integration-verifier`), re-run the exact
+      real guard pipeline against `../anima` after the loop-carried-state dead_assign
+      fix.
+
+
+      YOUR GOAL IS TO FIND PROBLEMS, not to confirm it works.
+
+
+      Reproduction command:
+
+      `uv run --project "/Users/tefx/Projects/anima" invar guard --all "/Users/tefx/Projects/anima"`
+
+
+      Test for:
+
+      - happy path: the real `../anima` guard no longer reports `message_history`,
+      `was_awaiting_approval`, or `seen_count` as `dead_assign`
+
+      - edge case: any remaining `dead_assign` findings are captured verbatim and
+      classified as residual blocker vs unrelated noise
+
+      - error scenario: the same command still reproduces one or more of the three
+      blocker findings after the fix
+
+
+      Document the exact command and exact output excerpts.
+
+      Independence Level: L2'
+    verification: '- Run exactly: `uv run --project "/Users/tefx/Projects/anima" invar
+      guard --all "/Users/tefx/Projects/anima"`
+
+      - Real guard output from `../anima` is attached
+
+      - The three blocker variables are absent from `dead_assign` findings
+
+      - Any remaining findings are explicitly classified as unrelated or residual
+      blocker evidence'
+    depends_on:
+    - da-while-field.fix-loop-carried-state-dead-assign
+    agent: integration-verifier
+    evidence: 'priority: HIGH'
 - id: release-readiness
   name: Release Readiness
   status: locked
