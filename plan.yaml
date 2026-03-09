@@ -9678,7 +9678,7 @@ phases:
       run pytest.'
   - id: da-while-fix.freeze-for-gate
     name: freeze-for-gate
-    status: pending
+    status: claimed
     description: Freeze snapshot for dead_assign while-fix gate review.
     verification: '- Record `git rev-parse HEAD`
 
@@ -9688,6 +9688,8 @@ phases:
     depends_on:
     - da-while-fix.verify-local-regression
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-09T13:13:27.136686+00:00'
   - id: da-while-fix.gate
     name: da-while-fix.gate
     status: pending
