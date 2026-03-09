@@ -10515,7 +10515,7 @@ phases:
       present and stable; detector logic remained unchanged.'
   - id: da-while-repro.da-while-repro-retest-pre-fix-repros-stabilized
     name: da-while-repro.retest-pre-fix-repros-stabilized
-    status: pending
+    status: claimed
     description: 'As an INDEPENDENT TESTER (`integration-verifier`), re-run the tightened
       pre-fix while-loop reproduction set against snapshot `cdf191a1` and confirm
       the three intended false-positive patterns reproduce while the negative control
@@ -10559,6 +10559,8 @@ phases:
     depends_on:
     - da-while-repro.da-while-repro-tighten-pre-fix-repro-methodology
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-09T15:37:41.462922+00:00'
 - id: da-while-fix
   name: dead_assign While Fix
   status: done
