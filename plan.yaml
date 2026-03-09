@@ -8295,7 +8295,7 @@ phases:
       Verdict: OPEN'
 - id: mcp-full-guard-design
   name: MCP Full Guard Support Design
-  status: in_progress
+  status: done
   steps:
   - id: mcp-full-guard-design.specify-support-model
     name: specify-support-model
@@ -9239,7 +9239,7 @@ phases:
       - `mcp-full-guard-design.gate-retest-blockers`"
   - id: mcp-full-guard-design.gate-rereview-blockers
     name: gate-rereview-blockers
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT REVIEWER (`gate-reviewer`), assess whether the
       focused remediation loop actually closes the blockers that caused `mcp-full-guard-design.gate`
       to fail.
@@ -9289,6 +9289,22 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-09T17:38:06.936724+00:00'
+    done_at: '2026-03-09T17:39:54.527261+00:00'
+    evidence: "Artifact:\n- Retest evidence: mcp-full-guard-design.gate-retest-blockers\
+      \ (integration-verifier)\n- Design doc under review: docs/proposals/DX-94-mcp-full-guard-support-model.md\n\
+      \nVerification:\n- Doc remediation did narrow scope correctly (cancel tool removed;\
+      \ wait-timeout keys removed; cross-repo staged; property blocker decoupled)\
+      \ per retest evidence.\n- Remaining blockers confirmed by independent retest:\n\
+      \  1) Taxonomy mismatch at runtime boundary: nonexistent run_id returns `status:\"\
+      expired\"` + message \"Run ID not found\" (no `error_kind`), which contradicts\
+      \ DX-94 machine-distinct `run_not_found` vs `run_expired` requirement.\n  2)\
+      \ `lifecycle` field relied upon by DX-94 examples/criteria is not present in\
+      \ observed deferred/running envelopes.\n  3) Changed-mode sanity is unstable:\
+      \ `invar_invar_guard(changed=true)` timed out at MCP boundary (`-32001`).\n\n\
+      Verdict: BLOCKED\n- The doc scope reductions are necessary but not sufficient:\
+      \ DX-94 still contradicts observed MCP behavior on key contract fields and the\
+      \ changed-mode control path is not reliably testable.\n\nSpec link:\n- docs/proposals/DX-94-mcp-full-guard-support-model.md\n\
+      - plan:mcp-full-guard-design.gate-retest-blockers"
   - id: mcp-full-guard-design.remediate-shell-complexity-debt-precondition
     name: remediate-shell-complexity-debt-precondition
     status: done
