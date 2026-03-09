@@ -9994,7 +9994,7 @@ phases:
     name: smoke-install-artifacts
     status: pending
     description: 'As an INDEPENDENT TESTER (`blind-tester`), perform a clean-environment
-      smoke install of the built artifacts and prove publish-critical entrypoints
+      packaging smoke install of the built artifacts and prove publish-critical entrypoints
       work from the installed package, not only from the source tree.
 
 
@@ -10016,20 +10016,23 @@ phases:
 
       - verify `invar guard --help`
 
-      - run a minimal installed-path command proving the packaged command tree resolves
-      `invar.shell.commands.hooks` and the repo-local hook/guard command path works
-      without `ModuleNotFoundError`
+      - verify `invar guard` against a minimal control repo/path and capture actual
+      stdout/stderr
 
-      - if `invar guard` is used against a control repo/path, capture actual stdout/stderr
-      even if findings are reported
+      - prove the installed command tree resolves `invar.shell.commands.hooks` without
+      `ModuleNotFoundError`
+
+      - if any command only works from the source tree, classify that as a release
+      blocker with exact reproduction
 
 
       Independence Level: L2'
     verification: '- Main path: clean-env wheel install and clean-env sdist install
       both expose working `invar`, `invar hooks`, and `invar guard` entrypoints
 
-      - Failure path: any missing module, broken console-script wiring, or installed-path
-      divergence is captured with the exact command and output
+      - Failure path: any missing module, broken console-script wiring, broken `invar
+      guard` execution, or installed-path divergence is captured with the exact command
+      and output
 
       - Proof: attached commands and output show installed-artifact behavior, not
       source-tree behavior'
