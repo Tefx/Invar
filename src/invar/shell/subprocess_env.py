@@ -266,10 +266,14 @@ def _detect_venv_python(venv: Path) -> Path | None:
 
 # @shell_complexity: Parses direct_url metadata with robust scheme/path validation
 def detect_running_invar_source() -> Path | None:
-    """Detect source path for currently running invar-tools package.
+    """Detect install provenance for currently running invar-tools package.
 
     When launched via `uvx --from /path/to/repo`, package metadata includes
     direct_url.json pointing to that local source path.
+
+    When launched via `uvx --from /path/to/invar_tools-*.whl`, metadata points
+    to the wheel file. Returning that wheel path preserves artifact provenance
+    on uvx re-spawn.
     """
     try:
         distribution = metadata.distribution("invar-tools")
@@ -296,10 +300,13 @@ def detect_running_invar_source() -> Path | None:
     raw_path = parsed.path
     if parsed.netloc:
         raw_path = f"//{parsed.netloc}{parsed.path}"
-    source_root = Path(unquote(raw_path)).resolve()
+    source_path = Path(unquote(raw_path)).resolve()
 
-    pyproject = source_root / "pyproject.toml"
-    src_pkg = source_root / "src" / "invar"
+    if source_path.suffix == ".whl" and source_path.exists():
+        return source_path
+
+    pyproject = source_path / "pyproject.toml"
+    src_pkg = source_path / "src" / "invar"
     if not (pyproject.exists() and src_pkg.exists()):
         return None
 
@@ -310,7 +317,7 @@ def detect_running_invar_source() -> Path | None:
     if 'name = "invar-tools"' not in pyproject_text:
         return None
 
-    return source_root
+    return source_path
 
 
 def _can_resolve_uvx_source(
@@ -357,10 +364,15 @@ def get_uvx_respawn_command(
     if uvx_path is None:
         return None
 
-    local_source = detect_local_invar_source(project_root=project_root)
-    if local_source is None and invocation_root is not None:
-        local_source = detect_local_invar_source(project_root=invocation_root)
-    running_source = detect_local_invar_source() or detect_running_invar_source()
+    running_checkout = detect_local_invar_source()
+    running_source = running_checkout or detect_running_invar_source()
+
+    local_source: Path | None = None
+    if running_checkout is not None:
+        local_source = detect_local_invar_source(project_root=project_root)
+        if local_source is None and invocation_root is not None:
+            local_source = detect_local_invar_source(project_root=invocation_root)
+
     if local_source is not None and tool_exe in {"invar", "invar-tools"}:
         venv = detect_project_venv(project_root)
         project_python = _detect_venv_python(venv) if venv is not None else None
@@ -391,7 +403,7 @@ def get_uvx_respawn_command(
     if project_python is None:
         return None
 
-    preferred_source = local_source or running_source
+    preferred_source = running_source or local_source
     if preferred_source is not None:
         return [
             uvx_path,

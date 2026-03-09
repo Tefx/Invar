@@ -284,7 +284,7 @@ def f(x: int) -> int:
 
             assert module is not None
             assert getattr(module, "ANSWER", None) == 7
-            assert str(tmp_path / "src" / "demo" / "core") == list(demo_core.__path__)[0]
+            assert str(tmp_path / "src" / "demo" / "core") == next(iter(demo_core.__path__))
         finally:
             sys.modules.pop("demo.core.dead_param", None)
             sys.modules.pop("demo.core.dead_param_helpers", None)
@@ -608,7 +608,7 @@ class TestUvxRespawnCommand:
             patch("shutil.which", return_value="uvx"),
             patch(
                 "invar.shell.subprocess_env.detect_local_invar_source",
-                side_effect=[local_src, None],
+                side_effect=[local_src, local_src],
             ),
             patch(
                 "invar.shell.subprocess_env.sys.version_info",
@@ -654,7 +654,7 @@ class TestUvxRespawnCommand:
             patch("shutil.which", return_value="uvx"),
             patch(
                 "invar.shell.subprocess_env.detect_local_invar_source",
-                side_effect=[local_src, None],
+                side_effect=[local_src, local_src],
             ),
             patch("invar.shell.subprocess_env.detect_running_invar_source", return_value=None),
             patch(
@@ -703,7 +703,7 @@ class TestUvxRespawnCommand:
             patch("shutil.which", return_value="uvx"),
             patch(
                 "invar.shell.subprocess_env.detect_local_invar_source",
-                side_effect=[None, local_src, None],
+                side_effect=[local_src, None, local_src],
             ),
             patch("invar.shell.subprocess_env.detect_running_invar_source", return_value=None),
             patch(
@@ -780,6 +780,57 @@ class TestUvxRespawnCommand:
             "--all",
         ]
 
+    def test_uses_running_wheel_path_for_version_mismatch_respawn(self, tmp_path: Path) -> None:
+        (tmp_path / "pyproject.toml").write_text("[project]\nname='x'\nversion='0.0.0'\n")
+        venv = tmp_path / ".venv"
+        venv.mkdir()
+        (venv / "pyvenv.cfg").write_text("version = 3.12.0\n")
+        python_path = venv / "bin" / "python"
+        python_path.parent.mkdir(parents=True)
+        python_path.write_text("")
+
+        wheel_path = tmp_path / "dist" / "invar_tools-1.2.3-py3-none-any.whl"
+        wheel_path.parent.mkdir(parents=True)
+        wheel_path.write_text("")
+
+        with (
+            patch.dict(os.environ, {}, clear=True),
+            patch("shutil.which", return_value="uvx"),
+            patch(
+                "invar.shell.subprocess_env.sys.version_info",
+                SimpleNamespace(major=3, minor=11),
+            ),
+            patch(
+                "invar.shell.subprocess_env.detect_local_invar_source", return_value=None
+            ) as local,
+            patch(
+                "invar.shell.subprocess_env.detect_running_invar_source",
+                return_value=wheel_path,
+            ),
+            patch("invar.shell.subprocess_env.subprocess.run") as probe,
+        ):
+            cmd = get_uvx_respawn_command(
+                project_root=tmp_path,
+                argv=["guard", str(tmp_path), "--all"],
+                tool_name="invar-tools",
+                invar_tools_version="1.2.3",
+                invocation_root=tmp_path,
+            )
+
+        assert cmd == [
+            "uvx",
+            "--python",
+            str(python_path),
+            "--from",
+            str(wheel_path),
+            "invar-tools",
+            "guard",
+            str(tmp_path),
+            "--all",
+        ]
+        local.assert_called_once_with()
+        probe.assert_not_called()
+
 
 class TestDetectRunningInvarSource:
     def test_returns_none_when_direct_url_missing(self) -> None:
@@ -796,6 +847,16 @@ class TestDetectRunningInvarSource:
         dist = SimpleNamespace(read_text=lambda _name: direct_url)
         with patch("invar.shell.subprocess_env.metadata.distribution", return_value=dist):
             assert detect_running_invar_source() == repo
+
+    def test_detects_wheel_from_direct_url(self, tmp_path: Path) -> None:
+        wheel_path = tmp_path / "dist" / "invar_tools-1.2.3-py3-none-any.whl"
+        wheel_path.parent.mkdir(parents=True)
+        wheel_path.write_text("")
+
+        direct_url = '{"url":"file://' + str(wheel_path) + '"}'
+        dist = SimpleNamespace(read_text=lambda _name: direct_url)
+        with patch("invar.shell.subprocess_env.metadata.distribution", return_value=dist):
+            assert detect_running_invar_source() == wheel_path
 
 
 class TestDetectLocalInvarSource:
