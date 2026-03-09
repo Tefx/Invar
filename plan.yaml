@@ -8720,6 +8720,73 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-09T14:24:23.972602+00:00'
+  - id: mcp-full-guard-design.verify-design-retest-retest-fix
+    name: verify-design-retest-retest-fix
+    status: pending
+    description: 'Fix the remaining runtime/spec taxonomy inconsistency reported by
+      `mcp-full-guard-design.verify-design-retest-retest`.
+
+
+      Scope:
+
+      - align runtime and proposal language so unknown `run_id` and expired `run_id`
+      outcomes are machine-distinct, not only message-distinct
+
+      - ensure `run_not_found` is actually emitted on MCP runtime status/wait paths
+      for unknown runs
+
+      - align DX-94 status-set text with implemented statuses, including explicit
+      `expired` handling
+
+      - add integration coverage for the unknown-run taxonomy path
+
+
+      State semantics:
+
+      - `run_expired` remains the machine-level outcome for previously valid but now
+      expired runs
+
+      - `run_not_found` is reserved for unknown runs that were never present or are
+      no longer addressable as unknown
+
+      - narrative text, examples, and runtime/status taxonomy must preserve the same
+      split exactly
+
+      - backward-compatible client messaging may remain descriptive, but machine-level
+      signaling must be unambiguous
+
+
+      Out of scope:
+
+      - broader redesign of MCP full-guard lifecycle beyond the unknown-vs-expired
+      taxonomy correction
+
+
+      Remediation metadata:
+
+      - prior_loop: [`mcp-full-guard-design.verify-design-retest`, `mcp-full-guard-design.verify-design-retest-fix`,
+      `mcp-full-guard-design.verify-design-retest-retest`]
+
+      - remaining_blocker: unknown and expired run outcomes are not yet machine-distinct
+      across runtime/spec text and integration coverage
+
+      - why_new_loop: the latest independent retest found a narrower but still blocking
+      taxonomy mismatch, so a focused remediation step is required instead of reopening
+      earlier loops'
+    verification: '- Proposal/runtime design specifies machine-distinct signaling
+      for unknown vs expired runs
+
+      - MCP status/wait paths explicitly emit `run_not_found` for unknown runs and
+      `run_expired` for expired runs
+
+      - DX-94 status-set text matches the intended implemented statuses, including
+      `expired`
+
+      - Integration coverage requirement includes an assertion for the unknown-run
+      taxonomy path'
+    depends_on:
+    - mcp-full-guard-design.verify-design-retest-retest
+    agent: python-senior
 - id: mcp-full-guard-implement
   name: MCP Full Guard Implementation
   status: in_progress
