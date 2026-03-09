@@ -10021,7 +10021,7 @@ phases:
       prior loop-carried-state test additions; detector logic unchanged.'
   - id: da-while-repro.da-while-repro-retest-pre-fix-repros
     name: da-while-repro.retest-pre-fix-repros
-    status: pending
+    status: claimed
     description: 'As an INDEPENDENT TESTER (`integration-verifier`), verify the repaired
       focused while-loop reproductions now fail on the pre-fix snapshot `cdf191a1`
       and that the negative control continues to pass as a true positive.
@@ -10053,6 +10053,8 @@ phases:
     depends_on:
     - da-while-repro.da-while-repro-realign-focused-repros
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-09T14:57:41.792353+00:00'
 - id: da-while-fix
   name: dead_assign While Fix
   status: in_progress
