@@ -8439,10 +8439,31 @@ phases:
     name: mcp-full-guard-design.gate
     status: claimed
     description: 'Gate review: verify the MCP full-guard support model is precise
-      enough to implement safely.'
-    verification: '- All design steps completed successfully
+      enough to implement safely.
 
-      - A concrete supported model exists for full MCP guard on large repos
+
+      This gate is rewired to wait for the focused blocker-remediation loop created
+      from failed gate evidence:
+
+      - property-test failure in `src/invar/core/rules.py::check_all_rules`
+
+      - DX-94 assumptions about cancel tooling / explicit wait-timeout envelope fields
+      that are not implemented in MCP runtime/tooling
+
+      - unavailable `../tasca` context for cross-repo deferral verification
+
+
+      The original gate preserves prior history and must not pass until the focused
+      rereview step reports these blockers closed.'
+    verification: '- All earlier design steps and remediation loops completed successfully
+
+      - Focused rereview confirms the `check_all_rules` blocker is resolved or explicitly
+      removed from the supported design contract
+
+      - DX-94 support model matches currently implemented MCP runtime/tooling
+
+      - Cross-repo deferral verification scope is concrete even when `../tasca` is
+      unavailable in the gate context
 
       - No unresolved ambiguity remains before implementation'
     depends_on:
@@ -8453,6 +8474,7 @@ phases:
     - mcp-full-guard-design.verify-design-retest-fix
     - mcp-full-guard-design.verify-design-retest-retest
     - mcp-full-guard-design.verify-design-retest-retest-retest
+    - mcp-full-guard-design.gate-rereview-blockers
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-09T15:37:48.189085+00:00'
