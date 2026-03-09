@@ -9920,3 +9920,6 @@ phases:
     depends_on:
     - da-while-field.fix-anima-residual-dead-assign
     agent: integration-verifier
+- id: release-readiness
+  name: Release Readiness
+  status: pending
