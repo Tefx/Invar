@@ -9401,7 +9401,7 @@ phases:
       Gaps/Notes: sibling CLI import-path issue tracked and independently handled'
   - id: mcp-full-guard-field-verify.retest-real-mcp-full-guard
     name: retest-real-mcp-full-guard
-    status: pending
+    status: claimed
     description: 'As an INDEPENDENT TESTER (`integration-verifier`), re-run the real
       MCP full-guard validation after both blocker fixes land.
 
@@ -9486,6 +9486,8 @@ phases:
     - mcp-full-guard-field-verify.fix-real-mcp-full-guard-entrypoints
     - mcp-full-guard-field-verify.fix-cli-comparison-import-path
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-09T14:24:28.161980+00:00'
   - id: mcp-full-guard-field-verify.fix-cli-comparison-import-path
     name: fix-cli-comparison-import-path
     status: done
