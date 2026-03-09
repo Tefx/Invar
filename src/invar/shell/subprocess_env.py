@@ -344,6 +344,7 @@ def get_uvx_respawn_command(
     argv: list[str],
     tool_name: str,
     invar_tools_version: str,
+    invocation_root: Path | None = None,
 ) -> list[str] | None:
     if os.environ.get("INVAR_UVX_RESPAWNED") == "1":
         return None
@@ -353,6 +354,8 @@ def get_uvx_respawn_command(
         return None
 
     local_source = detect_local_invar_source(project_root=project_root)
+    if local_source is None and invocation_root is not None:
+        local_source = detect_local_invar_source(project_root=invocation_root)
     running_source = detect_local_invar_source() or detect_running_invar_source()
     if local_source is not None and tool_name in {"invar", "invar-tools"}:
         venv = detect_project_venv(project_root)

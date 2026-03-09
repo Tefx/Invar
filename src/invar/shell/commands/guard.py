@@ -321,6 +321,7 @@ def guard(
         argv=sys.argv[1:],
         tool_name=Path(sys.argv[0]).name,
         invar_tools_version=__version__,
+        invocation_root=Path.cwd(),
     )
     if cmd is not None:
         env = os.environ.copy()

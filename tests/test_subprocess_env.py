@@ -636,6 +636,56 @@ class TestUvxRespawnCommand:
             "--all",
         ]
 
+    def test_prefers_invocation_root_checkout_for_external_project(self, tmp_path: Path) -> None:
+        external_project = tmp_path / "external-project"
+        external_project.mkdir()
+        (external_project / "pyproject.toml").write_text("[project]\nname='x'\nversion='0.0.0'\n")
+        venv = external_project / ".venv"
+        venv.mkdir()
+        (venv / "pyvenv.cfg").write_text("version = 3.12.0\n")
+        python_path = venv / "bin" / "python"
+        python_path.parent.mkdir(parents=True)
+        python_path.write_text("")
+
+        local_src = tmp_path / "invar-checkout"
+        (local_src / "src" / "invar").mkdir(parents=True)
+        (local_src / "pyproject.toml").write_text(
+            '[project]\nname = "invar-tools"\nversion = "1.2.3"\n'
+        )
+
+        with (
+            patch.dict(os.environ, {}, clear=True),
+            patch("shutil.which", return_value="uvx"),
+            patch(
+                "invar.shell.subprocess_env.detect_local_invar_source",
+                side_effect=[None, local_src, None],
+            ),
+            patch("invar.shell.subprocess_env.detect_running_invar_source", return_value=None),
+            patch(
+                "invar.shell.subprocess_env.sys.version_info",
+                SimpleNamespace(major=3, minor=12),
+            ),
+        ):
+            cmd = get_uvx_respawn_command(
+                project_root=external_project,
+                argv=["guard", "--all", str(external_project)],
+                tool_name="invar",
+                invar_tools_version="1.2.3",
+                invocation_root=local_src,
+            )
+
+        assert cmd == [
+            "uvx",
+            "--python",
+            str(python_path),
+            "--from",
+            str(local_src),
+            "invar",
+            "guard",
+            "--all",
+            str(external_project),
+        ]
+
     def test_uses_running_source_for_version_mismatch_respawn(self, tmp_path: Path) -> None:
         (tmp_path / "pyproject.toml").write_text("[project]\nname='x'\nversion='0.0.0'\n")
         venv = tmp_path / ".venv"
