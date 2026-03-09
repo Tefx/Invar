@@ -8437,7 +8437,7 @@ phases:
       - Remediation chain added before gate progression.'
   - id: mcp-full-guard-design.gate
     name: mcp-full-guard-design.gate
-    status: claimed
+    status: done
     description: 'Gate review: verify the MCP full-guard support model is precise
       enough to implement safely.
 
@@ -8478,6 +8478,40 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-09T15:37:48.189085+00:00'
+    done_at: '2026-03-09T15:53:46.331839+00:00'
+    evidence: 'Artifact:
+
+      - PR: da3c899b (gate audit branch, verify-only)
+
+      Verification:
+
+      - Full guard static pass observed, but full guard with property testing reported
+      failure at `src/invar/core/rules.py::check_all_rules`.
+
+      - Gate audit also identified design/runtime mismatch around cancel tool and
+      wait-timeout envelope expectations.
+
+      - Gate run context could not directly validate ../tasca deferral target path.
+
+      Spec link:
+
+      - mcp-full-guard-design.gate
+
+      Commit hash(es): none (verify-only)
+
+      Files changed: none
+
+      Gaps/Notes: gate failed; remediation chain created.
+
+      Remediation steps created:
+
+      - mcp-full-guard-design.gate-fix-blockers
+
+      - mcp-full-guard-design.gate-retest-blockers
+
+      - mcp-full-guard-design.gate-rereview-blockers
+
+      - mcp-full-guard-design.gate rewired to rereview step'
   - id: mcp-full-guard-design.verify-design-fix
     name: verify-design.fix
     status: done
