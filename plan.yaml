@@ -9399,7 +9399,7 @@ phases:
       rewired to remediation chain.'
   - id: mcp-full-guard-field-verify.review-results
     name: review-results
-    status: pending
+    status: claimed
     description: 'As an INDEPENDENT REVIEWER (`gate-reviewer`), assess whether full
       MCP guard is now genuinely supported on large repos.
 
@@ -9426,6 +9426,8 @@ phases:
     depends_on:
     - mcp-full-guard-field-verify.retest-real-mcp-full-guard
     agent: gate-reviewer
+    claimed_by: gate-reviewer
+    claimed_at: '2026-03-09T14:57:51.939085+00:00'
   - id: mcp-full-guard-field-verify.gate
     name: mcp-full-guard-field-verify.gate
     status: pending
