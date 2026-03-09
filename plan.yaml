@@ -9239,7 +9239,7 @@ phases:
       - `mcp-full-guard-design.gate-retest-blockers`"
   - id: mcp-full-guard-design.gate-rereview-blockers
     name: gate-rereview-blockers
-    status: pending
+    status: claimed
     description: 'As an INDEPENDENT REVIEWER (`gate-reviewer`), assess whether the
       focused remediation loop actually closes the blockers that caused `mcp-full-guard-design.gate`
       to fail.
@@ -9287,6 +9287,8 @@ phases:
     depends_on:
     - mcp-full-guard-design.gate-retest-blockers
     agent: gate-reviewer
+    claimed_by: gate-reviewer
+    claimed_at: '2026-03-09T17:38:06.936724+00:00'
   - id: mcp-full-guard-design.remediate-shell-complexity-debt-precondition
     name: remediate-shell-complexity-debt-precondition
     status: done
