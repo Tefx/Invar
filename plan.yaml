@@ -9922,7 +9922,16 @@ phases:
     agent: integration-verifier
 - id: release-readiness
   name: Release Readiness
-  status: pending
+  status: locked
+  context: Release boundary validation after active MCP full-guard and dead_assign
+    remediation phases complete; packaging/build/install evidence required before
+    publish.
+  depends_on:
+  - mcp-full-guard-implement
+  - mcp-full-guard-field-verify
+  - da-while-repro
+  - da-while-fix
+  - da-while-field
   steps:
   - id: release-readiness.freeze-release-candidate
     name: freeze-release-candidate
