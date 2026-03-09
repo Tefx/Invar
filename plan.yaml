@@ -9013,6 +9013,68 @@ phases:
       - The deferred cross-repo validation requirement is concrete enough for a later
       field-validation step to execute without hidden assumptions'
     agent: python-senior
+  - id: mcp-full-guard-design.gate-retest-blockers
+    name: gate-retest-blockers
+    status: pending
+    description: 'As an INDEPENDENT TESTER (`integration-verifier`), re-test the focused
+      blocker set after `mcp-full-guard-design.gate-fix-blockers`.
+
+
+      YOUR GOAL IS TO FIND REMAINING PROBLEMS, not to confirm it works.
+
+
+      Test for:
+
+      - Happy path: the targeted full-guard/property coverage that previously failed
+      now passes, including the `src/invar/core/rules.py::check_all_rules` path implicated
+      by the gate evidence.
+
+      - Design/runtime alignment: DX-94 no longer assumes an MCP cancel tool or explicit
+      wait-timeout envelope fields that are absent from runtime/tooling.
+
+      - Deferred verification clarity: the plan and design explicitly state how cross-repo
+      deferral validation is handled when `../tasca` is unavailable in the current
+      gate context.
+
+      - Error scenarios: any remaining mismatch between design text, runtime/tooling
+      behavior, and verification scope is called out as a blocker.
+
+
+      Document ALL findings. A test that discovers issues is a SUCCESS.
+
+      A test that finds nothing must justify the coverage achieved.
+
+
+      Remediation metadata:
+
+      - prior_loop: [`mcp-full-guard-design.gate-fix-blockers`]
+
+      - remaining_blocker: verify the consolidated gate blockers are actually closed
+      with independent evidence
+
+      - why_new_loop: the gate cannot safely pass on self-asserted remediation; an
+      independent retest must confirm the rule failure, design/runtime mismatch, and
+      cross-repo scope ambiguity are resolved
+
+
+      Priority: HIGH
+
+
+      Independence Level: L1'
+    verification: '- Independent evidence shows the relevant rule/property checks
+      pass or the failure mode is explicitly eliminated from the supported design
+      contract
+
+      - DX-94 text, examples, and acceptance criteria match the MCP runtime/tooling
+      currently implemented
+
+      - Cross-repo deferral verification scope is explicit about unavailable `../tasca`
+      context and identifies the downstream field-validation evidence required
+
+      - Any remaining blocker is reported with exact file/section or command context'
+    depends_on:
+    - mcp-full-guard-design.gate-fix-blockers
+    agent: integration-verifier
 - id: mcp-full-guard-implement
   name: MCP Full Guard Implementation
   status: done
