@@ -10329,7 +10329,7 @@ phases:
       - Gate updated to depend on remediation loop.'
   - id: da-while-field.fix-loop-carried-state-dead-assign
     name: fix-loop-carried-state-dead-assign
-    status: claimed
+    status: done
     description: 'Fix the residual loop-carried-state `dead_assign` behavior still
       reproduced by the real `../anima` guard run.
 
@@ -10372,7 +10372,36 @@ phases:
     agent: python-senior
     claimed_by: python-senior
     claimed_at: '2026-03-09T14:24:11.871773+00:00'
-    evidence: 'priority: HIGH'
+    done_at: '2026-03-09T14:54:10.255335+00:00'
+    evidence: 'Artifact:
+
+      - PR: e0f3ea2
+
+      Verification:
+
+      - Run: `uv run pytest -q tests/core/test_dead_assign.py -k "anima_repro or approval_gate_state_not_reported
+      or follow_cursor_not_reported or message_history_chain_not_reported or true_dead_write_still_reported"`
+      -> `9 passed, 20 deselected`
+
+      - Run: analyzer probe over /Users/tefx/Projects/anima target files using check_dead_assigns(...)
+      -> `total 0` for message_history/was_awaiting_approval/seen_count
+
+      - Run: `uv run invar guard tests/core/test_dead_assign.py` -> passed (errors
+      0, warnings 0)
+
+      Spec link:
+
+      - da-while-field.fix-loop-carried-state-dead-assign
+
+      Commit hash(es): e0f3ea2
+
+      Files changed:
+
+      - tests/core/test_dead_assign.py
+
+      Gaps/Notes: Added focused analyzer regressions for three reproduced anima blockers
+      and an unrelated dead_assign negative control; analyzer logic unchanged in this
+      step; full `invar guard --all` timed out in worktree, so focused proof used.'
   - id: da-while-field.retest-anima-guard-loop-carried-state
     name: retest-anima-guard-loop-carried-state
     status: pending
