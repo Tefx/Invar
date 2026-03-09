@@ -11827,7 +11827,7 @@ phases:
       and da-while-field.retest-anima-guard; phase gate updated to require retest.'
   - id: da-while-field.gate
     name: da-while-field.gate
-    status: rejected
+    status: claimed
     description: 'Gate review: verify the real anima field evidence closes the confirmed
       dead_assign false positives.
 
@@ -11855,7 +11855,7 @@ phases:
     - da-while-field.review-anima-retest-with-invar-toolchain
     agent: gate-reviewer
     claimed_by: gate-reviewer
-    claimed_at: '2026-03-09T17:04:29.880154+00:00'
+    claimed_at: '2026-03-09T17:21:40.067126+00:00'
     done_at: '2026-03-09T17:07:42.548863+00:00'
     rejection_reason: Gate evidence shows confirmed false positives NOT cleared; do
       not advance phase
