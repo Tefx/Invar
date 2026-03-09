@@ -10391,7 +10391,7 @@ phases:
       - mcp-full-guard-field-verify.gate rewired to corrected review step'
   - id: mcp-full-guard-field-verify.correct-completed-large-repo-mcp-full-guard-evidence-provenance
     name: correct-completed-large-repo-mcp-full-guard-evidence-provenance
-    status: claimed
+    status: done
     description: 'Focused evidence remediation for `mcp-full-guard-field-verify.review-completed-large-repo-mcp-full-guard-evidence`.
 
 
@@ -10452,6 +10452,45 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-09T15:56:01.300475+00:00'
+    done_at: '2026-03-09T16:21:40.146860+00:00'
+    evidence: '## Evidence Correction Report
+
+
+      Corrected artifact: artifacts/mcp_full_guard_completion_evidence.md
+
+      Target context: /Users/tefx/Projects/Invar
+
+      Incorrect path(s) removed: prior mismatched worktree provenance references replaced
+      with current step path and raw outputs.
+
+
+      Raw command outputs now embedded in artifact:
+
+      - `git worktree list --porcelain`
+
+      - `pwd && git rev-parse --show-toplevel`
+
+      - `python3 -c "os.path.samefile(...)"`
+
+
+      Provenance check:
+
+      - No worktree-path ambiguity remains: yes
+
+      - Every claimed context-proof command has raw output attached: yes
+
+      - Artifact references prior evidence history without rewriting it: yes
+
+
+      Commit hash(es): cbce42928581bcc4644ea654676f51e3931d87aa
+
+      Files changed:
+
+      - artifacts/mcp_full_guard_completion_evidence.md
+
+      Spec link: mcp-full-guard-field-verify.correct-completed-large-repo-mcp-full-guard-evidence-provenance
+
+      Gaps/Notes: preserved prior run-id/timestamp history while correcting provenance.'
   - id: mcp-full-guard-field-verify.review-corrected-completed-large-repo-mcp-full-guard-evidence
     name: review-corrected-completed-large-repo-mcp-full-guard-evidence
     status: pending
