@@ -9545,7 +9545,7 @@ phases:
       Gaps/Notes: none'
   - id: da-while-repro.gate
     name: da-while-repro.gate
-    status: pending
+    status: claimed
     description: 'Gate review: verify the while-loop reproductions are precise, minimal,
       and sufficient to constrain the fix scope.'
     verification: '- The three confirmed false-positive patterns are reproduced locally
@@ -9558,6 +9558,8 @@ phases:
     - da-while-repro.verify-pre-fix-failures
     - da-while-repro.freeze-for-gate
     agent: gate-reviewer
+    claimed_by: gate-reviewer
+    claimed_at: '2026-03-09T13:13:53.301829+00:00'
 - id: da-while-fix
   name: dead_assign While Fix
   status: in_progress
