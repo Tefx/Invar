@@ -8673,7 +8673,7 @@ phases:
       Gaps/Notes: none'
   - id: mcp-full-guard-design.verify-design-retest-retest
     name: verify-design-retest.retest
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT TESTER (`integration-verifier`), re-review the
       updated design after remediation of the issue found in `mcp-full-guard-design.verify-design-retest`.
 
@@ -8721,6 +8721,49 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-09T14:24:23.972602+00:00'
+    done_at: '2026-03-09T14:56:28.418553+00:00'
+    evidence: 'Artifact:
+
+      - PR: none (read-only verification)
+
+
+      Verification:
+
+      - Run: `uv run pytest -v tests/integration/test_mcp_guard_deferred.py tests/integration/test_mcp_full_guard_regressions.py`
+      -> 30 passed
+
+      - Runtime probe unknown run_id -> status/wait return `status=expired` with message
+      `Run ID not found` (no machine `error_kind` split)
+
+      - Runtime probe expired run_id -> status/wait return `status=expired` with message
+      `Run state has expired`
+
+      - Search runtime source for `run_not_found` emission -> no runtime envelope
+      usage found
+
+
+      Result:
+
+      - Remaining taxonomy inconsistency detected; verification failed acceptance.
+
+
+      Spec link:
+
+      - mcp-full-guard-design.verify-design-retest-retest
+
+      Commit hash(es): none (verify-only)
+
+      Files changed: none
+
+      Gaps/Notes: remediation chain added.
+
+      Remediation steps created:
+
+      - mcp-full-guard-design.verify-design-retest-retest-fix
+
+      - mcp-full-guard-design.verify-design-retest-retest-retest
+
+      - mcp-full-guard-design.gate rewired to depend on new retest'
   - id: mcp-full-guard-design.verify-design-retest-retest-fix
     name: verify-design-retest-retest-fix
     status: pending
