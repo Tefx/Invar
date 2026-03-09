@@ -12619,7 +12619,7 @@ phases:
       \ no blocker under requested criteria."
   - id: da-while-field.review-anima-retest-with-invar-toolchain
     name: review-anima-retest-with-invar-toolchain
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT REVIEWER (gate-reviewer), review the corrected
       anima retest evidence and confirm: (1) the fixed Invar analyzer actually ran,
       (2) the three tracked dead_assign false positives are cleared, (3) any remaining
@@ -12630,6 +12630,38 @@ phases:
     - da-while-field.retest-anima-guard-with-invar-toolchain
     claimed_by: gate-reviewer
     claimed_at: '2026-03-09T17:21:12.183916+00:00'
+    done_at: '2026-03-09T17:21:20.010798+00:00'
+    evidence: 'Artifact:
+
+      - Evidence: da-while-field.retest-anima-guard-with-invar-toolchain (vectl evidence
+      block)
+
+
+      Verification:
+
+      - Reviewed exact command: `uv run --project "/Users/tefx/Projects/Invar" invar
+      guard --all "/Users/tefx/Projects/anima"` -> `status: passed` and `files_checked:
+      84`.
+
+      - Reviewed evidence searches: `rg -n "message_history|was_awaiting_approval|seen_count"
+      <captured output>` -> NOT_FOUND; `rg -n "dead_assign" <captured output>` ->
+      NOT_FOUND.
+
+
+      Assessment:
+
+      - Toolchain provenance is correct: execution started from Invar project env,
+      so the fixed analyzer ran (not anima''s installed invar).
+
+      - Target false positives are cleared under the real entry-point invocation criteria.
+
+      - Residual warnings (file_size_warning/shell_too_complex/dead_param) are unrelated
+      to dead_assign while-loop FP slice.
+
+
+      Spec link:
+
+      - plan:da-while-field.retest-anima-guard-with-invar-toolchain'
 - id: release-readiness
   name: Release Readiness
   status: locked
