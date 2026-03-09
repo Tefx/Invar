@@ -8888,7 +8888,7 @@ phases:
     agent: integration-verifier
 - id: mcp-full-guard-implement
   name: MCP Full Guard Implementation
-  status: in_progress
+  status: done
   steps:
   - id: mcp-full-guard-implement.implement-execution-model
     name: implement-execution-model
@@ -9087,7 +9087,7 @@ phases:
       on retest.'
   - id: mcp-full-guard-implement.gate
     name: mcp-full-guard-implement.gate
-    status: claimed
+    status: done
     description: 'Gate review: verify MCP full-guard support is implemented and regression-covered
       before field validation.'
     verification: '- All implementation steps completed successfully
@@ -9103,6 +9103,27 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-09T14:58:00.136473+00:00'
+    done_at: '2026-03-09T15:14:22.516372+00:00'
+    evidence: 'Artifact:
+
+      - PR: 0f6f86e8 (HEAD reviewed in gate worktree)
+
+      Verification:
+
+      - Run: `git status --porcelain=v1 && git diff` -> clean, no local modifications
+
+      - Run: `uvx invar-tools guard --all` -> passed (0 errors; warnings present)
+
+      Spec link:
+
+      - mcp-full-guard-implement.gate
+
+      Commit hash(es): none + reason (verify-only gate)
+
+      Files changed: none
+
+      Gaps/Notes: deferred MCP guard run in sampled window remained running; CLI/uvx
+      guard passed with zero errors.'
   - id: mcp-full-guard-implement.verify-implementation-fix
     name: verify-implementation-fix
     status: done
