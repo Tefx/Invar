@@ -9024,7 +9024,7 @@ phases:
       '
   - id: mcp-full-guard-implement.verify-implementation-retest
     name: verify-implementation-retest
-    status: pending
+    status: claimed
     description: 'Re-test the MCP full-guard implementation after `mcp-full-guard-implement.verify-implementation-fix`.
 
 
@@ -9066,6 +9066,8 @@ phases:
     depends_on:
     - mcp-full-guard-implement.verify-implementation-fix
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-09T14:24:33.900499+00:00'
 - id: mcp-full-guard-field-verify
   name: MCP Full Guard Field Validation
   status: in_progress
