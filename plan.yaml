@@ -10120,6 +10120,50 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-09T14:57:41.792353+00:00'
+  - id: da-while-repro.da-while-repro-tighten-pre-fix-repro-methodology
+    name: da-while-repro.tighten-pre-fix-repro-methodology
+    status: pending
+    description: 'Tighten the pre-fix while-loop reproduction methodology and fixtures
+      in `tests/core/test_dead_assign.py` so snapshot `cdf191a1` reliably demonstrates
+      the three intended false-positive patterns without destabilizing the negative
+      control.
+
+
+      prior_loop: [da-while-repro.da-while-repro-realign-focused-repros, da-while-repro.da-while-repro-retest-pre-fix-repros]
+
+      remaining_blocker: the focused quartet still reports 4 passed on the pre-fix
+      snapshot, while the alternate anima quartet over-reports the negative control
+      with an extra `seen_count`, so the repro methodology is not yet stable enough
+      to constrain the detector fix
+
+      why_new_loop: the prior realignment corrected fixture shape but did not produce
+      a stable pre-fix reproduction signal, so this loop must tighten the exact fixtures/selection
+      method before gate review can rely on the repro evidence
+
+
+      Scope:
+
+      - adjust only the focused pre-fix repro fixtures, test selection methodology,
+      and any negative-control setup needed for stability
+
+      - preserve the three intended false-positive patterns as the target scope
+
+      - preserve history and prior remediation steps; do not remove or rewrite earlier
+      evidence
+
+      - do not modify detector logic in this step'
+    verification: '- Focused pre-fix repro command or selection method is narrowed
+      and documented
+
+      - The three intended false-positive fixtures are isolated from unstable alternates
+
+      - Negative control setup is explicit enough to prevent extra `seen_count` over-reporting
+      in the focused repro run
+
+      - Detector implementation remains unchanged in this step'
+    depends_on:
+    - da-while-repro.da-while-repro-retest-pre-fix-repros
+    agent: python-executor
 - id: da-while-fix
   name: dead_assign While Fix
   status: done
