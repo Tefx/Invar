@@ -13338,7 +13338,7 @@ phases:
     agent: gate-reviewer
   - id: release-readiness.smoke-install-artifacts-fix-provenance-uv-fallback
     name: smoke-install-artifacts-fix-provenance-uv-fallback
-    status: claimed
+    status: done
     description: 'HIGH priority blocker fix. Eliminate persistent `uv`/`uvx` source
       fallback during installed-artifact `invar guard` execution so the smoke path
       cannot rebuild or resolve `invar-tools` from any `.vectl/worktrees/...` checkout.
@@ -13443,6 +13443,20 @@ phases:
     agent: python-senior
     claimed_by: python-senior
     claimed_at: '2026-03-09T18:56:15.823826+00:00'
+    done_at: '2026-03-09T19:05:33.903520+00:00'
+    evidence: "Artifact:\n- Worker commit: `45db9eba1782b20b11f8e6c112b978a4155eca2b`\n\
+      - Squash merge commit on main: `70bef34`\n- Files changed:\n  - `src/invar/shell/subprocess_env.py`\n\
+      \  - `tests/test_subprocess_env.py`\n\nVerification:\n- Focused seam tests:\n\
+      \  - `uv run pytest -q tests/test_subprocess_env.py -k \"does_not_climb_above_site_packages_boundary\
+      \ or running_source_checkout or running_wheel_path_for_version_mismatch_respawn\
+      \ or builds_command_with_project_python\"` -> pass.\n- Installed-artifact clean-env\
+      \ smoke evidence:\n  - Build wheel, install into isolated tool env, invoke installed\
+      \ `invar guard` against separate project env.\n  - Outcome: guard `status: passed`;\
+      \ no `Building invar-tools @ file:///.../.vectl/worktrees/...` indicator emitted.\n\
+      - `uv run invar guard --changed` -> pass (0 errors, 0 warnings).\n\nSpec link:\n\
+      - phase: release-readiness\n- step: release-readiness.smoke-install-artifacts-fix-provenance-uv-fallback\n\
+      \nGaps/Notes:\n- Full-suite run intentionally out of scope; targeted seam tests\
+      \ + guard used as acceptance evidence."
   - id: release-readiness.smoke-install-artifacts-retest-provenance-uv-fallback
     name: smoke-install-artifacts-retest-provenance-uv-fallback
     status: pending
