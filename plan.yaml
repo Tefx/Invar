@@ -8873,7 +8873,7 @@ phases:
       and aligned docs/tool status wording.'
   - id: mcp-full-guard-design.verify-design-retest-retest-retest
     name: verify-design-retest-retest-retest
-    status: pending
+    status: claimed
     description: 'As an INDEPENDENT TESTER (`integration-verifier`), re-run design/runtime
       consistency verification after `mcp-full-guard-design.verify-design-retest-retest-fix`.
 
@@ -8924,6 +8924,8 @@ phases:
     depends_on:
     - mcp-full-guard-design.verify-design-retest-retest-fix
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-09T15:21:17.512768+00:00'
 - id: mcp-full-guard-implement
   name: MCP Full Guard Implementation
   status: done
