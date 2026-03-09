@@ -10904,7 +10904,7 @@ phases:
       \ CLI path under full-scan conditions."
   - id: mcp-full-guard-field-verify.review-tasca-terminal-evidence
     name: review-tasca-terminal-evidence
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT REVIEWER (gate-reviewer), audit the external-large-repo
       (tasca) completion evidence: (1) path provenance unambiguous, (2) terminal completion
       observed (success or failure), (3) no MCP timeout/fallback, (4) CLI comparison
@@ -10914,6 +10914,39 @@ phases:
     - mcp-full-guard-field-verify.capture-tasca-terminal-evidence
     claimed_by: gate-reviewer
     claimed_at: '2026-03-09T17:22:05.957133+00:00'
+    done_at: '2026-03-09T17:22:13.821659+00:00'
+    evidence: 'Artifact:
+
+      - Evidence: mcp-full-guard-field-verify.capture-tasca-terminal-evidence (integration-verifier
+      L2)
+
+
+      Verification:
+
+      - MCP kickoff: `invar_invar_guard(path="/Users/tefx/Projects/tasca", changed=false)`
+      -> deferred run_id `grd_7dbddcd86fc04b9088928b01`.
+
+      - Terminal completion observed: ✅ status `failed` within first wait window.
+
+      - Failure is an infrastructure blocker (not a rules/finding failure): ❌ `execution_error`
+      with message "An executable named `guard.py` is not provided by package `invar-tools`".
+
+      - CLI comparison: `uvx invar-tools guard --all /Users/tefx/Projects/tasca` ->
+      `status: passed` (warnings present), demonstrating MCP/CLI parity gap.
+
+
+      Verdict: BLOCKED
+
+      - The MCP full-guard execution path is still invoking a non-existent `guard.py`
+      executable for the invar-tools package when targeting an external repo.
+
+      - This directly violates the field-validation requirement: MCP path must work
+      on an external large repo without fallback/timeout trade-offs.
+
+
+      Spec link:
+
+      - plan:mcp-full-guard-field-verify.capture-tasca-terminal-evidence'
 - id: da-while-repro
   name: dead_assign While Repros
   status: done
