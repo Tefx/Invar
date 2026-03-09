@@ -69,6 +69,9 @@ def detect_local_invar_source(
 
     def _find_checkout_root(candidate: Path) -> Path | None:
         for parent in (candidate, *candidate.parents):
+            if parent.name == "site-packages":
+                break
+
             pyproject = parent / "pyproject.toml"
             src_pkg = parent / "src" / "invar"
 
@@ -403,7 +406,10 @@ def get_uvx_respawn_command(
     if project_python is None:
         return None
 
-    preferred_source = running_source or local_source
+    preferred_source = local_source
+    if running_source is not None:
+        if running_checkout is not None or running_source.suffix == ".whl":
+            preferred_source = running_source
     if preferred_source is not None:
         return [
             uvx_path,
