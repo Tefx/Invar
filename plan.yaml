@@ -9913,6 +9913,68 @@ phases:
     depends_on:
     - mcp-full-guard-field-verify.review-results
     agent: integration-verifier
+  - id: mcp-full-guard-field-verify.review-completed-large-repo-mcp-full-guard-evidence
+    name: review-completed-large-repo-mcp-full-guard-evidence
+    status: pending
+    description: 'As an INDEPENDENT REVIEWER (`gate-reviewer`), assess whether the
+      follow-up field evidence now proves large-repo MCP full-guard support to terminal
+      completion.
+
+
+      prior_loop: [mcp-full-guard-field-verify.review-results]
+
+      remaining_blocker: gate-review evidence was insufficient because terminal deferred-run
+      completion was not observed and evidence referenced the wrong target context.
+
+      why_new_loop: a fresh independent review is required after the new evidence-capture
+      step so phase progression depends on completed-evidence review rather than the
+      failed review alone.
+
+
+      Review criteria:
+
+      1. Large-repo target context is clearly the original intended target
+
+      2. Deferred MCP full-guard run is observed to a terminal state with outputs
+
+      3. Evidence distinguishes completed observation from inference or worktree-local
+      artifacts
+
+      4. Any remaining limitations are explicit and non-blocking'
+    verification: '- Review the follow-up evidence for terminal deferred-run completion
+      on the intended large-repo target
+
+      - Block if evidence still relies on worktree-local paths, inferred completion,
+      or missing terminal outputs
+
+      - Conclude whether the original blocker is closed for downstream progression'
+    evidence_template: '## Follow-Up Review Report
+
+
+      **Reviewer**: gate-reviewer
+
+      **Scope**: completed-evidence review for large-repo MCP full-guard
+
+
+      ### Checklist
+
+      - [ ] Intended large-repo target context confirmed
+
+      - [ ] Deferred run observed to terminal status
+
+      - [ ] Terminal outputs/artifacts included
+
+      - [ ] No worktree-path ambiguity remains
+
+
+      ### Decision
+
+      - blocker | should_fix | pass
+
+      - Notes: <specific rationale>'
+    depends_on:
+    - mcp-full-guard-field-verify.capture-completed-large-repo-mcp-full-guard-evidence
+    agent: gate-reviewer
 - id: da-while-repro
   name: dead_assign While Repros
   status: in_progress
