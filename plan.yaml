@@ -9744,7 +9744,7 @@ phases:
       - da-while-repro.gate rewired to depend on retest step'
   - id: da-while-repro.da-while-repro-realign-focused-repros
     name: da-while-repro.realign-focused-repros
-    status: claimed
+    status: done
     description: 'Repair the focused while-loop reproductions in `tests/core/test_dead_assign.py`
       so the pre-fix snapshot `cdf191a1` reproduces the three intended false positives
       while keeping the negative control a true positive.
@@ -9784,6 +9784,34 @@ phases:
     agent: python-executor
     claimed_by: python-executor
     claimed_at: '2026-03-09T14:24:20.289875+00:00'
+    done_at: '2026-03-09T14:54:20.249782+00:00'
+    evidence: 'Artifact:
+
+      - PR: cbfe62c (merged with conflict resolution commit ff76633)
+
+      Verification:
+
+      - Run: `uv run pytest tests/core/test_dead_assign.py::test_while_loop_boolean_flag_carried_state
+      tests/core/test_dead_assign.py::test_while_loop_cursor_update_carried_state
+      tests/core/test_dead_assign.py::test_while_loop_accumulated_state_via_helper
+      tests/core/test_dead_assign.py::test_while_loop_true_dead_write_still_reported
+      -v` -> 4 passed
+
+      - Run: `uv run pytest tests/core/test_dead_assign.py -v` -> 26 passed after
+      merge resolution
+
+      Spec link:
+
+      - da-while-repro.da-while-repro-realign-focused-repros
+
+      Commit hash(es): cbfe62c, ff76633
+
+      Files changed:
+
+      - tests/core/test_dead_assign.py
+
+      Gaps/Notes: Realigned focused repro patterns and resolved overlap conflict with
+      prior loop-carried-state test additions; detector logic unchanged.'
   - id: da-while-repro.da-while-repro-retest-pre-fix-repros
     name: da-while-repro.retest-pre-fix-repros
     status: pending
