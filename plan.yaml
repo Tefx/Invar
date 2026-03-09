@@ -11088,7 +11088,7 @@ phases:
       \ zero progress."
   - id: mcp-full-guard-field-verify.review-tasca-terminal-evidence-post-fix
     name: review-tasca-terminal-evidence-post-fix
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT REVIEWER (gate-reviewer), review the post-fix
       tasca evidence and confirm: MCP path reaches terminal completion without `guard.py`
       missing-executable error; no fallback; CLI parity is at least status/summary
@@ -11097,6 +11097,39 @@ phases:
     - mcp-full-guard-field-verify.retest-tasca-terminal-evidence-post-fix
     claimed_by: gate-reviewer
     claimed_at: '2026-03-09T17:37:32.624625+00:00'
+    done_at: '2026-03-09T17:37:41.844795+00:00'
+    evidence: 'Artifact:
+
+      - Evidence: mcp-full-guard-field-verify.retest-tasca-terminal-evidence-post-fix
+      (integration-verifier L2)
+
+
+      Verification:
+
+      - Regression signature cleared: ✅ no terminal `execution_error` about missing
+      `guard.py` executable from `invar-tools`.
+
+      - Terminal completion evidence: ❌ NOT provided. Run `grd_6a7847cd9e22441c9fa727ed`
+      remains `running` across repeated waits/status checks; `updated_at` and `progress`
+      unchanged.
+
+      - CLI comparison remains healthy: ✅ `uvx invar-tools guard --all /Users/tefx/Projects/tasca`
+      -> `status: passed` with warnings.
+
+
+      Verdict: BLOCKED
+
+      - Field-validation requirement is not met until we can observe the MCP deferred
+      run reach a terminal status (complete/failed/cancelled) or provide strong bounded-time
+      semantics proving it will eventually terminate.
+
+      - Current payload provides no liveness signal (no progress, no updated_at ticks),
+      so "running" may mask a hung subprocess.
+
+
+      Spec link:
+
+      - plan:mcp-full-guard-field-verify.retest-tasca-terminal-evidence-post-fix'
 - id: da-while-repro
   name: dead_assign While Repros
   status: done
