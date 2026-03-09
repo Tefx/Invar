@@ -9686,7 +9686,7 @@ phases:
       run pytest.'
   - id: da-while-fix.freeze-for-gate
     name: freeze-for-gate
-    status: claimed
+    status: done
     description: Freeze snapshot for dead_assign while-fix gate review.
     verification: '- Record `git rev-parse HEAD`
 
@@ -9698,6 +9698,31 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-09T13:13:27.136686+00:00'
+    done_at: '2026-03-09T14:19:21.733906+00:00'
+    evidence: 'Artifact:
+
+      - PR: 8f17147511d572c372fabab34284f2b0a631a48a
+
+      Verification:
+
+      - Run: git rev-parse HEAD -> 8f17147511d572c372fabab34284f2b0a631a48a
+
+      - Run: git status --short -> (no output; clean)
+
+      - Run: git status --branch -> On branch vectl/step-da-while-fix.freeze-for-gate;
+      nothing to commit, working tree clean
+
+      - Policy: No code changes are allowed until gate review completes.
+
+      Spec link:
+
+      - da-while-fix.freeze-for-gate
+
+      Commit hash(es): none + reason (snapshot verification only; no changes required)
+
+      Files changed: []
+
+      Gaps/Notes: none'
   - id: da-while-fix.gate
     name: da-while-fix.gate
     status: pending
