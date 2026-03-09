@@ -8766,7 +8766,7 @@ phases:
       - mcp-full-guard-design.gate rewired to depend on new retest'
   - id: mcp-full-guard-design.verify-design-retest-retest-fix
     name: verify-design-retest-retest-fix
-    status: claimed
+    status: done
     description: 'Fix the remaining runtime/spec taxonomy inconsistency reported by
       `mcp-full-guard-design.verify-design-retest-retest`.
 
@@ -8833,6 +8833,44 @@ phases:
     agent: python-senior
     claimed_by: python-senior
     claimed_at: '2026-03-09T14:57:46.137155+00:00'
+    done_at: '2026-03-09T15:14:37.807557+00:00'
+    evidence: 'Artifact:
+
+      - PR: edc0cef (HEAD on fix branch)
+
+
+      Verification:
+
+      - Run: invar_guard(path=<worktree>, changed=true) before commits -> passed (0
+      errors, 5 warnings)
+
+      - Run: `.venv/bin/python -m pytest -q tests/integration/test_mcp_guard_deferred.py
+      tests/integration/test_mcp_full_guard_regressions.py` -> 32 passed
+
+      - Run: invar_guard(path=<worktree>, changed=true) after commits -> passed (0
+      errors, 0 warnings)
+
+      - Run: pre-commit hooks (ruff, mypy, invar-guard) -> all passed
+
+
+      Spec link:
+
+      - mcp-full-guard-design.verify-design-retest-retest-fix
+
+      Commit hash(es): 3470e02, edc0cef
+
+      Files changed:
+
+      - src/invar/mcp/guard_runs.py
+
+      - src/invar/mcp/server.py
+
+      - tests/integration/test_mcp_guard_deferred.py
+
+      - tests/integration/test_mcp_full_guard_regressions.py
+
+      Gaps/Notes: scope remained focused to unknown-vs-expired taxonomy signaling
+      and aligned docs/tool status wording.'
   - id: mcp-full-guard-design.verify-design-retest-retest-retest
     name: verify-design-retest-retest-retest
     status: pending
