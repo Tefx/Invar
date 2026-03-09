@@ -242,11 +242,11 @@ def test_while_loop_boolean_flag_carried_state() -> None:
     Pre-fix: FALSE POSITIVE - incorrectly reports was_awaiting_approval as dead.
     Post-fix: No violations (body-read simulation clears pending writes).
 
-    The key pattern: variable is READ before being REASSIGNED in loop body.
+    The key pattern: variable is READ in loop body BEFORE reassignment in next iteration.
     At pre-fix, only condition is re-checked, not body reads.
     """
     source = """
-def f() -> bool:
+def f():
     was_awaiting_approval = False
     while True:
         current = read_state()
@@ -254,11 +254,11 @@ def f() -> bool:
             notify()
         was_awaiting_approval = current.awaiting
         if should_exit(current):
-            return was_awaiting_approval
+            break
 """
     violations = _check_source(source)
-    # Pre-fix: FAILS (reports was_awaiting_approval as dead)
-    # Post-fix: PASSES (no violations)
+    # Pre-fix: FAILS (reports was_awaiting_approval as dead) - no body re-check
+    # Post-fix: PASSES (no violations) - body re-check clears pending
     assert violations == []
 
 
@@ -269,7 +269,7 @@ def test_while_loop_cursor_update_carried_state() -> None:
     Post-fix: No violations (body-read simulation clears pending writes).
     """
     source = """
-def f() -> int:
+def f():
     seen_count = 0
     while True:
         latest_entries = read_entries()
@@ -279,11 +279,11 @@ def f() -> int:
             emit(latest_entries[seen_count:])
             seen_count = len(latest_entries)
         if done(latest_entries):
-            return seen_count
+            break
 """
     violations = _check_source(source)
-    # Pre-fix: FAILS (reports seen_count as dead)
-    # Post-fix: PASSES (no violations)
+    # Pre-fix: FAILS (reports seen_count as dead) - no body re-check
+    # Post-fix: PASSES (no violations) - body re-check clears pending
     assert violations == []
 
 
@@ -294,7 +294,7 @@ def test_while_loop_accumulated_state_via_helper() -> None:
     Post-fix: No violations (body-read simulation clears pending writes).
     """
     source = """
-def f() -> list:
+def f():
     message_history = []
     while True:
         pending_message = poll()
@@ -303,11 +303,11 @@ def f() -> list:
             message_history = response
             message_history = compact(message_history)
         if should_stop(message_history):
-            return message_history
+            break
 """
     violations = _check_source(source)
-    # Pre-fix: FAILS (reports message_history as dead)
-    # Post-fix: PASSES (no violations)
+    # Pre-fix: FAILS (reports message_history as dead) - no body re-check
+    # Post-fix: PASSES (no violations) - body re-check clears pending
     assert violations == []
 
 
