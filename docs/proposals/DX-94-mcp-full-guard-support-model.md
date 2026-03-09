@@ -5,7 +5,7 @@
 - Source A (task boundary): `mcp-full-guard-design.specify-support-model` requires design for `invar_guard(changed=false)` full scans, timeout avoidance, fast-path preservation, compatibility, acceptance criteria including `../tasca`, and migration constraints.
 - Source B (current contract docs): `CLAUDE.md` parameter reference defines `invar_guard(changed=False)` as full-project verification.
 - Source C (MCP behavior constraints): long-running operations can exceed request timeouts in host environments; large-repository scans are at risk.
-- Source D (current step boundary): `mcp-full-guard-design.verify-design-fix` requires explicit closure for cancellation contract, non-terminal wait-timeout schema, partial-result semantics, and extended deferred failure-mode coverage.
+- Source D (current step boundary): `mcp-full-guard-design.verify-design-retest-fix` requires explicit closure for cancellation contract, non-terminal wait-timeout schema, partial-result semantics, and extended deferred failure-mode coverage.
 
 ## Problem Statement
 
@@ -176,7 +176,7 @@ Deferred full-scan failure-mode coverage (`error_kind`):
 - `planner_error`: pre-execution estimator/planner failed before worker handoff.
 - `queue_persist_error`: run accepted but background work could not be persisted/scheduled.
 - `execution_error`: worker started but verification execution failed.
-- `run_not_found`: unknown `run_id` (invalid or already cleaned up).
+- `run_not_found`: unknown `run_id` (never existed or malformed for this namespace).
 - `run_expired`: run metadata existed but exceeded retention TTL before retrieval.
 
 Partial-result semantics:
@@ -206,7 +206,8 @@ Cancellation contract:
 - Terminal-state behavior:
   - `complete`: return `status="complete"` unchanged.
   - `failed`: return `status="failed"` unchanged.
-  - unknown/expired `run_id`: return `status="failed"`, `error_kind="run_not_found"`.
+  - unknown `run_id`: return `status="failed"`, `error_kind="run_not_found"`.
+  - expired `run_id`: return `status="failed"`, `error_kind="run_expired"`.
 - End-to-end guarantee: after successful cancellation, subsequent `status`/`wait` calls for the same `run_id` return `status="cancelled"` (no reversion to `running`).
 
 ## Timeout-Avoidance Strategy
@@ -250,6 +251,7 @@ Compatibility contract: no parameter removals, no semantic changes to changed-on
    - `invar_guard_wait` timeout while run is still active returns `status="running"` + `wait_timeout=true` + `next_poll_after_ms`.
 4. **Cancellation contract is end-to-end**
    - `invar_guard_cancel(run_id)` yields terminal cancelled envelope and all follow-up `status`/`wait` calls remain `status="cancelled"`.
+   - Unknown `run_id` maps to `error_kind="run_not_found"`; expired `run_id` maps to `error_kind="run_expired"`.
 5. **Partial-result semantics are unambiguous**
    - `partial_report` never replaces final `report`; final report exists only in `status="complete"`.
 6. **Deferred full-scan failure coverage is explicit**

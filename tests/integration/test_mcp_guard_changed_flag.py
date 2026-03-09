@@ -62,6 +62,7 @@ async def test_run_guard_changed_false_uses_all_flag(monkeypatch: pytest.MonkeyP
         return [TextContent(type="text", text="ok")]
 
     monkeypatch.setattr(handlers, "_execute_command", fake_execute_command)
+    monkeypatch.setattr(handlers, "_should_defer_full_scan", lambda *args: False)
 
     result = await handlers._run_guard({"path": ".", "changed": False})
 

@@ -19,6 +19,8 @@ RULE_FILES=(
 
 # Activate venv
 source .venv/bin/activate
+export INVAR_UVX_RESPAWNED=1
+INVAR_CMD="$(pwd)/.venv/bin/invar"
 
 # Check if any rule-affecting files are staged
 STAGED_FILES=$(git diff --cached --name-only)
@@ -37,7 +39,7 @@ if [ "$FULL_GUARD" = true ]; then
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo "Rule change detected - verifying entire codebase"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    invar guard --all
+    "$INVAR_CMD" guard --all
 else
-    invar guard
+    "$INVAR_CMD" guard
 fi
