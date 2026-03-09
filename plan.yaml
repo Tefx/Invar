@@ -10777,6 +10777,56 @@ phases:
     claimed_by: integration-verifier
     claimed_at: '2026-03-09T14:57:26.443290+00:00'
     evidence: 'priority: HIGH'
+  - id: da-while-field.fix-repeated-loop-carried-state-blocker
+    name: fix-repeated-loop-carried-state-blocker
+    status: pending
+    description: 'Fix the repeated real-guard blocker after `da-while-field.retest-anima-guard-loop-carried-state`
+      still reports `dead_assign` for `message_history` (`src/anima/shell/agent.py:855`),
+      `was_awaiting_approval` (`src/anima/shell/cli_commands/talk_runtime.py:526`),
+      and `seen_count` (`src/anima/shell/cli_commands/inspect_collect.py:555`).
+
+
+      prior_loop: [da-while-field.fix-loop-carried-state-dead-assign, da-while-field.retest-anima-guard-loop-carried-state]
+
+      remaining_blocker: the exact real anima guard command still reproduces the same
+      three blocker findings after the prior loop-carried-state remediation.
+
+      why_new_loop: one remediation loop already completed and the blocker repeated
+      unchanged, so this follow-up escalates to semantic-risk investigation rather
+      than reopening the prior closed step.
+
+
+      Requirements:
+
+      - isolate why the full released guard path still emits the three residual findings
+      despite the focused analyzer proof
+
+      - scope changes to the loop-carried-state / guard-path semantic mismatch needed
+      to clear the repeated blocker
+
+      - preserve detection for unrelated true `dead_assign` cases
+
+      - add or update focused regression coverage for the repeated blocker shape and
+      the highest-risk false-negative guardrail
+
+
+      Out of scope:
+
+      - unrelated `dead_assign` heuristics outside this repeated blocker path
+
+      - broad guard output/reporting changes not required to clear the reproduced
+      findings'
+    verification: '- Main path: evidence shows the exact repeated blocker command
+      or equivalent focused regression no longer reports the three target variables
+
+      - Failure path: evidence shows unrelated true `dead_assign` findings still surface,
+      so the remediation does not over-suppress results
+
+      - Proof: document the semantic mismatch that caused the repeated blocker and
+      the regression added to lock it down'
+    depends_on:
+    - da-while-field.retest-anima-guard-loop-carried-state
+    agent: python-senior
 - id: release-readiness
   name: Release Readiness
   status: locked
