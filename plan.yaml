@@ -10819,7 +10819,7 @@ phases:
       reviewer: gate-reviewer
   - id: mcp-full-guard-field-verify.capture-tasca-terminal-evidence
     name: capture-tasca-terminal-evidence
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT TESTER (integration-verifier), re-run MCP full-guard
       against an external large repo (e.g. /Users/tefx/Projects/tasca) until the deferred
       run reaches terminal state. Capture: exact MCP invocation, run_id, polling/wait
@@ -10829,6 +10829,38 @@ phases:
     - mcp-full-guard-field-verify.review-corrected-completed-large-repo-mcp-full-guard-evidence
     claimed_by: integration-verifier
     claimed_at: '2026-03-09T17:15:17.485914+00:00'
+    done_at: '2026-03-09T17:17:36.266130+00:00'
+    evidence: "Artifact:\n- No code changes (verification-only run)\n\nVerification:\n\
+      - Claim: vectl_claim(agent=\"integration-verifier\", step_id=\"mcp-full-guard-field-verify.capture-tasca-terminal-evidence\"\
+      ) -> ok, claimed by integration-verifier\n\n- MCP full guard kickoff (tool call):\n\
+      \  invar_invar_guard(path=\"/Users/tefx/Projects/tasca\", changed=false)\n \
+      \ -> {\n       \"status\":\"deferred\",\n       \"run_id\":\"grd_7dbddcd86fc04b9088928b01\"\
+      ,\n       \"mode\":\"full_scan\",\n       \"poll_after_ms\":1000,\n       \"\
+      timeout_reason\":\"estimated_duration_exceeds_sync_budget\"\n     }\n\n- Poll\
+      \ iteration #1 (wait):\n  invar_invar_guard_wait(run_id=\"grd_7dbddcd86fc04b9088928b01\"\
+      , wait_ms=2000)\n  -> {\n       \"status\":\"failed\",\n       \"error_kind\"\
+      :\"execution_error\",\n       \"message\":\"An executable named `guard.py` is\
+      \ not provided by package `invar-tools`. The following executables are available:\
+      \ invar, invar-tools\"\n     }\n\n- Poll iteration #2 (status):\n  invar_invar_guard_status(run_id=\"\
+      grd_7dbddcd86fc04b9088928b01\")\n  -> {\n       \"status\":\"failed\",\n   \
+      \    \"error_kind\":\"execution_error\",\n       \"completed_at\":\"2026-03-09T17:15:20.913663Z\"\
+      \n     }\n\n- Poll iteration #3 (status, terminal confirmation unchanged):\n\
+      \  invar_invar_guard_status(run_id=\"grd_7dbddcd86fc04b9088928b01\")\n  -> {\n\
+      \       \"status\":\"failed\",\n       \"error_kind\":\"execution_error\",\n\
+      \       \"expires_at\":\"2026-03-09T17:30:20.913663Z\"\n     }\n\n- CLI comparison\
+      \ full scan (no MCP fallback):\n  uvx invar-tools guard --all /Users/tefx/Projects/tasca\n\
+      \  -> exit 0, JSON payload emitted\n  Key excerpts:\n    - \"status\": \"passed\"\
+      \n    - static: \"errors\": 0, \"warnings\": 73, \"infos\": 2\n    - includes\
+      \ warning class \"review_suggested\" (e.g., src/tasca/core/services/table_service.py,\
+      \ src/tasca/core/services/limits_service.py)\n    - crosshair: \"status\": \"\
+      verified\"\n    - property_tests: \"status\": \"passed\", \"functions_tested\"\
+      : 112, \"functions_failed\": 0\n  Full raw CLI transcript stored by tool runner\
+      \ at:\n  /Users/tefx/.local/share/opencode/tool-output/tool_cd39a2e7b001gLiyykfBvkj8wT\n\
+      \nSpec link:\n- Phase mcp-full-guard-field-verify / step capture-tasca-terminal-evidence\n\
+      \nFinal verdict:\n- ISSUES_FOUND\n  1) MCP deferred full-guard path fails terminally\
+      \ with execution_error (missing/incorrect executable invocation: guard.py).\n\
+      \  2) CLI full scan succeeds, demonstrating parity gap between MCP path and\
+      \ CLI path under full-scan conditions."
   - id: mcp-full-guard-field-verify.review-tasca-terminal-evidence
     name: review-tasca-terminal-evidence
     status: pending
