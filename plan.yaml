@@ -10990,7 +10990,7 @@ phases:
       \ rewired to new retest"
   - id: da-while-repro.da-while-repro-fix-snapshot-reproduction-anchoring
     name: da-while-repro.fix-snapshot-reproduction-anchoring
-    status: pending
+    status: claimed
     description: 'Resolve the snapshot reproduction method for the while-loop pre-fix
       repro suite so snapshot `cdf191a1` reproduces the intended three false positives
       while preserving the stable negative control.
@@ -11030,6 +11030,8 @@ phases:
     depends_on:
     - da-while-repro.da-while-repro-retest-pre-fix-repros-stabilized
     agent: python-executor
+    claimed_by: python-executor
+    claimed_at: '2026-03-09T15:55:50.685753+00:00'
   - id: da-while-repro.retest-snapshot-reproduction-anchoring
     name: retest-snapshot-reproduction-anchoring
     status: pending
