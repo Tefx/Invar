@@ -9075,6 +9075,56 @@ phases:
     depends_on:
     - mcp-full-guard-design.gate-fix-blockers
     agent: integration-verifier
+  - id: mcp-full-guard-design.gate-rereview-blockers
+    name: gate-rereview-blockers
+    status: pending
+    description: 'As an INDEPENDENT REVIEWER (`gate-reviewer`), assess whether the
+      focused remediation loop actually closes the blockers that caused `mcp-full-guard-design.gate`
+      to fail.
+
+
+      YOU ARE THE QUALITY GATE for this remediation loop. Your job is to BLOCK progression
+      if quality is insufficient, not to rubber-stamp completion.
+
+
+      Review criteria:
+
+      1. Property-test blocker: the `src/invar/core/rules.py::check_all_rules` failure
+      is resolved or the supported design contract is narrowed so the failure no longer
+      contradicts the planned behavior.
+
+      2. Runtime alignment: DX-94 no longer requires a cancel tool or explicit wait-timeout
+      envelope fields that the MCP runtime/tooling does not implement.
+
+      3. Cross-repo scope: the unavailable `../tasca` validation context is handled
+      explicitly with concrete deferred-verification requirements.
+
+      4. Evidence quality: remediation evidence is specific, reproducible, and sufficient
+      for the original gate to decide pass/fail.
+
+
+      Remediation metadata:
+
+      - prior_loop: [`mcp-full-guard-design.gate-fix-blockers`, `mcp-full-guard-design.gate-retest-blockers`]
+
+      - remaining_blocker: determine whether the consolidated blocker set is fully
+      closed or still blocks the original gate
+
+      - why_new_loop: the original gate needs a focused independent review artifact
+      instead of relying on raw retest output alone
+
+
+      Priority: HIGH'
+    verification: '- Review explicitly addresses blocker 1 (property-test failure),
+      blocker 2 (DX-94 over-specification), and blocker 3 (missing `../tasca` context)
+
+      - Any unresolved issue is classified as blocker/should_fix with concrete evidence
+
+      - If no blockers remain, the original gate has enough focused evidence to pass
+      without replacing earlier history'
+    depends_on:
+    - mcp-full-guard-design.gate-retest-blockers
+    agent: gate-reviewer
 - id: mcp-full-guard-implement
   name: MCP Full Guard Implementation
   status: done
