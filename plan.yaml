@@ -8589,7 +8589,7 @@ phases:
       chain.'
   - id: mcp-full-guard-design.verify-design-retest-fix
     name: verify-design-retest.fix
-    status: claimed
+    status: done
     description: 'Fix the remaining design inconsistency reported by `mcp-full-guard-design.verify-design-retest`
       in `docs/proposals/DX-94-mcp-full-guard-support-model.md`.
 
@@ -8641,6 +8641,35 @@ phases:
     agent: python-senior
     claimed_by: python-senior
     claimed_at: '2026-03-09T13:14:19.762155+00:00'
+    done_at: '2026-03-09T14:19:30.647736+00:00'
+    evidence: 'Artifact:
+
+      - PR: e741a44cae280e185008ff31631fcc3c686397cc
+
+
+      Verification:
+
+      - Run: invar_guard(path=".", changed=true) -> passed; static errors=0, warnings=0;
+      files_checked=0 (doc-only change)
+
+      - Run: git status --short -> clean worktree
+
+      - Run: git rev-parse HEAD -> e741a44cae280e185008ff31631fcc3c686397cc
+
+      - Final: guard PASS | 0 errors, 0 warnings
+
+
+      Spec link:
+
+      - docs/proposals/DX-94-mcp-full-guard-support-model.md
+
+      Commit hash(es): e741a44cae280e185008ff31631fcc3c686397cc
+
+      Files changed:
+
+      - docs/proposals/DX-94-mcp-full-guard-support-model.md
+
+      Gaps/Notes: none'
   - id: mcp-full-guard-design.verify-design-retest-retest
     name: verify-design-retest.retest
     status: pending
