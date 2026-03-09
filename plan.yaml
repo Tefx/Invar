@@ -12505,7 +12505,7 @@ phases:
       parity remains unresolved.'
   - id: da-while-field.retest-anima-guard-with-invar-toolchain
     name: retest-anima-guard-with-invar-toolchain
-    status: pending
+    status: claimed
     description: 'As an INDEPENDENT TESTER (integration-verifier), re-run guard against
       the anima codebase using the *Invar* project toolchain (so the fixed analyzer
       is actually executed), not anima''s installed invar. Requirement: run a real
@@ -12516,6 +12516,8 @@ phases:
       L2; goal is to find problems.'
     depends_on:
     - da-while-field.retest-anima-guard-runtime-parity
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-09T17:15:04.720878+00:00'
   - id: da-while-field.review-anima-retest-with-invar-toolchain
     name: review-anima-retest-with-invar-toolchain
     status: pending
