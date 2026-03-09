@@ -11088,13 +11088,15 @@ phases:
       \ zero progress."
   - id: mcp-full-guard-field-verify.review-tasca-terminal-evidence-post-fix
     name: review-tasca-terminal-evidence-post-fix
-    status: pending
+    status: claimed
     description: 'As an INDEPENDENT REVIEWER (gate-reviewer), review the post-fix
       tasca evidence and confirm: MCP path reaches terminal completion without `guard.py`
       missing-executable error; no fallback; CLI parity is at least status/summary
       consistent. Block if any ambiguity remains.'
     depends_on:
     - mcp-full-guard-field-verify.retest-tasca-terminal-evidence-post-fix
+    claimed_by: gate-reviewer
+    claimed_at: '2026-03-09T17:37:32.624625+00:00'
 - id: da-while-repro
   name: dead_assign While Repros
   status: done
