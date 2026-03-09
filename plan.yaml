@@ -8672,7 +8672,7 @@ phases:
       Gaps/Notes: none'
   - id: mcp-full-guard-design.verify-design-retest-retest
     name: verify-design-retest.retest
-    status: pending
+    status: claimed
     description: 'As an INDEPENDENT TESTER (`integration-verifier`), re-review the
       updated design after remediation of the issue found in `mcp-full-guard-design.verify-design-retest`.
 
@@ -8718,6 +8718,8 @@ phases:
     depends_on:
     - mcp-full-guard-design.verify-design-retest-fix
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-09T14:24:23.972602+00:00'
 - id: mcp-full-guard-implement
   name: MCP Full Guard Implementation
   status: in_progress
