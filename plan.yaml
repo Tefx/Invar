@@ -13459,7 +13459,7 @@ phases:
       \ + guard used as acceptance evidence."
   - id: release-readiness.smoke-install-artifacts-retest-provenance-uv-fallback
     name: smoke-install-artifacts-retest-provenance-uv-fallback
-    status: pending
+    status: claimed
     description: 'HIGH priority independent retest. As an INDEPENDENT TESTER (`blind-tester`),
       rerun the installed-artifact smoke specifically to prove whether `uv`/`uvx`
       source fallback during `invar guard` is finally gone.
@@ -13519,3 +13519,5 @@ phases:
     depends_on:
     - release-readiness.smoke-install-artifacts-fix-provenance-uv-fallback
     agent: blind-tester
+    claimed_by: blind-tester
+    claimed_at: '2026-03-09T19:05:54.991244+00:00'
