@@ -10029,8 +10029,9 @@ phases:
       and no unresolved timeout blocker remains.
 
 
-      Additional requirement: external large-repo (e.g. ../tasca) terminal-completion
-      evidence exists and is independently reviewed (no local-repo-only substitutes).'
+      External-large-repo requirement: /Users/tefx/Projects/tasca evidence exists,
+      and a post-fix review confirms the MCP path no longer fails with missing `guard.py`
+      executable.'
     verification: '- All field-validation steps completed successfully
 
       - Evidence covers both the MCP execution-path fix and the CLI comparison-path
@@ -10050,6 +10051,7 @@ phases:
     - mcp-full-guard-field-verify.review-results
     - mcp-full-guard-field-verify.review-corrected-completed-large-repo-mcp-full-guard-evidence
     - mcp-full-guard-field-verify.review-tasca-terminal-evidence
+    - mcp-full-guard-field-verify.review-tasca-terminal-evidence-post-fix
     agent: gate-reviewer
   - id: mcp-full-guard-field-verify.fix-real-mcp-full-guard-entrypoints
     name: fix-real-mcp-full-guard-entrypoints
