@@ -10904,7 +10904,7 @@ phases:
       \ CLI path under full-scan conditions."
   - id: mcp-full-guard-field-verify.review-tasca-terminal-evidence
     name: review-tasca-terminal-evidence
-    status: pending
+    status: claimed
     description: 'As an INDEPENDENT REVIEWER (gate-reviewer), audit the external-large-repo
       (tasca) completion evidence: (1) path provenance unambiguous, (2) terminal completion
       observed (success or failure), (3) no MCP timeout/fallback, (4) CLI comparison
@@ -10912,6 +10912,8 @@ phases:
       substitutes.'
     depends_on:
     - mcp-full-guard-field-verify.capture-tasca-terminal-evidence
+    claimed_by: gate-reviewer
+    claimed_at: '2026-03-09T17:22:05.957133+00:00'
 - id: da-while-repro
   name: dead_assign While Repros
   status: done
