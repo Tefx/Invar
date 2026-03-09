@@ -10688,7 +10688,7 @@ phases:
       Gaps/Notes: preserved prior run-id/timestamp history while correcting provenance.'
   - id: mcp-full-guard-field-verify.review-corrected-completed-large-repo-mcp-full-guard-evidence
     name: review-corrected-completed-large-repo-mcp-full-guard-evidence
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT REVIEWER (`gate-reviewer`), assess whether the
       corrected completed-evidence artifact resolves the provenance blocker for large-repo
       MCP full-guard validation.
@@ -10761,7 +10761,48 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-09T17:13:08.942757+00:00'
-    done_at: '2026-03-09T17:04:02.217757+00:00'
+    done_at: '2026-03-09T17:13:32.161412+00:00'
+    evidence: '## Follow-up Evidence Review
+
+
+      **Reviewer**: gate-reviewer
+
+      **Scope**: corrected completed-evidence artifact provenance
+
+
+      ### Checklist
+
+      - [x] Correct target context only
+
+      - [x] Raw command outputs attached
+
+      - [x] No worktree-path ambiguity remains
+
+      - [x] Prior history preserved
+
+
+      ### Findings
+
+      | Severity | Description | Evidence location | Blocking? |
+
+      | --- | --- | --- | --- |
+
+      | none | Artifact no longer references worktree-local paths; provenance anchors
+      to repo root via raw `pwd` / `git rev-parse --show-toplevel` / `git rev-parse
+      HEAD` plus `test -f`/`ls` existence proof. | artifacts/mcp_full_guard_completion_evidence.md
+      | NO |
+
+
+      ### Verdict
+
+      - OPEN: corrected evidence is sufficient
+
+
+      Notes:
+
+      - The artifact still necessarily contains absolute repo-root paths in raw outputs;
+      this is acceptable because they are stable in a post-merge checkout and independently
+      verifiable (unlike worktree-local paths).'
     rejection_reason: Artifact provenance updated to remove .vectl/worktrees references;
       re-review needed against new artifact content.
     rejection_history:
