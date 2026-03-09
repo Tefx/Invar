@@ -9953,3 +9953,126 @@ phases:
       - State explicitly that no code changes are allowed until packaging smoke validation
       completes'
     agent: integration-verifier
+  - id: release-readiness.build-release-artifacts
+    name: build-release-artifacts
+    status: pending
+    description: 'As an INDEPENDENT TESTER (`integration-verifier`), build the publish
+      candidate artifacts from the frozen snapshot and capture release-blocking packaging
+      evidence.
+
+
+      YOUR GOAL IS TO FIND PACKAGING FAILURES, not to assume the source tree is releasable.
+
+
+      Required checks:
+
+      - run `uv build` (or the exact project release build command) from the frozen
+      repo snapshot
+
+      - produce both wheel and source distribution artifacts
+
+      - confirm the source distribution no longer leaks `.venv` or invalid external
+      symlinks
+
+      - record the exact artifact filenames and sizes
+
+      - capture the exact failure if build still breaks before artifact creation
+
+
+      Independence Level: L2'
+    verification: '- Main path: `uv build` completes and emits both wheel and sdist
+      artifacts from the frozen snapshot
+
+      - Failure path: evidence explicitly shows whether `.venv` inclusion or invalid
+      external symlink traversal still blocks sdist creation
+
+      - Proof: artifact names, paths, and build output are attached'
+    depends_on:
+    - release-readiness.freeze-release-candidate
+    agent: integration-verifier
+  - id: release-readiness.smoke-install-artifacts
+    name: smoke-install-artifacts
+    status: pending
+    description: 'As an INDEPENDENT TESTER (`blind-tester`), perform a clean-environment
+      smoke install of the built artifacts and prove publish-critical entrypoints
+      work from the installed package, not only from the source tree.
+
+
+      YOUR GOAL IS TO FIND INSTALLED-ARTIFACT FAILURES.
+
+
+      Required smoke coverage:
+
+      - create a clean temporary environment with no editable install and no source-tree
+      import fallback
+
+      - install the built wheel and exercise the installed CLI
+
+      - install the built source distribution and exercise the installed CLI
+
+      - verify `invar --help`
+
+      - verify `invar hooks --help`
+
+      - verify `invar guard --help`
+
+      - run a minimal installed-path command proving the packaged command tree resolves
+      `invar.shell.commands.hooks` and the repo-local hook/guard command path works
+      without `ModuleNotFoundError`
+
+      - if `invar guard` is used against a control repo/path, capture actual stdout/stderr
+      even if findings are reported
+
+
+      Independence Level: L2'
+    verification: '- Main path: clean-env wheel install and clean-env sdist install
+      both expose working `invar`, `invar hooks`, and `invar guard` entrypoints
+
+      - Failure path: any missing module, broken console-script wiring, or installed-path
+      divergence is captured with the exact command and output
+
+      - Proof: attached commands and output show installed-artifact behavior, not
+      source-tree behavior'
+    depends_on:
+    - release-readiness.build-release-artifacts
+    agent: blind-tester
+  - id: release-readiness.release-readiness-gate
+    name: release-readiness.gate
+    status: pending
+    description: 'Gate review: determine whether the current candidate is genuinely
+      ready to publish as the next Invar tools release (likely `1.19.7`) based on
+      packaged-artifact evidence, not just source-tree verification.
+
+
+      As an INDEPENDENT REVIEWER (`gate-reviewer`), block release if any packaging,
+      install, entrypoint, or repo-local hook-path evidence is missing or broken.
+
+
+      Review focus:
+
+      1. Frozen release boundary really followed the active MCP full-guard and dead_assign
+      field-validation closures
+
+      2. Artifact build evidence is complete and free of `.venv` / external-symlink
+      packaging regressions
+
+      3. Clean-install smoke proves `invar`, `invar hooks`, and `invar guard` work
+      from installed artifacts
+
+      4. Release recommendation explicitly states whether publish should proceed and
+      why'
+    verification: '- All release-readiness steps completed successfully
+
+      - Evidence shows both artifact build and clean-install smoke passed from the
+      frozen snapshot
+
+      - No unresolved packaged-entrypoint blocker remains (`guard.py` executable resolution,
+      `invar.shell.commands.hooks`, or repo-local hook-path wiring)
+
+      - Gate output states OPEN only if the candidate is suitable for publish as the
+      next release'
+    depends_on:
+    - release-readiness.freeze-release-candidate
+    - release-readiness.build-release-artifacts
+    - release-readiness.smoke-install-artifacts
+    agent: gate-reviewer
