@@ -13068,7 +13068,7 @@ phases:
       \ release-readiness\n- step: release-readiness.build-release-artifacts"
   - id: release-readiness.smoke-install-artifacts
     name: smoke-install-artifacts
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT TESTER (`blind-tester`), perform a clean-environment
       packaging smoke install of the built artifacts and prove publish-critical entrypoints
       work from the installed package, not only from the source tree.
@@ -13117,6 +13117,21 @@ phases:
     agent: blind-tester
     claimed_by: blind-tester
     claimed_at: '2026-03-09T18:17:34.958652+00:00'
+    done_at: '2026-03-09T18:24:40.474733+00:00'
+    evidence: "Artifact:\n- Blind-tester smoke evidence from isolated worktree `.vectl/worktrees/release-readiness.smoke-install-artifacts`\n\
+      - Built artifacts used for install smoke:\n  - `dist/invar_tools-1.19.6-py3-none-any.whl`\n\
+      \  - `dist/invar_tools-1.19.6.tar.gz`\n\nVerification:\n- Clean env wheel+sdist\
+      \ installs succeeded; `invar --help`, `invar hooks --help`, `invar guard --help`\
+      \ all passed in both envs.\n- `invar guard` on minimal control repo passed after\
+      \ adding minimal `pyproject.toml`.\n- Installed-module provenance mostly indicates\
+      \ site-packages paths.\n- BLOCKER found: wheel env output included `Building\
+      \ invar-tools @ file:///Users/tefx/Projects/Invar/.vectl/worktrees/release-readiness.smoke-install-artifacts`,\
+      \ indicating ambiguous source-tree involvement risk during guard execution path.\n\
+      \nIssue classification:\n- blocker: ambiguous installed-artifact provenance\
+      \ / possible local source fallback.\n\nRemediation steps created (via planner):\n\
+      - `release-readiness.smoke-install-artifacts-fix-provenance`\n- `release-readiness.smoke-install-artifacts-retest-provenance`\n\
+      - `release-readiness.release-readiness-rereview-gate`\n\nSpec link:\n- phase:\
+      \ release-readiness\n- step: release-readiness.smoke-install-artifacts"
   - id: release-readiness.release-readiness-gate
     name: release-readiness.gate
     status: pending
