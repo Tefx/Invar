@@ -13320,7 +13320,7 @@ phases:
       \ release-readiness.smoke-install-artifacts-retest-provenance"
   - id: release-readiness.release-readiness-rereview-gate
     name: release-readiness-rereview-gate
-    status: pending
+    status: claimed
     description: 'Gate re-review for release unblocking after the repeated smoke-install
       provenance blocker. As an INDEPENDENT REVIEWER (`gate-reviewer`), reassess release
       readiness using the original gate evidence plus both provenance remediation
@@ -13355,6 +13355,8 @@ phases:
     - release-readiness.release-readiness-gate
     - release-readiness.smoke-install-artifacts-retest-provenance-uv-fallback
     agent: gate-reviewer
+    claimed_by: gate-reviewer
+    claimed_at: '2026-03-09T19:10:54.815387+00:00'
   - id: release-readiness.smoke-install-artifacts-fix-provenance-uv-fallback
     name: smoke-install-artifacts-fix-provenance-uv-fallback
     status: done
