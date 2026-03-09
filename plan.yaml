@@ -11883,7 +11883,7 @@ phases:
       \ to new parity retest"
   - id: da-while-field.fix-anima-environment-runtime-parity
     name: fix-anima-environment-runtime-parity
-    status: claimed
+    status: done
     description: 'Fix the remaining blocker by aligning the real `/Users/tefx/Projects/anima`
       execution environment with the intended analyzer/runtime path.
 
@@ -11965,6 +11965,71 @@ phases:
     agent: python-senior
     claimed_by: python-senior
     claimed_at: '2026-03-09T15:55:41.727535+00:00'
+    done_at: '2026-03-09T16:21:16.078609+00:00'
+    evidence: '## Environment/Runtime Parity Fix Evidence
+
+
+      Parity cause identified:
+
+      - External anima invocation resolved installed invar runtime (`/Users/tefx/Projects/anima/.venv/.../invar/core/dead_assign.py`)
+      rather than intended checkout analyzer path.
+
+
+      Focused change applied:
+
+      - Updated respawn/source-resolution path to prefer invocation checkout source
+      for external target runs.
+
+      - `src/invar/shell/subprocess_env.py`: `get_uvx_respawn_command(..., invocation_root)`
+      uses checkout discovery from invocation root when target project is external.
+
+      - `src/invar/shell/commands/guard.py`: passes `invocation_root=Path.cwd()`.
+
+      - Added regression in `tests/test_subprocess_env.py` for external-project checkout
+      preference.
+
+
+      Parity proof commands:
+
+      - Resolve invar module path from anima project runtime
+
+      - Run real anima guard baseline
+
+      - Print computed uvx respawn command with invocation_root
+
+      - Run guard via pinned source path
+
+      - Run new subprocess_env regression test
+
+
+      Observed outputs:
+
+      - Baseline anima runtime path points to installed site-packages copy.
+
+      - Baseline guard reports 8 warnings including three target dead_assign messages.
+
+      - New respawn command pins `--from` to invocation checkout.
+
+      - Pinned-source guard output removes three target dead_assign findings (warnings
+      reduced to 5).
+
+      - Regression test passes.
+
+
+      Commit hash(es): ae7682a
+
+      Files changed:
+
+      - src/invar/shell/subprocess_env.py
+
+      - src/invar/shell/commands/guard.py
+
+      - tests/test_subprocess_env.py
+
+      Spec link: da-while-field.fix-anima-environment-runtime-parity
+
+      Gaps/Notes: did not modify anima repo source; parity fix targets runtime/tool
+      resolution path.'
   - id: da-while-field.retest-anima-guard-runtime-parity
     name: retest-anima-guard-runtime-parity
     status: pending
