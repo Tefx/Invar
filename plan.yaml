@@ -13134,7 +13134,7 @@ phases:
       \ release-readiness\n- step: release-readiness.smoke-install-artifacts"
   - id: release-readiness.release-readiness-gate
     name: release-readiness.gate
-    status: pending
+    status: claimed
     description: 'Gate review: determine whether the current candidate is genuinely
       ready to publish as the next Invar tools release based on packaged-artifact
       evidence, not just source-tree verification.
@@ -13172,6 +13172,8 @@ phases:
     - release-readiness.build-release-artifacts
     - release-readiness.smoke-install-artifacts
     agent: gate-reviewer
+    claimed_by: gate-reviewer
+    claimed_at: '2026-03-09T19:10:23.242970+00:00'
   - id: release-readiness.smoke-install-artifacts-fix-provenance
     name: smoke-install-artifacts-fix-provenance
     status: done
