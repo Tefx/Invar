@@ -10063,7 +10063,7 @@ phases:
     claimed_at: '2026-03-09T14:57:41.792353+00:00'
 - id: da-while-fix
   name: dead_assign While Fix
-  status: in_progress
+  status: done
   steps:
   - id: da-while-fix.patch-walk-while-next-iteration
     name: patch-walk-while-next-iteration
@@ -10220,7 +10220,7 @@ phases:
       Gaps/Notes: none'
   - id: da-while-fix.gate
     name: da-while-fix.gate
-    status: claimed
+    status: done
     description: 'Gate review: verify the dead_assign while-loop repair is minimal,
       evidence-backed, and safe before field validation.'
     verification: '- Focused repros pass and negative control remains intact
@@ -10235,6 +10235,33 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-09T14:57:31.761663+00:00'
+    done_at: '2026-03-09T15:14:12.185563+00:00'
+    evidence: 'Artifact:
+
+      - PR: 0f6f86e863fc311db972b708cb9c1ff9ece184c7
+
+      Verification:
+
+      - Run: `git show --stat --oneline 59b3e42005a69f05df2c53f6606e6be5aa2684ff`
+      -> analyzer-only patch in src/invar/core/dead_assign.py
+
+      - Run: `git show --stat --oneline 999d3adcde68ea456a01f844142fdce044c0d950`
+      -> focused tests in tests/core/test_dead_assign.py
+
+      - Run: `uv run -m pytest tests/core/test_dead_assign.py -k ''while_loop''` ->
+      7 passed (includes negative control)
+
+      - Run: `uv run invar guard src/invar/core/dead_assign.py` -> passed
+
+      Spec link:
+
+      - da-while-fix.gate
+
+      Commit hash(es): none + reason (verification-only gate)
+
+      Files changed: none
+
+      Gaps/Notes: verification-only rerun accepted; no gate-side code edits performed.'
 - id: da-while-field
   name: dead_assign While Field Validation
   status: in_progress
