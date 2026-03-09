@@ -342,3 +342,80 @@ def f(agent):
 """
     violations = _check_source(source)
     assert violations == []
+
+
+def test_anima_repro_agent_message_history_not_reported() -> None:
+    """Exact anima-style loop-carried message_history assignment stays live."""
+    source = """
+async def f(agent):
+    message_history = []
+    while True:
+        pending_message = await poll()
+        if pending_message is not None:
+            response_result = await process(agent, pending_message, message_history)
+            message_history = response_result
+            message_history = await compact(agent, message_history)
+            continue
+        await sleep()
+"""
+    violations = _check_source(source)
+    assert violations == []
+
+
+def test_anima_repro_talk_runtime_was_awaiting_approval_not_reported() -> None:
+    """Exact anima-style tuple assignment keeps approval flag live."""
+    source = """
+async def f(session):
+    was_awaiting_approval = False
+    while True:
+        (
+            should_return,
+            had_error,
+            was_awaiting_approval,
+        ) = await wait_for_interact_or_input_or_stream(
+            session=session,
+            was_awaiting_approval=was_awaiting_approval,
+        )
+        if should_return:
+            return
+        if had_error:
+            break
+"""
+    violations = _check_source(source)
+    assert violations == []
+
+
+def test_anima_repro_inspect_collect_seen_count_not_reported() -> None:
+    """Exact anima-style follow cursor update stays live."""
+    source = """
+def f(instance_id):
+    seen_count = 0
+    while True:
+        latest_entries = read(instance_id)
+        if len(latest_entries) < seen_count:
+            seen_count = 0
+        if len(latest_entries) > seen_count:
+            emit(latest_entries[seen_count:])
+            seen_count = len(latest_entries)
+        sleep()
+"""
+    violations = _check_source(source)
+    assert violations == []
+
+
+def test_anima_repro_unrelated_dead_assign_still_reported() -> None:
+    """Negative control: unrelated while-loop dead assignment still reports."""
+    source = """
+def f(instance_id):
+    seen_count = 0
+    while True:
+        latest_entries = read(instance_id)
+        if len(latest_entries) > seen_count:
+            emit(latest_entries[seen_count:])
+            seen_count = len(latest_entries)
+        stale_snapshot = latest_entries
+        sleep()
+"""
+    violations = _check_source(source)
+    assert len(violations) == 1
+    assert "stale_snapshot" in violations[0].message
