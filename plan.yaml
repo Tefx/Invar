@@ -9020,6 +9020,13 @@ phases:
       from passing.
 
 
+      Prerequisite:
+
+      - Do not start this remediation until `mcp-full-guard-design.verify-shell-complexity-debt-precondition`
+      is complete, because any commit touching `src/invar/core/rules.py` currently
+      triggers full guard and can be blocked by `shell_complexity_debt`.
+
+
       Scope:
 
       - Resolve the property-test blocker affecting `src/invar/core/rules.py::check_all_rules`
@@ -9042,6 +9049,9 @@ phases:
 
       - Replacing the existing history for earlier `verify-design*` remediation loops.
 
+      - Broad shell-complexity cleanup beyond the prerequisite chain needed to unblock
+      this merge.
+
 
       Remediation metadata:
 
@@ -9055,7 +9065,7 @@ phases:
       - why_new_loop: the gate failure is now a consolidated blocker set that spans
       rule semantics, design/runtime alignment, and deferred field-validation scope;
       editing earlier verification-only loops would not create a concrete remediation
-      target
+      target after the new shell-complexity prerequisite is satisfied
 
 
       Priority: HIGH'
@@ -9067,7 +9077,11 @@ phases:
       versus deferred
 
       - The deferred cross-repo validation requirement is concrete enough for a later
-      field-validation step to execute without hidden assumptions'
+      field-validation step to execute without hidden assumptions
+
+      - The shell-complexity prerequisite chain is complete before this step begins'
+    refs:
+    - mcp-full-guard-design.verify-shell-complexity-debt-precondition
     agent: python-senior
     claimed_by: python-senior
     claimed_at: '2026-03-09T15:55:55.164581+00:00'
