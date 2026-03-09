@@ -12264,7 +12264,7 @@ phases:
       resolution path.'
   - id: da-while-field.retest-anima-guard-runtime-parity
     name: retest-anima-guard-runtime-parity
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT TESTER (`integration-verifier`), re-run the same
       real anima guard command after the environment/runtime parity fix.
 
@@ -12329,6 +12329,38 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-09T16:35:44.770613+00:00'
+    done_at: '2026-03-09T17:03:41.820139+00:00'
+    evidence: '## Integration Evidence
+
+
+      Command:
+
+      ```bash
+
+      uv run --project "/Users/tefx/Projects/anima" invar guard --all "/Users/tefx/Projects/anima"
+
+      ```
+
+
+      Actual output excerpts (dead_assign still present):
+
+      - src/anima/shell/agent.py:855 dead_assign local `message_history`
+
+      - src/anima/shell/cli_commands/talk_runtime.py:523 dead_assign local `was_awaiting_approval`
+
+      - src/anima/shell/cli_commands/inspect_collect.py:555 dead_assign local `seen_count`
+
+
+      Target vars present: message_history, was_awaiting_approval, seen_count
+
+      Classification: blocker (parity fix not reflected in this invocation)
+
+      Commit hash(es): none (verification-only)
+
+      Files changed: none
+
+      Gaps/Notes: This command resolves to anima''s installed invar runtime, so external
+      parity remains unresolved.'
 - id: release-readiness
   name: Release Readiness
   status: locked
