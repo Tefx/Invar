@@ -12248,7 +12248,7 @@ phases:
       resolution path.'
   - id: da-while-field.retest-anima-guard-runtime-parity
     name: retest-anima-guard-runtime-parity
-    status: pending
+    status: claimed
     description: 'As an INDEPENDENT TESTER (`integration-verifier`), re-run the same
       real anima guard command after the environment/runtime parity fix.
 
@@ -12311,6 +12311,8 @@ phases:
     depends_on:
     - da-while-field.fix-anima-environment-runtime-parity
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-09T16:35:44.770613+00:00'
 - id: release-readiness
   name: Release Readiness
   status: locked
