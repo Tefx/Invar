@@ -10565,6 +10565,48 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-09T15:37:41.462922+00:00'
+  - id: da-while-repro.da-while-repro-fix-snapshot-reproduction-anchoring
+    name: da-while-repro.fix-snapshot-reproduction-anchoring
+    status: pending
+    description: 'Resolve the snapshot reproduction method for the while-loop pre-fix
+      repro suite so snapshot `cdf191a1` reproduces the intended three false positives
+      while preserving the stable negative control.
+
+
+      prior_loop: [da-while-repro.da-while-repro-tighten-pre-fix-repro-methodology,
+      da-while-repro.da-while-repro-retest-pre-fix-repros-stabilized]
+
+      remaining_blocker: focused execution on snapshot `cdf191a1` still returns `4
+      PASS`, so the intended false-positive reproduction is absent even though the
+      negative control remains stable
+
+      why_new_loop: the tightened methodology improved stability but did not fix snapshot
+      execution strategy / fixture anchoring, so a narrower remediation loop is required
+      before gate review can rely on pre-fix evidence
+
+
+      Scope:
+
+      - adjust only snapshot execution strategy, fixture anchoring, or equivalent
+      pre-fix repro plumbing for the focused quartet
+
+      - preserve the negative control as a stable true-positive baseline
+
+      - do not modify detector logic in this step
+
+      - preserve all prior remediation history and evidence'
+    verification: '- Targeted snapshot-reproduction method changes are limited to
+      execution strategy / fixture anchoring for the focused quartet
+
+      - No detector-logic files or behaviors are changed
+
+      - Focused repro command and fixture selection are documented well enough for
+      independent retest
+
+      - Any remaining blocker is recorded explicitly'
+    depends_on:
+    - da-while-repro.da-while-repro-retest-pre-fix-repros-stabilized
+    agent: python-executor
 - id: da-while-fix
   name: dead_assign While Fix
   status: done
