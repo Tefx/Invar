@@ -10118,7 +10118,7 @@ phases:
       for reported external while-loop patterns while preserving true-positive behavior.'
   - id: da-while-field.retest-anima-guard
     name: retest-anima-guard
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT TESTER (`integration-verifier`), re-run the real
       guard pipeline against `../anima` after the residual dead_assign fix.
 
@@ -10161,6 +10161,85 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-09T13:12:55.805022+00:00'
+    done_at: '2026-03-09T14:23:12.177887+00:00'
+    evidence: '## Verification Report
+
+
+      Tester: integration-verifier (independent)
+
+      Scope: ../anima real guard retest after residual dead_assign fix
+
+      Independence Level: L2
+
+
+      ### Test Execution
+
+      - Commands executed:
+
+      ```bash
+
+      uv run --project "/Users/tefx/Projects/anima" invar guard --all "/Users/tefx/Projects/anima"
+
+      ```
+
+      - Output summary (key excerpts):
+
+      ```text
+
+      status: passed
+
+      summary: files_checked=83, errors=0, warnings=8, infos=3
+
+      dead_assign findings still include:
+
+      - src/anima/shell/agent.py:855 local ''message_history''
+
+      - src/anima/shell/cli_commands/talk_runtime.py:526 local ''was_awaiting_approval''
+
+      - src/anima/shell/cli_commands/inspect_collect.py:555 local ''seen_count''
+
+      ```
+
+
+      ### Issues Found
+
+      - blocker: expected residual blockers remain present in dead_assign findings
+      for the three tracked variables.
+
+      - should_fix: additional non-blocking file_size_warning findings remain.
+
+
+      ### Coverage Assessment
+
+      - Happy path verified: ❌
+
+      - Edge cases tested: 1
+
+      - NOT tested: runtime external-service behavior (out of scope)
+
+
+      ### Verdict
+
+      - ISSUES_FOUND
+
+      Confidence: high
+
+      Commit hash(es): none (verify-only)
+
+      Files changed: none
+
+      Spec link: da-while-field.retest-anima-guard
+
+      Gaps/Notes: acceptance failed because blocker variables remain.
+
+
+      Remediation planning:
+
+      - Added fix step: da-while-field.fix-loop-carried-state-dead-assign
+
+      - Added retest step: da-while-field.retest-anima-guard-loop-carried-state
+
+      - Gate updated to depend on remediation loop.'
   - id: da-while-field.fix-loop-carried-state-dead-assign
     name: fix-loop-carried-state-dead-assign
     status: pending
