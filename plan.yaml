@@ -10212,7 +10212,7 @@ phases:
       Gaps/Notes: none'
   - id: da-while-fix.gate
     name: da-while-fix.gate
-    status: pending
+    status: claimed
     description: 'Gate review: verify the dead_assign while-loop repair is minimal,
       evidence-backed, and safe before field validation.'
     verification: '- Focused repros pass and negative control remains intact
@@ -10225,6 +10225,8 @@ phases:
     - da-while-fix.verify-local-regression
     - da-while-fix.freeze-for-gate
     agent: gate-reviewer
+    claimed_by: gate-reviewer
+    claimed_at: '2026-03-09T14:57:31.761663+00:00'
 - id: da-while-field
   name: dead_assign While Field Validation
   status: in_progress
