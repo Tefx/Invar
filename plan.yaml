@@ -13459,7 +13459,7 @@ phases:
       \ + guard used as acceptance evidence."
   - id: release-readiness.smoke-install-artifacts-retest-provenance-uv-fallback
     name: smoke-install-artifacts-retest-provenance-uv-fallback
-    status: claimed
+    status: done
     description: 'HIGH priority independent retest. As an INDEPENDENT TESTER (`blind-tester`),
       rerun the installed-artifact smoke specifically to prove whether `uv`/`uvx`
       source fallback during `invar guard` is finally gone.
@@ -13521,3 +13521,19 @@ phases:
     agent: blind-tester
     claimed_by: blind-tester
     claimed_at: '2026-03-09T19:05:54.991244+00:00'
+    done_at: '2026-03-09T19:10:09.525516+00:00'
+    evidence: "## Verification Report\n\nArtifact:\n- Independent blind-tester retest\
+      \ from `.vectl/worktrees/release-readiness.smoke-install-artifacts-retest-provenance-uv-fallback`\n\
+      - Tested built artifacts: wheel + sdist (`invar_tools-1.19.6`)\n\nVerification:\n\
+      - Wheel env (`/tmp/invar-wheel-env`):\n  - `invar --help`, `invar hooks --help`,\
+      \ `invar guard --help` -> pass\n  - `invar guard --all /tmp/invar-control-wheel`\
+      \ -> pass (0 errors/0 warnings)\n  - Installed module path in site-packages\
+      \ confirmed.\n  - Fallback indicators check:\n    - `Building invar-tools @\
+      \ file:///...` -> NOT FOUND\n    - `.vectl/worktrees/...` -> NOT FOUND\n- Sdist\
+      \ env (`/tmp/invar-sdist-env`):\n  - same command set -> pass\n  - installed\
+      \ module path in site-packages confirmed.\n  - Fallback indicators check:\n\
+      \    - `Building invar-tools @ file:///...` -> NOT FOUND\n    - `.vectl/worktrees/...`\
+      \ -> NOT FOUND\n  - Observed standard `Building wheel for invar-tools (pyproject.toml)`\
+      \ during sdist install (expected, non-fallback).\n\nVerdict:\n- PASS: second\
+      \ uv/uvx fallback remediation closes the provenance blocker under independent\
+      \ retest.\n\nSpec link:\n- phase: release-readiness\n- step: release-readiness.smoke-install-artifacts-retest-provenance-uv-fallback"
