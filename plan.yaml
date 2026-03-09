@@ -8957,6 +8957,62 @@ phases:
       Files changed: none
 
       Gaps/Notes: scoped checks found no remaining mismatch.'
+  - id: mcp-full-guard-design.gate-fix-blockers
+    name: gate-fix-blockers
+    status: pending
+    description: 'Fix the remaining blockers that prevent `mcp-full-guard-design.gate`
+      from passing.
+
+
+      Scope:
+
+      - Resolve the property-test blocker affecting `src/invar/core/rules.py::check_all_rules`
+      so the full-guard design no longer relies on an invalid rule-set assumption.
+
+      - Update the DX-94 full-guard design and acceptance language to match the MCP
+      runtime/tooling that actually exists today; do not require a cancel tool or
+      explicit wait-timeout envelope fields unless a separate implementation step
+      is created for them.
+
+      - Make the cross-repo deferral validation story concrete when `../tasca` is
+      unavailable in the gate context: define what is verified in-repo now, what remains
+      deferred to cross-repo field validation, and what evidence is required later.
+
+
+      Out of scope:
+
+      - Implementing a new MCP cancel tool or new runtime envelope fields in this
+      remediation loop.
+
+      - Replacing the existing history for earlier `verify-design*` remediation loops.
+
+
+      Remediation metadata:
+
+      - prior_loop: [`mcp-full-guard-design.verify-design-retest-retest`, `mcp-full-guard-design.verify-design-retest-retest-fix`,
+      `mcp-full-guard-design.verify-design-retest-retest-retest`]
+
+      - remaining_blocker: property-based rule validation still fails, DX-94 over-specifies
+      unimplemented MCP features, and cross-repo deferral verification is not scoped
+      for missing `../tasca` context
+
+      - why_new_loop: the gate failure is now a consolidated blocker set that spans
+      rule semantics, design/runtime alignment, and deferred field-validation scope;
+      editing earlier verification-only loops would not create a concrete remediation
+      target
+
+
+      Priority: HIGH'
+    verification: '- Targeted remediation updates exist for the `check_all_rules`
+      property-test blocker, the DX-94 runtime/tooling mismatch, and the unavailable
+      `../tasca` verification context
+
+      - The updated design states exactly which MCP capabilities are supported now
+      versus deferred
+
+      - The deferred cross-repo validation requirement is concrete enough for a later
+      field-validation step to execute without hidden assumptions'
+    agent: python-senior
 - id: mcp-full-guard-implement
   name: MCP Full Guard Implementation
   status: done
