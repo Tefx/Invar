@@ -14387,6 +14387,34 @@ phases:
       - Evidence distinguishes runtime-owned docs from proposal/archive material that
       remains intentionally historical'
     agent: doc-reviewer
+  - id: update-proposals-index-and-crosslinks
+    name: update-proposals-index-and-crosslinks
+    status: pending
+    description: 'Update proposal index and repository cross-links so DX-91 is discoverable
+      as the authoritative simplification direction and stale references do not point
+      readers back to removed surfaces.
+
+
+      Scope:
+
+      - Ensure `docs/proposals/index.md` reflects DX-91 priority and cross-links correctly
+
+      - Align any repo-level references that should now point at DX-91 draft sections
+      or simplified docs
+
+      - Avoid broad archive churn; update only the active navigational surface needed
+      for accurate guidance'
+    verification: '- Proposal index and active repo cross-links resolve to the intended
+      DX-91 sections
+
+      - No active high-level navigation still points readers at removed TypeScript/agent-era
+      guidance as current behavior
+
+      - Historical/archive references remain untouched unless they are part of the
+      active navigational surface'
+    depends_on:
+    - update-runtime-owned-docs
+    agent: doc-reviewer
 - id: dx91-release-readiness
   name: DX-91 Release Readiness Audit
   status: locked
