@@ -13585,7 +13585,9 @@ phases:
       \ retest.\n\nSpec link:\n- phase: release-readiness\n- step: release-readiness.smoke-install-artifacts-retest-provenance-uv-fallback"
 - id: dx91-harness
   name: DX-91 Regression Harness
-  status: pending
+  status: locked
+  depends_on:
+  - dx91-spec
 - id: dx91-spec
   name: DX-91 Spec & Migration Semantics
   status: pending
