@@ -13709,6 +13709,30 @@ phases:
     depends_on:
     - build-migration-fixtures
     agent: integration-verifier
+  - id: freeze-harness-snapshot
+    name: freeze-harness-snapshot
+    status: pending
+    description: 'Freeze the regression harness snapshot that later destructive implementation
+      phases must verify against.
+
+
+      Freeze requirements:
+
+      - Capture the exact commit and clean working-tree state for harness fixtures
+
+      - Declare the fixture roots and test entrypoints that become the protected baseline
+
+      - No code changes allowed between this freeze and the subsequent gate review
+      for the phase'
+    verification: '- Freeze evidence includes `git rev-parse HEAD`, clean `git status`,
+      and environment declaration
+
+      - Protected fixture roots and test entrypoints are listed explicitly
+
+      - The harness baseline is ready for gate review and downstream reuse'
+    depends_on:
+    - prove-destructive-regression-harness
+    agent: integration-verifier
 - id: dx91-spec
   name: DX-91 Spec & Migration Semantics
   status: pending
