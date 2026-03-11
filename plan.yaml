@@ -14544,3 +14544,42 @@ phases:
       - Failure path explicitly checks for stale references or drift between implementation
       and docs'
     agent: integration-verifier
+  - id: prove-final-init-install-smoke
+    name: prove-final-init-install-smoke
+    status: pending
+    description: 'As an INDEPENDENT TESTER (`blind-tester`), provide final real-path
+      evidence that the simplified DX-91 product is usable from the top-level command
+      surface.
+
+
+      YOUR GOAL IS TO FIND PROBLEMS, not to confirm it works.
+
+
+      Test for:
+
+      - Happy path: a fresh consumer path can run the simplified init/install/help
+      flow without TypeScript or retired agent-era requirements
+
+      - Edge cases: migrated repo path, generated docs references, command help surface
+
+      - Error scenarios: missing runtime assets, stale command references, packaging/install
+      drift
+
+
+      Integration Evidence
+
+      - Exact command(s) executed must be captured
+
+      - Actual output must be pasted, not summarized
+
+      - Path exercised must identify the end-to-end user entrypoint'
+    verification: '- Main path: at least one end-to-end smoke path through the simplified
+      command surface passes with real output captured
+
+      - Failure path: smoke explicitly checks for missing retired dependencies or
+      dangling command references
+
+      - Evidence is independent and suitable for final gate review'
+    depends_on:
+    - audit-dx91-consistency
+    agent: blind-tester
