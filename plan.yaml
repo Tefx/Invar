@@ -14002,6 +14002,61 @@ phases:
 
       - Proof: no legacy init-only branch remains where DX-91 scope requires removal'
     agent: python-senior
+  - id: rewrite-dev-sync-template-merge
+    name: rewrite-dev-sync-template-merge
+    status: pending
+    description: 'Rewrite `invar dev sync` and the template merge pipeline so repository
+      templates, generated files, and migration semantics all follow the simplified
+      DX-91 contract.
+
+
+      Failure-mode checklist:
+
+      - Relative vs absolute path behavior for template roots and repo-local sync
+      targets
+
+      - Missing-file fallback behavior when older repos lack new DX-91 files
+
+      - Explicit clear / null overwrite semantics for deleted managed sections
+
+      - Stale-definition vs new-state precedence between template source and on-disk
+      generated files
+
+      - Partial-write / interrupted sync behavior
+
+
+      State semantics:
+
+      - Last-writer-wins is limited to managed template output
+
+      - User-maintained regions must be preserved exactly
+
+      - Backward-compatible legacy behavior means old repos can sync into the new
+      layout without duplicate managed blocks
+
+
+      Out-of-scope guardrail:
+
+      - Documentation wording polish is deferred to `dx91-self-docs`
+
+      - Node/TypeScript asset deletion is deferred to `dx91-python-only`
+
+
+      Known risks:
+
+      - Output/merge logic is historically rework-prone; verify all sync code paths,
+      not just the dominant path'
+    verification: '- Main path: targeted dev-sync/template-merge regressions for the
+      simplified pipeline pass
+
+      - Failure path: regression coverage proves stale-state precedence, explicit
+      deletion, and fallback behavior
+
+      - Proof: no legacy helper/call pattern remains where DX-91 migration scope requires
+      replacement'
+    depends_on:
+    - rewrite-init-entrypoints
+    agent: python-senior
 - id: dx91-python-only
   name: DX-91 Python-Only Cleanup
   status: locked
