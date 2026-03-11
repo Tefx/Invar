@@ -14519,3 +14519,28 @@ phases:
   status: locked
   depends_on:
   - dx91-self-docs
+  steps:
+  - id: audit-dx91-consistency
+    name: audit-dx91-consistency
+    status: pending
+    description: 'Audit the full repository for DX-91 consistency before a final release
+      recommendation is made.
+
+
+      Scope:
+
+      - Reconcile product surface, docs surface, and proposal-index surface
+
+      - Confirm the final repo no longer exposes retired TypeScript/agent-era behavior
+      as active
+
+      - Check that harness-backed migration evidence still maps to the implemented
+      runtime behavior'
+    verification: '- Audit evidence names the repo surfaces reviewed and any remaining
+      mismatches
+
+      - Main path confirms runtime/docs/proposals agree on the DX-91 Python-only shape
+
+      - Failure path explicitly checks for stale references or drift between implementation
+      and docs'
+    agent: integration-verifier
