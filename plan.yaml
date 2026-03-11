@@ -13583,3 +13583,6 @@ phases:
       \ during sdist install (expected, non-fallback).\n\nVerdict:\n- PASS: second\
       \ uv/uvx fallback remediation closes the provenance blocker under independent\
       \ retest.\n\nSpec link:\n- phase: release-readiness\n- step: release-readiness.smoke-install-artifacts-retest-provenance-uv-fallback"
+- id: dx91-harness
+  name: DX-91 Regression Harness
+  status: pending
