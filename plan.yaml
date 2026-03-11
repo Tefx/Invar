@@ -8,7 +8,18 @@
 # =============================================================
 version: 1
 project: invar
-context: Implementation plan for invar.
+context: 'DX-91 simplification execution plan. Product decisions: keep core Python
+  tooling (`guard`, `sig`, `map`, `refs`), `invar-runtime`, MCP server, pre-commit
+  integration, and mandatory core/shell architecture; remove USBV enforcement, skills,
+  agent-specific hooks, onboarding system, feedback collection, TypeScript/JS support,
+  and other stale agent-era assets. `invar init` and `invar dev sync` converge on
+  a simplified pipeline that emits `INVAR.md`, a minimal injected `CLAUDE.md` section,
+  and the minimal `.invar/` support files with idempotent merge semantics. v1 -> v2
+  migration behavior must be explicit, loss-averse, and covered by regression fixtures
+  before destructive removals land. Repository docs and proposal index must reflect
+  the new Python-only product surface before release-readiness audit. Primary specs:
+  `docs/proposals/DX-91-simplification.md`, `docs/proposals/DX-91-invar-md-draft.md`,
+  `docs/proposals/DX-91-claude-md-draft.md`, `docs/proposals/index.md`.'
 phases:
 - id: dx-80
   name: DX-80
