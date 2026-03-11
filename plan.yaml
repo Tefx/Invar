@@ -13622,6 +13622,53 @@ phases:
 
       - The later harness steps have a clear scope boundary'
     agent: python-executor
+  - id: build-migration-fixtures
+    name: build-migration-fixtures
+    status: pending
+    description: 'Build focused regression fixtures that capture pre-DX-91 project
+      states and expected post-migration results.
+
+
+      Failure-mode checklist:
+
+      - Relative vs absolute template path behavior
+
+      - Missing-file fallback behavior for partially initialized repos
+
+      - Explicit clear / null overwrite semantics for removed managed content
+
+      - Stale-definition vs new-state precedence when both legacy and new files are
+      present
+
+      - Partial-write / interrupted migration behavior
+
+
+      State semantics:
+
+      - Last-writer-wins applies only to regenerated managed regions
+
+      - User-edited content in preserved regions must remain byte-stable unless the
+      spec explicitly allows regeneration
+
+      - Backward-compatible legacy behavior means repeated migration from v1 fixtures
+      yields the same v2 layout without duplicated sections
+
+
+      Out of scope:
+
+      - Runtime implementation changes are deferred to `dx91-init-runtime`
+
+      - Fixture creation only; no production cleanup work here'
+    verification: '- Focused fixtures exist for the main path and each listed failure
+      mode
+
+      - Each fixture names the exact migration expectation it protects
+
+      - Evidence shows at least one fixture for stale legacy state and one for interrupted/partial
+      migration recovery'
+    depends_on:
+    - inventory-regression-surfaces
+    agent: python-senior
 - id: dx91-spec
   name: DX-91 Spec & Migration Semantics
   status: pending
