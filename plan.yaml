@@ -13733,6 +13733,51 @@ phases:
     depends_on:
     - prove-destructive-regression-harness
     agent: integration-verifier
+  - id: gate
+    name: dx91-harness.gate
+    status: pending
+    description: 'Gate review: verify the DX-91 regression harness is strong enough
+      to guard destructive simplification work.
+
+
+      review_depth: THOROUGH
+
+      review_depth_rationale:
+
+      - This phase is the safety barrier before destructive runtime and cleanup phases
+
+      - Migration semantics and fixture preservation are high-risk state surfaces
+
+      - A weak harness would allow data-loss regressions to escape into later phases
+
+
+      cross_cutting_focus:
+
+      - Idempotent migration proof
+
+      - User-region preservation under repeated runs
+
+      - Detection of partial-write and stale-state regressions
+
+
+      As an INDEPENDENT REVIEWER (`gate-reviewer`), block progress if fixture coverage,
+      failure-path evidence, or harness clarity is insufficient.'
+    verification: '- All dx91-harness steps completed successfully
+
+      - Evidence covers both the main migration path and at least one destructive
+      failure path
+
+      - Harness entrypoints and protected fixtures are specific enough to audit later
+      implementation work
+
+      - Gate output states OPEN only if dx91-init-runtime can proceed behind the harness
+      safely'
+    depends_on:
+    - inventory-regression-surfaces
+    - build-migration-fixtures
+    - prove-destructive-regression-harness
+    - freeze-harness-snapshot
+    agent: gate-reviewer
 - id: dx91-spec
   name: DX-91 Spec & Migration Semantics
   status: pending
