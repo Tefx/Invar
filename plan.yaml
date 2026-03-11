@@ -13589,6 +13589,61 @@ phases:
 - id: dx91-spec
   name: DX-91 Spec & Migration Semantics
   status: pending
+  steps:
+  - id: finalize-migration-semantics
+    name: finalize-migration-semantics
+    status: pending
+    description: 'Finalize the execution contract for DX-91 simplification and migration
+      semantics from the committed proposal docs.
+
+
+      Scope:
+
+      - Resolve the canonical keep/remove boundary for DX-91
+
+      - Make `invar init` / `invar dev sync` output semantics explicit
+
+      - Lock v1 -> v2 migration behavior, including user-content preservation and
+      idempotent re-run expectations
+
+      - Decide which legacy agent-era assets are migrated, preserved verbatim, or
+      deleted outright
+
+
+      State semantics:
+
+      - Last-writer-wins applies only to regenerated managed sections, never to user-owned
+      regions
+
+      - Exact preservation is required for user-authored regions and legacy files
+      that are intentionally carried forward
+
+      - Backward compatibility means legacy projects can be upgraded without silent
+      data loss and can re-run the command without accumulating duplicate content
+
+
+      Known risks:
+
+      - Stale-definition vs regenerated-state precedence during migration
+
+      - Explicit clear / delete semantics for removed legacy assets
+
+      - Relative vs absolute path assumptions in migration fixtures and template roots
+
+      - Partial migration rules that leave the repo in a mixed v1/v2 state
+
+
+      Deliverable: a clear semantic baseline that downstream implementation and regression
+      steps can reference without reinterpretation.'
+    verification: '- Spec evidence records the final migration decisions with file
+      + section references
+
+      - Failure path is explicit for stale legacy state, explicit deletion, and idempotent
+      re-run behavior
+
+      - Downstream phases can reference one canonical semantic baseline without re-deciding
+      migration rules'
+    agent: software-architect
 - id: dx91-init-runtime
   name: DX-91 Init & Dev-Sync Runtime Rewrite
   status: pending
