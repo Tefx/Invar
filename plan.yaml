@@ -14213,6 +14213,41 @@ phases:
       - Proof includes a targeted sibling search for residual TypeScript integration
       references'
     agent: python-senior
+  - id: remove-stale-agent-assets
+    name: remove-stale-agent-assets
+    status: pending
+    description: 'Remove stale agent-era assets and obsolete protocol surfaces that
+      DX-91 explicitly retires.
+
+
+      Scope:
+
+      - Remove skills, agent-specific hooks, onboarding-era files, feedback collection
+      remnants, and other deprecated agent-first assets
+
+      - Preserve only the minimal repo/runtime assets required by the DX-91 spec
+
+      - Keep deletions serialized behind TypeScript cleanup to avoid merge conflicts
+      in shared templates and packaging files
+
+
+      Known risks:
+
+      - Legacy assets may still be referenced from docs, templates, or command output;
+      cleanup must search for siblings beyond the obvious locations
+
+      - Delete semantics must follow the DX-91 spec rather than ad hoc cleanup'
+    verification: '- Main path: active runtime/template surfaces no longer expose
+      retired agent-era assets
+
+      - Failure path: sibling search shows no stale references remain in packaging,
+      docs stubs, or generated content sources where scope requires removal
+
+      - Evidence explicitly distinguishes deleted assets from intentionally preserved
+      minimal files'
+    depends_on:
+    - remove-typescript-tooling
+    agent: python-executor
 - id: dx91-self-docs
   name: DX-91 Self-Docs Update
   status: locked
