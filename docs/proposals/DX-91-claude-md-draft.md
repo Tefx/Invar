@@ -1,11 +1,12 @@
-# DX-91: CLAUDE.md Injected Section Draft (v2.1)
+# DX-91: CLAUDE.md Injected Section Draft (v3)
 
 ## Design Constraints
 
-1. **Append-only**: Invar adds a managed section to existing CLAUDE.md. Never replaces user content.
-2. **Idempotent**: Running `invar init` twice produces same result. Uses `<!--invar:begin-->` / `<!--invar:end-->` markers.
-3. **Default target**: CLAUDE.md (most users use Claude Code, which auto-loads it). `--file` flag for alternatives (AGENTS.md, .cursorrules, etc.)
-4. **Reference pointer**: Points to top-level `INVAR.md` for full reference.
+1. **Append-only**: Invar adds a managed section to an existing agent file and never replaces user content outside markers.
+2. **Idempotent**: Running `invar init` twice produces the same managed block via `<!--invar:begin-->` / `<!--invar:end-->`.
+3. **Default target**: `CLAUDE.md`. `--file` supports alternatives such as `AGENTS.md`.
+4. **Thin entry contract**: `CLAUDE.md` stays short and points to `INVAR.md` for durable agent semantics.
+5. **Migration preview requirement**: fresh init is non-interactive; destructive migration requires preview plus confirmation.
 
 ## Injected Content (~50 lines)
 
@@ -15,77 +16,67 @@ This is what `invar init` appends inside the managed region:
 <!--invar:begin-->
 ## Invar
 
-**CRITICAL: Write @pre/@post contracts BEFORE implementation. Guard rejects uncontracted core functions. This is not optional.**
+**CRITICAL: Write `@pre`/`@post` contracts and at least one doctest BEFORE implementing a Core function. Guard rejects uncontracted Core code.**
 
-### Architecture (Mandatory)
+### Architecture
 
 | Zone | Path | Rules |
 |------|------|-------|
-| Core | `**/core/**` | @pre/@post + doctests, NO I/O imports |
-| Shell | `**/shell/**` | Returns `Result[T, E]` from `returns` |
+| Core | `**/core/**` | `@pre` + `@post` + doctest, no I/O imports |
+| Shell | `**/shell/**` | returns `Result[T, E]`, handles I/O |
 
-Core receives data, Shell handles I/O. When unsure → Shell.
+If code touches files, network, env vars, time, randomness, or subprocesses, use Shell.
 
 ### Verification
 
-Run `invar guard` after every change. Fix all errors before committing.
+Run `invar guard` after changes. Fix errors before committing.
 
 ### Tools
 
 | Tool | Use |
 |------|-----|
-| `invar guard` | Verify code (static + doctest + CrossHair + wiring rules) |
-| `invar sig <file>` | Show function signatures and contracts |
-| `invar map [path]` | Entry points with reference counts |
-| `invar refs <file>::<symbol>` | Cross-file symbol references |
+| `invar guard` | verify architecture and contracts |
+| `invar sig <file>` | inspect signatures and contracts |
+| `invar map [path]` | inspect entry points |
+| `invar refs <file>::<symbol>` | inspect references |
 
-### Contract Syntax
+### Contract Traps
 
 ```python
-# @pre: lambda must include ALL parameters (even defaults)
+# @pre must include all parameters, including defaults
 @pre(lambda x, y=0: x >= 0)
 def calc(x: int, y: int = 0): ...
 
-# @post: only receives 'result', NOT function parameters
+# @post only receives result
 @post(lambda result: result >= 0)
-
-# Every core function needs @pre/@post + at least one doctest
 ```
 
 ### Escape Hatches
 
 ```python
-# Suppress a specific rule with reason
 # @invar:allow dead_export: CLI entry point called by framework
 ```
 
-### Configuration
-
-```toml
-# pyproject.toml
-[tool.invar.guard]
-core_paths = ["src/myapp/core"]
-shell_paths = ["src/myapp/shell"]
-```
-
-Full reference: see `INVAR.md`
+Exact syntax and repair patterns: `INVAR.md`
 <!--invar:end-->
 ```
 
-## Line count: ~50 lines (managed region only)
+## Line Count
+
+Managed region target: ~60 lines.
 
 ## Merge Behavior
 
 | Scenario | Action |
 |----------|--------|
-| CLAUDE.md doesn't exist | Create with only the managed section |
-| CLAUDE.md exists, no invar markers | Append managed section at end |
-| CLAUDE.md exists, has invar markers | Replace content between markers (idempotent) |
-| User content outside markers | Preserved unchanged |
+| `CLAUDE.md` missing | create file with managed section |
+| file exists without markers | append managed section |
+| file exists with markers | replace content between markers |
+| user content outside markers | preserve unchanged |
 
 ## MCP Variant
 
-When MCP is available, tool names adjust:
+When MCP is available, command examples may be rendered as MCP calls instead of CLI commands:
 
 | CLI | MCP |
 |-----|-----|
@@ -94,18 +85,13 @@ When MCP is available, tool names adjust:
 | `invar map` | `invar_map()` |
 | `invar refs <sym>` | `invar_refs(target="<sym>")` |
 
-Template uses Jinja2 `{% if syntax == "mcp" %}` to switch (same as current).
+## What Was Removed
 
-## What Was Removed (vs current 257-line AGENT.md.jinja)
-
-| Removed | Lines saved | Why |
-|---------|------------|-----|
-| Check-In / Final protocol | ~25 | Ceremony, guard is the only checkpoint |
-| USBV workflow (4 phases) | ~70 | Agents don't follow, guard enforces outcome |
-| Task Completion checklist | ~10 | Redundant with guard |
-| Documentation Structure table | ~10 | Merged into INVAR.md |
-| Tool Selection expanded table | ~15 | Merged into compact Tools table |
-| Visible Workflow / Phase headers | ~20 | Noise |
-| TypeScript variants | ~50 | TS support dropped |
-| Skills routing | ~15 | Skills system dropped |
-| **Total saved** | **~215 lines** | 257 → ~50 lines |
+| Removed | Why |
+|---------|-----|
+| Check-In / Final protocol | ceremony, not durable agent guidance |
+| USBV workflow phases | agents do not reliably follow them |
+| Task completion checklists | redundant with guard |
+| Skills and hooks | Claude-specific and unreliable |
+| TypeScript variants | product boundary is now Python-only |
+| Expanded prose tables | moved into concise `INVAR.md` semantic rules |

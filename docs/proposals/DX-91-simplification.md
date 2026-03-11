@@ -74,11 +74,11 @@ All planned rules continue: dead_export, dead_param, stub_body, wiring_gap, mock
 
 ### 2.4 TypeScript/JS Support
 
-**Remove entirely.** Focus on Python. node_tools/ (5,981 LOC), ts_compiler.py, TS protocol/example/CLAUDE.md templates, TS routing in guard/perception/sig/map/refs.
+**Remove entirely as a strategic product decision.** Invar v2 is explicitly Python-only. This is not a temporary scope reduction or package split; it is a deliberate narrowing of product boundary. Remove node_tools/ (5,981 LOC), ts_compiler.py, TS protocol/example/CLAUDE.md templates, and TS routing in guard/perception/sig/map/refs.
 
 ### 2.5 Examples Directory
 
-**Remove.** Guard error messages replace examples as teaching mechanism (requires investment in error message quality — see Section 4.3).
+**Remove as an agent-facing instruction source.** Keeping `.invar/examples/` creates a second semantic source alongside `INVAR.md`, increases staleness risk, and leaves agents vulnerable to copying obsolete patterns. Before deletion, run a full reference audit and inline only the mistake-prone normative patterns into `INVAR.md` (contract lambda signature, `@post` scope, Core/Shell boundary, shell `Result[T, E]`). Guard diagnostics must then carry the remaining teaching load for instance-level fixes (see Section 6.3).
 
 ### 2.6 Feedback Collection (DX-79)
 
@@ -88,7 +88,7 @@ All planned rules continue: dead_export, dead_param, stub_body, wiring_gap, mock
 
 **Remove.** Goes with skills.
 
-### 2.8 CLI Commands to Remove
+### 2.8 CLI Command Surface Changes
 
 | Command | Why |
 |---------|-----|
@@ -102,7 +102,7 @@ All planned rules continue: dead_export, dead_param, stub_body, wiring_gap, mock
 | `invar feedback *` (3) | Feature removed |
 | `invar hooks *` (2) | Feature removed |
 | `invar skill *` (2) | Feature removed |
-| `invar dev sync` | Internal only |
+| `invar dev sync` | Keep, but reduce to internal maintenance of generated semantic artifacts |
 
 ### 2.9 Check-In/Final Protocol
 
@@ -129,23 +129,25 @@ invar init
 invar init --file AGENTS.md
 ```
 
-No interactive prompts. No agent selection. No file selection.
+No agent selection. No file selection.
 
 Default target is **CLAUDE.md** (most users use Claude Code, and it auto-loads CLAUDE.md).
 `--file` flag for other targets (AGENTS.md, .cursorrules, etc.)
+
+Fresh init should be non-interactive. Migration prompts are allowed only when destructive cleanup is detected.
 
 ### 3.2 Generated Files
 
 | File | Content | Lines |
 |------|---------|-------|
 | **CLAUDE.md** | Invar section appended in `<!--invar:begin/end-->` markers | ~50 |
-| **INVAR.md** | Complete reference (core/shell, contracts, config, examples) | ~150 |
+| **INVAR.md** | Agent semantic specification (core/shell, contracts, config, repair guidance) | ~70-120 |
 | **.pre-commit-config.yaml** | Single hook: `invar guard` | ~8 |
 
 Optional:
 | **.mcp.json** | MCP server config (if `--mcp` flag) |
 
-**NOT generated:** directory skeleton, .invar/ directory, examples, skills, hooks, context.md.
+**NOT generated:** directory skeleton, `.invar/` user workspace, examples, skills, hooks, context.md.
 
 ### 3.3 Idempotent Merge
 
@@ -161,15 +163,22 @@ Optional:
 
 ### 3.4 v1 → v2 Migration
 
-When `invar init` detects a v1 layout (old skills/hooks/protocol):
+When `invar init` detects a v1 layout (old skills/hooks/protocol), it MAY perform destructive migration - but only after an explicit preview and confirmation.
 
-1. **Back up** `.invar/context.md` and `.invar/project-additions.md` (if exist)
-2. **Delete** `.claude/skills/`, `.claude/hooks/` (dead files confuse agents)
-3. **Replace** managed sections in CLAUDE.md with new minimal content
-4. **Create** INVAR.md (replaces old 434-line version with 150-line version)
-5. **Print** summary of what was deleted and where backups are
+Required flow:
 
-Stale files MUST be actively cleaned up — not left "inert." Agents read files on disk and will follow old instructions.
+1. **Detect** legacy layout and collect impacted files/directories
+2. **Preview** exactly what will be deleted, overwritten, or preserved
+3. **Back up** preserved user data (`.invar/context.md`, `.invar/project-additions.md`) and any user-customized legacy instruction files before deletion
+4. **Ask for confirmation** before any destructive action
+5. **Delete** stale agent config and stale semantic sources, including `.claude/skills/`, `.claude/hooks/`, and `.invar/examples/`
+6. **Replace** managed sections in CLAUDE.md with new minimal content
+7. **Create/overwrite** `INVAR.md` with the new agent semantic spec
+8. **Print** a migration summary with deleted paths, overwritten files, and backup locations
+
+Stale files MUST be actively cleaned up - not left "inert." Agents read files on disk and will follow old instructions.
+
+If backup fails, destructive migration must abort.
 
 ### 3.5 Installation Recommendation
 
@@ -247,7 +256,7 @@ core_paths = ["src/myapp/core"]
 shell_paths = ["src/myapp/shell"]
 ```
 
-Full reference: see `INVAR.md`
+More repair rules and exact syntax: see `INVAR.md`
 <!--invar:end-->
 ```
 
@@ -258,29 +267,34 @@ Full reference: see `INVAR.md`
 4. Contract syntax — the 3 most common mistakes
 5. Escape hatch — how to suppress rules
 6. Configuration — minimal, just paths
-7. Pointer to INVAR.md for full reference
+7. Pointer to `INVAR.md` for durable agent semantics
 
 ---
 
-## 5. INVAR.md Reference (~150 lines)
+## 5. INVAR.md as Agent Semantic Spec
 
-**Location:** Top-level (architectural guidance, not tooling internals).
+**Location:** Top-level. This is not a human reference manual; it is part of the active instruction surface agents consume.
 
-**Content:** See `docs/proposals/DX-91-invar-md-draft.md` for full draft.
+**Role:** `CLAUDE.md` gives the short entry contract. `INVAR.md` carries the durable semantic rules agents need when guard fails or when they need exact syntax.
 
-Sections:
-1. Core/Shell decision tree
-2. Injection pattern (how to keep Core pure)
-3. Core example (@pre/@post + doctest)
-4. Shell example (Result[T, E])
-5. Result type patterns (Success/Failure/chaining)
-6. Full contract syntax (lambda signature, @post scope, meaningful contracts)
-7. Full configuration reference (all pyproject.toml keys with defaults)
-8. Markers and escape hatches (entry points, shell complexity, @invar:allow)
-9. Size limits table
-10. Common errors table
+**Content:** See `docs/proposals/DX-91-invar-md-draft.md` for the draft to be revised in this direction.
 
-**Replaces:** Old INVAR.md (434 lines) + .invar/examples/ (12 files)
+Required characteristics:
+- Imperative, compact, and optimized for agent consumption rather than narrative reading
+- Stable section anchors so guard diagnostics can point to exact fixes
+- Contains only normative patterns or repair guidance, not optional tutorials
+- Must not reference deleted files such as `.invar/examples/`
+
+Required sections:
+1. Before writing code (contracts first, when to choose Core vs Shell)
+2. Core/Shell decision rule
+3. Contract syntax traps (`@pre` lambda parameters, `@post(result)` scope)
+4. Minimal canonical examples for Core and Shell
+5. Escape hatches and markers
+6. Minimal configuration
+7. Common guard failures and repair patterns
+
+**Replaces:** Old INVAR.md (434 lines) and the agent-facing role of `.invar/examples/`.
 
 ---
 
@@ -296,12 +310,13 @@ Static analysis, doctests, CrossHair, Hypothesis, and all wiring integrity rules
 
 ### 6.3 Invest in Error Message Quality
 
-Guard errors must teach (replacing examples/ and protocol docs). Each violation includes:
+Guard errors must teach enough to replace deleted examples for instance-level fixes. They do not replace the semantic role of `INVAR.md`; they complement it. This section defines a new requirement for DX-91 implementation. Each violation includes:
 - **What's wrong** (clear description)
 - **Where** (file:line)
 - **How to fix** (corrected code example)
 - **Why** (one sentence of rationale)
-- **Reference** (`see INVAR.md#section`)
+- **Pattern hint** (the general rule the agent should apply elsewhere)
+- **Semantic spec link** (`see INVAR.md#section`)
 
 Example:
 ```
@@ -310,10 +325,16 @@ E: missing_contract — function `calculate_total` in core/ has no @post contrac
   @post(lambda result: result >= 0)
   def calculate_total(items: list[Item]) -> float:
 
-  Core functions require @pre/@post + doctest. See INVAR.md#contracts
+  Core functions require @pre/@post + doctest. See INVAR.md#contract-syntax-traps
 ```
 
-**Audit before deleting examples/:** For each example file, verify guard errors fully communicate what the example taught. Any gap → add to INVAR.md.
+**Audit before deleting examples/:**
+1. Remove or rewrite every reference to `.invar/examples/`
+2. Verify each deleted example's normative lesson appears either in `INVAR.md` or guard diagnostics
+3. Delete `workflow.md` entirely because it preserves removed USBV ceremony
+4. Do not preserve examples as a second agent-facing instruction source
+
+This audit is required before implementing Section 2.5.
 
 ### 6.4 Enforcement Layers
 
@@ -348,9 +369,17 @@ Keep active: DX-88, DX-89, DX-91.
 6. Core/Shell in 5 lines
 7. CI integration example (one line)
 
-### 7.3 Update .invar/context.md
+### 7.3 Update `.invar/context.md`
 
-Remove references to USBV, skills, hooks, TypeScript, protocol templates.
+Remove references to USBV, skills, hooks, TypeScript, protocol templates, and `.invar/examples/` as required reading.
+
+### 7.4 Archive or Replace `docs/AGENTS.md`
+
+`docs/AGENTS.md` currently documents the skill/hook-era model and conflicts with DX-91. On implementation:
+- either archive it as a v1 historical artifact
+- or replace it with a minimal note pointing agents to `CLAUDE.md` and `INVAR.md`
+
+It must not remain as an active source of skills/hooks instructions after DX-91 lands.
 
 ---
 
@@ -389,7 +418,16 @@ Remove references to USBV, skills, hooks, TypeScript, protocol templates.
 
 **Keep (6):** guard, sig, map, refs, init, doc *
 
-**Remove (12):** update, uninstall, test, verify, mutate, rules, version, feedback *, hooks *, skill *, dev sync
+**Remove (11):** update, uninstall, test, verify, mutate, rules, version, feedback *, hooks *, skill *
+
+**Keep internal-only:** `dev sync` for maintaining generated semantic artifacts during Invar development
+
+Minimum retained scope for `dev sync`:
+- regenerate Invar's own `CLAUDE.md` managed block
+- regenerate `INVAR.md`
+- keep any other managed artifacts required by `invar init` in sync
+
+Out of scope for retained `dev sync`: skills, hooks, examples, onboarding assets, or multi-agent template families.
 
 ---
 
@@ -401,12 +439,15 @@ Remove references to USBV, skills, hooks, TypeScript, protocol templates.
 
 ### 9.2 `invar init` v2 on v1 Project
 
-Active cleanup (not "leave old files inert"):
-1. Back up user data (.invar/context.md, project-additions.md)
-2. Delete stale agent config (.claude/skills/, .claude/hooks/)
-3. Replace CLAUDE.md managed sections with new 50-line content
-4. Create/overwrite INVAR.md (150 lines)
-5. Print migration summary
+Active cleanup (not "leave old files inert") with explicit user confirmation:
+1. Detect v1 layout and preview impacted paths
+2. Back up preserved user data (`.invar/context.md`, `project-additions.md`) and any user-customized legacy instruction files that will be deleted
+3. Ask for confirmation before deletion/overwrite
+4. Delete stale agent config and stale semantic files (`.claude/skills/`, `.claude/hooks/`, `.invar/examples/`)
+5. Replace CLAUDE.md managed sections with new 50-line content
+6. Create/overwrite `INVAR.md` as agent semantic spec
+7. Print migration summary and backup locations
+8. Run a post-migration validation step: `invar guard --all`, then verify no surviving references to deleted instruction sources remain
 
 ### 9.3 Version: v2.0.0
 
@@ -442,11 +483,16 @@ Breaking changes:
 
 ---
 
-## 12. Open Questions
+## 12. Resolved Decisions
 
-1. **Guard `--contracts-only` and `--coverage` flags** — keep or remove?
-2. **MCP config generation** — should `invar init --mcp` create .mcp.json, or leave it fully manual?
-3. **Invar's own development** — without `invar dev sync`, how to manage templates during development?
+1. **Guard flags**
+   - Keep `--contracts-only` as a useful fast-path for contract coverage and CI checks.
+   - Remove `--coverage` from the DX-91 surface; revisit only if a clear post-v2 need appears.
+2. **MCP config generation**
+   - Remove automatic MCP config generation from `invar init`.
+   - `.mcp.json` setup becomes manual documentation, not generated state.
+3. **`invar dev sync` scope**
+   - Keep only the minimum internal sync surface needed to regenerate `CLAUDE.md`, `INVAR.md`, and any other artifacts directly emitted by `invar init`.
 
 ---
 

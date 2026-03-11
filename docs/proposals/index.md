@@ -1,6 +1,6 @@
 # Invar Proposals Index
 
-> **Last Updated:** 2026-03-09
+> **Last Updated:** 2026-03-11
 
 This directory contains design proposals for Invar development.
 
@@ -12,15 +12,15 @@ This directory contains design proposals for Invar development.
 
 ---
 
-## Active Proposals (15)
+## Open Proposals (23)
 
 ### DX Series (Developer Experience)
 
 | ID | Name | Status | Description |
 |----|------|--------|-------------|
+| DX-91 | [invar-simplification](DX-91-simplification.md) | Active | Simplify Invar to a Python-only, guard-first architecture with minimal agent instruction surface |
 | DX-94 | [mcp-full-guard-support-model](DX-94-mcp-full-guard-support-model.md) | Draft | Deferred full-scan model for MCP timeout-safe `invar_guard(changed=false)` |
-| DX-87 | [remove-multi-agent-init](DX-87-remove-multi-agent-init.md) | Draft | Remove combined/multi-select init; enforce single-agent init only |
-| DX-84 | [security-review-backlog](DX-84-security-review-backlog.md) | Active | Security review backlog for TypeScript & Python Guard |
+| DX-84 | [security-review-backlog](DX-84-security-review-backlog.md) | Active | Security review backlog for Python Guard; TypeScript items are legacy under DX-91 |
 | DX-83 | [multi-agent-subagent-support](DX-83-multi-agent-subagent-support.md) | Draft | Subagent support and fallback strategy for multi-agent environments |
 | DX-80 | [guard-cli-mcp-alignment](DX-80-guard-cli-mcp-alignment.md) | Draft | Align Guard CLI default behavior with MCP (bug fix) |
 | DX-79 | [invar-usage-feedback](DX-79-invar-usage-feedback.md) | Draft | Invar usage feedback collection |
@@ -39,8 +39,8 @@ This directory contains design proposals for Invar development.
 
 | ID | Name | Status | Description |
 |----|------|--------|-------------|
-| LX-13 | [typescript-runtime-optimization](LX-13-typescript-runtime-optimization.md) | Draft | Reduce Zod validation overhead by 80-90% |
-| LX-09 | [legacy-onboarding](LX-09-legacy-onboarding.md) | Draft | Update `/invar-onboard` skill for --mcp-only path |
+| LX-13 | [typescript-runtime-optimization](LX-13-typescript-runtime-optimization.md) | Deferred | On hold under DX-91 Python-only scope |
+| LX-09 | [legacy-onboarding](LX-09-legacy-onboarding.md) | Deferred | On hold under DX-91 Python-only scope |
 | LX-08 | extension-skills-future | Deferred | Future extension skills (split from LX-07) |
 
 ### Deferred (Low Priority)
@@ -59,7 +59,7 @@ This directory contains design proposals for Invar development.
 
 ---
 
-## Archived Proposals (77)
+## Archived Proposals (78)
 
 > All completed proposals have been moved to `completed/` directory.
 
@@ -67,6 +67,7 @@ This directory contains design proposals for Invar development.
 
 | ID | Name | Status | Description |
 |----|------|--------|-------------|
+| DX-87 | remove-multi-agent-init | Superseded | Absorbed into DX-91 simplification → `DX-91-simplification.md` |
 | DX-23 | entry-point-detection | ✅ Complete | Entry point detection & Monad Runner pattern |
 | DX-78 | mcp-protocol-sync | ✅ Implemented | MCP protocol synced to v5.0 + TypeScript support |
 | DX-85 | mcp-typescript-descriptions | ✅ Fixed | MCP tool descriptions fixed for TypeScript |
@@ -147,19 +148,19 @@ This directory contains design proposals for Invar development.
 
 | Category | Count |
 |----------|-------|
-| **Active** | 15 |
-| **Deferred** | 12 |
-| **Archived** | 77 |
-| **Total** | 104 |
+| **Open** | 23 |
+| **Deferred** | 11 |
+| **Archived** | 78 |
+| **Total** | 105 |
 
 ### Active Breakdown
 
 | Status | Count |
 |--------|-------|
-| Draft | 11 |
-| Active | 1 |
+| Draft | 8 |
+| Active | 2 |
 | Partial | 2 |
-| Deferred | 12 |
+| Deferred | 11 |
 
 ---
 
@@ -168,8 +169,8 @@ This directory contains design proposals for Invar development.
 ### High Priority (Actionable Now)
 
 1. **DX-84** (Security Review) — Active, blocking for production readiness
-2. **DX-80** (Guard CLI/MCP Alignment) — Bug fix, user impact
-3. **DX-87** (Remove Multi-Agent Init) — Cleanup, reduces maintenance
+2. **DX-91** (Invar Simplification) — Strategic product reset and document-model simplification
+3. **DX-80** (Guard CLI/MCP Alignment) — Bug fix, user impact
 
 ### Medium Priority (Strategic)
 
