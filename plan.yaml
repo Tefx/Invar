@@ -13644,6 +13644,34 @@ phases:
       - Downstream phases can reference one canonical semantic baseline without re-deciding
       migration rules'
     agent: software-architect
+  - id: align-generated-doc-contracts
+    name: align-generated-doc-contracts
+    status: pending
+    description: 'Translate the finalized DX-91 semantics into an implementation-facing
+      document contract for generated files and injected content.
+
+
+      Scope:
+
+      - Align `INVAR.md` draft expectations with the simplified protocol semantics
+
+      - Align `CLAUDE.md` injected section boundaries and escape hatches with the
+      new minimal design
+
+      - Record which proposal sections become source-of-truth for runtime/template
+      work versus repository docs work
+
+      - Call out any intentionally deferred wording cleanup so runtime rewrite does
+      not expand scope silently'
+    verification: '- Each generated-file contract maps back to an explicit proposal
+      section
+
+      - The split between runtime/template work and self-doc work is explicit
+
+      - No unresolved ambiguity remains about the minimum injected `CLAUDE.md` content'
+    depends_on:
+    - finalize-migration-semantics
+    agent: doc-reviewer
 - id: dx91-init-runtime
   name: DX-91 Init & Dev-Sync Runtime Rewrite
   status: pending
