@@ -13588,6 +13588,40 @@ phases:
   status: locked
   depends_on:
   - dx91-spec
+  steps:
+  - id: inventory-regression-surfaces
+    name: inventory-regression-surfaces
+    status: pending
+    description: 'Inventory every behavior surface that DX-91 can break before destructive
+      changes begin.
+
+
+      Scope:
+
+      - Identify init/dev-sync outputs, migration paths, template merge seams, and
+      packaging/install touchpoints
+
+      - Map the highest-risk repo paths and fixture directories for simplified Python-only
+      behavior
+
+      - Separate core regression fixtures from end-to-end harness entrypoints so later
+      implementation and verification steps do not fight over the same files
+
+
+      Conflict control:
+
+      - This inventory is the anchor for all harness work in the phase
+
+      - Later harness steps must serialize behind this inventory to avoid duplicate
+      or conflicting fixture creation'
+    verification: '- Regression surfaces are enumerated with file clusters and harness
+      entry points
+
+      - Legacy migration, destructive cleanup, and final release-smoke surfaces are
+      all covered
+
+      - The later harness steps have a clear scope boundary'
+    agent: python-executor
 - id: dx91-spec
   name: DX-91 Spec & Migration Semantics
   status: pending
