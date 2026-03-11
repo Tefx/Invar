@@ -14415,6 +14415,37 @@ phases:
     depends_on:
     - update-runtime-owned-docs
     agent: doc-reviewer
+  - id: verify-self-docs-surface
+    name: verify-self-docs-surface
+    status: pending
+    description: 'As an INDEPENDENT TESTER (`blind-tester`), review the repository''s
+      user-facing docs surface after DX-91 updates.
+
+
+      YOUR GOAL IS TO FIND PROBLEMS, not to confirm it works.
+
+
+      Test for:
+
+      - Happy path: a reader can understand the simplified Python-only product without
+      seeing stale agent-era instructions
+
+      - Edge cases: cross-links from proposal index, generated guidance references,
+      historical docs that remain intentionally archived
+
+      - Error scenarios: broken links, contradictory instructions, active docs still
+      requiring removed features'
+    verification: '- Main path: independent review confirms active docs are coherent
+      and navigable
+
+      - Failure path: stale or contradictory references are searched for and reported
+      explicitly
+
+      - Evidence states what was intentionally left as historical reference versus
+      active guidance'
+    depends_on:
+    - update-proposals-index-and-crosslinks
+    agent: blind-tester
 - id: dx91-release-readiness
   name: DX-91 Release Readiness Audit
   status: locked
