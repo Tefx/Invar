@@ -14177,6 +14177,42 @@ phases:
   status: locked
   depends_on:
   - dx91-init-runtime
+  steps:
+  - id: remove-typescript-tooling
+    name: remove-typescript-tooling
+    status: pending
+    description: 'Remove TypeScript/JS tooling, node-specific helper paths, and related
+      packaging/runtime references once the Python-only replacement path is already
+      proven.
+
+
+      Scope:
+
+      - Delete TypeScript query/tooling surfaces and their packaging hooks
+
+      - Remove Node/TypeScript detection and dependency assumptions from the Python
+      product surface
+
+      - Keep any still-needed Python references functionality intact through the simplified
+      scope
+
+
+      Known risks:
+
+      - TypeScript support is a recently completed surface in `.invar/context.md`;
+      cleanup must remove it completely, not partially strand packaging or docs
+
+      - Shared packaging and command wiring files are conflict-prone; keep cleanup
+      serialized in this phase'
+    verification: '- Main path: Python-only command surface remains coherent after
+      TypeScript removal
+
+      - Failure path: regression check proves no stale Node/TypeScript entrypoint
+      or dependency reference remains in active runtime paths
+
+      - Proof includes a targeted sibling search for residual TypeScript integration
+      references'
+    agent: python-senior
 - id: dx91-self-docs
   name: DX-91 Self-Docs Update
   status: locked
