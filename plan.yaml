@@ -14446,6 +14446,31 @@ phases:
     depends_on:
     - update-proposals-index-and-crosslinks
     agent: blind-tester
+  - id: freeze-self-docs-snapshot
+    name: freeze-self-docs-snapshot
+    status: pending
+    description: 'Freeze the repository docs snapshot that release-readiness will
+      audit.
+
+
+      Freeze requirements:
+
+      - Capture commit, clean working tree, and environment after doc updates and
+      independent verification
+
+      - Record the active docs entrypoints that now define the DX-91 guidance surface
+
+      - No code or doc changes allowed between this freeze and the subsequent gate
+      review for the phase'
+    verification: '- Freeze evidence includes `git rev-parse HEAD`, clean `git status`,
+      and environment declaration
+
+      - Active docs entrypoints are named explicitly
+
+      - The docs surface is ready for gate review'
+    depends_on:
+    - verify-self-docs-surface
+    agent: integration-verifier
 - id: dx91-release-readiness
   name: DX-91 Release Readiness Audit
   status: locked
