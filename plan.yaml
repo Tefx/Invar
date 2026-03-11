@@ -13747,7 +13747,9 @@ phases:
     agent: gate-reviewer
 - id: dx91-init-runtime
   name: DX-91 Init & Dev-Sync Runtime Rewrite
-  status: pending
+  status: locked
+  depends_on:
+  - dx91-harness
 - id: dx91-python-only
   name: DX-91 Python-Only Cleanup
   status: pending
