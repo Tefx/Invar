@@ -13752,7 +13752,9 @@ phases:
   - dx91-harness
 - id: dx91-python-only
   name: DX-91 Python-Only Cleanup
-  status: pending
+  status: locked
+  depends_on:
+  - dx91-init-runtime
 - id: dx91-self-docs
   name: DX-91 Self-Docs Update
   status: pending
