@@ -13762,4 +13762,6 @@ phases:
   - dx91-python-only
 - id: dx91-release-readiness
   name: DX-91 Release Readiness Audit
-  status: pending
+  status: locked
+  depends_on:
+  - dx91-self-docs
