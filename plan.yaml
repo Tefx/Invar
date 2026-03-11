@@ -13940,6 +13940,68 @@ phases:
   status: locked
   depends_on:
   - dx91-harness
+  steps:
+  - id: rewrite-init-entrypoints
+    name: rewrite-init-entrypoints
+    status: pending
+    description: 'Rewrite the `invar init` runtime path for the DX-91 simplified product
+      surface.
+
+
+      Scope:
+
+      - Remove agent-era branching from init entrypoints and option handling
+
+      - Emit the minimal file set required by the finalized DX-91 spec
+
+      - Preserve compatibility behavior required for upgrading legacy repos
+
+
+      Failure-mode checklist:
+
+      - Relative vs absolute template/root path behavior
+
+      - Missing-file fallback when initializing partially configured repos
+
+      - Explicit clear / delete semantics for removed generated assets
+
+      - Stale-definition vs regenerated-state precedence when legacy files already
+      exist
+
+      - Partial-write / interrupted init behavior
+
+
+      State semantics:
+
+      - Last-writer-wins applies only to managed generated content
+
+      - User regions and preserved files must remain exact unless the spec allows
+      rewrite
+
+      - Backward-compatible behavior means repeated init on migrated repos is idempotent
+      and non-duplicating
+
+
+      Out-of-scope guardrail:
+
+      - Template merge logic beyond init-specific generation is handled in the next
+      step
+
+      - Python-only cleanup is deferred to `dx91-python-only`
+
+
+      Known risks:
+
+      - This repo historically relied on broader agent-oriented init outputs; removal
+      must not silently strand upgrade paths'
+    verification: '- Main path: targeted init regression tests for the simplified
+      file set pass
+
+      - Failure path: regression coverage proves preservation, delete semantics, and
+      interrupted-run recovery
+
+      - Proof: no legacy init-only branch remains where DX-91 scope requires removal'
+    agent: python-senior
 - id: dx91-python-only
   name: DX-91 Python-Only Cleanup
   status: locked
