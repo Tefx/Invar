@@ -14248,6 +14248,41 @@ phases:
     depends_on:
     - remove-typescript-tooling
     agent: python-executor
+  - id: verify-python-only-surface
+    name: verify-python-only-surface
+    status: pending
+    description: 'As an INDEPENDENT TESTER (`blind-tester`), validate that the repository
+      now presents a coherent Python-only product surface after TypeScript and agent-era
+      removals.
+
+
+      YOUR GOAL IS TO FIND PROBLEMS, not to confirm it works.
+
+
+      Test for:
+
+      - Happy path: user-facing commands and repository guidance no longer imply Node/TypeScript
+      or retired agent-era requirements
+
+      - Edge cases: migrated repos, stale docs links, generated-file references, packaging
+      metadata
+
+      - Error scenarios: broken imports, missing files after cleanup, dangling command
+      references
+
+
+      Document ALL findings. A test that discovers issues is a SUCCESS.'
+    verification: '- Main path: independent verification finds the Python-only surface
+      coherent across runtime, packaging, and generated assets
+
+      - Failure path: targeted search for stale Node/agent-era references is performed
+      and reported
+
+      - Evidence identifies any remaining blockers or explicitly states why coverage
+      is sufficient'
+    depends_on:
+    - remove-stale-agent-assets
+    agent: blind-tester
 - id: dx91-self-docs
   name: DX-91 Self-Docs Update
   status: locked
