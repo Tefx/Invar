@@ -14360,6 +14360,33 @@ phases:
   status: locked
   depends_on:
   - dx91-python-only
+  steps:
+  - id: update-runtime-owned-docs
+    name: update-runtime-owned-docs
+    status: pending
+    description: 'Update repository-owned docs and template-facing guidance so they
+      describe the real DX-91 Python-only behavior instead of the removed agent-era
+      product surface.
+
+
+      Scope:
+
+      - Align repo docs with the simplified `INVAR.md` and minimal `CLAUDE.md` contract
+
+      - Remove stale mentions of TypeScript, agent hooks, skills, onboarding flow,
+      and check-in/final protocol where DX-91 retires them
+
+      - Preserve accurate references to the kept core tools, MCP server, runtime package,
+      and pre-commit integration'
+    verification: '- Main path: repo docs describe the same simplified product surface
+      as the implementation phases
+
+      - Failure path: targeted sibling search finds no stale high-signal references
+      to retired TypeScript or agent-era features in active docs/templates
+
+      - Evidence distinguishes runtime-owned docs from proposal/archive material that
+      remains intentionally historical'
+    agent: doc-reviewer
 - id: dx91-release-readiness
   name: DX-91 Release Readiness Audit
   status: locked
