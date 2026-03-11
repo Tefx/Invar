@@ -14057,6 +14057,47 @@ phases:
     depends_on:
     - rewrite-init-entrypoints
     agent: python-senior
+  - id: prove-init-dev-sync-flow
+    name: prove-init-dev-sync-flow
+    status: pending
+    description: 'As an INDEPENDENT TESTER (`integration-verifier`), validate the
+      full DX-91 init/dev-sync path from fresh repo state through migrated repo state.
+
+
+      YOUR GOAL IS TO FIND PROBLEMS, not to confirm it works.
+
+
+      Test for:
+
+      - Happy path: clean init and subsequent dev-sync produce the simplified Python-only
+      file set
+
+      - Edge cases: repeated runs, migrated legacy repos, preserved user sections,
+      removed agent-era assets
+
+      - Error scenarios: missing inputs, stale generated files, interrupted syncs
+
+
+      Integration Evidence
+
+      - Command or test exercising the full path must invoke init/dev-sync end to
+      end
+
+      - Actual output must be captured, not summarized
+
+      - Path exercised must identify source template -> generated files -> final asserted
+      repo state'
+    verification: '- Main path: at least one full init -> dev-sync proof passes with
+      actual output captured
+
+      - Failure path: at least one regression proves the new flow detects or survives
+      stale legacy state / explicit deletion edge cases
+
+      - Evidence identifies the exact end-to-end path exercised and is independent
+      of the implementation agent'
+    depends_on:
+    - rewrite-dev-sync-template-merge
+    agent: integration-verifier
 - id: dx91-python-only
   name: DX-91 Python-Only Cleanup
   status: locked
