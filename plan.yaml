@@ -14583,3 +14583,28 @@ phases:
     depends_on:
     - audit-dx91-consistency
     agent: blind-tester
+  - id: freeze-release-candidate
+    name: freeze-release-candidate
+    status: pending
+    description: 'Freeze the DX-91 release candidate snapshot before the final publish/merge
+      recommendation is made.
+
+
+      Freeze requirements:
+
+      - Capture commit, clean working tree, and environment after the final consistency
+      audit and smoke evidence
+
+      - Record the exact commands and docs entrypoints used as final evidence
+
+      - No code or docs changes allowed between this freeze and the subsequent gate
+      review for the phase'
+    verification: '- Freeze evidence includes `git rev-parse HEAD`, clean `git status`,
+      and environment declaration
+
+      - Final audit and smoke entrypoints are listed explicitly
+
+      - Candidate is ready for final gate review'
+    depends_on:
+    - prove-final-init-install-smoke
+    agent: integration-verifier
