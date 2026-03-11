@@ -14098,6 +14098,32 @@ phases:
     depends_on:
     - rewrite-dev-sync-template-merge
     agent: integration-verifier
+  - id: freeze-init-runtime-snapshot
+    name: freeze-init-runtime-snapshot
+    status: pending
+    description: 'Freeze the rewritten init/dev-sync runtime snapshot before cleanup
+      phases consume it.
+
+
+      Freeze requirements:
+
+      - Capture commit, clean working tree, and environment used for the rewritten
+      runtime proof
+
+      - Lock the exact regression entrypoints and fixture set that later cleanup and
+      doc phases must honor
+
+      - No code changes allowed between this freeze and the subsequent gate review
+      for the phase'
+    verification: '- Freeze evidence includes `git rev-parse HEAD`, clean `git status`,
+      and environment declaration
+
+      - The protected regression entrypoints are named explicitly
+
+      - The runtime rewrite is ready for gate review'
+    depends_on:
+    - prove-init-dev-sync-flow
+    agent: integration-verifier
 - id: dx91-python-only
   name: DX-91 Python-Only Cleanup
   status: locked
