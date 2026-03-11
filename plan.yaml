@@ -14608,3 +14608,48 @@ phases:
     depends_on:
     - prove-final-init-install-smoke
     agent: integration-verifier
+  - id: gate
+    name: dx91-release-readiness.gate
+    status: pending
+    description: 'Gate review: determine whether the repository is genuinely ready
+      to recommend DX-91 as the active product direction.
+
+
+      review_depth: THOROUGH
+
+      review_depth_rationale:
+
+      - This is the final repo-level decision point after product-surface, migration,
+      cleanup, and docs changes
+
+      - A false OPEN here would ship contradictory guidance or incomplete cleanup
+
+
+      cross_cutting_focus:
+
+      - Runtime, docs, and proposal index must agree on the simplified Python-only
+      surface
+
+      - Final smoke evidence must demonstrate usability from real entrypoints
+
+      - Migration and destructive cleanup evidence must remain traceable to the committed
+      DX-91 semantics
+
+
+      As an INDEPENDENT REVIEWER (`gate-reviewer`), block progress if any repo-level
+      inconsistency, missing evidence, or residual retired surface remains.'
+    verification: '- All dx91-release-readiness steps completed successfully
+
+      - Evidence shows runtime/docs/proposals consistency and final real-path smoke
+      proof
+
+      - No unresolved blocker remains around retired surface leakage, migration drift,
+      or contradictory guidance
+
+      - Gate output states OPEN only if the repo is suitable for DX-91 merge/release
+      recommendation; otherwise it must recommend BLOCKED with the specific blocker'
+    depends_on:
+    - audit-dx91-consistency
+    - prove-final-init-install-smoke
+    - freeze-release-candidate
+    agent: gate-reviewer
