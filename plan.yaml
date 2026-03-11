@@ -13669,6 +13669,46 @@ phases:
     depends_on:
     - inventory-regression-surfaces
     agent: python-senior
+  - id: prove-destructive-regression-harness
+    name: prove-destructive-regression-harness
+    status: pending
+    description: 'As an INDEPENDENT TESTER (`integration-verifier`), prove the regression
+      harness is capable of catching both intended DX-91 behavior and destructive
+      regressions before runtime rewrite begins.
+
+
+      YOUR GOAL IS TO FIND PROBLEMS, not to confirm it works.
+
+
+      Test for:
+
+      - Happy path: legacy fixture upgrades cleanly to the simplified v2 layout
+
+      - Edge cases: repeated migration, mixed legacy/new file states, preserved user
+      regions
+
+      - Error scenarios: missing files, interrupted migration, stale generated sections
+
+
+      Integration Evidence
+
+      - Command or test exercising the full path must run from fixture input through
+      migration assertion
+
+      - Actual output must be captured, not summarized
+
+      - Path exercised must identify fixture root -> migration entrypoint -> asserted
+      repo state'
+    verification: '- Main path: at least one end-to-end fixture migration test passes
+
+      - Failure path: regression proof shows the harness fails when a preservation/deletion
+      rule is broken
+
+      - Evidence includes actual command output and identifies the exercised fixture
+      path'
+    depends_on:
+    - build-migration-fixtures
+    agent: integration-verifier
 - id: dx91-spec
   name: DX-91 Spec & Migration Semantics
   status: pending
