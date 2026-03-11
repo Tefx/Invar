@@ -13672,6 +13672,32 @@ phases:
     depends_on:
     - finalize-migration-semantics
     agent: doc-reviewer
+  - id: freeze-spec-snapshot
+    name: freeze-spec-snapshot
+    status: pending
+    description: 'Freeze the DX-91 spec baseline for downstream implementation and
+      verification.
+
+
+      Freeze requirements:
+
+      - Record the exact commit and working-tree state used as the spec baseline
+
+      - Confirm no additional proposal changes are folded into the implementation
+      window without an explicit replan
+
+      - Declare that no code changes are allowed between the freeze snapshot and the
+      subsequent phase gate review for this phase'
+    verification: '- Freeze evidence includes `git rev-parse HEAD`, clean `git status`,
+      and environment declaration
+
+      - Snapshot identifies the exact proposal sections that now act as the execution
+      baseline
+
+      - The phase is ready for an independent gate review'
+    depends_on:
+    - align-generated-doc-contracts
+    agent: integration-verifier
 - id: dx91-init-runtime
   name: DX-91 Init & Dev-Sync Runtime Rewrite
   status: pending
