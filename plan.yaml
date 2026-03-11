@@ -14124,6 +14124,54 @@ phases:
     depends_on:
     - prove-init-dev-sync-flow
     agent: integration-verifier
+  - id: gate
+    name: dx91-init-runtime.gate
+    status: pending
+    description: 'Gate review: determine whether the DX-91 init/dev-sync runtime rewrite
+      is safe, complete, and ready for destructive cleanup to begin.
+
+
+      review_depth: THOROUGH
+
+      review_depth_rationale:
+
+      - Phase changes persisted repo state, merge semantics, and command behavior
+
+      - Migration and deletion semantics are high-risk and cross-cutting
+
+      - This gate protects later TypeScript and asset removals from landing on an
+      unstable runtime base
+
+
+      cross_cutting_focus:
+
+      - Idempotent init/dev-sync behavior
+
+      - Preservation of user-owned regions
+
+      - Explicit delete semantics and stale-state precedence
+
+      - End-to-end proof for fresh and migrated repos
+
+
+      As an INDEPENDENT REVIEWER (`gate-reviewer`), block progress if the rewritten
+      runtime lacks convincing main-path and failure-path evidence.'
+    verification: '- All dx91-init-runtime steps completed successfully
+
+      - Evidence shows both fresh init and migrated repo flows are covered end to
+      end
+
+      - No unresolved blocker remains around preservation, stale-state precedence,
+      or explicit deletion behavior
+
+      - Gate output states OPEN only if destructive Python-only cleanup can proceed
+      safely'
+    depends_on:
+    - rewrite-init-entrypoints
+    - rewrite-dev-sync-template-merge
+    - prove-init-dev-sync-flow
+    - freeze-init-runtime-snapshot
+    agent: gate-reviewer
 - id: dx91-python-only
   name: DX-91 Python-Only Cleanup
   status: locked
