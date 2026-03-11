@@ -14283,6 +14283,31 @@ phases:
     depends_on:
     - remove-stale-agent-assets
     agent: blind-tester
+  - id: freeze-python-only-snapshot
+    name: freeze-python-only-snapshot
+    status: pending
+    description: 'Freeze the Python-only cleanup snapshot before docs and release-readiness
+      work consumes it.
+
+
+      Freeze requirements:
+
+      - Capture commit, clean working tree, and environment after cleanup and independent
+      verification
+
+      - Record the command/package surfaces that now define the Python-only baseline
+
+      - No code changes allowed between this freeze and the subsequent gate review
+      for the phase'
+    verification: '- Freeze evidence includes `git rev-parse HEAD`, clean `git status`,
+      and environment declaration
+
+      - Python-only baseline surfaces are named explicitly
+
+      - Cleanup state is ready for gate review'
+    depends_on:
+    - verify-python-only-surface
+    agent: integration-verifier
 - id: dx91-self-docs
   name: DX-91 Self-Docs Update
   status: locked
