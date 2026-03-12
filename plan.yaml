@@ -17594,7 +17594,7 @@ phases:
     agent: gate-reviewer
   - id: remove-typescript-active-surface-residue
     name: remove-typescript-active-surface-residue
-    status: pending
+    status: claimed
     description: 'Remove stale TypeScript references from active Python-only state
       and classify any remaining historical mentions with an explicit allowlist/denylist.
 
@@ -17703,6 +17703,8 @@ phases:
     depends_on:
     - remove-typescript-tooling
     agent: python-executor
+    claimed_by: python-executor
+    claimed_at: '2026-03-12T17:43:52.774138+00:00'
 - id: dx91-self-docs
   name: DX-91 Self-Docs Update
   status: locked
