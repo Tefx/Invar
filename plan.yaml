@@ -14194,6 +14194,76 @@ phases:
     depends_on:
     - dx91-spec.gate
     agent: software-architect
+  - id: dx91-spec.dx91-spec-gate-retest
+    name: dx91-spec.gate-retest
+    status: pending
+    description: 'As an INDEPENDENT REVIEWER (`gate-reviewer`), re-run gate review
+      after `dx91-spec.dx91-spec-fix-gate-blockers` and verify ALL blockers and should_fix
+      items from `dx91-spec.gate` are resolved.
+
+
+      Review scope:
+
+      - B1 managed-marker inside-marker semantics are canonical and contradiction-free
+      across all DX-91 baseline docs
+
+      - B2 freeze baseline records exact frozen commit hash and cleanliness proof
+      in the authoritative freeze document
+
+      - B3 source-of-truth boundaries are complete and authoritative for downstream
+      phases
+
+      - S1 delete-list semantics are normalized to one canonical list
+
+      - S2 optional-file preservation/backup semantics are explicit about if-present
+      and non-fatal behavior
+
+
+      This is a focused re-test of the blocked gate outcome. Keep the review independent,
+      adversarial, and specific. The goal is to confirm there is no remaining semantic
+      ambiguity that would force downstream phases to re-decide destructive behavior.'
+    verification: '- Re-run independent gate review against the updated DX-91 baseline
+      docs
+
+      - Confirm all blocker and should_fix items from `dx91-spec.gate` are either
+      resolved or explicitly called out with blocking evidence
+
+      - OPEN only if no contradictory marker semantics, unreproducible freeze-state
+      gap, or incomplete source-of-truth boundary remains'
+    evidence_template: '## Gate Retest Report
+
+
+      **Reviewer**: gate-reviewer
+
+      **Prior blocked step**: `dx91-spec.gate`
+
+      **Remediation step reviewed**: `dx91-spec.dx91-spec-fix-gate-blockers`
+
+
+      ### Resolution Check
+
+      - B1 managed-marker semantics:
+
+      - B2 freeze reproducibility:
+
+      - B3 source-of-truth boundaries:
+
+      - S1 canonical delete list:
+
+      - S2 optional-file preservation/backup semantics:
+
+
+      ### Independent verdict
+
+      - [ ] OPEN: all blockers cleared and should_fix items addressed adequately
+
+      - [ ] BLOCKED: list remaining blocker(s) with exact location(s) and grep-able
+      pattern(s)
+
+      '
+    depends_on:
+    - dx91-spec.dx91-spec-fix-gate-blockers
+    agent: gate-reviewer
 - id: dx91-init-runtime
   name: DX-91 Init & Dev-Sync Runtime Rewrite
   status: locked
