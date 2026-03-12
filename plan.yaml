@@ -13881,7 +13881,7 @@ phases:
       - No discovered out-of-scope issues reported by worker'
   - id: align-generated-doc-contracts
     name: align-generated-doc-contracts
-    status: pending
+    status: claimed
     description: 'Translate the finalized DX-91 semantics into an implementation-facing
       document contract for generated files and injected content.
 
@@ -13907,6 +13907,8 @@ phases:
     depends_on:
     - finalize-migration-semantics
     agent: doc-reviewer
+    claimed_by: doc-reviewer
+    claimed_at: '2026-03-12T05:40:25.985909+00:00'
   - id: freeze-spec-snapshot
     name: freeze-spec-snapshot
     status: pending
