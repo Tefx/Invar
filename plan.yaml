@@ -14755,7 +14755,7 @@ phases:
       \ maintained).\n- Retest remained tightly scoped to B1/S1 families."
   - id: dx91-spec.dx91-spec-fix-literal-marker-shorthand-family
     name: dx91-spec.fix-literal-marker-shorthand-family
-    status: pending
+    status: claimed
     description: 'Fix ALL remaining unresolved B1 shorthand marker references after
       `dx91-spec.dx91-spec-gate-retest-3`.
 
@@ -14819,6 +14819,8 @@ phases:
     depends_on:
     - dx91-spec.dx91-spec-gate-retest-3
     agent: doc-reviewer
+    claimed_by: doc-reviewer
+    claimed_at: '2026-03-12T11:14:50.370393+00:00'
   - id: dx91-spec.dx91-spec-gate-retest-4
     name: dx91-spec.gate-retest-4
     status: pending
