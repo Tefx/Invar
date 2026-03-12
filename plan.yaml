@@ -16568,6 +16568,93 @@ phases:
     depends_on:
     - dx91-init-runtime.gate
     agent: python-senior
+  - id: dx91-init-runtime.gate-retest
+    name: dx91-init-runtime.gate-retest
+    status: pending
+    description: 'As an INDEPENDENT REVIEWER (`gate-reviewer`), re-run gate review
+      after `dx91-init-runtime.fix-gate-blockers` and verify ALL blocker findings
+      from `dx91-init-runtime.gate` are resolved in one pass.
+
+
+      step_type: gate
+
+      agent_source: default
+
+      prior_loop:
+
+      - dx91-init-runtime.gate
+
+      remaining_blocker: preservation semantics proof and harness/spec alignment were
+      previously insufficient to prove backup+retain behavior end to end.
+
+      why_new_loop: This retest is required to verify the single batched remediation
+      closed the root blocker without creating a new semantic split between public
+      migration behavior and destructive harness behavior.
+
+
+      Review scope:
+
+      - Public init migration path now proves preservation semantics when both `.invar/context.md`
+      and `.invar/project-additions.md` already exist.
+
+      - `.invar/backup/v1-context.md` and `.invar/backup/v1-project-additions.md`
+      are asserted explicitly.
+
+      - Original preserved files remain byte-identical where the spec says retain.
+
+      - Stale asset deletion still occurs, but retained preserved files are not deleted.
+
+      - Rerun idempotency remains proven after the new migration-preservation assertions.
+
+      - Harness/spec alignment is explicit: either preservation checks run through
+      the public init migration path, or uninstall-only destructive checks are clearly
+      separated from migration-preservation proof.
+
+      - No ambiguity remains for downstream `dx91-python-only`.
+
+
+      This reassessment must verify ALL prior findings, not just the first blocker.
+
+
+      review_depth: THOROUGH
+
+      review_depth_rationale:
+
+      - Phase touches migration preservation, backup semantics, and destructive deletion
+      behavior
+
+      - Prior loop already existed in this phase, so this retest must check for residual
+      ambiguity rather than only green-path success
+
+      - Downstream `dx91-python-only` depends on this phase being semantically unambiguous
+      about what may be deleted versus retained
+
+
+      cross_cutting_focus:
+
+      - backup creation versus retained-original semantics
+
+      - stale asset deletion boundaries
+
+      - public migration path evidence versus harness-only assertions
+
+      - rerun idempotency after migration-preservation proof changes'
+    verification: '- Reassess the main path evidence and block unless the public init
+      migration path explicitly proves backup creation, retained-original byte identity,
+      stale asset deletion, and rerun idempotency together
+
+      - Reassess the highest-risk failure path and block unless harness/spec alignment
+      makes it impossible to confuse uninstall-only destructive checks with migration-preservation
+      proof
+
+      - Confirm sibling-search evidence exists for both blocker families (`PRESERVED_BACKUPS|_backup_preserved_files|backup/v1-`
+      and `Deleted \.invar/|collect_removal_targets|execute_removal`)
+
+      - Report OPEN only if downstream `dx91-python-only` can proceed without reinterpreting
+      preservation semantics'
+    depends_on:
+    - dx91-init-runtime.fix-gate-blockers
+    agent: gate-reviewer
 - id: dx91-python-only
   name: DX-91 Python-Only Cleanup
   status: locked
