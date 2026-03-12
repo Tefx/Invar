@@ -75,7 +75,7 @@ class PatternSuggestion:
     ...     priority=Priority.P0,
     ...     current_code="def process(user_id: str, order_id: str)",
     ...     suggested_pattern="NewType('UserId', str), NewType('OrderId', str)",
-    ...     reference_file=".invar/examples/functional.py",
+    ...     reference_file="INVAR.md",
     ...     reference_pattern="Pattern 1: NewType for Semantic Clarity",
     ... )
     >>> suggestion.severity
@@ -108,7 +108,7 @@ class PatternSuggestion:
         ...     priority=Priority.P0,
         ...     current_code="def f(a: str, b: str, c: str)",
         ...     suggested_pattern="NewType",
-        ...     reference_file=".invar/examples/functional.py",
+        ...     reference_file="INVAR.md",
         ...     reference_pattern="Pattern 1",
         ... )
         >>> "SUGGEST" in suggestion.format_for_guard()

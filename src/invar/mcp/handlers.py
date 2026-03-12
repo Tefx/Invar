@@ -202,8 +202,8 @@ async def _run_map(args: dict[str, Any]) -> list[TextContent] | CombinationConte
 async def _run_refs(args: dict[str, Any]) -> list[TextContent] | CombinationContent:
     """Run invar refs command.
 
-    DX-78: Find all references to a symbol.
-    Target format: "path/to/file.py::symbol" or "path/to/file.ts::symbol"
+    Find all references to a symbol.
+    Target format: "path/to/file.py::symbol" or "path/to/file.pyi::symbol"
     """
     target = args.get("target", "")
     if not target:

@@ -50,7 +50,8 @@ def run_pattern_detection(
 
         # Filter out test files and hidden directories
         python_files = [
-            f for f in python_files
+            f
+            for f in python_files
             if not any(part.startswith(".") for part in f.parts)
             and "test" not in f.name.lower()
             and "__pycache__" not in str(f)
@@ -101,7 +102,7 @@ def suggestion_to_violation(suggestion: PatternSuggestion) -> Violation:
     ...     priority=Priority.P0,
     ...     current_code="def f(a, b, c): pass",
     ...     suggested_pattern="NewType",
-    ...     reference_file=".invar/examples/functional.py",
+    ...     reference_file="INVAR.md",
     ...     reference_pattern="Pattern 1",
     ... )
     >>> violation = suggestion_to_violation(suggestion)
@@ -211,9 +212,7 @@ def filter_suggestions(
 
     # Parse allowed priorities (only P0 and P1 exist, skip invalid values)
     priority_map = {"P0": Priority.P0, "P1": Priority.P1}
-    allowed_priorities = {
-        priority_map[p] for p in config.pattern_priorities if p in priority_map
-    }
+    allowed_priorities = {priority_map[p] for p in config.pattern_priorities if p in priority_map}
 
     # Parse excluded patterns
     excluded_patterns = set(config.pattern_exclude)

@@ -75,7 +75,7 @@
 
 | File | Owner | Edit? |
 |------|-------|-------|
-| INVAR.md | Invar | No — use `invar update` |
+| INVAR.md | Invar | No — use `invar init` |
 | CLAUDE.md | User | Yes |
 | .invar/context.md | User | Yes (this file) |
 | .invar/context.md | User | Yes (this file) |

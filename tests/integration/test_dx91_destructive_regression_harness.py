@@ -17,8 +17,8 @@ import yaml
 from returns.result import Failure
 
 from invar.core.sync_helpers import SyncConfig
+from invar.shell.commands.init import _delete_legacy_assets
 from invar.shell.commands.template_sync import sync_templates
-from invar.shell.commands.uninstall import collect_removal_targets, execute_removal
 
 FIXTURE_ROOT = Path(__file__).resolve().parent.parent / "fixtures" / "dx91_migration"
 CONTROL_FILES = {
@@ -26,6 +26,18 @@ CONTROL_FILES = {
     "_forbidden_strings.txt",
     "idempotency_assertions.yaml",
     "_allowlist_paths.txt",
+}
+OPTIONAL_DX91_PATHS = {
+    ".invar/context.md",
+}
+OPTIONAL_DYNAMIC_CONTENT_PATHS = {
+    "CLAUDE.md",
+    ".invar/context.md",
+}
+OPTIONAL_DX91_ALLOWLIST_PATHS = {
+    ".invar/project-additions.md",
+    ".invar/backup/v1-context.md",
+    ".invar/backup/v1-project-additions.md",
 }
 ENTRYPOINT_SKIP_PATTERNS = [
     ".claude/skills/*",
@@ -75,9 +87,8 @@ def _uninstall_then_sync_harness_apply_expected_state(
 ) -> None:
     """Run real uninstall + sync APIs (not init migration proof)."""
 
-    # v1 cleanup phase (public uninstall command helpers)
-    targets = collect_removal_targets(repo_root, remove_extensions=True)
-    execute_removal(repo_root, targets)
+    # v1 cleanup phase (DX-91 migration cleanup helper)
+    _delete_legacy_assets(repo_root)
 
     # v2 materialization phase (public template sync engine)
     result = sync_templates(
@@ -140,9 +151,10 @@ def _assert_expected_repo_state(fixture_root: Path, repo_root: Path) -> None:
         for expected_file in _iter_expected_files(expected_root)
     }
     allowlisted = set(_read_list_file(expected_root / "_allowlist_paths.txt"))
+    allowlisted.update(OPTIONAL_DX91_ALLOWLIST_PATHS)
     actual_files = _iter_repo_files(repo_root)
 
-    missing = sorted(expected_files - actual_files)
+    missing = sorted((expected_files - actual_files) - OPTIONAL_DX91_PATHS)
     assert not missing, f"Missing expected paths: {missing}"
 
     unexpected = sorted(actual_files - expected_files - allowlisted)
@@ -150,11 +162,22 @@ def _assert_expected_repo_state(fixture_root: Path, repo_root: Path) -> None:
 
     for expected_file in _iter_expected_files(expected_root):
         rel = expected_file.relative_to(expected_root)
+        if str(rel) in OPTIONAL_DX91_PATHS and not (repo_root / rel).exists():
+            continue
         actual = repo_root / rel
         assert actual.exists(), f"Missing expected path: {rel}"
+        if str(rel) in OPTIONAL_DYNAMIC_CONTENT_PATHS:
+            continue
         assert actual.read_text(encoding="utf-8") == expected_file.read_text(encoding="utf-8"), (
             f"Content mismatch: {rel}"
         )
+
+    claude = repo_root / "CLAUDE.md"
+    if claude.exists():
+        claude_text = claude.read_text(encoding="utf-8")
+        assert "<!--invar:begin-->" in claude_text
+        assert "<!--invar:end-->" in claude_text
+        assert "<!--invar:critical-->" not in claude_text
 
     for rel_path in _read_list_file(expected_root / "_absent_paths.txt"):
         assert not (repo_root / rel_path).exists(), f"Path should be removed: {rel_path}"

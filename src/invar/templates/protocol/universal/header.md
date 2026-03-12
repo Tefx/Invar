@@ -1,9 +1,9 @@
 <!--
   ┌─────────────────────────────────────────────────────────────┐
-  │ INVAR-MANAGED FILE - DO NOT EDIT DIRECTLY                   │
+  │ INVAR PROTOCOL FILE - DO NOT EDIT DIRECTLY                  │
   │                                                             │
-  │ This file is managed by Invar. Changes may be lost on       │
-  │ `invar update`. Add project content to CLAUDE.md instead.   │
+  │ This file is managed by Invar. Rerun `invar init` to        │
+  │ refresh managed content. Add project content to CLAUDE.md.  │
   └─────────────────────────────────────────────────────────────┘
 
   License: CC-BY-4.0 (Creative Commons Attribution 4.0 International)

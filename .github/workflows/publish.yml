@@ -47,24 +47,6 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "18"
-
-      - name: Install eslint-plugin dependencies (standalone)
-        run: |
-          # Use npm in clean directory to get full, non-symlinked installation
-          # (pnpm workspace creates symlinks that break when copied to site-packages)
-          mkdir -p /tmp/eslint-standalone
-          cp typescript/packages/eslint-plugin/package.json /tmp/eslint-standalone/
-          cd /tmp/eslint-standalone
-          npm install --production
-
-      - name: Copy node_modules to embedded location
-        run: |
-          cp -r /tmp/eslint-standalone/node_modules src/invar/node_tools/eslint-plugin/
-
       - name: Install build tools
         run: pip install build
 
@@ -76,4 +58,3 @@ jobs:
         with:
           skip-existing: true
         # Uses trusted publishing - configure at pypi.org/manage/project/invar-tools/settings/publishing/
-

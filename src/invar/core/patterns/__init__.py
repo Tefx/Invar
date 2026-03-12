@@ -23,7 +23,7 @@ Usage:
     >>> result.has_suggestions
     True
 
-See .invar/examples/functional.py for pattern examples.
+See INVAR.md for pattern examples.
 """
 
 from invar.core.patterns.registry import (

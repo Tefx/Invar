@@ -209,26 +209,19 @@ class BaseDetector:
         return cases
 
     @pre(
-        lambda self,
-        pattern_id,
-        priority,
-        file_path,
-        line,
-        message,
-        current_code,
-        suggested_pattern,
-        confidence,
-        reference_pattern: pattern_id in PatternID
-        and priority in Priority
-        and confidence in Confidence
-        and line > 0
-        and len(file_path) > 0
-        and len(message) > 0
-        and len(current_code) > 0
-        and len(suggested_pattern) > 0
-        and len(reference_pattern) > 0
+        lambda self, pattern_id, priority, file_path, line, message, current_code, suggested_pattern, confidence, reference_pattern: (
+            pattern_id in PatternID
+            and priority in Priority
+            and confidence in Confidence
+            and line > 0
+            and len(file_path) > 0
+            and len(message) > 0
+            and len(current_code) > 0
+            and len(suggested_pattern) > 0
+            and len(reference_pattern) > 0
+        )
     )
-    @post(lambda result: result.reference_file == ".invar/examples/functional.py")
+    @post(lambda result: result.reference_file == "INVAR.md")
     def make_suggestion(
         self,
         pattern_id: PatternID,
@@ -258,7 +251,7 @@ class BaseDetector:
         ...     reference_pattern="Pattern 1: NewType",
         ... )
         >>> suggestion.reference_file
-        '.invar/examples/functional.py'
+        'INVAR.md'
         """
         return PatternSuggestion(
             pattern_id=pattern_id,
@@ -268,6 +261,6 @@ class BaseDetector:
             priority=priority,
             current_code=current_code,
             suggested_pattern=suggested_pattern,
-            reference_file=".invar/examples/functional.py",
+            reference_file="INVAR.md",
             reference_pattern=reference_pattern,
         )

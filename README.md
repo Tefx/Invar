@@ -103,14 +103,14 @@ Guard passed.
 ```bash
 cd your-project
 
-# Interactive mode - choose what to install
+# Initialize DX-91 managed files
 uvx invar-tools init
 
-# Or quick setup (skip prompts)
-uvx invar-tools init --claude    # Claude Code only
-uvx invar-tools init --pi        # Pi only
-uvx invar-tools init --claude --pi  # Both agents (DX-81)
-uvx invar-tools init --mcp-only  # MCP tools only (legacy projects)
+# Optional: target a different instruction file
+uvx invar-tools init --file AGENTS.md
+
+# Optional: preview migration/write plan without changes
+uvx invar-tools init --preview
 
 # Add runtime contracts to your project
 pip install invar-runtime
@@ -344,7 +344,7 @@ AlphaCodium · Parsel · Reflexion · Clover
 
 | Agent | Status | Setup |
 |-------|--------|-------|
-| **Claude Code** | ✅ Full | `invar init --claude` |
+| **Claude Code** | ✅ Full | `invar init` |
 | **[Pi](https://shittycodingagent.ai/)** | ✅ MCP | `invar init` → select Other, add MCP config |
 | **Cursor** | ✅ MCP | `invar init` → select Other, add MCP config |
 | **Other** | 📝 Manual | `invar init` → select Other, include `AGENT.md` in prompt |
@@ -459,10 +459,10 @@ These customizations are preserved when updating skills via `invar skill add`.
 For projects that want Invar's MCP tools **without adopting the framework**:
 
 ```bash
-uvx invar-tools init --mcp-only
+uvx invar-tools init
 ```
 
-This creates only `.mcp.json` — no INVAR.md, CLAUDE.md, or Core/Shell structure. Your AI agent gets access to:
+This writes DX-91 managed files (`CLAUDE.md`, `INVAR.md`, `.pre-commit-config.yaml`) and migrates legacy assets when detected. Your AI agent gets access to:
 - **Document tools** (`invar_doc_toc`, `invar_doc_read`, etc.)
 - **Code navigation** (`invar_sig`, `invar_map`)
 - **Basic verification** (`invar_guard` with minimal rules)
@@ -630,11 +630,9 @@ rules = ["missing_contract", "shell_result"]
 | `invar guard --static` | Static analysis only (~0.5s) |
 | `invar guard --coverage` | Collect branch coverage from tests |
 | `invar init` | Initialize or update project (interactive) |
-| `invar init --claude` | Quick setup for Claude Code |
-| `invar init --pi` | Quick setup for Pi agent |
-| `invar init --claude --pi` | Setup for both agents (DX-81) |
-| `invar init --mcp-only` | MCP tools only (no framework files) |
-| `invar uninstall` | Remove Invar from project (preserves user content) |
+| `invar init` | Initialize or migrate DX-91 managed files |
+| `invar init --file AGENTS.md` | Write managed block to a non-default target file |
+| `invar init --preview` | Show migration/create plan without writing |
 | `invar sig <file>` | Show signatures and contracts |
 | `invar map` | Symbol map with reference counts |
 | `invar doc toc <file>` | View document structure (headings) |

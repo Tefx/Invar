@@ -75,7 +75,7 @@ src/{project}/
 
 | File | Owner | Edit? | Purpose |
 |------|-------|-------|---------|
-| INVAR.md | Invar | No | Protocol (`invar update` to sync) |
+| INVAR.md | Invar | No | Protocol (`invar init` to refresh managed content) |
 | CLAUDE.md | User | Yes | Project customization (this file) |
 | .invar/context.md | User | Yes | Project state, lessons learned |
 | .invar/context.md | User | Yes | Check-in context and local operating notes |
@@ -154,7 +154,7 @@ The Skill tool resolves the requested workflow from the host skill catalog, whic
 <!-- ========================================================================
      USER REGION - EDITABLE
      Add your team conventions and project-specific rules below.
-     This section is preserved across `invar update` and `invar dev sync`.
+     This section is preserved across `invar init` and `invar dev sync`.
      ======================================================================== -->
 <!--/invar:user-->
 

@@ -170,7 +170,6 @@ class TestAddSkill:
         assert (skill_dir / "SKILL.md").exists()
         assert (skill_dir / "patterns" / "_common.yaml").exists()
         assert (skill_dir / "patterns" / "python.yaml").exists()
-        assert (skill_dir / "patterns" / "typescript.yaml").exists()
 
     def test_add_pending_skill_blocked(self, test_project: Path, mock_console):
         """Adding a pending_discussion skill is blocked."""

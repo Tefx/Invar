@@ -150,33 +150,6 @@ def create_directories(path: Path, console) -> None:
         console.print("[green]Created[/green] src/shell/")
 
 
-# @shell_complexity: Directory copy with file filtering
-# @invar:allow dead_export: Typer CLI command registered at runtime via app.command()
-def copy_examples_directory(dest: Path, console) -> Result[bool, str]:
-    """Copy examples directory to .invar/examples/. Returns Success(True) if copied."""
-    import shutil
-
-    examples_dest = dest / ".invar" / "examples"
-    if examples_dest.exists():
-        return Success(False)
-
-    try:
-        examples_src = Path(str(resources.files("invar.templates").joinpath("examples")))
-        if not examples_src.exists():
-            return Failure("Examples template directory not found")
-
-        # Create .invar if needed
-        invar_dir = dest / ".invar"
-        if not invar_dir.exists():
-            invar_dir.mkdir()
-
-        shutil.copytree(examples_src, examples_dest)
-        console.print("[green]Created[/green] .invar/examples/ (reference examples)")
-        return Success(True)
-    except OSError as e:
-        return Failure(f"Failed to copy examples: {e}")
-
-
 # @shell_complexity: Directory copy for Claude commands (DX-32)
 # @invar:allow dead_export: Typer CLI command registered at runtime via app.command()
 def copy_commands_directory(dest: Path, console) -> Result[bool, str]:
