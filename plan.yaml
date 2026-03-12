@@ -17671,7 +17671,7 @@ phases:
 
       - Cleanup state is ready for gate review'
     depends_on:
-    - verify-python-only-surface
+    - dx91-python-only.verify-python-only-surface-retest-all-blockers
     agent: integration-verifier
   - id: dx91-python-only.gate
     name: dx91-python-only.gate
