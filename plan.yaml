@@ -13585,13 +13585,13 @@ phases:
       \ retest.\n\nSpec link:\n- phase: release-readiness\n- step: release-readiness.smoke-install-artifacts-retest-provenance-uv-fallback"
 - id: dx91-harness
   name: DX-91 Regression Harness
-  status: pending
+  status: in_progress
   depends_on:
   - dx91-spec
   steps:
   - id: inventory-regression-surfaces
     name: inventory-regression-surfaces
-    status: pending
+    status: claimed
     description: 'Inventory every behavior surface that DX-91 can break before destructive
       changes begin.
 
@@ -13622,6 +13622,8 @@ phases:
 
       - The later harness steps have a clear scope boundary'
     agent: python-executor
+    claimed_by: python-executor
+    claimed_at: '2026-03-12T12:34:03.533589+00:00'
   - id: build-migration-fixtures
     name: build-migration-fixtures
     status: pending
