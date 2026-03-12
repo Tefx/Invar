@@ -14626,49 +14626,6 @@ phases:
     depends_on:
     - verify-self-docs-surface
     agent: integration-verifier
-  - id: gate
-    name: dx91-self-docs.gate
-    status: pending
-    description: 'Gate review: verify the repository''s active docs now match the
-      real DX-91 product surface.
-
-
-      review_depth: STANDARD
-
-      review_depth_rationale:
-
-      - This phase is documentation-heavy but still cross-cutting because it defines
-      the active guidance surface
-
-      - Prior phases changed core product scope and removed significant legacy behavior
-
-
-      cross_cutting_focus:
-
-      - Active guidance must match the simplified Python-only implementation
-
-      - Historical material must remain clearly historical, not active instruction
-
-      - Proposal index and top-level navigation must send readers to the right places
-
-
-      As an INDEPENDENT REVIEWER (`gate-reviewer`), block progress if active docs
-      remain contradictory, stale, or navigationally broken.'
-    verification: '- All dx91-self-docs steps completed successfully
-
-      - Active guidance is coherent with the implemented DX-91 surface
-
-      - No unresolved blocker remains around stale active instructions or broken navigational
-      cross-links
-
-      - Gate output states OPEN only if final release-readiness audit can evaluate
-      a consistent repo surface'
-    depends_on:
-    - update-runtime-owned-docs
-    - update-proposals-index-and-crosslinks
-    - verify-self-docs-surface
-    - freeze-self-docs-snapshot
-    agent: gate-reviewer
   - id: dx91-self-docs.gate
     name: dx91-self-docs.gate
     status: pending
