@@ -13960,7 +13960,7 @@ phases:
       - Subagent reported no discovered out-of-scope issues'
   - id: freeze-spec-snapshot
     name: freeze-spec-snapshot
-    status: pending
+    status: claimed
     description: 'Freeze the DX-91 spec baseline for downstream implementation and
       verification.
 
@@ -13984,6 +13984,8 @@ phases:
     depends_on:
     - align-generated-doc-contracts
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-12T05:45:09.540351+00:00'
   - id: gate
     name: dx91-spec.gate
     status: pending
