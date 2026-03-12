@@ -16749,7 +16749,7 @@ phases:
       \ pass"
   - id: dx91-init-runtime.dx91-init-runtime-fix-tooling-parity-blockers
     name: dx91-init-runtime.fix-tooling-parity-blockers
-    status: claimed
+    status: done
     description: 'Fix ALL tooling-parity blockers surfaced by `dx91-init-runtime.gate-retest`
       in one batched pass, not just the first.
 
@@ -16996,6 +16996,44 @@ phases:
     - dx91-init-runtime.gate-retest
     claimed_by: python-senior
     claimed_at: '2026-03-12T16:11:51.789149+00:00'
+    done_at: '2026-03-12T16:28:31.580454+00:00'
+    evidence: "## Tooling Parity Evidence\n\n**Worktree context**: /Users/tefx/Projects/Invar/.vectl/worktrees/dx91-init-runtime.dx91-init-runtime-fix-tooling-parity-blockers\n\
+      **Reported run ids**: `grd_2745adf8a26c4d66a4dcc3af`, `grd_64908727f489427dbecf2f02`\n\
+      \n**Full-scan commands executed**:\n```text\ninvar_invar_guard(path=\"/Users/tefx/Projects/Invar/.vectl/worktrees/dx91-init-runtime.dx91-init-runtime-fix-tooling-parity-blockers\"\
+      , changed=false)\ninvar_invar_guard_status(run_id=\"grd_39624b3960324b3fad5b7c11\"\
+      )\nuvx invar-tools guard --all\n```\n\n**Actual outputs**:\n```text\nMCP full-scan\
+      \ (deferred): status=deferred, run_id=grd_39624b3960324b3fad5b7c11\nMCP full-scan\
+      \ terminal: status=complete, report={ok:true, errors:0, warnings:50, infos:2,\
+      \ files_checked:117}\nCLI full-scan: status=passed, files_checked=117, errors=0,\
+      \ warnings=50, infos=2, exit=0\n```\n\n**Parity verdict**: matched\n**Accepted\
+      \ gate path**: `uvx invar-tools guard --all` is explicitly encoded as authoritative\
+      \ for DX-91 full-scan parity; MCP now classifies wrapper instability separately\
+      \ from semantic failure.\n**B1/B2 semantic status**: unchanged\n\n**Path exercised**:\
+      \ `src/invar/mcp/handlers.py` -> `src/invar/mcp/guard_runs.py` -> guard subprocess\
+      \ path -> worktree full-scan result, compared against `src/invar/shell/commands/guard.py`\
+      \ CLI route\n\n**Failure path bounded**:\n```text\nuv run python -c \"import\
+      \ asyncio; from invar.mcp import handlers; result = asyncio.run(handlers._execute_command(['/usr/bin/false'],\
+      \ full_scan_contract=True, target_path='.', changed=False)); print(result[0].text)\"\
+      \n=> status=failed, error_kind=wrapper_instability, classification=tooling_parity_wrapper_instability,\n\
+      \   subprocess_exit_code=1, accepted_verification_path.command=\"uvx invar-tools\
+      \ guard --all\"\n```\n\n**Sibling search**:\n- grep family 1 (`_run_guard\\\
+      (|GuardRunRegistry|_run_guard_command|changed=False|changed=false|sync_budget_ms|run_id|subprocess\
+      \ exit code`) searched repo-wide; 196 matches reviewed, in-scope MCP/test siblings\
+      \ updated.\n- grep family 2 (`gate-retest|accepted verification path|parity|wrapper|uvx\
+      \ invar-tools guard --all|invar_invar_guard\\(`) searched repo-wide; 496 matches\
+      \ reviewed, in-scope contract surfaces updated.\n\n**Commit hash(es)**:\n- Worktree\
+      \ commits: `862f3d9`, `6e9040f`\n- Main squash merge commit: `3e89eca`\n\n**Files\
+      \ changed**:\n- `src/invar/mcp/guard_runs.py`\n- `src/invar/mcp/handlers.py`\n\
+      - `src/invar/mcp/server.py`\n- `tests/integration/test_mcp_full_guard_regressions.py`\n\
+      - `tests/integration/test_mcp_guard_deferred.py`\n\n**Verification**:\n- `invar_invar_guard(path=\"\
+      .../dx91-init-runtime.dx91-init-runtime-fix-tooling-parity-blockers\", changed=true)`\
+      \ -> passed, errors=0, warnings=0\n- Pre-commit hooks during merge commit: Ruff\
+      \ PASS, mypy PASS, Invar Guard PASS\n\n**Spec link(s)**:\n- `plan.yaml:16750-16956`\n\
+      - `src/invar/mcp/handlers.py:71`\n- `src/invar/mcp/guard_runs.py:24`\n- `src/invar/mcp/server.py:111`\n\
+      - `tests/integration/test_mcp_full_guard_regressions.py:253`\n- `tests/integration/test_mcp_guard_deferred.py:202`\n\
+      \n**Gaps/Notes**:\n- Existing repository-level full-scan warnings remain at\
+      \ baseline; out of scope for this parity step.\n- No plan/orchestrator state\
+      \ files were modified by worker.\n"
   - id: dx91-init-runtime.dx91-init-runtime-gate-retest-tooling-parity
     name: dx91-init-runtime.gate-retest-tooling-parity
     status: pending
