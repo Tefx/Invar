@@ -13917,7 +13917,7 @@ phases:
       \ runtime migration code."
   - id: freeze-harness-snapshot
     name: freeze-harness-snapshot
-    status: pending
+    status: claimed
     description: 'Freeze the regression harness snapshot that later destructive implementation
       phases must verify against.
 
@@ -13939,6 +13939,8 @@ phases:
     depends_on:
     - prove-destructive-regression-harness
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-12T13:19:18.900231+00:00'
   - id: dx91-harness.gate
     name: dx91-harness.gate
     status: pending
