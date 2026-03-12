@@ -14558,7 +14558,7 @@ phases:
       \ regression check."
   - id: dx91-spec.dx91-spec-fix-final-unresolved-spec-issues
     name: dx91-spec.fix-final-unresolved-spec-issues
-    status: claimed
+    status: done
     description: 'Fix ALL remaining issues, not just the first, from `dx91-spec.dx91-spec-gate-retest-2`
       while keeping scope tightly focused and explicitly not reopening resolved B2.
 
@@ -14638,6 +14638,68 @@ phases:
     agent: doc-reviewer
     claimed_by: doc-reviewer
     claimed_at: '2026-03-12T11:00:37.212739+00:00'
+    done_at: '2026-03-12T11:09:37.545954+00:00'
+    evidence: 'Artifact:
+
+      - PR: 016cd99dbc317abc25dc329c1560faba1ad21736
+
+
+      Verification:
+
+      - Run: targeted doc checks for unresolved B1/S1 families after commit 016cd99
+      -> marker mapping language normalized toward deterministic replacement semantics
+      and canonical delete-list section converted to path-focused entries.
+
+      - Run: `git merge --squash vectl/step-dx91-spec.dx91-spec-fix-final-unresolved-spec-issues`
+      -> already up to date (changes already present on main).
+
+
+      Spec link:
+
+      - docs/proposals/DX-91-generated-file-contracts.md §2.1, §4.2
+
+      - docs/proposals/DX-91-migration-semantics.md §2.2
+
+
+      Commit hash(es):
+
+      - 016cd99dbc317abc25dc329c1560faba1ad21736
+
+
+      Files changed:
+
+      - docs/proposals/DX-91-generated-file-contracts.md
+
+      - docs/proposals/DX-91-migration-semantics.md
+
+
+      Main-path proof:
+
+      - B1: v1->v2 mapping table wording adjusted to deterministic replacement phrasing
+      and literal marker pair notation.
+
+      - S1: canonical delete-list section now contains explicit path-style entries;
+      non-path explanatory items separated from canonical path list.
+
+      - B2 untouched: no edits were made to freeze baseline file in this step.
+
+
+      Failure-path proof:
+
+      - Focus remained on unresolved B1/S1 only; resolved B2 was not reopened.
+
+
+      Gaps/Notes:
+
+      - Execution anomaly observed: worker commit landed directly on main before squash
+      merge; no plan/state files were modified.
+
+      - Cleanup performed for unused isolated branch/worktree after completion.
+
+
+      discovered_issues:
+
+      - none'
   - id: dx91-spec.dx91-spec-gate-retest-3
     name: dx91-spec.gate-retest-3
     status: pending
