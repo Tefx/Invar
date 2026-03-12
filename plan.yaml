@@ -18328,7 +18328,8 @@ phases:
     status: pending
     description: 'As an INDEPENDENT TESTER (`blind-tester`), re-run the full Python-only
       surface validation after the batched remediation step and verify that ALL blocker
-      families from `verify-python-only-surface` are resolved.
+      families from `verify-python-only-surface` are resolved within the clarified
+      active-surface boundary.
 
 
       step_type: verification
@@ -18350,13 +18351,19 @@ phases:
 
       - `CLAUDE.md`
 
-      - `INVAR.md`
+      - `pyproject.toml`
 
       - `src/invar/core/`
 
       - `src/invar/shell/`
 
       - `src/invar/templates/`
+
+      - `.claude/`
+
+      - `.invar/`
+
+      - `INVAR.md`
 
       - verification contract text in `plan.yaml`
 
@@ -18373,30 +18380,39 @@ phases:
 
       Retest scope:
 
-      - B1 command-drift fixes are reproducible and deterministic in the current CLI
+      - B1 command-drift fixes are reproducible and deterministic in the current CLI.
 
-      - B2 active-surface TypeScript residue is gone or explicitly reclassified per
-      policy
+      - B2 active mutable-surface TypeScript residue is gone or explicitly downgraded
+      to non-blocking classification-only residue.
 
-      - B3 agent-era residue scan leaves only explicit allowlist/historical matches
+      - B3 agent-era broad scan leaves no active blocker matches in active mutable
+      surfaces.
+
+      - `INVAR.md`, archive/history paths, and compatibility/template-reference paths
+      are NOT blockers by themselves; they must instead be checked for correct classification
+      and for absence of accidental active runtime guidance creep.
 
 
-      Document any remaining blocker, should-fix, or allowlist drift. A retest that
-      finds issues is a SUCCESS because it prevents bad freeze/gate evidence.'
+      Document any remaining blocker, should-fix, or classification drift. A retest
+      that finds issues is a SUCCESS because it prevents bad freeze/gate evidence.'
     verification: '- Independently execute the corrected `invar init` preview proof
       path, corrected `invar dev sync` dry-run proof path, corrected inventory command
       using `python3`, and `invar guard`; paste concrete output
 
-      - Re-run the TypeScript active-surface residue scan and classify every remaining
-      match as blocker or allowed historical residue
+      - Re-run the TypeScript active-surface residue scan across `README.md`, `CLAUDE.md`,
+      `pyproject.toml`, `src/invar`, active `.claude`, and active `.invar`; classify
+      every remaining match as blocker or non-blocking residue
 
-      - Re-run the agent-era broad scan and classify every remaining match as blocker
-      or allowed historical residue with explicit allowlist reference
+      - Re-run the agent-era broad scan and confirm: blocker findings are limited
+      to active mutable surfaces; `INVAR.md`, `.invar/archive/**`, backups, and compatibility/template-reference
+      surfaces are reviewed as classification-only unless they newly present active
+      runtime guidance
 
-      - Confirm sibling-search coverage for all three blocker families
+      - Evidence must include a residual classification table with buckets: `active-blocker`,
+      `canonical-protected`, `historical/archive`, `compatibility/template-reference`
 
-      - Evidence must show whether freeze can proceed without command drift, active-surface
-      TypeScript residue, or non-allowlisted agent-era residue'
+      - Confirm sibling-search coverage for all three blocker families and state whether
+      freeze can proceed under the clarified boundary'
     depends_on:
     - dx91-python-only.verify-python-only-surface-fix-all-blockers
     agent: blind-tester
