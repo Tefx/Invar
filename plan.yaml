@@ -17227,13 +17227,13 @@ phases:
       \ (not parity contradiction)\n- tech_debt: none\n"
 - id: dx91-python-only
   name: DX-91 Python-Only Cleanup
-  status: pending
+  status: in_progress
   depends_on:
   - dx91-init-runtime
   steps:
   - id: remove-typescript-tooling
     name: remove-typescript-tooling
-    status: pending
+    status: claimed
     description: 'Remove runtime and packaging TypeScript tooling from the active
       product surface once the DX-91 Python-only replacement path is already proven.
 
@@ -17345,6 +17345,8 @@ phases:
       - Proof includes an explicit sibling search statement covering runtime, MCP,
       packaging, and active README/package surfaces rather than only touched files'
     agent: python-senior
+    claimed_by: python-senior
+    claimed_at: '2026-03-12T16:45:19.504413+00:00'
   - id: remove-stale-agent-assets
     name: remove-stale-agent-assets
     status: pending
