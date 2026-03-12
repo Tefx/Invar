@@ -14017,7 +14017,7 @@ phases:
       - none'
   - id: dx91-harness.gate
     name: dx91-harness.gate
-    status: claimed
+    status: done
     description: 'Gate review: verify the DX-91 regression harness is strong enough
       to guard destructive simplification work.
 
@@ -14063,6 +14063,32 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-12T13:23:44.440756+00:00'
+    done_at: '2026-03-12T13:40:16.153231+00:00'
+    evidence: "Artifact:\n- PR: none (verify-only gate)\n- Gate review task: ses_31dc7d0d5ffewu59veb857VFwa\n\
+      \nVerification:\n- Run: `invar_guard(path=\".vectl/worktrees/dx91-harness.gate\"\
+      , changed=false)` -> ok=true, errors=0, warnings=42, review_suggested=true\n\
+      - Run: `uv run pytest -v tests/integration/test_dx91_destructive_regression_harness.py`\
+      \ -> 7 passed\n- Run: `DX91_EXPECT_FAILURE=1 uv run pytest -v tests/integration/test_dx91_destructive_regression_harness.py::test_failure_path_harness_detects_broken_preservation_deletion_rule`\
+      \ -> expected FAIL with assertion for removed path\n- Run: `uv run invar guard\
+      \ --all` -> passed (0 errors, warnings present)\n- Run: cross-cutting grep scans\
+      \ over fixtures/spec links -> found link drift and scope mismatch findings\n\
+      - Run: planner remediation task `ses_31dbb9bc9ffeSm6VzVn8mC6ZSl` -> created\
+      \ batched fix + retest steps\n\nSpec link:\n- docs/proposals/DX-91-migration-semantics.md\n\
+      - docs/proposals/DX-91-freeze-spec-baseline.md\n- DX-91-REGRESSION-SURFACES.md\n\
+      - artifacts/freeze-harness-baseline.md\n- tests/fixtures/dx91_migration/*/EXPECTATION.md\n\
+      \nFindings:\n- blockers:\n  - B1: harness does not execute real migration entrypoint;\
+      \ uses harness-local write-through path (tautological)\n  - B2: assertions do\
+      \ not fail on unexpected extra files/leakage\n- should_fix:\n  - S1: fixture\
+      \ spec links reference nonexistent sections/anchors\n  - S2: fixture inventory\
+      \ includes unexercised fixture\n  - S3: idempotency_assertions.yaml not consumed\
+      \ by harness assertions\n\nActions taken (batched protocol):\n- Created fix\
+      \ step: dx91-harness.fix-gate-blockers (depends_on: dx91-harness.gate)\n- Created\
+      \ retest step: dx91-harness.retest-gate-blockers (depends_on: dx91-harness.fix-gate-blockers)\n\
+      \nGate Decision:\n- verdict: BLOCKED\n- rationale: harness adequacy blockers\
+      \ prevent safe dx91-init-runtime progression until remediated\n\nFiles changed:\n\
+      - none (verify-only)\n\nGaps/Notes:\n- Worker reported uv.lock transient mutation\
+      \ in isolated worktree and restored it; no state files modified.\n- Gate blocked\
+      \ on harness design adequacy, not test pass/fail alone."
   - id: dx91-harness.fix-gate-blockers
     name: Fix DX-91 harness gate blockers
     status: pending
