@@ -17752,7 +17752,7 @@ phases:
       \ handed to the new serialized follow-up step.\n"
   - id: dx91-python-only.remove-typescript-template-family-residue
     name: remove-typescript-template-family-residue
-    status: pending
+    status: claimed
     description: 'Remove or explicitly reclassify remaining TypeScript references
       in non-denylist template families so the phase-level broad scan over `src/invar/templates`
       becomes deterministic.
@@ -17854,6 +17854,8 @@ phases:
     depends_on:
     - remove-typescript-active-surface-residue
     agent: python-executor
+    claimed_by: python-senior
+    claimed_at: '2026-03-12T18:29:13.540021+00:00'
 - id: dx91-self-docs
   name: DX-91 Self-Docs Update
   status: locked
