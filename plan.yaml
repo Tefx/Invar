@@ -18233,15 +18233,16 @@ phases:
     description: "Fix ALL blockers found by `verify-python-only-surface` in ONE batched\
       \ remediation step. Do not fix just the first blocker.\n\nstep_type: implementation\n\
       agent: python-senior\nprior_loop:\n- verify-python-only-surface\nremaining_blocker:\
-      \ verification command drift, TypeScript residue in active surfaces, and agent-era\
-      \ residue/broad-scan allowlist mismatches still block proof of a coherent Python-only\
-      \ surface.\nwhy_new_loop: The independent verification step successfully found\
-      \ blockers; a single systemic remediation pass is required so runtime command\
-      \ surfaces, residue policy, and active-surface cleanup stay consistent.\n\n\
-      spec_refs:\n- `DX-91-REGRESSION-SURFACES.md`\n- `.invar/context.md`\n- `dx91-python-only/verify-python-only-surface`\n\
-      \ntouch_paths:\n- `README.md`\n- `CLAUDE.md`\n- `INVAR.md`\n- `src/invar/core/`\n\
-      - `src/invar/shell/`\n- `src/invar/templates/`\n- verification contract text\
-      \ in `plan.yaml` for `verify-python-only-surface`\n\nharness_refs:\n- `verify-python-only-surface`\n\
+      \ verification command drift, TypeScript residue in active mutable surfaces,\
+      \ and unresolved agent-era residue in active mutable surfaces still block proof\
+      \ of a coherent Python-only surface.\nwhy_new_loop: The independent verification\
+      \ step successfully found blockers; a single systemic remediation pass is required\
+      \ so runtime command surfaces, residue policy, and active-surface cleanup stay\
+      \ consistent.\n\nspec_refs:\n- `DX-91-REGRESSION-SURFACES.md`\n- `.invar/context.md`\n\
+      - `dx91-python-only/verify-python-only-surface`\n\ntouch_paths:\n- `README.md`\n\
+      - `CLAUDE.md`\n- `pyproject.toml`\n- `src/invar/core/`\n- `src/invar/shell/`\n\
+      - `src/invar/templates/`\n- `.claude/`\n- `.invar/`\n- verification contract\
+      \ text in `plan.yaml` for `verify-python-only-surface`\n\nharness_refs:\n- `verify-python-only-surface`\n\
       - `freeze-python-only-snapshot`\n\n## Blockers to Fix (ALL of these, not just\
       \ the first)\n\n### B1: Verification command drift blocks required checks\n\
       - Remediation: update the verification contract and/or runtime command surfaces\
@@ -18254,43 +18255,66 @@ phases:
       \ inspect every DX-91 verification/gate/reference path that repeats these command\
       \ strings before claiming done.\n- Grep hint: `init --preview|dev sync --dry-run|python\
       \ - <<'PY'|verify-python-only-surface`\n\n### B2: TypeScript residue blockers\
-      \ in active surfaces\n- Locations reported: `src/invar/core/models.py`, `src/invar/core/language.py`,\
-      \ `src/invar/shell/templates.py`, `src/invar/shell/fs.py`\n- Remediation: remove,\
-      \ reclassify, or narrow active-surface residue according to DX-91 policy so\
-      \ active Python-only surfaces no longer advertise retired TypeScript support.\n\
-      - Sibling search required: search beyond the listed files for adjacent active-surface\
-      \ residue in runtime/template/package paths before claiming done.\n- Grep hint:\
-      \ `typescript|TypeScript|tsconfig\\.json|ts-query|guard_ts|ts_compiler`\n\n\
-      ### B3: Agent-era residue blockers in active/non-allowlist surfaces\n- Locations\
-      \ include `README.md`, `CLAUDE.md`, `INVAR.md`, `.invar/archive/sessions-2025-12.md`,\
-      \ plus active `src/invar/**` findings from tester evidence.\n- Remediation:\
-      \ make the allowlist explicit in the broad scan policy, clear active blockers,\
-      \ and preserve historical-only references only where DX-91 policy allows them.\n\
-      - Sibling search required: search all active repo-root docs, runtime/template\
-      \ surfaces, and broad-scan patterns; classify every remaining match as active\
-      \ blocker or explicit allowlist residue.\n- Grep hint: `\\.claude/skills|\\\
-      .claude/hooks|\\.pi/hooks|\\.invar/examples|\\.invar/feedback|USBV|UNDERSTAND|SPECIFY|VALIDATE|/develop|/review|/investigate|/propose|Check-In|✓\
+      \ in active mutable surfaces\n- Locations reported: `src/invar/core/models.py`,\
+      \ `src/invar/core/language.py`, `src/invar/shell/templates.py`, `src/invar/shell/fs.py`\n\
+      - Remediation: remove, reclassify, or narrow active-surface residue according\
+      \ to DX-91 policy so active Python-only surfaces no longer advertise retired\
+      \ TypeScript support.\n- Active blocker boundary for B2: repo-root active docs/runtime/package\
+      \ surfaces only (`README.md`, `CLAUDE.md`, `pyproject.toml`, `src/invar/**`,\
+      \ active `.claude/**`, active `.invar/**`). Historical, archived, backup, and\
+      \ compatibility-only/template-reference surfaces are classification-only, not\
+      \ blockers in this remediation step.\n- Sibling search required: search beyond\
+      \ the listed files for adjacent active-surface residue in runtime/template/package\
+      \ paths before claiming done.\n- Grep hint: `typescript|TypeScript|tsconfig\\\
+      .json|ts-query|guard_ts|ts_compiler`\n\n### B3: Agent-era residue blockers in\
+      \ active mutable surfaces\n- Locations may include repo-root docs plus active\
+      \ `src/invar/**`, `.claude/**`, and `.invar/**` findings from tester evidence.\n\
+      - Remediation: clear agent-era residue from ACTIVE MUTABLE SURFACES and make\
+      \ the residual classification boundary explicit in evidence.\n- Deterministic\
+      \ blocker boundary for B3:\n  - BLOCKERS: matches under `README.md`, `CLAUDE.md`,\
+      \ `pyproject.toml`, `src/invar/**`, active `.claude/**`, and active `.invar/**`\
+      \ that still present retired agent-era workflow as current runtime/product guidance.\n\
+      \  - NON-BLOCKING CLASSIFICATION-ONLY RESIDUE: `INVAR.md` canonical protected\
+      \ protocol text, `.invar/archive/**`, backups, historical session notes, proposal/test-report\
+      \ artifacts, and compatibility/template-reference surfaces preserved only to\
+      \ explain migration, legacy markers, or historical behavior.\n  - Any residual\
+      \ outside the blocker set must be explicitly classified in evidence as `canonical-protected`,\
+      \ `historical/archive`, or `compatibility/template-reference`; those residuals\
+      \ do not block completion of this fix step.\n- Sibling search required: search\
+      \ all active repo-root docs, runtime/template surfaces, and broad-scan patterns;\
+      \ classify every remaining match as active blocker or explicit non-blocking\
+      \ residue.\n- Grep hint: `\\.claude/skills|\\.claude/hooks|\\.pi/hooks|\\.invar/examples|\\\
+      .invar/feedback|USBV|UNDERSTAND|SPECIFY|VALIDATE|/develop|/review|/investigate|/propose|Check-In|✓\
       \ Final|UserPromptSubmit|PreToolUse|PostToolUse|Stop\\.sh`\n\n## Completion\
-      \ Criteria\n- ALL blockers above are fixed in one coherent remediation pass.\n\
-      - Sibling searches completed for each blocker family, not only the listed locations.\n\
-      - Verification/gate contracts name only valid deterministic commands for the\
-      \ current CLI.\n- Active Python-only surfaces are clean; any residual historical\
-      \ references are explicitly allowlisted and documented in the scan contract.\n\
-      - Out of scope: adding new product features unrelated to DX-91 Python-only cleanup."
+      \ Criteria\n- ALL active blockers above are fixed in one coherent remediation\
+      \ pass.\n- Sibling searches completed for each blocker family, not only the\
+      \ listed locations.\n- Verification/gate contracts name only valid deterministic\
+      \ commands for the current CLI.\n- Active Python-only surfaces are clean.\n\
+      - Residual matches in `INVAR.md`, archive/history, or compatibility/template-reference\
+      \ surfaces are allowed only if explicitly classified in evidence and not presented\
+      \ as active product/runtime guidance.\n- Out of scope: rewriting protected canonical\
+      \ protocol text in `INVAR.md`, deleting historical/archive records, or removing\
+      \ compatibility/template references whose purpose is to document migration/history\
+      \ rather than current active behavior."
     verification: '- `rg -n "init --preview|dev sync --dry-run|python - <<''PY''|verify-python-only-surface"`
       shows only corrected verification contract/runtime references for the current
       CLI
 
       - `rg -n "typescript|TypeScript|tsconfig\.json|ts-query|guard_ts|ts_compiler"
-      README.md pyproject.toml src/invar .claude .invar --glob ''!docs/proposals/**''
+      README.md CLAUDE.md pyproject.toml src/invar .claude .invar --glob ''!INVAR.md''
+      --glob ''!.invar/archive/**'' --glob ''!.invar/backup/**'' --glob ''!docs/proposals/**''
       --glob ''!docs/test-reports/**'' --glob ''!artifacts/**'' --glob ''!tests/fixtures/**''`
       leaves no active-surface blocker matches
 
       - `rg -n "\.claude/skills|\.claude/hooks|\.pi/hooks|\.invar/examples|\.invar/feedback|USBV|UNDERSTAND|SPECIFY|VALIDATE|/develop|/review|/investigate|/propose|Check-In|✓
       Final|UserPromptSubmit|PreToolUse|PostToolUse|Stop\.sh" README.md CLAUDE.md
-      INVAR.md pyproject.toml src/invar .claude .invar --glob ''!docs/proposals/**''
-      --glob ''!docs/test-reports/**'' --glob ''!artifacts/**'' --glob ''!tests/fixtures/**''`
-      leaves only explicit allowlist/historical residues with classification evidence
+      pyproject.toml src/invar .claude .invar INVAR.md --glob ''!.invar/archive/**''
+      --glob ''!.invar/backup/**'' --glob ''!docs/proposals/**'' --glob ''!docs/test-reports/**''
+      --glob ''!artifacts/**'' --glob ''!tests/fixtures/**''` shows zero active blocker
+      matches outside explicitly classified non-blocking residues
+
+      - Evidence must include a residual classification table with buckets: `active-blocker`,
+      `canonical-protected`, `historical/archive`, `compatibility/template-reference`
 
       - Evidence must show sibling-search coverage for B1/B2/B3, not just the first
       reported location'
