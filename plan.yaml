@@ -14226,6 +14226,86 @@ phases:
     depends_on:
     - dx91-harness.gate
     agent: python-senior
+  - id: dx91-harness.retest-gate-blockers
+    name: Reassess DX-91 harness after batched fixes
+    status: pending
+    description: 'Independent reassessment after `dx91-harness.fix-gate-blockers`.
+
+
+      As an INDEPENDENT REVIEWER (`gate-reviewer`), reassess whether the batched fix
+      step resolved ALL `dx91-harness.gate` findings and whether the harness now provides
+      a trustworthy safety barrier.
+
+
+      Focus areas:
+
+      - Real migration entrypoint is exercised end-to-end rather than via harness-local
+      write-through
+
+      - Harness fails on unexpected extra-file leakage
+
+      - Fixture inventory / expectation metadata is live, exercised, and aligned with
+      current DX-91 semantics headings
+
+      - No sibling instances remain for the blocker patterns called out by the gate
+
+
+      This reassessment must verify ALL prior findings, not just the first blocker.'
+    verification: '- Reassess both the main path and the highest-risk failure path
+      from fresh evidence produced by the fix step
+
+      - Confirm every `dx91-harness.gate` issue (B1, B2, S1, S2, S3) is either resolved
+      in scope or explicitly removed with justification
+
+      - Block if evidence is vague, if the harness still bypasses the real migration
+      path, or if unexpected-file leakage is not shown to fail the harness
+
+      - Report OPEN only if the harness is now strong enough to guard downstream destructive
+      DX-91 work'
+    evidence_template: '## Independent Reassessment Report
+
+
+      **Reviewer**: gate-reviewer
+
+      **Prior gate**: `dx91-harness.gate`
+
+      **Fix step reviewed**: `dx91-harness.fix-gate-blockers`
+
+
+      ### Finding-by-finding reassessment
+
+      | Finding | Status | Evidence quality | Notes |
+
+      | ------- | ------ | ---------------- | ----- |
+
+      | B1 | resolved/open | excellent/adequate/insufficient | <notes> |
+
+      | B2 | resolved/open | excellent/adequate/insufficient | <notes> |
+
+      | S1 | resolved/open | excellent/adequate/insufficient | <notes> |
+
+      | S2 | resolved/open | excellent/adequate/insufficient | <notes> |
+
+      | S3 | resolved/open | excellent/adequate/insufficient | <notes> |
+
+
+      ### Critical proof checks
+
+      - Real migration entrypoint end-to-end evidence present: yes/no
+
+      - Extra unexpected-file leakage failure proof present: yes/no
+
+      - Sibling search evidence complete: yes/no
+
+
+      ### Decision
+
+      - [ ] OPEN: harness now guards downstream destructive work
+
+      - [ ] BLOCKED: additional remediation required'
+    depends_on:
+    - dx91-harness.fix-gate-blockers
+    agent: gate-reviewer
 - id: dx91-spec
   name: DX-91 Spec & Migration Semantics
   status: done
