@@ -14535,6 +14535,86 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-12T10:55:40.843476+00:00'
+  - id: dx91-spec.dx91-spec-fix-final-unresolved-spec-issues
+    name: dx91-spec.fix-final-unresolved-spec-issues
+    status: pending
+    description: 'Fix ALL remaining issues, not just the first, from `dx91-spec.dx91-spec-gate-retest-2`
+      while keeping scope tightly focused and explicitly not reopening resolved B2.
+
+
+      ## Remaining issues to fix (ALL of these)
+
+
+      ### B1: generated-file contract still contradictory/ambiguous
+
+      Locations:
+
+      - `docs/proposals/DX-91-generated-file-contracts.md:26`
+
+      - `docs/proposals/DX-91-generated-file-contracts.md:215`
+
+      - `docs/proposals/DX-91-generated-file-contracts.md:216`
+
+      - `docs/proposals/DX-91-generated-file-contracts.md:218`
+
+
+      Remediation:
+
+      - enforce one deterministic statement that v1 managed content is replaced by
+      the generated v2 managed block; no merge semantics remain anywhere in the canonical
+      contract
+
+      - normalize every marker reference to the literal pair `<!--invar:begin-->`
+      and `<!--invar:end-->`; do not leave prose using abstract `begin/end` token
+      notation
+
+      - sibling-search instruction: use `Content merged|begin/end` to search the surrounding
+      proposal set and cited document for sibling contradictory wording before closing
+      the issue
+
+
+      ### S1: canonical delete list still contains non-path entries
+
+      Locations:
+
+      - `docs/proposals/DX-91-migration-semantics.md:35`
+
+      - `docs/proposals/DX-91-migration-semantics.md:40`
+
+      - `docs/proposals/DX-91-migration-semantics.md:41`
+
+
+      Remediation:
+
+      - keep the canonical delete list restricted to explicit repo-relative paths
+      or explicit globs only
+
+      - move descriptive/count entries out of the canonical path list, or expand them
+      into explicit canonical paths if needed
+
+      - sibling-search instruction: use `Canonical delete list` to inspect the section
+      and nearby bullets for non-path entries or mixed semantic/list content
+
+
+      Out of scope:
+
+      - do not reopen or restate resolved B2 freeze-baseline findings
+
+      - do not broaden edits beyond the cited DX-91 proposal docs unless sibling-search
+      proves another directly conflicting statement in the same spec family'
+    verification: '- Main path: cited lines and sibling statements in both DX-91 proposal
+      docs now express one deterministic replacement contract and one canonical path-only
+      delete list
+
+      - Highest-risk failure path: targeted sibling-search using `Content merged|begin/end`
+      and `Canonical delete list` finds no residual contradictory merge wording, abstract
+      marker tokens, or non-path entries in the canonical list
+
+      - Evidence must show B2 stayed untouched and no resolved freeze-baseline semantics
+      were reopened'
+    depends_on:
+    - dx91-spec.dx91-spec-gate-retest-2
+    agent: doc-reviewer
 - id: dx91-init-runtime
   name: DX-91 Init & Dev-Sync Runtime Rewrite
   status: locked
