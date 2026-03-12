@@ -14091,7 +14091,7 @@ phases:
       \ on harness design adequacy, not test pass/fail alone."
   - id: dx91-harness.fix-gate-blockers
     name: Fix DX-91 harness gate blockers
-    status: claimed
+    status: done
     description: 'Fix ALL issues found by `dx91-harness.gate` — fix ALL of these,
       not just the first.
 
@@ -14254,6 +14254,49 @@ phases:
     agent: python-senior
     claimed_by: python-senior
     claimed_at: '2026-03-12T13:40:29.831052+00:00'
+    done_at: '2026-03-12T13:56:04.325310+00:00'
+    evidence: "## Batched Gate Fix Evidence\n\n**Scope**: `dx91-harness.gate` blockers\
+      \ and should-fix items\n\nArtifact:\n- Worker commit: 463fb1ef6b8830958d3f8ca112ad60ec9e75d0ca\n\
+      - Main merge commit: dd7a7f3 ([vectl] step-dx91-harness.fix-gate-blockers completed)\n\
+      \n### Main path proof\n- Exact command/test invoking the real migration entrypoint\
+      \ end-to-end:\n  - `uv run pytest -v tests/integration/test_dx91_destructive_regression_harness.py`\n\
+      - Actual output excerpt:\n  - `collected 8 items`\n  - `... test_happy_path_mainline_fixture_migrates_end_to_end\
+      \ PASSED`\n  - `... test_failure_path_harness_detects_broken_preservation_deletion_rule\
+      \ PASSED`\n  - `============================== 8 passed in 1.02s ===============================`\n\
+      - Real entrypoint usage implemented in harness:\n  - `collect_removal_targets(...,\
+      \ remove_extensions=True)` + `execute_removal(...)`\n  - `sync_templates(...,\
+      \ SyncConfig(...))`\n  - prior local write-through shortcut (`dest.write_text`\
+      \ expected snapshot) removed from migration path.\n\n### Highest-risk failure\
+      \ path proof\n- Exact command/test demonstrating harness failure on unexpected\
+      \ extra-file leakage:\n  - `DX91_EXPECT_FAILURE=1 uv run pytest -v tests/integration/test_dx91_destructive_regression_harness.py::test_failure_path_harness_detects_broken_preservation_deletion_rule`\n\
+      - Actual failing output excerpt:\n  - `AssertionError: Unexpected repo files:\
+      \ ['_unexpected_leak.txt']`\n  - `FAILED tests/integration/test_dx91_destructive_regression_harness.py::test_failure_path_harness_detects_broken_preservation_deletion_rule`\n\
+      \n### Sibling search proof\n- `_migration_entrypoint_apply_expected_state|dest.write_text`:\
+      \ shortcut write-through removed from harness migration path.\n- `_assert_expected_repo_state`:\
+      \ assertion surface now includes expected-tree vs actual-tree + allowlist checks\
+      \ for extra-file leakage.\n- `10.1|10.4|104-idempotent-re-run-edge-cases`: stale\
+      \ fixture/spec links updated to current migration-semantics anchors.\n- `relative-vs-absolute-template-path`:\
+      \ fixture now exercised in parametrized harness path (instead of being inventory-only).\n\
+      - `idempotency_assertions`: metadata now consumed by test logic (not dead fixture\
+      \ metadata).\n\n### Files changed\n- tests/integration/test_dx91_destructive_regression_harness.py\n\
+      - tests/fixtures/dx91_migration/fixture_inventory.yaml\n- tests/fixtures/dx91_migration/stale-legacy-vs-new-state-precedence/EXPECTATION.md\n\
+      - tests/fixtures/dx91_migration/interrupted-partial-migration-recovery/EXPECTATION.md\n\
+      - tests/fixtures/dx91_migration/repeated-migration-idempotent-v1-source/expected/idempotency_assertions.yaml\n\
+      - fixture expected snapshots/control files across dx91_migration fixtures updated\
+      \ to align with real-entrypoint harness execution\n\n### Verification\n- `uv\
+      \ run pytest -v tests/integration/test_dx91_destructive_regression_harness.py`\
+      \ -> PASS (8 passed)\n- `DX91_EXPECT_FAILURE=1 uv run pytest -v ...::test_failure_path_harness_detects_broken_preservation_deletion_rule`\
+      \ -> expected FAIL with extra-file assertion\n- `invar_guard(path=\".../dx91-harness.fix-gate-blockers\"\
+      , changed=true)` -> PASS (0 errors, 0 warnings)\n- `git merge --squash vectl/step-dx91-harness.fix-gate-blockers`\
+      \ -> merged without conflicts\n- `git commit -m \"[vectl] step-dx91-harness.fix-gate-blockers\
+      \ completed\"` -> committed on main\n\n### Spec link\n- docs/proposals/DX-91-migration-semantics.md\n\
+      - tests/fixtures/dx91_migration/fixture_inventory.yaml\n\n### Coverage notes\n\
+      - Protected fixture inventory now aligned with exercised harness paths.\n- Failure\
+      \ mode for unexpected leakage is explicitly asserted and proven.\n\n### Gaps/Notes\n\
+      - Worker noted deferred full-scan invar_guard run during execution; required\
+      \ changed-file guard and targeted integration outputs were provided.\n- Scope\
+      \ remained harness/fixture/inventory focused; no runtime semantics redesign\
+      \ introduced.\n\ndiscovered_issues:\n- none"
   - id: dx91-harness.retest-gate-blockers
     name: Reassess DX-91 harness after batched fixes
     status: pending
