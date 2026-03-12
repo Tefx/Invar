@@ -17425,7 +17425,7 @@ phases:
       '
   - id: remove-stale-agent-assets
     name: remove-stale-agent-assets
-    status: claimed
+    status: done
     description: 'Remove the canonical DX-91 template and command assets for skills/hooks/onboard/feedback
       without deleting the minimal Python-only protocol surface that must remain.
 
@@ -17549,6 +17549,34 @@ phases:
     agent: python-executor
     claimed_by: python-senior
     claimed_at: '2026-03-12T18:43:14.826238+00:00'
+    done_at: '2026-03-12T19:11:48.507883+00:00'
+    evidence: "Artifact:\n- Main squash commit: `52828b9`\n- Worktree commit: `dbf4dabfc0093d62aa99e9e80a21dacc5eef5bfa`\n\
+      \nVerification:\n- Asset absence checks:\n  - retired command modules (`feedback/hooks/mutate/skill/test/uninstall/update`)\
+      \ absent\n  - retired trees `.invar/examples/**`, `src/invar/templates/{skills,hooks,onboard,examples,claude-md}/**`\
+      \ removed\n- Runtime/template exposure checks:\n  - retired command imports/registrations\
+      \ removed from `src/invar/shell/commands/guard.py`\n  - manifest and active\
+      \ templates narrowed to DX-91 minimal surfaces\n- Sibling search:\n  - packaging/runtime\
+      \ active surfaces cleaned; historical docs/tests references inventoried as out-of-scope\
+      \ debt\n- Hook verification on final commit:\n  - INVAR.md Protection PASS\n\
+      \  - Ruff PASS\n  - mypy PASS\n  - Invar Guard PASS\n\nFiles changed (deleted\
+      \ vs preserved):\n- Deleted retired command files:\n  - `src/invar/shell/commands/feedback.py`\n\
+      \  - `src/invar/shell/commands/hooks.py`\n  - `src/invar/shell/commands/mutate.py`\n\
+      \  - `src/invar/shell/commands/skill.py`\n  - `src/invar/shell/commands/test.py`\n\
+      \  - `src/invar/shell/commands/uninstall.py`\n  - `src/invar/shell/commands/update.py`\n\
+      - Deleted retired asset trees/files:\n  - `.invar/examples/**`\n  - `src/invar/templates/skills/**`\n\
+      \  - `src/invar/templates/hooks/**`\n  - `src/invar/templates/onboard/**`\n\
+      \  - `src/invar/templates/examples/**`\n  - `src/invar/templates/claude-md/**`\n\
+      - Updated active minimal surfaces:\n  - `src/invar/shell/commands/guard.py`\n\
+      \  - `src/invar/shell/commands/template_sync.py`\n  - `src/invar/shell/commands/__init__.py`\n\
+      \  - `src/invar/shell/testing.py`\n  - `src/invar/templates/manifest.toml`\n\
+      \  - `src/invar/templates/config/CLAUDE.md.jinja`\n  - `src/invar/templates/protocol/INVAR.md.jinja`\n\
+      \  - `pyproject.toml`\n\nSpec link:\n- `remove-stale-agent-assets` (dx91-python-only)\n\
+      - refs used by worker evidence: DX-91 migration semantics (`2.2/2.3/3.2/5.1`)\
+      \ and generated-file contracts (`3.1`)\n\nGaps/Notes:\n- Historical docs/proposals/test\
+      \ fixtures still mention retired assets; reported as documentation/fixture debt,\
+      \ not active runtime exposure.\n- During integration, full-guard initially failed\
+      \ due stale unrelated worktrees being scanned; obsolete worktrees were cleaned\
+      \ and commit then passed without code-scope expansion.\n"
   - id: verify-python-only-surface
     name: verify-python-only-surface
     status: pending
