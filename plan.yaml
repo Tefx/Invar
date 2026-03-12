@@ -16065,7 +16065,7 @@ phases:
       \ tests\n- failure-path masking by earlier assertion"
   - id: freeze-init-runtime-snapshot
     name: freeze-init-runtime-snapshot
-    status: claimed
+    status: done
     description: 'Freeze the rewritten init/dev-sync runtime snapshot before cleanup
       phases consume it.
 
@@ -16091,6 +16091,31 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-12T15:01:27.952742+00:00'
+    done_at: '2026-03-12T15:05:37.684545+00:00'
+    evidence: "Artifact:\n- PR: 8bf99de0f6607a7ee169c2a6f18f7b873c3e90c9\n- Main merge\
+      \ commit: b90fba6 ([vectl] step-freeze-init-runtime-snapshot completed)\n\n\
+      Verification:\n- Run: `git rev-parse HEAD` (worker) -> 8bf99de0f6607a7ee169c2a6f18f7b873c3e90c9\n\
+      - Run: `git status --short --branch` -> clean branch status in isolated worktree\n\
+      - Run: `pwd` -> /Users/tefx/Projects/Invar/.vectl/worktrees/freeze-init-runtime-snapshot\n\
+      - Run: `git rev-parse --abbrev-ref HEAD` -> vectl/step-freeze-init-runtime-snapshot\n\
+      - Run: `uname -s` -> Darwin\n- Run: `python3 --version` -> Python 3.14.3\n-\
+      \ Run: `git merge --squash vectl/step-freeze-init-runtime-snapshot` -> merged\
+      \ without conflicts\n- Run: `git commit -m \"[vectl] step-freeze-init-runtime-snapshot\
+      \ completed\"` -> committed on main\n\nSpec link:\n- tests/integration/test_dx91_init_entrypoints.py\n\
+      - tests/integration/test_dx91_destructive_regression_harness.py\n- tests/fixtures/dx91_migration/fixture_inventory.yaml\n\
+      - docs/proposals/DX-91-migration-semantics.md\n\nCommit hash(es):\n- base proof\
+      \ snapshot noted in artifact: bcde322920e8af5b590e5d38e99fe2126d16ac09\n- worker\
+      \ freeze artifact commit: 8bf99de0f6607a7ee169c2a6f18f7b873c3e90c9\n- main squash\
+      \ commit: b90fba6\n\nFiles changed:\n- docs/test-reports/DX-91-init-runtime-freeze.md\n\
+      \nProtected regression entrypoints locked in artifact:\n- tests/integration/test_dx91_init_entrypoints.py\n\
+      - tests/integration/test_dx91_destructive_regression_harness.py\n\nProtected\
+      \ fixture set locked in artifact:\n- tests/fixtures/dx91_migration/fixture_inventory.yaml\
+      \ fixture IDs:\n  - mainline-v1-to-v2\n  - relative-vs-absolute-template-path\n\
+      \  - missing-file-fallback-partial-repo\n  - clear-null-overwrite-removed-managed\n\
+      \  - stale-legacy-vs-new-state-precedence\n  - interrupted-partial-migration-recovery\n\
+      \  - repeated-migration-idempotent-v1-source\n\nFreeze rule declared:\n- No\
+      \ code changes allowed until `dx91-init-runtime.gate`.\n\nGaps/Notes:\n- none\n\
+      \ndiscovered_issues:\n- none"
   - id: dx91-init-runtime.gate
     name: dx91-init-runtime.gate
     status: pending
