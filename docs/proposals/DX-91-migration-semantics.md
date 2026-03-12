@@ -31,11 +31,11 @@ This document defines the **canonical execution contract** for DX-91. Downstream
 
 | Category | Files | Lines | Delete Action |
 |----------|-------|-------|---------------|
-| `node_tools/` | 35 files | ~5,981 | Delete entire directory (must exist) |
+| `src/invar/node_tools/` | 35 files | ~5,981 | Delete entire directory (must exist) |
 | TS routing in guard/perception/sig/map/refs | — | ~500 | Remove TS branches |
-| Skills templates | `templates/skills/**` | ~2,000 | Delete if present (non-fatal if absent) |
-| Hooks templates | `templates/hooks/**` | ~200 | Delete if present (non-fatal if absent) |
-| Onboard templates | `templates/onboard/**` | ~200 | Delete if present (non-fatal if absent) |
+| Skills templates | `src/invar/templates/skills/**` | ~2,000 | Delete if present (non-fatal if absent) |
+| Hooks templates | `src/invar/templates/hooks/**` | ~200 | Delete if present (non-fatal if absent) |
+| Onboard templates | `src/invar/templates/onboard/**` | ~200 | Delete if present (non-fatal if absent) |
 | Examples (agent-facing) | `.invar/examples/` | — | Delete if present (non-fatal if absent) |
 | CLI commands removed | 9 files | ~2,000 | Delete command modules (must exist) |
 | Feedback collection | DX-79 code | ~300 | Remove all feedback code (must exist) |

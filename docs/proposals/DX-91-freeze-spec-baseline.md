@@ -13,13 +13,13 @@
 **Reproducibility proof:**
 ```
 # Record at freeze handoff
-git rev-parse HEAD        → <exact-sha>
+git rev-parse HEAD        → 6f1c0cac8ebc79e00f922c47586c76688ee1c26f
 git status --short        → (empty output)
 git diff --stat          → (empty output)
 ```
 
 **Verification:** Re-running these commands at any point during the implementation phase MUST yield:
-- Same `<exact-sha>` as recorded at freeze handoff
+- Same `6f1c0cac8ebc79e00f922c47586c76688ee1c26f` as recorded at freeze handoff
 - Empty `git status --short` (clean working tree)
 - No uncommitted changes
 

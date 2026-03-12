@@ -212,10 +212,10 @@ Per DX-91 §9.1, move to `docs/proposals/archive/`:
 
 | v1 Marker | v2 Handling |
 |-----------|-------------|
-| `<!--invar:critical-->` | Content merged into single v2 block OR preserved outside markers |
-| `<!--invar:managed-->` | Replaced by `<!--invar:begin/end-->` |
-| `<!--invar:project-->` | Content moved to user region (outside markers) OR `.invar/project-additions.md` |
-| `<!--invar:user-->` | Preserved verbatim outside markers |
+| `<!--invar:critical-->` | Content merged into single v2 block between `<!--invar:begin/end-->` markers |
+| `<!--invar:managed-->` | Replaced by `<!--invar:begin/end-->` markers |
+| `<!--invar:project-->` | Content moved to `.invar/project-additions.md` (user region outside markers) |
+| `<!--invar:user-->` | Preserved verbatim outside `<!--invar:begin/end-->` markers |
 
 ---
 
