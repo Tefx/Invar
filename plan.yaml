@@ -16140,7 +16140,7 @@ phases:
     agent: gate-reviewer
   - id: fix-init-dev-sync-flow-batch
     name: fix-init-dev-sync-flow-batch
-    status: claimed
+    status: done
     description: 'Fix ALL issues found by `prove-init-dev-sync-flow` in one pass,
       not just the first.
 
@@ -16268,6 +16268,102 @@ phases:
     agent: python-senior
     claimed_by: python-senior
     claimed_at: '2026-03-12T14:46:42.787641+00:00'
+    done_at: '2026-03-12T14:56:22.120521+00:00'
+    evidence: 'Artifact:
+
+      - Worker commit: 869ff2c
+
+      - Main merge commit: 717bd10 ([vectl] step-fix-init-dev-sync-flow-batch completed)
+
+
+      Verification:
+
+      - Run: `uv run pytest -v tests/integration/test_dx91_destructive_regression_harness.py`
+      -> 8 passed
+
+      - Run: `DX91_EXPECT_FAILURE=1 uv run pytest -v tests/integration/test_dx91_destructive_regression_harness.py::test_failure_path_harness_detects_broken_preservation_deletion_rule`
+      -> intentional single fail after reaching expected `Unexpected repo files` assertion
+      branch
+
+      - Run: `uv run pytest -v tests/integration/test_dx91_dev_sync_template_merge.py
+      tests/integration/test_lx05_templates.py` -> 22 passed
+
+      - Run: `invar_guard(path=<worktree>, changed=true)` -> passed, 0 errors, 0 warnings
+
+      - Run: sibling searches for blocker families (`Missing expected paths|\.invar/context\.md|Deleted
+      \.invar/`, failure-path assertion symbols, critical module usage patterns) ->
+      in-scope sites updated and verified
+
+      - Run: `git merge --squash vectl/step-fix-init-dev-sync-flow-batch` -> merged
+      without conflicts
+
+      - Run: `git commit -m "[vectl] step-fix-init-dev-sync-flow-batch completed"`
+      -> committed on main
+
+
+      Spec link:
+
+      - docs/proposals/DX-91-migration-semantics.md
+
+      - docs/proposals/DX-91-generated-file-contracts.md
+
+      - src/invar/templates/manifest.toml ([sync].create_only semantics)
+
+
+      Commit hash(es):
+
+      - 869ff2c
+
+      - 717bd10
+
+
+      Files changed:
+
+      - src/invar/shell/commands/template_sync.py
+
+      - tests/integration/test_dx91_destructive_regression_harness.py
+
+      - tests/integration/test_dx91_dev_sync_template_merge.py
+
+      - dx91 fixture expected outputs for affected scenarios (CLAUDE.md/INVAR.md under
+      tests/fixtures/dx91_migration/*/expected)
+
+
+      Main-path result:
+
+      - `.invar/context.md` preservation/create-only path aligned and no longer causes
+      destructive harness missing-path regression.
+
+
+      Failure-path result:
+
+      - Forced failure path now deterministically reaches intended destructive-edge
+      assertion (`Unexpected repo files`) instead of being masked earlier.
+
+
+      Sibling-search proof summary:
+
+      - B1 family: missing-context/deletion assertion sites reviewed and corrected
+      in harness and dev-sync integration tests.
+
+      - B2 family: failure-path branch for `test_failure_path_harness_detects_broken_preservation_deletion_rule`
+      updated to assert intended edge deterministically.
+
+      - S1 family: focused integration assertions strengthened for critical flow seams
+      and module usage paths.
+
+
+      Gaps/Notes:
+
+      - Fixture expected outputs were stale vs current v2 template surfaces; regenerated/aligned
+      in this fix step.
+
+      - Scope remained within dx91 init/dev-sync + related harness fixtures/tests.
+
+
+      discovered_issues:
+
+      - none blocking after batched remediation'
   - id: retest-init-dev-sync-flow-batch
     name: retest-init-dev-sync-flow-batch
     status: pending
