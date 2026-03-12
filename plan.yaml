@@ -13917,7 +13917,7 @@ phases:
       \ runtime migration code."
   - id: freeze-harness-snapshot
     name: freeze-harness-snapshot
-    status: claimed
+    status: done
     description: 'Freeze the regression harness snapshot that later destructive implementation
       phases must verify against.
 
@@ -13941,6 +13941,80 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-12T13:19:18.900231+00:00'
+    done_at: '2026-03-12T13:23:31.965156+00:00'
+    evidence: 'Artifact:
+
+      - PR: fb2d91600cc3a05703330a317b1d8b8f3b6ebf41
+
+      - Main merge commit: b0ef60d ([vectl] step-freeze-harness-snapshot completed)
+
+
+      Verification:
+
+      - Run: `git rev-parse HEAD` (worker) -> fb2d91600cc3a05703330a317b1d8b8f3b6ebf41
+
+      - Run: `git status --short` -> empty output (clean tree)
+
+      - Run: `git status --porcelain=v1` -> empty output (clean tree)
+
+      - Run: `pwd` -> /Users/tefx/Projects/Invar/.vectl/worktrees/freeze-harness-snapshot
+
+      - Run: `uname -srm` -> Darwin 25.1.0 arm64
+
+      - Run: `python3 --version` -> Python 3.14.3
+
+      - Run: `git show --name-only --pretty=format:"%H%n%s" HEAD` -> commit subject
+      `docs: freeze DX-91 harness baseline snapshot`, file `artifacts/freeze-harness-baseline.md`
+
+      - Run: `git merge --squash vectl/step-freeze-harness-snapshot` -> merged without
+      conflicts
+
+      - Run: `git commit -m "[vectl] step-freeze-harness-snapshot completed"` -> committed
+      on main
+
+
+      Spec link:
+
+      - docs/proposals/DX-91-freeze-spec-baseline.md
+
+      - DX-91-REGRESSION-SURFACES.md
+
+
+      Commit hash(es):
+
+      - baseline capture commit (noted in artifact): 0b462c40662e4c2fd9686800922511d2ddf51662
+
+      - worker freeze artifact commit: fb2d91600cc3a05703330a317b1d8b8f3b6ebf41
+
+      - main squash commit: b0ef60d
+
+
+      Files changed:
+
+      - artifacts/freeze-harness-baseline.md
+
+
+      Protected baseline declaration included:
+
+      - Fixture root: tests/fixtures/dx91_migration/ plus per-fixture subroots
+
+      - Test entrypoints: tests/integration/test_dx91_destructive_regression_harness.py
+      and listed node ids
+
+      - Freeze rule: no code changes allowed between snapshot and phase gate review;
+      drift invalidates freeze
+
+
+      Gaps/Notes:
+
+      - No blocking gaps reported by worker.
+
+      - Artifact is committed and ready for gate review.
+
+
+      discovered_issues:
+
+      - none'
   - id: dx91-harness.gate
     name: dx91-harness.gate
     status: pending
