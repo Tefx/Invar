@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 
 
 # LX-05: Valid language values for template rendering
-VALID_LANGUAGES = frozenset({"python", "typescript"})
+VALID_LANGUAGES = frozenset({"python"})
 
 
 @dataclass
@@ -38,11 +38,11 @@ class SyncConfig:
         >>> config.inject_project_additions
         False
 
-        >>> config = SyncConfig(syntax="mcp", language="typescript", force=True)
+        >>> config = SyncConfig(syntax="mcp", force=True)
         >>> config.syntax
         'mcp'
         >>> config.language
-        'typescript'
+        'python'
         >>> config.force
         True
 
@@ -52,7 +52,7 @@ class SyncConfig:
     """
 
     syntax: str = "cli"  # "cli" or "mcp"
-    language: str = "python"  # "python" or "typescript" (LX-05)
+    language: str = "python"  # LX-05: Python-only
     inject_project_additions: bool = False
     force: bool = False
     check: bool = False  # Preview only
@@ -71,7 +71,7 @@ class SyncConfig:
 
             >>> SyncConfig(language="rust")  # doctest: +IGNORE_EXCEPTION_DETAIL
             Traceback (most recent call last):
-            ValueError: Invalid language 'rust'. Must be one of: python, typescript
+            ValueError: Invalid language 'rust'. Must be one of: python
         """
         if self.language not in VALID_LANGUAGES:
             valid = ", ".join(sorted(VALID_LANGUAGES))

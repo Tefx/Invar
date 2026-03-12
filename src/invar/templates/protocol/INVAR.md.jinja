@@ -1,6 +1,6 @@
 {# INVAR.md Composition Template
-   Composes universal protocol + language-specific fragments
-   Variables: language (python|typescript)
+   Composes universal protocol + Python-specific fragments
+   Variables: language (python)
 #}
 {% include "protocol/universal/header.md" %}
 
@@ -8,17 +8,9 @@
 
 {% include "protocol/universal/architecture.md" %}
 
-{% if language == "python" %}
 {% include "protocol/python/architecture-examples.md" %}
-{% elif language == "typescript" %}
-{% include "protocol/typescript/architecture-examples.md" %}
-{% endif %}
 
-{% if language == "python" %}
 {% include "protocol/python/contracts-syntax.md" %}
-{% elif language == "typescript" %}
-{% include "protocol/typescript/contracts-syntax.md" %}
-{% endif %}
 
 {% include "protocol/universal/session.md" %}
 
@@ -28,23 +20,11 @@
 
 {% include "protocol/universal/completion.md" %}
 
-{% if language == "python" %}
 {% include "protocol/python/markers.md" %}
-{% elif language == "typescript" %}
-{% include "protocol/typescript/markers.md" %}
-{% endif %}
 
-{% if language == "python" %}
 {% include "protocol/python/tools.md" %}
-{% elif language == "typescript" %}
-{% include "protocol/typescript/tools.md" %}
-{% endif %}
 
-{% if language == "python" %}
 {% include "protocol/python/troubleshooting.md" %}
-{% elif language == "typescript" %}
-{% include "protocol/typescript/troubleshooting.md" %}
-{% endif %}
 
 ---
 

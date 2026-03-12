@@ -28,14 +28,6 @@ agents write code that's correct by construction—not by accident.
 
 An AI agent, guided by Invar, writes code with formal contracts and built-in tests:
 
-<table>
-<tr>
-<th>Python</th>
-<th>TypeScript</th>
-</tr>
-<tr>
-<td>
-
 ```python
 from invar_runtime import pre, post
 
@@ -52,33 +44,6 @@ def average(items: list[float]) -> float:
     """
     return sum(items) / len(items)
 ```
-
-</td>
-<td>
-
-```typescript
-import { z } from 'zod';
-
-const ItemsSchema = z.array(z.number()).min(1);
-
-/**
- * Calculate the average of a non-empty list.
- * @pre items.length > 0
- * @post result >= 0
- *
- * @example
- * average([1.0, 2.0, 3.0]) // => 2.0
- * average([10.0])          // => 10.0
- */
-function average(items: number[]): number {
-  ItemsSchema.parse(items); // Runtime validation
-  return items.reduce((a, b) => a + b) / items.length;
-}
-```
-
-</td>
-</tr>
-</table>
 
 Invar's Guard automatically verifies the code—the agent sees results and fixes issues without human intervention:
 
@@ -105,17 +70,13 @@ Guard passed.
 
 ### Tool × Language Support
 
-| Tool | Python | TypeScript | Notes |
-|------|--------|------------|-------|
-| `invar guard` | ✅ Full | ⚠️ Partial | TS: tsc + eslint + vitest |
-| `invar sig` | ✅ Full | ✅ Full | TS: TS Compiler API |
-| `invar map` | ✅ Full | ✅ Full | TS: With reference counts |
-| `invar refs` | ✅ Full | ✅ Full | Cross-file reference finding |
-| `invar doc *` | ✅ Full | ✅ Full | Language-agnostic |
-
-**TypeScript Notes:**
-- Requires Node.js + TypeScript (most TS projects have these)
-- Falls back to regex parser if Node.js unavailable
+| Tool | Python | Notes |
+|------|--------|-------|
+| `invar guard` | ✅ Full | Static + doctest + CrossHair + Hypothesis |
+| `invar sig` | ✅ Full | Signatures + contracts |
+| `invar map` | ✅ Full | Symbol map + reference counts |
+| `invar refs` | ✅ Full | Cross-file reference finding |
+| `invar doc *` | ✅ Full | Language-agnostic docs tools |
 
 ### 📦 Two Packages, Different Purposes
 
@@ -213,15 +174,7 @@ Invar addresses each from the ground up.
 
 ### ✅ Solution 1: Contracts as Specification
 
-Contracts (`@pre`/`@post` in Python, Zod schemas in TypeScript) turn vague intent into verifiable specifications:
-
-<table>
-<tr>
-<th>Python</th>
-<th>TypeScript</th>
-</tr>
-<tr>
-<td>
+Contracts (`@pre`/`@post`) turn vague intent into verifiable specifications:
 
 ```python
 # Without contracts: ambiguous
@@ -240,32 +193,6 @@ def average(items: list[float]) -> float:
     return sum(items) / len(items)
 ```
 
-</td>
-<td>
-
-```typescript
-// Without contracts: ambiguous
-function average(items) {
-  return items.reduce((a,b) => a+b) / items.length;
-  // What if empty? Return type?
-}
-
-// With contracts: explicit
-const ItemsSchema = z.array(z.number()).min(1);
-
-/** @post result >= 0 */
-function average(items: number[]): number {
-  ItemsSchema.parse(items); // Precondition
-  const result = items.reduce((a,b) => a+b) / items.length;
-  console.assert(result >= 0); // Postcondition
-  return result;
-}
-```
-
-</td>
-</tr>
-</table>
-
 **Benefits:**
 - Agent knows exactly what to implement
 - Edge cases are explicit in the contract
@@ -277,13 +204,13 @@ Guard provides fast feedback **on top of standard type checking**. Agent sees er
 
 | Layer | Tool | Speed | What It Catches |
 |-------|------|-------|-----------------|
-| **Type Check*** | mypy (Python) / tsc (TypeScript) | ~1s | Type errors, missing annotations |
+| **Type Check** | mypy | ~1s | Type errors, missing annotations |
 | **Static** | Guard rules | ~0.5s | Architecture violations, missing contracts |
-| **Doctest** | pytest / vitest | ~2s | Example correctness |
-| **Property** | Hypothesis / fast-check | ~10s | Edge cases via random inputs |
-| **Symbolic** | CrossHair / (TS: N/A) | ~30s | Mathematical proof of contracts |
+| **Doctest** | pytest | ~2s | Example correctness |
+| **Property** | Hypothesis | ~10s | Edge cases via random inputs |
+| **Symbolic** | CrossHair | ~30s | Mathematical proof of contracts |
 
-<sup>* Requires separate installation: `pip install mypy` or configure TypeScript in your project</sup>
+<sup>* Requires separate installation: `pip install mypy`</sup>
 
 ```
 ┌──────────┐   ┌───────────┐   ┌───────────┐   ┌────────────┐
@@ -366,16 +293,8 @@ Separate pure logic from I/O for maximum testability:
 │  parse_config, validate, calculate          │
 └──────────────────┬──────────────────────────┘
                    │
-                   ▼ Result[T, E]
+                    ▼ Result[T, E]
 ```
-
-<table>
-<tr>
-<th>Python</th>
-<th>TypeScript</th>
-</tr>
-<tr>
-<td>
 
 ```python
 # Core: Pure, testable, provable
@@ -389,28 +308,6 @@ def load_config(path: Path) -> Result[Config, str]:
     except FileNotFoundError:
         return Failure(f"Not found: {path}")
 ```
-
-</td>
-<td>
-
-```typescript
-// Core: Pure, testable, provable
-function parseConfig(content: string): Config {
-  return ConfigSchema.parse(JSON.parse(content));
-}
-
-// Shell: Handles I/O, returns ResultAsync
-function loadConfig(path: string): ResultAsync<Config, ConfigError> {
-  return ResultAsync.fromPromise(
-    fs.readFile(path, 'utf-8'),
-    () => ({ type: 'NOT_FOUND', path })
-  ).map(parseConfig);
-}
-```
-
-</td>
-</tr>
-</table>
 
 ### Session Protocol
 
@@ -625,15 +522,7 @@ invar skill add invar-onboard
 
 ### Language Support
 
-The onboarding skill includes language-specific pattern guides:
-
-<table>
-<tr>
-<th>Python</th>
-<th>TypeScript</th>
-</tr>
-<tr>
-<td>
+The onboarding skill includes Python pattern guides:
 
 ```python
 # Error handling: returns library
@@ -653,37 +542,6 @@ from invar_runtime import pre, post
 def calculate_tax(amount: float) -> float:
     return amount * 0.1
 ```
-
-</td>
-<td>
-
-```typescript
-// Error handling: neverthrow
-import { Result, ResultAsync, ok, err } from 'neverthrow';
-
-function getUser(id: string): ResultAsync<User, NotFoundError> {
-  return ResultAsync.fromPromise(
-    db.user.findUnique({ where: { id } }),
-    () => new DbError('query_failed')
-  ).andThen(user =>
-    user ? ok(user) : err(new NotFoundError(`User ${id}`))
-  );
-}
-
-// Contracts: Zod schemas
-import { z } from 'zod';
-
-const AmountSchema = z.number().positive();
-
-function calculateTax(amount: number): number {
-  AmountSchema.parse(amount);
-  return amount * 0.1;
-}
-```
-
-</td>
-</tr>
-</table>
 
 ### When to Use `/invar-onboard` vs `/refactor`
 

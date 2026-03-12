@@ -13,13 +13,8 @@
 <!-- DX-54: Rules summary for long conversation resilience -->
 
 ### Core/Shell Separation
-{% if language == "python" -%}
 - **Core** (`**/core/**`): @pre/@post + doctests, NO I/O imports
 - **Shell** (`**/shell/**`): Result[T, E] return type
-{% elif language == "typescript" -%}
-- **Core** (`**/core/**`): Contract comments (@pre/@post), no side effects
-- **Shell** (`**/shell/**`): Result<T, E> return type
-{% endif -%}
 
 ### USBV Workflow
 1. Understand → 2. Specify (contracts first) → 3. Build → 4. Validate
@@ -36,7 +31,6 @@
 
 <!-- Before writing code, check this table -->
 
-{% if language == "python" %}
 | If you are about to... | STOP and read first |
 |------------------------|---------------------|
 | Write code in `core/` | `.invar/examples/contracts.py` |
@@ -44,15 +38,6 @@
 | Add `@pre`/`@post` contracts | `.invar/examples/contracts.py` |
 | Use functional patterns | `.invar/examples/functional.py` |
 | Implement a feature | `.invar/examples/workflow.md` |
-{% elif language == "typescript" %}
-| If you are about to... | STOP and read first |
-|------------------------|---------------------|
-| Write code in `core/` | `.invar/examples/contracts.ts` |
-| Write code in `shell/` | `.invar/examples/core_shell.ts` |
-| Add contract comments | `.invar/examples/contracts.ts` |
-| Use functional patterns | `.invar/examples/functional.ts` |
-| Implement a feature | `.invar/examples/workflow.md` |
-{% endif %}
 
 **Rule:** Match found above? Read the file BEFORE writing code.
 
@@ -68,11 +53,7 @@
 
 **Quick rule check:**
 - Am I in Core or Shell?
-{% if language == "python" -%}
 - Do I have @pre/@post contracts?
-{% elif language == "typescript" -%}
-- Do I have contract comments (@pre/@post)?
-{% endif -%}
 - Am I following USBV workflow?
 - Did I run guard before claiming "done"?
 

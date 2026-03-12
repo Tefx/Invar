@@ -37,8 +37,6 @@ LANGUAGE_MARKERS: frozenset[str] = frozenset(
     {
         "pyproject.toml",
         "setup.py",
-        "tsconfig.json",
-        "package.json",
         "Cargo.toml",
         "go.mod",
     }

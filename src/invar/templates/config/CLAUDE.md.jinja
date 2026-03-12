@@ -1,12 +1,8 @@
 {# CLAUDE.md Composition Template
    Composes universal workflow + language-specific rules
-   Variables: language (python|typescript), syntax (mcp|cli), version
+   Variables: language (python), syntax (mcp|cli), version
 #}
-{% if language == "python" %}
 {% include "claude-md/python/critical-rules.md" %}
-{% elif language == "typescript" %}
-{% include "claude-md/typescript/critical-rules.md" %}
-{% endif %}
 
 <!--invar:managed version="{{ version }}"-->
 # Project Development Guide
@@ -17,11 +13,7 @@
 
 ---
 
-{% if language == "python" %}
 {% include "claude-md/python/quick-reference.md" %}
-{% elif language == "typescript" %}
-{% include "claude-md/typescript/quick-reference.md" %}
-{% endif %}
 
 {% include "claude-md/universal/tool-selection.md" %}
 
