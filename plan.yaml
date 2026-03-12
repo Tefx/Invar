@@ -13591,7 +13591,7 @@ phases:
   steps:
   - id: inventory-regression-surfaces
     name: inventory-regression-surfaces
-    status: claimed
+    status: done
     description: 'Inventory every behavior surface that DX-91 can break before destructive
       changes begin.
 
@@ -13624,6 +13624,76 @@ phases:
     agent: python-executor
     claimed_by: python-executor
     claimed_at: '2026-03-12T12:34:03.533589+00:00'
+    done_at: '2026-03-12T12:40:18.799574+00:00'
+    evidence: 'Artifact:
+
+      - PR: commit-based workflow
+
+      - Worker commit: 10b64e2ffd2ecbd02b8e9cc521896b313e0f123b
+
+      - Main merge commit: 09bdf42 ([vectl] step-inventory-regression-surfaces completed)
+
+
+      Verification:
+
+      - Run: `git log --oneline -1` (worker branch) -> 10b64e2 docs: Add DX-91 regression
+      surfaces inventory
+
+      - Run: `git show --stat HEAD` (worker branch) -> 1 file changed, 328 insertions
+
+      - Run: `git merge --squash vectl/step-inventory-regression-surfaces` -> merged
+      without conflicts
+
+      - Run: `git commit -m "[vectl] step-inventory-regression-surfaces completed"`
+      -> committed on main
+
+
+      Spec link:
+
+      - docs/proposals/DX-91-simplification.md
+
+      - docs/proposals/DX-91-migration-semantics.md
+
+
+      Commit hash(es):
+
+      - 10b64e2ffd2ecbd02b8e9cc521896b313e0f123b
+
+      - 09bdf42
+
+
+      Files changed:
+
+      - DX-91-REGRESSION-SURFACES.md
+
+
+      Surface mapping evidence:
+
+      - Inventory document enumerates init/dev-sync outputs, migration paths, template
+      seams, packaging/install surfaces, and E2E harness entrypoints.
+
+      - Includes explicit surface->file/entrypoint->owning-step mapping and separates
+      core fixtures from E2E harness entrypoints.
+
+      - Covers legacy migration, destructive cleanup, and release-smoke surfaces.
+
+
+      Gaps/Notes:
+
+      - Fixture implementation and runtime rewrites intentionally deferred to downstream
+      harness/runtime steps.
+
+      - Discovered issues recorded for parser compatibility, centralized migration
+      detection, and CLI flag removals.
+
+
+      discovered_issues:
+
+      - marker parsing compatibility in template_parser (v1 multi-region to v2 single-marker)
+
+      - migration detection logic centralization needed
+
+      - CLI flag removal compatibility checks needed'
   - id: build-migration-fixtures
     name: build-migration-fixtures
     status: pending
