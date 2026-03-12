@@ -14755,7 +14755,7 @@ phases:
       \ maintained).\n- Retest remained tightly scoped to B1/S1 families."
   - id: dx91-spec.dx91-spec-fix-literal-marker-shorthand-family
     name: dx91-spec.fix-literal-marker-shorthand-family
-    status: claimed
+    status: done
     description: 'Fix ALL remaining unresolved B1 shorthand marker references after
       `dx91-spec.dx91-spec-gate-retest-3`.
 
@@ -14821,6 +14821,65 @@ phases:
     agent: doc-reviewer
     claimed_by: doc-reviewer
     claimed_at: '2026-03-12T11:14:50.370393+00:00'
+    done_at: '2026-03-12T12:30:55.744116+00:00'
+    evidence: 'Artifact:
+
+      - PR: d9338bf1e94a2b6a5260a6551b1b9efb06f7b30d
+
+      - Main merge commit: a0c219e ([vectl] step-dx91-spec.dx91-spec-fix-literal-marker-shorthand-family
+      completed)
+
+
+      Verification:
+
+      - Run: `git show --name-only --pretty=format:%H -n 1` (worker branch) -> changed
+      only docs/proposals/DX-91-migration-semantics.md and docs/proposals/DX-91-simplification.md
+
+      - Run: `git diff --unified=0 HEAD~1..HEAD -- docs/proposals/DX-91-migration-semantics.md`
+      -> 5 shorthand `<!--invar:begin/end-->` replacements to explicit literal pair
+      references
+
+      - Run: `git diff --unified=0 HEAD~1..HEAD -- docs/proposals/DX-91-simplification.md`
+      -> 2 shorthand replacements to explicit literal pair references
+
+      - Run: search `invar:begin/end|<!--invar:begin/end-->|begin/end` across DX-91
+      proposal files -> no remaining shorthand marker references
+
+      - Run: inspect docs/proposals/DX-91-migration-semantics.md §2.2 -> canonical
+      delete-list section remains present and was not weakened
+
+      - Run: `git merge --squash vectl/step-dx91-spec.dx91-spec-fix-literal-marker-shorthand-family`
+      -> merged without conflicts
+
+      - Run: `git commit -m "[vectl] step-dx91-spec.dx91-spec-fix-literal-marker-shorthand-family
+      completed"` -> committed on main
+
+
+      Spec link:
+
+      - docs/proposals/DX-91-migration-semantics.md
+
+      - docs/proposals/DX-91-simplification.md
+
+
+      Files changed:
+
+      - docs/proposals/DX-91-migration-semantics.md
+
+      - docs/proposals/DX-91-simplification.md
+
+
+      Gaps/Notes:
+
+      - Evidence recovered via independent read-only verification after prior worker
+      response-format issue.
+
+      - S1 remained satisfied and B2 was not reopened.
+
+
+      discovered_issues:
+
+      - none'
   - id: dx91-spec.dx91-spec-gate-retest-4
     name: dx91-spec.gate-retest-4
     status: pending
