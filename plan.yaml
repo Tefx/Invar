@@ -18548,6 +18548,111 @@ phases:
       \ rejected and corrected\n- follow-up purity run reverted `uv.lock`; final files\
       \ changed: none\n\nNotes:\n- Retest confirms batched remediation closed B1/B2/B3\
       \ blocker families under repaired acceptance boundary.\n"
+  - id: dx91-python-only.dx91-python-only-fix-gate-blockers
+    name: dx91-python-only.fix-gate-blockers
+    status: pending
+    description: 'Fix ALL issues found by `dx91-python-only.gate` in ONE batched remediation
+      pass — fix ALL of these, not just the first.
+
+
+      ## Blockers to Fix (ALL of these, not just the first)
+
+
+      ### B1: Broken Python test suite due removed-but-still-imported uninstall API
+
+      Locations: `tests/integration/test_dx91_destructive_regression_harness.py:21`
+
+      Remediation: restore a compatible uninstall API OR update the destructive regression
+      harness to the current removal path, consistently across call sites and helper
+      imports. Do not leave split semantics between legacy uninstall and the new removal
+      flow.
+
+      Grep hint: `invar\.shell\.commands\.uninstall|collect_removal_targets|execute_removal`
+
+      IMPORTANT: search for sibling imports, helper wrappers, and destructive-regression
+      references beyond the listed location.
+
+
+      ### B2: TypeScript retirement inconsistent (tests/docs/templates/modules mismatch)
+
+      Locations: `tests/integration/test_dx78_ts_compiler.py`, `src/invar/templates/pi-tools/invar/index.ts`,
+      `typescript/**`
+
+      Remediation: choose ONE coherent DX-91 Python-only direction and apply it consistently:
+      either retire TS tests/artifacts/docs/templates together, or restore TS support
+      end-to-end. The expected default for DX-91 is retirement unless active spec
+      evidence requires restoration.
+
+      Grep hint: `\.ts\b|TypeScript|typescript|ts_compiler|vitest|eslint|tsc`
+
+      IMPORTANT: search for siblings in tests, shipped template artifacts, packaging,
+      docs, and generated surfaces so no partial TS-facing surface remains.
+
+
+      ### B3: Active docs mismatch with DX-91 CLI
+
+      Locations: `README.md` init flags; `INVAR.md` legacy managed/v1 wording
+
+      Remediation: align active docs with the current DX-91 minimal CLI/template behavior,
+      or move clearly historical guidance into an archive/proposal zone with explicit
+      policy. Active docs must not advertise removed flags or retired managed/v1 semantics.
+
+      Grep hint: `init --claude|init --pi|INVAR-MANAGED FILE|invar update|\.invar/examples`
+
+      IMPORTANT: search sibling active docs/templates for the same stale DX-91 mismatches,
+      not just the named files.
+
+
+      ## Completion Criteria
+
+      - ALL blockers fixed together; do not stop after B1
+
+      - Python destructive-regression harness imports and execution path are internally
+      consistent
+
+      - No active TypeScript-facing test/template/module/doc surface remains unless
+      fully restored end-to-end by explicit DX-91 direction
+
+      - Active docs match the real minimal DX-91 CLI/template behavior
+
+      - Evidence includes sibling-search coverage for each grep hint
+
+
+      known_risks:
+
+      - Python-only cleanup can leave half-retired TypeScript or uninstall surfaces
+      that still break test and template consumers
+
+      - Active docs can silently drift from the runtime even when code cleanup looks
+      complete
+
+      - Partial retirement across tests/templates/docs is likely to re-trigger the
+      same gate blocker family
+
+
+      Gate Preview (what the re-test WILL reject)
+
+      1. Any remaining import of the retired uninstall module or split removal helper
+      path
+
+      2. Any active TS-facing artifact, test expectation, or template residue inconsistent
+      with DX-91 Python-only direction
+
+      3. Any active README/INVAR guidance that still documents removed init flags,
+      managed-file wording, or legacy update flows'
+    verification: '- Each blocker family addressed in one coherent pass
+
+      - Each grep hint reviewed and remaining matches either removed, archived, or
+      justified as intentionally historical
+
+      - Main path: targeted regression suites and focused repo searches align with
+      the chosen Python-only direction
+
+      - Failure path: evidence shows no stale uninstall import, no partial TS retirement
+      residue, and no active-doc mismatch remains'
+    depends_on:
+    - dx91-python-only.gate
+    agent: python-senior
 - id: dx91-self-docs
   name: DX-91 Self-Docs Update
   status: locked
