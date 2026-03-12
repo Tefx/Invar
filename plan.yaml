@@ -13696,7 +13696,7 @@ phases:
       - CLI flag removal compatibility checks needed'
   - id: build-migration-fixtures
     name: build-migration-fixtures
-    status: claimed
+    status: done
     description: 'Build focused regression fixtures that capture pre-DX-91 project
       states and expected post-migration results.
 
@@ -13743,6 +13743,106 @@ phases:
     agent: python-senior
     claimed_by: python-senior
     claimed_at: '2026-03-12T12:59:09.194185+00:00'
+    done_at: '2026-03-12T13:10:10.259571+00:00'
+    evidence: 'Artifact:
+
+      - PR: commit-based workflow (no PR URL)
+
+      - Worker commit: 9d1dc7b97a0bcbd6827d3fe67f010c5aa7d72891
+
+      - Main merge commit: e850f48 ([vectl] step-build-migration-fixtures completed)
+
+
+      Verification:
+
+      - Run: fixture structure check script -> `fixture_count=7`, all fixtures reported
+      expectation/input/expected present
+
+      - Run: inventory coverage check script -> `required_covered=True`, `covered_count=7/7`,
+      `stale_fixture_present=True`, `interrupted_fixture_present=True`
+
+      - Run: `invar_guard(path=".../build-migration-fixtures", changed=true)` -> PASS,
+      0 errors, 0 warnings
+
+      - Run: `git show --stat HEAD` (worker commit) -> 52 files changed, 290 insertions
+
+      - Run: `git merge --squash vectl/step-build-migration-fixtures` -> merged without
+      conflicts
+
+      - Run: `git commit -m "[vectl] step-build-migration-fixtures completed"` ->
+      committed on main
+
+
+      Spec link:
+
+      - docs/proposals/DX-91-simplification.md
+
+      - docs/proposals/DX-91-migration-semantics.md
+
+
+      Commit hash(es):
+
+      - 9d1dc7b97a0bcbd6827d3fe67f010c5aa7d72891
+
+      - e850f48
+
+
+      Files changed:
+
+      - tests/fixtures/dx91_migration/README.md
+
+      - tests/fixtures/dx91_migration/fixture_inventory.yaml
+
+      - tests/fixtures/dx91_migration/mainline-v1-to-v2/**
+
+      - tests/fixtures/dx91_migration/relative-vs-absolute-template-path/**
+
+      - tests/fixtures/dx91_migration/missing-file-fallback-partial-repo/**
+
+      - tests/fixtures/dx91_migration/clear-null-overwrite-removed-managed/**
+
+      - tests/fixtures/dx91_migration/stale-legacy-vs-new-state-precedence/**
+
+      - tests/fixtures/dx91_migration/interrupted-partial-migration-recovery/**
+
+      - tests/fixtures/dx91_migration/repeated-migration-idempotent-v1-source/**
+
+
+      Fixture inventory mapping (fixture -> protected expectation):
+
+      - mainline-v1-to-v2 -> main-path legacy v1->v2 migration baseline
+
+      - relative-vs-absolute-template-path -> path resolution parity behavior
+
+      - missing-file-fallback-partial-repo -> partial-repo missing-file fallback behavior
+
+      - clear-null-overwrite-removed-managed -> explicit clear/null overwrite semantics
+
+      - stale-legacy-vs-new-state-precedence -> stale-definition vs new-state precedence
+
+      - interrupted-partial-migration-recovery -> interrupted/partial migration recovery
+
+      - repeated-migration-idempotent-v1-source -> repeated migration idempotency/no
+      duplicated sections
+
+
+      Gaps/Notes:
+
+      - Step intentionally limited to fixture creation; no runtime migration implementation
+      changes.
+
+      - Downstream harness execution remains for subsequent verifier steps.
+
+
+      discovered_issues:
+
+      - template_parser compatibility update likely needed for v1 multi-region to
+      v2 single-marker parsing
+
+      - migration detection logic appears scattered and may need centralization in
+      runtime rewrite
+
+      - removed CLI flag compatibility surface should be validated in runtime phase'
   - id: prove-destructive-regression-harness
     name: prove-destructive-regression-harness
     status: pending
