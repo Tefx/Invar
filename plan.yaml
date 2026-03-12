@@ -17721,6 +17721,110 @@ phases:
     agent: python-executor
     claimed_by: python-executor
     claimed_at: '2026-03-12T17:43:52.774138+00:00'
+  - id: dx91-python-only.remove-typescript-template-family-residue
+    name: remove-typescript-template-family-residue
+    status: pending
+    description: 'Remove or explicitly reclassify remaining TypeScript references
+      in non-denylist template families so the phase-level broad scan over `src/invar/templates`
+      becomes deterministic.
+
+
+      Spec refs:
+
+      - `docs/proposals/DX-91-simplification.md` :: `2.4 TypeScript/JS Support`, `3.2
+      Generated Files`
+
+      - `docs/proposals/DX-91-migration-semantics.md` :: `2.2 What Gets Removed`,
+      `3.2 Generated Files`, `5.1 What dev sync Does After DX-91`
+
+      - `DX-91-REGRESSION-SURFACES.md` :: `4.3 TypeScript Support Removed`, `10. Verification
+      Commands`
+
+
+      Touch paths:
+
+      - non-denylist families under `src/invar/templates/**` that still match the
+      broad TypeScript residue search, excluding `config/**`, `protocol/**`, and `examples/**`
+      paths already owned by `remove-typescript-active-surface-residue`
+
+
+      Conflict rationale:
+
+      - This serial cleanup exists to resolve the contradictory acceptance boundary
+      between the denylist-focused cleanup step and the phase-level broad verification
+      over all template families
+
+      - Keep serialized after `remove-typescript-active-surface-residue` and before
+      `remove-stale-agent-assets` so one worker owns the remaining template residue
+      boundary
+
+
+      Failure modes to cover:
+
+      - historical or extension template families still present active TypeScript
+      support as current guidance
+
+      - broad verification over `src/invar/templates` stays non-deterministic because
+      remaining hits were never assigned to a cleanup owner
+
+      - cleanup overreaches into allowed historical docs instead of template families
+      that still affect active generated surfaces
+
+
+      State semantics:
+
+      - preserve exactly: truly historical or extension-only content only if it is
+      explicitly labeled and compatible with the phase-level verification policy
+
+      - remove completely: residual TypeScript references in template families that
+      the broad phase verification treats as active blockers
+
+      - backward-compatible legacy behavior: if a template family must remain as historical
+      evidence, document the reclassification path so `verify-python-only-surface`
+      can classify it deterministically
+
+
+      Out-of-scope guardrail:
+
+      - docs/proposals and other explicit allowlist paths remain out of scope for
+      this step
+
+      - do not reopen already-clean denylist paths owned by `remove-typescript-active-surface-residue`
+
+
+      Known risks:
+
+      - Template families such as skills, hooks, onboard, or extension registries
+      can behave like shared registries and must be cleaned or reclassified consistently,
+      not file-by-file ad hoc
+
+      - Broad residue searches must converge to a deterministic classification before
+      independent verification
+
+
+      Gate Preview (what the gate WILL reject):
+
+      1. Broad `src/invar/templates` search still finds unowned TypeScript residue
+
+      2. Remaining matches are hand-waved as historical without explicit reclassification
+      evidence
+
+      3. Cleanup reintroduces conflict with the denylist-focused acceptance of the
+      prior step'
+    verification: '- Main path: run `rg -n "typescript|TypeScript|node_tools|tsconfig\.json|ts-query|guard_ts|ts_compiler"
+      src/invar/templates`; expected result is either zero matches or only explicitly
+      justified matches that `verify-python-only-surface` can classify as non-blocking
+      under the phase policy
+
+      - Failure path: for each remaining matching template family, provide a per-family
+      classification stating whether it was removed, relabeled as historical/extension-only,
+      or left as a blocker for follow-up
+
+      - Proof includes a deterministic inventory for all remaining template-family
+      hits so the phase-level verifier no longer sees ambiguous residue'
+    depends_on:
+    - remove-typescript-active-surface-residue
+    agent: python-executor
 - id: dx91-self-docs
   name: DX-91 Self-Docs Update
   status: locked
