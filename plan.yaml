@@ -15987,7 +15987,7 @@ phases:
       - none (worker resolved transient complexity/doctest drift before final commit)'
   - id: prove-init-dev-sync-flow
     name: prove-init-dev-sync-flow
-    status: pending
+    status: claimed
     description: 'As an INDEPENDENT TESTER (`integration-verifier`), validate the
       full DX-91 init/dev-sync path from fresh repo state through migrated repo state.
 
@@ -16026,6 +16026,8 @@ phases:
     depends_on:
     - rewrite-dev-sync-template-merge
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-12T14:36:55.915529+00:00'
   - id: freeze-init-runtime-snapshot
     name: freeze-init-runtime-snapshot
     status: pending
