@@ -17766,7 +17766,7 @@ phases:
       '
   - id: dx91-python-only.gate
     name: dx91-python-only.gate
-    status: pending
+    status: claimed
     description: 'Gate review: verify DX-91 cleanup actually leaves a coherent Python-only
       product rather than a half-removed mixed surface.
 
@@ -17825,6 +17825,8 @@ phases:
     - dx91-python-only.verify-python-only-surface-retest-all-blockers
     - freeze-python-only-snapshot
     agent: gate-reviewer
+    claimed_by: gate-reviewer
+    claimed_at: '2026-03-12T20:13:36.765796+00:00'
   - id: remove-typescript-active-surface-residue
     name: remove-typescript-active-surface-residue
     status: done
