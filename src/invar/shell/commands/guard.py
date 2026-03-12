@@ -19,7 +19,7 @@ from invar import __version__
 from invar.core.models import GuardReport, RuleConfig
 from invar.core.rules import check_all_rules
 from invar.core.utils import get_exit_code
-from invar.shell.config import find_project_root, find_pyproject_root, load_config
+from invar.shell.config import find_pyproject_root, load_config
 from invar.shell.fs import scan_project
 from invar.shell.guard_output import output_agent, output_rich
 
@@ -250,8 +250,6 @@ def guard(
     Use --suggest to get functional pattern suggestions (NewType, Validation, etc.).
     Use --contracts-only (-c) to check contract coverage without running tests (SPECIFY phase).
     """
-    # LX-06: Language detection and dispatch
-    from invar.shell.commands.init import detect_language
     from invar.shell.guard_helpers import (
         collect_files_to_check,
         handle_changed_mode,
@@ -261,41 +259,6 @@ def guard(
         run_property_tests_phase,
     )
     from invar.shell.testing import VerificationLevel
-
-    project_language = detect_language(path if path.is_dir() else find_project_root(path))
-
-    # Dispatch to language-specific guard if not Python
-    if project_language == "typescript":
-        from invar.shell.prove.guard_ts import run_typescript_guard
-
-        ts_result = run_typescript_guard(path if path.is_dir() else find_project_root(path))
-        match ts_result:
-            case Success(result):
-                if human:
-                    # Human-readable Rich output
-                    from invar.shell.prove.guard_ts import format_typescript_guard_v2
-
-                    output = format_typescript_guard_v2(result)
-                    console.print(f"[bold]TypeScript Guard[/bold] ({project_language})")
-                    if result.status == "passed":
-                        console.print("[green]✓ PASSED[/green]")
-                    elif result.status == "skipped":
-                        console.print("[yellow]⚠ SKIPPED[/yellow] (no TypeScript tools available)")
-                    else:
-                        console.print(f"[red]✗ FAILED[/red] ({result.error_count} errors)")
-                        for v in result.violations[:10]:  # Show first 10
-                            console.print(f"  {v.file}:{v.line}: [{v.severity}] {v.message}")
-                else:
-                    # JSON output for agents
-                    from invar.shell.json_output import write_json
-                    from invar.shell.prove.guard_ts import format_typescript_guard_v2
-
-                    output = format_typescript_guard_v2(result)
-                    write_json(output, indent=2)
-                raise typer.Exit(0 if result.status == "passed" else 1)
-            case Failure(err):
-                console.print(f"[red]Error:[/red] {err}")
-                raise typer.Exit(1)
 
     # DX-65: Handle single file mode (Python only from here)
     single_file_mode = path.is_file()
@@ -624,19 +587,16 @@ def sig_command(
         raise typer.Exit(1)
 
 
-# @invar:allow entry_point_too_thick: Multi-language ref finding with examples
+# @invar:allow entry_point_too_thick: Python reference finding with examples
 @app.command("refs")
 def refs_command(
-    target: str = typer.Argument(..., help="file.py::symbol or file.ts::symbol"),
+    target: str = typer.Argument(..., help="file.py::symbol"),
     json_output: bool = typer.Option(False, "--json", help="Output as JSON"),
 ) -> None:
     """Find all references to a symbol.
 
-    DX-78: Supports Python (via jedi) and TypeScript (via TS Compiler API).
-
     Examples:
         invar refs src/auth.py::AuthService
-        invar refs src/auth.ts::validateToken
     """
     from invar.shell.commands.perception import run_refs
 

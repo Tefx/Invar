@@ -33,7 +33,7 @@ from invar.mcp.handlers import (
 )
 from invar.shell.subprocess_env import should_respawn
 
-# Strong instructions for agent behavior (DX-16 + DX-17 + DX-26 + DX-76 + DX-78)
+# Strong instructions for agent behavior (DX-16 + DX-17 + DX-26 + DX-76)
 INVAR_INSTRUCTIONS = """
 ## Invar Tool Usage (MANDATORY)
 
@@ -57,13 +57,13 @@ Run guard only when:
 
 ### Tool x Language Support
 
-| Tool | Python | TypeScript | Notes |
-|------|--------|------------|-------|
-| `invar_guard` | ✅ Full | ⚠️ Partial | TS: tsc + eslint + vitest |
-| `invar_sig` | ✅ Full | ✅ Full | TS: TS Compiler API |
-| `invar_map` | ✅ Full | ✅ Full | TS: With reference counts |
-| `invar_refs` | ✅ Full | ✅ Full | Cross-file reference finding |
-| `invar_doc_*` | ✅ Full | ✅ Full | Language-agnostic |
+| Tool | Python | Notes |
+|------|--------|-------|
+| `invar_guard` | ✅ Full | static + doctest + CrossHair + Hypothesis |
+| `invar_sig` | ✅ Full | signatures + contracts |
+| `invar_map` | ✅ Full | symbol map + reference counts |
+| `invar_refs` | ✅ Full | cross-file reference finding |
+| `invar_doc_*` | ✅ Full | language-agnostic docs tools |
 
 ### Tool Substitution Rules (ENFORCED)
 
@@ -166,10 +166,9 @@ def _get_guard_tool() -> Tool:
         name="invar_guard",
         title="Smart Guard",
         description=(
-            "Smart Guard: Verify code quality with static analysis + tests. "
-            "Supports Python (pytest + doctest + CrossHair + Hypothesis) "
-            "and TypeScript (tsc + eslint + vitest). "
-            "Auto-detects project language from marker files (pyproject.toml, tsconfig.json). "
+            "Smart Guard: Verify Python code quality with static analysis + tests. "
+            "Runs pytest + doctest + CrossHair + Hypothesis. "
+            "Uses pyproject.toml as project marker. "
             "For DX-91 full-scan gate parity, authoritative CLI path is 'uvx invar-tools guard --all'. "
             "Use this INSTEAD of Bash('pytest ...') or Bash('npm test ...')."
         ),
@@ -268,8 +267,8 @@ def _get_sig_tool() -> Tool:
         title="Show Signatures",
         description=(
             "Show function signatures and contracts (@pre/@post). "
-            "Supports Python and TypeScript (via TS Compiler API). "
-            "Use this INSTEAD of Read('file.py'/'file.ts') when you want to understand structure."
+            "Supports Python projects. "
+            "Use this INSTEAD of Read('file.py') when you want to understand structure."
         ),
         inputSchema={
             "type": "object",
@@ -290,7 +289,7 @@ def _get_map_tool() -> Tool:
         title="Symbol Map",
         description=(
             "Symbol map with reference counts. "
-            "Supports Python and TypeScript projects. "
+            "Supports Python projects. "
             "Use this INSTEAD of Grep for 'def ' or 'function ' to find symbols."
         ),
         inputSchema={
@@ -308,14 +307,14 @@ def _get_map_tool() -> Tool:
 def _get_refs_tool() -> Tool:
     """Define the invar_refs tool.
 
-    DX-78: Cross-file reference finding.
+    Cross-file reference finding.
     """
     return Tool(
         name="invar_refs",
         title="Find References",
         description=(
             "Find all references to a symbol. "
-            "Supports Python (via jedi) and TypeScript (via TS Compiler API). "
+            "Supports Python (via jedi). "
             "Use this to understand symbol usage across the codebase."
         ),
         inputSchema={
@@ -323,7 +322,7 @@ def _get_refs_tool() -> Tool:
             "properties": {
                 "target": {
                     "type": "string",
-                    "description": "Target format: 'file.py::symbol' or 'file.ts::symbol'",
+                    "description": "Target format: 'file.py::symbol'",
                 },
             },
             "required": ["target"],

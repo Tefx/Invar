@@ -46,6 +46,7 @@ class _RenderedAssets:
     context_content: str | None = None
 
 
+# @shell_complexity: sync pipeline handles write ordering, optional context file, and failure rollback reporting.
 def sync_templates(path: Path, config: SyncConfig) -> Result[SyncReport, str]:
     """Synchronize DX-91 managed template output into a target repository.
 
@@ -116,6 +117,7 @@ def _display_path(repo_root: Path, candidate: Path) -> str:
         return str(candidate)
 
 
+# @shell_complexity: rendering requires fallback sequencing across managed, protocol, and optional context templates.
 def _render_assets(templates_dir: Path, config: SyncConfig) -> Result[_RenderedAssets, str]:
     variables = {"syntax": config.syntax, "language": config.language, "version": "5.0"}
 
