@@ -14800,6 +14800,49 @@ phases:
     depends_on:
     - dx91-spec.dx91-spec-gate-retest-3
     agent: doc-reviewer
+  - id: dx91-spec.dx91-spec-gate-retest-4
+    name: dx91-spec.gate-retest-4
+    status: pending
+    description: 'As an INDEPENDENT REVIEWER (`gate-reviewer`), re-run a tightly scoped
+      gate retest after `dx91-spec.dx91-spec-fix-literal-marker-shorthand-family`.
+
+
+      Scope:
+
+      - Confirm B1 is fully closed: zero remaining non-literal `<!--invar:begin/end-->`
+      or `begin/end` shorthand references anywhere in the DX-91 proposal family
+
+      - Confirm deterministic marker semantics still name the explicit literal pair
+      `<!--invar:begin-->` and `<!--invar:end-->`
+
+      - Confirm S1 remains satisfied without reopening B2
+
+
+      Review this adversarially and sibling-aware: verify the family-wide sweep, not
+      just the originally listed lines.
+
+
+      prior_loop: [`dx91-spec.dx91-spec-gate-retest-2`, `dx91-spec.dx91-spec-gate-retest-3`]
+
+      remaining_blocker: B1 shorthand marker wording must be fully eliminated while
+      preserving deterministic marker semantics.
+
+      why_new_loop: the previous gate retest left one unresolved blocker family, so
+      this follow-up retest must confirm closure without reopening out-of-scope items.'
+    verification: '- Run independent review of the DX-91 proposal family after the
+      batched fix step
+
+      - Confirm sibling-search evidence used grep hint `invar:begin/end|begin/end`
+      and produced zero remaining shorthand hits
+
+      - Confirm deterministic marker semantics still refer to the explicit literal
+      pair `<!--invar:begin-->` and `<!--invar:end-->`
+
+      - Confirm S1 remains satisfied and B2 was not reopened unless a new regression
+      explicitly introduced it'
+    depends_on:
+    - dx91-spec.dx91-spec-fix-literal-marker-shorthand-family
+    agent: gate-reviewer
 - id: dx91-init-runtime
   name: DX-91 Init & Dev-Sync Runtime Rewrite
   status: locked
