@@ -1,11 +1,14 @@
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 import typer
 
 from invar.shell.commands import init as init_cmd
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def _run_init(tmp_path: Path, *, file: str = "CLAUDE.md", preview: bool = False) -> None:
@@ -156,3 +159,54 @@ def test_repeated_init_on_migrated_repo_is_idempotent(
     assert first == second
     assert second.count("<!--invar:begin-->") == 1
     assert "user-prefix" in second
+
+
+def test_migration_backs_up_both_preserved_files_and_keeps_originals(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    (tmp_path / ".claude" / "skills").mkdir(parents=True)
+    (tmp_path / ".claude" / "hooks").mkdir(parents=True)
+    (tmp_path / ".pi" / "hooks").mkdir(parents=True)
+    (tmp_path / ".pi" / "tools").mkdir(parents=True)
+    (tmp_path / ".invar" / "examples").mkdir(parents=True)
+
+    (tmp_path / "CLAUDE.md").write_text(
+        "legacy-prefix\n<!--invar:critical-->legacy<!--/invar:critical-->",
+        encoding="utf-8",
+    )
+    context_path = tmp_path / ".invar" / "context.md"
+    additions_path = tmp_path / ".invar" / "project-additions.md"
+    context_path.write_bytes(b"ctx line 1\nctx line 2\n")
+    additions_path.write_bytes(b"# additions\nkeep this exact text\n")
+
+    original_context = context_path.read_bytes()
+    original_additions = additions_path.read_bytes()
+
+    monkeypatch.setattr("invar.shell.commands.init.typer.confirm", lambda *_args, **_kwargs: True)
+
+    _run_init(tmp_path)
+
+    context_backup = tmp_path / ".invar" / "backup" / "v1-context.md"
+    additions_backup = tmp_path / ".invar" / "backup" / "v1-project-additions.md"
+    assert context_backup.exists()
+    assert additions_backup.exists()
+    assert context_backup.read_bytes() == original_context
+    assert additions_backup.read_bytes() == original_additions
+
+    assert context_path.read_bytes() == original_context
+    assert additions_path.read_bytes() == original_additions
+
+    assert not (tmp_path / ".claude" / "skills").exists()
+    assert not (tmp_path / ".claude" / "hooks").exists()
+    assert not (tmp_path / ".pi" / "hooks").exists()
+    assert not (tmp_path / ".pi" / "tools").exists()
+    assert not (tmp_path / ".invar" / "examples").exists()
+
+    first_claude = (tmp_path / "CLAUDE.md").read_text(encoding="utf-8")
+    _run_init(tmp_path)
+    second_claude = (tmp_path / "CLAUDE.md").read_text(encoding="utf-8")
+    assert first_claude == second_claude
+    assert second_claude.count("<!--invar:begin-->") == 1
+
+    assert context_backup.read_bytes() == original_context
+    assert additions_backup.read_bytes() == original_additions

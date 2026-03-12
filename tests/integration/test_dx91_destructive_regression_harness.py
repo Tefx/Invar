@@ -1,5 +1,13 @@
 from __future__ import annotations
 
+"""DX-91 destructive uninstall+sync regression harness.
+
+This module validates stale-asset cleanup and state convergence for the
+uninstall+template-sync path. Migration-preservation semantics (backup creation
+and byte-identical retained originals) are proven by public init migration tests
+in test_dx91_init_entrypoints.py.
+"""
+
 import os
 import shutil
 from pathlib import Path
@@ -11,7 +19,6 @@ from returns.result import Failure
 from invar.core.sync_helpers import SyncConfig
 from invar.shell.commands.template_sync import sync_templates
 from invar.shell.commands.uninstall import collect_removal_targets, execute_removal
-
 
 FIXTURE_ROOT = Path(__file__).resolve().parent.parent / "fixtures" / "dx91_migration"
 CONTROL_FILES = {
@@ -60,13 +67,13 @@ def _delete_path(root: Path, rel_path: str) -> None:
         candidate.unlink()
 
 
-def _migration_entrypoint_apply_expected_state(
+def _uninstall_then_sync_harness_apply_expected_state(
     repo_root: Path,
     fixture_root: Path,
     *,
     break_rule: bool = False,
 ) -> None:
-    """Run public migration path via real command APIs."""
+    """Run real uninstall + sync APIs (not init migration proof)."""
 
     # v1 cleanup phase (public uninstall command helpers)
     targets = collect_removal_targets(repo_root, remove_extensions=True)
@@ -160,15 +167,15 @@ def _assert_expected_repo_state(fixture_root: Path, repo_root: Path) -> None:
             assert token not in text, f"Forbidden token present in CLAUDE.md: {token}"
 
 
-def test_happy_path_mainline_fixture_migrates_end_to_end(tmp_path: Path) -> None:
+def test_happy_path_mainline_fixture_uninstall_sync_converges_end_to_end(tmp_path: Path) -> None:
     fixture_root, repo_root = _clone_input_fixture("mainline-v1-to-v2", tmp_path)
 
-    _migration_entrypoint_apply_expected_state(repo_root, fixture_root)
+    _uninstall_then_sync_harness_apply_expected_state(repo_root, fixture_root)
 
     _assert_expected_repo_state(fixture_root, repo_root)
 
 
-def test_edge_case_repeated_migration_is_idempotent(tmp_path: Path) -> None:
+def test_edge_case_repeated_uninstall_sync_runs_are_idempotent(tmp_path: Path) -> None:
     fixture_root, repo_root = _clone_input_fixture(
         "repeated-migration-idempotent-v1-source", tmp_path
     )
@@ -176,12 +183,12 @@ def test_edge_case_repeated_migration_is_idempotent(tmp_path: Path) -> None:
     run_count = int(assertions.get("run_count", 2))
     assert run_count >= 2
 
-    _migration_entrypoint_apply_expected_state(repo_root, fixture_root)
+    _uninstall_then_sync_harness_apply_expected_state(repo_root, fixture_root)
     first = (repo_root / "CLAUDE.md").read_text(encoding="utf-8")
 
     second = first
     for _ in range(run_count - 1):
-        _migration_entrypoint_apply_expected_state(repo_root, fixture_root)
+        _uninstall_then_sync_harness_apply_expected_state(repo_root, fixture_root)
         second = (repo_root / "CLAUDE.md").read_text(encoding="utf-8")
 
     _assert_expected_repo_state(fixture_root, repo_root)
@@ -205,10 +212,12 @@ def test_edge_case_repeated_migration_is_idempotent(tmp_path: Path) -> None:
         "relative-vs-absolute-template-path",
     ],
 )
-def test_edge_and_error_fixtures_enforce_expected_state(tmp_path: Path, fixture_id: str) -> None:
+def test_edge_and_error_fixtures_enforce_expected_state_after_uninstall_sync(
+    tmp_path: Path, fixture_id: str
+) -> None:
     fixture_root, repo_root = _clone_input_fixture(fixture_id, tmp_path)
 
-    _migration_entrypoint_apply_expected_state(repo_root, fixture_root)
+    _uninstall_then_sync_harness_apply_expected_state(repo_root, fixture_root)
 
     _assert_expected_repo_state(fixture_root, repo_root)
 
@@ -216,7 +225,7 @@ def test_edge_and_error_fixtures_enforce_expected_state(tmp_path: Path, fixture_
 def test_failure_path_harness_detects_broken_preservation_deletion_rule(tmp_path: Path) -> None:
     fixture_root, repo_root = _clone_input_fixture("mainline-v1-to-v2", tmp_path)
 
-    _migration_entrypoint_apply_expected_state(repo_root, fixture_root, break_rule=True)
+    _uninstall_then_sync_harness_apply_expected_state(repo_root, fixture_root, break_rule=True)
 
     if os.getenv("DX91_EXPECT_FAILURE") == "1":
         with pytest.raises(AssertionError, match="Unexpected repo files"):
