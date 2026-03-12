@@ -13845,7 +13845,7 @@ phases:
       - removed CLI flag compatibility surface should be validated in runtime phase'
   - id: prove-destructive-regression-harness
     name: prove-destructive-regression-harness
-    status: pending
+    status: claimed
     description: 'As an INDEPENDENT TESTER (`integration-verifier`), prove the regression
       harness is capable of catching both intended DX-91 behavior and destructive
       regressions before runtime rewrite begins.
@@ -13883,6 +13883,8 @@ phases:
     depends_on:
     - build-migration-fixtures
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-12T13:10:22.558167+00:00'
   - id: freeze-harness-snapshot
     name: freeze-harness-snapshot
     status: pending
