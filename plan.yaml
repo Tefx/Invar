@@ -18713,7 +18713,7 @@ phases:
       \ verification were not expanded beyond this step's scope.\n"
   - id: dx91-python-only.dx91-python-only-retest-gate-blockers
     name: dx91-python-only.retest-gate-blockers
-    status: pending
+    status: claimed
     description: 'As an INDEPENDENT REVIEWER (`gate-reviewer`), re-test the FULL blocker
       set from `dx91-python-only.gate` after `dx91-python-only.fix-gate-blockers`.
 
@@ -18759,6 +18759,8 @@ phases:
     depends_on:
     - dx91-python-only.dx91-python-only-fix-gate-blockers
     agent: gate-reviewer
+    claimed_by: gate-reviewer
+    claimed_at: '2026-03-12T20:46:00.456154+00:00'
 - id: dx91-self-docs
   name: DX-91 Self-Docs Update
   status: locked
