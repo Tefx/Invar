@@ -1,78 +1,66 @@
+# Invar Protocol
 
-<!--
-  ┌─────────────────────────────────────────────────────────────┐
-  │ INVAR-MANAGED FILE - DO NOT EDIT DIRECTLY                   │
-  │                                                             │
-  │ This file is managed by Invar. Changes may be lost on       │
-  │ `invar update`. Add project content to CLAUDE.md instead.   │
-  └─────────────────────────────────────────────────────────────┘
+## Before Writing Code
 
-  License: CC-BY-4.0 (Creative Commons Attribution 4.0 International)
-  https://creativecommons.org/licenses/by/4.0/
+1. If you are writing a Core function, write `@pre`, `@post`, and at least one doctest BEFORE implementation.
+2. If you are unsure whether code belongs in Core or Shell, use Shell.
+3. Run `invar guard` after changes. Fix errors before committing.
 
-  You are free to share and adapt this document, provided you give
-  appropriate credit to the Invar project.
--->
-# The Invar Protocol v5.0
+## Core vs Shell
 
-> **"Trade structure for safety."**
+Use Shell if the code does any of these:
+- reads or writes files
+- makes network requests
+- reads environment variables
+- uses current time or randomness without injection
+- performs subprocess or system I/O
 
+Use Core for pure logic that only transforms already-available data.
 
-## Six Laws
+| Zone | Path | Rules |
+|------|------|-------|
+| Core | `**/core/**` | `@pre` + `@post` + doctest, no I/O imports |
+| Shell | `**/shell/**` | returns `Result[T, E]`, performs I/O |
 
-| Law | Principle |
-|-----|-----------|
-| 1. Separation | Core (pure logic) / Shell (I/O) physically separate |
-| 2. Contract Complete | Preconditions + Postconditions + Examples uniquely determine implementation |
-| 3. Context Economy | Overview → Signatures → Code (only read what's needed) |
-| 4. Decompose First | Break into sub-functions before implementing |
-| 5. Verify Reflectively | Fail → Reflect (why?) → Fix → Verify |
-| 6. Integrate Fully | Local correct ≠ Global correct; verify all paths |
+## Contract Syntax Traps
 
-
-## Core/Shell Architecture
-
-| Zone | Location | Requirements |
-|------|----------|--------------|
-| Core | `**/core/**` | Contracts + Examples, pure (no I/O) |
-| Shell | `**/shell/**` | Error-handling return type |
-
-### Decision Tree: Core vs Shell
-
-```
-Does this function...
-│
-├─ Read or write files? ──────────────────→ Shell
-├─ Make network requests? ─────────────────→ Shell
-├─ Access current time? ──────────────────→ Shell OR inject as parameter
-├─ Generate random values? ────────────────→ Shell OR inject as parameter
-├─ Print to console? ──────────────────────→ Shell (return data, Shell logs)
-├─ Access environment variables? ──────────→ Shell
-│
-└─ None of the above? ─────────────────────→ Core
-```
-
-### Injection Pattern (Universal)
-
-Instead of accessing impure values directly, inject them as parameters:
-
-```
-# Core: receives 'current_time' as parameter (pure)
-FUNCTION is_expired(expiry, current_time):
-    RETURN current_time > expiry
-
-# Shell: calls with actual time
-expired = is_expired(token.expiry, get_current_time())
-```
-
-This keeps Core functions pure and testable.
-
-
-
-## Core Example (Python)
+### `@pre` lambda must include all function parameters
 
 ```python
-from deal import pre, post
+# WRONG
+@pre(lambda x: x >= 0)
+def calc(x: int, y: int = 0): ...
+
+# CORRECT
+@pre(lambda x, y=0: x >= 0)
+def calc(x: int, y: int = 0): ...
+```
+
+### `@post` only receives `result`
+
+```python
+# WRONG
+@post(lambda result: result > x)
+
+# CORRECT
+@post(lambda result: result >= 0)
+```
+
+### Contracts must be semantic, not just type checks
+
+```python
+# WEAK
+@pre(lambda x: isinstance(x, int))
+
+# BETTER
+@pre(lambda x: x > 0)
+@pre(lambda start, end: start < end)
+```
+
+## Canonical Core Example
+
+```python
+from invar_runtime import pre, post
 
 @pre(lambda price, discount: price > 0 and 0 <= discount <= 1)
 @post(lambda result: result >= 0)
@@ -80,367 +68,45 @@ def discounted_price(price: float, discount: float) -> float:
     """
     >>> discounted_price(100, 0.2)
     80.0
-    >>> discounted_price(100, 0)      # Edge: no discount
-    100.0
     """
     return price * (1 - discount)
 ```
 
-**Self-test:** Can someone else write the exact same function from just @pre/@post + doctests?
-
-**Forbidden in Core:** `os`, `sys`, `subprocess`, `pathlib`, `open`, `requests`, `datetime.now`
-
-## Shell Example (Python)
+## Canonical Shell Example
 
 ```python
 from pathlib import Path
 from returns.result import Result, Success, Failure
 
-def read_config(path: Path) -> Result[dict, str]:
-    """Shell: handles I/O, returns Result for error handling."""
+def read_config(path: Path) -> Result[str, str]:
     try:
-        import json
-        return Success(json.loads(path.read_text()))
-    except FileNotFoundError:
-        return Failure(f"File not found: {path}")
-    except json.JSONDecodeError as e:
-        return Failure(f"Invalid JSON: {e}")
+        return Success(path.read_text())
+    except OSError as exc:
+        return Failure(str(exc))
 ```
 
-**Pattern:** Shell reads file → passes content to Core → returns Result.
-
-More examples: `.invar/examples/`
-
-
-
-
-## Contract Syntax (Python)
-
-### Lambda Signature (Critical)
+## Escape Hatches
 
 ```python
-# WRONG: Lambda only takes first parameter
-@pre(lambda x: x >= 0)
-def calculate(x: int, y: int = 0): ...
-
-# CORRECT: Lambda must include ALL parameters (even defaults)
-@pre(lambda x, y=0: x >= 0)
-def calculate(x: int, y: int = 0): ...
+# @invar:allow dead_export: CLI entry point called by framework
+# @invar:allow shell_complexity: orchestration requires many steps
 ```
 
-Guard's `param_mismatch` rule catches this as ERROR.
+Use escape hatches rarely and always include a reason.
 
-### Meaningful Contracts
-
-```python
-# Redundant - type hints already check this
-@pre(lambda x: isinstance(x, int))
-def calc(x: int): ...
-
-# Meaningful - checks business logic
-@pre(lambda x: x > 0)
-def calc(x: int): ...
-
-# Meaningful - checks relationship between params
-@pre(lambda start, end: start < end)
-def process_range(start: int, end: int): ...
-```
-
-### @post Scope
-
-```python
-# WRONG: @post cannot access function parameters
-@post(lambda result: result > x)  # 'x' not available!
-def calc(x: int) -> int: ...
-
-# CORRECT: @post can only use 'result'
-@post(lambda result: result >= 0)
-def calc(x: int) -> int: ...
-```
-
-### Doctest Examples
-
-```python
-def calculate(x: int) -> int:
-    """
-    >>> calculate(5)
-    10
-    >>> calculate(0)      # Edge case
-    0
-    """
-    return x * 2
-```
-
-
-
-## Check-In (Required)
-
-Your first message MUST display:
-
-```
-✓ Check-In: [project] | [branch] | [clean/dirty]
-```
-
-Actions:
-1. Read `.invar/context.md` (Key Rules + Current State + Lessons Learned)
-2. Show one-line status
-
-**Do NOT execute verification at Check-In.**
-Verification is for VALIDATE phase and Final only.
-
-This is your sign-in. The user sees it immediately.
-No visible check-in = Session not started.
-
-
-## USBV Workflow
-
-**U**nderstand → **S**pecify → **B**uild → **V**alidate
-
-| Phase | Purpose | Activities |
-|-------|---------|------------|
-| UNDERSTAND | Know what and why | Intent, Inspect existing code, Constraints |
-| SPECIFY | Define boundaries | Preconditions, Postconditions, Examples |
-| BUILD | Write code | Implement leaves, Compose |
-| VALIDATE | Confirm correctness | Run verification, Review if needed |
-
-**Key:** Inspect before Contract. Contracts before Code. Depth varies naturally.
-
-**Review Gate:** When verification triggers `review_suggested` (escape hatches ≥3, security paths, low coverage), invoke `/review` before completion.
-
-
-## Visible Workflow
-
-For complex tasks (3+ functions), show 3 checkpoints in TodoList:
-
-```
-□ [UNDERSTAND] Task description, codebase context, constraints
-□ [SPECIFY] Contracts and design decomposition
-□ [VALIDATE] Verification results, Review Gate if triggered, integration status
-```
-
-**BUILD is internal work** — not shown in TodoList.
-
-**Show contracts before code.** Example:
-
-```
-[SPECIFY] calculate_discount:
-PRECONDITION: price > 0 AND 0 <= rate <= 1
-POSTCONDITION: result >= 0
-FUNCTION calculate_discount(price, rate): ...
-
-[BUILD] Now coding...
-```
-
-**When to use:** New features (3+ functions), architectural changes, Core modifications.
-**Skip for:** Single-line fixes, documentation, trivial refactoring.
-
-
-## Task Completion
-
-A task is complete only when ALL conditions are met:
-- Check-In displayed: `✓ Check-In: [project] | [branch] | [clean/dirty]`
-- Intent explicitly stated
-- Contract written before implementation
-- Final displayed: `✓ Final: verification PASS | <errors>, <warnings>`
-- User requirement satisfied
-
-**Missing any = Task incomplete.**
-
----
-
-## Baseline Protocol (Technical Debt)
-
-When working on projects with existing verification failures:
-
-### Establishing Baseline
-
-Before starting implementation:
-1. Run verification from **repository root**: `invar_guard(path=".")`
-2. If failures exist and are pre-existing debt → **Record as baseline**
-3. Note the failure count and affected files
-
-### During Implementation
-
-**Allowed:**
-- Continue work despite baseline failures
-- Use language-specific local checks (e.g., linters, type checkers, unit tests)
-- Focus on ensuring new code doesn't introduce violations
-
-**Required:**
-- New code must not expand the failure surface
-- Changes to existing files must not add new violations
-
-### Final Output Format
-
-**When baseline is cleared:**
-```
-✓ Final: guard PASS | 0 errors, 2 warnings
-```
-
-**When baseline still exists (known debt):**
-```
-✓ Final: guard BASELINE_FAIL (known debt) | local checks PASS
-```
-
-**If new violations introduced:**
-```
-✗ Final: guard FAIL | X new errors (baseline: Y)
-```
-
-### Guard Best Practices
-
-**Always run from repository root:**
-```python
-# ✅ CORRECT - Runs from repo root
-invar_guard(path=".")
-
-# ❌ WRONG - May fail language detection in subdirectories
-invar_guard(path="src/components")
-```
-
-**Reason:** Subdirectories may lack language marker files (pyproject.toml, tsconfig.json), causing incorrect detection defaults.
-
----
-
-*Protocol v5.0 — USBV workflow | [Examples](.invar/examples/)*
-
-
-
-## Markers (Python)
-
-### Entry Points
-
-Entry points are framework callbacks (`@app.route`, `@app.command`) at Shell boundary.
-- **Exempt** from `Result[T, E]` — must match framework signature
-- **Keep thin** — delegate to Shell functions that return Result
-  - Traditional callbacks: max **15** lines (`entry_max_lines`)
-  - MCP tool handlers: max **35** lines (`entry_point_thresholds["mcp_tool"]`)
-
-Auto-detected by decorators. For custom callbacks:
-
-```python
-# @shell:entry
-def on_custom_event(data: dict) -> dict:
-    result = handle_event(data)
-    return result.unwrap_or({"error": "failed"})
-```
-
-### Shell Complexity
-
-When shell function complexity is justified:
-
-```python
-# @shell_complexity: Subprocess with error classification
-def run_external_tool(...): ...
-
-# @shell_orchestration: Multi-step pipeline coordination
-def process_batch(...): ...
-```
-
-### Architecture Escape Hatch
-
-When rule violation has valid architectural justification:
-
-```python
-# @invar:allow shell_result: Framework callback signature fixed
-def flask_handler(): ...
-```
-
-**Valid rule names for @invar:allow:**
-- `shell_result` — Shell function without Result return type
-- `entry_point_too_thick` — Entry point exceeds kind-specific limit (15 traditional / 35 MCP tool handlers)
-- `forbidden_import` — I/O import in Core (rare, justify carefully)
-
-Run `invar rules` for complete rule catalog with hints.
-
-
-
-
-## Commands (Python)
-
-```bash
-invar guard              # Check git-modified files (fast, default)
-invar guard --all        # Check entire project (CI, release)
-invar guard --static     # Static only (quick debug, ~0.5s)
-invar guard --coverage   # Collect branch coverage
-invar guard -c           # Contract coverage only (DX-63)
-invar sig <file>         # Show contracts + signatures
-invar map --top 10       # Most-referenced symbols
-invar rules              # List all rules with detection/hints (JSON)
-```
-
-**Default behavior**: Checks git-modified files for fast feedback during development.
-Use `--all` for comprehensive checks before release.
-
-## Configuration (Python)
+## Minimal Configuration
 
 ```toml
-# pyproject.toml
 [tool.invar.guard]
-core_paths = ["src/myapp/core"]    # Default: ["src/core", "core"]
-shell_paths = ["src/myapp/shell"]  # Default: ["src/shell", "shell"]
-max_file_lines = 500               # Default: 500 (warning at 80%)
-max_function_lines = 50            # Default: 50
-timeout_doctest = 60                 # Default: 60s
-timeout_crosshair = 300              # Default: 300s
-timeout_hypothesis = 300             # Default: 300s
-# Doctest lines are excluded from size calculations
-```
-
-```toml
-# invar.toml
-[guard]
 core_paths = ["src/myapp/core"]
 shell_paths = ["src/myapp/shell"]
 ```
 
-`.invar/config.toml` is deprecated and no longer loaded.
+## Common Guard Repairs
 
-
-
-
-## Troubleshooting (Python)
-
-### Size Limits (Agent Quick Reference)
-
-| Rule | Limit | Fix |
-|------|-------|-----|
-| `function_too_long` | **50 lines** | Extract helper: `_impl()` + main with docstring |
-| `file_too_long` | **500 lines** | Split by responsibility |
-| `entry_point_too_thick` (traditional callbacks) | **15 lines** | Delegate to Shell functions |
-| `entry_point_too_thick` (MCP tool handlers) | **35 lines** | Delegate to Shell functions |
-
-*Doctest lines excluded from counts. Limits are line-based and configurable in `pyproject.toml` (`entry_max_lines`, `entry_point_thresholds`).*
-
-### Common Errors
-
-| Symptom | Cause | Fix |
-|---------|-------|-----|
-| `param_mismatch` error | Lambda missing params | Include ALL params (even defaults) |
-| `shell_result` error | Shell func no Result | Add Result[T,E] or @invar:allow |
-| `is_failure()` not found | Wrong Result check | Use `isinstance(result, Failure)` |
-
-### Result Type Usage
-
-```python
-from returns.result import Result, Success, Failure
-
-# Creating results
-return Success(value)
-return Failure(error)
-
-# Checking results
-if isinstance(result, Failure):
-    handle_error(result.failure())
-else:
-    use_value(result.unwrap())
-
-# Chaining
-result.map(transform).bind(next_operation)
-```
-
-
-
----
-
-*Protocol v5.0 — USBV workflow (DX-32) | [Examples](.invar/examples/)*
+| Error | Fix |
+|------|-----|
+| `missing_contract` | add `@pre`, `@post`, and a doctest before implementation |
+| `param_mismatch` | include every function parameter in the `@pre` lambda |
+| `shell_result` | return `Result[T, E]` from Shell functions |
+| `forbidden_import` | move I/O out of Core or inject the value as a parameter |

@@ -86,6 +86,36 @@ def test_missing_target_files_are_created_for_older_repo(tmp_path: Path) -> None
     assert "INVAR.md" in report.created
 
 
+def test_create_only_context_file_is_created_from_templates(tmp_path: Path) -> None:
+    result = sync_templates(
+        tmp_path,
+        SyncConfig(syntax="mcp", template_root=str(_v2_template_root())),
+    )
+
+    assert isinstance(result, Success)
+    report = result.unwrap()
+    context_file = tmp_path / ".invar" / "context.md"
+    assert context_file.exists()
+    assert ".invar/context.md" in report.created
+    assert "## Current State" in context_file.read_text(encoding="utf-8")
+
+
+def test_existing_context_file_is_preserved_as_create_only(tmp_path: Path) -> None:
+    context_file = tmp_path / ".invar" / "context.md"
+    context_file.parent.mkdir(parents=True, exist_ok=True)
+    context_file.write_text("legacy context stays", encoding="utf-8")
+
+    result = sync_templates(
+        tmp_path,
+        SyncConfig(syntax="mcp", template_root=str(_v2_template_root())),
+    )
+
+    assert isinstance(result, Success)
+    report = result.unwrap()
+    assert context_file.read_text(encoding="utf-8") == "legacy context stays"
+    assert ".invar/context.md" in report.skipped
+
+
 def test_clear_overwrite_semantics_remove_stale_managed_content(tmp_path: Path) -> None:
     custom_templates = tmp_path / "templates"
     (custom_templates / "config").mkdir(parents=True)

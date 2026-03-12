@@ -188,7 +188,8 @@ def test_edge_case_repeated_migration_is_idempotent(tmp_path: Path) -> None:
     if assertions.get("managed_block_byte_identical_on_second_run") is True:
         assert first == second
     if assertions.get("managed_block_count") is not None:
-        assert second.count("<!--invar:managed") == int(assertions["managed_block_count"])
+        managed_count = second.count("<!--invar:managed") + second.count("<!--invar:begin-->")
+        assert managed_count == int(assertions["managed_block_count"])
     if assertions.get("user_content_outside_markers_byte_identical") is True:
         assert "kept user preface" in second
         assert "kept user suffix" in second
@@ -218,7 +219,9 @@ def test_failure_path_harness_detects_broken_preservation_deletion_rule(tmp_path
     _migration_entrypoint_apply_expected_state(repo_root, fixture_root, break_rule=True)
 
     if os.getenv("DX91_EXPECT_FAILURE") == "1":
-        _assert_expected_repo_state(fixture_root, repo_root)
+        with pytest.raises(AssertionError, match="Unexpected repo files"):
+            _assert_expected_repo_state(fixture_root, repo_root)
+        pytest.fail("DX91_EXPECT_FAILURE=1 forced the expected Unexpected repo files assertion")
         return
 
     with pytest.raises(AssertionError, match="Unexpected repo files"):
