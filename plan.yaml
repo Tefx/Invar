@@ -17752,7 +17752,7 @@ phases:
       \ handed to the new serialized follow-up step.\n"
   - id: dx91-python-only.remove-typescript-template-family-residue
     name: remove-typescript-template-family-residue
-    status: claimed
+    status: done
     description: 'Remove or explicitly reclassify remaining TypeScript references
       in non-denylist template families so the phase-level broad scan over `src/invar/templates`
       becomes deterministic.
@@ -17856,6 +17856,26 @@ phases:
     agent: python-executor
     claimed_by: python-senior
     claimed_at: '2026-03-12T18:29:13.540021+00:00'
+    done_at: '2026-03-12T18:36:56.084829+00:00'
+    evidence: "Artifact:\n- Main squash commit: `abc7163`\n- Worktree commit: `8c1f8d9a125d3405d818d0afb48138db7e20016f`\n\
+      \nVerification:\n- Broad template scan:\n  `rg -n \"typescript|TypeScript|node_tools|tsconfig\\\
+      .json|ts-query|guard_ts|ts_compiler\" src/invar/templates`\n  -> Remaining matches\
+      \ deterministically limited to classified families.\n- Classified remaining\
+      \ families:\n  - `src/invar/templates/skills/extensions/**` -> extension-only,\
+      \ non-blocking\n  - `src/invar/templates/onboard/patterns/typescript.md` ->\
+      \ historical/migration-reference, non-blocking\n  - `src/invar/templates/claude-md/typescript/critical-rules.md`\
+      \ -> legacy variant template, non-blocking\n- `invar_guard(path=\"/Users/tefx/Projects/Invar/.vectl/worktrees/dx91-python-only.remove-typescript-template-family-residue\"\
+      , changed=true)` -> passed (errors=0, warnings=0)\n\nFiles changed:\n- `src/invar/templates/commands/audit.md.jinja`\n\
+      - `src/invar/templates/hooks/PostToolUse.sh.jinja`\n- `src/invar/templates/hooks/PreToolUse.sh.jinja`\n\
+      - `src/invar/templates/hooks/UserPromptSubmit.sh.jinja`\n- `src/invar/templates/hooks/pi/invar.ts.jinja`\n\
+      - `src/invar/templates/manifest.toml`\n- `src/invar/templates/skills/develop/SKILL.md.jinja`\n\
+      - `src/invar/templates/skills/invar-reflect/CONFIG.md`\n- `src/invar/templates/skills/invar-reflect/template.md`\n\
+      \nSpec link:\n- `dx91-python-only.remove-typescript-template-family-residue`\n\
+      - refs: DX-91 simplification/migration semantics and regression-surfaces sections\
+      \ specified in step\n\nGaps/Notes:\n- Step purpose (deterministic classification\
+      \ of non-denylist template-family hits) is satisfied; downstream verifier can\
+      \ now classify remaining template hits without ambiguity.\n- No modifications\
+      \ to `plan.yaml` or orchestrator state files.\n"
 - id: dx91-self-docs
   name: DX-91 Self-Docs Update
   status: locked
