@@ -18229,7 +18229,7 @@ phases:
       \ sources updated instead.\n"
   - id: dx91-python-only.verify-python-only-surface-fix-all-blockers
     name: verify-python-only-surface.fix-all-blockers
-    status: claimed
+    status: done
     description: "Fix ALL blockers found by `verify-python-only-surface` in ONE batched\
       \ remediation step. Do not fix just the first blocker.\n\nstep_type: implementation\n\
       agent: python-senior\nprior_loop:\n- verify-python-only-surface\nremaining_blocker:\
@@ -18323,6 +18323,42 @@ phases:
     agent: python-senior
     claimed_by: python-senior
     claimed_at: '2026-03-12T19:33:50.155241+00:00'
+    done_at: '2026-03-12T20:01:03.171763+00:00'
+    evidence: "Artifact:\n- Main squash commit: `3c370a3`\n- Worktree commits: `ce7925c53d7e4abfcc30e92edbc089ad65349fd0`,\
+      \ `f00b22e3c6c58e5445a30645f6a43f7067a586f5`\n\nFiles changed:\n- `.invar/context.md`\n\
+      - `CLAUDE.md`\n- `DX-91-REGRESSION-SURFACES.md`\n- `README.md`\n- `docs/design.md`\n\
+      - `docs/dx91-python-only-scan-policy.md` (new)\n- `src/invar/core/language.py`\n\
+      - `src/invar/core/models.py`\n- `src/invar/shell/fs.py`\n- `src/invar/shell/templates.py`\n\
+      \nVerification:\n- B1 command-drift scan over active boundary:\n  `rg -n \"\
+      init --preview|dev sync --dry-run|python - <<'PY'|verify-python-only-surface\"\
+      \ README.md CLAUDE.md pyproject.toml src/invar .claude .invar --glob '!**/.invar/archive/**'\
+      \ --glob '!**/.invar/cache/**'` -> no active-boundary matches\n- B2 TypeScript\
+      \ residue scan over active boundary:\n  `rg -n \"typescript|TypeScript|tsconfig\\\
+      .json|ts-query|guard_ts|ts_compiler\" README.md CLAUDE.md pyproject.toml src/invar\
+      \ .claude .invar --glob '!**/.invar/archive/**' --glob '!**/.invar/cache/**'`\
+      \ -> no matches\n- B3 agent-era scan over active boundary:\n  `rg -n \"\\.claude/skills|\\\
+      .claude/hooks|\\.pi/hooks|\\.invar/examples|\\.invar/feedback|USBV|UNDERSTAND|SPECIFY|VALIDATE|/develop|/review|/investigate|/propose|Check-In|✓\
+      \ Final|UserPromptSubmit|PreToolUse|PostToolUse|Stop\\.sh\" README.md CLAUDE.md\
+      \ pyproject.toml src/invar .claude .invar --glob '!**/.invar/archive/**' --glob\
+      \ '!**/.invar/cache/**'` -> matches limited to non-blocking compatibility/template-reference\
+      \ surfaces under repaired policy\n- `invar_guard(changed=true)` in worker run\
+      \ -> pass (errors=0, warnings=0)\n- Main merge commit hooks: INVAR.md Protection\
+      \ PASS, Ruff PASS, mypy PASS, Invar Guard PASS\n\nB1 sibling-search coverage:\n\
+      - full active mutable boundary scanned; stale command strings removed/reclassified\n\
+      \nB2 sibling-search coverage:\n- full active mutable boundary scanned; reported\
+      \ active blockers cleared (`core/models.py`, `core/language.py`, `shell/templates.py`,\
+      \ `shell/fs.py` + siblings)\n\nB3 sibling-search coverage:\n- full active mutable\
+      \ boundary scanned and classified\n- repaired boundary enforced: blockers only\
+      \ in active mutable surfaces\n\nResidue classification:\n- `canonical-protected`:\
+      \ `INVAR.md`\n- `historical/archive`: `.invar/archive/**`, proposals/test-report\
+      \ artifacts\n- `compatibility/template-reference`: remaining pattern matches\
+      \ in compatibility/template-reference surfaces; non-blocking under repaired\
+      \ policy\n\nSpec link:\n- `dx91-python-only.verify-python-only-surface-fix-all-blockers`\n\
+      - repaired policy captured in `docs/dx91-python-only-scan-policy.md`\n\nGaps/Notes:\n\
+      - Initial attempt failed due over-broad B3 boundary; planner remediation clarified\
+      \ feasible blocker boundary and step was resumed successfully.\n- Temporary\
+      \ local changes were stashed before merge (`vectl-temp-batched-fix-local`) to\
+      \ avoid data loss during integration.\n"
   - id: dx91-python-only.verify-python-only-surface-retest-all-blockers
     name: verify-python-only-surface.retest-all-blockers
     status: pending
