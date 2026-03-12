@@ -16366,7 +16366,7 @@ phases:
       - none blocking after batched remediation'
   - id: retest-init-dev-sync-flow-batch
     name: retest-init-dev-sync-flow-batch
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT TESTER (`integration-verifier`), re-run the DX-91
       init/dev-sync proof after the batched fix step and try to break it.
 
@@ -16424,6 +16424,33 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-12T14:56:35.623585+00:00'
+    done_at: '2026-03-12T15:01:09.102722+00:00'
+    evidence: "Artifact:\n- PR: none (verify-only retest)\n- Retest task: ses_31d72db85ffe2FPNedD8LqoRPs\n\
+      \nVerification:\n- Run: `uv run pytest -v tests/integration/test_dx91_init_entrypoints.py::test_main_path_writes_minimal_dx91_file_set\
+      \ tests/integration/test_dx91_dev_sync_template_merge.py::test_main_path_preserves_user_content_and_rewrites_managed\
+      \ tests/integration/test_dx91_destructive_regression_harness.py::test_happy_path_mainline_fixture_migrates_end_to_end`\n\
+      \  - Outcome: collected 3; all PASSED (`3 passed in 2.85s`)\n- Run: `uv run\
+      \ pytest -v -s tests/integration/test_dx91_destructive_regression_harness.py::test_happy_path_mainline_fixture_migrates_end_to_end`\n\
+      \  - Outcome: migration action logs emitted; final PASS\n- Run: `DX91_EXPECT_FAILURE=1\
+      \ uv run pytest -v tests/integration/test_dx91_destructive_regression_harness.py::test_failure_path_harness_detects_broken_preservation_deletion_rule`\n\
+      \  - Outcome: test FAILs intentionally after entering expected `Unexpected repo\
+      \ files` assertion path (`Failed: DX91_EXPECT_FAILURE=1 forced the expected\
+      \ Unexpected repo files assertion`)\n- Run: `uv run pytest -v tests/integration/test_dx91_dev_sync_template_merge.py::test_create_only_context_file_is_created_from_templates\
+      \ 'tests/integration/test_dx91_destructive_regression_harness.py::test_edge_and_error_fixtures_enforce_expected_state[missing-file-fallback-partial-repo]'`\n\
+      \  - Outcome: collected 2; both PASSED (`2 passed in 0.90s`)\n\nSpec link:\n\
+      - docs/proposals/DX-91-migration-semantics.md\n- docs/proposals/DX-91-generated-file-contracts.md\n\
+      - tests/integration/test_dx91_init_entrypoints.py\n- tests/integration/test_dx91_dev_sync_template_merge.py\n\
+      - tests/integration/test_dx91_destructive_regression_harness.py\n\nMain path\
+      \ result:\n- End-to-end init->dev-sync proof passes with preserved-path assertions\
+      \ and expected generated outputs.\n\nFailure path result:\n- Explicit destructive-edge\
+      \ assertion path is reached and demonstrated (intentional forced fail), not\
+      \ masked by earlier missing-path regression.\n\nRegression check:\n- No recurrence\
+      \ of `.invar/context.md` missing-path failure in scoped retest commands.\n\n\
+      Path exercised:\n- Source templates (`CLAUDE.md.v2.jinja`, `INVAR.md.v2.jinja`)\
+      \ -> generated files in temp repos -> destructive harness assertions (`_assert_expected_repo_state`)\
+      \ -> pass/fail verdicts.\n\nFiles changed:\n- none (verify-only)\n\nGaps/Notes:\n\
+      - Retest used `uv run pytest` consistently due environment interpreter constraints\
+      \ with direct python invocation.\n\ndiscovered_issues:\n- none in scope"
 - id: dx91-python-only
   name: DX-91 Python-Only Cleanup
   status: locked
