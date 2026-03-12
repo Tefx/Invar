@@ -17393,25 +17393,46 @@ phases:
 
       Test for:
 
-      - Happy path: user-facing commands and repository guidance no longer imply Node/TypeScript
-      or retired agent-era requirements
+      - Happy path: `invar init --preview`, `invar dev sync --dry-run`, and `invar
+      guard` behave as Python-only surfaces with no Node/TypeScript requirements
 
-      - Edge cases: migrated repos, stale docs links, generated-file references, packaging
-      metadata
+      - Edge cases: active README/template/package/runtime surfaces contain no stale
+      TypeScript references, while historical references remain only in the explicit
+      allowlist paths
 
-      - Error scenarios: broken imports, missing files after cleanup, dangling command
-      references
+      - Error scenarios: broken imports after file deletion, stale detection logic,
+      dangling generated-output/template references, packaging residue
 
 
-      Document ALL findings. A test that discovers issues is a SUCCESS.'
-    verification: '- Main path: independent verification finds the Python-only surface
-      coherent across runtime, packaging, and generated assets
+      Document ALL findings. A test that discovers issues is a SUCCESS.
 
-      - Failure path: targeted search for stale Node/agent-era references is performed
-      and reported
 
-      - Evidence identifies any remaining blockers or explicitly states why coverage
-      is sufficient'
+      Allowlist for historical residual references:
+
+      - `docs/proposals/**`
+
+      - `DX-91-REGRESSION-SURFACES.md`
+
+      - `docs/test-reports/**`
+
+      - `artifacts/**`
+
+      - `tests/fixtures/**`
+
+      - `.invar/context.md`
+
+      '
+    verification: '- Main path: independently execute `invar init --preview`, `invar
+      dev sync --dry-run`, and `invar guard` and report concrete output proving the
+      active surface is Python-only
+
+      - Failure path: run `rg -n "typescript|TypeScript|node_tools|tsconfig\\.json|ts-query|guard_ts|ts_compiler"
+      README.md pyproject.toml src/invar` and classify every match as blocker (denylist)
+      or allowed historical residue (allowlist only)
+
+      - Evidence must state whether denylist active paths are clean, list any allowlist
+      matches found, and identify blockers if any active runtime/package/template
+      path still advertises TypeScript'
     depends_on:
     - remove-stale-agent-assets
     agent: blind-tester
