@@ -18761,6 +18761,171 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-12T20:46:00.456154+00:00'
+  - id: dx91-python-only.dx91-python-only-fix-remaining-gate-blockers
+    name: dx91-python-only.fix-remaining-gate-blockers
+    status: pending
+    description: 'Fix ALL remaining blockers from `dx91-python-only.dx91-python-only-retest-gate-blockers`
+      in ONE batched remediation step. Fix ALL of these, not just the first.
+
+
+      step_type: implementation
+
+      agent: python-senior
+
+      agent_source: default
+
+      prior_loop:
+
+      - dx91-python-only.dx91-python-only-fix-gate-blockers
+
+      - dx91-python-only.dx91-python-only-retest-gate-blockers
+
+      remaining_blocker: uninstall/removal-policy mismatch and active-docs/CLI drift
+      remain unresolved; TypeScript-retirement coherence must stay covered as a regression
+      check in the follow-up retest.
+
+      why_new_loop: the existing retest isolated a narrower remaining blocker set;
+      extending the chain is safer than reopening the earlier broad gate-fix step
+      because the unresolved work is now concentrated on CLI policy, command/module
+      coherence, and active docs alignment.
+
+
+      spec_refs:
+
+      - `docs/proposals/DX-91-simplification.md`
+
+      - `docs/proposals/DX-91-migration-semantics.md`
+
+      - `DX-91-REGRESSION-SURFACES.md`
+
+      - `README.md`
+
+      - `docs/design.md`
+
+
+      touch_paths:
+
+      - `README.md`
+
+      - `docs/design.md`
+
+      - `tests/integration/test_dx91_destructive_regression_harness.py`
+
+      - `src/invar/shell/commands/`
+
+      - `src/invar/cli/`
+
+      - CLI help / command-table surfaces defining the active DX-91 command set
+
+
+      harness_refs:
+
+      - `dx91-python-only.dx91-python-only-retest-gate-blockers`
+
+      - destructive regression harness for DX-91 removal flows
+
+      - `uv run invar --help`
+
+      - `uv run invar uninstall --help`
+
+
+      ## Blockers to Fix (ALL of these, not just the first)
+
+
+      ### B1: uninstall surface mismatch
+
+      Locations: CLI help surface, `invar.shell.commands.uninstall`, destructive regression
+      harness, `docs/design.md`
+
+      Remediation: choose ONE coherent DX-91 policy and apply it consistently across
+      code, tests, and docs. If uninstall is removed, docs/tests/imports must stop
+      requiring it. If uninstall is retained, restore command/module wiring and help
+      surface consistently.
+
+      Grep hint: `uninstall|invar\.shell\.commands\.uninstall|collect_removal_targets|execute_removal`
+
+      IMPORTANT: search sibling command-routing, import, regression-harness, and docs
+      references beyond the listed locations.
+
+
+      ### B3: active docs mismatch with actual CLI
+
+      Locations: `README.md`, `docs/design.md`, CLI help output
+
+      Remediation: align active docs with the real DX-91 CLI surface exposed by `uv
+      run invar --help`; remove or update command-table entries and flow docs that
+      still advertise commands/flags/flows not actually supported.
+
+      Grep hint: `\btest\b|\bverify\b|\bmutate\b|\bhooks\b|\bskill\b|init --claude|uninstall`
+
+      IMPORTANT: fix active docs against the real CLI surface, not against stale historical
+      wording.
+
+
+      ### B2: retain regression coverage for TS retirement coherence
+
+      Locations: prior B2 evidence surfaces in tests/templates/docs/modules
+
+      Remediation: do not reopen B2 as a new blocker unless the B1/B3 policy fix regresses
+      TS-retirement coherence; preserve the regression expectation in the follow-up
+      retest.
+
+      Grep hint: `\.ts\b|TypeScript|typescript|ts_compiler|vitest|eslint|tsc`
+
+      IMPORTANT: follow-up evidence must show B2 still passes after the B1/B3 remediation.
+
+
+      ## Completion Criteria
+
+      - ALL remaining blockers above are fixed in one coherent remediation pass.
+
+      - Uninstall policy is singular and consistent across CLI wiring, module surface,
+      destructive-regression tests, and active docs.
+
+      - Active docs match the actual DX-91 CLI help surface.
+
+      - B2 regression expectations remain intact; no TS-facing active surface is reintroduced
+      while fixing B1/B3.
+
+      - Evidence includes sibling-search coverage for each grep hint.
+
+
+      known_risks:
+
+      - Partial uninstall removal/restoration will recreate the same split-surface
+      blocker family.
+
+      - README/design docs can drift from the real CLI even when tests are updated.
+
+      - Narrow fixes for B1/B3 can accidentally reintroduce TypeScript-facing guidance
+      unless B2 remains under regression watch.
+
+
+      Gate Preview (what the follow-up retest WILL reject)
+
+      1. Any surviving uninstall import/help/docs path that contradicts the chosen
+      DX-91 policy
+
+      2. Any active README/design command table or flow doc that still disagrees with
+      `uv run invar --help`
+
+      3. Any B2 TypeScript-retirement regression reopened by the remediation
+
+      '
+    verification: '- Main path: chosen uninstall policy is internally consistent across
+      CLI/module/docs/test surfaces
+
+      - Failure path: grep-based sibling searches show no residual uninstall/doc-drift
+      blocker remains in active surfaces
+
+      - Regression path: TS-retirement coherence checks remain green after the B1/B3
+      fixes
+
+      - Proof distinguishes active docs/runtime surfaces from historical or proposal-only
+      references'
+    depends_on:
+    - dx91-python-only.dx91-python-only-retest-gate-blockers
+    agent: python-senior
 - id: dx91-self-docs
   name: DX-91 Self-Docs Update
   status: locked
