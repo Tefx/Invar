@@ -15685,13 +15685,13 @@ phases:
       - none'
 - id: dx91-init-runtime
   name: DX-91 Init & Dev-Sync Runtime Rewrite
-  status: pending
+  status: in_progress
   depends_on:
   - dx91-harness
   steps:
   - id: rewrite-init-entrypoints
     name: rewrite-init-entrypoints
-    status: pending
+    status: claimed
     description: 'Rewrite the `invar init` runtime path for the DX-91 simplified product
       surface.
 
@@ -15750,6 +15750,8 @@ phases:
 
       - Proof: no legacy init-only branch remains where DX-91 scope requires removal'
     agent: python-senior
+    claimed_by: python-senior
+    claimed_at: '2026-03-12T14:08:50.271182+00:00'
   - id: rewrite-dev-sync-template-merge
     name: rewrite-dev-sync-template-merge
     status: pending
