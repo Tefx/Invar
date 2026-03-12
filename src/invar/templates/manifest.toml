@@ -1,29 +1,18 @@
-# DX-49: Template Manifest
-# Defines ownership rules and template behaviors
+# DX-91: Minimal template manifest
 
 [meta]
 version = "5.0"
 workflow = "USBV"
 
-# =============================================================================
-# Ownership Classification
-# =============================================================================
-
 [ownership]
-# Fully managed - safe to overwrite completely
 fully_managed = [
     "INVAR.md",
-    ".invar/examples/**",
 ]
 
-# Partially managed - only update marked regions
 partially_managed = [
     "CLAUDE.md",
-    ".claude/skills/*/SKILL.md",
-    ".claude/commands/*.md",
 ]
 
-# Never touch - other tools or user private files
 never_touch = [
     ".claude/settings*.json",
     ".mcp.json",
@@ -32,117 +21,43 @@ never_touch = [
     ".invar/config.toml",
 ]
 
-# =============================================================================
-# Region Definitions
-# =============================================================================
-
 [regions."CLAUDE.md"]
 managed = { action = "overwrite" }
 project = { action = "inject", source = ".invar/project-additions.md" }
 user = { action = "preserve" }
 
-[regions.".claude/skills/*/SKILL.md"]
-skill = { action = "overwrite" }
-extensions = { action = "preserve" }
-
-# =============================================================================
-# Template Generation
-# =============================================================================
-
 [templates]
-# Protocol files (Jinja2 composition - LX-05)
-"INVAR.md" = { src = "protocol/INVAR.md.jinja", type = "jinja" }
-
-# Config files (Jinja2 templates)
-"CLAUDE.md" = { src = "config/CLAUDE.md.jinja", type = "jinja" }
-"AGENT.md" = { src = "config/AGENT.md.jinja", type = "jinja" }
-".invar/context.md" = { src = "config/context.md.jinja", type = "jinja" }
+"INVAR.md" = { src = "protocol/INVAR.md.v2.jinja", type = "jinja" }
+"CLAUDE.md" = { src = "config/CLAUDE.md.v2.jinja", type = "jinja" }
 ".pre-commit-config.yaml" = { src = "config/pre-commit.yaml.jinja", type = "jinja" }
 
-# Skills (Jinja2 with syntax variable)
-".claude/skills/develop/SKILL.md" = { src = "skills/develop/SKILL.md.jinja", type = "jinja" }
-".claude/skills/investigate/SKILL.md" = { src = "skills/investigate/SKILL.md.jinja", type = "jinja" }
-".claude/skills/propose/SKILL.md" = { src = "skills/propose/SKILL.md.jinja", type = "jinja" }
-".claude/skills/review/SKILL.md" = { src = "skills/review/SKILL.md.jinja", type = "jinja" }
-
-# DX-79: Invar usage feedback skill
-".claude/skills/invar-reflect/SKILL.md" = { src = "skills/invar-reflect/SKILL.md", type = "copy" }
-".claude/skills/invar-reflect/template.md" = { src = "skills/invar-reflect/template.md", type = "copy" }
-".claude/skills/invar-reflect/CONFIG.md" = { src = "skills/invar-reflect/CONFIG.md", type = "copy" }
-
-# Commands (Jinja2 templates for language-specific content)
-".claude/commands/audit.md" = { src = "commands/audit.md.jinja", type = "jinja" }
-".claude/commands/guard.md" = { src = "commands/guard.md", type = "copy" }
-
-# Examples (language-aware directory copy - LX-05 hotfix)
-".invar/examples/" = { src = "examples/{language}/", type = "copy_dir_lang" }
-
-# =============================================================================
-# Variables
-# =============================================================================
-
 [variables]
-# Available for Jinja2 templates
-syntax = "cli"          # "cli" or "mcp"
-language = "python"     # python-only mode (DX-91)
+syntax = "cli"
+language = "python"
 version = "5.0"
-project_name = ""       # Set by init
-
-# =============================================================================
-# Command Behaviors
-# =============================================================================
+project_name = ""
 
 [commands.init]
-# Files created by invar init
 creates = [
     "INVAR.md",
     "CLAUDE.md",
-    ".invar/context.md",
-    ".invar/examples/",
-    ".claude/skills/",
-    ".claude/commands/",
     ".pre-commit-config.yaml",
 ]
-syntax = "cli"          # Default syntax for new projects
-
-[commands.update]
-# How invar update handles existing files
-overwrite = ["INVAR.md", ".invar/examples/"]
-merge = ["CLAUDE.md", ".claude/skills/"]
-skip = [".invar/context.md"]
+syntax = "cli"
 
 [commands.dev_sync]
-# For Invar project only (invar dev sync)
 syntax = "mcp"
 inject_project_additions = true
 
-# =============================================================================
-# DX-56: Sync Configuration (Unified Sync Engine)
-# =============================================================================
-
 [sync]
-# Files that are fully managed (overwrite completely on sync)
 fully_managed = [
     "INVAR.md",
 ]
 
-# Files with region-based updates (update managed, preserve user)
 region_managed = [
     "CLAUDE.md",
-    ".claude/skills/develop/SKILL.md",
-    ".claude/skills/investigate/SKILL.md",
-    ".claude/skills/propose/SKILL.md",
-    ".claude/skills/review/SKILL.md",
 ]
 
-# Files created once, never updated by sync
 create_only = [
-    ".invar/context.md",
-    ".invar/examples/",
     ".pre-commit-config.yaml",
-    ".claude/commands/audit.md",
-    ".claude/commands/guard.md",
-    ".claude/skills/invar-reflect/SKILL.md",
-    ".claude/skills/invar-reflect/template.md",
-    ".claude/skills/invar-reflect/CONFIG.md",
 ]

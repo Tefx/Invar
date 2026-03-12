@@ -14,7 +14,7 @@ from pathlib import Path
 
 from returns.result import Failure, Result, Success
 
-from invar.core.sync_helpers import SyncConfig, SyncReport, should_skip_file
+from invar.core.sync_helpers import SyncConfig, SyncReport
 from invar.shell.template_engine import get_templates_dir, render_template_file
 
 __all__ = ["SyncConfig", "SyncReport", "sync_templates"]
@@ -43,7 +43,6 @@ class _RenderedAssets:
 
     claude_managed_block: str
     invar_content: str
-    context_content: str | None = None
 
 
 # @shell_complexity: sync pipeline handles write ordering, optional context file, and failure rollback reporting.
@@ -77,14 +76,6 @@ def sync_templates(path: Path, config: SyncConfig) -> Result[SyncReport, str]:
         invar_file = repo_root / "INVAR.md"
         _sync_fully_managed(invar_file, "INVAR.md", assets.invar_content, config, report)
         written.append("INVAR.md")
-
-        context_rel = ".invar/context.md"
-        if assets.context_content is not None and not should_skip_file(
-            context_rel, config.skip_patterns
-        ):
-            context_file = repo_root / context_rel
-            _sync_create_only(context_file, context_rel, assets.context_content, config, report)
-            written.append(context_rel)
 
     except OSError as exc:
         detail = ", ".join(written) if written else "none"
@@ -147,21 +138,10 @@ def _render_assets(templates_dir: Path, config: SyncConfig) -> Result[_RenderedA
     if isinstance(managed_result, Failure):
         return managed_result
 
-    context_result = _render_optional_with_fallback(
-        templates_dir,
-        [
-            "config/context.md.jinja",
-        ],
-        variables,
-    )
-    if isinstance(context_result, Failure):
-        return context_result
-
     return Success(
         _RenderedAssets(
             claude_managed_block=managed_result.unwrap(),
             invar_content=invar_result.unwrap(),
-            context_content=context_result.unwrap(),
         )
     )
 
@@ -186,22 +166,6 @@ def _render_with_fallback(
 
     detail = "; ".join(seen) if seen else "no candidates"
     return Failure(f"No usable DX-91 template source. Tried: {detail}")
-
-
-def _render_optional_with_fallback(
-    templates_dir: Path,
-    relative_candidates: list[str],
-    variables: dict[str, str],
-) -> Result[str | None, str]:
-    existing_candidates = [
-        relative for relative in relative_candidates if (templates_dir / relative).exists()
-    ]
-    if not existing_candidates:
-        return Success(None)
-    rendered = _render_with_fallback(templates_dir, existing_candidates, variables)
-    if isinstance(rendered, Failure):
-        return rendered
-    return Success(rendered.unwrap())
 
 
 def _extract_managed_block(rendered_claude: str) -> Result[str, str]:
@@ -299,23 +263,6 @@ def _sync_fully_managed(
         report.updated.append(target_rel)
     else:
         report.created.append(target_rel)
-
-
-def _sync_create_only(
-    target_file: Path,
-    target_rel: str,
-    new_content: str,
-    config: SyncConfig,
-    report: SyncReport,
-) -> None:
-    if target_file.exists():
-        report.skipped.append(target_rel)
-        return
-
-    if not config.check:
-        _atomic_write(target_file, new_content)
-
-    report.created.append(target_rel)
 
 
 def _atomic_write(path: Path, content: str) -> None:

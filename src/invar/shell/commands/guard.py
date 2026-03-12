@@ -35,11 +35,6 @@ from invar.shell.commands.doc import doc_app
 
 app.add_typer(doc_app, name="doc")
 
-# DX-79: Register feedback subcommand
-from invar.shell.commands.feedback import feedback_app
-
-app.add_typer(feedback_app, name="feedback")
-
 
 # @shell_orchestration: Statistics helper for CLI guard output
 # @shell_complexity: Iterates symbols checking kind and contracts (4 branches minimal)
@@ -683,23 +678,10 @@ def rules(
 
 # DX-48b: Import commands from shell/commands/
 from invar.shell.commands.dev_sync import dev_sync
-from invar.shell.commands.hooks import app as hooks_app  # DX-57
 from invar.shell.commands.init import init
-from invar.shell.commands.mutate import mutate  # DX-28
-from invar.shell.commands.skill import app as skill_app  # LX-07
 from invar.shell.commands.sync_self import sync_self  # DX-49
-from invar.shell.commands.test import test, verify
-from invar.shell.commands.uninstall import uninstall  # DX-69
-from invar.shell.commands.update import update
 
 app.command()(init)
-app.command()(uninstall)  # DX-69: Remove Invar from project
-app.command()(update)
-app.command()(test)
-app.command()(verify)
-app.command()(mutate)  # DX-28: Mutation testing
-app.add_typer(hooks_app, name="hooks")  # DX-57: Claude Code hooks management
-app.add_typer(skill_app, name="skill")  # LX-07: Extension skills management
 
 # DX-56: Create dev subcommand group for developer commands
 dev_app = typer.Typer(

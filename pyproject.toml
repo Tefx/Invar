@@ -95,7 +95,7 @@ forbidden_imports = [
 ]
 
 # Paths to exclude from checking
-exclude_paths = ["tests", "scripts", ".venv", "__pycache__", "templates", ".invar/examples"]
+exclude_paths = ["tests", "scripts", ".venv", "__pycache__", "templates"]
 
 # Phase 3: Guard Enhancement
 strict_pure = true          # Detect internal imports and impure calls in Core
@@ -137,18 +137,6 @@ rules = ["file_size_warning"]  # Complex strategy inference, hard to split
 [[tool.invar.guard.rule_exclusions]]
 pattern = "**/rules.py"
 rules = ["file_size_warning"]  # All rule checks in one place for discoverability
-
-[[tool.invar.guard.rule_exclusions]]
-pattern = ".invar/examples/**"
-rules = ["*"]  # Examples intentionally show "bad" patterns without contracts
-
-[[tool.invar.guard.rule_exclusions]]
-pattern = "**/examples/functional.py"
-rules = ["*"]  # Fallback: Examples intentionally show "bad" patterns
-
-[[tool.invar.guard.rule_exclusions]]
-pattern = "**/templates/examples/**"
-rules = ["*"]  # LX-05: Template source files (language-specific examples)
 
 [tool.invar]
 # Protocol governance
