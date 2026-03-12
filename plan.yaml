@@ -18273,6 +18273,83 @@ phases:
     depends_on:
     - verify-python-only-surface
     agent: python-senior
+  - id: dx91-python-only.verify-python-only-surface-retest-all-blockers
+    name: verify-python-only-surface.retest-all-blockers
+    status: pending
+    description: 'As an INDEPENDENT TESTER (`blind-tester`), re-run the full Python-only
+      surface validation after the batched remediation step and verify that ALL blocker
+      families from `verify-python-only-surface` are resolved.
+
+
+      step_type: verification
+
+      agent: blind-tester
+
+      independence_level: L1
+
+      spec_refs:
+
+      - `DX-91-REGRESSION-SURFACES.md`
+
+      - `dx91-python-only/verify-python-only-surface`
+
+
+      touch_paths:
+
+      - `README.md`
+
+      - `CLAUDE.md`
+
+      - `INVAR.md`
+
+      - `src/invar/core/`
+
+      - `src/invar/shell/`
+
+      - `src/invar/templates/`
+
+      - verification contract text in `plan.yaml`
+
+
+      harness_refs:
+
+      - `verify-python-only-surface`
+
+      - `dx91-python-only.verify-python-only-surface-fix-all-blockers`
+
+
+      YOUR GOAL IS TO FIND REMAINING PROBLEMS, not to confirm it works.
+
+
+      Retest scope:
+
+      - B1 command-drift fixes are reproducible and deterministic in the current CLI
+
+      - B2 active-surface TypeScript residue is gone or explicitly reclassified per
+      policy
+
+      - B3 agent-era residue scan leaves only explicit allowlist/historical matches
+
+
+      Document any remaining blocker, should-fix, or allowlist drift. A retest that
+      finds issues is a SUCCESS because it prevents bad freeze/gate evidence.'
+    verification: '- Independently execute the corrected `invar init` preview proof
+      path, corrected `invar dev sync` dry-run proof path, corrected inventory command
+      using `python3`, and `invar guard`; paste concrete output
+
+      - Re-run the TypeScript active-surface residue scan and classify every remaining
+      match as blocker or allowed historical residue
+
+      - Re-run the agent-era broad scan and classify every remaining match as blocker
+      or allowed historical residue with explicit allowlist reference
+
+      - Confirm sibling-search coverage for all three blocker families
+
+      - Evidence must show whether freeze can proceed without command drift, active-surface
+      TypeScript residue, or non-allowlisted agent-era residue'
+    depends_on:
+    - dx91-python-only.verify-python-only-surface-fix-all-blockers
+    agent: blind-tester
 - id: dx91-self-docs
   name: DX-91 Self-Docs Update
   status: locked
