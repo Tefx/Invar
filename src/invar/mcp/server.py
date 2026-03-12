@@ -106,6 +106,16 @@ Run guard only when:
 ❌ `Read("docs/file.md")` to understand structure - Use invar_doc_toc instead
 ❌ `Grep` in markdown files - Use invar_doc_find instead
 
+### Full-Scan Gate Contract (DX-91)
+
+- For full-scan evidence in worktree gate review, the authoritative parity path is:
+  `uvx invar-tools guard --all`
+- If `invar_guard(changed=false)` reports wrapper instability while the authoritative
+  CLI path passes, classify it as tooling-path instability and do not treat it as
+  DX-91 semantic regression by itself.
+- Report wrapper-instability metadata alongside CLI proof; do not collapse wrapper
+  transport failure into semantic blocker state.
+
 ### Task Completion
 
 A task is complete ONLY when:
@@ -160,6 +170,7 @@ def _get_guard_tool() -> Tool:
             "Supports Python (pytest + doctest + CrossHair + Hypothesis) "
             "and TypeScript (tsc + eslint + vitest). "
             "Auto-detects project language from marker files (pyproject.toml, tsconfig.json). "
+            "For DX-91 full-scan gate parity, authoritative CLI path is 'uvx invar-tools guard --all'. "
             "Use this INSTEAD of Bash('pytest ...') or Bash('npm test ...')."
         ),
         inputSchema={

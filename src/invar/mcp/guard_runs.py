@@ -21,6 +21,49 @@ from typing import Any, Literal
 
 RunStatus = Literal["deferred", "running", "complete", "failed", "cancelled"]
 
+AUTHORITATIVE_FULL_SCAN_COMMAND = "uvx invar-tools guard --all"
+WRAPPER_INSTABILITY_CLASSIFICATION = "tooling_parity_wrapper_instability"
+
+
+class GuardWrapperInstabilityError(RuntimeError):
+    """Raised when MCP wrapper path fails before semantic guard verdict."""
+
+    def __init__(self, returncode: int, stderr: str) -> None:
+        self.returncode = returncode
+        self.stderr = stderr
+        detail = stderr or "no stderr"
+        super().__init__(f"MCP guard wrapper subprocess exit code {returncode}: {detail}")
+
+
+# @shell_orchestration: Shared envelope keeps deferred/sync wrapper failures consistent
+# @invar:allow shell_result: Envelope helper returns dict for MCP error payload
+def build_wrapper_instability_envelope(
+    *,
+    run_id: str,
+    path: str,
+    changed: bool,
+    subprocess_exit_code: int,
+    stderr: str,
+) -> dict[str, Any]:
+    """Build explicit tooling-parity envelope for wrapper failures."""
+    return {
+        "status": "failed",
+        "run_id": run_id,
+        "error_kind": "wrapper_instability",
+        "classification": WRAPPER_INSTABILITY_CLASSIFICATION,
+        "path": path,
+        "changed": changed,
+        "subprocess_exit_code": subprocess_exit_code,
+        "stderr": stderr,
+        "accepted_verification_path": {
+            "command": AUTHORITATIVE_FULL_SCAN_COMMAND,
+            "reason": (
+                "When MCP wrapper fails but CLI full-scan passes, treat this as tooling-path "
+                "instability, not DX-91 semantic regression."
+            ),
+        },
+    }
+
 
 # @invar:allow shell_result: Timestamp helper for shell lifecycle metadata
 def _utc_now() -> datetime:
@@ -143,6 +186,7 @@ class GuardRun:
     report: dict[str, Any] | None = None
     error_kind: str | None = None
     message: str | None = None
+    details: dict[str, Any] | None = None
     task: asyncio.Task[None] | None = None
     done_event: asyncio.Event = field(default_factory=asyncio.Event)
 
@@ -283,6 +327,23 @@ class GuardRunRegistry:
                 "run_expired",
                 "Run exceeded max runtime and was cancelled",
             )
+        except GuardWrapperInstabilityError as exc:
+            run = self._runs.get(run_id)
+            if run is None:
+                return
+            details = build_wrapper_instability_envelope(
+                run_id=run_id,
+                path=run.path,
+                changed=run.changed,
+                subprocess_exit_code=exc.returncode,
+                stderr=exc.stderr,
+            )
+            await self._set_failed(
+                run_id,
+                "wrapper_instability",
+                str(exc),
+                details=details,
+            )
         except subprocess.TimeoutExpired as exc:
             message = f"Guard subprocess timed out ({exc.timeout}s)"
             await self._set_failed(run_id, "execution_error", message)
@@ -315,7 +376,14 @@ class GuardRunRegistry:
             run.expires_at = _iso(expires_at)
             run.done_event.set()
 
-    async def _set_failed(self, run_id: str, error_kind: str, message: str) -> None:
+    async def _set_failed(
+        self,
+        run_id: str,
+        error_kind: str,
+        message: str,
+        *,
+        details: dict[str, Any] | None = None,
+    ) -> None:
         now = _utc_now()
         expires_at = now + timedelta(seconds=self._retention_seconds)
         async with self._lock:
@@ -325,6 +393,7 @@ class GuardRunRegistry:
             run.status = "failed"
             run.error_kind = error_kind
             run.message = message
+            run.details = details
             run.completed_at = _iso(now)
             run.updated_at = _iso(now)
             run.expires_at = _iso(expires_at)
@@ -376,12 +445,10 @@ class GuardRunRegistry:
 
         stdout = (stdout_b or b"").decode("utf-8", errors="replace")
         stderr = (stderr_b or b"").decode("utf-8", errors="replace").strip()
-        returncode = proc.returncode
+        returncode = proc.returncode if proc.returncode is not None else -1
 
         if returncode != 0:
-            if stderr:
-                raise RuntimeError(stderr)
-            raise RuntimeError(f"Guard subprocess failed with code {returncode}")
+            raise GuardWrapperInstabilityError(returncode, stderr)
 
         return _parse_guard_json(stdout)
 
@@ -450,7 +517,7 @@ class GuardRunRegistry:
                 "expires_at": run.expires_at,
             }
 
-        return {
+        payload = {
             "status": run.status,
             "run_id": run.run_id,
             "error_kind": run.error_kind,
@@ -458,6 +525,9 @@ class GuardRunRegistry:
             "completed_at": run.completed_at,
             "expires_at": run.expires_at,
         }
+        if run.details:
+            payload.update(run.details)
+        return payload
 
 
 GUARD_RUNS = GuardRunRegistry()

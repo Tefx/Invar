@@ -205,7 +205,9 @@ async def test_guard_run_registry_failed_envelope() -> None:
 
     async def failing_command(cmd: list[str]) -> dict[str, object]:
         del cmd
-        raise RuntimeError("CrossHair subprocess exited non-zero")
+        from invar.mcp.guard_runs import GuardWrapperInstabilityError
+
+        raise GuardWrapperInstabilityError(1, "CrossHair subprocess exited non-zero")
 
     registry._run_guard_command = failing_command
 
@@ -218,8 +220,10 @@ async def test_guard_run_registry_failed_envelope() -> None:
 
     final = await registry.wait(run.run_id, wait_ms=100)
     assert final["status"] == "failed"
-    assert final["error_kind"] == "execution_error"
-    assert "CrossHair subprocess exited non-zero" in final["message"]
+    assert final["error_kind"] == "wrapper_instability"
+    assert final["classification"] == "tooling_parity_wrapper_instability"
+    assert final["accepted_verification_path"]["command"] == "uvx invar-tools guard --all"
+    assert final["subprocess_exit_code"] == 1
 
 
 async def test_guard_run_registry_expiry_semantics() -> None:

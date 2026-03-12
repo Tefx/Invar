@@ -17,7 +17,10 @@ from typing import TYPE_CHECKING, Any, Literal
 from mcp.types import TextContent
 from returns.result import Success
 
-from invar.mcp.guard_runs import GUARD_RUNS
+from invar.mcp.guard_runs import (
+    GUARD_RUNS,
+    build_wrapper_instability_envelope,
+)
 
 if TYPE_CHECKING:
     from mcp.server.lowlevel.server import CombinationContent
@@ -112,7 +115,12 @@ async def _run_guard(args: dict[str, Any]) -> list[TextContent] | CombinationCon
             }
             return [TextContent(type="text", text=json.dumps(deferred, indent=2))]
 
-    return await _execute_command(cmd)
+    return await _execute_command(
+        cmd,
+        full_scan_contract=not changed_mode,
+        target_path=path,
+        changed=changed_mode,
+    )
 
 
 # @shell_orchestration: MCP handler - reads deferred run status
@@ -161,8 +169,8 @@ async def _run_sig(args: dict[str, Any]) -> list[TextContent] | CombinationConte
         return [TextContent(type="text", text="Error: target is required")]
 
     # Validate target (can be file path or file::symbol)
-    target_path = target.split("::")[0] if "::" in target else target
-    is_valid, error = _validate_path(target_path)
+    validated_target_path = target.split("::")[0] if "::" in target else target
+    is_valid, error = _validate_path(validated_target_path)
     if not is_valid:
         return [TextContent(type="text", text=f"Error: {error}")]
 
@@ -480,6 +488,10 @@ async def _run_doc_delete(args: dict[str, Any]) -> list[TextContent] | Combinati
 async def _execute_command(
     cmd: list[str],
     timeout: int = 600,
+    *,
+    full_scan_contract: bool = False,
+    target_path: str = ".",
+    changed: bool = True,
 ) -> list[TextContent] | CombinationContent:
     """Execute a command and return result."""
     try:
@@ -491,6 +503,16 @@ async def _execute_command(
         )
 
         stdout = result.stdout.strip()
+
+        if result.returncode != 0 and full_scan_contract:
+            payload = build_wrapper_instability_envelope(
+                run_id="sync",
+                path=target_path,
+                changed=changed,
+                subprocess_exit_code=result.returncode,
+                stderr=result.stderr.strip(),
+            )
+            return [TextContent(type="text", text=json.dumps(payload, indent=2))]
 
         # Try to parse as JSON
         try:

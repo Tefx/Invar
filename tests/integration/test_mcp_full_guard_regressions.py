@@ -255,7 +255,9 @@ async def test_deferred_run_failure_returns_error_envelope(monkeypatch: pytest.M
     registry = GuardRunRegistry(retention_seconds=30, max_runtime_seconds=30)
 
     async def failing_command(cmd):
-        raise RuntimeError("CrossHair subprocess failed")
+        from invar.mcp.guard_runs import GuardWrapperInstabilityError
+
+        raise GuardWrapperInstabilityError(1, "subprocess exit code 1")
 
     registry._run_guard_command = failing_command
 
@@ -269,8 +271,10 @@ async def test_deferred_run_failure_returns_error_envelope(monkeypatch: pytest.M
     final = await registry.wait(run.run_id, wait_ms=1000)
 
     assert final["status"] == "failed"
-    assert final["error_kind"] == "execution_error"
-    assert "CrossHair subprocess failed" in final["message"]
+    assert final["error_kind"] == "wrapper_instability"
+    assert final["classification"] == "tooling_parity_wrapper_instability"
+    assert final["accepted_verification_path"]["command"] == "uvx invar-tools guard --all"
+    assert final["subprocess_exit_code"] == 1
 
 
 async def test_deferred_run_timeout_returns_cancelled(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -425,8 +429,10 @@ async def test_guard_wait_response_schema_failed(monkeypatch: pytest.MonkeyPatch
     fake_registry._wait_response = {
         "status": "failed",
         "run_id": "grd_test_123",
-        "error_kind": "execution_error",
+        "error_kind": "wrapper_instability",
         "message": "Test error",
+        "classification": "tooling_parity_wrapper_instability",
+        "accepted_verification_path": {"command": "uvx invar-tools guard --all"},
     }
     monkeypatch.setattr(handlers, "GUARD_RUNS", fake_registry)
 
@@ -435,8 +441,33 @@ async def test_guard_wait_response_schema_failed(monkeypatch: pytest.MonkeyPatch
     payload = json.loads(result[0].text)
 
     assert payload["status"] == "failed"
-    assert payload["error_kind"] == "execution_error"
+    assert payload["error_kind"] == "wrapper_instability"
+    assert payload["classification"] == "tooling_parity_wrapper_instability"
+    assert payload["accepted_verification_path"]["command"] == "uvx invar-tools guard --all"
     assert payload["message"] == "Test error"
+
+
+async def test_sync_full_scan_failure_surfaces_authoritative_cli_path(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Synchronous changed=false failures must classify wrapper instability explicitly."""
+
+    class _FailureResult:
+        def __init__(self) -> None:
+            self.returncode = 1
+            self.stdout = ""
+            self.stderr = "subprocess exit code 1"
+
+    monkeypatch.setattr(handlers, "_should_defer_full_scan", lambda path, args, budget: False)
+    monkeypatch.setattr(handlers.subprocess, "run", lambda *args, **kwargs: _FailureResult())
+
+    result = await handlers._run_guard({"path": ".", "changed": False})
+
+    payload = json.loads(result[0].text)
+    assert payload["status"] == "failed"
+    assert payload["error_kind"] == "wrapper_instability"
+    assert payload["classification"] == "tooling_parity_wrapper_instability"
+    assert payload["accepted_verification_path"]["command"] == "uvx invar-tools guard --all"
 
 
 # ============================================================================
