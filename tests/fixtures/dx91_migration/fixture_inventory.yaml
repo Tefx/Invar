@@ -1,0 +1,47 @@
+spec_source: docs/proposals/DX-91-migration-semantics.md
+fixtures:
+  - id: mainline-v1-to-v2
+    protects: main_path_upgrade
+    expectation: Legacy v1 layout migrates to v2 layout with backups and stale asset deletion.
+    spec_links:
+      - "DX-91-migration-semantics.md#4-migration-behavior-v1-v2"
+      - "DX-91-migration-semantics.md#43-migration-steps-atomic"
+
+  - id: relative-vs-absolute-template-path
+    protects: relative_absolute_template_path_behavior
+    expectation: Relative and absolute template-root metadata resolve to identical managed output.
+    spec_links:
+      - "DX-91-migration-semantics.md#43-migration-steps-atomic"
+
+  - id: missing-file-fallback-partial-repo
+    protects: missing_file_fallback_partial_repo
+    expectation: Migration proceeds when optional files are absent and backs up only present optional files.
+    spec_links:
+      - "DX-91-migration-semantics.md#44-user-content-preservation"
+
+  - id: clear-null-overwrite-removed-managed
+    protects: explicit_clear_null_overwrite_semantics
+    expectation: Removed managed sections are fully regenerated and stale managed tokens are absent.
+    spec_links:
+      - "DX-91-migration-semantics.md#33-managed-section-markers"
+      - "DX-91-migration-semantics.md#44-user-content-preservation"
+
+  - id: stale-legacy-vs-new-state-precedence
+    protects: stale_definition_vs_new_state_precedence
+    expectation: Presence of any v1 signal forces migration semantics; managed region is regenerated and stale assets are removed.
+    spec_links:
+      - "DX-91-migration-semantics.md#41-detection"
+      - "DX-91-migration-semantics.md#44-user-content-preservation"
+
+  - id: interrupted-partial-migration-recovery
+    protects: partial_write_interrupted_migration_recovery
+    expectation: Partially migrated state is treated as v1 and repaired to consistent v2 state without duplication.
+    spec_links:
+      - "DX-91-migration-semantics.md#104-idempotent-re-run-edge-cases"
+      - "DX-91-migration-semantics.md#43-migration-steps-atomic"
+
+  - id: repeated-migration-idempotent-v1-source
+    protects: repeated_migration_no_duplicate_sections
+    expectation: Repeated migration from v1 snapshot converges to stable v2 layout with no duplicate managed sections.
+    spec_links:
+      - "DX-91-migration-semantics.md#45-idempotent-re-run-expectations"

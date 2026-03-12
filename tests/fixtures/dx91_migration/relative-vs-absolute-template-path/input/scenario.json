@@ -1,0 +1,6 @@
+{
+  "template_root_relative": "src/invar/templates/v2",
+  "template_root_absolute": "/opt/invar/templates/v2",
+  "assert_same_output": true,
+  "assert_no_absolute_path_leak": true
+}

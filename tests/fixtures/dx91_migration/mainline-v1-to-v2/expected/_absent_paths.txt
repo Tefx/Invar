@@ -1,0 +1,5 @@
+.claude/skills/
+.claude/hooks/
+.pi/hooks/
+.pi/tools/
+.invar/examples/

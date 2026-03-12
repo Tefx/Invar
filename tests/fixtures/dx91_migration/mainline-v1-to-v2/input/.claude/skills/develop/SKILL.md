@@ -1,0 +1,1 @@
+legacy skill content

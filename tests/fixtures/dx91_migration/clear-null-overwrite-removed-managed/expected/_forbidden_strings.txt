@@ -1,0 +1,2 @@
+LEGACY_MANAGED_TOKEN_REMOVE_ME
+obsolete command list
