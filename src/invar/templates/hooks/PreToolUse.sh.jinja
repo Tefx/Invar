@@ -22,7 +22,6 @@ else
 fi
 [[ -z "$CMD" ]] && exit 0
 
-{% if language == "python" -%}
 # ============================================
 # pytest blocking with smart escape
 # ============================================
@@ -71,42 +70,5 @@ if echo "$CMD" | grep -qE '\bcrosshair\b'; then
   echo "   Manual escape: INVAR_ALLOW_CROSSHAIR=1 crosshair ..."
   exit 1
 fi
-{% elif language == "typescript" -%}
-# ============================================
-# jest/vitest blocking with smart escape
-# ============================================
-if echo "$CMD" | grep -qE '\bjest\b|\bvitest\b|npx\s+(jest|vitest)\b|npm\s+(run\s+)?test\b'; then
-
-  # Auto-escape 1: Debugging mode
-  if echo "$CMD" | grep -qE '\-\-inspect|\-\-debug'; then
-    echo "⚠️ Test debugging allowed. Run {{ guard_cmd }} after."
-    exit 0
-  fi
-
-  # Auto-escape 2: External/vendor tests
-  if echo "$CMD" | grep -qE 'vendor/|third_party/|external/'; then
-    exit 0
-  fi
-
-  # Auto-escape 3: Explicit coverage collection
-  if echo "$CMD" | grep -qE '\-\-coverage'; then
-    echo "⚠️ Test coverage allowed. Run {{ guard_cmd }} for contract verification."
-    exit 0
-  fi
-
-  # Auto-escape 4: Environment variable override
-  if [[ "$INVAR_ALLOW_JEST" == "1" ]]; then
-    exit 0
-  fi
-
-  # Default: Block with helpful message
-  echo "❌ Use {{ guard_cmd }} instead of jest/vitest"
-  echo "   {{ guard_cmd }} = tsc + eslint + vitest + fast-check"
-  echo ""
-  echo "   Auto-allowed: --inspect (debug), --coverage"
-  echo "   Manual escape: INVAR_ALLOW_JEST=1 jest ..."
-  exit 1
-fi
-{% endif -%}
 
 exit 0

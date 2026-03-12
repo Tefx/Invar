@@ -48,20 +48,11 @@ is_git_repo() {
 detect_changes() {
   if is_git_repo; then
     # Primary: Git-based detection (includes staged + unstaged)
-{% if language == "python" -%}
     { git diff --name-only -- '*.py' 2>/dev/null; git diff --cached --name-only -- '*.py' 2>/dev/null; } | sort -u
-{% elif language == "typescript" -%}
-    { git diff --name-only -- '*.ts' '*.tsx' 2>/dev/null; git diff --cached --name-only -- '*.ts' '*.tsx' 2>/dev/null; } | sort -u
-{% endif -%}
   elif [[ -f "$LAST_CHECK_MARKER" ]]; then
     # Fallback: Timestamp-based detection (approximate)
-{% if language == "python" -%}
     find . -name "*.py" -newer "$LAST_CHECK_MARKER" -type f 2>/dev/null | \
       grep -v __pycache__ | grep -v '.venv' | head -20
-{% elif language == "typescript" -%}
-    find . \( -name "*.ts" -o -name "*.tsx" \) -newer "$LAST_CHECK_MARKER" -type f 2>/dev/null | \
-      grep -v node_modules | grep -v dist | head -20
-{% endif -%}
   fi
   # Update marker for next check
   touch "$LAST_CHECK_MARKER" 2>/dev/null

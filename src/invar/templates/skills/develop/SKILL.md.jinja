@@ -100,7 +100,6 @@ If task appears simple (4+ signals: single file, clear target, additive change, 
 - **Examples:** Add examples for expected behavior
 - **Design:** Decompose complex tasks into sub-functions
 
-{% if language == "python" %}
 ```python
 # SPECIFY before BUILD:
 @pre(lambda x: x > 0)
@@ -112,25 +111,6 @@ def calculate(x: int) -> int:
     """
     ...  # Implementation comes in BUILD
 ```
-{% elif language == "typescript" %}
-```typescript
-// SPECIFY before BUILD:
-import { z } from 'zod';
-
-const CalculateInput = z.number().positive();
-const CalculateOutput = z.number().nonnegative();
-
-/**
- * @example
- * calculate(10) // => 100
- */
-function calculate(x: number): number {
-    const validated = CalculateInput.parse(x);
-    // Implementation comes in BUILD
-    return CalculateOutput.parse(result);
-}
-```
-{% endif %}
 
 #### Function-Level Gates (DX-63)
 
@@ -306,7 +286,6 @@ For multiple tasks:
 
 Quick reference for resolving common Guard errors:
 
-{% if language == "python" %}
 | Error | Cause | Quick Fix |
 |-------|-------|-----------|
 | `forbidden_import: io` | I/O library in Core | Use `iter(s.splitlines())` not `io.StringIO` |
@@ -325,18 +304,6 @@ Check the "Suggested:" line in Guard output.
 
 **Note:** Use `from deal import pre, post` for lambda-based contracts.
 `invar_runtime.pre/post` are for Contract objects like `NonEmpty`.
-{% elif language == "typescript" %}
-| Error | Cause | Quick Fix |
-|-------|-------|-----------|
-| `forbidden_import: fs` | fs module in Core | Accept path as parameter instead |
-| `forbidden_import: path` | path module in Core | Accept string path as parameter |
-| `missing_contract` | Core function without contract comments | Add @pre/@post comments |
-| `empty_contract` | Contract with no condition | Add meaningful condition |
-| `file_size` | File > 500 lines | Extract functions to new module |
-| `shell_result` | Shell function missing Result | Return `Result<T, E>` type |
-
-**Tip:** For `missing_contract`, Guard automatically suggests contracts based on parameter types.
-{% endif %}
 
 ## Timeout Handling
 
@@ -471,11 +438,7 @@ Agent:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📍 /develop → SPECIFY (2/4)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-{% if language == "python" %}
 @pre(lambda source, path: len(source.strip()) > 0)
-{% elif language == "typescript" %}
-const SourceInput = z.string().refine(s => s.trim().length > 0);
-{% endif %}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📍 /develop → BUILD (3/4)

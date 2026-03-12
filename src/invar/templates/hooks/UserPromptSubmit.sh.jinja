@@ -42,17 +42,10 @@ echo "$COUNT" > "$COUNT_FILE"
 # Keyword triggers (independent of count)
 # ============================================
 
-{% if language == "python" -%}
 # pytest intent → immediate correction
 if echo "$USER_MESSAGE" | grep -qiE "run.*pytest|pytest.*test|用.*pytest"; then
   echo "<system-reminder>Use {{ guard_cmd }}, not pytest.</system-reminder>"
 fi
-{% elif language == "typescript" -%}
-# jest/vitest intent → immediate correction
-if echo "$USER_MESSAGE" | grep -qiE "run.*jest|run.*vitest|npm.*test|用.*jest|用.*vitest"; then
-  echo "<system-reminder>Use {{ guard_cmd }}, not jest/vitest directly.</system-reminder>"
-fi
-{% endif -%}
 
 # Implementation intent → workflow reminder (after warmup)
 if [[ $COUNT -gt 3 ]]; then

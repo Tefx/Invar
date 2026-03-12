@@ -84,7 +84,7 @@ extensions = { action = "preserve" }
 [variables]
 # Available for Jinja2 templates
 syntax = "cli"          # "cli" or "mcp"
-language = "python"     # "python" or "typescript" (LX-05)
+language = "python"     # python-only mode (DX-91)
 version = "5.0"
 project_name = ""       # Set by init
 

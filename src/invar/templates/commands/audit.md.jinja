@@ -51,21 +51,12 @@ You ARE here to:
 > **Principle:** Only items requiring semantic judgment. Mechanical checks are excluded (see bottom).
 
 ### A. Contract Semantic Value
-{% if language == "python" %}
 - [ ] Does @pre constrain inputs beyond type checking?
   - Bad: `@pre(lambda x: isinstance(x, int))`
   - Good: `@pre(lambda x: x > 0 and x < MAX_VALUE)`
 - [ ] Does @post verify meaningful output properties?
   - Bad: `@post(lambda result: result is not None)`
   - Good: `@post(lambda result: len(result) == len(input))`
-{% elif language == "typescript" %}
-- [ ] Does Zod schema constrain inputs beyond type checking?
-  - Bad: `z.number()` (type only)
-  - Good: `z.number().positive().max(MAX_VALUE)` (semantic constraints)
-- [ ] Does output schema verify meaningful properties?
-  - Bad: `z.string()` (type only)
-  - Good: `z.string().min(1).max(100)` (semantic constraints)
-{% endif %}
 - [ ] Could someone implement correctly from contracts alone?
 - [ ] Are boundary conditions explicit in contracts?
 
@@ -109,11 +100,7 @@ You ARE here to:
 
 These are checked by Guard or linters - don't duplicate:
 - Core/Shell separation → Guard (forbidden_import, impure_call)
-{% if language == "python" -%}
 - Shell returns Result[T,E] → Guard (shell_result)
-{% elif language == "typescript" -%}
-- Shell returns Result<T,E> → Guard (shell_result)
-{% endif -%}
 - Missing contracts → Guard (missing_contract)
 - File/function size limits → Guard (file_size, function_size)
 - Entry point thickness → Guard (entry_point_too_thick)
@@ -134,11 +121,7 @@ For each issue found, use severity levels:
 ```markdown
 ### [CRITICAL/MAJOR/MINOR] Issue Title
 
-{% if language == "python" -%}
 **Location:** file.py:line_number
-{% elif language == "typescript" -%}
-**Location:** file.ts:line_number
-{% endif -%}
 **Category:** contract_quality | logic_error | security | escape_hatch | code_smell
 **Problem:** What's wrong
 **Suggestion:** How to fix (but don't implement)

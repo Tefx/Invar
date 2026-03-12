@@ -320,7 +320,7 @@ def double(x: int) -> int:
 
 ## 📝 Additional Notes
 
-- First time using `invar refs` - worked great for finding TypeScript symbol usage
+- First time using `invar refs` - worked great for finding cross-file symbol usage
 - Didn't use `invar map` much this session - not sure when it's better than `invar sig`
 - Skill system (`/develop`, `/review`) works smoothly - no issues
 - USBV workflow feels natural by Session 3 - initial friction worth it

@@ -14,13 +14,8 @@ import type { HookAPI } from "@mariozechner/pi-coding-agent/hooks";
 import * as fs from "fs";
 
 // Blocked commands (same as Claude Code)
-{% if language == "python" -%}
 const BLOCKED_CMDS = [/^pytest\b/, /^python\s+-m\s+pytest/, /^crosshair\b/];
 const ALLOWED_FLAGS = [/--pdb/, /--cov/, /--debug/];
-{% elif language == "typescript" -%}
-const BLOCKED_CMDS = [/^jest\b/, /^vitest\b/, /^npx\s+(jest|vitest)\b/, /^npm\s+(run\s+)?test\b/];
-const ALLOWED_FLAGS = [/--inspect/, /--coverage/, /--debug/];
-{% endif -%}
 
 // Protocol content for injection (escaped for JS)
 const INVAR_PROTOCOL = `{{ invar_protocol_escaped }}`;
@@ -106,11 +101,7 @@ To disable: Set feedback.enabled=false in .claude/settings.local.json
 
     return {
       block: true,
-{% if language == "python" -%}
       reason: "Use `{{ guard_cmd }}` instead of pytest/crosshair.",
-{% elif language == "typescript" -%}
-      reason: "Use `{{ guard_cmd }}` instead of jest/vitest.",
-{% endif -%}
     };
   });
 }

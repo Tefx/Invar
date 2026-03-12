@@ -52,7 +52,7 @@ Both Claude Code and Pi now support automatic feedback triggering via **message 
 | Platform | Hook File | Mechanism |
 |----------|-----------|-----------|
 | **Claude Code** | `.claude/hooks/invar.UserPromptSubmit.sh` | Bash script with jq config parsing |
-| **Pi** | `.pi/hooks/invar.ts` | TypeScript with fs config reading |
+| **Pi** | `.pi/hooks/invar.ts` | TS hook with fs config reading |
 
 Both read the same `.claude/settings.local.json` configuration file.
 
@@ -233,7 +233,7 @@ fi
 
 **Pi Hook** (`.pi/hooks/invar.ts`):
 
-```typescript
+```ts
 // DX-79: Helper to read feedback configuration
 function readFeedbackConfig() {
   try {
