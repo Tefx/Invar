@@ -18361,7 +18361,7 @@ phases:
       \ avoid data loss during integration.\n"
   - id: dx91-python-only.verify-python-only-surface-retest-all-blockers
     name: verify-python-only-surface.retest-all-blockers
-    status: pending
+    status: claimed
     description: 'As an INDEPENDENT TESTER (`blind-tester`), re-run the full Python-only
       surface validation after the batched remediation step and verify that ALL blocker
       families from `verify-python-only-surface` are resolved within the clarified
@@ -18452,6 +18452,8 @@ phases:
     depends_on:
     - dx91-python-only.verify-python-only-surface-fix-all-blockers
     agent: blind-tester
+    claimed_by: blind-tester
+    claimed_at: '2026-03-12T20:01:21.593173+00:00'
 - id: dx91-self-docs
   name: DX-91 Self-Docs Update
   status: locked
