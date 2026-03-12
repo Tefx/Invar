@@ -14734,6 +14734,72 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-12T11:09:48.456277+00:00'
+  - id: dx91-spec.dx91-spec-fix-literal-marker-shorthand-family
+    name: dx91-spec.fix-literal-marker-shorthand-family
+    status: pending
+    description: 'Fix ALL remaining unresolved B1 shorthand marker references after
+      `dx91-spec.dx91-spec-gate-retest-3`.
+
+
+      ## Blocker to Fix (ALL of these, not just the first)
+
+
+      ### B1: non-literal `<!--invar:begin/end-->` shorthand remains in DX-91 proposal
+      docs
+
+      Locations: `docs/proposals/DX-91-migration-semantics.md:105`, `docs/proposals/DX-91-migration-semantics.md:195`,
+      `docs/proposals/DX-91-migration-semantics.md:208`, `docs/proposals/DX-91-migration-semantics.md:219`,
+      `docs/proposals/DX-91-migration-semantics.md:443`, `docs/proposals/DX-91-simplification.md:113`,
+      `docs/proposals/DX-91-simplification.md:143`
+
+      Remediation: replace every shorthand reference with the explicit literal pair
+      references `<!--invar:begin-->` and `<!--invar:end-->`.
+
+      Grep hint: `invar:begin/end|begin/end`
+
+      IMPORTANT: Search for siblings beyond the listed locations across the entire
+      DX-91 proposal family, including both named proposal files and any related DX-91
+      proposal docs that may still mention shorthand marker wording.
+
+
+      ## Scope Guardrails
+
+      - S1 is already satisfied; preserve it and do not weaken canonical delete-list
+      language.
+
+      - B2 is out of scope and MUST NOT be reopened unless directly regressed by this
+      edit.
+
+      - This is a batched documentation remediation step: fix every remaining shorthand
+      occurrence in one pass, not a first-hit-only edit.
+
+
+      ## Remediation Chain
+
+      prior_loop: [`dx91-spec.dx91-spec-fix-remaining-gate-issues`, `dx91-spec.dx91-spec-gate-retest-2`,
+      `dx91-spec.dx91-spec-fix-final-unresolved-spec-issues`, `dx91-spec.dx91-spec-gate-retest-3`]
+
+      remaining_blocker: B1 shorthand marker wording still appears instead of explicit
+      literal marker pair references.
+
+      why_new_loop: prior doc-only cleanup reduced the open gate scope, but the latest
+      retest still found sibling shorthand occurrences across the DX-91 proposal family,
+      so a batched family-wide sweep is required rather than reopening resolved issues.
+
+      '
+    verification: '- Grep the DX-91 proposal family with `invar:begin/end|begin/end`
+      and confirm no shorthand marker wording remains
+
+      - Inspect updated proposal text to confirm every mention uses the explicit literal
+      pair `<!--invar:begin-->` and `<!--invar:end-->`
+
+      - Preserve deterministic marker semantics and do not regress satisfied S1 language
+
+      - Provide sibling-search evidence covering the full DX-91 proposal family, not
+      just the listed lines'
+    depends_on:
+    - dx91-spec.dx91-spec-gate-retest-3
+    agent: doc-reviewer
 - id: dx91-init-runtime
   name: DX-91 Init & Dev-Sync Runtime Rewrite
   status: locked
