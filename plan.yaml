@@ -14063,6 +14063,169 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-12T13:23:44.440756+00:00'
+  - id: dx91-harness.fix-gate-blockers
+    name: Fix DX-91 harness gate blockers
+    status: pending
+    description: 'Fix ALL issues found by `dx91-harness.gate` — fix ALL of these,
+      not just the first.
+
+
+      ## Blockers to Fix (ALL of these, not just the first)
+
+
+      ### B1: Harness does not execute real migration entrypoint (tautological test)
+
+      Locations:
+
+      - `tests/integration/test_dx91_destructive_regression_harness.py:46`
+
+      - `tests/integration/test_dx91_destructive_regression_harness.py:60`
+
+      Remediation:
+
+      - Replace the harness-local write-through entrypoint with the real migration
+      path invocation (`CLI` or public API), not a local helper that writes expected
+      state directly
+
+      - Assert post-run state against fixture contents after real execution
+
+      - Search for sibling shortcuts beyond the listed lines before closing the step
+
+      Grep hint: `_migration_entrypoint_apply_expected_state|dest.write_text`
+
+
+      ### B2: Harness does not detect unexpected extra files (leakage not caught)
+
+      Locations:
+
+      - `tests/integration/test_dx91_destructive_regression_harness.py:78`
+
+      Remediation:
+
+      - Add a repo-tree assertion comparing actual tree to expected tree plus an explicit
+      allowlist
+
+      - Ensure the harness fails when an unexpected extra file appears in the migrated
+      tree
+
+      - Search for sibling assertions that only check presence/content without checking
+      extras
+
+      Grep hint: `_assert_expected_repo_state`
+
+
+      ### S1: Fixture spec links drift to nonexistent sections
+
+      Locations:
+
+      - `tests/fixtures/dx91_migration/stale-legacy-vs-new-state-precedence/EXPECTATION.md:12`
+
+      - `tests/fixtures/dx91_migration/interrupted-partial-migration-recovery/EXPECTATION.md:12`
+
+      - `tests/fixtures/dx91_migration/fixture_inventory.yaml:40`
+
+      Remediation:
+
+      - Update links and anchors to the current DX-91 migration semantics headings
+
+      - Search for sibling stale anchors before closing the step
+
+      Grep hint: `10.1|10.4|104-idempotent-re-run-edge-cases`
+
+
+      ### S2: Fixture inventory includes unexercised fixture
+
+      Locations:
+
+      - `tests/fixtures/dx91_migration/fixture_inventory.yaml:10`
+
+      - `tests/integration/test_dx91_destructive_regression_harness.py:126`
+
+      Remediation:
+
+      - Either include the fixture in the parametrized harness or remove it from the
+      protected-scope inventory
+
+      - Search for other inventory entries that are declared but not exercised
+
+      Grep hint: `relative-vs-absolute-template-path`
+
+
+      ### S3: `idempotency_assertions.yaml` not consumed
+
+      Locations:
+
+      - `tests/fixtures/dx91_migration/repeated-migration-idempotent-v1-source/expected/idempotency_assertions.yaml:1`
+
+      - `tests/integration/test_dx91_destructive_regression_harness.py:121`
+
+      Remediation:
+
+      - Drive assertions from the YAML data or remove the dead data file
+
+      - Search for sibling dead fixture metadata files before closing the step
+
+      Grep hint: `idempotency_assertions`
+
+
+      ## Known risks
+
+      - This harness is the safety barrier ahead of destructive DX-91 runtime simplification
+      work; avoid any harness-local shortcut that bypasses the actual migration flow
+
+      - Unexpected-file leakage is the highest-risk hidden failure mode for fixture-based
+      migration harnesses; the negative case must be proven explicitly
+
+
+      ## Completion criteria
+
+      - ALL blockers and should-fix items above are resolved in one coherent pass
+
+      - Sibling search completed for every grep hint, not only the listed locations
+
+      - Main path uses the real migration entrypoint end-to-end and asserts resulting
+      tree/content against fixtures
+
+      - Highest-risk failure path is covered by a regression proving the harness fails
+      on unexpected extra-file leakage
+
+      - Any fixture inventory / expectation metadata left in scope is exercised and
+      linked to live semantics headings
+
+
+      Out of scope guardrail:
+
+      - Do not change DX-91 product migration semantics here beyond what is required
+      to make the regression harness faithfully exercise and verify them'
+    verification: '- Main path: targeted integration coverage exercises the real migration
+      entrypoint end-to-end and matches resulting repo state to fixtures
+
+      - Failure path: targeted regression proves unexpected extra-file leakage is
+      detected and fails the harness
+
+      - Sibling search evidence shows no remaining shortcut entrypoints, stale anchors,
+      unexercised protected fixtures, or dead idempotency metadata in DX-91 harness
+      scope
+
+      - Proof that scope remains harness/fixture/inventory focused; no unrelated migration-semantics
+      redesign introduced'
+    evidence_template: "## Batched Gate Fix Evidence\n\n**Scope**: `dx91-harness.gate`\
+      \ blockers and should-fix items\n\n### Main path proof\n- Exact command or test\
+      \ invoking the real migration entrypoint end-to-end:\n```\n<paste exact command>\n\
+      ```\n- Actual output:\n```\n<paste stdout/stderr or test output>\n```\n- Fixture(s)\
+      \ asserted after real execution:\n  - <fixture path>\n\n### Highest-risk failure\
+      \ path proof\n- Exact command or test demonstrating harness failure on unexpected\
+      \ extra-file leakage:\n```\n<paste exact command>\n```\n- Actual failing output\
+      \ / assertion excerpt:\n```\n<paste stdout/stderr or assertion excerpt>\n```\n\
+      \n### Sibling search proof\n- `_migration_entrypoint_apply_expected_state|dest.write_text`:\
+      \ <result>\n- `_assert_expected_repo_state`: <result>\n- `10.1|10.4|104-idempotent-re-run-edge-cases`:\
+      \ <result>\n- `relative-vs-absolute-template-path`: <result>\n- `idempotency_assertions`:\
+      \ <result>\n\n### Coverage notes\n- Explain whether the unexercised fixture\
+      \ was added to harness coverage or removed from protected scope\n- Explain whether\
+      \ `idempotency_assertions.yaml` was consumed or deleted, and why"
+    depends_on:
+    - dx91-harness.gate
+    agent: python-senior
 - id: dx91-spec
   name: DX-91 Spec & Migration Semantics
   status: done
