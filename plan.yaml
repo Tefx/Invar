@@ -18229,7 +18229,7 @@ phases:
       \ sources updated instead.\n"
   - id: dx91-python-only.verify-python-only-surface-fix-all-blockers
     name: verify-python-only-surface.fix-all-blockers
-    status: pending
+    status: claimed
     description: "Fix ALL blockers found by `verify-python-only-surface` in ONE batched\
       \ remediation step. Do not fix just the first blocker.\n\nstep_type: implementation\n\
       agent: python-senior\nprior_loop:\n- verify-python-only-surface\nremaining_blocker:\
@@ -18297,6 +18297,8 @@ phases:
     depends_on:
     - verify-python-only-surface
     agent: python-senior
+    claimed_by: python-senior
+    claimed_at: '2026-03-12T19:33:50.155241+00:00'
   - id: dx91-python-only.verify-python-only-surface-retest-all-blockers
     name: verify-python-only-surface.retest-all-blockers
     status: pending
