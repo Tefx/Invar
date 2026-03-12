@@ -17766,7 +17766,7 @@ phases:
       '
   - id: dx91-python-only.gate
     name: dx91-python-only.gate
-    status: claimed
+    status: done
     description: 'Gate review: verify DX-91 cleanup actually leaves a coherent Python-only
       product rather than a half-removed mixed surface.
 
@@ -17827,6 +17827,24 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-12T20:13:36.765796+00:00'
+    done_at: '2026-03-12T20:27:36.757552+00:00'
+    evidence: "Gate decision: BLOCKED (issues detected)\n\nFindings (from independent\
+      \ gate-reviewer):\n- blockers:\n  - B1: `tests/integration/test_dx91_destructive_regression_harness.py`\
+      \ imports removed `invar.shell.commands.uninstall` (ModuleNotFoundError)\n \
+      \ - B2: TypeScript retirement inconsistent: `tests/integration/test_dx78_ts_compiler.py`\
+      \ fails; TS-facing artifacts remain (`src/invar/templates/pi-tools/invar/index.ts`,\
+      \ `typescript/**`)\n  - B3: Active docs mismatch DX-91 CLI/templates (`README.md`\
+      \ init flags; `INVAR.md` legacy v1 managed wording)\n- should_fix:\n  - clarify/align\
+      \ Pi artifacts and TS placeholder policy\n- suggestions/tech_debt:\n  - explicit\
+      \ preserved-vs-archived policy section for residual historical references\n\n\
+      Commands executed by gate reviewer:\n- `uv run pytest -q tests/integration/test_dx91_destructive_regression_harness.py`\
+      \ -> fails (ModuleNotFoundError)\n- `uv run pytest -q tests/integration/test_dx78_ts_compiler.py`\
+      \ -> multiple failures\n- repository scans and evidence inventory checks per\
+      \ gate\n\nBatched remediation created (anti-rework protocol):\n- `dx91-python-only.dx91-python-only-fix-gate-blockers`\
+      \ (single fix step for B1+B2+B3)\n- `dx91-python-only.dx91-python-only-retest-gate-blockers`\
+      \ (independent retest step)\n- downstream progression remains blocked until\
+      \ fix+retest complete\n\nNotes:\n- This gate step is completed as issue-discovery\
+      \ evidence with batched remediation chain added.\n"
   - id: remove-typescript-active-surface-residue
     name: remove-typescript-active-surface-residue
     status: done
