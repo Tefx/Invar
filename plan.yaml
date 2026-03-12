@@ -14389,6 +14389,42 @@ phases:
     depends_on:
     - dx91-spec.dx91-spec-gate-retest
     agent: doc-reviewer
+  - id: dx91-spec.dx91-spec-gate-retest-2
+    name: dx91-spec.gate-retest-2
+    status: pending
+    description: 'As an INDEPENDENT REVIEWER (`gate-reviewer`), re-run focused gate
+      review after `dx91-spec.dx91-spec-fix-remaining-gate-issues` and verify ALL
+      remaining blocker/should_fix items from `dx91-spec.dx91-spec-gate-retest` are
+      resolved.
+
+
+      Scope (tight to unresolved issues only):
+
+      - B1 deterministic v1->v2 marker mapping replaces every remaining OR-based outcome
+
+      - B2 authoritative freeze baseline records the exact literal 40-hex SHA and
+      captured cleanliness proof output
+
+      - S1 canonical delete list uses fully-qualified repo-relative paths consistently
+      across the canonical list
+
+
+      This is the second remediation-loop retest for the same step family. Keep review
+      tightly scoped, independent, adversarial, and specific. The goal is to confirm
+      no residual ambiguity remains in the unresolved semantic defects without reopening
+      already-resolved findings.'
+    verification: '- Re-run independent gate review against the updated DX-91 baseline
+      docs for B1, B2, and S1 only
+
+      - Confirm each grep-hint family has been resolved across sibling statements,
+      not just at the cited lines
+
+      - OPEN only if there is one deterministic marker mapping, one reproducible freeze
+      baseline with literal SHA and cleanliness proof, and one canonical fully-qualified
+      delete list'
+    depends_on:
+    - dx91-spec.dx91-spec-fix-remaining-gate-issues
+    agent: gate-reviewer
 - id: dx91-init-runtime
   name: DX-91 Init & Dev-Sync Runtime Rewrite
   status: locked
