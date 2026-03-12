@@ -345,8 +345,7 @@ AlphaCodium · Parsel · Reflexion · Clover
 | Agent | Status | Setup |
 |-------|--------|-------|
 | **Claude Code** | ✅ Full | `invar init --claude` |
-| **[Pi](https://shittycodingagent.ai/)** | ✅ Full | `invar init --pi` |
-| **Multi-Agent** | ✅ Full | `invar init --claude --pi` (DX-81) |
+| **[Pi](https://shittycodingagent.ai/)** | ✅ MCP | `invar init` → select Other, add MCP config |
 | **Cursor** | ✅ MCP | `invar init` → select Other, add MCP config |
 | **Other** | 📝 Manual | `invar init` → select Other, include `AGENT.md` in prompt |
 
@@ -360,14 +359,12 @@ All features auto-configured:
 - Claude Code hooks (tool guidance, verification reminders)
 - Pre-commit hooks
 
-### [Pi](https://shittycodingagent.ai/) (Full Support)
+### [Pi](https://shittycodingagent.ai/) (MCP Support)
 
-Pi reads CLAUDE.md and .claude/skills/ directly, sharing configuration with Claude Code:
-- **Same instruction file** — CLAUDE.md (no separate AGENT.md needed)
-- **Same workflow skills** — .claude/skills/ work in Pi
-- **Pi-specific hooks** — .pi/hooks/invar.ts for pytest blocking and protocol refresh
-- **Protocol injection** — Long conversation support via `pi.send()`
-- Pre-commit hooks
+Pi can use the same Invar MCP server and protocol docs:
+- Configure MCP as described in the Other Editors flow
+- Keep `CLAUDE.md` and `INVAR.md` as the project protocol source
+- Use CLI verification (`invar guard`) when MCP is unavailable
 
 ### Cursor (MCP + Rules)
 
@@ -395,13 +392,11 @@ Cursor users get full verification via MCP:
 | File/Directory | Purpose | Category |
 |----------------|---------|----------|
 | `INVAR.md` | Protocol for AI agents | Required |
-| `.invar/` | Config, context, examples | Required |
+| `.invar/` | Config and project context | Required |
 | `.pre-commit-config.yaml` | Verification before commit (Ruff, mypy*, Guard) | Optional |
 | `src/core/`, `src/shell/` | Recommended structure | Optional |
 | `CLAUDE.md` | Agent instructions | Claude Code |
-| `.claude/skills/` | Workflow + extension skills | Claude Code |
 | `.claude/commands/` | User commands (/audit, /guard) | Claude Code |
-| `.claude/hooks/` | Tool guidance | Claude Code |
 | `.mcp.json` | MCP server config | Claude Code |
 | `AGENT.md` | Universal agent instructions | Other agents |
 
@@ -679,7 +674,7 @@ rules = ["missing_contract", "shell_result"]
 
 **Created by `invar init`:**
 - `INVAR.md` — Protocol v5.0
-- `.invar/examples/` — Reference patterns
+- `.invar/context.md` — Local project context and operating notes
 
 **Documentation:**
 - [Vision & Philosophy](./docs/vision.md)

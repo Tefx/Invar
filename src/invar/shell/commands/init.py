@@ -26,6 +26,7 @@ LEGACY_REMOVE_PATHS: tuple[str, ...] = (
     ".pi/hooks",
     ".pi/tools",
     ".invar/examples",
+    ".invar/feedback",
 )
 
 PRESERVED_BACKUPS: tuple[tuple[str, str], ...] = (

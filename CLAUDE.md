@@ -181,7 +181,7 @@ bash("invar sig src/core/parser.py")
 | CLAUDE.md | User | Yes | Project customization (this file) |
 | .invar/context.md | User | Yes | Project state, lessons learned |
 | .invar/project-additions.md | User | Yes | Project rules → injected into CLAUDE.md |
-| .invar/examples/ | Invar | No | **Must read:** Core/Shell patterns, workflow |
+| .invar/context.md | User | Yes | Check-in context and local operating notes |
 
 > **Before writing code:** Check Task Router in `.invar/context.md`
 
@@ -197,7 +197,7 @@ For complex tasks (3+ functions), show 3 checkpoints in TodoList:
 
 **BUILD is internal work** — not shown in TodoList.
 
-**Show contracts before code.** See `.invar/examples/workflow.md` for full example.
+**Show contracts before code.** Use `INVAR.md` USBV guidance as the canonical workflow reference.
 
 ## Phase Visibility (DX-51)
 
@@ -267,7 +267,7 @@ When user message contains these triggers, you MUST use the **Skill tool** to in
 
 **CRITICAL: You must call the Skill tool, not just follow the workflow mentally.**
 
-The Skill tool reads `.claude/skills/<skill>/SKILL.md` which contains:
+The Skill tool resolves the requested workflow from the host skill catalog, which contains:
 - Detailed phase instructions (USBV breakdown)
 - Error handling rules
 - Timeout policies
@@ -382,8 +382,8 @@ invar init  # Select multiple agents with Space key
 ```
 
 **File Structure:**
-- Shared: CLAUDE.md, .claude/skills/, .invar/
-- Isolated: .claude/hooks/ (Claude Code), .pi/hooks/ (Pi)
+- Shared: CLAUDE.md, INVAR.md, .invar/
+- Agent-specific runtime wiring lives outside this repository and is managed by each host tool.
 - No conflicts: All files designed for coexistence
 
 **Use Cases:**

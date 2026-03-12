@@ -78,7 +78,7 @@ src/{project}/
 | INVAR.md | Invar | No | Protocol (`invar update` to sync) |
 | CLAUDE.md | User | Yes | Project customization (this file) |
 | .invar/context.md | User | Yes | Project state, lessons learned |
-| .invar/examples/ | Invar | No | **Must read:** Core/Shell patterns, workflow |
+| .invar/context.md | User | Yes | Check-in context and local operating notes |
 
 ## Visible Workflow (DX-30)
 
@@ -92,7 +92,7 @@ For complex tasks (3+ functions), show 3 checkpoints in TodoList:
 
 **BUILD is internal work** — not shown in TodoList.
 
-**Show contracts before code.** See `.invar/examples/workflow.md` for full example.
+**Show contracts before code.** Use `INVAR.md` USBV guidance as the canonical workflow reference.
 
 ---
 
@@ -131,7 +131,7 @@ When user message contains these triggers, you MUST use the **Skill tool** to in
 
 **⚠️ CRITICAL: You must call the Skill tool, not just follow the workflow mentally.**
 
-The Skill tool reads `.claude/skills/<skill>/SKILL.md` which contains:
+The Skill tool resolves the requested workflow from the host skill catalog, which contains:
 - Detailed phase instructions (USBV breakdown)
 - Error handling rules
 - Timeout policies

@@ -23,11 +23,11 @@
 
 | If you are about to... | STOP and read first |
 |------------------------|---------------------|
-| Write code in `core/` | `.invar/examples/contracts.py` |
-| Write code in `shell/` | `.invar/examples/core_shell.py` |
-| Add `@pre`/`@post` contracts | `.invar/examples/contracts.py` |
-| Use functional patterns | `.invar/examples/functional.py` |
-| Implement a feature | `.invar/examples/workflow.md` |
+| Write code in `core/` | `INVAR.md#core-vs-shell` |
+| Write code in `shell/` | `INVAR.md#core-vs-shell` |
+| Add `@pre`/`@post` contracts | `INVAR.md#contract-syntax-python` |
+| Use functional patterns | `INVAR.md#core-example-python` |
+| Implement a feature | `INVAR.md#usbv-workflow` |
 
 **Rule:** Match found above? Read the file BEFORE writing code.
 
@@ -204,7 +204,7 @@ gh release create vX.Y.Z --title "vX.Y.Z - Title" --notes "..."
 | INVAR.md | Sync | No (`invar dev sync`) |
 | CLAUDE.md | Sync + User | Regions only |
 | .invar/context.md | User | Yes (this file) |
-| .invar/examples/ | Sync | `invar dev sync` |
+| .invar/context.md | User | Yes (this file) |
 
 **Version Flow:** `templates/` → Invar project (via `invar dev sync`, syntax=mcp) AND → User projects (via `invar init/update`, syntax=cli)
 

@@ -65,4 +65,4 @@ invar_guard(path="src/components")
 
 ---
 
-*Protocol v5.0 — USBV workflow | [Examples](.invar/examples/)*
+*Protocol v5.0 — USBV workflow*

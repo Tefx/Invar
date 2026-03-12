@@ -78,7 +78,7 @@
 | INVAR.md | Invar | No — use `invar update` |
 | CLAUDE.md | User | Yes |
 | .invar/context.md | User | Yes (this file) |
-| .invar/examples/ | Invar | No |
+| .invar/context.md | User | Yes (this file) |
 
 **Decision rule:** Is this Invar protocol or project-specific?
 - Protocol content → Already in INVAR.md, don't duplicate
