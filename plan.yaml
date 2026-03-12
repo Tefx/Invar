@@ -16065,7 +16065,7 @@ phases:
       \ tests\n- failure-path masking by earlier assertion"
   - id: freeze-init-runtime-snapshot
     name: freeze-init-runtime-snapshot
-    status: pending
+    status: claimed
     description: 'Freeze the rewritten init/dev-sync runtime snapshot before cleanup
       phases consume it.
 
@@ -16089,6 +16089,8 @@ phases:
     depends_on:
     - retest-init-dev-sync-flow-batch
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-12T15:01:27.952742+00:00'
   - id: dx91-init-runtime.gate
     name: dx91-init-runtime.gate
     status: pending
