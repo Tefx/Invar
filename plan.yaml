@@ -13784,7 +13784,7 @@ phases:
   steps:
   - id: finalize-migration-semantics
     name: finalize-migration-semantics
-    status: claimed
+    status: done
     description: 'Finalize the execution contract for DX-91 simplification and migration
       semantics from the committed proposal docs.
 
@@ -13838,6 +13838,47 @@ phases:
     agent: software-architect
     claimed_by: software-architect
     claimed_at: '2026-03-12T05:37:14.092490+00:00'
+    done_at: '2026-03-12T05:40:12.604682+00:00'
+    evidence: 'Artifact:
+
+      - PR: fca7124329a83a5cffe0006960626309076047eb
+
+      - Main merge commit: 5d22bbe ([vectl] step-finalize-migration-semantics completed)
+
+
+      Verification:
+
+      - Run: `git show fca7124 --stat` -> new file docs/proposals/DX-91-migration-semantics.md
+      (492 insertions)
+
+      - Run: `wc -l docs/proposals/DX-91-migration-semantics.md` -> 491 lines
+
+      - Run: `git merge --squash vectl/step-finalize-migration-semantics` -> squash
+      staged successfully without conflicts
+
+      - Run: `git commit -m "[vectl] step-finalize-migration-semantics completed"`
+      -> committed staged squash to main
+
+
+      Spec link:
+
+      - docs/proposals/DX-91-migration-semantics.md (canonical execution contract)
+
+
+      Files changed:
+
+      - docs/proposals/DX-91-migration-semantics.md
+
+
+      Gaps/Notes:
+
+      - Open question documented in spec: DX-81 multi-agent init flags resolution
+      (remove entirely, use --file only)
+
+      - Failure paths covered in section 10 (stale legacy state, explicit deletion,
+      idempotent rerun)
+
+      - No discovered out-of-scope issues reported by worker'
   - id: align-generated-doc-contracts
     name: align-generated-doc-contracts
     status: pending
