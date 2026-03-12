@@ -16967,6 +16967,159 @@ phases:
       CLI route'
     depends_on:
     - dx91-init-runtime.gate-retest
+  - id: dx91-init-runtime.dx91-init-runtime-gate-retest-tooling-parity
+    name: dx91-init-runtime.gate-retest-tooling-parity
+    status: pending
+    description: 'As an INDEPENDENT REVIEWER (`gate-reviewer`), re-run gate review
+      after `dx91-init-runtime.dx91-init-runtime-fix-tooling-parity-blockers` and
+      verify the tooling-parity blocker family is resolved in one pass without reopening
+      B1/B2 semantics.
+
+
+      step_type: gate
+
+      agent_source: default
+
+      agent: gate-reviewer
+
+      prior_loop:
+
+      - dx91-init-runtime.gate-retest
+
+      - dx91-init-runtime.dx91-init-runtime-fix-tooling-parity-blockers
+
+      remaining_blocker: The phase remains blocked only if full-scan guard parity
+      or authoritative verification-path definition is still contradictory in the
+      dx91 worktree context.
+
+      why_new_loop: This retest is required to confirm the new batched tooling remediation
+      closed the wrapper-path blocker while preserving the already-accepted migration
+      backup/retain semantics.
+
+
+      spec_refs:
+
+      - `plan.yaml:16634`
+
+      - `src/invar/mcp/handlers.py:68`
+
+      - `src/invar/mcp/guard_runs.py:348`
+
+      - `src/invar/shell/commands/guard.py:192`
+
+      - `tests/integration/test_mcp_full_guard_regressions.py:90`
+
+
+      touch_paths:
+
+      - `src/invar/mcp/handlers.py`
+
+      - `src/invar/mcp/guard_runs.py`
+
+      - `src/invar/shell/commands/guard.py`
+
+      - `tests/integration/test_mcp_full_guard_regressions.py`
+
+      - gate verification contract text for dx91-init-runtime
+
+
+      harness_refs:
+
+      - MCP full-scan wrapper path
+
+      - CLI full-scan guard path
+
+      - dx91 phase gate evidence wording
+
+
+      review_depth: THOROUGH
+
+      review_depth_rationale:
+
+      - Phase already passed semantic migration review; this retest must distinguish
+      wrapper instability from product regression with high confidence.
+
+      - Integration-tagged guard wrapper and CLI paths both influence gate verdicts.
+
+      - A contradictory full-scan contract would block downstream execution even if
+      DX-91 semantics are correct.
+
+
+      cross_cutting_focus:
+
+      - authoritative verification path for full-scan evidence
+
+      - MCP wrapper vs CLI parity in worktree context
+
+      - explicit preservation of B1/B2 closure
+
+      - reproducibility of downstream gate verification
+
+
+      Review scope:
+
+      - Confirm the fix step diagnosed and either eliminated or explicitly bounded
+      MCP/CLI full-scan divergence for the same worktree inputs.
+
+      - Confirm the accepted full-scan verification path is written clearly enough
+      that wrapper instability cannot by itself create contradictory BLOCKED/OPEN
+      outcomes.
+
+      - Confirm the downstream gate now has a reproducible verification route with
+      concrete command/output evidence.
+
+      - Confirm B1/B2 migration backup/retain semantics remain closed and are not
+      reopened by this loop.
+
+
+      This reassessment must verify ALL tooling-parity findings, not just the first
+      blocker.'
+    verification: '- Reassess the main path evidence and block unless the same dx91
+      worktree context now yields a non-contradictory full-scan verdict across MCP
+      and CLI paths, or an explicitly documented authoritative path that downstream
+      gate review can apply consistently
+
+
+      - Reassess the highest-risk failure path and block unless wrapper/runtime instability
+      is reported distinctly from DX-91 semantic failure, with reproducible evidence
+      for the accepted gate path
+
+
+      - Confirm sibling-search evidence exists for both blocker families (`_run_guard\(|GuardRunRegistry|_run_guard_command|changed=False|changed=false|sync_budget_ms|run_id|subprocess
+      exit code` and `gate-retest|accepted verification path|parity|wrapper|uvx invar-tools
+      guard --all|invar_invar_guard\(`)
+
+
+      - Report OPEN only if this remains a tooling-parity blocker family closure and
+      downstream `dx91-python-only` no longer depends on interpreting conflicting
+      wrapper results'
+    evidence_template: '## Gate Retest Report
+
+
+      **Reviewer**: gate-reviewer
+
+      **Scope**: dx91-init-runtime tooling parity blocker family
+
+
+      ### Required evidence
+
+      - Exact full-scan command(s) or MCP payload(s) used for the accepted gate path
+
+      - Actual output showing why the accepted path is authoritative and reproducible
+
+      - Explicit statement whether MCP/CLI parity is now matched, bounded, or still
+      divergent
+
+      - Explicit statement that B1/B2 migration semantics remain closed
+
+
+      ### Gate decision
+
+      - [ ] OPEN: tooling parity blocker family closed; downstream gate path unambiguous
+
+      - [ ] BLOCKED: parity or gate contract still contradictory'
+    depends_on:
+    - dx91-init-runtime.dx91-init-runtime-fix-tooling-parity-blockers
 - id: dx91-python-only
   name: DX-91 Python-Only Cleanup
   status: locked
