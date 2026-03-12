@@ -13881,7 +13881,7 @@ phases:
       - No discovered out-of-scope issues reported by worker'
   - id: align-generated-doc-contracts
     name: align-generated-doc-contracts
-    status: claimed
+    status: done
     description: 'Translate the finalized DX-91 semantics into an implementation-facing
       document contract for generated files and injected content.
 
@@ -13909,6 +13909,55 @@ phases:
     agent: doc-reviewer
     claimed_by: doc-reviewer
     claimed_at: '2026-03-12T05:40:25.985909+00:00'
+    done_at: '2026-03-12T05:44:56.948185+00:00'
+    evidence: 'Artifact:
+
+      - PR: 7e015e8a92985b29300e340769c956a6813247fd
+
+      - Main merge commit: ab55e80 ([vectl] step-align-generated-doc-contracts completed)
+
+
+      Verification:
+
+      - Run: `git show HEAD --stat` -> 1 file changed, 270 insertions, docs/proposals/DX-91-generated-file-contracts.md
+      created
+
+      - Run: `grep "Verification Matrix" docs/proposals/DX-91-generated-file-contracts.md`
+      -> found section mapping generated-file contracts to proposal sections
+
+      - Run: `grep "No Unresolved Ambiguity" docs/proposals/DX-91-generated-file-contracts.md`
+      -> found checklist explicitly resolving minimum CLAUDE.md content ambiguity
+
+      - Run: `git merge --squash vectl/step-align-generated-doc-contracts` -> squash
+      staged successfully without conflicts
+
+      - Run: `git commit -m "[vectl] step-align-generated-doc-contracts completed"`
+      -> committed staged squash to main
+
+
+      Spec link:
+
+      - docs/proposals/DX-91-migration-semantics.md §3.3
+
+      - docs/proposals/DX-91-claude-md-draft.md §2
+
+      - docs/proposals/DX-91-invar-md-draft.md
+
+      - docs/proposals/DX-91-generated-file-contracts.md
+
+
+      Files changed:
+
+      - docs/proposals/DX-91-generated-file-contracts.md
+
+
+      Gaps/Notes:
+
+      - Contract split between runtime/template work and repository docs is explicit
+
+      - Intentionally deferred wording cleanup items captured to prevent scope expansion
+
+      - Subagent reported no discovered out-of-scope issues'
   - id: freeze-spec-snapshot
     name: freeze-spec-snapshot
     status: pending
