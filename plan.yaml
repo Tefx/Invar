@@ -16512,7 +16512,7 @@ phases:
       \ with direct python invocation.\n\ndiscovered_issues:\n- none in scope"
   - id: dx91-init-runtime.fix-gate-blockers
     name: dx91-init-runtime.fix-gate-blockers
-    status: pending
+    status: claimed
     description: "Fix ALL findings from `dx91-init-runtime.gate` in one pass, not\
       \ just the first.\n\nstep_type: implementation\nagent_source: default\nprior_loop:\n\
       - fix-init-dev-sync-flow-batch\n- retest-init-dev-sync-flow-batch\nremaining_blocker:\
@@ -16598,6 +16598,8 @@ phases:
     depends_on:
     - dx91-init-runtime.gate
     agent: python-senior
+    claimed_by: python-senior
+    claimed_at: '2026-03-12T15:21:08.672650+00:00'
   - id: dx91-init-runtime.gate-retest
     name: dx91-init-runtime.gate-retest
     status: pending
