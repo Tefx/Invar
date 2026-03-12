@@ -16231,6 +16231,64 @@ phases:
     depends_on:
     - prove-init-dev-sync-flow
     agent: python-senior
+  - id: retest-init-dev-sync-flow-batch
+    name: retest-init-dev-sync-flow-batch
+    status: pending
+    description: 'As an INDEPENDENT TESTER (`integration-verifier`), re-run the DX-91
+      init/dev-sync proof after the batched fix step and try to break it.
+
+
+      step_type: verification
+
+      agent_source: default
+
+      Independence Level: L2
+
+
+      YOUR GOAL IS TO FIND PROBLEMS, not to confirm it works.
+
+
+      Retest scope:
+
+      - Main path: end-to-end init -> dev-sync flow proves the intended preserved
+      file set and captures actual output
+
+      - Failure path: destructive-edge scenario reaches the intended leakage assertion
+      (or explicitly documented equivalent assertion) instead of being masked by an
+      earlier missing-path failure
+
+      - Regression guard: no recurrence of the `.invar/context.md` missing-path failure
+      across the updated destructive harness expectations
+
+
+      Integration Evidence
+
+      - Command or test exercising the full path must invoke init/dev-sync end to
+      end
+
+      - Actual output must be captured, not summarized
+
+      - Path exercised must identify source template -> generated files -> destructive
+      harness assertions -> final repo-state verdict
+
+
+      Evidence must include the actual output for both the passing main path and the
+      explicit failure-path proof.'
+    verification: '- Main path: re-run end-to-end init -> dev-sync proof with actual
+      output captured and preserved-path assertions passing
+
+      - Failure path: re-run explicit destructive-edge proof and show it reaches the
+      intended leakage assertion (or documented equivalent explicit destructive-edge
+      assertion)
+
+      - Regression check: no recurrence of `.invar/context.md` missing-path failure
+      in the updated destructive harness run
+
+      - Evidence identifies the exact test names / commands used and includes actual
+      output for both paths'
+    depends_on:
+    - fix-init-dev-sync-flow-batch
+    agent: integration-verifier
 - id: dx91-python-only
   name: DX-91 Python-Only Cleanup
   status: locked
