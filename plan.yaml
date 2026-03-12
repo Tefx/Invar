@@ -13696,7 +13696,7 @@ phases:
       - CLI flag removal compatibility checks needed'
   - id: build-migration-fixtures
     name: build-migration-fixtures
-    status: pending
+    status: claimed
     description: 'Build focused regression fixtures that capture pre-DX-91 project
       states and expected post-migration results.
 
@@ -13741,6 +13741,8 @@ phases:
     depends_on:
     - inventory-regression-surfaces
     agent: python-senior
+    claimed_by: python-senior
+    claimed_at: '2026-03-12T12:59:09.194185+00:00'
   - id: prove-destructive-regression-harness
     name: prove-destructive-regression-harness
     status: pending
