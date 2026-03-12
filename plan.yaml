@@ -17589,19 +17589,32 @@ phases:
       - `.invar/context.md`
 
       '
-    verification: '- Main path: independently execute `invar init --preview`, `invar
-      dev sync --dry-run`, and `invar guard` and report concrete output proving the
-      active surface is Python-only
-
-      - Failure path: run `rg -n "typescript|TypeScript|node_tools|tsconfig\\.json|ts-query|guard_ts|ts_compiler"
-      README.md pyproject.toml src/invar` and classify every match as blocker (denylist)
-      or allowed historical residue (allowlist only)
-
-      - Evidence must state whether denylist active paths are clean, list any allowlist
-      matches found, and identify blockers if any active runtime/package/template
-      path still advertises TypeScript'
+    verification: "- Main path: independently execute `invar init --preview`, `invar\
+      \ dev sync --dry-run`, and `invar guard` and report concrete output proving\
+      \ the active surface is Python-only\n- Deterministic inventory check: `python\
+      \ - <<'PY'\nfrom pathlib import Path\nmissing_deleted = [p for p in [\n    'src/invar/templates/skills',\n\
+      \    'src/invar/templates/hooks',\n    'src/invar/templates/onboard',\n    'src/invar/shell/commands/feedback.py',\n\
+      \    'src/invar/shell/commands/hooks.py',\n    '.claude/skills',\n    '.claude/hooks',\n\
+      \    '.pi/hooks',\n    '.invar/examples',\n    '.invar/feedback',\n] if Path(p).exists()]\n\
+      preserved_missing = [p for p in [\n    'src/invar/templates/protocol/INVAR.md.jinja',\n\
+      \    'src/invar/templates/protocol/INVAR.md.v2.jinja',\n    'src/invar/templates/config/CLAUDE.md.jinja',\n\
+      \    '.invar/context.md',\n    '.invar/project-additions.md',\n    '.claude/commands/guard.md',\n\
+      \    '.claude/commands/audit.md',\n    'CLAUDE.md',\n    'INVAR.md',\n] if not\
+      \ Path(p).exists()]\nprint({'unexpected_survivors': missing_deleted, 'missing_preserved':\
+      \ preserved_missing})\nPY`\n- TypeScript active-surface residue scan: `rg -n\
+      \ \"typescript|TypeScript|node_tools|tsconfig\\.json|ts-query|guard_ts|ts_compiler\"\
+      \ README.md pyproject.toml src/invar .claude .invar --glob '!docs/proposals/**'\
+      \ --glob '!docs/test-reports/**' --glob '!artifacts/**' --glob '!tests/fixtures/**'`\n\
+      - Agent-era active-surface residue scan: `rg -n \"\\.claude/skills|\\.claude/hooks|\\\
+      .pi/hooks|\\.invar/examples|\\.invar/feedback|skills|hooks|onboard|feedback|USBV|UNDERSTAND|SPECIFY|VALIDATE|/develop|/review|/investigate|/propose|Check-In|✓\
+      \ Final|UserPromptSubmit|PreToolUse|PostToolUse|Stop\\.sh\" README.md CLAUDE.md\
+      \ INVAR.md pyproject.toml src/invar .claude .invar --glob '!docs/proposals/**'\
+      \ --glob '!docs/test-reports/**' --glob '!artifacts/**' --glob '!tests/fixtures/**'`\n\
+      - Evidence must classify every residue match as blocker (active surface) or\
+      \ allowed historical residue, and must paste the inventory output proving deleted\
+      \ vs preserved paths"
     depends_on:
-    - remove-stale-agent-assets
+    - dx91-python-only.dx91-python-only-remove-generated-agent-residue
     agent: blind-tester
   - id: freeze-python-only-snapshot
     name: freeze-python-only-snapshot
