@@ -13585,7 +13585,7 @@ phases:
       \ retest.\n\nSpec link:\n- phase: release-readiness\n- step: release-readiness.smoke-install-artifacts-retest-provenance-uv-fallback"
 - id: dx91-harness
   name: DX-91 Regression Harness
-  status: in_progress
+  status: done
   depends_on:
   - dx91-spec
   steps:
@@ -14299,7 +14299,7 @@ phases:
       \ introduced.\n\ndiscovered_issues:\n- none"
   - id: dx91-harness.retest-gate-blockers
     name: Reassess DX-91 harness after batched fixes
-    status: claimed
+    status: done
     description: 'Independent reassessment after `dx91-harness.fix-gate-blockers`.
 
 
@@ -14379,6 +14379,93 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-12T13:56:22.966189+00:00'
+    done_at: '2026-03-12T14:08:28.550042+00:00'
+    evidence: '## Independent Reassessment Report
+
+
+      Artifact:
+
+      - PR: none (verify-only reassessment)
+
+      - Retest task: ses_31daa064cffeP2DqkTJXIZkNcc
+
+
+      Verification:
+
+      - Run: `uv run pytest -v tests/integration/test_dx91_destructive_regression_harness.py`
+      -> 8 passed (happy path + edge/error fixtures + failure-path test in caught
+      mode)
+
+      - Run: `DX91_EXPECT_FAILURE=1 uv run pytest -v tests/integration/test_dx91_destructive_regression_harness.py::test_failure_path_harness_detects_broken_preservation_deletion_rule
+      || true` -> failing assertion excerpt includes `AssertionError: Unexpected repo
+      files: [''_unexpected_leak.txt'']`
+
+      - Run: `rg -n "dest\.write_text\(|expected_root.*write_text|expected.*write_text\("
+      tests/integration/test_dx91_destructive_regression_harness.py` -> no matches
+      (write-through shortcut removed)
+
+      - Run: `rg -n "10\.1|10\.4|104-idempotent-re-run-edge-cases" tests/fixtures/dx91_migration
+      -S` -> no matches (stale-anchor drift patterns cleared)
+
+      - Run: targeted inspection of harness and fixture inventory -> previously unexercised
+      fixture now included in parametrized coverage
+
+
+      Spec link:
+
+      - tests/integration/test_dx91_destructive_regression_harness.py
+
+      - tests/fixtures/dx91_migration/fixture_inventory.yaml
+
+      - docs/proposals/DX-91-migration-semantics.md
+
+
+      Finding-by-finding reassessment:
+
+      - B1: RESOLVED (real command APIs invoked; no harness-local expected-state write-through
+      shortcut)
+
+      - B2: RESOLVED (unexpected extra-file leakage now fails harness explicitly)
+
+      - S1: RESOLVED (stale section-anchor patterns removed from fixture metadata
+      scope)
+
+      - S2: RESOLVED (inventory and exercised fixture set aligned, including relative-vs-absolute-template-path)
+
+      - S3: RESOLVED (idempotency_assertions.yaml parsed and enforced by harness)
+
+
+      Critical proof checks:
+
+      - Real migration entrypoint end-to-end evidence present: yes
+
+      - Extra unexpected-file leakage failure proof present: yes
+
+      - Sibling search evidence complete: yes
+
+
+      Gate Decision:
+
+      - verdict: OPEN
+
+      - rationale: all prior findings closed with concrete, reproducible evidence;
+      harness is now strong enough to guard downstream destructive DX-91 work
+
+
+      Files changed:
+
+      - none (verify-only)
+
+
+      Gaps/Notes:
+
+      - `uv run invar guard --all` still reports baseline warnings (42) but no errors;
+      this did not reopen closed gate findings.
+
+
+      discovered_issues:
+
+      - none'
 - id: dx91-spec
   name: DX-91 Spec & Migration Semantics
   status: done
@@ -15598,7 +15685,7 @@ phases:
       - none'
 - id: dx91-init-runtime
   name: DX-91 Init & Dev-Sync Runtime Rewrite
-  status: locked
+  status: pending
   depends_on:
   - dx91-harness
   steps:
