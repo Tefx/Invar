@@ -16103,6 +16103,134 @@ phases:
     - prove-init-dev-sync-flow
     - freeze-init-runtime-snapshot
     agent: gate-reviewer
+  - id: fix-init-dev-sync-flow-batch
+    name: fix-init-dev-sync-flow-batch
+    status: pending
+    description: 'Fix ALL issues found by `prove-init-dev-sync-flow` in one pass,
+      not just the first.
+
+
+      step_type: implementation
+
+      agent_source: default
+
+      prior_loop: []
+
+      remaining_blocker: Restore DX-91 destructive harness preservation semantics
+      and ensure the failure-path proof reaches its intended destructive-edge assertion.
+
+      why_new_loop: The original proof step surfaced multiple coupled failures in
+      the same step family; they must be resolved together so the retest can measure
+      the intended end-to-end behavior.
+
+
+      Scope is centered on DX-91 init/dev-sync runtime behavior plus the related destructive
+      regression harness fixtures/tests. Keep changes focused on init/dev-sync preservation
+      semantics, destructive harness expectations, and targeted integration assertions
+      for critical DX-91 flow modules.
+
+
+      ## Blockers and should-fix items to resolve (ALL of these, not just the first)
+
+
+      ### B1: Missing preserved path `.invar/context.md` breaks 8/22 destructive harness
+      tests
+
+      Affected area: `tests/integration/test_dx91_destructive_regression_harness.py`
+      and the DX-91 init/dev-sync preservation logic/fixtures it exercises.
+
+      Remediation:
+
+      - Restore or align preservation semantics so `.invar/context.md` survives when
+      the flow is meant to preserve user-owned state.
+
+      - Align fixture expectations only where the runtime rewrite intentionally changed
+      behavior; do not weaken the destructive harness into accepting unintended deletions.
+
+      - Confirm the main path and destructive-edge scenarios assert the intended preserved
+      file set explicitly.
+
+      Sibling search instruction:
+
+      - Use grep hint `Missing expected paths|\.invar/context\.md|Deleted \.invar/`
+      and search for sibling assertions, fixture builders, and deletion logs beyond
+      the first failing location.
+
+
+      ### B2: Failure-path proof is masked by the earlier missing-preservation failure
+
+      Affected area: forced failure/destructive-edge coverage in `tests/integration/test_dx91_destructive_regression_harness.py`.
+
+      Remediation:
+
+      - Ensure the forced failure path deterministically reaches the intended leakage
+      assertion, or an explicitly equivalent destructive-edge assertion, instead of
+      failing earlier on the missing-path regression.
+
+      - Preserve independence between main-path preservation checks and failure-path
+      leakage checks so the failure-path proof actually exercises the target edge.
+
+      Sibling search instruction:
+
+      - Use grep hint `test_failure_path_harness_detects_broken_preservation_deletion_rule|Unexpected
+      repo files` and search for sibling failure-path helpers/assertions that can
+      mask the intended leakage proof.
+
+
+      ### S1: Low confidence in critical DX-91 flow modules
+
+      Affected area: focused DX-91 integration coverage around `uninstall.py`, `template_engine.py`,
+      and any adjacent init/dev-sync flow modules directly exercised by the destructive
+      harness.
+
+      Remediation:
+
+      - Add or strengthen focused integration assertions/paths for the critical DX-91
+      flow modules implicated by the end-to-end init->dev-sync flow.
+
+      - Improve confidence in the path actually used by the regression harness; do
+      not chase arbitrary coverage numbers outside this step family.
+
+      Sibling search instruction:
+
+      - Use grep hint `uninstall.py|template_engine.py|coverage` and search for sibling
+      DX-91 integration assertions that should be extended rather than creating isolated
+      mock-heavy tests.
+
+
+      ## Out of scope
+
+      - S2 mock-island findings in `tests/test_subprocess_env.py` and `tests/integration/test_dx78_ts_compiler.py`
+      are deferred unless they are discovered to block DX-91 init/dev-sync verification
+      directly.
+
+
+      ## Completion criteria
+
+      - ALL blockers above are fixed in one pass.
+
+      - Sibling-search evidence is provided for each grep hint family.
+
+      - Main path preserves `.invar/context.md` where required.
+
+      - Failure path reaches the intended destructive-edge assertion deterministically.
+
+      - Focused DX-91 integration assertions cover the critical runtime modules implicated
+      by this flow.'
+    verification: '- Grep-driven sibling search completed for each blocker family
+      and documented in evidence
+
+      - Targeted DX-91 harness/tests updated so preserved-path and destructive-edge
+      assertions are both reachable and meaningful
+
+      - Focused integration assertions added or strengthened for critical DX-91 flow
+      modules (`uninstall.py`, `template_engine.py`, or directly adjacent flow seams)
+
+      - Evidence identifies exactly which preservation semantic, fixture expectation,
+      and failure-path masking issue were corrected'
+    depends_on:
+    - prove-init-dev-sync-flow
+    agent: python-senior
 - id: dx91-python-only
   name: DX-91 Python-Only Cleanup
   status: locked
