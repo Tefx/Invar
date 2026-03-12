@@ -17497,14 +17497,19 @@ phases:
     verification: '- All dx91-python-only steps completed successfully
 
       - Evidence shows the active product surface is Python-only and free of retired
-      asset references where scope requires removal
+      asset references in runtime, packaging, templates, and README denylist paths
 
-      - No unresolved blocker remains around packaging, imports, or stale documentation
-      links introduced by cleanup
+      - Evidence explicitly inventories any historical allowlist references that remain
+      in proposals, reports, fixtures, or `.invar/context.md`
 
-      - Gate output states OPEN only if self-doc updates can proceed on a stable baseline'
+      - No unresolved blocker remains around packaging, imports, stale detection logic,
+      or active documentation links introduced by cleanup
+
+      - Gate output states OPEN only if self-doc updates can proceed on a stable Python-only
+      baseline'
     depends_on:
     - remove-typescript-tooling
+    - remove-typescript-active-surface-residue
     - remove-stale-agent-assets
     - verify-python-only-surface
     - freeze-python-only-snapshot
