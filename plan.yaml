@@ -17595,8 +17595,9 @@ phases:
   - id: remove-typescript-active-surface-residue
     name: remove-typescript-active-surface-residue
     status: claimed
-    description: 'Remove stale TypeScript references from active Python-only state
-      and classify any remaining historical mentions with an explicit allowlist/denylist.
+    description: 'Remove stale TypeScript references from the explicit active-surface
+      denylist for DX-91, and inventory any residual matches outside that denylist
+      for serialized follow-up rather than blocking this step.
 
 
       Spec refs:
@@ -17642,6 +17643,17 @@ phases:
       `src/invar/templates/examples/**`
 
 
+      Acceptance boundary for THIS step:
+
+      - Pass/fail is defined only by the explicit denylist paths above
+
+      - Residual TypeScript matches elsewhere under `src/invar/templates/**` do NOT
+      block this step if they are outside the denylist paths and are handed off to
+      the follow-up cleanup step in the same phase
+
+      - Evidence must distinguish `denylist=0` from `out_of_scope_template_hits>0`
+
+
       Allowlist (may retain historical mentions if clearly labeled historical or fixture-only):
 
       - `docs/proposals/**`
@@ -17664,9 +17676,12 @@ phases:
 
       - detection helpers still accept `typescript` as a live Python-only mode
 
-      - generated-output templates still emit TS-era assets or instructions
+      - active generated-output templates still emit TS-era assets or instructions
 
       - sibling search misses residue because only obvious edited files were checked
+
+      - residual matches in other template families are misclassified as blockers
+      for this denylist-focused step instead of being handed to the serialized follow-up
 
 
       State semantics:
@@ -17675,31 +17690,32 @@ phases:
       for migration evidence
 
       - remove completely: active product/runtime/package references that imply TypeScript
-      is still supported
+      is still supported in the denylist paths above
 
-      - backward-compatible legacy behavior: historical proposal and fixture text
-      stays only as historical evidence, not active instructions
+      - backward-compatible legacy behavior: proposal, fixture, and explicitly deferred
+      non-denylist template families may remain only until the follow-up cleanup step
+      removes or reclassifies them
 
 
       Out-of-scope guardrail:
 
       - proposal/archive narrative cleanup beyond the allowlist inventory is deferred
-      to `dx91-self-docs`; this step is responsible only for active-surface residue
-      and explicit inventory of allowed historical leftovers
+      to `dx91-self-docs`
 
-      '
+      - non-denylist template families under `src/invar/templates/**` are deferred
+      to `remove-typescript-template-family-residue`; this step must inventory them
+      but does not need to clear them to pass'
     verification: '- Main path: run `rg -n "typescript|TypeScript|node_tools|tsconfig\\.json|ts-query|guard_ts|ts_compiler"
-      README.md pyproject.toml src/invar/templates src/invar/shell/commands/init.py
-      src/invar/core/sync_helpers.py src/invar/mcp/server.py`; expected result is
-      zero denylist matches after cleanup
+      README.md pyproject.toml src/invar/templates/config src/invar/templates/protocol
+      src/invar/templates/examples src/invar/shell/commands/init.py src/invar/core/sync_helpers.py
+      src/invar/mcp/server.py`; expected result is zero denylist matches after cleanup
 
-      - Failure path: run the same pattern search over `docs/proposals DX-91-REGRESSION-SURFACES.md
-      docs/test-reports artifacts tests/fixtures .invar/context.md`; evidence must
-      inventory any remaining allowlist hits and explain why each is historical or
-      fixture-only
+      - Failure path: run `rg -n "typescript|TypeScript|node_tools|tsconfig\\.json|ts-query|guard_ts|ts_compiler"
+      src/invar/templates`; evidence must inventory any remaining non-denylist template
+      hits and hand them off explicitly to `remove-typescript-template-family-residue`
 
-      - Proof includes an explicit `denylist=0` statement for active surfaces and
-      an allowlist inventory handed off to later docs work'
+      - Proof includes an explicit `denylist=0` statement for the scoped paths above
+      plus a separate list of deferred template-family hits, if any'
     depends_on:
     - remove-typescript-tooling
     agent: python-executor
