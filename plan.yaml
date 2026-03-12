@@ -16100,7 +16100,7 @@ phases:
     depends_on:
     - rewrite-init-entrypoints
     - rewrite-dev-sync-template-merge
-    - prove-init-dev-sync-flow
+    - retest-init-dev-sync-flow-batch
     - freeze-init-runtime-snapshot
     agent: gate-reviewer
   - id: fix-init-dev-sync-flow-batch
