@@ -14255,7 +14255,7 @@ phases:
       \ implemented in single step as required.\n\ndiscovered_issues:\n- none"
   - id: dx91-spec.dx91-spec-gate-retest
     name: dx91-spec.gate-retest
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT REVIEWER (`gate-reviewer`), re-run gate review
       after `dx91-spec.dx91-spec-fix-gate-blockers` and verify ALL blockers and should_fix
       items from `dx91-spec.gate` are resolved.
@@ -14325,6 +14325,34 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-12T10:46:36.182510+00:00'
+    done_at: '2026-03-12T10:51:31.080829+00:00'
+    evidence: "## Gate Retest Report\n\n**Reviewer**: gate-reviewer\n**Prior blocked\
+      \ step**: `dx91-spec.gate`\n**Remediation step reviewed**: `dx91-spec.dx91-spec-fix-gate-blockers`\n\
+      \n### Resolution Check\n- B1 managed-marker semantics: BLOCKED (v1->v2 mapping\
+      \ still ambiguous due to OR outcomes).\n- B2 freeze reproducibility: BLOCKED\
+      \ (`<exact-sha>` placeholder remains in freeze baseline).\n- B3 source-of-truth\
+      \ boundaries: acceptable after prior fixes.\n- S1 canonical delete list: SHOULD_FIX\
+      \ (path normalization inconsistencies).\n- S2 optional-file preservation/backup\
+      \ semantics: acceptable after prior fixes.\n\n### Independent verdict\n- BLOCKED:\
+      \ remaining blockers identified with exact locations/grep hints.\n\nArtifact:\n\
+      - PR/commit reviewed: 1297ad6b (batched remediation commit)\n- Gate review task:\
+      \ ses_31e57af8fffekWo0WL58HoWyVO\n\nVerification:\n- Run: `git status --porcelain=v1\
+      \ -b` -> clean retest worktree, no file changes\n- Run: `git diff --stat` ->\
+      \ empty\n- Run: targeted content checks on DX-91 docs -> remaining blockers\
+      \ found:\n  - B1 at docs/proposals/DX-91-generated-file-contracts.md:215, :217\n\
+      \  - B2 at docs/proposals/DX-91-freeze-spec-baseline.md:16, :22\n  - S1 at docs/proposals/DX-91-migration-semantics.md:34,\
+      \ :36\n- Run: planner remediation task `ses_31e5542ddffeEJoV13FnJuTEvv` -> created\
+      \ second batched fix + retest chain\n\nSpec link:\n- docs/proposals/DX-91-generated-file-contracts.md\n\
+      - docs/proposals/DX-91-freeze-spec-baseline.md\n- docs/proposals/DX-91-migration-semantics.md\n\
+      \nFindings:\n- blockers:\n  - B1: ambiguous OR outcomes in v1->v2 marker mapping\n\
+      \  - B2: freeze baseline still uses placeholder SHA\n- should_fix:\n  - S1:\
+      \ canonical delete list not fully normalized to fully-qualified forms\n\nActions\
+      \ taken:\n- Created batched fix step: dx91-spec.dx91-spec-fix-remaining-gate-issues\
+      \ (depends_on: dx91-spec.dx91-spec-gate-retest)\n- Created retest step: dx91-spec.dx91-spec-gate-retest-2\
+      \ (depends_on: dx91-spec.dx91-spec-fix-remaining-gate-issues)\n\nFiles changed:\n\
+      - none (verify-only gate retest)\n\nGaps/Notes:\n- This retest intentionally\
+      \ scoped to unresolved issues from the first remediation loop.\n- Follow-up\
+      \ chain created per batched-fix protocol to avoid serial one-by-one fixes."
   - id: dx91-spec.dx91-spec-fix-remaining-gate-issues
     name: dx91-spec.fix-remaining-gate-issues
     status: pending
