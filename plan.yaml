@@ -17234,37 +17234,116 @@ phases:
   - id: remove-typescript-tooling
     name: remove-typescript-tooling
     status: pending
-    description: 'Remove TypeScript/JS tooling, node-specific helper paths, and related
-      packaging/runtime references once the Python-only replacement path is already
-      proven.
+    description: 'Remove runtime and packaging TypeScript tooling from the active
+      product surface once the DX-91 Python-only replacement path is already proven.
 
 
-      Scope:
+      Spec refs:
 
-      - Delete TypeScript query/tooling surfaces and their packaging hooks
+      - `docs/proposals/DX-91-simplification.md` :: `2.4 TypeScript/JS Support`, `3.2
+      Generated Files`
 
-      - Remove Node/TypeScript detection and dependency assumptions from the Python
-      product surface
+      - `docs/proposals/DX-91-migration-semantics.md` :: `2.2 What Gets Removed`,
+      `3.2 Generated Files`, `5.1 What dev sync Does After DX-91`
 
-      - Keep any still-needed Python references functionality intact through the simplified
-      scope
+      - `DX-91-REGRESSION-SURFACES.md` :: `4.3 TypeScript Support Removed`, `5.2 End-to-End
+      Harness Entrypoints`, `10. Verification Commands`
+
+
+      Touch paths:
+
+      - `src/invar/node_tools/`
+
+      - `src/invar/shell/ts_compiler.py`
+
+      - `src/invar/shell/prove/guard_ts.py`
+
+      - `src/invar/core/ts_parsers.py`
+
+      - `src/invar/core/ts_sig_parser.py`
+
+      - `src/invar/shell/commands/guard.py`
+
+      - `src/invar/shell/commands/perception.py`
+
+      - `src/invar/mcp/server.py`
+
+      - `pyproject.toml`
+
+
+      Conflict rationale:
+
+      - Shared command routing, MCP tool docs, and packaging metadata are merge-conflict-prone
+      registries; keep this serialized before later cleanup touches docs/templates.
+
+
+      Failure modes to cover:
+
+      - stale runtime entrypoints/imports still reference `ts_compiler`, `guard_ts`,
+      `node_tools`, or TypeScript-only helpers after file deletion
+
+      - packaging metadata or exclude rules still preserve Node-specific assets or
+      dependency assumptions
+
+      - active detection logic still branches on `tsconfig.json`, `project_language
+      == "typescript"`, or `language="typescript"`
+
+      - MCP/runtime help text still advertises TypeScript support after runtime removal
+
+
+      State semantics:
+
+      - last-writer-wins: DX-91 Python-only runtime semantics replace prior multi-language
+      behavior in active product paths
+
+      - preserve exactly: Python `sig`/`map`/`refs`/`guard` behavior and the proven
+      DX-91 init/dev-sync flow
+
+      - backward-compatible legacy behavior: historical TypeScript references may
+      remain only in proposal/history/fixture surfaces, not in active runtime or packaging
+      paths
+
+
+      Out-of-scope guardrail:
+
+      - Broad proposal/history cleanup stays with later docs work unless a file still
+      defines active runtime, packaging, or generated-output behavior
 
 
       Known risks:
 
       - TypeScript support is a recently completed surface in `.invar/context.md`;
-      cleanup must remove it completely, not partially strand packaging or docs
+      cleanup must remove active runtime hooks completely, not strand packaging or
+      command wiring
 
       - Shared packaging and command wiring files are conflict-prone; keep cleanup
-      serialized in this phase'
-    verification: '- Main path: Python-only command surface remains coherent after
-      TypeScript removal
+      serialized in this phase
 
-      - Failure path: regression check proves no stale Node/TypeScript entrypoint
-      or dependency reference remains in active runtime paths
 
-      - Proof includes a targeted sibling search for residual TypeScript integration
-      references'
+      Gate Preview (what the gate WILL reject):
+
+      1. Deleted Node files but surviving imports or help text in runtime/package
+      paths
+
+      2. `invar guard`, `invar init --preview`, or `invar dev sync --dry-run` still
+      depending on TS detection branches
+
+      3. Residual TypeScript mentions in active product paths without explicit historical
+      justification
+
+      '
+    verification: '- Main path: run `invar init --preview`, `invar dev sync --dry-run`,
+      and `invar guard`; evidence must show the active Python-only command surface
+      still works after TypeScript runtime deletion
+
+      - Failure path: run `rg -n "ts_compiler|guard_ts|node_tools|run_(sig|map|refs)_typescript|query_typescript|TypeScript
+      Compiler API" src/invar pyproject.toml` and `rg -n "tsconfig\\.json|project_language
+      == \"typescript\"|language=\"typescript\"|TypeScript" src/invar pyproject.toml
+      README.md`; evidence must show zero denylist matches or explicitly justify any
+      residual match as historical and moved out of active product paths
+
+      - Proof includes an explicit sibling search statement covering runtime, MCP,
+      packaging, and active README/package surfaces rather than only touched files'
     agent: python-senior
   - id: remove-stale-agent-assets
     name: remove-stale-agent-assets
