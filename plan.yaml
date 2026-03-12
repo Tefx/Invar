@@ -14702,7 +14702,7 @@ phases:
       - none'
   - id: dx91-spec.dx91-spec-gate-retest-3
     name: dx91-spec.gate-retest-3
-    status: pending
+    status: claimed
     description: 'As an INDEPENDENT REVIEWER (`gate-reviewer`), re-run a tightly scoped
       gate retest after `dx91-spec.dx91-spec-fix-final-unresolved-spec-issues` and
       verify only the remaining unresolved items from `dx91-spec.dx91-spec-gate-retest-2`
@@ -14732,6 +14732,8 @@ phases:
     depends_on:
     - dx91-spec.dx91-spec-fix-final-unresolved-spec-issues
     agent: gate-reviewer
+    claimed_by: gate-reviewer
+    claimed_at: '2026-03-12T11:09:48.456277+00:00'
 - id: dx91-init-runtime
   name: DX-91 Init & Dev-Sync Runtime Rewrite
   status: locked
