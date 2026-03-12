@@ -14132,6 +14132,52 @@ phases:
     - align-generated-doc-contracts
     - freeze-spec-snapshot
     agent: gate-reviewer
+  - id: dx91-spec.gate
+    name: dx91-spec.gate
+    status: pending
+    description: 'Gate review: verify the DX-91 semantic baseline is complete enough
+      to drive destructive implementation safely.
+
+
+      review_depth: THOROUGH
+
+
+      review_depth_rationale:
+
+      - This phase defines migration and deletion semantics for later destructive
+      work
+
+      - Downstream phases depend on one canonical interpretation of keep/remove behavior
+
+      - Failure here would cascade into harness and runtime rewrite rework
+
+
+      cross_cutting_focus:
+
+      - User-region preservation across repeated migration runs
+
+      - Clear delete semantics for removed TypeScript and agent-era assets
+
+      - Explicit source-of-truth boundaries between proposal docs, generated files,
+      and repo docs
+
+
+      As an INDEPENDENT REVIEWER (`gate-reviewer`), block progress if migration semantics,
+      generated-file contracts, or ownership boundaries remain ambiguous.'
+    verification: '- All dx91-spec steps completed successfully
+
+      - Evidence shows one canonical migration baseline and generated-file contract
+
+      - No unresolved blocker remains around preservation, deletion, or idempotent
+      merge semantics
+
+      - Gate output states OPEN only if dx91-harness can proceed without re-deciding
+      product semantics'
+    depends_on:
+    - finalize-migration-semantics
+    - align-generated-doc-contracts
+    - freeze-spec-snapshot
+    agent: gate-reviewer
 - id: dx91-init-runtime
   name: DX-91 Init & Dev-Sync Runtime Rewrite
   status: locked
