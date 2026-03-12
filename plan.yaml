@@ -17425,7 +17425,7 @@ phases:
       '
   - id: remove-stale-agent-assets
     name: remove-stale-agent-assets
-    status: pending
+    status: claimed
     description: 'Remove the canonical DX-91 template and command assets for skills/hooks/onboard/feedback
       without deleting the minimal Python-only protocol surface that must remain.
 
@@ -17547,6 +17547,8 @@ phases:
     depends_on:
     - dx91-python-only.remove-typescript-template-family-residue
     agent: python-executor
+    claimed_by: python-senior
+    claimed_at: '2026-03-12T18:43:14.826238+00:00'
   - id: verify-python-only-surface
     name: verify-python-only-surface
     status: pending
