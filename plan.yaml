@@ -13845,7 +13845,7 @@ phases:
       - removed CLI flag compatibility surface should be validated in runtime phase'
   - id: prove-destructive-regression-harness
     name: prove-destructive-regression-harness
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT TESTER (`integration-verifier`), prove the regression
       harness is capable of catching both intended DX-91 behavior and destructive
       regressions before runtime rewrite begins.
@@ -13885,6 +13885,36 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-12T13:10:22.558167+00:00'
+    done_at: '2026-03-12T13:19:04.020946+00:00'
+    evidence: "Artifact:\n- PR: e2085026565d3be5a55fc5773526660ea03c3e4e\n- Main merge\
+      \ commit: 30cb7fb ([vectl] step-prove-destructive-regression-harness completed)\n\
+      \nVerification:\n- Run: `uv run pytest -v tests/integration/test_dx91_destructive_regression_harness.py`\n\
+      \  - Output: collected 7 items; all 7 tests PASSED; `==============================\
+      \ 7 passed in 0.40s ===============================`\n- Run: `DX91_EXPECT_FAILURE=1\
+      \ uv run pytest -v tests/integration/test_dx91_destructive_regression_harness.py::test_failure_path_harness_detects_broken_preservation_deletion_rule`\n\
+      \  - Output: collected 1 item; FAILED with `AssertionError: Path should be removed:\
+      \ .claude/skills/`; `============================== 1 failed in 0.10s ===============================`\n\
+      - Run: `git merge --squash vectl/step-prove-destructive-regression-harness`\
+      \ -> merged without conflicts\n- Run: `git commit -m \"[vectl] step-prove-destructive-regression-harness\
+      \ completed\"` -> committed on main\n\nExercised path evidence:\n- Fixture root:\
+      \ `tests/fixtures/dx91_migration/<fixture-id>/input`\n- Migration entrypoint:\
+      \ `tests/integration/test_dx91_destructive_regression_harness.py::_migration_entrypoint_apply_expected_state`\n\
+      - Assertion surface: `tests/integration/test_dx91_destructive_regression_harness.py::_assert_expected_repo_state`\n\
+      - Asserted state: expected files, expected deletions (`_absent_paths.txt`),\
+      \ forbidden stale strings (`_forbidden_strings.txt`), idempotency expectations\n\
+      \nMain path + failure path:\n- Main path: PASS (`mainline-v1-to-v2` end-to-end\
+      \ fixture migration)\n- Edge cases: PASS (`repeated-migration-idempotent-v1-source`,\
+      \ `stale-legacy-vs-new-state-precedence`)\n- Error scenarios: PASS (`missing-file-fallback-partial-repo`,\
+      \ `interrupted-partial-migration-recovery`, `clear-null-overwrite-removed-managed`)\n\
+      - Failure path proof: PASS (forced rule break produced real failing assertion)\n\
+      \nCommit hash(es):\n- e2085026565d3be5a55fc5773526660ea03c3e4e\n- 30cb7fb\n\n\
+      Files changed:\n- tests/integration/test_dx91_destructive_regression_harness.py\n\
+      \nSpec link:\n- docs/proposals/DX-91-migration-semantics.md\n- tests/fixtures/dx91_migration/fixture_inventory.yaml\n\
+      \nGaps/Notes:\n- Runtime migration behavior intentionally not rewritten in this\
+      \ step; proof is harness/fixture driven.\n- Worker reported isolated `uv.lock`\
+      \ tooling side effect in worktree; it was not committed or merged.\n\ndiscovered_issues:\n\
+      - Tested migration entrypoint is currently harness-local helper, not production\
+      \ runtime migration code."
   - id: freeze-harness-snapshot
     name: freeze-harness-snapshot
     status: pending
