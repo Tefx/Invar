@@ -18015,7 +18015,7 @@ phases:
       \ to `plan.yaml` or orchestrator state files.\n"
   - id: dx91-python-only.dx91-python-only-remove-generated-agent-residue
     name: dx91-python-only.remove-generated-agent-residue
-    status: claimed
+    status: done
     description: 'Remove repo-root generated residue and stale references left by
       the retired agent-era surface after the runtime/template delete set is already
       complete.
@@ -18170,6 +18170,37 @@ phases:
     agent: python-executor
     claimed_by: python-senior
     claimed_at: '2026-03-12T19:12:13.717807+00:00'
+    done_at: '2026-03-12T19:25:34.995951+00:00'
+    evidence: "Artifact:\n- Main squash commit: `fdb8455`\n- Worktree commit: `943acdc1d7061cee8c46a6b5b369a2b4e70f320f`\n\
+      \nVerification:\n- Deleted inventory checks passed for retired repo-root residue:\n\
+      \  - `.claude/skills/**` removed\n  - `.claude/hooks/**` removed\n  - `.invar/feedback/**`\
+      \ removed\n  - optional already-absent: `.pi/hooks/**`, `.invar/examples/**`\n\
+      - Preservation inventory checks passed:\n  - `.invar/context.md`, `.invar/project-additions.md`,\
+      \ `.claude/commands/**`, `CLAUDE.md`, `INVAR.md` present\n- Active-surface residue\
+      \ scan (allowlist-excluded edited surfaces) returned zero retired-path blockers:\n\
+      \  - grep for `.claude/skills|.claude/hooks|.pi/hooks|.pi/tools|.invar/examples|.invar/feedback`\
+      \ over active surfaces -> `0`\n- Integration verification from worker:\n  -\
+      \ `pytest tests/integration/test_dx91_init_entrypoints.py -k \"migration_explicitly_deletes_removed_generated_assets\"\
+      ` PASS\n  - `pytest tests/integration/test_dx91_init_entrypoints.py -k \"migration_backs_up_both_preserved_files_and_keeps_originals\"\
+      ` PASS\n  - `invar_guard(changed=true)` PASS (0 errors, 1 non-blocking warning)\n\
+      - Pre-commit on main merge commit: INVAR.md Protection PASS, Ruff PASS, mypy\
+      \ PASS, Invar Guard PASS\n\nInventories:\n- deleted-now:\n  - `.claude/hooks/**`\n\
+      \  - `.claude/skills/**`\n  - `.invar/feedback/**`\n- already-absent-optional:\n\
+      \  - `.pi/hooks/**`\n  - `.invar/examples/**`\n- preserved-allowlist:\n  - `.invar/context.md`\n\
+      \  - `.invar/project-additions.md`\n  - `.claude/commands/**`\n  - `CLAUDE.md`\n\
+      \  - `INVAR.md`\n  - `docs/proposals/**`\n  - `DX-91-REGRESSION-SURFACES.md`\n\
+      \  - `docs/test-reports/**`\n  - `artifacts/**`\n  - `tests/fixtures/**`\n\n\
+      Files changed:\n- Deleted `.claude/hooks/**`, `.claude/skills/**`, `.invar/feedback/**`\n\
+      - Updated stale-reference surfaces:\n  - `README.md`\n  - `CLAUDE.md`\n  - `.invar/context.md`\n\
+      \  - `src/invar/shell/commands/init.py`\n  - `src/invar/templates/CLAUDE.md.template`\n\
+      \  - `src/invar/templates/config/AGENT.md.jinja`\n  - `src/invar/templates/config/context.md.jinja`\n\
+      \  - `src/invar/templates/context.md.template`\n  - `src/invar/templates/protocol/python/architecture-examples.md`\n\
+      \  - `src/invar/templates/protocol/universal/completion.md`\n\nSpec link:\n\
+      - `dx91-python-only.remove-generated-agent-residue`\n- DX-91 simplification/migration\
+      \ semantics/generated-file contracts refs listed in step\n\nGaps/Notes:\n- `invar_guard`\
+      \ still reports one pre-existing non-blocking warning: `dead_export` on `init.py::detect_language`.\n\
+      - INVAR.md direct edit attempt was reverted to satisfy protection hook; protocol/template\
+      \ sources updated instead.\n"
 - id: dx91-self-docs
   name: DX-91 Self-Docs Update
   status: locked
