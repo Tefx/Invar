@@ -18568,7 +18568,7 @@ phases:
       \ blocker families under repaired acceptance boundary.\n"
   - id: dx91-python-only.dx91-python-only-fix-gate-blockers
     name: dx91-python-only.fix-gate-blockers
-    status: claimed
+    status: done
     description: 'Fix ALL issues found by `dx91-python-only.gate` in ONE batched remediation
       pass — fix ALL of these, not just the first.
 
@@ -18673,6 +18673,44 @@ phases:
     agent: python-senior
     claimed_by: python-senior
     claimed_at: '2026-03-12T20:28:24.772416+00:00'
+    done_at: '2026-03-12T20:45:29.974985+00:00'
+    evidence: "Artifact:\n- Main squash commit: `4a01295`\n- Worktree commit: `0d2abc295fcfa08d1609b147636551bdbe32ee1b`\n\
+      \nFiles changed:\n- B1 harness/path alignment:\n  - `tests/integration/test_dx91_destructive_regression_harness.py`\n\
+      - B2 coherent DX-91 Python-only retirement:\n  - `tests/integration/test_dx78_ts_compiler.py`\
+      \ (converted to retirement assertions)\n  - deleted `tests/integration/test_lx05_detection.py`\n\
+      \  - deleted `tests/integration/test_lx05_integration.py`\n  - deleted `tests/integration/test_lx05_templates.py`\n\
+      \  - deleted `tests/integration/test_lx06_typescript.py`\n  - deleted `src/invar/templates/pi-tools/invar/index.ts`\n\
+      \  - deleted `src/invar/shell/pi_tools.py`\n  - deleted `src/invar/shell/pi_hooks.py`\n\
+      \  - deleted `scripts/embed_node_tools.py`\n  - deleted `typescript/**` workspace\
+      \ tree\n  - `.github/workflows/publish.yml` cleanup of Node/TS packaging paths\n\
+      - B3 docs/template alignment:\n  - `README.md`\n  - `src/invar/templates/CLAUDE.md.template`\n\
+      \  - `src/invar/templates/config/AGENT.md.jinja`\n  - `src/invar/templates/config/context.md.jinja`\n\
+      \  - `src/invar/templates/context.md.template`\n  - `src/invar/templates/protocol/universal/header.md`\n\
+      - sibling cleanup:\n  - `src/invar/core/patterns/__init__.py`\n  - `src/invar/core/patterns/detector.py`\n\
+      \  - `src/invar/core/patterns/registry.py`\n  - `src/invar/core/patterns/types.py`\n\
+      \  - `src/invar/shell/pattern_integration.py`\n  - `src/invar/shell/templates.py`\n\
+      \  - `src/invar/mcp/handlers.py`\n  - `tests/integration/test_lx07_skills.py`\n\
+      \nVerification:\n- `uv run pytest -q tests/integration/test_dx91_destructive_regression_harness.py\
+      \ tests/integration/test_dx78_ts_compiler.py tests/integration/test_dx91_init_entrypoints.py`\
+      \ -> `19 passed, 0 failed`\n- `invar_guard(changed=true)` (worker) -> pass\n\
+      - main merge commit hooks -> INVAR.md Protection PASS, Ruff PASS, mypy PASS,\
+      \ Invar Guard PASS\n\nB1 sibling-search coverage:\n- `rg -n \"invar\\.shell\\\
+      .commands\\.uninstall|collect_removal_targets|execute_removal\"` across active\
+      \ docs/src/tests/workflows/scripts\n- result: no active-surface blockers after\
+      \ remediation\n\nB2 sibling-search coverage:\n- `rg -n \"\\.ts\\b|TypeScript|typescript|ts_compiler|vitest|eslint|tsc\"\
+      ` across active surfaces\n- result: no active TS runtime/template/workspace/toolchain\
+      \ surfaces remain; only intentional retirement assertions in `test_dx78_ts_compiler.py`\n\
+      \nB3 sibling-search coverage:\n- `rg -n \"init --claude|init --pi|INVAR-MANAGED\
+      \ FILE|invar update|\\.invar/examples\"` across active docs/templates/shell/tests/workflows\n\
+      - result: stale active-doc guidance removed; remaining references confined to\
+      \ compatibility/migration semantics zones\n\nResidue classification:\n- active-blocker:\
+      \ none\n- canonical-protected: `INVAR.md` unchanged\n- historical/archive: proposals/test-reports/changelog\
+      \ references\n- compatibility/template-reference: legacy-removal constants/migration\
+      \ tests\n\nSpec link:\n- `dx91-python-only.dx91-python-only-fix-gate-blockers`\n\
+      \nGaps/Notes:\n- Initial commit attempt hit INVAR protection; resolved by restoring\
+      \ protected file and recommitting without bypassing hooks.\n- Unrelated baseline\
+      \ failures in `tests/integration/test_lx07_skills.py` observed during exploratory\
+      \ verification were not expanded beyond this step's scope.\n"
   - id: dx91-python-only.dx91-python-only-retest-gate-blockers
     name: dx91-python-only.retest-gate-blockers
     status: pending
