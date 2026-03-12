@@ -17730,6 +17730,8 @@ phases:
     - remove-stale-agent-assets
     - dx91-python-only.dx91-python-only-remove-generated-agent-residue
     - verify-python-only-surface
+    - dx91-python-only.verify-python-only-surface-fix-all-blockers
+    - dx91-python-only.verify-python-only-surface-retest-all-blockers
     - freeze-python-only-snapshot
     agent: gate-reviewer
   - id: remove-typescript-active-surface-residue
