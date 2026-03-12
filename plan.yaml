@@ -13960,7 +13960,7 @@ phases:
       - Subagent reported no discovered out-of-scope issues'
   - id: freeze-spec-snapshot
     name: freeze-spec-snapshot
-    status: claimed
+    status: done
     description: 'Freeze the DX-91 spec baseline for downstream implementation and
       verification.
 
@@ -13986,6 +13986,61 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-12T05:45:09.540351+00:00'
+    done_at: '2026-03-12T05:48:17.613131+00:00'
+    evidence: 'Artifact:
+
+      - PR: 56976b500f52ee4c81ff2a7b74f08af041466093
+
+      - Main merge commit: 63b6279 ([vectl] step-freeze-spec-snapshot completed)
+
+
+      Verification:
+
+      - Run: `git rev-parse HEAD` -> 56976b500f52ee4c81ff2a7b74f08af041466093 (in
+      isolated worktree before merge)
+
+      - Run: `git status --short` -> no output (clean working tree)
+
+      - Run: `printf "workdir=%s\nbranch=%s\nos=%s\n" "$(pwd)" "$(git rev-parse --abbrev-ref
+      HEAD)" "$(uname -s)"` -> workdir/branch/os declaration captured in evidence
+
+      - Run: `git show --name-only --pretty="format:" HEAD` -> docs/proposals/DX-91-freeze-spec-baseline.md
+
+      - Run: freeze snapshot declaration review in docs/proposals/DX-91-freeze-spec-baseline.md
+      -> includes exact baseline capture rule, no-folding rule, and no-code-change
+      rule until phase gate review
+
+      - Run: `git merge --squash vectl/step-freeze-spec-snapshot` -> squash staged
+      successfully without conflicts
+
+      - Run: `git commit -m "[vectl] step-freeze-spec-snapshot completed"` -> committed
+      staged squash to main
+
+
+      Spec link:
+
+      - docs/proposals/DX-91-freeze-spec-baseline.md
+
+      - docs/proposals/DX-91-generated-file-contracts.md
+
+      - docs/proposals/DX-91-migration-semantics.md
+
+      - docs/proposals/DX-91-simplification.md
+
+
+      Files changed:
+
+      - docs/proposals/DX-91-freeze-spec-baseline.md
+
+
+      Gaps/Notes:
+
+      - No existing proposal documents were modified in freeze step; freeze artifact
+      added only
+
+      - Freeze artifact records phase readiness for independent gate review
+
+      - Subagent reported discovered_issues: none'
   - id: gate
     name: dx91-spec.gate
     status: pending
