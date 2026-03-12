@@ -18203,6 +18203,76 @@ phases:
       \ still reports one pre-existing non-blocking warning: `dead_export` on `init.py::detect_language`.\n\
       - INVAR.md direct edit attempt was reverted to satisfy protection hook; protocol/template\
       \ sources updated instead.\n"
+  - id: dx91-python-only.verify-python-only-surface-fix-all-blockers
+    name: verify-python-only-surface.fix-all-blockers
+    status: pending
+    description: "Fix ALL blockers found by `verify-python-only-surface` in ONE batched\
+      \ remediation step. Do not fix just the first blocker.\n\nstep_type: implementation\n\
+      agent: python-senior\nprior_loop:\n- verify-python-only-surface\nremaining_blocker:\
+      \ verification command drift, TypeScript residue in active surfaces, and agent-era\
+      \ residue/broad-scan allowlist mismatches still block proof of a coherent Python-only\
+      \ surface.\nwhy_new_loop: The independent verification step successfully found\
+      \ blockers; a single systemic remediation pass is required so runtime command\
+      \ surfaces, residue policy, and active-surface cleanup stay consistent.\n\n\
+      spec_refs:\n- `DX-91-REGRESSION-SURFACES.md`\n- `.invar/context.md`\n- `dx91-python-only/verify-python-only-surface`\n\
+      \ntouch_paths:\n- `README.md`\n- `CLAUDE.md`\n- `INVAR.md`\n- `src/invar/core/`\n\
+      - `src/invar/shell/`\n- `src/invar/templates/`\n- verification contract text\
+      \ in `plan.yaml` for `verify-python-only-surface`\n\nharness_refs:\n- `verify-python-only-surface`\n\
+      - `freeze-python-only-snapshot`\n\n## Blockers to Fix (ALL of these, not just\
+      \ the first)\n\n### B1: Verification command drift blocks required checks\n\
+      - Remediation: update the verification contract and/or runtime command surfaces\
+      \ so the required proof commands are reproducible and deterministic in the current\
+      \ CLI.\n- Required outcomes:\n  - `invar init --preview` proof path is non-interactive\
+      \ and valid for the current CLI surface (for example, with the required agent\
+      \ flags if that is the supported contract).\n  - `invar dev sync --dry-run`\
+      \ mismatch is resolved by contract or command-surface correction.\n  - inventory/proof\
+      \ snippets use `python3`, not missing `python`.\n- Sibling search required:\
+      \ inspect every DX-91 verification/gate/reference path that repeats these command\
+      \ strings before claiming done.\n- Grep hint: `init --preview|dev sync --dry-run|python\
+      \ - <<'PY'|verify-python-only-surface`\n\n### B2: TypeScript residue blockers\
+      \ in active surfaces\n- Locations reported: `src/invar/core/models.py`, `src/invar/core/language.py`,\
+      \ `src/invar/shell/templates.py`, `src/invar/shell/fs.py`\n- Remediation: remove,\
+      \ reclassify, or narrow active-surface residue according to DX-91 policy so\
+      \ active Python-only surfaces no longer advertise retired TypeScript support.\n\
+      - Sibling search required: search beyond the listed files for adjacent active-surface\
+      \ residue in runtime/template/package paths before claiming done.\n- Grep hint:\
+      \ `typescript|TypeScript|tsconfig\\.json|ts-query|guard_ts|ts_compiler`\n\n\
+      ### B3: Agent-era residue blockers in active/non-allowlist surfaces\n- Locations\
+      \ include `README.md`, `CLAUDE.md`, `INVAR.md`, `.invar/archive/sessions-2025-12.md`,\
+      \ plus active `src/invar/**` findings from tester evidence.\n- Remediation:\
+      \ make the allowlist explicit in the broad scan policy, clear active blockers,\
+      \ and preserve historical-only references only where DX-91 policy allows them.\n\
+      - Sibling search required: search all active repo-root docs, runtime/template\
+      \ surfaces, and broad-scan patterns; classify every remaining match as active\
+      \ blocker or explicit allowlist residue.\n- Grep hint: `\\.claude/skills|\\\
+      .claude/hooks|\\.pi/hooks|\\.invar/examples|\\.invar/feedback|USBV|UNDERSTAND|SPECIFY|VALIDATE|/develop|/review|/investigate|/propose|Check-In|✓\
+      \ Final|UserPromptSubmit|PreToolUse|PostToolUse|Stop\\.sh`\n\n## Completion\
+      \ Criteria\n- ALL blockers above are fixed in one coherent remediation pass.\n\
+      - Sibling searches completed for each blocker family, not only the listed locations.\n\
+      - Verification/gate contracts name only valid deterministic commands for the\
+      \ current CLI.\n- Active Python-only surfaces are clean; any residual historical\
+      \ references are explicitly allowlisted and documented in the scan contract.\n\
+      - Out of scope: adding new product features unrelated to DX-91 Python-only cleanup."
+    verification: '- `rg -n "init --preview|dev sync --dry-run|python - <<''PY''|verify-python-only-surface"`
+      shows only corrected verification contract/runtime references for the current
+      CLI
+
+      - `rg -n "typescript|TypeScript|tsconfig\.json|ts-query|guard_ts|ts_compiler"
+      README.md pyproject.toml src/invar .claude .invar --glob ''!docs/proposals/**''
+      --glob ''!docs/test-reports/**'' --glob ''!artifacts/**'' --glob ''!tests/fixtures/**''`
+      leaves no active-surface blocker matches
+
+      - `rg -n "\.claude/skills|\.claude/hooks|\.pi/hooks|\.invar/examples|\.invar/feedback|USBV|UNDERSTAND|SPECIFY|VALIDATE|/develop|/review|/investigate|/propose|Check-In|✓
+      Final|UserPromptSubmit|PreToolUse|PostToolUse|Stop\.sh" README.md CLAUDE.md
+      INVAR.md pyproject.toml src/invar .claude .invar --glob ''!docs/proposals/**''
+      --glob ''!docs/test-reports/**'' --glob ''!artifacts/**'' --glob ''!tests/fixtures/**''`
+      leaves only explicit allowlist/historical residues with classification evidence
+
+      - Evidence must show sibling-search coverage for B1/B2/B3, not just the first
+      reported location'
+    depends_on:
+    - verify-python-only-surface
+    agent: python-senior
 - id: dx91-self-docs
   name: DX-91 Self-Docs Update
   status: locked
