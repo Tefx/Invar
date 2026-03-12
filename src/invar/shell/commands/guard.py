@@ -722,6 +722,7 @@ def rules(
 
 
 # DX-48b: Import commands from shell/commands/
+from invar.shell.commands.dev_sync import dev_sync
 from invar.shell.commands.hooks import app as hooks_app  # DX-57
 from invar.shell.commands.init import init
 from invar.shell.commands.mutate import mutate  # DX-28
@@ -746,7 +747,7 @@ dev_app = typer.Typer(
     help="Developer commands for Invar project development",
     add_completion=False,
 )
-dev_app.command("sync")(sync_self)  # DX-56: renamed from sync-self
+dev_app.command("sync")(dev_sync)  # DX-56: renamed from sync-self
 app.add_typer(dev_app)
 
 # DX-56: Keep sync-self as alias for backward compatibility (deprecated)

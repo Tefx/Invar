@@ -58,6 +58,8 @@ class SyncConfig:
     check: bool = False  # Preview only
     reset: bool = False  # Discard user content
     skip_patterns: list[str] = field(default_factory=list)  # Glob patterns to skip
+    template_root: str | None = None  # Optional template root (relative to sync path or absolute)
+    target_file: str = "CLAUDE.md"  # Sync target for managed instruction file
 
     @post(lambda result: result is None)  # Void method, validates or raises
     def __post_init__(self) -> None:
@@ -65,7 +67,7 @@ class SyncConfig:
 
         Examples:
             >>> SyncConfig(language="python")  # Valid
-            SyncConfig(syntax='cli', language='python', inject_project_additions=False, force=False, check=False, reset=False, skip_patterns=[])
+            SyncConfig(syntax='cli', language='python', inject_project_additions=False, force=False, check=False, reset=False, skip_patterns=[], template_root=None, target_file='CLAUDE.md')
 
             >>> SyncConfig(language="rust")  # doctest: +IGNORE_EXCEPTION_DETAIL
             Traceback (most recent call last):
