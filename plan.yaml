@@ -18713,7 +18713,7 @@ phases:
       \ verification were not expanded beyond this step's scope.\n"
   - id: dx91-python-only.dx91-python-only-retest-gate-blockers
     name: dx91-python-only.retest-gate-blockers
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT REVIEWER (`gate-reviewer`), re-test the FULL blocker
       set from `dx91-python-only.gate` after `dx91-python-only.fix-gate-blockers`.
 
@@ -18761,6 +18761,22 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-12T20:46:00.456154+00:00'
+    done_at: '2026-03-12T20:54:43.670113+00:00'
+    evidence: "Gate decision: BLOCKED (remaining blockers detected)\n\nFindings:\n\
+      - blockers:\n  - B1 uninstall-surface mismatch: CLI command `invar uninstall`\
+      \ missing and module `invar.shell.commands.uninstall` missing, while docs still\
+      \ reference uninstall flows.\n  - B3 active-doc/CLI drift: README command table\
+      \ and design doc advertise commands/flags not present in `uv run invar --help`.\n\
+      - should_fix:\n  - keep B2 regression check in next retest (currently passes)\n\
+      - tech_debt:\n  - stale helper comment in `src/invar/shell/skill_manager.py`\
+      \ referencing uninstall module\n\nKey evidence:\n- `uv run invar --help` command\
+      \ surface differs from documented README/design command lists\n- `uv run invar\
+      \ uninstall --help` fails; import of `invar.shell.commands.uninstall` fails\n\
+      - targeted regression tests (including TS retirement suite) pass: 19 passed\n\
+      \nBatched follow-up remediation created:\n- `dx91-python-only.dx91-python-only-fix-remaining-gate-blockers`\
+      \ (single fix step for remaining B1+B3, with B2 regression hold)\n- `dx91-python-only.dx91-python-only-retest-remaining-gate-blockers`\
+      \ (independent gate retest)\n\nNotes:\n- This retest step is completed as issue-discovery\
+      \ evidence; progression now flows through the new batched follow-up chain.\n"
   - id: dx91-python-only.dx91-python-only-fix-remaining-gate-blockers
     name: dx91-python-only.fix-remaining-gate-blockers
     status: pending
