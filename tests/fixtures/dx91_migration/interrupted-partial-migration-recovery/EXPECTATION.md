@@ -9,4 +9,4 @@ Expected:
 
 Spec links:
 - `docs/proposals/DX-91-migration-semantics.md` section 4.3
-- `docs/proposals/DX-91-migration-semantics.md` section 10.4
+- `docs/proposals/DX-91-migration-semantics.md` section 4.5

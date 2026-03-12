@@ -1,0 +1,3 @@
+.claude/hooks/pre-tool-use.sh
+.pi/hooks/pre.sh
+.pi/tools/invar.md

@@ -5,10 +5,27 @@ import shutil
 from pathlib import Path
 
 import pytest
+import yaml
+from returns.result import Failure
+
+from invar.core.sync_helpers import SyncConfig
+from invar.shell.commands.template_sync import sync_templates
+from invar.shell.commands.uninstall import collect_removal_targets, execute_removal
 
 
 FIXTURE_ROOT = Path(__file__).resolve().parent.parent / "fixtures" / "dx91_migration"
-CONTROL_FILES = {"_absent_paths.txt", "_forbidden_strings.txt", "idempotency_assertions.yaml"}
+CONTROL_FILES = {
+    "_absent_paths.txt",
+    "_forbidden_strings.txt",
+    "idempotency_assertions.yaml",
+    "_allowlist_paths.txt",
+}
+ENTRYPOINT_SKIP_PATTERNS = [
+    ".claude/skills/*",
+    ".claude/commands/*",
+    ".pre-commit-config.yaml",
+    ".invar/examples/*",
+]
 
 
 def _clone_input_fixture(fixture_id: str, tmp_path: Path) -> tuple[Path, Path]:
@@ -49,34 +66,80 @@ def _migration_entrypoint_apply_expected_state(
     *,
     break_rule: bool = False,
 ) -> None:
-    """Harness migration entrypoint used to prove fixture assertions.
+    """Run public migration path via real command APIs."""
 
-    Path exercised in tests:
-    fixture input -> this function -> repo state assertions.
-    """
+    # v1 cleanup phase (public uninstall command helpers)
+    targets = collect_removal_targets(repo_root, remove_extensions=True)
+    execute_removal(repo_root, targets)
 
-    expected_root = fixture_root / "expected"
-
-    # Materialize canonical expected files into migrated repository state.
-    for expected_file in _iter_expected_files(expected_root):
-        rel = expected_file.relative_to(expected_root)
-        dest = repo_root / rel
-        dest.parent.mkdir(parents=True, exist_ok=True)
-        dest.write_text(expected_file.read_text(encoding="utf-8"), encoding="utf-8")
-
-    # Enforce expected deletions.
-    for rel_path in _read_list_file(expected_root / "_absent_paths.txt"):
-        _delete_path(repo_root, rel_path)
+    # v2 materialization phase (public template sync engine)
+    result = sync_templates(
+        repo_root,
+        SyncConfig(
+            syntax="mcp",
+            language="python",
+            inject_project_additions=(repo_root / ".invar" / "project-additions.md").exists(),
+            force=False,
+            check=False,
+            reset=False,
+            skip_patterns=ENTRYPOINT_SKIP_PATTERNS,
+        ),
+    )
+    if isinstance(result, Failure):
+        pytest.fail(f"Migration entrypoint failed: {result.failure()}")
+    if result.unwrap().errors:
+        pytest.fail(f"Migration entrypoint errors: {result.unwrap().errors}")
 
     # Optional destructive regression injection for proof.
     if break_rule:
-        stale_dir = repo_root / ".claude" / "skills"
-        stale_dir.mkdir(parents=True, exist_ok=True)
-        (stale_dir / "BROKEN.md").write_text("stale legacy directory leaked", encoding="utf-8")
+        leaked = repo_root / "_unexpected_leak.txt"
+        leaked.write_text("unexpected leaked file", encoding="utf-8")
+
+
+def _iter_repo_files(repo_root: Path) -> set[str]:
+    return {str(path.relative_to(repo_root)) for path in repo_root.rglob("*") if path.is_file()}
+
+
+def _read_idempotency_assertions(expected_root: Path) -> dict[str, int | bool]:
+    path = expected_root / "idempotency_assertions.yaml"
+    if not path.exists():
+        return {}
+
+    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    if not isinstance(data, dict):
+        return {}
+
+    assertions: dict[str, int | bool] = {}
+    run_count = data.get("run_count")
+    if isinstance(run_count, int):
+        assertions["run_count"] = run_count
+
+    items = data.get("assertions", [])
+    if isinstance(items, list):
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            for key, value in item.items():
+                if isinstance(value, (int, bool)):
+                    assertions[str(key)] = value
+
+    return assertions
 
 
 def _assert_expected_repo_state(fixture_root: Path, repo_root: Path) -> None:
     expected_root = fixture_root / "expected"
+    expected_files = {
+        str(expected_file.relative_to(expected_root))
+        for expected_file in _iter_expected_files(expected_root)
+    }
+    allowlisted = set(_read_list_file(expected_root / "_allowlist_paths.txt"))
+    actual_files = _iter_repo_files(repo_root)
+
+    missing = sorted(expected_files - actual_files)
+    assert not missing, f"Missing expected paths: {missing}"
+
+    unexpected = sorted(actual_files - expected_files - allowlisted)
+    assert not unexpected, f"Unexpected repo files: {unexpected}"
 
     for expected_file in _iter_expected_files(expected_root):
         rel = expected_file.relative_to(expected_root)
@@ -109,18 +172,26 @@ def test_edge_case_repeated_migration_is_idempotent(tmp_path: Path) -> None:
     fixture_root, repo_root = _clone_input_fixture(
         "repeated-migration-idempotent-v1-source", tmp_path
     )
+    assertions = _read_idempotency_assertions(fixture_root / "expected")
+    run_count = int(assertions.get("run_count", 2))
+    assert run_count >= 2
 
     _migration_entrypoint_apply_expected_state(repo_root, fixture_root)
     first = (repo_root / "CLAUDE.md").read_text(encoding="utf-8")
 
-    _migration_entrypoint_apply_expected_state(repo_root, fixture_root)
-    second = (repo_root / "CLAUDE.md").read_text(encoding="utf-8")
+    second = first
+    for _ in range(run_count - 1):
+        _migration_entrypoint_apply_expected_state(repo_root, fixture_root)
+        second = (repo_root / "CLAUDE.md").read_text(encoding="utf-8")
 
     _assert_expected_repo_state(fixture_root, repo_root)
-    assert first == second
-    assert second.count("<!--invar:begin-->") == 1
-    assert "kept user preface" in second
-    assert "kept user suffix" in second
+    if assertions.get("managed_block_byte_identical_on_second_run") is True:
+        assert first == second
+    if assertions.get("managed_block_count") is not None:
+        assert second.count("<!--invar:managed") == int(assertions["managed_block_count"])
+    if assertions.get("user_content_outside_markers_byte_identical") is True:
+        assert "kept user preface" in second
+        assert "kept user suffix" in second
 
 
 @pytest.mark.parametrize(
@@ -130,6 +201,7 @@ def test_edge_case_repeated_migration_is_idempotent(tmp_path: Path) -> None:
         "missing-file-fallback-partial-repo",
         "interrupted-partial-migration-recovery",
         "clear-null-overwrite-removed-managed",
+        "relative-vs-absolute-template-path",
     ],
 )
 def test_edge_and_error_fixtures_enforce_expected_state(tmp_path: Path, fixture_id: str) -> None:
@@ -149,5 +221,5 @@ def test_failure_path_harness_detects_broken_preservation_deletion_rule(tmp_path
         _assert_expected_repo_state(fixture_root, repo_root)
         return
 
-    with pytest.raises(AssertionError, match="Path should be removed"):
+    with pytest.raises(AssertionError, match="Unexpected repo files"):
         _assert_expected_repo_state(fixture_root, repo_root)

@@ -1,0 +1,105 @@
+# Project Context
+
+*Last updated: [DATE]*
+
+## Current State
+
+- Phase: [current development phase]
+- Working on: [current task or feature]
+- Blockers: None
+
+## Key Rules (Quick Reference)
+
+<!-- DX-54: Rules summary for long conversation resilience -->
+
+### Core/Shell Separation
+- **Core** (`**/core/**`): @pre/@post + doctests, NO I/O imports
+- **Shell** (`**/shell/**`): Result[T, E] return type
+### USBV Workflow
+1. Understand → 2. Specify (contracts first) → 3. Build → 4. Validate
+
+### Verification
+- `invar_guard()` = static + doctests + CrossHair + Hypothesis
+- Final must show: `✓ Final: guard PASS | ...`
+
+## Task Router (DX-62)
+
+<!-- Before writing code, check this table -->
+
+
+| If you are about to... | STOP and read first |
+|------------------------|---------------------|
+| Write code in `core/` | `.invar/examples/contracts.py` |
+| Write code in `shell/` | `.invar/examples/core_shell.py` |
+| Add `@pre`/`@post` contracts | `.invar/examples/contracts.py` |
+| Use functional patterns | `.invar/examples/functional.py` |
+| Implement a feature | `.invar/examples/workflow.md` |
+
+
+**Rule:** Match found above? Read the file BEFORE writing code.
+
+## Self-Reminder
+
+<!-- DX-54: AI should re-read this file periodically -->
+
+**When to re-read this file:**
+- Starting a new task
+- Completing a task (before moving to next)
+- Conversation has been going on for a while (~15-20 exchanges)
+- Unsure about project rules or patterns
+
+**Quick rule check:**
+- Am I in Core or Shell?
+- Do I have @pre/@post contracts?
+- Am I following USBV workflow?
+- Did I run guard before claiming "done"?
+
+---
+
+## Recent Decisions
+
+1. [Decision summary] - [Brief rationale]
+
+## Lessons Learned
+
+1. [Pitfall or issue] → [Solution or workaround]
+
+## Documentation Structure
+
+| File | Owner | Edit? | When to Read |
+|------|-------|-------|--------------|
+| INVAR.md | Invar | No — use `invar update` | Protocol details, Six Laws |
+| CLAUDE.md | User | Yes | Project rules |
+| .invar/context.md | User | Yes (this file) | Session start, refresh |
+| .invar/examples/ | Invar | No | Learning Core/Shell patterns |
+
+**Decision rule:** Is this Invar protocol or project-specific?
+- Protocol content → Already in INVAR.md, don't duplicate
+- Project-specific → Add to CLAUDE.md or here
+
+**When to consult INVAR.md:**
+- Unsure about Core/Shell separation rules
+- Need to understand Six Laws principles
+- Checking USBV workflow details
+
+## Technical Debt
+
+*Run `invar_guard()` to check current status.*
+
+
+| File | Warning | Priority |
+|------|---------|----------|
+| (none) | — | — |
+
+## Key Files
+
+| File | Purpose |
+|------|---------|
+| INVAR.md | Protocol reference (Invar-managed) |
+| CLAUDE.md | Project guide (customize freely) |
+| src/core/ | Pure business logic |
+| src/shell/ | I/O adapters |
+
+---
+
+*Update this file when: completing major tasks, making design decisions, discovering pitfalls.*

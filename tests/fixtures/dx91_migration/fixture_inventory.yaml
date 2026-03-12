@@ -37,7 +37,7 @@ fixtures:
     protects: partial_write_interrupted_migration_recovery
     expectation: Partially migrated state is treated as v1 and repaired to consistent v2 state without duplication.
     spec_links:
-      - "DX-91-migration-semantics.md#104-idempotent-re-run-edge-cases"
+      - "DX-91-migration-semantics.md#45-idempotent-re-run-expectations"
       - "DX-91-migration-semantics.md#43-migration-steps-atomic"
 
   - id: repeated-migration-idempotent-v1-source

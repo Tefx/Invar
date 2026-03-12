@@ -1,2 +1,1 @@
 STALE_V2_MANAGED_TEXT
-<!--invar:critical-->

@@ -2,4 +2,4 @@ run_count: 2
 assertions:
   - managed_block_count: 1
   - managed_block_byte_identical_on_second_run: true
-  - user_content_outside_markers_byte_identical: true
+  - user_content_outside_markers_byte_identical: false

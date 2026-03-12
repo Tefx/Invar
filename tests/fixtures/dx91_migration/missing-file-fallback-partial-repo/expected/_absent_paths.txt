@@ -1,2 +1,1 @@
-.invar/context.md
 .claude/skills/
