@@ -8,7 +8,22 @@
 
 ## Baseline Commit and State
 
-The DX-91 execution baseline is frozen to the repository `HEAD` captured at freeze handoff time (`git rev-parse HEAD`) with a clean working tree (`git status --short` returns no entries).
+**Canonical freeze snapshot:** `git rev-parse HEAD` output recorded at freeze handoff time.
+
+**Reproducibility proof:**
+```
+# Record at freeze handoff
+git rev-parse HEAD        → <exact-sha>
+git status --short        → (empty output)
+git diff --stat          → (empty output)
+```
+
+**Verification:** Re-running these commands at any point during the implementation phase MUST yield:
+- Same `<exact-sha>` as recorded at freeze handoff
+- Empty `git status --short` (clean working tree)
+- No uncommitted changes
+
+If the commit hash differs or the tree is dirty, the freeze is invalidated.
 
 ## Baseline Proposal Sections (Authoritative)
 
@@ -40,3 +55,19 @@ The following proposal sections define the execution baseline for downstream imp
 ## Gate Readiness Declaration
 
 This phase is ready for independent gate review against the frozen baseline above.
+
+## Source-of-Truth Boundaries
+
+For all downstream implementation and verification, the following sources are canonical:
+
+| Topic | Canonical Source | Notes |
+|-------|------------------|-------|
+| Generated file contracts | `DX-91-generated-file-contracts.md` §2-4 | Contract definitions |
+| Keep/remove lists | `DX-91-migration-semantics.md` §2.2 | Deletion reference |
+| init v2 behavior | `DX-91-migration-semantics.md` §3 | Command surface |
+| Migration steps | `DX-91-migration-semantics.md` §4 | Migration execution |
+| Marker semantics | `DX-91-migration-semantics.md` §3.3, §4.4, §10.4 | Inside-marker behavior |
+| CLAUDE.md content | `DX-91-claude-md-draft.md` §2 | Injected section |
+| INVAR.md content | `DX-91-invar-md-draft.md` (entire) | Full document |
+| Idempotent re-run | `DX-91-migration-semantics.md` §10.4 | Edge case handling |
+| Backup semantics | `DX-91-migration-semantics.md` §4.3-4.4, §10.2 | Optional-file handling |

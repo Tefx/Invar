@@ -27,16 +27,20 @@ This document defines the **canonical execution contract** for DX-91. Downstream
 
 ### 2.2 What Gets Removed
 
+**Canonical delete list (implementation reference):**
+
 | Category | Files | Lines | Delete Action |
 |----------|-------|-------|---------------|
-| `node_tools/` | 35 files | ~5,981 | Delete entire directory |
+| `node_tools/` | 35 files | ~5,981 | Delete entire directory (must exist) |
 | TS routing in guard/perception/sig/map/refs | — | ~500 | Remove TS branches |
-| Skills templates | `templates/skills/**` | ~2,000 | Delete all skill templates |
-| Hooks templates | `templates/hooks/**` | ~200 | Delete all hook templates |
-| Onboard templates | `templates/onboard/**` | ~200 | Delete all onboard templates |
-| Examples (agent-facing) | `.invar/examples/` | — | Delete entire directory |
-| CLI commands removed | 9 files | ~2,000 | Delete command modules |
-| Feedback collection | DX-79 code | ~300 | Remove all feedback code |
+| Skills templates | `templates/skills/**` | ~2,000 | Delete if present (non-fatal if absent) |
+| Hooks templates | `templates/hooks/**` | ~200 | Delete if present (non-fatal if absent) |
+| Onboard templates | `templates/onboard/**` | ~200 | Delete if present (non-fatal if absent) |
+| Examples (agent-facing) | `.invar/examples/` | — | Delete if present (non-fatal if absent) |
+| CLI commands removed | 9 files | ~2,000 | Delete command modules (must exist) |
+| Feedback collection | DX-79 code | ~300 | Remove all feedback code (must exist) |
+
+**Optional-file semantics:** Directories marked "if present" proceed silently when absent. No error for missing optional deletions.
 
 ### 2.3 CLI Surface Change
 
@@ -149,16 +153,16 @@ A project is considered **v1** if **any** of these exist:
 ⚠  Legacy Invar v1 layout detected. Migration preview follows.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-[DELETED] Stale agent config:
-  • .claude/skills/          (entire directory)
-  • .claude/hooks/          (entire directory)
-  • .pi/hooks/              (entire directory)
-  • .pi/tools/              (entire directory)
-  • .invar/examples/        (entire directory)
+[DELETED] Stale agent config (non-fatal if absent):
+  • .claude/skills/          (delete if present)
+  • .claude/hooks/           (delete if present)
+  • .pi/hooks/               (delete if present)
+  • .pi/tools/               (delete if present)
+  • .invar/examples/         (delete if present)
 
-[PRESERVED] User data (backed up before deletion):
-  • .invar/context.md              → .invar/backup/v1-context.md
-  • .invar/project-additions.md    → .invar/backup/v1-project-additions.md
+[PRESERVED] User data (backed up before deletion, if present):
+  • .invar/context.md              → .invar/backup/v1-context.md (if present)
+  • .invar/project-additions.md    → .invar/backup/v1-project-additions.md (if present)
 
 [OVERWRITTEN] Managed files:
   • INVAR.md              (fully managed — no user edits)
@@ -176,8 +180,8 @@ Proceed? [y/N]
 2. **Calculate preview** — list file categories: deleted, preserved/backed up, overwritten
 3. **Prompt for confirmation** — abort if user declines
 4. **Create backup directory** — `.invar/backup/`
-5. **Copy preserved user files** — `.invar/context.md` → `.invar/backup/v1-context.md`
-6. **Delete stale directories** — remove all agent-era assets in one pass
+5. **Copy preserved user files** — only if `.invar/context.md` or `.invar/project-additions.md` exist (non-fatal if absent)
+6. **Delete stale directories** — remove all agent-era assets in one pass (skip absent directories silently)
 7. **Replace managed sections** — CLAUDE.md `<!--invar:begin/end-->` content replaced
 8. **Create/overwrite INVAR.md** — new semantic spec
 9. **Print migration summary** — deleted paths, backed up files, overwritten files
@@ -192,9 +196,14 @@ Proceed? [y/N]
 | File | User Content Location | Preservation |
 |------|----------------------|--------------|
 | `CLAUDE.md` | Outside `<!--invar:begin/end-->` | Preserved verbatim |
-| `.invar/context.md` | Entire file | Backed up, user retains original |
-| `.invar/project-additions.md` | Entire file | Backed up, user retains original |
+| `.invar/context.md` | Entire file (if present) | Backed up (non-fatal if absent), user retains original |
+| `.invar/project-additions.md` | Entire file (if present) | Backed up (non-fatal if absent), user retains original |
 | `INVAR.md` | N/A (fully managed) | Overwritten without backup (no user edits expected) |
+
+**Optional-file semantics:**
+- `.invar/context.md` and `.invar/project-additions.md` are optional
+- If absent: migration proceeds without error, no backup needed
+- If present: backup required before proceeding
 
 **Last-writer-wins scope:**
 - Applies **only** to regenerated managed sections between `<!--invar:begin/end-->`
@@ -416,10 +425,12 @@ Each guard violation must include:
 
 | Scenario | Action |
 |----------|--------|
-| v2 present, user modified managed section | Replace managed content (last-writer-wins for managed regions only) |
-| v2 present, user added content inside markers | Merge algorithm: preserve unique user lines, replace managed lines |
+| v2 present, user modified managed section | Replace managed content exactly (managed section is regenerated, not merged) |
+| v2 present, user added content inside markers | Replaced (user content inside markers is not preserved; see §4.4) |
 | v2 present, user moved markers | Detect markers, use current position |
 | v1 present but partially migrated | Treat as v1, run full migration |
+
+**Canonical semantics (see §4.4):** User content belongs *outside* `<!--invar:begin/end-->` markers. Content inside markers is regenerated exactly, never merged.
 
 ---
 
