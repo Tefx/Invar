@@ -14114,7 +14114,7 @@ phases:
       \ protocol"
   - id: dx91-spec.dx91-spec-fix-gate-blockers
     name: dx91-spec.fix-gate-blockers
-    status: pending
+    status: claimed
     description: "Fix ALL blockers and should_fix items found by `dx91-spec.gate`,\
       \ not just the first.\n\nprior_loop:\n- dx91-spec.gate\nremaining_blocker: Conflicting\
       \ managed-marker semantics, unreproducible freeze baseline, and incomplete source-of-truth\
@@ -14216,6 +14216,8 @@ phases:
     depends_on:
     - dx91-spec.gate
     agent: software-architect
+    claimed_by: software-architect
+    claimed_at: '2026-03-12T10:42:10.428716+00:00'
   - id: dx91-spec.dx91-spec-gate-retest
     name: dx91-spec.gate-retest
     status: pending
