@@ -14355,7 +14355,7 @@ phases:
       \ chain created per batched-fix protocol to avoid serial one-by-one fixes."
   - id: dx91-spec.dx91-spec-fix-remaining-gate-issues
     name: dx91-spec.fix-remaining-gate-issues
-    status: claimed
+    status: done
     description: "Fix ALL remaining issues, not just the first, from `dx91-spec.dx91-spec-gate-retest`\
       \ in ONE tightly scoped remediation pass.\n\nprior_loop:\n- dx91-spec.dx91-spec-fix-gate-blockers\n\
       - dx91-spec.dx91-spec-gate-retest\nremaining_blocker: The frozen DX-91 baseline\
@@ -14419,6 +14419,84 @@ phases:
     agent: doc-reviewer
     claimed_by: doc-reviewer
     claimed_at: '2026-03-12T10:51:42.896886+00:00'
+    done_at: '2026-03-12T10:55:32.446818+00:00'
+    evidence: 'Artifact:
+
+      - PR: fb530cb (worker commit)
+
+      - Main merge commit: 24b5dfa ([vectl] step-dx91-spec.dx91-spec-fix-remaining-gate-issues
+      completed)
+
+
+      Verification:
+
+      - Run: `git merge --squash vectl/step-dx91-spec.dx91-spec-fix-remaining-gate-issues`
+      -> merged without conflicts
+
+      - Run: `git commit -m "[vectl] step-dx91-spec.dx91-spec-fix-remaining-gate-issues
+      completed"` -> committed on main
+
+      - Run: content checks on target docs for unresolved patterns (`OR` mapping ambiguity,
+      `<exact-sha>` placeholder, shorthand canonical delete-list paths) -> removed/normalized
+      in canonical sections
+
+
+      Spec link:
+
+      - docs/proposals/DX-91-generated-file-contracts.md §4.2
+
+      - docs/proposals/DX-91-freeze-spec-baseline.md §Baseline Commit and State
+
+      - docs/proposals/DX-91-migration-semantics.md §2.2
+
+
+      Commit hash(es):
+
+      - fb530cb
+
+      - 24b5dfa
+
+
+      Files changed:
+
+      - docs/proposals/DX-91-generated-file-contracts.md
+
+      - docs/proposals/DX-91-freeze-spec-baseline.md
+
+      - docs/proposals/DX-91-migration-semantics.md
+
+
+      Main-path proof:
+
+      - Deterministic v1->v2 marker mapping now specifies single destination per marker
+      state (no OR alternatives).
+
+      - Freeze baseline now records literal frozen SHA and clean-state proof in the
+      authoritative freeze document.
+
+      - Canonical delete list paths normalized to fully-qualified repo-relative form
+      in the canonical list.
+
+
+      Failure-path proof:
+
+      - No remaining OR-based marker destination ambiguity in canonical mapping section.
+
+      - No `<exact-sha>` placeholder remains in freeze baseline.
+
+      - No mixed shorthand path forms remain in canonical delete-list section.
+
+
+      Gaps/Notes:
+
+      - Changes intentionally scoped to remaining unresolved B1/B2/S1 issues.
+
+      - Historical/archive docs not part of canonical baseline were not rewritten.
+
+
+      discovered_issues:
+
+      - none'
   - id: dx91-spec.dx91-spec-gate-retest-2
     name: dx91-spec.gate-retest-2
     status: pending
