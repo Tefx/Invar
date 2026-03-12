@@ -61,7 +61,7 @@ invar_guard(path=".")
 invar_guard(path="src/components")
 ```
 
-**Reason:** Subdirectories may lack language marker files (pyproject.toml, tsconfig.json), causing incorrect detection defaults.
+**Reason:** Subdirectories may lack required marker files, causing incorrect detection defaults.
 
 ---
 
