@@ -14090,6 +14090,110 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-12T10:34:40.668820+00:00'
+  - id: dx91-spec.dx91-spec-fix-gate-blockers
+    name: dx91-spec.fix-gate-blockers
+    status: pending
+    description: "Fix ALL blockers and should_fix items found by `dx91-spec.gate`,\
+      \ not just the first.\n\nprior_loop:\n- dx91-spec.gate\nremaining_blocker: Conflicting\
+      \ managed-marker semantics, unreproducible freeze baseline, and incomplete source-of-truth\
+      \ boundaries keep the DX-91 semantic baseline unsafe for downstream destructive\
+      \ work.\nwhy_new_loop: The existing gate surfaced concrete cross-document contradictions\
+      \ and omissions that require a single canonical remediation pass across the\
+      \ frozen baseline before an independent re-review can open the phase.\n\n##\
+      \ Blockers to Fix (ALL of these, not just the first)\n\n### B1: Conflicting\
+      \ idempotent/merge semantics for managed markers\nLocations:\n- `docs/proposals/DX-91-generated-file-contracts.md:31`\n\
+      - `docs/proposals/DX-91-migration-semantics.md:209`\n- `docs/proposals/DX-91-migration-semantics.md:419`\n\
+      - `docs/proposals/DX-91-migration-semantics.md:420`\nRemediation:\n- Choose\
+      \ ONE canonical inside-marker rule and align all baseline docs to it.\n- Remove\
+      \ contradictory language about exact replace vs merge vs last-writer-wins.\n\
+      Grep hint: `merge algorithm|preserve unique user lines|replaces content between\
+      \ markers exactly|last-writer-wins`\nIMPORTANT: Search for sibling statements\
+      \ beyond the listed locations and normalize every occurrence before closing\
+      \ this step.\n\n### B2: Freeze baseline not reproducible (no explicit commit\
+      \ hash recorded)\nLocations:\n- `docs/proposals/DX-91-freeze-spec-baseline.md:9`\n\
+      - `docs/proposals/DX-91-freeze-spec-baseline.md:11`\nRemediation:\n- Record\
+      \ the exact frozen commit hash and cleanliness proof directly in the freeze\
+      \ document.\n- Ensure the freeze baseline can be replayed without guessing repo\
+      \ state.\nGrep hint: `Baseline Commit and State|git rev-parse HEAD`\nIMPORTANT:\
+      \ Search for sibling freeze-state references beyond the listed locations and\
+      \ bring them under one reproducible baseline statement.\n\n### B3: Source-of-truth\
+      \ boundaries incomplete in frozen baseline\nLocations:\n- `docs/proposals/DX-91-freeze-spec-baseline.md:13`\n\
+      - `docs/proposals/DX-91-generated-file-contracts.md:23`\n- `docs/proposals/DX-91-generated-file-contracts.md:75`\n\
+      Remediation:\n- Add the referenced draft sections to the authoritative freeze\
+      \ baseline list OR inline the authoritative content.\n- Make ownership boundaries\
+      \ explicit between freeze baseline, migration semantics, and generated-file\
+      \ contracts.\nGrep hint: `Source of truth:`\nIMPORTANT: Search for sibling source-of-truth\
+      \ declarations beyond the listed locations and unify them under the same authoritative\
+      \ boundary.\n\n## Should-Fix Items (include in same remediation pass)\n\n###\
+      \ S1: Canonical delete list split/inconsistent\nLocations:\n- `docs/proposals/DX-91-migration-semantics.md:28`\n\
+      - `docs/proposals/DX-91-migration-semantics.md:132`\n- `docs/proposals/DX-91-migration-semantics.md:152`\n\
+      Remediation:\n- Normalize one canonical delete list and reference it consistently\
+      \ from preview/detection text.\n\n### S2: Optional-file preservation/backup\
+      \ semantics underspecified\nLocations:\n- `docs/proposals/DX-91-migration-semantics.md:159`\n\
+      - `docs/proposals/DX-91-migration-semantics.md:179`\n- `docs/proposals/DX-91-migration-semantics.md:195`\n\
+      Remediation:\n- Explicitly define if-present behavior and non-fatal handling\
+      \ for optional files and backups.\n\n## Completion Criteria\n- Fix ALL of these,\
+      \ not just the first.\n- Perform systemic sibling search for each grep hint\
+      \ and capture every matching baseline statement that needs alignment.\n- Preserve\
+      \ one canonical semantic baseline across all DX-91 proposal docs.\n- State clearly\
+      \ what the frozen source of truth is and what is merely referenced support text.\n\
+      - Focused verification must cover both the main path and the highest-risk failure\
+      \ path:\n  - Main path: an independent reader can derive one unambiguous inside-marker\
+      \ rule, one reproducible freeze baseline, and one authoritative source-of-truth\
+      \ boundary.\n  - Highest-risk failure path: no contradictory merge/replace language\
+      \ remains that could cause downstream destructive implementation to preserve,\
+      \ merge, or overwrite user content differently across repeated runs."
+    verification: '- Main path: all cited DX-91 baseline documents read consistently
+      for managed markers, freeze state, delete list, and source-of-truth ownership
+
+      - Failure path: targeted search using each grep hint finds no contradictory
+      sibling statements that would reintroduce merge/replace ambiguity or unreproducible
+      freeze state
+
+      - Evidence names each updated authoritative statement and shows where the highest-risk
+      contradiction was removed'
+    evidence_template: '## Batched Gate Blocker Remediation
+
+
+      **Scope**: Resolve ALL blockers and should_fix items from `dx91-spec.gate`,
+      not just the first.
+
+
+      ### Main path proof
+
+      - Canonical inside-marker rule:
+
+      - Canonical freeze baseline statement:
+
+      - Canonical source-of-truth boundary:
+
+      - Canonical delete list reference:
+
+      - Optional-file/backup handling statement:
+
+
+      ### Sibling search proof
+
+      - Grep hint `merge algorithm|preserve unique user lines|replaces content between
+      markers exactly|last-writer-wins`:
+
+      - Grep hint `Baseline Commit and State|git rev-parse HEAD`:
+
+      - Grep hint `Source of truth:`:
+
+
+      ### Highest-risk failure path proof
+
+      - Explain how repeated migration runs now avoid contradictory preserve/merge/overwrite
+      behavior inside managed markers.
+
+      - Show that freeze replay no longer depends on unstated repo state or draft-only
+      authority.
+
+      '
+    depends_on:
+    - dx91-spec.gate
+    agent: software-architect
 - id: dx91-init-runtime
   name: DX-91 Init & Dev-Sync Runtime Rewrite
   status: locked
