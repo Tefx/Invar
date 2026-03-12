@@ -14299,7 +14299,7 @@ phases:
       \ introduced.\n\ndiscovered_issues:\n- none"
   - id: dx91-harness.retest-gate-blockers
     name: Reassess DX-91 harness after batched fixes
-    status: pending
+    status: claimed
     description: 'Independent reassessment after `dx91-harness.fix-gate-blockers`.
 
 
@@ -14377,6 +14377,8 @@ phases:
     depends_on:
     - dx91-harness.fix-gate-blockers
     agent: gate-reviewer
+    claimed_by: gate-reviewer
+    claimed_at: '2026-03-12T13:56:22.966189+00:00'
 - id: dx91-spec
   name: DX-91 Spec & Migration Semantics
   status: done
