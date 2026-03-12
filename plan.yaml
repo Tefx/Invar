@@ -15838,7 +15838,7 @@ phases:
       - no functional regressions detected in targeted suites'
   - id: rewrite-dev-sync-template-merge
     name: rewrite-dev-sync-template-merge
-    status: claimed
+    status: done
     description: 'Rewrite `invar dev sync` and the template merge pipeline so repository
       templates, generated files, and migration semantics all follow the simplified
       DX-91 contract.
@@ -15893,6 +15893,98 @@ phases:
     agent: python-senior
     claimed_by: python-senior
     claimed_at: '2026-03-12T14:19:46.418516+00:00'
+    done_at: '2026-03-12T14:36:40.872043+00:00'
+    evidence: 'Artifact:
+
+      - Worker commit: cad5047b93d3cb8d0ae8ea0dfd9a98fb2e82d463
+
+      - Main merge commit: 52b95fd1 ([vectl] step-rewrite-dev-sync-template-merge
+      completed)
+
+
+      Verification:
+
+      - Run: `uv run pytest tests/integration/test_dx91_dev_sync_template_merge.py
+      -q` -> 7 passed in 0.53s
+
+      - Run: `uv run pytest tests/integration/test_dx91_dev_sync_template_merge.py
+      -k "main_path or missing_target_files or clear_overwrite or stale_legacy" -q`
+      -> 4 passed, 3 deselected
+
+      - Run: `invar_guard(path=<worktree>, changed=true)` -> passed, errors=0, warnings=0;
+      doctest/property tests passed
+
+      - Run: sibling search `rg -n "detect_region_scheme|get_sync_file_lists|_merge_region_content"
+      src/invar/shell/commands` -> no matches
+
+      - Run: `rg -n "dev_app.command\(\"sync\"\)" src/invar/shell/commands/guard.py`
+      -> dev sync wired as primary command
+
+      - Run: `git merge --squash vectl/step-rewrite-dev-sync-template-merge` -> merged
+      without conflicts
+
+      - Run: `git commit -m "[vectl] step-rewrite-dev-sync-template-merge completed"`
+      -> committed on main
+
+
+      Spec link:
+
+      - docs/proposals/DX-91-migration-semantics.md
+
+      - docs/proposals/DX-91-generated-file-contracts.md
+
+
+      Commit hash(es):
+
+      - cad5047b93d3cb8d0ae8ea0dfd9a98fb2e82d463
+
+      - 52b95fd1
+
+
+      Files changed:
+
+      - src/invar/core/sync_helpers.py
+
+      - src/invar/shell/commands/dev_sync.py
+
+      - src/invar/shell/commands/guard.py
+
+      - src/invar/shell/commands/sync_self.py
+
+      - src/invar/shell/commands/template_sync.py
+
+      - src/invar/templates/config/CLAUDE.md.v2.jinja
+
+      - src/invar/templates/protocol/INVAR.md.v2.jinja
+
+      - tests/integration/test_dx91_dev_sync_template_merge.py
+
+
+      Main-path result:
+
+      - Simplified DX-91 dev-sync/template-merge pipeline regressions pass and create/merge
+      expected minimal outputs.
+
+
+      Failure-path result:
+
+      - Regression coverage passes for stale-state precedence, explicit clear/delete
+      overwrite semantics, fallback behavior for missing target files, and interrupted/partial-write
+      recovery.
+
+
+      Gaps/Notes:
+
+      - Scope maintained: no python-only cleanup phase work and no docs-polish phase
+      work included.
+
+      - Hidden `sync-self` alias preserved for compatibility while primary flow moved
+      to DX-91 `dev sync` path.
+
+
+      discovered_issues:
+
+      - none (worker resolved transient complexity/doctest drift before final commit)'
   - id: prove-init-dev-sync-flow
     name: prove-init-dev-sync-flow
     status: pending
