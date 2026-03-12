@@ -14499,7 +14499,7 @@ phases:
       - none'
   - id: dx91-spec.dx91-spec-gate-retest-2
     name: dx91-spec.gate-retest-2
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT REVIEWER (`gate-reviewer`), re-run focused gate
       review after `dx91-spec.dx91-spec-fix-remaining-gate-issues` and verify ALL
       remaining blocker/should_fix items from `dx91-spec.dx91-spec-gate-retest` are
@@ -14535,6 +14535,27 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-12T10:55:40.843476+00:00'
+    done_at: '2026-03-12T11:00:25.988198+00:00'
+    evidence: "Artifact:\n- PR: none (verify-only)\n- Gate retest task: ses_31e4f6effffeC2rGB4DX8G5qgd\n\
+      \nVerification:\n- Run: `git status` in isolated retest worktree -> clean\n\
+      - Run: focused checks on unresolved families B1/B2/S1 against updated docs\n\
+      \  - B2 passed (literal 40-hex SHA present in freeze baseline)\n  - B1 remained\
+      \ blocked (managed-content merge wording + non-literal marker token usage)\n\
+      \  - S1 remains should-fix (canonical delete list still contains non-path entries\
+      \ in canonical list section)\n- Run: planner remediation task `ses_31e4cecc8ffeWsbv17kgPEsZHv`\
+      \ -> created next batched fix+retest chain\n\nSpec link:\n- docs/proposals/DX-91-generated-file-contracts.md\n\
+      - docs/proposals/DX-91-freeze-spec-baseline.md\n- docs/proposals/DX-91-migration-semantics.md\n\
+      \nFindings:\n- blockers:\n  - B1: v1->v2 mapping still ambiguous/contradictory\
+      \ around merge-vs-replace semantics and marker literal representation\n- should_fix:\n\
+      \  - S1: canonical delete-list section not fully path-normalized\n- resolved\
+      \ in this retest:\n  - B2: freeze reproducibility requirement satisfied\n\n\
+      Actions taken:\n- Created fix step: dx91-spec.dx91-spec-fix-final-unresolved-spec-issues\
+      \ (depends_on: dx91-spec.dx91-spec-gate-retest-2)\n- Created retest step: dx91-spec.dx91-spec-gate-retest-3\
+      \ (depends_on: dx91-spec.dx91-spec-fix-final-unresolved-spec-issues)\n\nGate\
+      \ Decision:\n- verdict: BLOCKED\n- rationale: unresolved B1 ambiguity remains\
+      \ in contract semantics\n\nFiles changed:\n- none (verify-only)\n\nGaps/Notes:\n\
+      - Retest intentionally constrained to unresolved families; B2 not reopened except\
+      \ regression check."
   - id: dx91-spec.dx91-spec-fix-final-unresolved-spec-issues
     name: dx91-spec.fix-final-unresolved-spec-issues
     status: pending
