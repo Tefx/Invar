@@ -13780,11 +13780,11 @@ phases:
     agent: gate-reviewer
 - id: dx91-spec
   name: DX-91 Spec & Migration Semantics
-  status: pending
+  status: in_progress
   steps:
   - id: finalize-migration-semantics
     name: finalize-migration-semantics
-    status: pending
+    status: claimed
     description: 'Finalize the execution contract for DX-91 simplification and migration
       semantics from the committed proposal docs.
 
@@ -13836,6 +13836,8 @@ phases:
       - Downstream phases can reference one canonical semantic baseline without re-deciding
       migration rules'
     agent: software-architect
+    claimed_by: software-architect
+    claimed_at: '2026-03-12T05:37:14.092490+00:00'
   - id: align-generated-doc-contracts
     name: align-generated-doc-contracts
     status: pending
