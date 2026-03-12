@@ -14615,6 +14615,38 @@ phases:
     depends_on:
     - dx91-spec.dx91-spec-gate-retest-2
     agent: doc-reviewer
+  - id: dx91-spec.dx91-spec-gate-retest-3
+    name: dx91-spec.gate-retest-3
+    status: pending
+    description: 'As an INDEPENDENT REVIEWER (`gate-reviewer`), re-run a tightly scoped
+      gate retest after `dx91-spec.dx91-spec-fix-final-unresolved-spec-issues` and
+      verify only the remaining unresolved items from `dx91-spec.dx91-spec-gate-retest-2`
+      are closed.
+
+
+      Scope:
+
+      - B1 deterministic generated-file contract: replacement/regeneration semantics
+      only, with literal `<!--invar:begin-->` and `<!--invar:end-->` markers named
+      explicitly
+
+      - S1 canonical delete list: explicit repo-relative paths or explicit globs only
+
+
+      Do not reopen resolved B2 unless the new fix step regressed it. Keep the review
+      adversarial, sibling-aware, and limited to the unresolved issue families.'
+    verification: '- Re-run independent gate review for B1 and S1 only after the new
+      fix step
+
+      - Confirm sibling-search evidence was performed for both grep hints: `Content
+      merged|begin/end` and `Canonical delete list`
+
+      - OPEN only if the spec now has one deterministic replacement contract, literal
+      marker references, a canonical path-only delete list, and no regression of previously
+      resolved B2'
+    depends_on:
+    - dx91-spec.dx91-spec-fix-final-unresolved-spec-issues
+    agent: gate-reviewer
 - id: dx91-init-runtime
   name: DX-91 Init & Dev-Sync Runtime Rewrite
   status: locked
