@@ -14882,7 +14882,7 @@ phases:
       - none'
   - id: dx91-spec.dx91-spec-gate-retest-4
     name: dx91-spec.gate-retest-4
-    status: pending
+    status: claimed
     description: 'As an INDEPENDENT REVIEWER (`gate-reviewer`), re-run a tightly scoped
       gate retest after `dx91-spec.dx91-spec-fix-literal-marker-shorthand-family`.
 
@@ -14923,6 +14923,8 @@ phases:
     depends_on:
     - dx91-spec.dx91-spec-fix-literal-marker-shorthand-family
     agent: gate-reviewer
+    claimed_by: gate-reviewer
+    claimed_at: '2026-03-12T12:31:08.862289+00:00'
 - id: dx91-init-runtime
   name: DX-91 Init & Dev-Sync Runtime Rewrite
   status: locked
