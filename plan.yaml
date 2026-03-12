@@ -17579,7 +17579,7 @@ phases:
       \ and commit then passed without code-scope expansion.\n"
   - id: verify-python-only-surface
     name: verify-python-only-surface
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT TESTER (`blind-tester`), validate that the repository
       now presents a coherent Python-only product surface after TypeScript and agent-era
       removals.
@@ -17648,6 +17648,28 @@ phases:
     agent: blind-tester
     claimed_by: blind-tester
     claimed_at: '2026-03-12T19:25:55.270390+00:00'
+    done_at: '2026-03-12T19:33:18.394860+00:00'
+    evidence: "Gate decision: BLOCKED (issues detected and batched remediation planned)\n\
+      \nFindings from independent tester (`blind-tester`):\n- blockers:\n  - `invar\
+      \ init --preview` exits non-interactive error (`Use --claude or --pi for quick\
+      \ setup`)\n  - `invar dev sync --dry-run` invalid option\n  - deterministic\
+      \ inventory snippet used `python` (missing); `python3` succeeds\n  - TypeScript\
+      \ residue blockers in non-allowlist active surfaces (`src/invar/core/models.py`,\
+      \ `src/invar/core/language.py`, `src/invar/shell/templates.py`, `src/invar/shell/fs.py`)\n\
+      \  - Agent-era residue blockers in non-allowlist active surfaces (`README.md`,\
+      \ `CLAUDE.md`, `INVAR.md`, `.invar/archive/sessions-2025-12.md`, multiple `src/invar/**`\
+      \ surfaces)\n- should_fix:\n  - Align verification commands with current CLI/runtime\
+      \ (`--dry-run` replacement, interpreter path)\n- suggestions/tech_debt:\n  -\
+      \ Add pinned verification script to avoid command drift\n\nCommands run (from\
+      \ tester):\n- `invar init --preview` -> exit 1\n- `invar dev sync --dry-run`\
+      \ -> exit 2\n- `invar guard` -> pass\n- deterministic inventory exact command\
+      \ with `python` -> exit 127\n- fallback with `python3` -> pass (`{'unexpected_survivors':\
+      \ [], 'missing_preserved': []}`)\n- TypeScript/agent-era residue scans -> blockers\
+      \ found and classified\n\nBatched remediation action taken:\n- Added `dx91-python-only.verify-python-only-surface-fix-all-blockers`\
+      \ (single batched fix step for B1+B2+B3)\n- Added `dx91-python-only.verify-python-only-surface-retest-all-blockers`\
+      \ (independent retest)\n- Rewired downstream deps so freeze/gate require batched\
+      \ fix+retest\n\nNotes:\n- This test step is completed as issue-discovery evidence;\
+      \ phase now proceeds through batched fix + retest chain per anti-rework protocol.\n"
   - id: freeze-python-only-snapshot
     name: freeze-python-only-snapshot
     status: pending
