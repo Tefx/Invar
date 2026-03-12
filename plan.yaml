@@ -17426,35 +17426,124 @@ phases:
   - id: remove-stale-agent-assets
     name: remove-stale-agent-assets
     status: pending
-    description: 'Remove stale agent-era assets and obsolete protocol surfaces that
-      DX-91 explicitly retires.
+    description: 'Remove the canonical DX-91 template and command assets for skills/hooks/onboard/feedback
+      without deleting the minimal Python-only protocol surface that must remain.
 
 
-      Scope:
+      Spec refs:
 
-      - Remove skills, agent-specific hooks, onboarding-era files, feedback collection
-      remnants, and other deprecated agent-first assets
+      - `docs/proposals/DX-91-simplification.md` :: `2.2 Skills System`, `2.3 Hooks
+      (Agent-Specific)`, `2.6 Feedback Collection (DX-79)`, `2.7 Onboarding System`,
+      `3.4 v1 -> v2 Migration`
 
-      - Preserve only the minimal repo/runtime assets required by the DX-91 spec
+      - `docs/proposals/DX-91-migration-semantics.md` :: `2.2 What Gets Removed`,
+      `4.3 Migration Steps (Atomic)`, `5.1 What dev sync Does After DX-91`
 
-      - Keep deletions serialized behind TypeScript cleanup to avoid merge conflicts
-      in shared templates and packaging files
+      - `docs/proposals/DX-91-generated-file-contracts.md` :: `3.1 Runtime/Template
+      Work (src/invar/)`, `5. Intentionally Deferred`
 
 
-      Known risks:
+      Touch paths:
 
-      - Legacy assets may still be referenced from docs, templates, or command output;
-      cleanup must search for siblings beyond the obvious locations
+      - `src/invar/templates/skills/**`
 
-      - Delete semantics must follow the DX-91 spec rather than ad hoc cleanup'
-    verification: '- Main path: active runtime/template surfaces no longer expose
-      retired agent-era assets
+      - `src/invar/templates/hooks/**`
 
-      - Failure path: sibling search shows no stale references remain in packaging,
-      docs stubs, or generated content sources where scope requires removal
+      - `src/invar/templates/onboard/**`
 
-      - Evidence explicitly distinguishes deleted assets from intentionally preserved
-      minimal files'
+      - `src/invar/shell/commands/feedback.py`
+
+      - `src/invar/shell/commands/hooks.py`
+
+      - `src/invar/shell/commands/init.py`
+
+      - `src/invar/shell/commands/dev_sync.py`
+
+      - `src/invar/shell/commands/template_sync.py`
+
+      - `pyproject.toml`
+
+
+      Preservation allowlist (must remain if present):
+
+      - `src/invar/templates/protocol/INVAR.md.jinja`
+
+      - `src/invar/templates/protocol/INVAR.md.v2.jinja`
+
+      - `src/invar/templates/config/CLAUDE.md.jinja`
+
+      - `INVAR.md`
+
+      - `CLAUDE.md`
+
+
+      Conflict rationale:
+
+      - Keep this serialized after TypeScript residue cleanup because template families
+      and command/package wiring are shared registries and are merge-conflict-prone
+      under worktree parallelism.
+
+
+      Failure modes to cover:
+
+      - stale runtime or packaging references still mention deleted `skills`, `hooks`,
+      `onboard`, `feedback`, or hook-script names after the files are removed
+
+      - accidental over-deletion removes active protocol/template assets that DX-91
+      still requires (`INVAR.md`, `CLAUDE.md`, v2 protocol/config templates)
+
+      - packaging/template residue still includes deleted families in manifests, package
+      data, or sync logic
+
+      - sibling search stops at the deleted files and misses surviving references
+      in `init.py`, `dev_sync.py`, `template_sync.py`, or `pyproject.toml`
+
+
+      State semantics:
+
+      - remove completely: retired template families and runtime command files that
+      DX-91 marks deleted
+
+      - preserve exactly: the minimal Python-only protocol/config assets listed in
+      the allowlist above
+
+      - backward-compatible legacy behavior: historical discussion of removed assets
+      may remain only in proposal/report/fixture allowlists, not in active runtime/template/package
+      paths
+
+
+      Sibling-search patterns (must be exhausted before claiming done):
+
+      - `skills|skill system|/develop|/review|/investigate|/propose`
+
+      - `hooks|PreToolUse|PostToolUse|UserPromptSubmit|Stop\.sh`
+
+      - `onboard|assessment\.md|roadmap\.md`
+
+      - `feedback|feedback collection`
+
+
+      Out-of-scope guardrail:
+
+      - repo-root generated residue under `.claude/**`, `.pi/**`, and `.invar/**`
+      is handled by the next serialized step; do not mix runtime/template deletion
+      with repo-root inventory cleanup in this step'
+    verification: '- Deleted inventory: `test ! -e src/invar/templates/skills && test
+      ! -e src/invar/templates/hooks && test ! -e src/invar/templates/onboard && test
+      ! -e src/invar/shell/commands/feedback.py && test ! -e src/invar/shell/commands/hooks.py`
+
+      - Preservation inventory: `test -e src/invar/templates/protocol/INVAR.md.jinja
+      && test -e src/invar/templates/protocol/INVAR.md.v2.jinja && test -e src/invar/templates/config/CLAUDE.md.jinja
+      && test -e INVAR.md && test -e CLAUDE.md`
+
+      - Stale-reference scan over active runtime/package paths returns zero matches:
+      `rg -n "skills|skill system|/develop|/review|/investigate|/propose|hooks|PreToolUse|PostToolUse|UserPromptSubmit|Stop\\.sh|onboard|assessment\\.md|roadmap\\.md|feedback|feedback
+      collection" src/invar/shell/commands/init.py src/invar/shell/commands/dev_sync.py
+      src/invar/shell/commands/template_sync.py pyproject.toml src/invar/templates`
+
+      - Evidence must list exactly which canonical delete targets were absent already
+      versus deleted now, so the gate can distinguish optional-path absence from accidental
+      omission'
     depends_on:
     - dx91-python-only.remove-typescript-template-family-residue
     agent: python-executor
