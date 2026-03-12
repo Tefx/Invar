@@ -18015,7 +18015,7 @@ phases:
       \ to `plan.yaml` or orchestrator state files.\n"
   - id: dx91-python-only.dx91-python-only-remove-generated-agent-residue
     name: dx91-python-only.remove-generated-agent-residue
-    status: pending
+    status: claimed
     description: 'Remove repo-root generated residue and stale references left by
       the retired agent-era surface after the runtime/template delete set is already
       complete.
@@ -18168,6 +18168,8 @@ phases:
     depends_on:
     - remove-stale-agent-assets
     agent: python-executor
+    claimed_by: python-senior
+    claimed_at: '2026-03-12T19:12:13.717807+00:00'
 - id: dx91-self-docs
   name: DX-91 Self-Docs Update
   status: locked
