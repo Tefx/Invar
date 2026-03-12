@@ -1,0 +1,42 @@
+# DX-91 Spec Freeze Baseline
+
+## Freeze Metadata
+
+- Freeze date (UTC): 2026-03-12
+- Working tree requirement: clean at freeze capture and gate handoff
+- Execution environment: isolated git worktree `.vectl/worktrees/freeze-spec-snapshot`
+
+## Baseline Commit and State
+
+The DX-91 execution baseline is frozen to the repository `HEAD` captured at freeze handoff time (`git rev-parse HEAD`) with a clean working tree (`git status --short` returns no entries).
+
+## Baseline Proposal Sections (Authoritative)
+
+The following proposal sections define the execution baseline for downstream implementation and verification:
+
+1. `docs/proposals/DX-91-generated-file-contracts.md`
+   - `dx-91-generated-file-contract/2-generated-files-contract`
+   - `dx-91-generated-file-contract/3-implementation-work-split`
+   - `dx-91-generated-file-contract/4-marker-system-contract`
+   - `dx-91-generated-file-contract/5-intentionally-deferred`
+   - `dx-91-generated-file-contract/6-verification-matrix`
+   - `dx-91-generated-file-contract/7-no-unresolved-ambiguity-checklist`
+2. `docs/proposals/DX-91-migration-semantics.md`
+   - `dx-91-migration-semantics-specification/2-keep-remove-boundary-canonical`
+   - `dx-91-migration-semantics-specification/3-init-v2-behavior`
+   - `dx-91-migration-semantics-specification/4-migration-behavior-v1-v2`
+   - `dx-91-migration-semantics-specification/5-dev-sync-scope-reduced`
+3. `docs/proposals/DX-91-simplification.md`
+   - `dx-91-invar-simplification/1-what-to-keep`
+   - `dx-91-invar-simplification/2-what-to-remove`
+   - `dx-91-invar-simplification/3-simplified-invar-init`
+
+## Freeze Guards
+
+1. No additional DX-91 proposal edits are folded into the active implementation window without an explicit replan.
+2. No code changes are allowed between this freeze snapshot and the subsequent phase gate review for this phase.
+3. If any baseline proposal section changes, the freeze is invalidated and must be re-issued with a new snapshot commit.
+
+## Gate Readiness Declaration
+
+This phase is ready for independent gate review against the frozen baseline above.
