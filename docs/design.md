@@ -769,7 +769,7 @@ Create src/core and src/shell? [Y/n]
 ```bash
 invar init              # Interactive mode with menus
 invar init --claude     # Auto-select Claude Code, skip prompts
-invar init --preview    # Show what would be done (dry run)
+invar init --preview --claude    # Non-interactive preview for Claude setup
 invar uninstall         # Remove Invar from project (preserves user content)
 invar uninstall --dry-run  # Preview what would be removed
 ```

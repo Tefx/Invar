@@ -66,13 +66,6 @@ PYTHON_LAYER_LIMITS: dict[CodeLayer, LayerLimits] = {
     CodeLayer.DEFAULT: LayerLimits(600, 80),
 }
 
-TYPESCRIPT_LAYER_LIMITS: dict[CodeLayer, LayerLimits] = {
-    CodeLayer.CORE: LayerLimits(650, 65),
-    CodeLayer.SHELL: LayerLimits(910, 130),
-    CodeLayer.TESTS: LayerLimits(1300, 260),
-    CodeLayer.DEFAULT: LayerLimits(780, 104),
-}
-
 
 class Contract(BaseModel):
     """A contract (precondition or postcondition) on a function."""
@@ -160,26 +153,19 @@ def get_layer(file_info: FileInfo) -> CodeLayer:
     return CodeLayer.DEFAULT
 
 
-@pre(
-    lambda layer, language="python": (
-        isinstance(layer, CodeLayer) and language in ("python", "typescript")
-    )
-)
+@pre(lambda layer: isinstance(layer, CodeLayer))
 @post(lambda result: result.max_file_lines > 0 and result.max_function_lines > 0)
-def get_limits(layer: CodeLayer, language: str = "python") -> LayerLimits:
+def get_limits(layer: CodeLayer) -> LayerLimits:
     """
-    Get size limits for layer and language.
+    Get size limits for layer.
 
     Examples:
         >>> get_limits(CodeLayer.CORE).max_function_lines
         50
         >>> get_limits(CodeLayer.SHELL).max_function_lines
         100
-        >>> get_limits(CodeLayer.CORE, "typescript").max_function_lines
-        65
     """
-    limits = TYPESCRIPT_LAYER_LIMITS if language == "typescript" else PYTHON_LAYER_LIMITS
-    return limits[layer]
+    return PYTHON_LAYER_LIMITS[layer]
 
 
 class Violation(BaseModel):

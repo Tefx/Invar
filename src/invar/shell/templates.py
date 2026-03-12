@@ -12,7 +12,7 @@ from pathlib import Path
 from returns.result import Failure, Result, Success
 
 # =============================================================================
-# Language-Specific Configurations (LX-05)
+# Python Configuration
 # =============================================================================
 
 # Python configuration
@@ -46,35 +46,13 @@ exclude_paths = ["tests", "test", "scripts", ".venv", "venv", "__pycache__", ".p
 # shell_patterns = ["**/api/**", "**/cli/**"]
 """
 
-# TypeScript configuration (LX-05)
-_TYPESCRIPT_INVAR_TOML = """# Invar Configuration (TypeScript)
-# For TypeScript/JavaScript projects
-
-[guard]
-core_paths = ["src/core"]
-shell_paths = ["src/shell"]
-max_file_lines = 500
-max_function_lines = 50
-require_contracts = true
-require_doctests = false  # TypeScript uses JSDoc examples instead
-# TypeScript/Node.js I/O modules to forbid in Core
-forbidden_imports = ["fs", "path", "http", "https", "net", "child_process", "os", "process"]
-exclude_paths = ["tests", "test", "scripts", "node_modules", "dist", "build", ".next", "coverage"]
-
-# Pattern-based classification (optional, takes priority over paths)
-# core_patterns = ["**/domain/**", "**/models/**"]
-# shell_patterns = ["**/api/**", "**/cli/**"]
-"""
-
 # Backward compatibility alias
 _DEFAULT_PYPROJECT_CONFIG = _PYTHON_PYPROJECT_CONFIG
 _DEFAULT_INVAR_TOML = _PYTHON_INVAR_TOML
 
 
 def _get_invar_config(language: str) -> str:
-    """Get the appropriate config content for the language."""
-    if language == "typescript":
-        return _TYPESCRIPT_INVAR_TOML
+    """Get the appropriate config content for the current surface."""
     return _PYTHON_INVAR_TOML
 
 
@@ -114,7 +92,7 @@ def copy_template(
 def add_config(path: Path, console, language: str = "python") -> Result[bool, str]:
     """Add configuration to project. Returns Success(True) if added, Success(False) if skipped.
 
-    LX-05: Now generates language-specific config (Python vs TypeScript).
+    Generates Python guard configuration.
     Guard config supports pyproject.toml [tool.invar.guard] and invar.toml [guard].
     """
     pyproject = path / "pyproject.toml"
@@ -145,7 +123,7 @@ def add_config(path: Path, console, language: str = "python") -> Result[bool, st
             return Success(False)
 
         # Create invar.toml for projects without pyproject.toml
-        # LX-05: Use language-specific config
+        # DX-91: Python-only config
         if not invar_toml.exists():
             invar_toml.write_text(_get_invar_config(language))
             console.print("[green]Created[/green] invar.toml")

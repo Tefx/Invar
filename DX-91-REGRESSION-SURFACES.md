@@ -179,7 +179,7 @@ These are the integration points that validate the complete workflow:
 | Entrypoint | Validates | Surface Type |
 |------------|-----------|--------------|
 | `invar init` (fresh) | Non-interactive v2 init | **E2E** |
-| `invar init --preview` | Preview mode works | **E2E** |
+| `invar init --preview --claude` | Preview mode works in non-interactive CLI | **E2E** |
 | `invar init` (v1 detected) | Migration preview + confirmation | **E2E** |
 | `invar dev sync` | Regenerates CLAUDE.md + INVAR.md | **E2E** |
 | `invar guard` | Python-only verification | **E2E** |
@@ -311,7 +311,7 @@ These fixtures capture pre-DX-91 behavior for regression testing:
 
 ```bash
 # Verify init generates expected v2 output
-invar init --preview
+invar init --preview --claude
 
 # Verify migration detection works
 # (Test with v1 project layout)
@@ -319,8 +319,8 @@ invar init --preview
 # Verify guard works without TS
 invar guard
 
-# Verify dev sync scope reduced
-invar dev sync --dry-run
+# Verify dev sync scope reduced (dry-run equivalent)
+invar dev sync --check
 ```
 
 ---

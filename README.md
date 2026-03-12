@@ -128,10 +128,10 @@ pip install invar-runtime
 **Agent responds (automatically guided by Invar):**
 
 ```
-✓ Check-In: my-project | main | clean
+Startup status: my-project | main | clean
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📍 /develop → SPECIFY (2/4)
+Phase: Design (2/4)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 First, I'll define the contract:
@@ -142,7 +142,7 @@ def compound_interest(principal: float, rate: float, years: int) -> float:
     ...
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📍 /develop → VALIDATE (4/4)
+Phase: Validate (4/4)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 $ invar guard --changed
@@ -153,7 +153,7 @@ WARN: missing doctest example (compound_interest)
 $ invar guard --changed
 Guard passed. (1 file, 0 errors)
 
-✓ Final: guard PASS | 0 errors, 0 warnings
+Final guard status: PASS | 0 errors, 0 warnings
 ```
 
 **Key insight:** The agent verifies and fixes automatically. You review the result, not the process.
@@ -233,7 +233,7 @@ Agent writes code
 
 ### ✅ Solution 3: Workflow Discipline
 
-The USBV workflow forces "specify before implement":
+The four-phase workflow forces "specify before implement":
 
 ```
 🔍 Understand  →  📝 Specify  →  🔨 Build  →  ✓ Validate
@@ -245,10 +245,10 @@ Skill routing ensures agents enter through the correct workflow:
 
 | User Intent | Skill Invoked | Behavior |
 |-------------|---------------|----------|
-| "why does X fail?" | `/investigate` | Research only, no code changes |
-| "should we use A or B?" | `/propose` | Present options with trade-offs |
-| "add feature X" | `/develop` | Full USBV workflow |
-| (after develop) | `/review` | Adversarial review with fix loop |
+| "why does X fail?" | investigate mode | Research only, no code changes |
+| "should we use A or B?" | proposal mode | Present options with trade-offs |
+| "add feature X" | implementation mode | Full four-phase workflow |
+| (after implementation) | review mode | Adversarial review with fix loop |
 
 ### ✅ Solution 4: Architecture Constraints
 
@@ -315,8 +315,8 @@ Clear boundaries for every AI session:
 
 | Phase | Format | Purpose |
 |-------|--------|---------|
-| **Start** | `✓ Check-In: project \| branch \| status` | Context visibility |
-| **End** | `✓ Final: guard PASS \| 0 errors` | Verification proof |
+| **Start** | `startup status: project | branch | status` | Context visibility |
+| **End** | `guard result: PASS | 0 errors` | Verification proof |
 
 ### Intellectual Heritage
 
@@ -355,7 +355,7 @@ AlphaCodium · Parsel · Reflexion · Clover
 
 All features auto-configured:
 - MCP tools (`invar_guard`, `invar_sig`, `invar_map`)
-- Workflow skills (`/develop`, `/review`, `/investigate`, `/propose`)
+- Workflow modes (implement, review, investigate, propose)
 - Claude Code hooks (tool guidance, verification reminders)
 - Pre-commit hooks
 
@@ -370,7 +370,7 @@ Pi can use the same Invar MCP server and protocol docs:
 
 Cursor users get full verification via MCP:
 - MCP tools (`invar_guard`, `invar_sig`, `invar_map`)
-- .cursor/rules/ for USBV workflow guidance
+- .cursor/rules/ for workflow guidance
 - Hooks (beta) for pytest blocking
 - Pre-commit hooks
 
@@ -416,7 +416,7 @@ src/{project}/
 
 ## 🧩 Extension Skills
 
-Beyond the core workflow skills (`/develop`, `/review`, `/investigate`, `/propose`), Invar provides optional extension skills for specialized tasks:
+Beyond the core workflow modes, Invar provides optional extension skills for specialized tasks:
 
 | Skill | Purpose | Install |
 |-------|---------|---------|

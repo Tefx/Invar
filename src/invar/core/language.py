@@ -1,13 +1,9 @@
-"""Language detection for multi-language support.
-
-This module provides language detection based on project marker files.
-Part of LX-05 language-agnostic architecture.
-"""
+"""Language detection for the Python-only DX-91 surface."""
 
 from deal import post, pre
 
 # Supported languages for Invar verification
-SUPPORTED_LANGUAGES: frozenset[str] = frozenset({"python", "typescript"})
+SUPPORTED_LANGUAGES: frozenset[str] = frozenset({"python"})
 
 # Future languages (detected but not yet supported)
 FUTURE_LANGUAGES: frozenset[str] = frozenset({"rust", "go"})
@@ -34,12 +30,6 @@ def detect_language_from_markers(markers: frozenset[str]) -> str:
         >>> detect_language_from_markers(frozenset({"setup.py", "README.md"}))
         'python'
 
-        >>> detect_language_from_markers(frozenset({"tsconfig.json"}))
-        'typescript'
-
-        >>> detect_language_from_markers(frozenset({"package.json"}))
-        'typescript'
-
         >>> detect_language_from_markers(frozenset({"Cargo.toml"}))
         'rust'
 
@@ -55,8 +45,6 @@ def detect_language_from_markers(markers: frozenset[str]) -> str:
     # Detection order matters - first match wins
     if "pyproject.toml" in markers or "setup.py" in markers:
         return "python"
-    if "tsconfig.json" in markers or "package.json" in markers:
-        return "typescript"
     if "Cargo.toml" in markers:
         return "rust"
     if "go.mod" in markers:
@@ -77,8 +65,6 @@ def is_supported(lang: str) -> bool:
 
     Examples:
         >>> is_supported("python")
-        True
-        >>> is_supported("typescript")
         True
         >>> is_supported("rust")
         False
