@@ -16633,7 +16633,7 @@ phases:
       \ gate retest"
   - id: dx91-init-runtime.gate-retest
     name: dx91-init-runtime.gate-retest
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT REVIEWER (`gate-reviewer`), re-run gate review
       after `dx91-init-runtime.fix-gate-blockers` and verify ALL blocker findings
       from `dx91-init-runtime.gate` are resolved in one pass.
@@ -16720,6 +16720,33 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-12T15:52:18.046127+00:00'
+    done_at: '2026-03-12T16:08:30.773476+00:00'
+    evidence: "Artifact:\n- PR: none (verify-only retest)\n- Retest task: ses_31d3fcc4cffej6zcAUlGRWZ5ay\n\
+      \nVerification:\n- Run: `uvx invar-tools guard --all` -> PASS (0 errors; warnings\
+      \ present)\n- Run: `invar_invar_guard(path=<worktree>, changed=true)` -> PASS\n\
+      - Run: `invar_invar_guard(path=<worktree>, changed=false)` -> FAIL with subprocess\
+      \ code 1 on repeated runs (run_ids: grd_2745adf8a26c4d66a4dcc3af, grd_64908727f489427dbecf2f02)\n\
+      - Run: `uv run pytest -q tests/integration/test_dx91_init_entrypoints.py -k\
+      \ \"test_migration_backs_up_both_preserved_files_and_keeps_originals\"` -> PASS\n\
+      - Run: sibling-search family scans for preservation and uninstall surfaces ->\
+      \ evidence collected and reviewed\n- Run: planner remediation task `ses_31d343cb5ffeS4JAz26fBPLQkd`\
+      \ -> created tooling-parity fix + retest chain\n\nSpec link:\n- docs/proposals/DX-91-migration-semantics.md\n\
+      - DX-91-REGRESSION-SURFACES.md\n- src/invar/shell/commands/init.py\n- tests/integration/test_dx91_init_entrypoints.py\n\
+      - tests/integration/test_dx91_destructive_regression_harness.py\n\nFindings:\n\
+      - blockers:\n  - tooling-parity blocker: full-scan MCP guard path fails while\
+      \ CLI full-scan passes, producing contradictory gate signals for same repo state\n\
+      - prior semantic blockers status:\n  - B1/B2 considered closed by evidence in\
+      \ scope unless tooling-parity diagnosis contradicts\n\nActions taken (batched\
+      \ protocol):\n- Created fix step: dx91-init-runtime.dx91-init-runtime-fix-tooling-parity-blockers\
+      \ (depends_on: dx91-init-runtime.gate-retest)\n- Created retest step: dx91-init-runtime.dx91-init-runtime-gate-retest-tooling-parity\
+      \ (depends_on: dx91-init-runtime.dx91-init-runtime-fix-tooling-parity-blockers)\n\
+      \nGate Decision:\n- verdict: BLOCKED\n- rationale: unresolved full-scan verification\
+      \ path mismatch must be remediated to avoid contradictory phase verdicts\n\n\
+      Files changed:\n- none\n\nGaps/Notes:\n- Retest remained focused on closure\
+      \ confirmation and verification-path parity issue.\n- B1/B2 semantics not reopened\
+      \ by default in new remediation loop.\n\ndiscovered_issues:\n- MCP full-scan\
+      \ guard subprocess instability in this verification context despite CLI parity\
+      \ pass"
   - id: dx91-init-runtime.dx91-init-runtime-fix-tooling-parity-blockers
     name: dx91-init-runtime.fix-tooling-parity-blockers
     status: pending
