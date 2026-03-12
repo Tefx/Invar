@@ -14255,7 +14255,7 @@ phases:
       \ implemented in single step as required.\n\ndiscovered_issues:\n- none"
   - id: dx91-spec.dx91-spec-gate-retest
     name: dx91-spec.gate-retest
-    status: pending
+    status: claimed
     description: 'As an INDEPENDENT REVIEWER (`gate-reviewer`), re-run gate review
       after `dx91-spec.dx91-spec-fix-gate-blockers` and verify ALL blockers and should_fix
       items from `dx91-spec.gate` are resolved.
@@ -14323,6 +14323,8 @@ phases:
     depends_on:
     - dx91-spec.dx91-spec-fix-gate-blockers
     agent: gate-reviewer
+    claimed_by: gate-reviewer
+    claimed_at: '2026-03-12T10:46:36.182510+00:00'
 - id: dx91-init-runtime
   name: DX-91 Init & Dev-Sync Runtime Rewrite
   status: locked
