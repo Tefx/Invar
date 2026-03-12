@@ -14702,7 +14702,7 @@ phases:
       - none'
   - id: dx91-spec.dx91-spec-gate-retest-3
     name: dx91-spec.gate-retest-3
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT REVIEWER (`gate-reviewer`), re-run a tightly scoped
       gate retest after `dx91-spec.dx91-spec-fix-final-unresolved-spec-issues` and
       verify only the remaining unresolved items from `dx91-spec.dx91-spec-gate-retest-2`
@@ -14734,6 +14734,25 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-12T11:09:48.456277+00:00'
+    done_at: '2026-03-12T11:14:36.996834+00:00'
+    evidence: "Artifact:\n- PR: none (verify-only)\n- Gate retest task: ses_31e4288bfffewL20H6bGMw7Myg\n\
+      \nVerification:\n- Run: `git status --short` -> clean\n- Run: `rg -n \"Content\
+      \ merged|begin/end|Canonical delete list\" docs/proposals/DX-91-*.md` -> no\
+      \ remaining \"Content merged\" contradiction; shorthand `begin/end` hits remained\n\
+      - Run: `rg -n \"invar:begin/end|begin/end\" docs/proposals/DX-91-*.md` -> 7\
+      \ shorthand occurrences found (B1 unresolved)\n- Run: planner remediation task\
+      \ `ses_31e3fce37ffeMnbTerWluziAcT` -> created next batched fix + retest chain\n\
+      \nSpec link:\n- docs/proposals/DX-91-generated-file-contracts.md\n- docs/proposals/DX-91-migration-semantics.md\n\
+      - docs/proposals/DX-91-simplification.md\n\nFindings:\n- blockers:\n  - B1:\
+      \ non-literal `<!--invar:begin/end-->` shorthand persists across DX-91 proposal\
+      \ docs\n- should_fix:\n  - none (S1 satisfied in this retest)\n\nActions taken:\n\
+      - Created fix step: dx91-spec.dx91-spec-fix-literal-marker-shorthand-family\
+      \ (depends_on: dx91-spec.dx91-spec-gate-retest-3)\n- Created retest step: dx91-spec.dx91-spec-gate-retest-4\
+      \ (depends_on: dx91-spec.dx91-spec-fix-literal-marker-shorthand-family)\n\n\
+      Gate Decision:\n- verdict: BLOCKED\n- rationale: literal-marker reference requirement\
+      \ still violated by residual shorthand occurrences\n\nFiles changed:\n- none\n\
+      \nGaps/Notes:\n- B2 was intentionally not reopened (regression-check-only constraint\
+      \ maintained).\n- Retest remained tightly scoped to B1/S1 families."
   - id: dx91-spec.dx91-spec-fix-literal-marker-shorthand-family
     name: dx91-spec.fix-literal-marker-shorthand-family
     status: pending
