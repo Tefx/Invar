@@ -14558,7 +14558,7 @@ phases:
       \ regression check."
   - id: dx91-spec.dx91-spec-fix-final-unresolved-spec-issues
     name: dx91-spec.fix-final-unresolved-spec-issues
-    status: pending
+    status: claimed
     description: 'Fix ALL remaining issues, not just the first, from `dx91-spec.dx91-spec-gate-retest-2`
       while keeping scope tightly focused and explicitly not reopening resolved B2.
 
@@ -14636,6 +14636,8 @@ phases:
     depends_on:
     - dx91-spec.dx91-spec-gate-retest-2
     agent: doc-reviewer
+    claimed_by: doc-reviewer
+    claimed_at: '2026-03-12T11:00:37.212739+00:00'
   - id: dx91-spec.dx91-spec-gate-retest-3
     name: dx91-spec.gate-retest-3
     status: pending
