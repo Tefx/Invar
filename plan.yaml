@@ -17672,7 +17672,7 @@ phases:
       \ phase now proceeds through batched fix + retest chain per anti-rework protocol.\n"
   - id: freeze-python-only-snapshot
     name: freeze-python-only-snapshot
-    status: claimed
+    status: done
     description: 'Freeze the Python-only cleanup snapshot before docs and release-readiness
       work consumes it.
 
@@ -17697,6 +17697,73 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-12T20:10:43.703732+00:00'
+    done_at: '2026-03-12T20:13:16.604038+00:00'
+    evidence: 'Freeze decision: READY
+
+
+      Commands run:
+
+      - `git rev-parse HEAD`
+
+      - `git status --short --branch`
+
+      - `git status --porcelain=v1 --untracked-files=all`
+
+      - `git diff --name-only`
+
+      - `git diff --cached --name-only`
+
+      - environment capture: `python3 --version`, `python3 -m pip --version`, `uv
+      --version`, `uname -a`, `sw_vers`
+
+
+      Snapshot commit:
+
+      - `dc7046ac2e19471cbbdc2aaeeb641f147b73c8e8`
+
+      - rechecked after evidence capture: unchanged
+
+
+      Working tree status:
+
+      - clean; no tracked or untracked changes in freeze worktree
+
+
+      Environment declaration:
+
+      - worktree: `.vectl/worktrees/freeze-python-only-snapshot`
+
+      - OS: macOS 26.1 / Darwin 25.1.0 arm64
+
+      - Python: 3.14.3
+
+      - Pip: 26.0
+
+      - UV: 0.10.9
+
+
+      Python-only baseline surfaces:
+
+      - command surfaces: `invar`, `invar-tools`, `pytest`, `mypy`, `ruff`, `coverage`
+
+      - package surfaces (main/dev/runtime) captured from `pyproject.toml`, `runtime/pyproject.toml`,
+      `uv.lock`
+
+      - note: TypeScript manifests under `typescript/**/package.json` are not part
+      of baseline surface
+
+
+      Files changed:
+
+      - none
+
+
+      Notes:
+
+      - no code changes occurred between retest and freeze capture; snapshot is ready
+      for gate review.
+
+      '
   - id: dx91-python-only.gate
     name: dx91-python-only.gate
     status: pending
