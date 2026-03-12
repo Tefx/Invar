@@ -14355,7 +14355,7 @@ phases:
       \ chain created per batched-fix protocol to avoid serial one-by-one fixes."
   - id: dx91-spec.dx91-spec-fix-remaining-gate-issues
     name: dx91-spec.fix-remaining-gate-issues
-    status: pending
+    status: claimed
     description: "Fix ALL remaining issues, not just the first, from `dx91-spec.dx91-spec-gate-retest`\
       \ in ONE tightly scoped remediation pass.\n\nprior_loop:\n- dx91-spec.dx91-spec-fix-gate-blockers\n\
       - dx91-spec.dx91-spec-gate-retest\nremaining_blocker: The frozen DX-91 baseline\
@@ -14417,6 +14417,8 @@ phases:
     depends_on:
     - dx91-spec.dx91-spec-gate-retest
     agent: doc-reviewer
+    claimed_by: doc-reviewer
+    claimed_at: '2026-03-12T10:51:42.896886+00:00'
   - id: dx91-spec.dx91-spec-gate-retest-2
     name: dx91-spec.gate-retest-2
     status: pending
