@@ -16052,7 +16052,7 @@ phases:
 
       - The runtime rewrite is ready for gate review'
     depends_on:
-    - prove-init-dev-sync-flow
+    - retest-init-dev-sync-flow-batch
     agent: integration-verifier
   - id: dx91-init-runtime.gate
     name: dx91-init-runtime.gate
