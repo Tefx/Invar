@@ -16118,7 +16118,7 @@ phases:
       \ndiscovered_issues:\n- none"
   - id: dx91-init-runtime.gate
     name: dx91-init-runtime.gate
-    status: pending
+    status: claimed
     description: 'Gate review: determine whether the DX-91 init/dev-sync runtime rewrite
       is safe, complete, and ready for destructive cleanup to begin.
 
@@ -16165,6 +16165,8 @@ phases:
     - retest-init-dev-sync-flow-batch
     - freeze-init-runtime-snapshot
     agent: gate-reviewer
+    claimed_by: gate-reviewer
+    claimed_at: '2026-03-12T15:05:54.920401+00:00'
   - id: fix-init-dev-sync-flow-batch
     name: fix-init-dev-sync-flow-batch
     status: done
