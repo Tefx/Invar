@@ -17509,6 +17509,117 @@ phases:
     - verify-python-only-surface
     - freeze-python-only-snapshot
     agent: gate-reviewer
+  - id: remove-typescript-active-surface-residue
+    name: remove-typescript-active-surface-residue
+    status: pending
+    description: 'Remove stale TypeScript references from active Python-only state
+      and classify any remaining historical mentions with an explicit allowlist/denylist.
+
+
+      Spec refs:
+
+      - `docs/proposals/DX-91-simplification.md` :: `2.4 TypeScript/JS Support`, `3.2
+      Generated Files`
+
+      - `docs/proposals/DX-91-migration-semantics.md` :: `2.2 What Gets Removed`,
+      `3.2 Generated Files`, `5.1 What dev sync Does After DX-91`
+
+      - `DX-91-REGRESSION-SURFACES.md` :: `4.3 TypeScript Support Removed`, `10. Verification
+      Commands`
+
+
+      Touch paths:
+
+      - `README.md`
+
+      - `src/invar/templates/config/**`
+
+      - `src/invar/templates/protocol/**`
+
+      - `src/invar/templates/examples/**`
+
+      - `src/invar/shell/commands/init.py`
+
+      - `src/invar/core/sync_helpers.py`
+
+      - `src/invar/mcp/server.py`
+
+      - `pyproject.toml`
+
+
+      Denylist (must be Python-only after this step):
+
+      - active runtime/package/product surfaces under `src/invar/**`
+
+      - `pyproject.toml`
+
+      - `README.md`
+
+      - active generated-output templates under `src/invar/templates/config/**`, `src/invar/templates/protocol/**`,
+      `src/invar/templates/examples/**`
+
+
+      Allowlist (may retain historical mentions if clearly labeled historical or fixture-only):
+
+      - `docs/proposals/**`
+
+      - `DX-91-REGRESSION-SURFACES.md`
+
+      - `docs/test-reports/**`
+
+      - `artifacts/**`
+
+      - `tests/fixtures/**`
+
+      - `.invar/context.md`
+
+
+      Failure modes to cover:
+
+      - stale entrypoint/help text still tells users to install Node or use TypeScript
+      tooling
+
+      - detection helpers still accept `typescript` as a live Python-only mode
+
+      - generated-output templates still emit TS-era assets or instructions
+
+      - sibling search misses residue because only obvious edited files were checked
+
+
+      State semantics:
+
+      - preserve exactly: historical references in allowlist paths remain discoverable
+      for migration evidence
+
+      - remove completely: active product/runtime/package references that imply TypeScript
+      is still supported
+
+      - backward-compatible legacy behavior: historical proposal and fixture text
+      stays only as historical evidence, not active instructions
+
+
+      Out-of-scope guardrail:
+
+      - proposal/archive narrative cleanup beyond the allowlist inventory is deferred
+      to `dx91-self-docs`; this step is responsible only for active-surface residue
+      and explicit inventory of allowed historical leftovers
+
+      '
+    verification: '- Main path: run `rg -n "typescript|TypeScript|node_tools|tsconfig\\.json|ts-query|guard_ts|ts_compiler"
+      README.md pyproject.toml src/invar/templates src/invar/shell/commands/init.py
+      src/invar/core/sync_helpers.py src/invar/mcp/server.py`; expected result is
+      zero denylist matches after cleanup
+
+      - Failure path: run the same pattern search over `docs/proposals DX-91-REGRESSION-SURFACES.md
+      docs/test-reports artifacts tests/fixtures .invar/context.md`; evidence must
+      inventory any remaining allowlist hits and explain why each is historical or
+      fixture-only
+
+      - Proof includes an explicit `denylist=0` statement for active surfaces and
+      an allowlist inventory handed off to later docs work'
+    depends_on:
+    - remove-typescript-tooling
+    agent: python-executor
 - id: dx91-self-docs
   name: DX-91 Self-Docs Update
   status: locked
