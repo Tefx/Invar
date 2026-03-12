@@ -18568,7 +18568,7 @@ phases:
       \ blocker families under repaired acceptance boundary.\n"
   - id: dx91-python-only.dx91-python-only-fix-gate-blockers
     name: dx91-python-only.fix-gate-blockers
-    status: pending
+    status: claimed
     description: 'Fix ALL issues found by `dx91-python-only.gate` in ONE batched remediation
       pass — fix ALL of these, not just the first.
 
@@ -18671,6 +18671,8 @@ phases:
     depends_on:
     - dx91-python-only.gate
     agent: python-senior
+    claimed_by: python-senior
+    claimed_at: '2026-03-12T20:28:24.772416+00:00'
   - id: dx91-python-only.dx91-python-only-retest-gate-blockers
     name: dx91-python-only.retest-gate-blockers
     status: pending
