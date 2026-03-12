@@ -16480,6 +16480,94 @@ phases:
       \ -> pass/fail verdicts.\n\nFiles changed:\n- none (verify-only)\n\nGaps/Notes:\n\
       - Retest used `uv run pytest` consistently due environment interpreter constraints\
       \ with direct python invocation.\n\ndiscovered_issues:\n- none in scope"
+  - id: dx91-init-runtime.fix-gate-blockers
+    name: dx91-init-runtime.fix-gate-blockers
+    status: pending
+    description: "Fix ALL findings from `dx91-init-runtime.gate` in one pass, not\
+      \ just the first.\n\nstep_type: implementation\nagent_source: default\nprior_loop:\n\
+      - fix-init-dev-sync-flow-batch\n- retest-init-dev-sync-flow-batch\nremaining_blocker:\
+      \ End-to-end migration backup/retention semantics for `.invar/context.md` and\
+      \ `.invar/project-additions.md` are not convincingly proven through the public\
+      \ init migration path, and the destructive harness currently appears to delete\
+      \ `.invar/` in a way that conflicts with the DX-91 spec's backup+retain semantics.\n\
+      why_new_loop: The earlier loop restored broad init/dev-sync flow confidence,\
+      \ but the gate found a narrower unresolved root blocker at the migration-preservation\
+      \ boundary. Editing the prior completed loop is no longer appropriate; a single\
+      \ batched remediation step is required so downstream `dx91-python-only` does\
+      \ not inherit semantic ambiguity.\n\nspec_refs:\n- `docs/proposals/DX-91-migration-semantics.md:192`\n\
+      - `docs/proposals/DX-91-migration-semantics.md:209`\n- `src/invar/shell/commands/init.py:347`\n\
+      - `tests/integration/test_dx91_init_entrypoints.py:42`\n- `tests/integration/test_dx91_destructive_regression_harness.py:71`\n\
+      \ntouch_paths:\n- `src/invar/shell/commands/init.py`\n- `tests/integration/test_dx91_init_entrypoints.py`\n\
+      - `tests/integration/test_dx91_destructive_regression_harness.py`\n- related\
+      \ DX-91 migration fixtures under `tests/fixtures/dx91_migration/`\n\nharness_refs:\n\
+      - public init migration path exercised by `tests/integration/test_dx91_init_entrypoints.py`\n\
+      - destructive regression harness in `tests/integration/test_dx91_destructive_regression_harness.py`\n\
+      \n## Blockers to Fix (ALL of these, not just the first)\n\n### B1: Public migration\
+      \ path does not yet prove backup+retain semantics end to end\nLocations:\n-\
+      \ `docs/proposals/DX-91-migration-semantics.md:192`\n- `docs/proposals/DX-91-migration-semantics.md:209`\n\
+      - `src/invar/shell/commands/init.py:347`\n- `tests/integration/test_dx91_init_entrypoints.py:42`\n\
+      Remediation:\n- Add an end-to-end migration proof using the public init migration\
+      \ path when BOTH preserved files already exist: `.invar/context.md` and `.invar/project-additions.md`.\n\
+      - Assert that `.invar/backup/v1-context.md` and `.invar/backup/v1-project-additions.md`\
+      \ are created.\n- Assert the original preserved files remain byte-identical\
+      \ where the spec says retain.\n- Assert stale asset deletion still occurs in\
+      \ the same end-to-end run.\n- Assert rerun idempotency remains true after the\
+      \ migration-preservation proof is added.\nGrep hint: `PRESERVED_BACKUPS|_backup_preserved_files|backup/v1-`\n\
+      \n### B2: Harness semantics are currently ambiguous versus the spec's preservation\
+      \ model\nLocations:\n- `tests/integration/test_dx91_destructive_regression_harness.py:71`\n\
+      - any helper using `collect_removal_targets` / `execute_removal` to stand in\
+      \ for migration-preservation proof\nRemediation:\n- Reconcile the destructive\
+      \ harness with the spec by doing EXACTLY one of the following and making the\
+      \ choice explicit in code/tests:\n  1. switch the preservation check to the\
+      \ intended public init migration path, OR\n  2. split the harness so uninstall-only\
+      \ destructive assertions are no longer used as migration-preservation proof.\n\
+      - Preserve the destructive stale-asset deletion checks, but do not let uninstall-only\
+      \ semantics masquerade as backup+retain migration evidence.\n- Ensure the resulting\
+      \ assertions leave no ambiguity for the downstream `dx91-python-only` phase.\n\
+      Grep hint: `Deleted \\.invar/|collect_removal_targets|execute_removal`\n\n##\
+      \ Known risks\n- Migration/persistence semantics are a historical rework hotspot\
+      \ in DX-91; hidden ambiguity between backup creation, retained originals, and\
+      \ stale-asset deletion will cascade into destructive cleanup work if not closed\
+      \ here.\n- The highest-risk failure mode is proving deletion behavior on a path\
+      \ that bypasses the spec-defined public migration semantics; this can incorrectly\
+      \ bless `.invar/` deletion that should only apply to stale assets.\n\n## State\
+      \ semantics that MUST be explicit\n- Last-writer-wins does NOT apply to retained\
+      \ user-owned `.invar/context.md` and `.invar/project-additions.md`; when the\
+      \ spec says retain, those originals must survive byte-identically.\n- Backup\
+      \ files under `.invar/backup/` must capture the migrated v1 source snapshot\
+      \ exactly.\n- Backward-compatible legacy behavior includes stale asset deletion,\
+      \ but only for assets the spec marks removable; it must not broaden into deleting\
+      \ retained preserved files.\n\n## Out-of-scope guardrail\n- S1 baseline guard\
+      \ warnings are deferred unless a warning fix is directly required to land the\
+      \ migration-preservation proof or the harness/spec alignment.\n- Do not expand\
+      \ this step into general DX-91 Python-only cleanup, unrelated warning reduction,\
+      \ or broader template-surface redesign.\n\n## Completion criteria\n- ALL blockers\
+      \ above are fixed in one coherent pass, not serially.\n- Sibling search completed\
+      \ for both grep families beyond the listed locations.\n- Public init migration\
+      \ proof covers backup creation, byte-identical retained originals, stale asset\
+      \ deletion, and rerun idempotency in one end-to-end scenario.\n- Harness/spec\
+      \ alignment is explicit enough that downstream `dx91-python-only` work does\
+      \ not need to reinterpret preservation semantics."
+    verification: '- Main path: targeted integration proof through the public init
+      migration path passes when both preserved files already exist, and evidence
+      names the exact test(s)/command(s) covering backup creation, byte-identical
+      retained originals, stale asset deletion, and rerun idempotency
+
+      - Failure path: targeted regression proves uninstall-only destructive checks
+      cannot be misread as migration-preservation proof, or that the destructive harness
+      now routes preservation checks through the public migration path
+
+      - Sibling search: grep `PRESERVED_BACKUPS|_backup_preserved_files|backup/v1-`
+      and grep `Deleted \.invar/|collect_removal_targets|execute_removal` are both
+      used to review sibling sites, with evidence showing what remained valid versus
+      what changed
+
+      - Proof: no remaining ambiguity is left for downstream `dx91-python-only` about
+      whether preserved `.invar` files are backed up+retained while stale assets are
+      still removed'
+    depends_on:
+    - dx91-init-runtime.gate
+    agent: python-senior
 - id: dx91-python-only
   name: DX-91 Python-Only Cleanup
   status: locked
