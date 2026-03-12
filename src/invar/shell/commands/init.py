@@ -1,682 +1,490 @@
-"""
-Init command for Invar.
-
-Shell module: handles project initialization.
-DX-70: Simplified init with interactive menus and safe merge behavior.
-"""
+"""Init command for Invar (DX-91 simplified surface)."""
 
 from __future__ import annotations
 
-import sys
+import re
+import shutil
+import tempfile
 from pathlib import Path
 
 import typer
-from returns.result import Failure, Success
+import yaml
 from rich.console import Console
-from rich.panel import Panel
 
-from invar.core.sync_helpers import VALID_LANGUAGES, SyncConfig
-from invar.shell.claude_hooks import add_feedback_config, install_claude_hooks
-from invar.shell.commands.template_sync import sync_templates
-from invar.shell.mcp_config import (
-    generate_mcp_json,
-    get_recommended_method,
-)
-from invar.shell.pi_hooks import install_pi_hooks
-from invar.shell.pi_tools import install_pi_tools
-from invar.shell.templates import (
-    add_config,
-    create_directories,
-    install_hooks,
-)
+from invar.core.language import detect_language_from_markers
 
 console = Console()
 
+MANAGED_BEGIN = "<!--invar:begin-->"
+MANAGED_END = "<!--invar:end-->"
+LEGACY_MARKERS = ("<!--invar:critical-->", "<!--invar:managed")
+LEGACY_MANAGED_HEADER = "INVAR-MANAGED FILE - DO NOT EDIT DIRECTLY"
 
-# =============================================================================
-# File Categories (DX-70)
-# =============================================================================
-
-FILE_CATEGORIES: dict[str, list[tuple[str, str]]] = {
-    "required": [
-        ("INVAR.md", "Protocol and contract rules"),
-        (".invar/", "Config, context, examples"),
-    ],
-    "optional": [
-        (".pre-commit-config.yaml", "Verification before commit"),
-        ("src/core/", "Pure logic directory"),
-        ("src/shell/", "I/O operations directory"),
-    ],
-    "claude": [
-        ("CLAUDE.md", "Agent instructions"),
-        (".claude/skills/", "Workflow automation"),
-        (".claude/commands/", "User commands (/audit, /guard)"),
-        (".claude/hooks/", "Tool guidance (+ settings.local.json)"),
-        (".mcp.json", "MCP server config"),
-    ],
-    "generic": [
-        ("AGENT.md", "Universal agent instructions"),
-    ],
-    "pi": [
-        ("CLAUDE.md", "Agent instructions (Pi compatible)"),
-        (".claude/skills/", "Workflow automation (Pi compatible)"),
-        (".pi/hooks/", "Pi-specific hooks"),
-        (".pi/tools/", "Pi custom tools (invar_guard, invar_sig, invar_map)"),
-    ],
-}
-
-AGENT_CONFIGS: dict[str, dict[str, str]] = {
-    "claude": {"name": "Claude Code", "category": "claude"},
-    "pi": {"name": "Pi Coding Agent", "category": "pi"},
-    "generic": {"name": "Other (AGENT.md)", "category": "generic"},
-}
-
-
-# =============================================================================
-# Language Detection (LX-05)
-# =============================================================================
-
-from invar.core.language import (
-    FUTURE_LANGUAGES,
-    detect_language_from_markers,
+LEGACY_REMOVE_PATHS: tuple[str, ...] = (
+    ".claude/skills",
+    ".claude/hooks",
+    ".pi/hooks",
+    ".pi/tools",
+    ".invar/examples",
 )
 
-# Marker files to check for language detection
+PRESERVED_BACKUPS: tuple[tuple[str, str], ...] = (
+    (".invar/context.md", "v1-context.md"),
+    (".invar/project-additions.md", "v1-project-additions.md"),
+)
+
 LANGUAGE_MARKERS: frozenset[str] = frozenset(
     {
         "pyproject.toml",
-        "setup.py",  # Python
+        "setup.py",
         "tsconfig.json",
-        "package.json",  # TypeScript
-        "Cargo.toml",  # Rust (future)
-        "go.mod",  # Go (future)
+        "package.json",
+        "Cargo.toml",
+        "go.mod",
     }
 )
 
+CLAUDE_MANAGED_BLOCK = """<!--invar:begin-->
+## Invar
+
+**CRITICAL: Write `@pre`/`@post` contracts and at least one doctest BEFORE implementing a Core function. Guard rejects uncontracted Core code.**
+
+### Architecture
+
+| Zone | Path | Rules |
+|------|------|-------|
+| Core | `**/core/**` | `@pre` + `@post` + doctest, no I/O imports |
+| Shell | `**/shell/**` | returns `Result[T, E]`, handles I/O |
+
+If code touches files, network, env vars, time, randomness, or subprocesses, use Shell.
+
+### Verification
+
+Run `invar guard` after changes. Fix errors before committing.
+
+### Tools
+
+| Tool | Use |
+|------|-----|
+| `invar guard` | verify architecture and contracts |
+| `invar sig <file>` | inspect signatures and contracts |
+| `invar map [path]` | inspect entry points |
+| `invar refs <file>::<symbol>` | inspect references |
+
+### Contract Traps
+
+```python
+# @pre must include all parameters, including defaults
+@pre(lambda x, y=0: x >= 0)
+def calc(x: int, y: int = 0): ...
+
+# @post only receives result
+@post(lambda result: result >= 0)
+```
+
+### Escape Hatches
+
+```python
+# @invar:allow dead_export: CLI entry point called by framework
+```
+
+Exact syntax and repair patterns: `INVAR.md`
+<!--invar:end-->
+"""
+
+INVAR_MANAGED_CONTENT = '''# Invar Protocol
+
+## Before Writing Code
+
+1. If you are writing a Core function, write `@pre`, `@post`, and at least one doctest BEFORE implementation.
+2. If you are unsure whether code belongs in Core or Shell, use Shell.
+3. Run `invar guard` after changes. Fix errors before committing.
+
+## Core vs Shell
+
+Use Shell if the code does any of these:
+- reads or writes files
+- makes network requests
+- reads environment variables
+- uses current time or randomness without injection
+- performs subprocess or system I/O
+
+Use Core for pure logic that only transforms already-available data.
+
+| Zone | Path | Rules |
+|------|------|-------|
+| Core | `**/core/**` | `@pre` + `@post` + doctest, no I/O imports |
+| Shell | `**/shell/**` | returns `Result[T, E]`, performs I/O |
+
+## Contract Syntax Traps
+
+### `@pre` lambda must include all function parameters
+
+```python
+# WRONG
+@pre(lambda x: x >= 0)
+def calc(x: int, y: int = 0): ...
+
+# CORRECT
+@pre(lambda x, y=0: x >= 0)
+def calc(x: int, y: int = 0): ...
+```
+
+### `@post` only receives `result`
+
+```python
+# WRONG
+@post(lambda result: result > x)
+
+# CORRECT
+@post(lambda result: result >= 0)
+```
+
+### Contracts must be semantic, not just type checks
+
+```python
+# WEAK
+@pre(lambda x: isinstance(x, int))
+
+# BETTER
+@pre(lambda x: x > 0)
+@pre(lambda start, end: start < end)
+```
+
+## Canonical Core Example
+
+```python
+from invar_runtime import pre, post
+
+@pre(lambda price, discount: price > 0 and 0 <= discount <= 1)
+@post(lambda result: result >= 0)
+def discounted_price(price: float, discount: float) -> float:
+    """
+    >>> discounted_price(100, 0.2)
+    80.0
+    """
+    return price * (1 - discount)
+```
+
+## Canonical Shell Example
+
+```python
+from pathlib import Path
+from returns.result import Result, Success, Failure
+
+def read_config(path: Path) -> Result[str, str]:
+    try:
+        return Success(path.read_text())
+    except OSError as exc:
+        return Failure(str(exc))
+```
+
+## Escape Hatches
+
+```python
+# @invar:allow dead_export: CLI entry point called by framework
+# @invar:allow shell_complexity: orchestration requires many steps
+```
+
+Use escape hatches rarely and always include a reason.
+
+## Minimal Configuration
+
+```toml
+[tool.invar.guard]
+core_paths = ["src/myapp/core"]
+shell_paths = ["src/myapp/shell"]
+```
+
+## Common Guard Repairs
+
+| Error | Fix |
+|------|-----|
+| `missing_contract` | add `@pre`, `@post`, and a doctest before implementation |
+| `param_mismatch` | include every function parameter in the `@pre` lambda |
+| `shell_result` | return `Result[T, E]` from Shell functions |
+| `forbidden_import` | move I/O out of Core or inject the value as a parameter |
+'''
+
 
 def detect_language(path: Path) -> str:
-    """Detect project language from marker files (Shell wrapper).
-
-    This is the Shell wrapper that handles I/O. The actual detection
-    logic is in core.language.detect_language_from_markers.
-
-    Examples:
-        >>> from pathlib import Path
-        >>> import tempfile
-        >>> with tempfile.TemporaryDirectory() as d:
-        ...     p = Path(d)
-        ...     (p / "pyproject.toml").touch()
-        ...     detect_language(p)
-        'python'
-
-        >>> with tempfile.TemporaryDirectory() as d:
-        ...     p = Path(d)
-        ...     (p / "tsconfig.json").touch()
-        ...     detect_language(p)
-        'typescript'
-
-        >>> with tempfile.TemporaryDirectory() as d:
-        ...     p = Path(d)
-        ...     detect_language(p)  # Empty dir defaults to python
-        'python'
-    """
-    # Collect present markers (I/O operation)
+    """Detect project language from marker files (compatibility helper)."""
     present_markers = frozenset(marker for marker in LANGUAGE_MARKERS if (path / marker).exists())
-    # Delegate to pure core function
     return detect_language_from_markers(present_markers)
 
 
-# =============================================================================
-# Interactive Prompts (DX-70)
-# =============================================================================
+def _resolve_target_file(root: Path, file: str) -> Path:
+    target = Path(file)
+    if target.is_absolute():
+        return target
+    return root / target
 
 
-def _is_interactive() -> bool:
-    """Check if running in an interactive terminal."""
-    return sys.stdin.isatty() and sys.stdout.isatty()
+def _read_text(path: Path) -> str:
+    return path.read_text(encoding="utf-8") if path.exists() else ""
 
 
-# @shell_orchestration: Style configuration for questionary UI library
-def _get_prompt_style():
-    """Get custom style for questionary prompts.
+def _atomic_write(path: Path, content: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.NamedTemporaryFile(
+        "w", encoding="utf-8", delete=False, dir=str(path.parent)
+    ) as tmp:
+        tmp.write(content)
+        tmp_path = Path(tmp.name)
+    tmp_path.replace(path)
 
-    Simple design:
-    - Pointer (») indicates current row
-    - Checkbox (●/○) indicates selected state
-    - All text in default color, no reverse
-    """
-    from questionary import Style
 
-    return Style(
-        [
-            ("pointer", "fg:cyan bold"),  # Pointer: cyan bold
-            ("highlighted", "noreverse"),  # Current row: no reverse
-            ("selected", "noreverse"),  # Selected items: no reverse
-            ("text", "noreverse"),  # Normal text: no reverse
-        ]
+def _strip_legacy_blocks(content: str) -> str:
+    pairs = (
+        (r"<!--invar:critical-->", r"<!--/invar:critical-->"),
+        (r"<!--invar:managed.*?-->", r"<!--/invar:managed-->"),
+        (r"<!--invar:project-->", r"<!--/invar:project-->"),
     )
+    cleaned = content
+    for begin_pattern, end_pattern in pairs:
+        pattern = re.compile(begin_pattern + r".*?" + end_pattern, flags=re.DOTALL)
+        cleaned = pattern.sub("", cleaned)
+
+    user_pattern = re.compile(
+        r"<!--invar:user-->\s*(.*?)\s*<!--/invar:user-->",
+        flags=re.DOTALL,
+    )
+    cleaned = user_pattern.sub(lambda m: m.group(1), cleaned)
+    return cleaned.strip("\n")
 
 
-# @shell_complexity: Interactive prompt with cursor selection
-def _prompt_agent_selection() -> list[str]:
-    """Prompt user to select agent(s) using checkbox (DX-81: multi-agent support)."""
-    import questionary
+# @shell_complexity: Handles v1/v2 marker migration and append-safe behavior.
+def _upsert_managed_block(existing: str, managed_block: str) -> str:
+    begin_idx = existing.find(MANAGED_BEGIN)
+    if begin_idx >= 0:
+        end_idx = existing.find(MANAGED_END, begin_idx)
+        if end_idx >= 0:
+            end_idx += len(MANAGED_END)
+            return (existing[:begin_idx] + managed_block + existing[end_idx:]).strip("\n") + "\n"
 
-    console.print("\n[bold]Select agent(s) to configure:[/bold]")
-    console.print("[dim]Space to toggle, Enter to confirm (can select multiple)[/dim]\n")
+    if any(marker in existing for marker in LEGACY_MARKERS):
+        preserved = _strip_legacy_blocks(existing)
+        if preserved:
+            return f"{preserved}\n\n{managed_block}".strip("\n") + "\n"
+        return managed_block.strip("\n") + "\n"
 
-    choices = [
-        questionary.Choice(
-            "Claude Code (recommended)",
-            value="claude",
-            checked=True,  # Default selection
-        ),
-        questionary.Choice("Pi Coding Agent", value="pi", checked=False),
-        questionary.Choice("Other (AGENT.md)", value="generic", checked=False),
-    ]
-
-    selected = questionary.checkbox(
-        "",
-        choices=choices,
-        instruction="",
-        style=_get_prompt_style(),
-    ).ask()
-
-    # Handle Ctrl+C or empty selection
-    if not selected:
-        console.print("[yellow]No agents selected, using Claude Code as default.[/yellow]")
-        return ["claude"]
-
-    return selected
+    if existing.strip():
+        return f"{existing.rstrip()}\n\n{managed_block}".strip("\n") + "\n"
+    return managed_block.strip("\n") + "\n"
 
 
-# @shell_complexity: Interactive file selection with cursor navigation
-def _prompt_file_selection(agents: list[str]) -> dict[str, bool]:
-    """Prompt user to select optional files using cursor navigation."""
-    import questionary
+# @shell_complexity: Must preserve arbitrary pre-commit YAML while adding local hook.
+def _merge_pre_commit(path: Path) -> str:
+    config_path = path / ".pre-commit-config.yaml"
+    if not config_path.exists():
+        return (
+            "repos:\n"
+            "  - repo: local\n"
+            "    hooks:\n"
+            "      - id: invar-guard\n"
+            "        name: invar guard\n"
+            "        entry: invar guard\n"
+            "        language: system\n"
+            "        pass_filenames: false\n"
+            "        always_run: true\n"
+        )
 
-    # Build available files
-    available: dict[str, list[tuple[str, str]]] = {
-        "optional": FILE_CATEGORIES["optional"],
-    }
-    for agent in agents:
-        config = AGENT_CONFIGS.get(agent)
-        if config:
-            category = config["category"]
-            available[category] = FILE_CATEGORIES.get(category, [])
+    loaded = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+    if loaded is None:
+        loaded = {}
+    if not isinstance(loaded, dict):
+        raise ValueError(".pre-commit-config.yaml must be a mapping")
 
-    # Show header
-    console.print("\n[bold]File Selection:[/bold]")
-    console.print("[dim]Existing files will be MERGED (your content preserved).[/dim]\n")
+    repos = loaded.setdefault("repos", [])
+    if not isinstance(repos, list):
+        raise ValueError(".pre-commit-config.yaml field 'repos' must be a list")
 
-    # Required files (always installed)
-    console.print("[bold]Required (always installed):[/bold]")
-    for file, desc in FILE_CATEGORIES["required"]:
-        console.print(f"  [green]✓[/green] {file:30} {desc}")
+    local_repo: dict[str, object] | None = None
+    for repo in repos:
+        if isinstance(repo, dict) and repo.get("repo") == "local":
+            local_repo = repo
+            break
 
-    console.print()
-    console.print("[dim]Use arrow keys to move, space to toggle, enter to confirm[/dim]\n")
+    if local_repo is None:
+        local_repo = {"repo": "local", "hooks": []}
+        repos.append(local_repo)
 
-    # Build choices with categories as separators (DX-81: deduplicate shared files)
-    choices: list[questionary.Choice | questionary.Separator] = []
-    file_list: list[str] = []
-    seen_files: set[str] = set()
+    hooks = local_repo.setdefault("hooks", [])
+    if not isinstance(hooks, list):
+        raise ValueError(".pre-commit-config.yaml local repo 'hooks' must be a list")
 
-    for category, files in available.items():
-        if category == "required":
+    for hook in hooks:
+        if isinstance(hook, dict) and hook.get("id") == "invar-guard":
+            return yaml.safe_dump(loaded, sort_keys=False, allow_unicode=False)
+
+    hooks.append(
+        {
+            "id": "invar-guard",
+            "name": "invar guard",
+            "entry": "invar guard",
+            "language": "system",
+            "pass_filenames": False,
+            "always_run": True,
+        }
+    )
+    return yaml.safe_dump(loaded, sort_keys=False, allow_unicode=False)
+
+
+def _is_v1_layout(root: Path, target_file: Path) -> bool:
+    for rel in LEGACY_REMOVE_PATHS:
+        if (root / rel).exists():
+            return True
+
+    invar_text = _read_text(root / "INVAR.md")
+    if LEGACY_MANAGED_HEADER in invar_text:
+        return True
+
+    target_text = _read_text(target_file)
+    return any(marker in target_text for marker in LEGACY_MARKERS)
+
+
+# @shell_complexity: Backup is conditional and must abort migration on I/O failures.
+def _backup_preserved_files(root: Path) -> list[str]:
+    backed_up: list[str] = []
+    backup_dir = root / ".invar" / "backup"
+
+    existing_sources = [rel for rel, _ in PRESERVED_BACKUPS if (root / rel).exists()]
+    if not existing_sources:
+        return backed_up
+
+    try:
+        backup_dir.mkdir(parents=True, exist_ok=True)
+        for src_rel, backup_name in PRESERVED_BACKUPS:
+            src = root / src_rel
+            if not src.exists():
+                continue
+            dst = backup_dir / backup_name
+            shutil.copy2(src, dst)
+            backed_up.append(f"{src_rel} -> .invar/backup/{backup_name}")
+    except OSError as exc:
+        raise RuntimeError(f"Backup failed. Migration aborted. {exc}") from exc
+
+    return backed_up
+
+
+# @shell_complexity: Delete pass must report partial progress on failure.
+def _delete_legacy_assets(root: Path) -> list[str]:
+    deleted: list[str] = []
+    for rel in LEGACY_REMOVE_PATHS:
+        path = root / rel
+        if not path.exists():
             continue
-        category_name = category.capitalize()
-        if category == "claude":
-            category_name = "Claude Code"
-        elif category == "pi":
-            category_name = "Pi Coding Agent"
-
-        # Filter out files already seen (shared between categories)
-        unique_files = [(f, d) for f, d in files if f not in seen_files]
-
-        # Only add separator if there are unique files to show
-        if unique_files:
-            choices.append(questionary.Separator(f"── {category_name} ──"))
-            for file, desc in unique_files:
-                choices.append(questionary.Choice(f"{file:28} {desc}", value=file, checked=True))
-                file_list.append(file)
-                seen_files.add(file)
-
-    selected = questionary.checkbox(
-        "Select files to install:",
-        choices=choices,
-        instruction="",
-        style=_get_prompt_style(),
-    ).ask()
-
-    # Handle Ctrl+C or empty result
-    if selected is None:
-        return dict.fromkeys(file_list, True)  # Default: all selected
-
-    # Build result dict
-    return {f: f in selected for f in file_list}
+        try:
+            if path.is_dir():
+                shutil.rmtree(path)
+            else:
+                path.unlink()
+            deleted.append(rel)
+        except OSError as exc:
+            detail = ", ".join(deleted) if deleted else "none"
+            raise RuntimeError(
+                f"Failed deleting legacy assets. Deleted before failure: {detail}. Error: {exc}"
+            ) from exc
+    return deleted
 
 
-# @shell_complexity: Interactive consent prompt for feedback collection
-def _prompt_feedback_consent() -> bool:
-    """
-    Prompt user for consent to enable automatic feedback collection.
+def _render_migration_preview(target_file: Path) -> None:
+    console.print()
+    console.print("[bold]⚠ Legacy Invar v1 layout detected. Migration preview follows.[/bold]")
+    console.print()
 
-    DX-79 Phase C: Opt-out consent flow (default: enabled).
+    console.print("[bold][DELETED][/bold] Stale agent config (non-fatal if absent):")
+    for rel in LEGACY_REMOVE_PATHS:
+        console.print(f"  • {rel}/" if not rel.endswith("/") else f"  • {rel}")
 
-    Returns:
-        True if user consents (or accepts default), False otherwise
-    """
-    from rich import print as rprint
-    from rich.prompt import Confirm
+    console.print()
+    console.print("[bold][PRESERVED][/bold] User data (backed up before deletion, if present):")
+    for src_rel, backup_name in PRESERVED_BACKUPS:
+        console.print(f"  • {src_rel} -> .invar/backup/{backup_name} (if present)")
 
-    rprint()
-    rprint("[bold]━" * 40)
-    rprint("[bold]📊 Usage Feedback (Optional)")
-    rprint("[bold]━" * 40)
-    rprint()
-    rprint("Invar can automatically reflect on tool usage to help improve")
-    rprint("the framework. Feedback is:")
-    rprint("  • Stored locally in [cyan].invar/feedback/[/cyan]")
-    rprint("  • Never sent automatically")
-    rprint("  • You decide what (if anything) to share")
-    rprint()
+    console.print()
+    console.print("[bold][OVERWRITTEN][/bold] Managed files:")
+    console.print("  • INVAR.md")
+    console.print(f"  • {target_file.name} invar block")
+    console.print()
 
-    # Opt-out: default is True (Y)
-    consent = Confirm.ask(
-        "Enable automatic feedback collection?",
-        default=True,
+
+def _write_minimal_state(root: Path, target_file: Path) -> list[str]:
+    written: list[str] = []
+    target_existing = _read_text(target_file)
+    merged_target = _upsert_managed_block(target_existing, CLAUDE_MANAGED_BLOCK)
+    _atomic_write(target_file, merged_target)
+    written.append(
+        str(target_file.relative_to(root)) if target_file.is_relative_to(root) else str(target_file)
     )
 
-    return consent
+    _atomic_write(root / "INVAR.md", INVAR_MANAGED_CONTENT.strip("\n") + "\n")
+    written.append("INVAR.md")
+
+    merged_pre_commit = _merge_pre_commit(root)
+    _atomic_write(root / ".pre-commit-config.yaml", merged_pre_commit)
+    written.append(".pre-commit-config.yaml")
+    return written
 
 
-def _show_execution_output(
-    created: list[str],
-    merged: list[str],
-    skipped: list[str],
-) -> None:
-    """Display execution results."""
-    console.print()
-    for file in created:
-        console.print(f"  [green]✓[/green] {file:30} [dim]created[/dim]")
-    for file in merged:
-        console.print(f"  [cyan]↻[/cyan] {file:30} [dim]merged[/dim]")
-    for file in skipped:
-        console.print(f"  [dim]○[/dim] {file:30} [dim]skipped[/dim]")
-
-
-# =============================================================================
-# MCP Configuration
-# =============================================================================
-
-
-# @shell_complexity: MCP config merge with existing file handling
-def _configure_mcp(path: Path) -> tuple[bool, str]:
-    """Configure MCP server with recommended method.
-
-    Returns:
-        (success, message): (True, "created") | (True, "merged") | (False, "already_configured") | (False, error_message)
-    """
-    import json
-
-    config = get_recommended_method()
-    mcp_json_path = path / ".mcp.json"
-    mcp_content = generate_mcp_json(config)
-
-    if mcp_json_path.exists():
-        try:
-            existing = json.loads(mcp_json_path.read_text())
-            if existing.get("mcpServers", {}).get("invar"):
-                return (False, "already_configured")
-            # Add invar to existing config
-            if "mcpServers" not in existing:
-                existing["mcpServers"] = {}
-            existing["mcpServers"]["invar"] = mcp_content["mcpServers"]["invar"]
-            mcp_json_path.write_text(json.dumps(existing, indent=2))
-            return (True, "merged")
-        except json.JSONDecodeError as e:
-            return (False, f"Invalid JSON in .mcp.json: {e}")
-        except OSError as e:
-            return (False, f"Failed to read/write .mcp.json: {e}")
-    else:
-        try:
-            mcp_json_path.write_text(json.dumps(mcp_content, indent=2))
-            return (True, "created")
-        except OSError as e:
-            return (False, f"Failed to create .mcp.json: {e}")
-
-
-# =============================================================================
-# Main Init Command (DX-70)
-# =============================================================================
-
-
-# @shell_complexity: Main CLI entry point with interactive flow and file generation
+# @shell_complexity: Single entrypoint orchestrates preview, migration, backup, cleanup, and writes.
 def init(
-    path: Path = typer.Argument(
-        Path(),
-        help="Project root directory (default: current directory)",
-    ),
-    claude: bool = typer.Option(
-        False,
-        "--claude",
-        help="Auto-select Claude Code, skip all prompts",
-    ),
-    pi: bool = typer.Option(
-        False,
-        "--pi",
-        help="Auto-select Pi Coding Agent, skip all prompts",
-    ),
-    mcp_only: bool = typer.Option(
-        False,
-        "--mcp-only",
-        help="Install MCP tools only (no framework files, just .mcp.json)",
-    ),
-    language: str | None = typer.Option(
-        None,
-        "--language",
-        "-l",
-        help="Target language (auto-detected if not specified): python, typescript",
+    path: Path = typer.Argument(Path(), help="Project root directory (default: current directory)"),
+    file: str = typer.Option(
+        "CLAUDE.md", "--file", help="Instruction file target (default: CLAUDE.md)"
     ),
     preview: bool = typer.Option(
-        False,
-        "--preview",
-        help="Show what would be done (dry run)",
+        False, "--preview", help="Show migration/create plan without writing"
     ),
 ) -> None:
-    """
-    Initialize or update Invar configuration.
-
-    DX-70: Simplified init with interactive selection and safe merge.
-
-    \b
-    Quick setup options:
-    - --claude     Auto-select Claude Code (MCP + hooks + skills)
-    - --pi         Auto-select Pi (shares CLAUDE.md + skills, adds Pi hooks)
-    - --mcp-only   Install MCP tools only (minimal, no framework files)
-
-    \b
-    This command is safe - it always MERGES with existing files:
-    - File doesn't exist → Create
-    - File exists → Merge (update invar regions, preserve your content)
-    - Never overwrites user content
-    - Never deletes files
-
-    \b
-    For full reset, use: invar uninstall && invar init
-    """
+    """Initialize Invar with DX-91 minimal generated surface."""
     from invar import __version__
 
-    # DX-81: Multi-agent support - removed mutual exclusivity check
+    root = path.resolve() if path != Path() else Path.cwd().resolve()
+    target_file = _resolve_target_file(root, file)
+    is_migration = _is_v1_layout(root, target_file)
 
-    if mcp_only and (claude or pi):
-        console.print("[red]Error:[/red] --mcp-only cannot be combined with --claude or --pi.")
-        raise typer.Exit(1)
-
-    if mcp_only and language is not None:
-        console.print(
-            "[red]Error:[/red] --language is not needed with --mcp-only (MCP tools work for all languages)."
-        )
-        raise typer.Exit(1)
-
-    # Resolve path
-    if path == Path():
-        path = Path.cwd()
-    path = path.resolve()
-
-    # MCP-only mode: minimal setup, just create .mcp.json
-    if mcp_only:
-        console.print(f"\n[bold]Invar v{__version__} - MCP Tools Only[/bold]")
-        console.print("=" * 45)
-        console.print("[dim]Installing MCP server configuration only.[/dim]\n")
-
-        # Preview mode
-        if preview:
-            console.print("[bold]Preview - Would create:[/bold]")
-            console.print("  [green]✓[/green] .mcp.json")
-            console.print("\n[dim]Run without --preview to apply.[/dim]")
-            return
-
-        console.print("[bold]Creating .mcp.json...[/bold]")
-        success, message = _configure_mcp(path)
-        if success:
-            if message == "created":
-                console.print("[green]✓[/green] Created .mcp.json")
-            elif message == "merged":
-                console.print("[green]✓[/green] Merged into existing .mcp.json")
-            console.print("\n[bold]Setup complete![/bold]")
-            console.print("MCP tools available: invar_doc_*, invar_sig, invar_map, invar_guard")
-        elif message == "already_configured":
-            console.print("[yellow]○[/yellow] .mcp.json already configured")
-        else:
-            console.print(f"[red]Error:[/red] {message}")
-            raise typer.Exit(1)
-
-        return  # Early exit, skip all framework setup
-
-    # LX-05: Language detection and validation
-    if language is None:
-        detected = detect_language(path)
-        # Fall back to python for unsupported detected languages
-        if detected in FUTURE_LANGUAGES:
-            console.print(
-                f"[yellow]Note:[/yellow] {detected} project detected. "
-                f"Using python templates (most similar). "
-                f"Native {detected} support coming soon."
-            )
-            language = "python"
-        else:
-            language = detected
-    else:
-        # Validate explicitly provided language
-        if language not in VALID_LANGUAGES:
-            valid = ", ".join(sorted(VALID_LANGUAGES))
-            console.print(
-                f"[red]Error:[/red] Invalid language '{language}'. Must be one of: {valid}"
-            )
-            raise typer.Exit(1)
-
-    # Header (DX-81: Support multi-agent display)
-    if claude and pi:
-        console.print(f"\n[bold]Invar v{__version__} - Quick Setup (Claude Code + Pi)[/bold]")
-    elif claude:
-        console.print(f"\n[bold]Invar v{__version__} - Quick Setup (Claude Code)[/bold]")
-    elif pi:
-        console.print(f"\n[bold]Invar v{__version__} - Quick Setup (Pi)[/bold]")
-    else:
-        console.print(f"\n[bold]Invar v{__version__} - Project Setup[/bold]")
+    console.print(f"\n[bold]Invar v{__version__} - Simplified Init[/bold]")
     console.print("=" * 45)
-    console.print(f"[dim]Language: {language} | Existing files will be MERGED.[/dim]")
+    console.print(f"[dim]Root: {root} | Target: {target_file}[/dim]")
 
-    # DX-81: Determine agents and files (multi-agent support)
-    if claude or pi:
-        # Quick mode: Build agent list from flags
-        agents = []
-        if claude:
-            agents.append("claude")
-        if pi:
-            agents.append("pi")
-
-        # Build selected_files from all agents' categories
-        selected_files: dict[str, bool] = {}
-        for agent in agents:
-            category = AGENT_CONFIGS[agent]["category"]
-            for file, _ in FILE_CATEGORIES.get(category, []):
-                selected_files[file] = True
-
-        # Add optional files
-        for file, _ in FILE_CATEGORIES["optional"]:
-            selected_files[file] = True
-
-        # DX-79: Default feedback enabled for quick mode
-        feedback_enabled = True
-        if len(agents) > 1:
-            console.print(
-                f"\n[dim]📊 Configuring for {len(agents)} agents: {', '.join(agents)}[/dim]"
-            )
-        console.print(
-            "\n[dim]📊 Feedback collection enabled by default (stored locally in .invar/feedback/)[/dim]"
-        )
-        console.print(
-            "[dim]   To disable: Set feedback.enabled=false in .claude/settings.local.json[/dim]"
-        )
-    else:
-        # Interactive mode
-        if not _is_interactive():
-            console.print(
-                "[yellow]Non-interactive terminal detected. Use --claude or --pi for quick setup.[/yellow]"
-            )
+    if is_migration:
+        _render_migration_preview(target_file)
+        if preview:
+            console.print("[dim]Preview only. No changes applied.[/dim]")
+            return
+        if not typer.confirm("Proceed?", default=False):
+            console.print("[yellow]Migration cancelled.[/yellow]")
             raise typer.Exit(1)
-
-        agents = _prompt_agent_selection()
-        selected_files = _prompt_file_selection(agents)
-        # DX-79: Prompt for feedback consent (opt-out, default: enabled)
-        feedback_enabled = _prompt_feedback_consent()
-
-    # Preview mode
-    if preview:
-        console.print("\n[bold]Preview - Would create/update:[/bold]")
-        console.print("\n[bold]Required:[/bold]")
-        for file, desc in FILE_CATEGORIES["required"]:
-            console.print(f"  [green]✓[/green] {file:30} {desc}")
-
-        console.print("\n[bold]Selected:[/bold]")
-        for file, selected in selected_files.items():
-            if selected:
-                console.print(f"  [green]✓[/green] {file}")
-            else:
-                console.print(f"  [dim]○[/dim] {file} [dim](skipped)[/dim]")
-
-        console.print("\n[dim]Run without --preview to apply.[/dim]")
+    elif preview:
+        console.print("\n[bold]Preview[/bold]: would write managed files")
+        console.print(f"  • {target_file}")
+        console.print("  • INVAR.md")
+        console.print("  • .pre-commit-config.yaml")
         return
 
-    # Execute
-    console.print("\n[bold]Creating files...[/bold]")
+    backed_up: list[str] = []
+    deleted: list[str] = []
+    written: list[str] = []
 
-    created: list[str] = []
-    merged: list[str] = []
-    skipped: list[str] = []
+    try:
+        if is_migration:
+            backed_up = _backup_preserved_files(root)
+            deleted = _delete_legacy_assets(root)
+        written = _write_minimal_state(root, target_file)
+    except (OSError, RuntimeError, ValueError) as exc:
+        console.print(f"[red]Error:[/red] {exc}")
+        raise typer.Exit(1) from exc
 
-    # Add config file (invar.toml or pyproject.toml)
-    # LX-05: Pass language for language-specific config generation
-    config_result = add_config(path, console, language)
-    if isinstance(config_result, Failure):
-        console.print(f"[red]Error:[/red] {config_result.failure()}")
-        raise typer.Exit(1)
-
-    # Ensure .invar directory exists
-    invar_dir = path / ".invar"
-    if not invar_dir.exists():
-        invar_dir.mkdir()
-
-    # Build skip patterns based on selection
-    skip_patterns: list[str] = []
-    if not selected_files.get(".claude/skills/", True):
-        skip_patterns.append(".claude/skills/*")
-    if not selected_files.get(".claude/commands/", True):
-        skip_patterns.append(".claude/commands/*")
-    if not selected_files.get(".pre-commit-config.yaml", True):
-        skip_patterns.append(".pre-commit-config.yaml")
-
-    # Run template sync (LX-05: pass language for template rendering)
-    sync_config = SyncConfig(
-        syntax="cli",
-        language=language,
-        inject_project_additions=(path / ".invar" / "project-additions.md").exists(),
-        force=False,
-        check=False,
-        reset=False,
-        skip_patterns=skip_patterns,
-    )
-
-    result = sync_templates(path, sync_config)
-    if isinstance(result, Success):
-        report = result.unwrap()
-        created.extend(report.created)
-        merged.extend(report.updated)
-
-    # Create proposals directory
-    proposals_dir = invar_dir / "proposals"
-    if not proposals_dir.exists():
-        proposals_dir.mkdir()
-        from invar.shell.templates import copy_template
-
-        copy_template("proposal.md.template", proposals_dir, "TEMPLATE.md")
-
-    # Configure MCP if Claude selected
-    if "claude" in agents and selected_files.get(".mcp.json", True):
-        success, message = _configure_mcp(path)
-        if success:
-            if message == "created":
-                created.append(".mcp.json")
-            elif message == "merged":
-                merged.append(".mcp.json")
-        elif message != "already_configured":
-            console.print(f"[yellow]Warning:[/yellow] MCP configuration failed: {message}")
-
-    # Create directories if selected
-    if selected_files.get("src/core/", True):
-        create_directories(path, console)
-
-    # Install pre-commit hooks if selected
-    if selected_files.get(".pre-commit-config.yaml", True):
-        install_hooks(path, console)
-
-    # Install Claude hooks if selected
-    if "claude" in agents and selected_files.get(".claude/hooks/", True):
-        install_claude_hooks(path, console)
-
-    # Install Pi hooks if selected
-    if "pi" in agents and selected_files.get(".pi/hooks/", True):
-        install_pi_hooks(path, console)
-
-    # Install Pi custom tools if selected
-    if "pi" in agents and selected_files.get(".pi/tools/", True):
-        install_pi_tools(path, console)
-
-    # Add feedback configuration (DX-79 Phase C)
-    if "claude" in agents or "pi" in agents:
-        feedback_result = add_feedback_config(path, feedback_enabled, console)
-        if isinstance(feedback_result, Failure):
-            console.print(f"[yellow]Warning:[/yellow] {feedback_result.failure()}")
-
-    # Create MCP setup guide
-    mcp_setup = invar_dir / "mcp-setup.md"
-    if not mcp_setup.exists():
-        from invar.shell.templates import _MCP_SETUP_TEMPLATE
-
-        mcp_setup.write_text(_MCP_SETUP_TEMPLATE)
-
-    # Track skipped files
-    for file, selected in selected_files.items():
-        if not selected:
-            skipped.append(file)
-
-    # Show results
-    _show_execution_output(created, merged, skipped)
-
-    # Completion message
-    console.print(f"\n[bold green]✓ Initialized Invar v{__version__}[/bold green]")
-
-    # Show agent-specific tips (DX-81: show all relevant tips)
-    if "claude" in agents:
-        console.print()
-        console.print(
-            Panel(
-                "[dim]If you run [bold]claude /init[/bold] afterward, "
-                "run [bold]invar init[/bold] again to restore protocol.[/dim]",
-                title="📌 Tip",
-                border_style="dim",
-            )
-        )
-    if "pi" in agents:
-        console.print()
-        console.print(
-            Panel(
-                "[dim]Pi reads CLAUDE.md and .claude/skills/ directly.\n"
-                "Run [bold]pi[/bold] to start — USBV workflow is auto-enabled.[/dim]",
-                title="📌 Tip",
-                border_style="dim",
-            )
-        )
+    console.print("\n[bold green]✓ Invar init complete[/bold green]")
+    if deleted:
+        console.print("[bold]Deleted:[/bold]")
+        for rel in deleted:
+            console.print(f"  • {rel}")
+    if backed_up:
+        console.print("[bold]Backed up:[/bold]")
+        for rel in backed_up:
+            console.print(f"  • {rel}")
+    console.print("[bold]Written:[/bold]")
+    for rel in written:
+        console.print(f"  • {rel}")
