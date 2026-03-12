@@ -17036,7 +17036,7 @@ phases:
       \ files were modified by worker.\n"
   - id: dx91-init-runtime.dx91-init-runtime-gate-retest-tooling-parity
     name: dx91-init-runtime.gate-retest-tooling-parity
-    status: pending
+    status: claimed
     description: 'As an INDEPENDENT REVIEWER (`gate-reviewer`), re-run gate review
       after `dx91-init-runtime.dx91-init-runtime-fix-tooling-parity-blockers` and
       verify the tooling-parity blocker family is resolved in one pass without reopening
@@ -17187,6 +17187,8 @@ phases:
       - [ ] BLOCKED: parity or gate contract still contradictory'
     depends_on:
     - dx91-init-runtime.dx91-init-runtime-fix-tooling-parity-blockers
+    claimed_by: gate-reviewer
+    claimed_at: '2026-03-12T16:28:51.117271+00:00'
 - id: dx91-python-only
   name: DX-91 Python-Only Cleanup
   status: locked
