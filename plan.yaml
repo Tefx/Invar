@@ -16512,7 +16512,7 @@ phases:
       \ with direct python invocation.\n\ndiscovered_issues:\n- none in scope"
   - id: dx91-init-runtime.fix-gate-blockers
     name: dx91-init-runtime.fix-gate-blockers
-    status: claimed
+    status: done
     description: "Fix ALL findings from `dx91-init-runtime.gate` in one pass, not\
       \ just the first.\n\nstep_type: implementation\nagent_source: default\nprior_loop:\n\
       - fix-init-dev-sync-flow-batch\n- retest-init-dev-sync-flow-batch\nremaining_blocker:\
@@ -16600,6 +16600,37 @@ phases:
     agent: python-senior
     claimed_by: python-senior
     claimed_at: '2026-03-12T15:21:08.672650+00:00'
+    done_at: '2026-03-12T15:51:47.570912+00:00'
+    evidence: "Artifact:\n- Worker commit: 6352c0f\n- Main merge commit: 691d942 ([vectl]\
+      \ step-dx91-init-runtime.fix-gate-blockers completed)\n\nVerification:\n- Run:\
+      \ `uv run pytest -v tests/integration/test_dx91_init_entrypoints.py tests/integration/test_dx91_destructive_regression_harness.py`\n\
+      \  - Outcome: collected 16; all passed (`16 passed in 1.12s`)\n  - Includes\
+      \ new migration-preservation proof test: `test_migration_backs_up_both_preserved_files_and_keeps_originals`\n\
+      - Run: sibling-search family 1 (`PRESERVED_BACKUPS|_backup_preserved_files|backup/v1-`)\
+      \ across src/tests\n  - Outcome: backup semantics sites identified in init runtime;\
+      \ explicit end-to-end assertions added in init integration test\n- Run: sibling-search\
+      \ family 2 (`Deleted \\.invar/|collect_removal_targets|execute_removal`) across\
+      \ src/tests\n  - Outcome: uninstall-only references identified and harness wording/entrypoint\
+      \ naming clarified to prevent migration-preservation ambiguity\n- Run: `invar_guard(path=<worktree>,\
+      \ changed=true)` -> passed, errors=0, warnings=0\n- Run: `git merge --squash\
+      \ vectl/step-dx91-init-runtime.fix-gate-blockers` -> merged without conflicts\n\
+      - Run: `git commit -m \"[vectl] step-dx91-init-runtime.fix-gate-blockers completed\"\
+      ` -> committed on main\n\nSpec link:\n- docs/proposals/DX-91-migration-semantics.md\n\
+      - src/invar/shell/commands/init.py\n- tests/integration/test_dx91_init_entrypoints.py\n\
+      - tests/integration/test_dx91_destructive_regression_harness.py\n\nCommit hash(es):\n\
+      - 6352c0f\n- 691d942\n\nFiles changed:\n- tests/integration/test_dx91_init_entrypoints.py\n\
+      - tests/integration/test_dx91_destructive_regression_harness.py\n\nB1 closure:\n\
+      - Added end-to-end public init migration proof where BOTH preserved files exist.\n\
+      - Assertions now cover backup file creation, retained originals byte-identity,\
+      \ stale asset deletion, and rerun idempotency.\n\nB2 closure:\n- Clarified and\
+      \ split semantics so uninstall-only destructive harness checks are not misread\
+      \ as migration-preservation proof.\n- Harness helper/test wording now explicitly\
+      \ indicates uninstall+sync destructive regression role; preservation proof routed\
+      \ through public init migration tests.\n\nGaps/Notes:\n- Scope stayed focused\
+      \ on B1/B2; non-blocking S1 warning baseline remained deferred by plan direction.\n\
+      - Worker reported deferred full-scan guard run; commit-hook guard and targeted\
+      \ changed checks were green.\n\ndiscovered_issues:\n- none blocking remaining\
+      \ gate retest"
   - id: dx91-init-runtime.gate-retest
     name: dx91-init-runtime.gate-retest
     status: pending
