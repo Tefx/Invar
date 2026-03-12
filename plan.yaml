@@ -18653,6 +18653,54 @@ phases:
     depends_on:
     - dx91-python-only.gate
     agent: python-senior
+  - id: dx91-python-only.dx91-python-only-retest-gate-blockers
+    name: dx91-python-only.retest-gate-blockers
+    status: pending
+    description: 'As an INDEPENDENT REVIEWER (`gate-reviewer`), re-test the FULL blocker
+      set from `dx91-python-only.gate` after `dx91-python-only.fix-gate-blockers`.
+
+
+      YOUR GOAL IS TO FIND REMAINING PROBLEMS, not to confirm the first blocker moved.
+
+
+      Validate ALL blocker families:
+
+      - B1 uninstall/removal-path consistency in the destructive regression harness
+      and any sibling imports/helpers
+
+      - B2 TypeScript retirement consistency across tests, shipped templates, docs,
+      and module surfaces
+
+      - B3 Active docs parity with the current DX-91 minimal CLI/template behavior
+
+
+      This re-test must verify ALL of these, not just the first.
+
+
+      Independence Level: L1
+
+      review_depth: THOROUGH
+
+      cross_cutting_focus:
+
+      - No stale Python import path remains for destructive removal flows
+
+      - No active TS-facing surface contradicts DX-91 Python-only policy
+
+      - No active docs path still advertises removed flags or legacy managed/v1 behavior'
+    verification: '- Main path: independent review confirms B1+B2+B3 are resolved
+      together
+
+      - Failure path: focused searches and targeted test/doc evidence show no residual
+      uninstall-import, TS-retirement, or active-doc mismatch blocker remains
+
+      - Evidence distinguishes active surfaces from intentionally historical/archive
+      material
+
+      - Downstream DX-91 docs work may proceed only if all blocker families are closed'
+    depends_on:
+    - dx91-python-only.dx91-python-only-fix-gate-blockers
+    agent: gate-reviewer
 - id: dx91-self-docs
   name: DX-91 Self-Docs Update
   status: locked
