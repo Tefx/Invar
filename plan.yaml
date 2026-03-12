@@ -14017,7 +14017,7 @@ phases:
       - none'
   - id: dx91-harness.gate
     name: dx91-harness.gate
-    status: pending
+    status: claimed
     description: 'Gate review: verify the DX-91 regression harness is strong enough
       to guard destructive simplification work.
 
@@ -14061,6 +14061,8 @@ phases:
     - prove-destructive-regression-harness
     - freeze-harness-snapshot
     agent: gate-reviewer
+    claimed_by: gate-reviewer
+    claimed_at: '2026-03-12T13:23:44.440756+00:00'
 - id: dx91-spec
   name: DX-91 Spec & Migration Semantics
   status: done
