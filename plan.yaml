@@ -17579,7 +17579,7 @@ phases:
       \ and commit then passed without code-scope expansion.\n"
   - id: verify-python-only-surface
     name: verify-python-only-surface
-    status: pending
+    status: claimed
     description: 'As an INDEPENDENT TESTER (`blind-tester`), validate that the repository
       now presents a coherent Python-only product surface after TypeScript and agent-era
       removals.
@@ -17646,6 +17646,8 @@ phases:
     depends_on:
     - dx91-python-only.dx91-python-only-remove-generated-agent-residue
     agent: blind-tester
+    claimed_by: blind-tester
+    claimed_at: '2026-03-12T19:25:55.270390+00:00'
   - id: freeze-python-only-snapshot
     name: freeze-python-only-snapshot
     status: pending
