@@ -14044,7 +14044,7 @@ phases:
       - Subagent reported discovered_issues: none'
   - id: dx91-spec.gate
     name: dx91-spec.gate
-    status: claimed
+    status: pending
     description: 'Gate review: verify the DX-91 semantic baseline is complete enough
       to drive destructive implementation safely.
 
@@ -14088,8 +14088,6 @@ phases:
     - align-generated-doc-contracts
     - freeze-spec-snapshot
     agent: gate-reviewer
-    claimed_by: gate-reviewer
-    claimed_at: '2026-03-12T10:31:39.655338+00:00'
 - id: dx91-init-runtime
   name: DX-91 Init & Dev-Sync Runtime Rewrite
   status: locked
