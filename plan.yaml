@@ -17672,7 +17672,7 @@ phases:
       \ phase now proceeds through batched fix + retest chain per anti-rework protocol.\n"
   - id: freeze-python-only-snapshot
     name: freeze-python-only-snapshot
-    status: pending
+    status: claimed
     description: 'Freeze the Python-only cleanup snapshot before docs and release-readiness
       work consumes it.
 
@@ -17695,6 +17695,8 @@ phases:
     depends_on:
     - dx91-python-only.verify-python-only-surface-retest-all-blockers
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-12T20:10:43.703732+00:00'
   - id: dx91-python-only.gate
     name: dx91-python-only.gate
     status: pending
