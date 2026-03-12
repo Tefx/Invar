@@ -15685,7 +15685,7 @@ phases:
       - none'
 - id: dx91-init-runtime
   name: DX-91 Init & Dev-Sync Runtime Rewrite
-  status: in_progress
+  status: done
   depends_on:
   - dx91-harness
   steps:
@@ -17036,7 +17036,7 @@ phases:
       \ files were modified by worker.\n"
   - id: dx91-init-runtime.dx91-init-runtime-gate-retest-tooling-parity
     name: dx91-init-runtime.gate-retest-tooling-parity
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT REVIEWER (`gate-reviewer`), re-run gate review
       after `dx91-init-runtime.dx91-init-runtime-fix-tooling-parity-blockers` and
       verify the tooling-parity blocker family is resolved in one pass without reopening
@@ -17189,9 +17189,45 @@ phases:
     - dx91-init-runtime.dx91-init-runtime-fix-tooling-parity-blockers
     claimed_by: gate-reviewer
     claimed_at: '2026-03-12T16:28:51.117271+00:00'
+    done_at: '2026-03-12T16:39:19.390827+00:00'
+    evidence: "## Gate Retest Report\n\n**Reviewer**: gate-reviewer\n**Scope**: dx91-init-runtime\
+      \ tooling parity blocker family\n\n### Required evidence\n- Exact full-scan\
+      \ command(s) or MCP payload(s) used for the accepted gate path\n  - CLI: `uvx\
+      \ invar-tools guard --all` (workdir: `.vectl/worktrees/dx91-init-runtime.dx91-init-runtime-gate-retest-tooling-parity`)\n\
+      \  - MCP: `invar_invar_guard(path=\".vectl/worktrees/dx91-init-runtime.dx91-init-runtime-gate-retest-tooling-parity\"\
+      , changed=false, strict=false, coverage=false)`\n  - Deferred wait: `invar_invar_guard_wait(run_id=\"\
+      grd_eb5fb041561c4af699ccb16a\", wait_ms=10000)`\n\n- Actual output showing authoritative/reproducible\
+      \ path\n  - CLI full-scan output: status=passed, files_checked=117, errors=0,\
+      \ warnings=50, infos=2\n  - MCP full-scan output: status=complete, run_id=grd_eb5fb041561c4af699ccb16a,\
+      \ report={ok:true, errors:0, warnings:50, infos:2, files_checked:117}\n\n- Explicit\
+      \ parity status\n  - MCP/CLI parity is MATCHED in dx91 worktree context (same\
+      \ counts and pass/ok verdict).\n\n- Explicit B1/B2 status\n  - B1/B2 migration\
+      \ semantics remain CLOSED; no reopening observed.\n  - Migration regression\
+      \ surfaces still pass:\n    - `uv run pytest -q tests/integration/test_dx91_init_entrypoints.py\
+      \ tests/integration/test_dx91_destructive_regression_harness.py` -> `16 passed`\n\
+      \  - Failure-path harness remains active:\n    - `DX91_EXPECT_FAILURE=1 uv run\
+      \ pytest -q tests/integration/test_dx91_destructive_regression_harness.py::test_failure_path_harness_detects_broken_preservation_deletion_rule`\
+      \ -> expected failure with forced message and exit=1\n\n### Gate decision\n\
+      - [x] OPEN: tooling parity blocker family closed; downstream gate path unambiguous\n\
+      - [ ] BLOCKED: parity or gate contract still contradictory\n\n### Commit hash(es)\n\
+      - none (verification-only step; no code/doc edits)\n- context fix commit already\
+      \ in main: `3e89eca`\n\n### Files changed\n- none in this retest step\n\n###\
+      \ Verification commands and results\n- `uvx invar-tools guard --all` -> PASS\
+      \ (0 errors, 50 warnings, 2 infos)\n- `invar_invar_guard(... changed=false)`\
+      \ -> COMPLETE/OK (0 errors, 50 warnings, 2 infos)\n- `uv run pytest -q tests/integration/test_mcp_full_guard_regressions.py::test_sync_full_scan_failure_surfaces_authoritative_cli_path\
+      \ tests/integration/test_mcp_guard_deferred.py::test_guard_run_registry_failed_envelope`\
+      \ -> `2 passed`\n- `uv run pytest -q tests/integration/test_dx91_init_entrypoints.py\
+      \ tests/integration/test_dx91_destructive_regression_harness.py` -> `16 passed`\n\
+      - `DX91_EXPECT_FAILURE=1 uv run pytest -q tests/integration/test_dx91_destructive_regression_harness.py::test_failure_path_harness_detects_broken_preservation_deletion_rule`\
+      \ -> expected FAIL, exit=1\n\n### Sibling-search evidence\n- `rg -n \"tooling_parity_wrapper_instability|GuardWrapperInstabilityError|AUTHORITATIVE_FULL_SCAN_COMMAND\"\
+      \ src/invar tests` -> 16 matches\n- `rg -n \"\\.invar/context\\.md|Unexpected\
+      \ repo files|DX91_EXPECT_FAILURE\" tests/integration src/invar` -> 32 matches\n\
+      \n### Findings severity classification\n- blockers: none\n- should_fix: none\n\
+      - suggestions: guard full-scan still reports baseline warnings=50/review_suggested=true\
+      \ (not parity contradiction)\n- tech_debt: none\n"
 - id: dx91-python-only
   name: DX-91 Python-Only Cleanup
-  status: locked
+  status: pending
   depends_on:
   - dx91-init-runtime
   steps:
