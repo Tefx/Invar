@@ -14325,6 +14325,70 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-12T10:46:36.182510+00:00'
+  - id: dx91-spec.dx91-spec-fix-remaining-gate-issues
+    name: dx91-spec.fix-remaining-gate-issues
+    status: pending
+    description: "Fix ALL remaining issues, not just the first, from `dx91-spec.dx91-spec-gate-retest`\
+      \ in ONE tightly scoped remediation pass.\n\nprior_loop:\n- dx91-spec.dx91-spec-fix-gate-blockers\n\
+      - dx91-spec.dx91-spec-gate-retest\nremaining_blocker: The frozen DX-91 baseline\
+      \ still leaves deterministic v1->v2 marker mapping ambiguous, freeze reproducibility\
+      \ incomplete, and canonical delete-list path normalization inconsistent.\nwhy_new_loop:\
+      \ The first remediation pass closed earlier cross-document contradictions, but\
+      \ the retest narrowed the remaining scope to three unresolved semantic defects\
+      \ that must be fixed together to avoid another fragmented serial loop.\n\n##\
+      \ Remaining issues to fix (ALL of these, not just the first)\n\n### B1: v1->v2\
+      \ marker mapping remains ambiguous due to OR outcomes\nLocations:\n- `docs/proposals/DX-91-generated-file-contracts.md:215`\n\
+      - `docs/proposals/DX-91-generated-file-contracts.md:217`\nWhy blocker:\n- OR\
+      \ outcomes still allow materially different destinations for legacy content,\
+      \ leaving non-canonical migration behavior.\nRemediation:\n- Replace OR language\
+      \ with deterministic mapping rules per v1 marker.\n- State the explicit condition\
+      \ set that maps each legacy marker case to exactly one destination.\n- Remove\
+      \ any wording that permits multiple valid destinations for the same marker state.\n\
+      Grep hint: `OR preserved outside markers|OR \\.invar/project-additions\\.md`\n\
+      IMPORTANT: Search for sibling statements beyond the listed locations and normalize\
+      \ every matching v1->v2 marker-mapping statement before closing this step.\n\
+      \n### B2: freeze baseline still has `<exact-sha>` placeholder\nLocations:\n\
+      - `docs/proposals/DX-91-freeze-spec-baseline.md:16`\n- `docs/proposals/DX-91-freeze-spec-baseline.md:22`\n\
+      Why blocker:\n- Reproducibility cannot be independently verified without the\
+      \ literal recorded frozen SHA and captured cleanliness proof output.\nRemediation:\n\
+      - Record the exact literal 40-hex SHA in the freeze document.\n- Capture the\
+      \ cleanliness proof output directly in the authoritative freeze baseline document,\
+      \ not as an implied future action.\n- Ensure no placeholder text remains for\
+      \ the frozen baseline identity.\nGrep hint: `<exact-sha>`\nIMPORTANT: Search\
+      \ for sibling placeholder or freeze-baseline identity references beyond the\
+      \ listed locations and normalize them into one reproducible statement.\n\n###\
+      \ S1: canonical delete list path normalization still inconsistent\nLocations:\n\
+      - `docs/proposals/DX-91-migration-semantics.md:34`\n- `docs/proposals/DX-91-migration-semantics.md:36`\n\
+      Remediation:\n- Normalize delete-list entries to fully-qualified repo-relative\
+      \ paths consistently across the canonical list.\n- Remove mixed shorthand/path-fragment\
+      \ forms so downstream readers see one path style only.\nGrep hint: `node_tools/|templates/skills`\n\
+      IMPORTANT: Search for sibling delete-list entries beyond the listed locations\
+      \ and normalize every canonical-list path reference to the same fully-qualified\
+      \ repo-relative form.\n\n## Completion criteria\n- Fix ALL remaining issues,\
+      \ not just the first.\n- Perform systemic sibling search for each grep hint\
+      \ and align every matching unresolved statement in the DX-91 baseline docs.\n\
+      - Keep this remediation tightly scoped to the three unresolved items above;\
+      \ do not reopen already-closed issues unless required to remove a direct contradiction.\n\
+      - Focused verification must cover both the main path and the highest-risk failure\
+      \ path:\n  - Main path: an independent reader can derive one deterministic v1->v2\
+      \ marker mapping, one literal reproducible freeze baseline, and one canonical\
+      \ fully-qualified delete list.\n  - Highest-risk failure path: no OR-based marker\
+      \ mapping or placeholder freeze identity remains that could let downstream migration\
+      \ or destructive cleanup choose different results across otherwise equivalent\
+      \ legacy states."
+    verification: '- Main path: confirm the edited docs define exactly one destination
+      per v1 marker case, record one literal 40-hex frozen SHA with captured cleanliness
+      proof output, and present one consistently repo-relative canonical delete list
+
+      - Failure path: focused regression search using each grep hint shows no remaining
+      OR-based marker ambiguity, no `<exact-sha>` placeholder, and no mixed shorthand
+      delete-list path forms in the canonical baseline docs
+
+      - Proof: sibling-search evidence demonstrates the unresolved issue family was
+      fixed comprehensively rather than location-by-location'
+    depends_on:
+    - dx91-spec.dx91-spec-gate-retest
+    agent: doc-reviewer
 - id: dx91-init-runtime
   name: DX-91 Init & Dev-Sync Runtime Rewrite
   status: locked
