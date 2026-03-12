@@ -14044,7 +14044,7 @@ phases:
       - Subagent reported discovered_issues: none'
   - id: dx91-spec.gate
     name: dx91-spec.gate
-    status: claimed
+    status: done
     description: 'Gate review: verify the DX-91 semantic baseline is complete enough
       to drive destructive implementation safely.
 
@@ -14090,6 +14090,28 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-12T10:34:40.668820+00:00'
+    done_at: '2026-03-12T10:41:58.103843+00:00'
+    evidence: "Artifact:\n- PR: none (verify-only gate)\n- Gate review task: ses_31e627faeffebqxZKhXnE6E1YB\n\
+      \nVerification:\n- Run: `git rev-parse HEAD` in isolated gate worktree -> a4e413f99fc2652f99850a486484603c18bf92ad\n\
+      - Run: `git status --porcelain=v1` -> clean working tree\n- Run: document review\
+      \ of DX-91 baseline artifacts -> blockers and should-fix items identified with\
+      \ file:line evidence\n- Run: planner remediation task `ses_31e5edee5ffez8uZfsFeFy5MPF`\
+      \ -> created batched fix + retest steps and plan validates clean (`vectl review`:\
+      \ 0 errors, 0 warnings)\n\nSpec link:\n- docs/proposals/DX-91-migration-semantics.md\n\
+      - docs/proposals/DX-91-generated-file-contracts.md\n- docs/proposals/DX-91-freeze-spec-baseline.md\n\
+      \nFindings:\n- blockers:\n  - B1: Conflicting inside-marker idempotent/merge\
+      \ semantics across baseline docs\n  - B2: Freeze baseline not reproducible (no\
+      \ explicit baseline commit hash recorded)\n  - B3: Source-of-truth boundary\
+      \ in frozen baseline is incomplete\n- should_fix:\n  - S1: Canonical delete\
+      \ list split/inconsistent across sections\n  - S2: Optional-file preservation/backup\
+      \ semantics underspecified\n\nActions taken:\n- Created batched fix step: dx91-spec.dx91-spec-fix-gate-blockers\
+      \ (depends_on: dx91-spec.gate)\n- Created retest step: dx91-spec.dx91-spec-gate-retest\
+      \ (depends_on: dx91-spec.dx91-spec-fix-gate-blockers)\n\nGate Decision:\n- verdict:\
+      \ BLOCKED\n- rationale: semantics contradictions and incomplete freeze pinning\
+      \ prevent safe handoff to dx91-harness until repaired\n\nFiles changed:\n- none\
+      \ (verify-only gate)\n\nGaps/Notes:\n- No code/doc modifications were performed\
+      \ in this gate step\n- Batched remediation path created per anti-serial-fix\
+      \ protocol"
   - id: dx91-spec.dx91-spec-fix-gate-blockers
     name: dx91-spec.fix-gate-blockers
     status: pending
