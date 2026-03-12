@@ -13585,7 +13585,7 @@ phases:
       \ retest.\n\nSpec link:\n- phase: release-readiness\n- step: release-readiness.smoke-install-artifacts-retest-provenance-uv-fallback"
 - id: dx91-harness
   name: DX-91 Regression Harness
-  status: locked
+  status: pending
   depends_on:
   - dx91-spec
   steps:
@@ -13781,7 +13781,7 @@ phases:
     agent: gate-reviewer
 - id: dx91-spec
   name: DX-91 Spec & Migration Semantics
-  status: in_progress
+  status: done
   steps:
   - id: finalize-migration-semantics
     name: finalize-migration-semantics
@@ -14882,7 +14882,7 @@ phases:
       - none'
   - id: dx91-spec.dx91-spec-gate-retest-4
     name: dx91-spec.gate-retest-4
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT REVIEWER (`gate-reviewer`), re-run a tightly scoped
       gate retest after `dx91-spec.dx91-spec-fix-literal-marker-shorthand-family`.
 
@@ -14925,6 +14925,77 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-12T12:31:08.862289+00:00'
+    done_at: '2026-03-12T12:33:42.226413+00:00'
+    evidence: 'Artifact:
+
+      - PR: none (verify-only)
+
+      - Gate retest task: ses_31df81f89ffeDMpblJoy9hxwsN
+
+
+      Verification:
+
+      - Run: `rg --stats -n "<!--\s*(invar:)?begin/end\s*-->" docs/proposals/DX-91-*.md`
+      -> 0 matches
+
+      - Run: `rg --stats -n "invar:begin/end" docs/proposals/DX-91-*.md` -> 0 matches
+
+      - Run: `rg --stats -n "<!--\s*begin/end\s*-->" docs/proposals/DX-91-*.md` ->
+      0 matches
+
+      - Run: `rg --stats -n "<!--invar:begin-->" docs/proposals/DX-91-*.md` -> explicit
+      literal marker matches present
+
+      - Run: `rg --stats -n "<!--invar:end-->" docs/proposals/DX-91-*.md` -> explicit
+      literal marker matches present
+
+      - Run: review relevant DX-91 proposal sections -> deterministic marker semantics
+      remain explicit; no S1 regression detected
+
+
+      Spec link:
+
+      - docs/proposals/DX-91-generated-file-contracts.md:26
+
+      - docs/proposals/DX-91-generated-file-contracts.md:34
+
+      - docs/proposals/DX-91-claude-md-draft.md:6
+
+      - docs/proposals/DX-91-migration-semantics.md:443
+
+
+      Findings:
+
+      - blockers: none
+
+      - should_fix: none
+
+      - suggestions: none
+
+      - tech_debt: none
+
+
+      Gate Decision:
+
+      - verdict: OPEN
+
+      - rationale: shorthand marker blocker family is fully cleared; literal-marker
+      semantics remain explicit and consistent across scoped DX-91 proposal set
+
+
+      Files changed:
+
+      - none
+
+
+      Gaps/Notes:
+
+      - Audit scope intentionally limited to docs/proposals/DX-91-*.md per step contract.
+
+
+      Discovered issues:
+
+      - none'
 - id: dx91-init-runtime
   name: DX-91 Init & Dev-Sync Runtime Rewrite
   status: locked
