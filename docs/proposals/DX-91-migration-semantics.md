@@ -29,18 +29,28 @@ This document defines the **canonical execution contract** for DX-91. Downstream
 
 **Canonical delete list (implementation reference):**
 
-| Category | Files | Lines | Delete Action |
-|----------|-------|-------|---------------|
-| `src/invar/node_tools/` | 35 files | ~5,981 | Delete entire directory (must exist) |
-| TS routing in guard/perception/sig/map/refs | — | ~500 | Remove TS branches |
-| Skills templates | `src/invar/templates/skills/**` | ~2,000 | Delete if present (non-fatal if absent) |
-| Hooks templates | `src/invar/templates/hooks/**` | ~200 | Delete if present (non-fatal if absent) |
-| Onboard templates | `src/invar/templates/onboard/**` | ~200 | Delete if present (non-fatal if absent) |
-| Examples (agent-facing) | `.invar/examples/` | — | Delete if present (non-fatal if absent) |
-| CLI commands removed | 9 files | ~2,000 | Delete command modules (must exist) |
-| Feedback collection | DX-79 code | ~300 | Remove all feedback code (must exist) |
+| Path/Glob | Lines | Delete Action |
+|-----------|-------|---------------|
+| `src/invar/node_tools/` | ~5,981 | Delete entire directory (must exist) |
+| `src/invar/templates/skills/**` | ~2,000 | Delete if present (non-fatal if absent) |
+| `src/invar/templates/hooks/**` | ~200 | Delete if present (non-fatal if absent) |
+| `src/invar/templates/onboard/**` | ~200 | Delete if present (non-fatal if absent) |
+| `.invar/examples/` | — | Delete if present (non-fatal if absent) |
+| `src/invar/shell/commands/feedback.py` | ~300 | Delete file (must exist) |
+| `src/invar/shell/commands/hooks.py` | ~200 | Delete file (must exist) |
+| `src/invar/shell/commands/skill.py` | ~300 | Delete file (must exist) |
+| `src/invar/shell/commands/test.py` | ~200 | Delete file (must exist) |
+| `src/invar/shell/commands/verify.py` | ~200 | Delete file (must exist) |
+| `src/invar/shell/commands/mutate.py` | ~150 | Delete file (must exist) |
+| `src/invar/shell/commands/rules.py` | ~150 | Delete file (must exist) |
+| `src/invar/shell/commands/uninstall.py` | ~200 | Delete file (must exist) |
+| `src/invar/shell/commands/update.py` | ~200 | Delete file (must exist) |
 
-**Optional-file semantics:** Directories marked "if present" proceed silently when absent. No error for missing optional deletions.
+**Optional-file semantics:** Paths marked "if present" proceed silently when absent. No error for missing optional deletions.
+
+**Additional implementation notes (not canonical paths):**
+- TS routing code in guard/perception/sig/map/refs (~500 lines) — remove TS branches during rewrite
+- DX-79 feedback collection code (~300 lines) — remove during command deletion
 
 ### 2.3 CLI Surface Change
 
