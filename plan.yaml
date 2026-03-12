@@ -16140,7 +16140,7 @@ phases:
     agent: gate-reviewer
   - id: fix-init-dev-sync-flow-batch
     name: fix-init-dev-sync-flow-batch
-    status: pending
+    status: claimed
     description: 'Fix ALL issues found by `prove-init-dev-sync-flow` in one pass,
       not just the first.
 
@@ -16266,6 +16266,8 @@ phases:
     depends_on:
     - prove-init-dev-sync-flow
     agent: python-senior
+    claimed_by: python-senior
+    claimed_at: '2026-03-12T14:46:42.787641+00:00'
   - id: retest-init-dev-sync-flow-batch
     name: retest-init-dev-sync-flow-batch
     status: pending
