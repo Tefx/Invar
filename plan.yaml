@@ -15987,7 +15987,7 @@ phases:
       - none (worker resolved transient complexity/doctest drift before final commit)'
   - id: prove-init-dev-sync-flow
     name: prove-init-dev-sync-flow
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT TESTER (`integration-verifier`), validate the
       full DX-91 init/dev-sync path from fresh repo state through migrated repo state.
 
@@ -16028,6 +16028,41 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-12T14:36:55.915529+00:00'
+    done_at: '2026-03-12T14:46:24.355413+00:00'
+    evidence: "Artifact:\n- Worker audit commit: eb97fb6\n- Verification task: ses_31d84df56ffem67WNqzD2Ozsq7\n\
+      \nVerification:\n- Run: `uv run pytest -v tests/integration/test_dx91_init_entrypoints.py\
+      \ tests/integration/test_dx91_dev_sync_template_merge.py tests/integration/test_dx91_destructive_regression_harness.py`\n\
+      \  - Outcome: collected 22; passed 14; failed 8 with recurring `AssertionError:\
+      \ Missing expected paths: ['.invar/context.md']`\n- Run: end-to-end CLI path\
+      \ script (`invar init` -> `invar dev sync` on legacy sandbox)\n  - Outcome:\
+      \ commands exit 0; preserved user prefix/suffix and preserved backup/preservation\
+      \ artifacts in exercised sandbox\n- Run: forced failure-path command\n  - `DX91_EXPECT_FAILURE=1\
+      \ uv run pytest -v tests/integration/test_dx91_destructive_regression_harness.py::test_failure_path_harness_detects_broken_preservation_deletion_rule`\n\
+      \  - Outcome: failed early on missing-path assertion, masking intended leakage\
+      \ assertion\n- Run: coverage sampling for DX-91 flow modules\n  - Outcome: low\
+      \ coverage reported for key modules (`uninstall.py` 0%, `template_engine.py`\
+      \ 16%, total 36%)\n\nSpec link:\n- docs/proposals/DX-91-migration-semantics.md\n\
+      - docs/proposals/DX-91-generated-file-contracts.md\n- tests/fixtures/dx91_migration/mainline-v1-to-v2/EXPECTATION.md\n\
+      \nFindings:\n- blockers:\n  - B1: `.invar/context.md` missing-path regression\
+      \ in destructive harness flow (`Missing expected paths` across 8/22 integration\
+      \ tests)\n  - B2: failure-path proof is masked by earlier missing-preservation\
+      \ failure, so intended destructive assertion is not reached deterministically\n\
+      - should_fix:\n  - S1: confidence gap from low DX-91 flow coverage in critical\
+      \ modules\n- deferred tech debt (out of current step family unless later proven\
+      \ blocking):\n  - S2: mock-island findings in non-DX91 test areas\n\nActions\
+      \ taken (batched fix protocol):\n- Planner task `ses_31d7f019affeypcnpxO4az5WOE`\
+      \ created batched remediation chain:\n  - fix-init-dev-sync-flow-batch (depends_on:\
+      \ prove-init-dev-sync-flow)\n  - retest-init-dev-sync-flow-batch (depends_on:\
+      \ fix-init-dev-sync-flow-batch)\n- Planner also rewired dependencies so freeze/gate\
+      \ cannot bypass retest:\n  - freeze-init-runtime-snapshot depends on retest-init-dev-sync-flow-batch\n\
+      \  - dx91-init-runtime.gate depends on retest-init-dev-sync-flow-batch\n\nStep\
+      \ decision:\n- verdict: BLOCKED pending batched remediation\n\nFiles changed:\n\
+      - docs/test-reports/DX-91-init-dev-sync-flow-audit.md (worker artifact commit)\n\
+      \nGaps/Notes:\n- Integration evidence captured actual outputs and surfaced real\
+      \ regressions.\n- This step is completed as a blocked test/proof step with batched\
+      \ follow-up chain created, per anti-serial-fix policy.\n\ndiscovered_issues:\n\
+      - repeated missing `.invar/context.md` assertion failures in destructive harness\
+      \ tests\n- failure-path masking by earlier assertion"
   - id: freeze-init-runtime-snapshot
     name: freeze-init-runtime-snapshot
     status: pending
