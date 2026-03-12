@@ -17456,7 +17456,7 @@ phases:
       - Evidence explicitly distinguishes deleted assets from intentionally preserved
       minimal files'
     depends_on:
-    - remove-typescript-active-surface-residue
+    - dx91-python-only.remove-typescript-template-family-residue
     agent: python-executor
   - id: verify-python-only-surface
     name: verify-python-only-surface
