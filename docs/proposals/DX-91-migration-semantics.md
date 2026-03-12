@@ -102,7 +102,7 @@ invar init --preview          # Dry-run mode
 
 | File | Content | Lines |
 |------|---------|-------|
-| `CLAUDE.md` | Injected section in `<!--invar:begin/end-->` markers | ~50 |
+| `CLAUDE.md` | Injected section in ``` <!--invar:begin-->` / `<!--invar:end--> ``` markers | ~50 |
 | `INVAR.md` | Agent semantic spec (fully managed) | ~70-120 |
 | `.pre-commit-config.yaml` | Single hook: `invar guard` | ~8 |
 
@@ -192,7 +192,7 @@ Proceed? [y/N]
 4. **Create backup directory** — `.invar/backup/`
 5. **Copy preserved user files** — only if `.invar/context.md` or `.invar/project-additions.md` exist (non-fatal if absent)
 6. **Delete stale directories** — remove all agent-era assets in one pass (skip absent directories silently)
-7. **Replace managed sections** — CLAUDE.md `<!--invar:begin/end-->` content replaced
+7. **Replace managed sections** — CLAUDE.md ``` <!--invar:begin-->` / `<!--invar:end--> ``` content replaced
 8. **Create/overwrite INVAR.md** — new semantic spec
 9. **Print migration summary** — deleted paths, backed up files, overwritten files
 
@@ -205,7 +205,7 @@ Proceed? [y/N]
 
 | File | User Content Location | Preservation |
 |------|----------------------|--------------|
-| `CLAUDE.md` | Outside `<!--invar:begin/end-->` | Preserved verbatim |
+| `CLAUDE.md` | Outside ``` <!--invar:begin-->` / `<!--invar:end--> ``` | Preserved verbatim |
 | `.invar/context.md` | Entire file (if present) | Backed up (non-fatal if absent), user retains original |
 | `.invar/project-additions.md` | Entire file (if present) | Backed up (non-fatal if absent), user retains original |
 | `INVAR.md` | N/A (fully managed) | Overwritten without backup (no user edits expected) |
@@ -216,7 +216,7 @@ Proceed? [y/N]
 - If present: backup required before proceeding
 
 **Last-writer-wins scope:**
-- Applies **only** to regenerated managed sections between `<!--invar:begin/end-->`
+- Applies **only** to regenerated managed sections between ``` <!--invar:begin-->` / `<!--invar:end--> ```
 - Does NOT apply to user content outside markers
 - Does NOT apply to `.invar/context.md` (preserved, not overwritten)
 
@@ -440,7 +440,7 @@ Each guard violation must include:
 | v2 present, user moved markers | Detect markers, use current position |
 | v1 present but partially migrated | Treat as v1, run full migration |
 
-**Canonical semantics (see §4.4):** User content belongs *outside* `<!--invar:begin/end-->` markers. Content inside markers is regenerated exactly, never merged.
+**Canonical semantics (see §4.4):** User content belongs *outside* ``` <!--invar:begin-->` / `<!--invar:end--> ``` markers. Content inside markers is regenerated exactly, never merged.
 
 ---
 

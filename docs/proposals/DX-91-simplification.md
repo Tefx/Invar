@@ -110,7 +110,7 @@ All planned rules continue: dead_export, dead_param, stub_body, wiring_gap, mock
 
 ### 2.10 Complex Managed Section Merge Logic
 
-**Simplify.** Replace multi-region versioned merge (`<!--invar:critical-->`, `<!--invar:managed-->`, `<!--invar:project-->`, `<!--invar:user-->`) with single `<!--invar:begin/end-->` marker pair.
+**Simplify.** Replace multi-region versioned merge (`<!--invar:critical-->`, `<!--invar:managed-->`, `<!--invar:project-->`, `<!--invar:user-->`) with single ``` <!--invar:begin-->` / `<!--invar:end--> ``` marker pair.
 
 ---
 
@@ -140,7 +140,7 @@ Fresh init should be non-interactive. Migration prompts are allowed only when de
 
 | File | Content | Lines |
 |------|---------|-------|
-| **CLAUDE.md** | Invar section appended in `<!--invar:begin/end-->` markers | ~50 |
+| **CLAUDE.md** | Invar section appended in ``` <!--invar:begin-->` / `<!--invar:end--> ``` markers | ~50 |
 | **INVAR.md** | Agent semantic specification (core/shell, contracts, config, repair guidance) | ~70-120 |
 | **.pre-commit-config.yaml** | Single hook: `invar guard` | ~8 |
 
