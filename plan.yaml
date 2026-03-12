@@ -17595,7 +17595,7 @@ phases:
     agent: gate-reviewer
   - id: remove-typescript-active-surface-residue
     name: remove-typescript-active-surface-residue
-    status: claimed
+    status: done
     description: 'Remove stale TypeScript references from the explicit active-surface
       denylist for DX-91, and inventory any residual matches outside that denylist
       for serialized follow-up rather than blocking this step.
@@ -17722,6 +17722,34 @@ phases:
     agent: python-executor
     claimed_by: python-executor
     claimed_at: '2026-03-12T17:43:52.774138+00:00'
+    done_at: '2026-03-12T18:28:54.291877+00:00'
+    evidence: "Artifact:\n- Integrated commits on Main: `7771d6d`, `0738d70`\n- Source\
+      \ branch commits: `d218a9f`, `b5c7da6`, `23677b7` (last commit became obsolete/empty\
+      \ during replay)\n\nVerification:\n- Scoped denylist scan command (per repaired\
+      \ acceptance):\n  `rg -n \"typescript|TypeScript|node_tools|tsconfig\\.json|ts-query|guard_ts|ts_compiler\"\
+      \ README.md pyproject.toml src/invar/templates/config src/invar/templates/protocol\
+      \ src/invar/templates/examples src/invar/shell/commands/init.py src/invar/core/sync_helpers.py\
+      \ src/invar/mcp/server.py`\n  -> `denylist=0` for required active paths after\
+      \ cleanup.\n- Explicit pyproject check:\n  `rg -n \"typescript|TypeScript|node_tools|tsconfig\\\
+      .json|ts-query|guard_ts|ts_compiler\" pyproject.toml | wc -l` -> `0`\n- Guard\
+      \ confidence checks from workers:\n  - `invar_guard(changed=true)` -> passed\
+      \ (errors=0, warnings=0)\n  - conflict-resolution verification: `python3 -m\
+      \ py_compile src/invar/mcp/server.py` PASS; `tomllib` parse for `pyproject.toml`\
+      \ PASS\n\nFiles changed:\n- `README.md`\n- `src/invar/core/sync_helpers.py`\n\
+      - `src/invar/shell/commands/init.py`\n- `src/invar/mcp/server.py`\n- `pyproject.toml`\n\
+      - `src/invar/templates/config/AGENT.md.jinja`\n- `src/invar/templates/config/CLAUDE.md.jinja`\n\
+      - `src/invar/templates/config/context.md.jinja`\n- `src/invar/templates/protocol/INVAR.md.jinja`\n\
+      - `src/invar/templates/protocol/universal/completion.md`\n- deleted `src/invar/templates/examples/typescript/*`\n\
+      - deleted `src/invar/templates/protocol/typescript/*`\n\nSpec link:\n- `remove-typescript-active-surface-residue`\
+      \ (dx91-python-only)\n- Planner remediation added deterministic follow-up ownership:\
+      \ `dx91-python-only.remove-typescript-template-family-residue`\n\nGaps/Notes:\n\
+      - Worker format-contract violations from `python-executor` were repaired via\
+      \ agent switch to `python-senior` and evidence normalization.\n- Acceptance\
+      \ ambiguity (broad template scan vs explicit denylist scope) was auto-repaired\
+      \ via planner before completion.\n- Merge replay required conflict resolution\
+      \ in `src/invar/mcp/server.py`; resolved and cherry-pick sequence completed\
+      \ cleanly.\n- Remaining non-denylist template-family residues are intentionally\
+      \ handed to the new serialized follow-up step.\n"
   - id: dx91-python-only.remove-typescript-template-family-residue
     name: remove-typescript-template-family-residue
     status: pending
