@@ -18926,6 +18926,111 @@ phases:
     depends_on:
     - dx91-python-only.dx91-python-only-retest-gate-blockers
     agent: python-senior
+  - id: dx91-python-only.dx91-python-only-retest-remaining-gate-blockers
+    name: dx91-python-only.retest-remaining-gate-blockers
+    status: pending
+    description: 'As an INDEPENDENT REVIEWER (`gate-reviewer`), re-test the remaining
+      blocker set after `dx91-python-only.fix-remaining-gate-blockers`.
+
+
+      step_type: verification
+
+      agent: gate-reviewer
+
+      agent_source: default
+
+      independence_level: L1
+
+      prior_loop:
+
+      - dx91-python-only.dx91-python-only-retest-gate-blockers
+
+      remaining_blocker: verify that the uninstall-policy decision and active-docs
+      alignment are now coherent, while B2 TS-retirement coherence still holds as
+      a regression check.
+
+      why_new_loop: the prior retest found a reduced blocker set; this retest closes
+      the narrowed loop without re-running an unnecessary broader remediation design.
+
+
+      spec_refs:
+
+      - `docs/proposals/DX-91-simplification.md`
+
+      - `docs/proposals/DX-91-migration-semantics.md`
+
+      - `DX-91-REGRESSION-SURFACES.md`
+
+      - `README.md`
+
+      - `docs/design.md`
+
+
+      touch_paths:
+
+      - `README.md`
+
+      - `docs/design.md`
+
+      - `tests/integration/test_dx91_destructive_regression_harness.py`
+
+      - `src/invar/shell/commands/`
+
+      - `src/invar/cli/`
+
+
+      harness_refs:
+
+      - `dx91-python-only.fix-remaining-gate-blockers`
+
+      - destructive regression harness for DX-91 removal flows
+
+      - `uv run invar --help`
+
+      - `uv run invar uninstall --help`
+
+
+      YOUR GOAL IS TO FIND REMAINING PROBLEMS, not to confirm the first blocker moved.
+
+
+      Validate ALL of these:
+
+      - B1 uninstall/removal-policy coherence across command wiring, module imports,
+      destructive regression tests, and active docs
+
+      - B3 active docs parity with the actual CLI surface shown by `uv run invar --help`
+
+      - B2 TypeScript-retirement coherence still passes as a regression check after
+      the B1/B3 remediation
+
+
+      This re-test must verify ALL of these, not just the first.
+
+
+      review_depth: THOROUGH
+
+      cross_cutting_focus:
+
+      - No split uninstall policy remains between runtime, tests, and docs
+
+      - No active docs surface advertises commands or flags absent from the current
+      CLI
+
+      - No TS-facing active surface was reintroduced while resolving the remaining
+      blockers'
+    verification: '- Main path: independent review confirms B1 and B3 are resolved
+      together
+
+      - Regression path: focused checks confirm B2 still passes after the remediation
+
+      - Failure path: targeted grep/help/doc evidence shows no residual uninstall-policy
+      or active-doc mismatch blocker remains
+
+      - Evidence distinguishes active docs/runtime surfaces from historical/archive/proposal
+      material'
+    depends_on:
+    - dx91-python-only.dx91-python-only-fix-remaining-gate-blockers
+    agent: gate-reviewer
 - id: dx91-self-docs
   name: DX-91 Self-Docs Update
   status: locked
