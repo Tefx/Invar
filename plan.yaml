@@ -16366,7 +16366,7 @@ phases:
       - none blocking after batched remediation'
   - id: retest-init-dev-sync-flow-batch
     name: retest-init-dev-sync-flow-batch
-    status: pending
+    status: claimed
     description: 'As an INDEPENDENT TESTER (`integration-verifier`), re-run the DX-91
       init/dev-sync proof after the batched fix step and try to break it.
 
@@ -16422,6 +16422,8 @@ phases:
     depends_on:
     - fix-init-dev-sync-flow-batch
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-12T14:56:35.623585+00:00'
 - id: dx91-python-only
   name: DX-91 Python-Only Cleanup
   status: locked
