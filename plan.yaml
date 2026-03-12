@@ -14091,7 +14091,7 @@ phases:
       \ on harness design adequacy, not test pass/fail alone."
   - id: dx91-harness.fix-gate-blockers
     name: Fix DX-91 harness gate blockers
-    status: pending
+    status: claimed
     description: 'Fix ALL issues found by `dx91-harness.gate` — fix ALL of these,
       not just the first.
 
@@ -14252,6 +14252,8 @@ phases:
     depends_on:
     - dx91-harness.gate
     agent: python-senior
+    claimed_by: python-senior
+    claimed_at: '2026-03-12T13:40:29.831052+00:00'
   - id: dx91-harness.retest-gate-blockers
     name: Reassess DX-91 harness after batched fixes
     status: pending
