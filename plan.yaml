@@ -17588,6 +17588,7 @@ phases:
     depends_on:
     - remove-typescript-tooling
     - remove-typescript-active-surface-residue
+    - dx91-python-only.remove-typescript-template-family-residue
     - remove-stale-agent-assets
     - verify-python-only-surface
     - freeze-python-only-snapshot
