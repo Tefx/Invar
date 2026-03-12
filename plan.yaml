@@ -18361,7 +18361,7 @@ phases:
       \ avoid data loss during integration.\n"
   - id: dx91-python-only.verify-python-only-surface-retest-all-blockers
     name: verify-python-only-surface.retest-all-blockers
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT TESTER (`blind-tester`), re-run the full Python-only
       surface validation after the batched remediation step and verify that ALL blocker
       families from `verify-python-only-surface` are resolved within the clarified
@@ -18454,6 +18454,29 @@ phases:
     agent: blind-tester
     claimed_by: blind-tester
     claimed_at: '2026-03-12T20:01:21.593173+00:00'
+    done_at: '2026-03-12T20:10:18.021599+00:00'
+    evidence: "Gate decision: OPEN\n\nFindings:\n- blockers: none under repaired B1/B2/B3\
+      \ boundary\n- should_fix:\n  - verification contracts should prefer explicit\
+      \ `uv run invar ...` commands to avoid PATH drift\n- suggestions:\n  - pin a\
+      \ single canonical retest command block in docs/plan to avoid drift\n- tech_debt:\n\
+      \  - historical/archive + compatibility/template-reference residual markers\
+      \ remain by policy (non-blocking)\n\nCommands run (independent tester evidence):\n\
+      - `uv run invar init --preview` -> PASS (non-interactive valid preview path)\n\
+      - `uv run invar dev sync --check` -> PASS\n- `uv run invar guard` -> PASS (errors=0,\
+      \ warnings=0)\n- `python3` deterministic inventory snippet -> `{'unexpected_survivors':\
+      \ [], 'missing_preserved': []}`\n- B1 scan (`init --preview|dev sync --dry-run|python\
+      \ - <<'PY'|verify-python-only-surface`) -> no active-boundary matches\n- B2\
+      \ scan (`typescript|TypeScript|...`) -> no active-boundary matches\n- B3 scan\
+      \ with repaired boundary -> no active blockers; residuals classified as non-blocking\
+      \ categories\n\nInventory output:\n- `unexpected_survivors: []`\n- `missing_preserved:\
+      \ []`\n\nResidue classification:\n- active-blocker: none\n- canonical-protected:\
+      \ `INVAR.md`\n- historical/archive: `.invar/archive/**`, proposals/test-report\
+      \ artifacts\n- compatibility/template-reference: controlled set under `src/invar/templates/**`,\
+      \ select `src/invar/shell/**`, `src/invar/core/**`, `src/invar/mcp/server.py`\n\
+      \nVerify-only purity:\n- initial retest run mutated `uv.lock`; mutation was\
+      \ rejected and corrected\n- follow-up purity run reverted `uv.lock`; final files\
+      \ changed: none\n\nNotes:\n- Retest confirms batched remediation closed B1/B2/B3\
+      \ blocker families under repaired acceptance boundary.\n"
 - id: dx91-self-docs
   name: DX-91 Self-Docs Update
   status: locked
