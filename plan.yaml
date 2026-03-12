@@ -17965,6 +17965,161 @@ phases:
       \ of non-denylist template-family hits) is satisfied; downstream verifier can\
       \ now classify remaining template hits without ambiguity.\n- No modifications\
       \ to `plan.yaml` or orchestrator state files.\n"
+  - id: dx91-python-only.dx91-python-only-remove-generated-agent-residue
+    name: dx91-python-only.remove-generated-agent-residue
+    status: pending
+    description: 'Remove repo-root generated residue and stale references left by
+      the retired agent-era surface after the runtime/template delete set is already
+      complete.
+
+
+      Spec refs:
+
+      - `docs/proposals/DX-91-simplification.md` :: `2.1 USBV Workflow Enforcement`,
+      `2.2 Skills System`, `2.3 Hooks (Agent-Specific)`, `2.7 Onboarding System`,
+      `2.9 Check-In/Final Protocol`, `3.4 v1 -> v2 Migration`
+
+      - `docs/proposals/DX-91-migration-semantics.md` :: `2.2 What Gets Removed`,
+      `4.3 Migration Steps (Atomic)`, `4.4 User Content Preservation`, `5.1 What dev
+      sync Does After DX-91`
+
+      - `docs/proposals/DX-91-generated-file-contracts.md` :: `3.1 Runtime/Template
+      Work (src/invar/)`, `5. Intentionally Deferred`, `6. Verification Matrix`
+
+
+      Touch paths:
+
+      - `.claude/skills/**`
+
+      - `.claude/hooks/**`
+
+      - `.pi/hooks/**`
+
+      - `.invar/examples/**`
+
+      - `.invar/feedback/**`
+
+      - `.invar/context.md`
+
+      - `.invar/project-additions.md`
+
+      - `.claude/commands/**`
+
+      - `README.md`
+
+      - `CLAUDE.md`
+
+      - `INVAR.md`
+
+      - `src/invar/shell/commands/init.py`
+
+      - `src/invar/shell/commands/dev_sync.py`
+
+      - `src/invar/templates/config/**`
+
+      - `src/invar/templates/protocol/**`
+
+
+      Preservation allowlist (must remain if present):
+
+      - `.invar/context.md`
+
+      - `.invar/project-additions.md`
+
+      - `.claude/commands/**`
+
+      - `CLAUDE.md`
+
+      - `INVAR.md`
+
+      - `docs/proposals/**`
+
+      - `DX-91-REGRESSION-SURFACES.md`
+
+      - `docs/test-reports/**`
+
+      - `artifacts/**`
+
+      - `tests/fixtures/**`
+
+
+      Conflict rationale:
+
+      - This stays serialized after `remove-stale-agent-assets` because repo-root
+      generated residue and active template/docs references share overlapping naming
+      patterns; a single owner prevents merge conflicts and inconsistent preserve/delete
+      decisions.
+
+
+      Failure modes to cover:
+
+      - stale references in active docs/templates/preview surfaces still point to
+      `.claude/skills/`, `.claude/hooks/`, `.pi/hooks/`, `.invar/examples/`, hook
+      scripts, USBV phase routing, or Check-In/Final ceremony after residue deletion
+
+      - accidental over-deletion removes preserved user-owned or still-active files
+      such as `.invar/context.md`, `.invar/project-additions.md`, `.claude/commands/**`,
+      `CLAUDE.md`, or `INVAR.md`
+
+      - packaging/template residue survives because only directories were deleted
+      but active template text still emits old assets or instructions
+
+      - sibling search misses repo-root residue such as `.invar/feedback/**` or stale
+      references in generated/config protocol templates
+
+
+      State semantics:
+
+      - remove completely: generated repo residue and active references that imply
+      skills/hooks/examples/onboarding/protocol ceremony are still part of the supported
+      product surface
+
+      - preserve exactly: user-owned context/additions files, active command docs,
+      and the explicit historical allowlist above
+
+      - backward-compatible legacy behavior: historical mentions may remain only inside
+      the allowlist, clearly separated from active runtime/package/template surfaces
+
+
+      Sibling-search patterns (must be exhausted before claiming done):
+
+      - `\.claude/skills|\.claude/hooks|\.pi/hooks|\.invar/examples|\.invar/feedback`
+
+      - `skills|hooks|onboard|feedback`
+
+      - `USBV|UNDERSTAND|SPECIFY|VALIDATE|/develop|/review|/investigate|/propose`
+
+      - `Check-In|✓ Final|UserPromptSubmit|PreToolUse|PostToolUse|Stop\.sh`
+
+
+      Gate Preview (what the gate WILL reject):
+
+      1. Repo-root residue deleted, but active templates/docs still instruct users
+      to use the removed assets
+
+      2. Preservation allowlist files disappear during cleanup
+
+      3. Inventory evidence does not distinguish active blockers from historical allowlist
+      matches'
+    verification: '- Deleted inventory: `test ! -e .claude/skills && test ! -e .claude/hooks
+      && test ! -e .pi/hooks && test ! -e .invar/examples && test ! -e .invar/feedback`
+
+      - Preservation inventory: `test -e .invar/context.md && test -e .invar/project-additions.md
+      && test -e .claude/commands/guard.md && test -e .claude/commands/audit.md &&
+      test -e CLAUDE.md && test -e INVAR.md`
+
+      - Active-surface residue scan returns zero matches outside the explicit historical
+      allowlist: `rg -n "\\.claude/skills|\\.claude/hooks|\\.pi/hooks|\\.invar/examples|\\.invar/feedback|skills|hooks|onboard|feedback|USBV|UNDERSTAND|SPECIFY|VALIDATE|/develop|/review|/investigate|/propose|Check-In|✓
+      Final|UserPromptSubmit|PreToolUse|PostToolUse|Stop\\.sh" README.md CLAUDE.md
+      INVAR.md src/invar .claude .invar --glob ''!docs/proposals/**'' --glob ''!docs/test-reports/**''
+      --glob ''!artifacts/**'' --glob ''!tests/fixtures/**''`
+
+      - Evidence must report three inventories: deleted-now, already-absent-optional,
+      and preserved-allowlist, so accidental over-deletion is distinguishable from
+      clean migration state'
+    depends_on:
+    - remove-stale-agent-assets
+    agent: python-executor
 - id: dx91-self-docs
   name: DX-91 Self-Docs Update
   status: locked
