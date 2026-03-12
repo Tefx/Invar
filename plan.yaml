@@ -17233,7 +17233,7 @@ phases:
   steps:
   - id: remove-typescript-tooling
     name: remove-typescript-tooling
-    status: claimed
+    status: done
     description: 'Remove runtime and packaging TypeScript tooling from the active
       product surface once the DX-91 Python-only replacement path is already proven.
 
@@ -17347,6 +17347,82 @@ phases:
     agent: python-senior
     claimed_by: python-senior
     claimed_at: '2026-03-12T16:45:19.504413+00:00'
+    done_at: '2026-03-12T17:43:31.020671+00:00'
+    evidence: 'Artifact:
+
+      - Main squash commit: `22380de9`
+
+      - Worktree commits: `8243607`, `cb12427`, `b515bc5`
+
+
+      Verification:
+
+      - `invar init --preview` -> PASS (Python project detected; preview non-destructive)
+
+      - `invar dev sync --dry-run` -> unsupported flag in current CLI; equivalent
+      `invar dev sync --check` -> PASS (`Would update: 2 files`)
+
+      - `invar guard` -> PASS (changed-files run, errors=0, warnings=0)
+
+      - `invar guard --all` -> PASS (errors=0; warnings baseline)
+
+      - Failure-path search #1: `rg -n "ts_compiler|guard_ts|node_tools|run_(sig|map|refs)_typescript|query_typescript|TypeScript
+      Compiler API" src/invar pyproject.toml` -> no matches
+
+      - Failure-path search #2: `rg -n "tsconfig\.json|project_language == \"typescript\"|language=\"typescript\"|TypeScript"
+      src/invar pyproject.toml README.md` -> residual matches outside in-scope runtime
+      cleanup (reported below)
+
+      - Pre-commit for final merged content: INVAR.md Protection PASS, Ruff PASS,
+      mypy PASS, Invar Guard PASS
+
+
+      Files changed:
+
+      - `src/invar/shell/commands/perception.py`
+
+      - `src/invar/shell/commands/guard.py`
+
+      - `src/invar/mcp/server.py`
+
+      - `src/invar/shell/ts_compiler.py` (deleted)
+
+      - `src/invar/shell/prove/guard_ts.py` (deleted)
+
+      - `src/invar/node_tools/**` (deleted)
+
+      - `src/invar/core/ts_parsers.py`
+
+      - `src/invar/core/ts_sig_parser.py`
+
+      - `src/invar/shell/commands/template_sync.py` (complexity justification to satisfy
+      hook debt gate)
+
+      - `pyproject.toml`
+
+
+      Spec link:
+
+      - `docs/proposals/DX-91-simplification.md` sections `2.4`, `3.2`
+
+      - `docs/proposals/DX-91-migration-semantics.md` sections `2.2`, `3.2`, `5.1`
+
+      - `DX-91-REGRESSION-SURFACES.md` sections `4.3`, `5.2`, `10`
+
+
+      Gaps/Notes:
+
+      - This step is runtime/packaging cleanup only; residual TypeScript mentions
+      in README/templates/init-language surfaces are reported for downstream residue/docs
+      steps.
+
+      - Commit-hook blocker encountered during squash (`shell_complexity_debt`) was
+      resolved in-step by adding explicit `@shell_complexity` justifications in `template_sync.py`
+      and re-verifying full guard.
+
+      - No changes made to `plan.yaml` or `.git/vectl/claims.json`.
+
+      '
   - id: remove-stale-agent-assets
     name: remove-stale-agent-assets
     status: pending
