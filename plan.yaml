@@ -14114,7 +14114,7 @@ phases:
       \ protocol"
   - id: dx91-spec.dx91-spec-fix-gate-blockers
     name: dx91-spec.fix-gate-blockers
-    status: claimed
+    status: done
     description: "Fix ALL blockers and should_fix items found by `dx91-spec.gate`,\
       \ not just the first.\n\nprior_loop:\n- dx91-spec.gate\nremaining_blocker: Conflicting\
       \ managed-marker semantics, unreproducible freeze baseline, and incomplete source-of-truth\
@@ -14218,6 +14218,41 @@ phases:
     agent: software-architect
     claimed_by: software-architect
     claimed_at: '2026-03-12T10:42:10.428716+00:00'
+    done_at: '2026-03-12T10:46:27.372627+00:00'
+    evidence: "## Batched Gate Blocker Remediation\n\n**Scope**: Resolved ALL blockers\
+      \ and should_fix items from `dx91-spec.gate`, not just the first.\n\n### Main\
+      \ path proof\n- Canonical inside-marker rule: unified to exact regeneration\
+      \ inside markers (no merge/no preservation inside markers), normalized across\
+      \ DX-91 baseline docs.\n- Canonical freeze baseline statement: explicit reproducibility\
+      \ section added with required commit-hash recording and clean-tree checks.\n\
+      - Canonical source-of-truth boundary: authoritative boundary table added to\
+      \ freeze baseline linking exact doc sections.\n- Canonical delete list reference:\
+      \ migration semantics marked as canonical delete list and referenced by generated-file\
+      \ contract.\n- Optional-file/backup handling statement: explicit \"if-present/non-fatal-if-absent\"\
+      \ semantics added to migration and contract docs.\n\n### Sibling search proof\n\
+      - Grep hint `merge algorithm|preserve unique user lines|replaces content between\
+      \ markers exactly|last-writer-wins`:\n  - contradictory statements removed/normalized\
+      \ in DX-91 docs; canonical inside-marker rule now consistent.\n- Grep hint `Baseline\
+      \ Commit and State|git rev-parse HEAD`:\n  - freeze baseline now includes explicit\
+      \ reproducibility commands + invalidation condition.\n- Grep hint `Source of\
+      \ truth:`:\n  - source-of-truth declarations consolidated with explicit authoritative\
+      \ boundary mapping.\n\n### Highest-risk failure path proof\n- Repeated migration\
+      \ ambiguity removed by replacing conflicting merge/preserve language with exact\
+      \ managed-marker regeneration semantics and explicit preserved-region boundary.\n\
+      - Freeze replay now depends on explicit recorded SHA + clean state checks, rather\
+      \ than unstated repo state.\n\nCommit hash(es):\n- Worker branch commit: 3410e880d545eb7a0d5997342474502d67cb2b5d\n\
+      - Main squash commit: 1297ad6 ([vectl] step-dx91-spec.dx91-spec-fix-gate-blockers\
+      \ completed)\n\nFiles changed:\n- docs/proposals/DX-91-freeze-spec-baseline.md\n\
+      - docs/proposals/DX-91-generated-file-contracts.md\n- docs/proposals/DX-91-migration-semantics.md\n\
+      \nVerification (commands + outcomes):\n- `git diff --stat docs/proposals/` ->\
+      \ 3 files changed, 84 insertions, 31 deletions\n- `git log -1 --format=\"%H\"\
+      ` -> 3410e880d545eb7a0d5997342474502d67cb2b5d (worker commit)\n- `git status\
+      \ --short` -> clean in worker worktree after commit\n- `git merge --squash vectl/step-dx91-spec.dx91-spec-fix-gate-blockers`\
+      \ -> merged without conflicts\n- `git commit -m \"[vectl] step-dx91-spec.dx91-spec-fix-gate-blockers\
+      \ completed\"` -> committed on main\n\nSpec link(s):\n- docs/proposals/DX-91-freeze-spec-baseline.md\n\
+      - docs/proposals/DX-91-migration-semantics.md\n- docs/proposals/DX-91-generated-file-contracts.md\n\
+      \nGaps/Notes:\n- No additional out-of-scope changes reported.\n- Batched remediation\
+      \ implemented in single step as required.\n\ndiscovered_issues:\n- none"
   - id: dx91-spec.dx91-spec-gate-retest
     name: dx91-spec.gate-retest
     status: pending
