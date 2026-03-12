@@ -14499,7 +14499,7 @@ phases:
       - none'
   - id: dx91-spec.dx91-spec-gate-retest-2
     name: dx91-spec.gate-retest-2
-    status: pending
+    status: claimed
     description: 'As an INDEPENDENT REVIEWER (`gate-reviewer`), re-run focused gate
       review after `dx91-spec.dx91-spec-fix-remaining-gate-issues` and verify ALL
       remaining blocker/should_fix items from `dx91-spec.dx91-spec-gate-retest` are
@@ -14533,6 +14533,8 @@ phases:
     depends_on:
     - dx91-spec.dx91-spec-fix-remaining-gate-issues
     agent: gate-reviewer
+    claimed_by: gate-reviewer
+    claimed_at: '2026-03-12T10:55:40.843476+00:00'
 - id: dx91-init-runtime
   name: DX-91 Init & Dev-Sync Runtime Rewrite
   status: locked
