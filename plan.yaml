@@ -15691,7 +15691,7 @@ phases:
   steps:
   - id: rewrite-init-entrypoints
     name: rewrite-init-entrypoints
-    status: claimed
+    status: done
     description: 'Rewrite the `invar init` runtime path for the DX-91 simplified product
       surface.
 
@@ -15752,6 +15752,90 @@ phases:
     agent: python-senior
     claimed_by: python-senior
     claimed_at: '2026-03-12T14:08:50.271182+00:00'
+    done_at: '2026-03-12T14:19:31.603493+00:00'
+    evidence: 'Artifact:
+
+      - Worker commit: 5c0ba34
+
+      - Main merge commit: 89ec4aa ([vectl] step-rewrite-init-entrypoints completed)
+
+
+      Verification:
+
+      - Run: `uv run invar init --help` -> entrypoint surface now `[PATH]`, `--file`,
+      `--preview` (legacy agent-era init flags removed)
+
+      - Run: `uv run pytest tests/integration/test_dx91_init_entrypoints.py -q` ->
+      7 passed
+
+      - Run: `uv run pytest tests/integration/test_dx91_destructive_regression_harness.py
+      -q` -> 8 passed
+
+      - Run: `invar_guard(path=".../rewrite-init-entrypoints", changed=true)` -> passed,
+      errors=0, warnings=0
+
+      - Run: sibling search in `src/invar/shell/commands/init.py` for legacy branches/options
+      (`--claude|--pi|--mcp-only|--language|_prompt_agent_selection|_prompt_file_selection|install_claude_hooks|install_pi_hooks|install_pi_tools|add_feedback_config`)
+      -> no matches
+
+      - Run: `git merge --squash vectl/step-rewrite-init-entrypoints` -> merged without
+      conflicts
+
+      - Run: `git commit -m "[vectl] step-rewrite-init-entrypoints completed"` ->
+      committed on main
+
+
+      Spec link:
+
+      - docs/proposals/DX-91-simplification.md
+
+      - docs/proposals/DX-91-migration-semantics.md
+
+      - docs/proposals/DX-91-claude-md-draft.md
+
+      - docs/proposals/DX-91-invar-md-draft.md
+
+
+      Commit hash(es):
+
+      - 5c0ba34
+
+      - 89ec4aa
+
+
+      Files changed:
+
+      - src/invar/shell/commands/init.py
+
+      - tests/integration/test_dx91_init_entrypoints.py
+
+
+      Main-path result:
+
+      - Rewritten init runtime emits DX-91 minimal generated set and passes targeted
+      init regression suite.
+
+
+      Failure-path result:
+
+      - Preservation/delete/interrupted-run/idempotency coverage passes via targeted
+      init regression and harness suites.
+
+
+      Gaps/Notes:
+
+      - Worker observed out-of-scope `uv.lock` drift in isolated worktree and intentionally
+      excluded it from commit.
+
+      - Scope remained init-entrypoint rewrite; no template-sync overhaul or python-only
+      cleanup performed.
+
+
+      discovered_issues:
+
+      - non-blocking local uv.lock drift during tooling bootstrap (not merged)
+
+      - no functional regressions detected in targeted suites'
   - id: rewrite-dev-sync-template-merge
     name: rewrite-dev-sync-template-merge
     status: pending
