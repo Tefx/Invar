@@ -19237,7 +19237,7 @@ phases:
       \ modified.\n"
   - id: update-proposals-index-and-crosslinks
     name: update-proposals-index-and-crosslinks
-    status: claimed
+    status: done
     description: 'Update proposal index and repository cross-links so DX-91 is discoverable
       as the authoritative simplification direction and stale references do not point
       readers back to removed surfaces.
@@ -19265,6 +19265,24 @@ phases:
     agent: doc-reviewer
     claimed_by: doc-reviewer
     claimed_at: '2026-03-13T14:16:49.925553+00:00'
+    done_at: '2026-03-13T14:25:25.565966+00:00'
+    evidence: "Artifact:\n- Main squash commit: `a6d546a7`\n- Worktree commits: `923e08f`,\
+      \ `683cd1f`\n\nFiles changed:\n- `README.md`\n- `docs/agents.md`\n- `docs/guides/multi-agent.md`\n\
+      - `docs/proposals/index.md`\n- `docs/reference/index.md`\n- `docs/vision.md`\n\
+      \nVerification:\n- Cross-links now point to DX-91 simplification direction from\
+      \ active navigation surfaces (README/reference/vision/proposals index/multi-agent\
+      \ deprecation note)\n- Active high-level navigation no longer presents removed\
+      \ agent-era/TypeScript surfaces as current behavior\n- Historical/archival references\
+      \ preserved in proposal/archive zones\n\nActive-vs-archive classification:\n\
+      - active navigation updated:\n  - `docs/proposals/index.md`\n  - `README.md`\n\
+      \  - `docs/reference/index.md`\n  - `docs/vision.md`\n- archive/historical retained:\n\
+      \  - `docs/guides/multi-agent.md` (deprecated notice added)\n  - proposal history\
+      \ under `docs/proposals/**`\n  - completed proposal archive surfaces\n\nSpec\
+      \ link:\n- `docs/proposals/DX-91-simplification.md`\n- related DX-91 proposal\
+      \ set referenced from updated index\n\nGaps/Notes:\n- some non-nav guide files\
+      \ still contain legacy references and were left as out-of-scope historical guidance\
+      \ for this step (`docs/guides/pi.md`, `docs/guides/cursor.md`).\n- No plan/orchestrator\
+      \ files modified.\n"
   - id: verify-self-docs-surface
     name: verify-self-docs-surface
     status: pending
