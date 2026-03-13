@@ -20814,7 +20814,7 @@ phases:
       \ policy.\n"
 - id: dx91-release-readiness
   name: DX-91 Release Readiness Audit
-  status: in_progress
+  status: done
   depends_on:
   - dx91-self-docs
   steps:
@@ -23742,7 +23742,7 @@ phases:
       \ initial missing worktree/branch for step setup"
   - id: dx91-release-readiness.retest-reference-classification-consistency-followup-batch
     name: retest-reference-classification-consistency-followup-batch
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT TESTER (`integration-verifier`), validate closure
       of the full remaining reference-classification blocker family after `dx91-release-readiness.fix-reference-classification-consistency-followup-batch`.
 
@@ -23851,3 +23851,23 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-13T18:48:24.078972+00:00'
+    done_at: '2026-03-13T18:52:08.270542+00:00'
+    evidence: "Verification (integration-verifier) with stale-state repair:\n\nVerification\
+      \ (commands + outputs/results)\n- Rebuilt retest branch/worktree from fixed\
+      \ baseline:\n  - removed old retest worktree\n  - force-moved `vectl/step-dx91-release-readiness.retest-reference-classification-consistency-followup-batch`\
+      \ to `vectl/step-dx91-release-readiness.fix-reference-classification-consistency-followup-batch`\n\
+      \  - re-added retest worktree at refreshed branch\n  - output head: `676a9cb2\
+      \ ...`\n- `git status --short --branch` => correct retest branch, clean tree.\n\
+      - `docs/proposals/index.md` checks:\n  - `docs/reference/index.md` row is `Active`\
+      \ (not Archive).\n  - boundary note states `docs/reference/**` active except\
+      \ archived `docs/reference/workflow/usbv.md`.\n- Sibling boundary rows coherent:\n\
+      \  - archive: `docs/guides/pi.md`, `docs/guides/aider.md`, `docs/guides/multi-agent.md`,\
+      \ `docs/reference/workflow/usbv.md`, `docs/AGENTS.md`\n  - active: `.invar/context.md`,\
+      \ `.invar/project-additions.md`, `docs/reference/workflow/index.md`, `docs/reference/index.md`\n\
+      - `docs/reference/index.md` remains active DX-91 mechanism index and explicitly\
+      \ scopes USBV workflow doc as archive-only historical.\n- Stale-state guard:\n\
+      \  - `git rev-parse` for fix+retest branches returned same SHA `676a9cb...`\n\
+      \  - `git diff --stat fix..retest -- docs/proposals/index.md` returned no diff.\n\
+      \nFiles changed\n- none (verification-only)\n\nGaps/Notes\n- Scope remained\
+      \ exact to retest step.\n- Initial stale-state condition was repaired before\
+      \ verification.\n- Gate recommendation: REOPEN.\n- discovered_issues: none"
