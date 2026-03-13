@@ -21653,7 +21653,7 @@ phases:
       **Status:** Ready for retest-dx91-consistency-blockers gate verification.'
   - id: dx91-release-readiness.retest-doc-runtime-proposal-index-blockers
     name: retest-doc-runtime-proposal-index-blockers
-    status: pending
+    status: claimed
     description: 'As an INDEPENDENT REVIEWER (`gate-reviewer`), re-test the FULL blocker
       set from `dx91-release-readiness.gate` after `dx91-release-readiness.fix-doc-runtime-proposal-index-blockers`.
 
@@ -21781,3 +21781,5 @@ phases:
     depends_on:
     - dx91-release-readiness.fix-doc-runtime-proposal-index-blockers
     agent: gate-reviewer
+    claimed_by: gate-reviewer
+    claimed_at: '2026-03-13T17:15:19.260036+00:00'
