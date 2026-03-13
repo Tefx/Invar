@@ -22626,7 +22626,7 @@ phases:
       \ legacy row not link-formatted"
   - id: dx91-release-readiness.fix-proposal-index-reconciliation-fs-inventory-blockers
     name: fix-proposal-index-reconciliation-fs-inventory-blockers
-    status: claimed
+    status: pending
     description: 'Fix ALL blockers found by `dx91-release-readiness.retest-proposal-index-reconciliation-remaining-blockers`
       in ONE batched remediation step. Fix ALL of these, not just the first.
 
@@ -22826,8 +22826,6 @@ phases:
     depends_on:
     - dx91-release-readiness.retest-proposal-index-reconciliation-remaining-blockers
     agent: doc-reviewer
-    claimed_by: doc-reviewer
-    claimed_at: '2026-03-13T18:00:01.820816+00:00'
   - id: dx91-release-readiness.retest-proposal-index-reconciliation-fs-inventory-blockers
     name: retest-proposal-index-reconciliation-fs-inventory-blockers
     status: pending
