@@ -241,14 +241,14 @@ The four-phase workflow forces "specify before implement":
    Context        Contracts        Code        Guard
 ```
 
-Skill routing ensures agents enter through the correct workflow:
+Agent follows a four-phase workflow based on user intent:
 
-| User Intent | Skill Invoked | Behavior |
-|-------------|---------------|----------|
-| "why does X fail?" | investigate mode | Research only, no code changes |
-| "should we use A or B?" | proposal mode | Present options with trade-offs |
-| "add feature X" | implementation mode | Full four-phase workflow |
-| (after implementation) | review mode | Adversarial review with fix loop |
+| User Intent | Mode | Behavior |
+|-------------|------|----------|
+| "why does X fail?" | investigate | Research only, no code changes |
+| "should we use A or B?" | propose | Present options with trade-offs |
+| "add feature X" | implement | Full four-phase workflow |
+| (after implementation) | review | Adversarial review with fix loop |
 
 ### ✅ Solution 4: Architecture Constraints
 
@@ -315,8 +315,8 @@ Clear boundaries for every AI session:
 
 | Phase | Format | Purpose |
 |-------|--------|---------|
-| **Start** | `startup status: project | branch | status` | Context visibility |
-| **End** | `guard result: PASS | 0 errors` | Verification proof |
+| **Start** | `✓ Check-In: project | branch | clean/dirty` | Context visibility |
+| **End** | `✓ Final: guard PASS | 0 errors` | Verification proof |
 
 ### Intellectual Heritage
 
@@ -356,7 +356,6 @@ AlphaCodium · Parsel · Reflexion · Clover
 All features auto-configured:
 - MCP tools (`invar_guard`, `invar_sig`, `invar_map`)
 - Workflow modes (implement, review, investigate, propose)
-- Claude Code hooks (tool guidance, verification reminders)
 - Pre-commit hooks
 
 ### [Pi](https://shittycodingagent.ai/) (MCP Support)
@@ -371,7 +370,6 @@ Pi can use the same Invar MCP server and protocol docs:
 Cursor users get full verification via MCP:
 - MCP tools (`invar_guard`, `invar_sig`, `invar_map`)
 - .cursor/rules/ for workflow guidance
-- Hooks (beta) for pytest blocking
 - Pre-commit hooks
 
 > See [Cursor Guide](./docs/guides/cursor.md) for detailed setup.
