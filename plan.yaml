@@ -22269,7 +22269,7 @@ phases:
       fix step.'
   - id: dx91-release-readiness.fix-proposal-index-reconciliation-remaining-blockers
     name: fix-proposal-index-reconciliation-remaining-blockers
-    status: claimed
+    status: done
     description: 'Fix ALL remaining proposal-index reconciliation blockers from `dx91-release-readiness.retest-release-guides-proposal-index-remaining-blockers`
       in ONE batched remediation step. Fix ALL of these, not just the first.
 
@@ -22446,6 +22446,56 @@ phases:
     agent: doc-reviewer
     claimed_by: doc-reviewer
     claimed_at: '2026-03-13T17:46:45.030423+00:00'
+    done_at: '2026-03-13T17:53:31.268653+00:00'
+    evidence: 'Commit hash(es)
+
+      - 987ea591749efa7441ca6fc98595183bb235be9b
+
+
+      Files changed
+
+      - docs/proposals/index.md (+53/-8, 61 lines changed)
+
+
+      Verification (commands + key outputs)
+
+      - `ls docs/proposals/completed/*.md | wc -l` => `76` (used to reconcile Archived
+      count)
+
+      - `grep -A 20 "### Active Implementation" docs/proposals/index.md | grep -E
+      "^\\| (DX|LX)" | wc -l` => `5`
+
+      - `grep -A 20 "### Deferred / Future" docs/proposals/index.md | grep -E "^\\|
+      (DX|LX)" | wc -l` => `9`
+
+      - `grep -A 20 "### Legacy / Pre-DX-91" docs/proposals/index.md | grep -E "^\\|
+      (DX|LX)" | wc -l` => `11`
+
+      - Statistics updated to reconcile one basis: Active=2, Draft=3, Partial=2, Deferred=7,
+      Legacy/Removed=11, Archived=76, Total=101.
+
+
+      Spec link
+
+      - docs/proposals/index.md (open proposals/status sections, statistics table,
+      sibling-search/count-basis note)
+
+      - docs/proposals/DX-91-simplification.md (DX-87 superseded context)
+
+      - docs/reference/index.md (active reference classification target)
+
+
+      Gaps/Notes
+
+      - Batched remediation covered all declared blockers B1/B2/B3 in one pass.
+
+      - Counting-basis note and reconciliation math were added to make future verification
+      reproducible.
+
+      - Worker reported `uv.lock` pre-commit stash/unstash noise; no functional change
+      included in this step.
+
+      - discovered_issues: none'
   - id: dx91-release-readiness.retest-proposal-index-reconciliation-remaining-blockers
     name: retest-proposal-index-reconciliation-remaining-blockers
     status: pending
