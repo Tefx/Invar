@@ -19600,6 +19600,187 @@ phases:
     agent: blind-tester
     claimed_by: blind-tester
     claimed_at: '2026-03-13T14:44:06.199047+00:00'
+  - id: dx91-self-docs.fix-self-docs-active-link-blockers-batch
+    name: fix-self-docs-active-link-blockers-batch
+    status: pending
+    description: 'Fix ALL active-link blockers found by `dx91-self-docs.retest-self-docs-surface-blockers`
+      in ONE batched remediation step.
+
+
+      prior_loop:
+
+      - dx91-self-docs.fix-self-docs-surface-blockers
+
+      - dx91-self-docs.retest-self-docs-surface-blockers
+
+      remaining_blocker: active docs still contain broken links caused by wrong relative
+      paths and moved/renamed proposal or contract targets across the DX-91 self-docs
+      surface.
+
+      why_new_loop: the first batched cleanup removed the earlier README/archive contradictions,
+      but the independent retest found a narrower residual link-integrity cluster
+      that now needs a single follow-up sweep across sibling docs surfaces.
+
+
+      ## Blockers to Fix (ALL of these, not just the first)
+
+
+      ### B1: broken relative link in `docs/reference/workflow/session-start.md`
+
+      Locations: `docs/reference/workflow/session-start.md`
+
+      Remediation: fix the active link to `INVAR.md` so the relative path resolves
+      from the workflow page''s actual nesting level.
+
+      Grep hint: `\.\./\.\./INVAR\.md`
+
+      IMPORTANT: search sibling workflow pages for the same repo-root relative-path
+      assumption before claiming done.
+
+
+      ### B2: broken renamed-target links in `docs/reference/contracts/pre-post.md`
+
+      Locations: `docs/reference/contracts/pre-post.md`
+
+      Remediation: replace links still pointing to `./contract-complete.md` with the
+      current active contract-complete target name.
+
+      Grep hint: `contract-complete\.md`
+
+      IMPORTANT: search sibling contract pages for renamed-target leftovers, not just
+      this page.
+
+
+      ### B3: broken moved-proposal link in `docs/reference/verification/smart-routing.md`
+
+      Locations: `docs/reference/verification/smart-routing.md`
+
+      Remediation: update the DX-22 verification strategy link to the current completed/archive
+      location rather than the old proposals path.
+
+      Grep hint: `DX-22-verification-strategy\.md`
+
+      IMPORTANT: search verification/reference siblings for moved proposal links in
+      the same family.
+
+
+      ### B4: broken base path in `docs/vision.md`
+
+      Locations: `docs/vision.md`
+
+      Remediation: correct the DX-91 simplification proposal link so it resolves from
+      the top-level docs page rather than using the wrong parent-base assumption.
+
+      Grep hint: `DX-91-simplification\.md`
+
+      IMPORTANT: search top-level docs pages for similar proposal links with the same
+      bad base-path pattern.
+
+
+      ### B5: broken moved/renamed proposal cluster in `docs/reference/agent-information-hierarchy.md`
+
+      Locations: `docs/reference/agent-information-hierarchy.md`
+
+      Remediation: repair the LX-04, DX-54, and DX-62 proposal references to their
+      current moved/renamed destinations.
+
+      Grep hint: `LX-04|DX-54|DX-62`
+
+      IMPORTANT: search sibling reference/workflow/information-hierarchy pages for
+      the same moved/renamed proposal family so the cluster is fixed consistently.
+
+
+      ## Optional should-fix notes (non-blocking)
+
+      - If `docs/reference/workflow/usbv.md` is touched while resolving blockers,
+      add an explicit archive banner.
+
+      - If `docs/reference/workflow/usbv.md` is touched, also repair legacy link `../contracts/contract-complete.md`
+      opportunistically.
+
+
+      ## Sibling Search Requirement
+
+      - Search all active docs for moved/renamed proposal and contract path leftovers,
+      not only the five listed files.
+
+      - Focus on active surfaces under `docs/`, especially `docs/reference/**` and
+      top-level DX-91 guidance pages.
+
+      - Keep archive material historical, but do not leave active pages pointing at
+      archive-only or renamed targets by accident.
+
+
+      ## Completion Criteria
+
+      - ALL five active-link blocker families are fixed in one batched pass.
+
+      - Sibling search evidence is provided for moved/renamed proposal and contract
+      paths.
+
+      - Active docs link integrity is restored without weakening active/archive workflow
+      boundaries.
+
+      - Optional should-fix notes are either completed when touched or explicitly
+      left as non-blocking.'
+    verification: '- Each blocker family is fixed across the active docs surface,
+      not just in the exemplar file
+
+      - Grep-hint sibling searches cover moved/renamed proposal and contract paths
+      and report what was fixed or confirmed absent
+
+      - Evidence states whether `docs/reference/workflow/usbv.md` was touched and,
+      if so, whether the archive banner and legacy contract link were updated
+
+      - No additional active docs path regressions are introduced while preserving
+      DX-91 workflow boundary clarity'
+    evidence_template: '## Batched Link-Blocker Fix Evidence
+
+
+      **Step scope**: active DX-91 docs link remediation
+
+      **Prior loop**:
+
+      - dx91-self-docs.fix-self-docs-surface-blockers
+
+      - dx91-self-docs.retest-self-docs-surface-blockers
+
+
+      ### Blockers fixed
+
+      - B1: <what changed>
+
+      - B2: <what changed>
+
+      - B3: <what changed>
+
+      - B4: <what changed>
+
+      - B5: <what changed>
+
+
+      ### Sibling searches performed
+
+      - Proposal-path search: <exact search or files reviewed>
+
+      - Contract-path search: <exact search or files reviewed>
+
+      - Additional active files touched: <list>
+
+
+      ### Optional should-fix handling
+
+      - usbv archive banner: done|not touched|deferred
+
+      - usbv legacy contract link: done|not touched|deferred
+
+
+      ### Residual risk
+
+      - <any remaining non-blocking notes>'
+    depends_on:
+    - dx91-self-docs.retest-self-docs-surface-blockers
+    agent: doc-reviewer
 - id: dx91-release-readiness
   name: DX-91 Release Readiness Audit
   status: locked
