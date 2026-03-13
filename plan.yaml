@@ -20637,6 +20637,68 @@ phases:
     depends_on:
     - dx91-self-docs.dx91-self-docs-retest-gate-doc-coherence-blockers-batch
     agent: doc-reviewer
+  - id: dx91-self-docs.dx91-self-docs-retest-gate-doc-coherence-blockers-followup-batch
+    name: dx91-self-docs.retest-gate-doc-coherence-blockers-followup-batch
+    status: pending
+    description: 'As an INDEPENDENT TESTER (`blind-tester`), validate the narrowed
+      `.invar/examples/` blocker-family remediation after `dx91-self-docs.dx91-self-docs-fix-gate-doc-coherence-blockers-followup-batch`
+      from a fresh-reader perspective.
+
+
+      YOUR GOAL IS TO FIND PROBLEMS, not to confirm it works.
+
+
+      Independence Level: L1
+
+
+      Scope:
+
+      - canonical/self-doc removal of active `.invar/examples/` references after directory
+      deletion
+
+      - policy-compliant handling of protected `INVAR.md` via the declared source-of-truth
+      or managed-generation path
+
+      - optional adjacent cleanup files only if they were touched during the fix (`docs/guides/multi-agent.md`,
+      `docs/guides/pi.md`, `docs/guides/aider.md`, `docs/guides/cursor.md`, `docs/guides/continue.md`,
+      `docs/guides/cline.md`)
+
+
+      Test for:
+
+      - Happy path: a reader sees no current DX-91 guidance that points to deleted
+      `.invar/examples/` surfaces.
+
+      - Edge cases: the repo-root `INVAR.md` and its canonical/template source(s)
+      agree, so protected-file regeneration does not reintroduce drift.
+
+      - Error scenarios: direct protected-file edits were used without updating the
+      real source-of-truth, or optional guide cleanups reintroduced removed `--claude/--pi`
+      / deprecated multi-agent patterns.
+
+
+      Suggested sibling search:
+
+      - `rg -n --hidden ''\.invar/examples/?|invar init --claude|invar init --pi|--claude|--pi|multi-agent\.md''
+      INVAR.md docs/proposals/DX-91-invar-md-draft.md src/invar/templates/protocol
+      src/invar/shell/commands/init.py docs/guides .invar`
+
+
+      Document ALL findings. A retest that discovers issues is a SUCCESS. A retest
+      that finds nothing must justify coverage across both the protected repo-root
+      file and the declared canonical/generation inputs.'
+    verification: '- Main path: no active/canonical DX-91 self-doc surface still points
+      at `.invar/examples/`
+
+      - Failure path: evidence proves the chosen `INVAR.md` source-of-truth/managed-generation
+      path and the repo-root output are coherent, so protection-policy compliance
+      did not leave hidden drift behind
+
+      - If optional adjacent cleanup files were touched, they remain clearly historical
+      or current as appropriate and do not reintroduce removed init-flag guidance'
+    depends_on:
+    - dx91-self-docs.dx91-self-docs-fix-gate-doc-coherence-blockers-followup-batch
+    agent: blind-tester
 - id: dx91-release-readiness
   name: DX-91 Release Readiness Audit
   status: locked
