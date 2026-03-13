@@ -1,21 +1,10 @@
 # Invar + Pi Integration Guide
 
-[Pi](https://github.com/badlogic/pi-mono) is a terminal-based coding agent that reads CLAUDE.md and .claude/skills/ directly, making it the closest alternative to Claude Code for Invar users.
+> **ARCHIVE:** This guide describes historical pre-DX-91 integration approaches. Current Invar is Python-only with agent-agnostic MCP support. See [DX-91 Simplification](../proposals/DX-91-simplification.md) for current direction.
 
-## Key Discovery
+[Pi](https://github.com/badlogic/pi-mono) is a terminal-based coding agent. This guide documents historical integration approaches; current Invar uses the same agent-agnostic protocol for all agents.
 
-**Pi shares configuration with Claude Code!**
-
-| File | Claude Code | Pi | Sharing |
-|------|-------------|-----|---------|
-| CLAUDE.md | ✅ Native | ✅ Reads directly | Same file |
-| .claude/skills/ | ✅ Native | ✅ Reads directly | Same files |
-| .claude/hooks/ | ✅ Bash | ❌ | Separate |
-| .pi/hooks/ | ❌ | ✅ TypeScript | Separate |
-
-This means you can use **both agents on the same project** without duplicating configuration.
-
-## Quick Start
+## Quick Start (DX-91)
 
 ### 1. Install Invar
 
@@ -32,62 +21,33 @@ uvx invar-tools guard
 ```bash
 cd your-project
 
-# Interactive mode
+# Initialize DX-91 managed files
 uvx invar-tools init
-# → Select "Pi Coding Agent"
 
 # This installs:
-# - CLAUDE.md (shared with Claude Code)
-# - .claude/skills/ (shared with Claude Code)
-# - .pi/hooks/invar.ts (Pi-specific hooks)
-# - INVAR.md, .invar/, pre-commit hooks
+# - CLAUDE.md (agent guidance)
+# - INVAR.md (protocol reference)
+# - .pre-commit-config.yaml (verification hook)
 ```
 
 ### 3. Start Pi Session
 
 ```bash
 pi
-# Pi will automatically read CLAUDE.md and follow USBV workflow
+# Pi will read CLAUDE.md for project context
 ```
 
 ---
 
 ## What Gets Installed
 
-| File/Directory | Purpose | Shared with Claude? |
-|----------------|---------|---------------------|
-| `CLAUDE.md` | Agent instructions | ✅ Yes |
-| `.claude/skills/` | Workflow automation | ✅ Yes |
-| `.pi/hooks/invar.ts` | pytest blocking + protocol refresh | ❌ Pi only |
-| `INVAR.md` | Protocol document | ✅ Yes |
-| `.invar/` | Config, context, examples | ✅ Yes |
-| `.pre-commit-config.yaml` | Pre-commit hooks | ✅ Yes |
+| File/Directory | Purpose |
+|----------------|---------|
+| `CLAUDE.md` | Agent guidance with managed Invar block |
+| `INVAR.md` | Protocol document |
+| `.pre-commit-config.yaml` | Pre-commit hooks |
 
----
-
-## Pi Hooks
-
-Pi supports TypeScript hooks in `.pi/hooks/`. Invar installs one hook file:
-
-### invar.ts
-
-```typescript
-// .pi/hooks/invar.ts
-// - Blocks pytest/crosshair → redirects to invar guard
-// - Protocol refresh at message 15, 25, 35, ...
-```
-
-**Features:**
-
-1. **pytest/crosshair Blocking**
-   - Intercepts `pytest` and `crosshair` commands
-   - Returns block message: "Use invar guard instead"
-   - Allows debug flags (--pdb, --cov)
-
-2. **Protocol Refresh (Long Conversations)**
-   - Message 15: Lightweight checkpoint reminder
-   - Message 25+: Full protocol injection every 10 messages
-   - Uses `pi.send()` to inject reminders
+**Historical note:** Pre-DX-91 versions generated `.claude/skills/`, `.pi/hooks/`, and other agent-specific files. These were removed per [DX-91](../proposals/DX-91-simplification.md) in favor of a minimal, agent-agnostic surface.
 
 ---
 
@@ -111,25 +71,15 @@ invar map --top 10
 
 ---
 
-## USBV Workflow in Pi
+## DX-91 Workflow
 
-Pi reads `.claude/skills/` and follows the same USBV workflow as Claude Code:
+Current Invar follows a simplified contracts-first workflow:
 
-### 1. UNDERSTAND
-- Read context.md and relevant code
-- Use `invar sig` to see existing contracts
+1. **Specify** — Write @pre/@post contracts BEFORE implementation
+2. **Build** — Implement following the contracts
+3. **Validate** — Run `invar guard` for verification
 
-### 2. SPECIFY
-- Write @pre/@post contracts first
-- Add doctests for expected behavior
-
-### 3. BUILD
-- Follow the contracts from SPECIFY
-- Run `invar guard --changed` frequently
-
-### 4. VALIDATE
-- Run `invar guard` (full verification)
-- Ensure all requirements met
+**Historical note:** The four-phase USBV workflow (Understand → Specify → Build → Validate) and Check-In/Final ceremony were removed per [DX-91](../proposals/DX-91-simplification.md). The essential intent survives: write contracts before code.
 
 ---
 
@@ -138,50 +88,15 @@ Pi reads `.claude/skills/` and follows the same USBV workflow as Claude Code:
 | Feature | Claude Code | Pi |
 |---------|-------------|-----|
 | CLAUDE.md | ✅ | ✅ |
-| Skills | ✅ | ✅ |
 | MCP Tools | ✅ | ❌ CLI only |
-| Hooks | ✅ Bash | ✅ TypeScript |
-| pytest Blocking | ✅ | ✅ |
-| Protocol Refresh | ✅ | ✅ |
+| Guard via CLI | ✅ | ✅ |
 | Pre-commit | ✅ | ✅ |
 
-**Key differences:**
-- Pi uses CLI (`invar guard`) instead of MCP (`invar_guard`)
-- Pi hooks are TypeScript, Claude Code hooks are Bash
+**Key difference:** Pi uses CLI (`invar guard`) instead of MCP (`invar_guard`).
 
 ---
 
 ## Troubleshooting
-
-### Hooks Not Working
-
-1. Check Pi version (requires 0.30.2+):
-   ```bash
-   pi --version
-   ```
-
-2. Verify hook file exists:
-   ```bash
-   ls -la .pi/hooks/invar.ts
-   ```
-
-3. Check hook syntax:
-   ```bash
-   # Pi should report hook loading errors on startup
-   pi
-   ```
-
-### Skills Not Recognized
-
-1. Verify skills directory:
-   ```bash
-   ls -la .claude/skills/
-   ```
-
-2. Check SKILL.md format:
-   ```bash
-   cat .claude/skills/develop/SKILL.md | head -20
-   ```
 
 ### Guard Command Not Found
 
@@ -199,34 +114,7 @@ uvx invar-tools guard
 
 ### From Claude Code to Pi
 
-No migration needed! Just run:
-```bash
-invar init    # Select Pi to add hooks
-```
-
-Pi will read your existing CLAUDE.md and .claude/skills/.
-
-### From Pi to Claude Code
-
-```bash
-invar init    # Select Claude Code
-```
-
-This adds Claude-specific hooks while keeping shared files.
-
-### Using Both Agents
-
-You can use both Claude Code and Pi on the same project:
-
-```
-your-project/
-├── CLAUDE.md              # Shared
-├── .claude/
-│   ├── skills/            # Shared (both read)
-│   └── hooks/             # Claude Code only
-└── .pi/
-    └── hooks/             # Pi only
-```
+No migration needed. Both agents read the same `CLAUDE.md` and `INVAR.md` files installed by `invar init`.
 
 ---
 
@@ -235,19 +123,11 @@ your-project/
 ```
 $ pi
 
-Pi: I'll read the project context.
-
-✓ Check-In: my-project | main | clean
+Pi: I'll read the project context from CLAUDE.md.
 
 You: Add a function to calculate compound interest
 
-Pi: I'll follow the USBV workflow.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📍 /develop → SPECIFY (2/4)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-First, I'll define the contract:
+Pi: I'll write the contract first, then implement:
 
 @pre(lambda principal, rate, years: principal > 0 and rate >= 0 and years > 0)
 @post(lambda result: result >= principal)
@@ -262,14 +142,12 @@ def compound_interest(principal: float, rate: float, years: int) -> float:
 
 $ invar guard --changed
 Guard passed. (1 file, 0 errors)
-
-✓ Final: guard PASS | 0 errors, 0 warnings
 ```
 
 ---
 
 ## Next Steps
 
-- [Multi-Agent Overview](./multi-agent.md)
 - [Cursor Integration](./cursor.md)
-- [Aider Integration](./aider.md)
+- [Cline Integration](./cline.md)
+- [Continue Integration](./continue.md)

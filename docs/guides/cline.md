@@ -24,7 +24,7 @@ Create `.clinerules` in your project root:
 | **Verify** | Use invar_guard MCP tool — NOT pytest, NOT crosshair |
 | **Core** | @pre/@post + doctests, NO I/O imports |
 | **Shell** | Returns Result[T, E] from returns library |
-| **Flow** | USBV: Understand → Specify → Build → Validate |
+| **Flow** | Contracts first → Build → Validate |
 
 ## Project Structure
 
@@ -34,24 +34,19 @@ src/{project}/
 └── shell/   # I/O operations (Result[T, E] return type)
 ```
 
-## USBV Workflow
+## Workflow
 
-### 1. UNDERSTAND
-- What exactly needs to be done?
-- Use invar_sig to see existing contracts
-- Read relevant code, understand patterns
-
-### 2. SPECIFY
+### 1. SPECIFY
 - Write @pre/@post BEFORE implementation
 - Add doctests for expected behavior
 - Design decomposition for complex tasks
 
-### 3. BUILD
+### 2. BUILD
 - Follow the contracts from SPECIFY
 - Run invar_guard frequently
 - Commit after each logical unit
 
-### 4. VALIDATE
+### 3. VALIDATE
 - Run invar_guard (full verification)
 - Ensure all requirements met
 
@@ -85,14 +80,14 @@ def calculate(x: int) -> int:
 
 ## Plan Mode Mapping
 
-Cline's Plan Mode maps to USBV:
+Cline's Plan Mode maps to Invar workflow:
 
-| Cline Mode | USBV Phase |
+| Cline Mode | Invar Phase |
 |------------|------------|
-| Plan Mode | UNDERSTAND + SPECIFY |
+| Plan Mode | SPECIFY (design contracts) |
 | Act Mode | BUILD + VALIDATE |
 
-Use Plan Mode for exploration, Act Mode for implementation.
+Use Plan Mode for exploration and contract design, Act Mode for implementation.
 ```
 
 ### 3. Configure MCP
@@ -143,7 +138,6 @@ Cline should use the MCP tool and show results.
 
 | Invar Feature | Cline Support |
 |---------------|---------------|
-| USBV Workflow | ✅ Via .clinerules |
 | Guard Verification | ✅ Via MCP |
 | Sig/Map Tools | ✅ Via MCP |
 | Core/Shell Rules | ✅ Via .clinerules |
@@ -153,27 +147,21 @@ Cline should use the MCP tool and show results.
 
 | Claude Code | Cline Alternative |
 |-------------|-------------------|
-| Skills (auto-routing) | Manual workflow or Custom Roles |
-| Hooks (pytest block) | Not available - rely on instructions |
+| CLAUDE.md | .clinerules |
+| MCP tools | Same MCP protocol |
 | /audit, /guard commands | Direct MCP tool calls |
-| Check-In/Final | Include in .clinerules |
 
-### Not Available
-
-- Automatic pytest/crosshair blocking (no hooks)
-- Skill-based auto-routing
-- Command shortcuts
+**Historical note:** Pre-DX-91 versions supported USBV workflow, Check-In/Final ceremony, skills, and hooks. These were removed per [DX-91](../proposals/DX-91-simplification.md) in favor of guard-enforced contracts before code.
 
 ---
 
-## Plan Mode + USBV
+## Plan Mode + Invar Workflow
 
-Cline's Plan & Act mode aligns well with USBV:
+Cline's Plan & Act mode aligns well with Invar:
 
 ```
 ┌─────────────────────────────────────────────┐
 │  Plan Mode (Read-Only)                      │
-│  ├── UNDERSTAND: Explore codebase           │
 │  └── SPECIFY: Design contracts              │
 ├─────────────────────────────────────────────┤
 │  Act Mode (Execute)                         │
@@ -240,12 +228,11 @@ You are an adversarial code reviewer. You:
 | Core | @pre/@post + doctests, pure (no I/O) |
 | Shell | Returns Result[T, E] from returns library |
 
-## Workflow: USBV
+## Workflow
 
-1. **UNDERSTAND** - What needs to be done? Read existing code.
-2. **SPECIFY** - Write contracts FIRST (@pre/@post, doctests)
-3. **BUILD** - Implement following contracts
-4. **VALIDATE** - Run invar_guard, ensure all passes
+1. **SPECIFY** - Write contracts FIRST (@pre/@post, doctests)
+2. **BUILD** - Implement following contracts
+3. **VALIDATE** - Run invar_guard, ensure all passes
 
 ## Verification Commands
 
@@ -288,7 +275,7 @@ def read_config(path: str) -> Result[Config, str]:
 
 ## Plan Mode Usage
 
-- Use Plan Mode for UNDERSTAND and SPECIFY phases
+- Use Plan Mode for SPECIFY phase (contract design)
 - Use Act Mode for BUILD and VALIDATE phases
 - Always verify with invar_guard before completing
 
@@ -341,7 +328,7 @@ export PYTHONPATH="${PWD}/src:${PYTHONPATH}"
 
 ## Tips
 
-1. **Use Plan Mode liberally** - It's perfect for UNDERSTAND/SPECIFY
+1. **Use Plan Mode liberally** - It's perfect for SPECIFY phase
 2. **Be explicit about verification** - Ask "run invar_guard" not "test"
 3. **Reference the rules** - "Following .clinerules, implement..."
 4. **Check MCP first** - Ensure tools work before starting
@@ -350,6 +337,6 @@ export PYTHONPATH="${PWD}/src:${PYTHONPATH}"
 
 ## Next Steps
 
-- [Multi-Agent Overview](./multi-agent.md)
+- [Pi Integration](./pi.md)
 - [Cursor Integration](./cursor.md)
-- [Aider Integration](./aider.md)
+- [Continue Integration](./continue.md)

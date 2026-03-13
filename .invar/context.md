@@ -1,23 +1,19 @@
 # Invar Project Context
 
-*Last updated: 2026-01-04*
-
-<!-- DX-58: Slimmed context for efficient startup status checks (~150 lines) -->
+*Last updated: 2026-03-14*
 
 ## Key Rules (Quick Reference)
-
-<!-- DX-54: Rules summary for long conversation resilience -->
 
 ### Core/Shell Separation
 - **Core** (`**/core/**`): @pre/@post + doctests, NO I/O imports
 - **Shell** (`**/shell/**`): Result[T, E] return type
 
 ### Workflow
-1. Understand → 2. Specify (contracts first) → 3. Build → 4. Validate
+Contracts first → Build → Validate (DX-91: contracts before code is the ONE required rule)
 
 ### Verification
 - `invar_guard()` = static + doctests + CrossHair + Hypothesis
-- Final should report: `guard PASS | ...`
+- Run after changes, fix errors before committing
 
 ## Task Router (DX-62)
 
@@ -27,7 +23,7 @@
 | Write code in `shell/` | `INVAR.md#core-vs-shell` |
 | Add `@pre`/`@post` contracts | `INVAR.md#contract-syntax-python` |
 | Use functional patterns | `INVAR.md#core-example-python` |
-| Implement a feature | `INVAR.md#usbv-workflow` |
+| Implement a feature | `INVAR.md#workflow` |
 
 **Rule:** Match found above? Read the file BEFORE writing code.
 
@@ -44,7 +40,7 @@
 **Quick rule check:**
 - Am I in Core or Shell?
 - Do I have @pre/@post contracts?
-- Am I following the 4-phase workflow?
+- Did I write contracts before implementing?
 - Did I run guard before claiming "done"?
 
 ---
@@ -52,7 +48,7 @@
 ## Current State
 
  - **PyPI:** `invar-tools` v1.17.12 + `invar-runtime` v1.3.0
-- **Protocol:** v5.0 (4-phase workflow, DX-58 critical section)
+- **Protocol:** v5.0 (DX-91: contracts-first workflow, DX-58 critical section)
  - **Status:** Feature complete, Python-only surface stabilization in progress
  - **Recent:** DX-91 (Python-only simplification), DX-87 (Removed multi-agent init), v1.17.12 (Guard hardening)
 - **Blockers:** None

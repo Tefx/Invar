@@ -61,7 +61,7 @@ Create `.continue/rules/invar.md`:
 | **Verify** | Use invar_guard MCP tool — NOT pytest |
 | **Core** | @pre/@post + doctests, NO I/O imports |
 | **Shell** | Returns Result[T, E] from returns library |
-| **Flow** | USBV: Understand → Specify → Build → Validate |
+| **Flow** | Contracts first → Build → Validate |
 
 ## Project Structure
 
@@ -73,10 +73,9 @@ src/{project}/
 
 ## Workflow
 
-1. **UNDERSTAND** - Analyze requirements
-2. **SPECIFY** - Write contracts first
-3. **BUILD** - Implement following contracts
-4. **VALIDATE** - Run invar_guard
+1. **SPECIFY** - Write contracts first (@pre/@post, doctests)
+2. **BUILD** - Implement following contracts
+3. **VALIDATE** - Run invar_guard
 
 ## Verification
 
@@ -91,7 +90,7 @@ Never use pytest or crosshair directly.
 
 ## MCP Configuration
 
-Continue has the most complete MCP support. Configure in `config.json`:
+Continue has complete MCP support. Configure in `config.json`:
 
 ### Option A: Using uvx (Recommended)
 
@@ -172,16 +171,6 @@ Continue supports custom slash commands. Add to `config.json`:
       "name": "map",
       "description": "Show symbol map",
       "prompt": "Use invar_map to show the symbol map with reference counts."
-    },
-    {
-      "name": "develop",
-      "description": "USBV development workflow",
-      "prompt": "Follow the USBV workflow for: {{{ input }}}\n\n1. UNDERSTAND: Analyze what needs to be done\n2. SPECIFY: Write @pre/@post contracts first\n3. BUILD: Implement following contracts\n4. VALIDATE: Run invar_guard"
-    },
-    {
-      "name": "review",
-      "description": "Adversarial code review",
-      "prompt": "Review the code as an adversarial reviewer:\n1. Check if contracts have semantic value\n2. Find bugs and edge cases\n3. Question escape hatches\n4. Verify code matches contracts\n\nReport issues with severity (CRITICAL/MAJOR/MINOR)."
     }
   ]
 }
@@ -192,8 +181,6 @@ Continue supports custom slash commands. Add to `config.json`:
 ```
 /guard              # Run verification
 /sig src/core/...   # Show signatures
-/develop Add login  # Start USBV workflow
-/review             # Code review
 ```
 
 ---
@@ -204,7 +191,7 @@ Set a system message for all conversations:
 
 ```json
 {
-  "systemMessage": "You are an Invar-compliant developer. Follow these rules:\n\n1. ALWAYS write @pre/@post contracts before implementation\n2. Use invar_guard for verification, NEVER pytest directly\n3. Follow Core/Shell separation (core=pure, shell=Result[T,E])\n4. Include doctests for all public functions\n5. Follow USBV: Understand → Specify → Build → Validate"
+  "systemMessage": "You are an Invar-compliant developer. Follow these rules:\n\n1. ALWAYS write @pre/@post contracts before implementation\n2. Use invar_guard for verification, NEVER pytest directly\n3. Follow Core/Shell separation (core=pure, shell=Result[T,E])\n4. Include doctests for all public functions\n5. Contracts first, then build, then validate"
 }
 ```
 
@@ -285,37 +272,6 @@ def read_config(path: str) -> Result[Config, str]:
 ```
 ```
 
-### `invar-workflow.md`
-
-```markdown
-# USBV Workflow
-
-For all implementation tasks, follow USBV:
-
-## 1. UNDERSTAND
-
-- What exactly needs to be done?
-- Use `invar_sig` to see existing contracts
-- Read relevant code
-
-## 2. SPECIFY
-
-- Write @pre/@post BEFORE implementation
-- Add doctests for expected behavior
-- Consider edge cases
-
-## 3. BUILD
-
-- Implement following the contracts
-- Run `invar_guard` frequently
-
-## 4. VALIDATE
-
-- Run `invar_guard` (full verification)
-- All tests must pass
-- Review any warnings
-```
-
 ---
 
 ## Feature Mapping
@@ -324,7 +280,6 @@ For all implementation tasks, follow USBV:
 
 | Invar Feature | Continue Support |
 |---------------|------------------|
-| USBV Workflow | ✅ Via rules + commands |
 | Guard Verification | ✅ Via MCP (best support) |
 | Sig/Map Tools | ✅ Via MCP |
 | Core/Shell Rules | ✅ Via rules |
@@ -334,10 +289,10 @@ For all implementation tasks, follow USBV:
 
 | Claude Code | Continue Alternative |
 |-------------|---------------------|
-| Skills (auto-routing) | customCommands |
-| Hooks | Not available |
 | CLAUDE.md | .continue/rules/ |
-| Check-In/Final | Include in rules |
+| MCP tools | Same MCP protocol |
+
+**Historical note:** Pre-DX-91 versions supported USBV workflow (Understand → Specify → Build → Validate), skills, and hooks. These were removed per [DX-91](../proposals/DX-91-simplification.md) in favor of guard-enforced contracts before code.
 
 ---
 
@@ -383,11 +338,6 @@ For all implementation tasks, follow USBV:
       "name": "map",
       "description": "Show symbol map",
       "prompt": "Use invar_map to show symbols."
-    },
-    {
-      "name": "develop",
-      "description": "USBV workflow",
-      "prompt": "Follow USBV for: {{{ input }}}\n1. UNDERSTAND\n2. SPECIFY (contracts first)\n3. BUILD\n4. VALIDATE (invar_guard)"
     }
   ],
   "systemMessage": "Follow Invar protocol: @pre/@post contracts, Core/Shell separation, invar_guard for verification.",
@@ -409,13 +359,13 @@ your-project/
 │       ├── invar-core.md
 │       ├── invar-shell.md
 │       └── invar-workflow.md
+├── CLAUDE.md              # Invar guidance (from init)
+├── INVAR.md               # Protocol reference (from init)
 ├── src/
 │   └── your_package/
 │       ├── core/          # Pure logic
 │       └── shell/         # I/O operations
-└── .invar/
-    ├── context.md         # Project state
-    └── examples/          # Pattern examples
+└── .pre-commit-config.yaml
 ```
 
 ---
@@ -451,7 +401,7 @@ your-project/
 
 ## Tips
 
-1. **Leverage MCP fully** - Continue has the best MCP support
+1. **Leverage MCP fully** - Continue has excellent MCP support
 2. **Use customCommands** - They're like lightweight skills
 3. **Organize rules** - One file per concern
 4. **Set systemMessage** - Persistent context across chats
@@ -460,7 +410,7 @@ your-project/
 
 ## Next Steps
 
-- [Multi-Agent Overview](./multi-agent.md)
-- [Cline Integration](./cline.md)
+- [Pi Integration](./pi.md)
 - [Cursor Integration](./cursor.md)
+- [Cline Integration](./cline.md)
 - [Aider Integration](./aider.md)

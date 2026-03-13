@@ -148,7 +148,13 @@ See `completed/` directory for detailed implementation notes and execution histo
 | `CLAUDE.md` (project root) | **Active** — DX-91 managed block (~50 lines) |
 | `INVAR.md` (project root) | **Active** — Agent semantic spec |
 | [DX-91-simplification.md](./DX-91-simplification.md) | **Active** — Authoritative direction |
+| `README.md` | **Active** — Updated for DX-91 Python-only workflow |
+| `docs/guides/pi.md` | **Archive** — Historical Pi integration (pre-DX-91) |
+| `docs/guides/cursor.md` | **Active** — Updated for DX-91 MCP-only workflow |
+| `docs/guides/continue.md` | **Active** — Updated for DX-91 MCP-only workflow |
+| `docs/guides/cline.md` | **Active** — Updated for DX-91 MCP-only workflow |
+| `.invar/context.md` | **Active** — User-managed project context |
+| `.invar/project-additions.md` | **Active** — User-managed project additions |
 | `docs/reference/workflow/usbv.md` | **Archive** — Historical USBV documentation |
 | `docs/AGENTS.md` | **Archive** — Pre-DX-91 agent roles (skills/hooks era) |
-| `docs/reference/index.md` | **Update needed** — Contains USBV references |
-| `README.md` | **Update needed** — Contains legacy workflow descriptions |
+| `docs/reference/index.md` | **Archive** — Contains USBV references (historical) |

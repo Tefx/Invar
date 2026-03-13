@@ -302,14 +302,16 @@ def load_config(path: Path) -> Result[Config, str]:
         return Failure(f"Not found: {path}")
 ```
 
-### Session Protocol
+### Verification Status
 
-Clear boundaries for every AI session:
+Guard provides clear verification boundaries:
 
-| Phase | Format | Purpose |
-|-------|--------|---------|
-| **Start** | `✓ Check-In: project | branch | clean/dirty` | Context visibility |
-| **End** | `✓ Final: guard PASS | 0 errors` | Verification proof |
+| Status | Format | Purpose |
+|--------|--------|---------|
+| **Running** | `invar guard` | Multi-layer verification |
+| **Complete** | `guard PASS | 0 errors` | Verification proof |
+
+> **Historical note:** Pre-DX-91 versions used Check-In/Final ceremony. This was simplified per [DX-91](./docs/proposals/DX-91-simplification.md) to focus on guard-enforced outcomes.
 
 ### Intellectual Heritage
 
@@ -342,7 +344,7 @@ AlphaCodium · Parsel · Reflexion · Clover
 | **Cursor** | ✅ MCP | `invar init`, then add MCP config manually |
 | **Other** | 📝 Manual | `invar init`, then include `CLAUDE.md`/`INVAR.md` in your prompt flow |
 
-> **See also:** ~~[Multi-Agent Guide](./docs/guides/multi-agent.md)~~ — *simplified per [DX-91](./docs/proposals/DX-91-simplification.md)*. See INVAR.md for agent-agnostic protocol.
+> **See also:** Agent guides in [docs/guides/](./docs/guides/) for editor-specific setup. INVAR.md provides the agent-agnostic protocol.
 
 ### Claude Code (Full Experience)
 

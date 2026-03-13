@@ -15,6 +15,7 @@ src/invar/
 1. **Language:** English for docs/code. User's language for conversation.
 2. **Verify Always:** Run `invar_guard()` after changes.
 3. **Warning Policy:** Fix warnings in files you modify.
+4. **Contracts First:** Write @pre/@post BEFORE implementation (DX-91 rule).
 
 ---
 
