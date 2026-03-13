@@ -21796,7 +21796,7 @@ phases:
       \ completed as issue-discovery evidence with one batched follow-up loop.\n"
   - id: dx91-release-readiness.fix-release-guides-proposal-index-remaining-blockers
     name: fix-release-guides-proposal-index-remaining-blockers
-    status: pending
+    status: claimed
     description: 'Fix ALL remaining release-readiness blockers from `dx91-release-readiness.retest-doc-runtime-proposal-index-blockers`
       in ONE batched remediation step. Fix ALL of these, not just the first.
 
@@ -22023,6 +22023,8 @@ phases:
     depends_on:
     - dx91-release-readiness.retest-doc-runtime-proposal-index-blockers
     agent: doc-reviewer
+    claimed_by: doc-reviewer
+    claimed_at: '2026-03-13T17:24:05.533898+00:00'
   - id: dx91-release-readiness.retest-release-guides-proposal-index-remaining-blockers
     name: retest-release-guides-proposal-index-remaining-blockers
     status: pending
