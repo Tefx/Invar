@@ -22055,7 +22055,7 @@ phases:
       \ exact ls"
   - id: dx91-release-readiness.retest-release-guides-proposal-index-remaining-blockers
     name: retest-release-guides-proposal-index-remaining-blockers
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT TESTER (`integration-verifier`), validate closure
       of the remaining blocker family after `dx91-release-readiness.fix-release-guides-proposal-index-remaining-blockers`.
 
@@ -22218,6 +22218,55 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-13T17:32:56.479732+00:00'
+    done_at: '2026-03-13T17:46:31.275280+00:00'
+    evidence: 'Integration-verifier independent retest executed in isolated worktree
+      branch `vectl/step-dx91-release-readiness.retest-release-guides-proposal-index-remaining-blockers`.
+
+
+      Verification (commands + results)
+
+      - `git rev-parse --abbrev-ref HEAD` => `vectl/step-dx91-release-readiness.retest-release-guides-proposal-index-remaining-blockers`
+
+      - `git status --short` => clean before/after verification.
+
+      - Retired-language scan for B1 in `docs/guides/aider.md` and `docs/guides/multi-agent.md`
+      found only archival/historical context; no active retired setup guidance remained.
+
+      - Read/reconciled `docs/proposals/index.md`, `docs/reference/index.md`, `docs/proposals/DX-91-simplification.md`
+      and filesystem counts for `docs/proposals/**`.
+
+
+      Detected issues (batched blocker family)
+
+      - `docs/proposals/index.md:168` classifies `docs/reference/index.md` as Archive
+      while `docs/reference/index.md` is active mechanism documentation.
+
+      - Statistics drift in `docs/proposals/index.md:102-113`: archived and total
+      counts do not reconcile with filesystem; open-status subtotals drift from listed
+      rows.
+
+      - Top-level index coverage drift: `DX-61-implementation-design.md` and `LX-08-extension-skills-future.md`
+      not properly represented/linked.
+
+      - DX-87 root narrative inconsistency: index presents DX-87 as active/draft priority
+      while DX-91 marks DX-87 superseded/absorbed.
+
+
+      Files changed
+
+      - none (verification-only step remained pure)
+
+
+      Gate recommendation
+
+      - BLOCKED (proposal-index reconciliation blocker family remains open)
+
+
+      Notes
+
+      - This verification closed B1 guide-language concern but confirmed B2 proposal-index
+      reconciliation remains blocked and requires batched remediation in the follow-up
+      fix step.'
   - id: dx91-release-readiness.fix-proposal-index-reconciliation-remaining-blockers
     name: fix-proposal-index-reconciliation-remaining-blockers
     status: pending
