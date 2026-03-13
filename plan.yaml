@@ -20220,6 +20220,152 @@ phases:
       \ (explicit archive banner)\n- boundary: clear and coherent in reviewed surfaces\n\
       \nFiles changed:\n- none (verify-only)\n\nNotes:\n- Verification-only audit\
       \ completed in isolated worktree; no code/doc/plan file edits.\n"
+  - id: dx91-self-docs.dx91-self-docs-fix-gate-doc-coherence-blockers-batch
+    name: dx91-self-docs.fix-gate-doc-coherence-blockers-batch
+    status: pending
+    description: 'Fix ALL blockers found by `dx91-self-docs.gate` in ONE batched remediation
+      pass for active DX-91 self-doc coherence.
+
+
+      prior_loop:
+
+      - dx91-self-docs.fix-self-docs-active-link-blockers-batch
+
+      - dx91-self-docs.retest-self-docs-active-link-blockers-batch
+
+      - dx91-self-docs.fix-self-docs-active-link-blockers-followup-batch
+
+      - dx91-self-docs.retest-self-docs-active-link-blockers-followup-batch
+
+      remaining_blocker: Active self-doc surfaces still present removed-feature guidance,
+      broken DX-91 cross-links, and references to deleted repo surfaces.
+
+      why_new_loop: The prior active-link remediation chain cleared earlier link and
+      wording issues, but the gate still found cross-surface stale guidance and deleted-surface
+      references that require one consolidated sibling-search pass.
+
+
+      Fix ALL of these, not just the first:
+
+
+      ### B1: Active stale removed-feature guidance for `invar init --claude` / `--pi`
+
+      Locations:
+
+      - `docs/index.html` around lines 746 and 750
+
+      - `docs/guides/multi-agent.md` multiple active guidance lines
+
+      Remediation:
+
+      - Remove or rewrite active guidance so docs reflect the DX-91 minimal init flow
+      only.
+
+      - If historical discussion must remain, label it clearly as historical/removed
+      behavior rather than active instruction.
+
+      Grep hint:
+
+      - `rg -n --hidden --glob ''!docs/testing/**'' ''invar init --claude|invar init
+      --pi|--claude|--pi'' docs .invar INVAR.md`
+
+      IMPORTANT: Search for sibling active-doc instances beyond the listed locations.
+
+
+      ### B2: Active `.invar/examples/` references after directory removal
+
+      Locations:
+
+      - `INVAR.md`
+
+      Remediation:
+
+      - Remove or replace active instructions that send readers to `.invar/examples/`.
+
+      - Align any replacement guidance with current DX-91 repository surfaces only.
+
+      Grep hint:
+
+      - `rg -n --hidden ''\.invar/examples/?'' docs .invar INVAR.md`
+
+      IMPORTANT: Search for sibling active-doc instances beyond the listed locations.
+
+
+      ### B3: Broken deprecation-banner link to DX-91 proposal
+
+      Locations:
+
+      - `docs/guides/multi-agent.md`
+
+      Remediation:
+
+      - Fix the relative path so the deprecation banner resolves to the correct DX-91
+      proposal target from the guide''s location.
+
+      - Verify sibling DX-91 proposal links in the same active doc family while editing.
+
+      Grep hint:
+
+      - `rg -n --hidden ''DX-91|deprecation|proposal'' docs/guides docs/index.html`
+
+      IMPORTANT: Search for sibling broken proposal links beyond the listed location.
+
+
+      ### B4: Stale removed-feature posture in `.invar/context.md`
+
+      Locations:
+
+      - `.invar/context.md`
+
+      Remediation:
+
+      - Reframe removed multi-agent init behavior as historical/retired, not current
+      or recently recommended posture.
+
+      - Ensure wording does not imply `invar init` still supports multi-agent bootstrap
+      choices.
+
+      Grep hint:
+
+      - `rg -n --hidden ''multi-agent init|invar init --claude|invar init --pi|removed-feature|recent''
+      .invar/context.md docs INVAR.md`
+
+      IMPORTANT: Search for sibling active-doc posture leaks beyond the listed location.
+
+
+      ## Should-fix notes (include if encountered while fixing blockers)
+
+      - `.invar/project-additions.md`: standalone broken links may be repaired if
+      they are part of the same active DX-91 self-doc sweep; otherwise document as
+      non-blocking follow-up.
+
+      - `docs/testing/**`: old test-report wording mismatch may remain historical
+      if it is clearly not part of the active minimal-init guidance surface.
+
+
+      ## Completion Criteria
+
+      - ALL blockers above are fixed in one pass
+
+      - Sibling search completed for each blocker family across active docs surfaces
+
+      - No active docs continue to present removed `invar init --claude/--pi`, `.invar/examples/`,
+      or `multi-agent init` as current guidance
+
+      - DX-91 minimal init flow is the only active init posture across active self-doc
+      surfaces'
+    verification: '- Each blocker family: the listed `rg` hint is rerun and no active-doc
+      false-current references remain
+
+      - Updated docs keep historical material explicitly historical where retained
+
+      - Broken DX-91 proposal/deprecation links in the active self-doc family resolve
+      correctly
+
+      - Evidence includes sibling-search coverage, not only the cited lines'
+    depends_on:
+    - dx91-self-docs.retest-self-docs-active-link-blockers-followup-batch
+    agent: doc-reviewer
 - id: dx91-release-readiness
   name: DX-91 Release Readiness Audit
   status: locked
