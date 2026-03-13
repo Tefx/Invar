@@ -19372,19 +19372,22 @@ phases:
 
       As an INDEPENDENT REVIEWER (`gate-reviewer`), block progress if active docs
       remain contradictory, stale, or navigationally broken.'
-    verification: '- All dx91-self-docs steps completed successfully
+    verification: '- All phase steps completed successfully, including the batched
+      fix and independent retest for `verify-self-docs-surface`
 
-      - Active guidance is coherent with the implemented DX-91 surface
+      - Evidence collected and reviewed for active link integrity, workflow consistency,
+      and active-vs-archive boundaries
 
-      - No unresolved blocker remains around stale active instructions or broken navigational
-      cross-links
+      - No unresolved blockers remain on active self-docs surfaces
 
-      - Gate output states OPEN only if final release-readiness audit can evaluate
-      a consistent repo surface'
+      - Ready for `dx91-release-readiness` only after the freeze snapshot and retest
+      evidence are both accepted'
     depends_on:
     - update-runtime-owned-docs
     - update-proposals-index-and-crosslinks
     - verify-self-docs-surface
+    - dx91-self-docs.fix-self-docs-surface-blockers
+    - dx91-self-docs.retest-self-docs-surface-blockers
     - freeze-self-docs-snapshot
     agent: gate-reviewer
   - id: dx91-self-docs.fix-self-docs-surface-blockers
