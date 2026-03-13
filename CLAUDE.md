@@ -1,7 +1,7 @@
 <!--invar:begin-->
 ## Invar
 
-**CRITICAL: Write `@pre`/`@post` contracts and at least one doctest before implementing a Core function. Guard rejects uncontracted Core code.**
+**CRITICAL: Write `@pre`/`@post` contracts and at least one doctest BEFORE implementing a Core function. Guard rejects uncontracted Core code.**
 
 ### Architecture
 

@@ -38,4 +38,4 @@ def read_config(path: Path) -> Result[dict, str]:
 
 **Pattern:** Shell reads file → passes content to Core → returns Result.
 
-More examples: see the Core/Shell and contract sections in `INVAR.md`.
+See `INVAR.md` for Core/Shell architecture and contract syntax details.

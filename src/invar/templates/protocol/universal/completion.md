@@ -65,4 +65,4 @@ invar_guard(path="src/components")
 
 ---
 
-*Protocol v5.0 — USBV workflow*
+*Protocol v5.0 — USBV workflow (DX-32)*
