@@ -21317,7 +21317,7 @@ phases:
       '
   - id: dx91-release-readiness.fix-doc-runtime-proposal-index-blockers
     name: fix-doc-runtime-proposal-index-blockers
-    status: pending
+    status: claimed
     description: 'Fix ALL remaining release-readiness blockers from `dx91-release-readiness.gate`
       in ONE batched remediation step. Fix ALL of these, not just the first.
 
@@ -21533,6 +21533,8 @@ phases:
     depends_on:
     - retest-dx91-consistency-blockers
     agent: doc-reviewer
+    claimed_by: doc-reviewer
+    claimed_at: '2026-03-13T17:03:38.705346+00:00'
   - id: dx91-release-readiness.retest-doc-runtime-proposal-index-blockers
     name: retest-doc-runtime-proposal-index-blockers
     status: pending
