@@ -22217,3 +22217,180 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-13T17:32:56.479732+00:00'
+  - id: dx91-release-readiness.fix-proposal-index-reconciliation-remaining-blockers
+    name: fix-proposal-index-reconciliation-remaining-blockers
+    status: pending
+    description: 'Fix ALL remaining proposal-index reconciliation blockers from `dx91-release-readiness.retest-release-guides-proposal-index-remaining-blockers`
+      in ONE batched remediation step. Fix ALL of these, not just the first.
+
+
+      step_type: implementation
+
+      agent: doc-reviewer
+
+      agent_source: default
+
+      prior_loop:
+
+      - dx91-release-readiness.fix-release-guides-proposal-index-remaining-blockers
+
+      - dx91-release-readiness.retest-release-guides-proposal-index-remaining-blockers
+
+      remaining_blocker: `docs/proposals/index.md` still fails reconciliation because
+      statistics tables, listed rows, filesystem-backed counts, and the counting basis
+      are not documented as one coherent source of truth.
+
+      why_new_loop: the prior batched docs fix closed the guide/archive blockers but
+      left one narrower blocker family inside proposal-index accounting semantics;
+      this follow-up consolidates the remaining stats, rollups, and counting-basis
+      work into a single reconciliation pass instead of another cell-by-cell edit.
+
+
+      spec_refs:
+
+      - `docs/proposals/index.md`
+
+      - `docs/proposals/DX-91-simplification.md`
+
+      - `docs/reference/index.md`
+
+      - `.invar/context.md`
+
+
+      touch_paths:
+
+      - `docs/proposals/index.md`
+
+      - `docs/proposals/*.md` as filesystem inventory source for rollup validation
+
+      - `docs/reference/index.md` only if needed to keep active/reference classification
+      aligned with the documented counting basis
+
+
+      harness_refs:
+
+      - `dx91-release-readiness.retest-release-guides-proposal-index-remaining-blockers`
+
+      - filesystem state for `docs/proposals/**`
+
+      - proposal-index statistics tables, rollup tables, and explanatory notes
+
+
+      known_risks:
+
+      - Statistics rows can be locally edited while the category rollups still disagree
+      with listed proposal rows.
+
+      - Filesystem totals can appear reconciled while Active/Deferred subtotals still
+      drift from the rows actually shown in the table.
+
+      - Future edits will drift again if the counting basis is left implicit instead
+      of documented next to the rollups.
+
+
+      ## Blockers to Fix (ALL of these, not just the first)
+
+
+      ### B1: statistics tables mismatch filesystem counts and table rollups
+
+      Locations:
+
+      - `docs/proposals/index.md` statistics summary table
+
+      - any proposal-status rollup table in the same document
+
+      Remediation:
+
+      - Recompute the statistics table from the actual `docs/proposals/**` inventory
+      and the row categories used in the document.
+
+      - Ensure totals and per-status rollups agree with each other everywhere the
+      document summarizes counts.
+
+      Grep hint: `Statistics|Active|Deferred|Archived|Total|Draft|Partial|Legacy`
+
+      IMPORTANT: reconcile every derived summary in the document together; do not
+      update one table without updating sibling rollups.
+
+
+      ### B2: Active/Deferred counts drift from listed rows
+
+      Locations:
+
+      - `docs/proposals/index.md` active/open/deferred proposal rows
+
+      - any section header or summary text that states Active or Deferred totals
+
+      Remediation:
+
+      - Count the rows actually listed under the document''s Active/Open/Deferred
+      sections and make the published totals match those rows.
+
+      - If a row is miscategorized, fix the row and the summary together.
+
+      Grep hint: `^\| DX-|Active|Deferred|Open Proposals|Deferred/Future`
+
+      IMPORTANT: the row inventory and summary numbers must be reconciled in the same
+      pass.
+
+
+      ### B3: counting basis is not documented
+
+      Locations:
+
+      - `docs/proposals/index.md` near the statistics/rollup section
+
+      Remediation:
+
+      - Add a short counting-basis note that explains exactly what is counted for
+      totals, which sections drive Active/Deferred rollups, and how filesystem counts
+      relate to listed rows.
+
+      - Make the wording specific enough that a later reviewer can reproduce the counts
+      without guessing.
+
+      Grep hint: `counting basis|count basis|how counts are derived|filesystem`
+
+      IMPORTANT: documenting the basis is mandatory; silent arithmetic changes are
+      not sufficient.
+
+
+      ## Completion Criteria
+
+      - `docs/proposals/index.md` statistics, rollups, and listed rows reconcile to
+      one another and to current `docs/proposals/**` filesystem counts.
+
+      - Active and Deferred totals exactly match the rows presented in the document.
+
+      - The document explicitly states the counting basis used for filesystem totals
+      and status rollups.
+
+      - Evidence includes sibling-search coverage for statistics tables, row sections,
+      and the new counting-basis note.
+
+
+      Gate Preview (what the follow-up retest WILL reject)
+
+      1. Any statistics table value that cannot be reproduced from current `docs/proposals/**`
+      files.
+
+      2. Any Active or Deferred total that disagrees with the rows actually listed.
+
+      3. Any proposal-index update that changes numbers without documenting the counting
+      basis.
+
+      4. Any one-cell fix that leaves sibling rollups or summary text stale.'
+    verification: '- Main path: one batched reconciliation pass updates proposal-index
+      statistics, rollups, row classifications, and counting-basis documentation together
+
+      - Failure path: sibling searches across proposal-index summaries and row sections
+      show no leftover count drift or undocumented arithmetic
+
+      - Proof: evidence states the filesystem totals used, the row totals used for
+      Active/Deferred rollups, and where the counting basis is documented
+
+      - Out-of-scope guardrail: broader non-index proposal curation outside `docs/proposals/index.md`
+      remains deferred unless required to keep the documented counts truthful'
+    depends_on:
+    - dx91-release-readiness.retest-release-guides-proposal-index-remaining-blockers
+    agent: doc-reviewer
