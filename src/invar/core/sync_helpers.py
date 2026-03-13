@@ -166,7 +166,7 @@ def get_sync_file_lists(
         ...     "sync": {
         ...         "fully_managed": ["INVAR.md"],
         ...         "region_managed": ["CLAUDE.md"],
-        ...         "create_only": [".invar/context.md"],
+        ...         "create_only": [".pre-commit-config.yaml"],
         ...     },
         ...     "templates": {
         ...         "INVAR.md": {"src": "protocol/INVAR.md", "type": "copy"},

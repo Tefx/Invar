@@ -22,7 +22,7 @@ Guard rejects uncontracted Core functions. This is not optional.
 
 | Document | Purpose |
 |----------|---------|
-| [Session Start](./session-start.md) | Check-In and Final protocols (optional) |
+| [Session Start](./session-start.md) | DX-91 session guidance + archive classification |
 | ~~[USBV](./usbv.md)~~ | **Archive** — Historical four-phase documentation |
 
 ## Key Principle

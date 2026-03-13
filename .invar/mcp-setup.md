@@ -12,7 +12,7 @@ This project includes an MCP server that provides Invar tools to AI agents.
 
 ## Configuration
 
-`invar init` automatically creates `.mcp.json` with smart detection of available methods.
+`invar init` does not auto-create `.mcp.json` in DX-91. Add MCP config manually using one of the templates below.
 
 ### Recommended: uvx (isolated environment)
 
