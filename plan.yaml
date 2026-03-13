@@ -23552,7 +23552,7 @@ phases:
       \ inconsistent with active DX-91 mechanisms documentation in `docs/reference/index.md`."
   - id: dx91-release-readiness.fix-reference-classification-consistency-followup-batch
     name: fix-reference-classification-consistency-followup-batch
-    status: claimed
+    status: done
     description: 'Fix ALL remaining blockers found by `dx91-release-readiness.retest-reference-classification-consistency-blockers`
       in ONE batched remediation step. Fix ALL of these, not just the first.
 
@@ -23727,6 +23727,19 @@ phases:
     agent: doc-reviewer
     claimed_by: general
     claimed_at: '2026-03-13T18:43:42.180897+00:00'
+    done_at: '2026-03-13T18:48:13.399144+00:00'
+    evidence: "Commit hash(es)\n- 676a9cb\n\nFiles changed\n- docs/proposals/index.md\n\
+      \nVerification (commands + outputs)\n- `git show --oneline --stat -1` => commit\
+      \ `676a9cb` touching `docs/proposals/index.md`.\n- `git show HEAD:docs/proposals/index.md\
+      \ | rg -n \"docs/reference/\\*\\* remains active|docs/reference/workflow/index.md|docs/reference/workflow/usbv.md|docs/reference/index.md\"\
+      ` => active/archive boundary note and rows present:\n  - `docs/reference/workflow/index.md`\
+      \ Active\n  - `docs/reference/workflow/usbv.md` Archive\n  - `docs/reference/index.md`\
+      \ Active\n- Live-branch stale-state guard:\n  - `git show vectl/step-dx91-release-readiness.fix-reference-classification-consistency-followup-batch:docs/proposals/index.md\
+      \ | rg -n \"docs/reference/index.md\"` => Active row present.\n  - Negative\
+      \ check for archive label on this row returned no matches.\n\nSpec link\n- dx91-release-readiness.fix-reference-classification-consistency-followup-batch\n\
+      \nGaps/Notes\n- Worktree/branch for this exact step was missing initially; created\
+      \ before edit execution.\n- No plan/orchestrator state files modified.\n- discovered_issues:\
+      \ initial missing worktree/branch for step setup"
   - id: dx91-release-readiness.retest-reference-classification-consistency-followup-batch
     name: retest-reference-classification-consistency-followup-batch
     status: pending
