@@ -22805,3 +22805,110 @@ phases:
     depends_on:
     - dx91-release-readiness.retest-proposal-index-reconciliation-remaining-blockers
     agent: doc-reviewer
+  - id: dx91-release-readiness.retest-proposal-index-reconciliation-fs-inventory-blockers
+    name: retest-proposal-index-reconciliation-fs-inventory-blockers
+    status: pending
+    description: 'As an INDEPENDENT TESTER (`integration-verifier`), validate closure
+      of the filesystem-inventory and row-traceability blocker family after `dx91-release-readiness.fix-proposal-index-reconciliation-fs-inventory-blockers`.
+
+
+      YOUR GOAL IS TO FIND PROBLEMS, not to confirm a single corrected count.
+
+
+      step_type: verification
+
+      agent: integration-verifier
+
+      agent_source: default
+
+      prior_loop:
+
+      - dx91-release-readiness.fix-proposal-index-reconciliation-remaining-blockers
+
+      - dx91-release-readiness.retest-proposal-index-reconciliation-remaining-blockers
+
+      remaining_blocker: final proposal-index release readiness remains blocked until
+      published totals, row coverage, and legacy-row traceability all match the current
+      filesystem-backed counting basis.
+
+      why_new_loop: the previous retest proved the arithmetic could reconcile internally
+      but found stale filesystem totals, omitted root proposal rows, and a legacy
+      formatting outlier that require one more independent validation pass.
+
+
+      spec_refs:
+
+      - `docs/proposals/index.md`
+
+      - `docs/proposals/DX-91-simplification.md`
+
+      - `docs/reference/index.md`
+
+
+      touch_paths:
+
+      - `docs/proposals/index.md`
+
+      - root proposal files in `docs/proposals/*.md` referenced by the row inventory
+
+      - `docs/proposals/completed/*.md` as archived-count comparison set
+
+
+      harness_refs:
+
+      - `dx91-release-readiness.fix-proposal-index-reconciliation-fs-inventory-blockers`
+
+      - filesystem state for `docs/proposals/**`
+
+      - proposal-index statistics/reconciliation sections and row tables
+
+
+      Independence Level: L1
+
+      review_depth: THOROUGH
+
+      cross_cutting_focus:
+
+      - Published grand totals must match the declared counting basis and current
+      filesystem inventory
+
+      - All root proposal files covered by the counting policy must be represented
+      or explicitly excluded in a reproducible way
+
+      - Legacy row formatting must preserve markdown-link traceability across the
+      row inventory
+
+
+      Validate ALL blocker families:
+
+      - B1 grand totals and reconciliation text agree with current filesystem reality
+      or an explicit exclusion policy
+
+      - B2 all named missing root proposal files are represented, linked, and categorized
+      consistently with the totals, or explicitly excluded by policy
+
+      - B3 LX-08 uses the linked-row format and sibling legacy rows have no equivalent
+      formatting outlier
+
+      - Sibling-search check: no adjacent total, row-table, or legacy-row text still
+      carries stale counts, omitted files, or plain-text row formatting
+
+
+      This re-test must validate ALL of these, not just the first.'
+    verification: '- Main path: independent review reproduces proposal-index totals
+      from current `docs/proposals/**` inventory and confirms row tables and legacy
+      links match the documented counting basis
+
+      - Failure path: targeted searches across `docs/proposals/index.md` find no remaining
+      mismatch between filesystem totals, row coverage, exclusion policy, and legacy
+      row formatting
+
+      - Filesystem path: retest explicitly compares root proposal inventory, completed
+      inventory, published totals, and row-table coverage for the six named files
+      plus LX-08 formatting
+
+      - Evidence states whether `dx91-release-readiness.gate` may reopen or must remain
+      BLOCKED'
+    depends_on:
+    - dx91-release-readiness.fix-proposal-index-reconciliation-fs-inventory-blockers
+    agent: integration-verifier
