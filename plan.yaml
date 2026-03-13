@@ -23216,3 +23216,152 @@ phases:
       \ are now closed for blocker family.\n- Setup-repair was required because the\
       \ retest worktree/branch did not exist initially.\n\nGate recommendation\n-\
       \ REOPEN\n\ndiscovered_issues\n- none"
+  - id: dx91-release-readiness.fix-reference-classification-consistency-blockers
+    name: fix-reference-classification-consistency-blockers
+    status: pending
+    description: 'Fix ALL blockers found by `dx91-release-readiness.gate` in ONE batched
+      remediation step. Fix ALL of these, not just the first.
+
+
+      step_type: implementation
+
+      agent: doc-reviewer
+
+      agent_source: default
+
+      prior_loop:
+
+      - dx91-release-readiness.gate
+
+      remaining_blocker: proposal-index release readiness remains blocked because
+      `docs/proposals/index.md` still classifies `docs/reference/index.md` as `Archive`
+      even though `docs/reference/index.md` is the active DX-91 mechanism reference,
+      leaving runtime/docs/proposal-index consistency unresolved.
+
+      why_new_loop: the prior inventory and row-coverage remediation loops corrected
+      totals and coverage, but they did not reconcile the proposal-index classification
+      narrative with the current active reference docs surface.
+
+
+      spec_refs:
+
+      - `docs/proposals/index.md`
+
+      - `docs/reference/index.md`
+
+      - `docs/proposals/DX-91-simplification.md`
+
+
+      touch_paths:
+
+      - `docs/proposals/index.md`
+
+      - `docs/reference/index.md`
+
+
+      harness_refs:
+
+      - `dx91-release-readiness.gate`
+
+      - proposal-index classification rows covering reference/mechanism docs
+
+      - current DX-91 mechanism narrative in `docs/reference/index.md`
+
+
+      known_risks:
+
+      - A single corrected row is insufficient if adjacent proposal-index classification
+      rows still describe neighboring reference docs with stale archive language.
+
+      - Runtime/docs/proposal-index consistency remains blocked unless the proposal
+      index matches the current active narrative in `docs/reference/index.md`.
+
+      - Archive-vs-active wording drift can recur unless sibling rows are searched
+      together, not one-by-one.
+
+
+      ## Blockers to Fix (ALL of these, not just the first)
+
+
+      ### B1: `docs/reference/index.md` classification is stale in the proposal index
+
+      Evidence:
+
+      - `docs/proposals/index.md` classifies `docs/reference/index.md` as `Archive`
+      around the current row near line 207.
+
+      - `docs/reference/index.md` is active DX-91 mechanism documentation, not archived
+      material.
+
+      Locations:
+
+      - classification row for `docs/reference/index.md` in `docs/proposals/index.md`
+
+      - adjacent proposal-index rows covering neighboring `docs/reference/**` entries
+      and classification narrative
+
+      - current content/headings in `docs/reference/index.md`
+
+      Remediation:
+
+      - Reconcile the proposal-index row and any nearby narrative so `docs/reference/index.md`
+      is described consistently with its current active DX-91 mechanism content.
+
+      - Perform sibling search across adjacent classification rows so no neighboring
+      reference-doc row still carries stale archive wording or contradictory status
+      language.
+
+      - Ensure proposal-index classification text, row status, and any narrative summary
+      use the same active-vs-archive story.
+
+      Grep hint: `docs/reference/index\.md|Archive|Active|mechanism|reference index`
+
+      Grep hint: `docs/reference/|Reference|Archive|Mechanism|DX-91` within `docs/proposals/index.md`
+
+      IMPORTANT: search sibling rows adjacent to the `docs/reference/index.md` entry
+      and fix the full consistency story, not just the first row hit.
+
+
+      ## Completion Criteria
+
+      - `docs/proposals/index.md` no longer classifies `docs/reference/index.md` as
+      archived.
+
+      - The proposal-index classification narrative matches the current active DX-91
+      mechanism content in `docs/reference/index.md`.
+
+      - Adjacent reference-doc rows in `docs/proposals/index.md` have been sibling-searched
+      and no stale archive wording remains for this blocker family.
+
+      - Evidence states what changed in the classification row, what sibling rows
+      were checked, and why the reconciled language now matches the active docs surface.
+
+
+      ## Gate Preview (what the follow-up retest WILL reject)
+
+      1. Any remaining `Archive` classification for `docs/reference/index.md`.
+
+      2. Any mismatch between the current `docs/reference/index.md` content and the
+      proposal-index classification narrative.
+
+      3. Any adjacent proposal-index reference row still using stale archive wording
+      after the sibling search.
+
+      4. Any fix that updates one row without documenting the reconciliation basis
+      against the active DX-91 mechanism docs.'
+    verification: '- Main path: one batched docs pass reconciles the `docs/reference/index.md`
+      row, adjacent proposal-index reference rows, and the active DX-91 mechanism
+      narrative
+
+      - Failure path: sibling-search evidence shows no adjacent reference classification
+      row still mislabels active docs as archived
+
+      - Proof: evidence names the row updated, the adjacent rows checked, and the
+      reconciliation basis taken from current `docs/reference/index.md`
+
+      - Out-of-scope guardrail: broader proposal-index taxonomy changes outside the
+      `docs/reference/**` classification family remain deferred unless required to
+      close this blocker'
+    depends_on:
+    - dx91-release-readiness.gate
+    agent: doc-reviewer
