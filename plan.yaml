@@ -19925,6 +19925,110 @@ phases:
     agent: blind-tester
     claimed_by: blind-tester
     claimed_at: '2026-03-13T14:58:52.333061+00:00'
+  - id: dx91-self-docs.fix-self-docs-active-link-blockers-followup-batch
+    name: fix-self-docs-active-link-blockers-followup-batch
+    status: pending
+    description: 'Fix ALL blockers found by `dx91-self-docs.retest-self-docs-active-link-blockers-batch`
+      in ONE batched remediation step.
+
+
+      prior_loop:
+
+      - dx91-self-docs.fix-self-docs-active-link-blockers-batch
+
+      - dx91-self-docs.retest-self-docs-active-link-blockers-batch
+
+      remaining_blocker: active self-docs still contain a narrowed DX-91 path-family
+      regression cluster spanning wrong docs-root proposal bases, stale moved-to-completed
+      proposal links, and an archive-banner DX-91 boundary link with the wrong relative
+      base.
+
+      why_new_loop: the prior batched fix closed the first active-link family, but
+      the independent retest found a second, tighter path-convention cluster that
+      must be swept together so active-link integrity and archive boundary correctness
+      converge in one pass.
+
+
+      ## Blockers to Fix (ALL of these, not just the first)
+
+
+      ### B1: wrong docs-root DX-91 proposal base in `docs/agents.md`
+
+      Locations: `docs/agents.md:280`
+
+      Remediation: replace `../proposals/DX-91-simplification.md` with the correct
+      docs-root-relative DX-91 proposal target.
+
+      Grep hint: `\.\./proposals/DX-91-simplification\.md|\./proposals/DX-91-simplification\.md`
+
+      IMPORTANT: search sibling top-level docs pages for the same docs-root vs nested
+      proposal-base-path family before claiming done.
+
+
+      ### B2: stale moved-to-completed proposal path in `docs/reference/contracts/pre-post.md`
+
+      Locations: `docs/reference/contracts/pre-post.md:304`
+
+      Remediation: update `../../proposals/DX-12-hypothesis-fallback.md` to the current
+      completed-location target under the correct base path.
+
+      Grep hint: `DX-12-hypothesis-fallback\.md|proposals/completed`
+
+      IMPORTANT: search sibling contract/reference pages for moved proposal links
+      that still point at pre-completed locations, not just this page.
+
+
+      ### B3: wrong-base DX-91 archive banner link in `docs/reference/workflow/usbv.md`
+
+      Locations: `docs/reference/workflow/usbv.md:1`
+
+      Remediation: correct the archive-banner DX-91 link so it resolves from the archive
+      page''s actual nesting level while keeping the page clearly historical.
+
+      Grep hint: `DX-91-simplification\.md|ARCHIVE`
+
+      IMPORTANT: search sibling workflow/archive-boundary pages for the same DX-91
+      proposal-base convention and confirm archive banners still point readers to
+      the right active/current target family.
+
+
+      ## Sibling Path-Family Search Requirement
+
+      - Sweep active docs for proposal path base-convention mistakes (`docs/` root
+      vs nested `docs/reference/**` roots).
+
+      - Sweep active docs for moved-to-completed proposal links, especially the DX-12
+      and DX-91 families plus nearby proposal references sharing the same convention.
+
+      - Confirm archive-boundary messaging stays historical while banner links resolve
+      correctly to current DX-91 material.
+
+
+      ## Completion Criteria
+
+      - ALL three blocker families are fixed in one batched pass.
+
+      - Sibling search evidence covers proposal-base conventions and moved-to-completed
+      link families.
+
+      - Active-link integrity is restored without breaking archive-boundary guidance.
+
+      - Any additional sibling hits in the same path families are either fixed in
+      scope or explicitly documented as absent.'
+    verification: '- Each listed blocker family is fixed across the active docs surface,
+      not just in the exemplar file
+
+      - Sibling search evidence explicitly covers proposal base-path conventions and
+      moved-to-completed proposal links
+
+      - Archive banner and active/current boundary links resolve correctly after the
+      batch fix
+
+      - No new active-link regressions are introduced while preserving DX-91 archive
+      boundary clarity'
+    depends_on:
+    - dx91-self-docs.retest-self-docs-active-link-blockers-batch
+    agent: doc-reviewer
 - id: dx91-release-readiness
   name: DX-91 Release Readiness Audit
   status: locked
