@@ -20932,7 +20932,7 @@ phases:
       \ full raw command outputs suitable for final gate review.\n"
   - id: freeze-release-candidate
     name: freeze-release-candidate
-    status: pending
+    status: claimed
     description: 'Freeze the DX-91 release candidate snapshot before the final publish/merge
       recommendation is made.
 
@@ -20955,6 +20955,8 @@ phases:
     depends_on:
     - prove-final-init-install-smoke
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-13T16:48:01.067162+00:00'
   - id: dx91-release-readiness.gate
     name: dx91-release-readiness.gate
     status: pending
