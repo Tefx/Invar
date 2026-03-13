@@ -21650,7 +21650,7 @@ phases:
       **Status:** Ready for retest-dx91-consistency-blockers gate verification.'
   - id: dx91-release-readiness.retest-doc-runtime-proposal-index-blockers
     name: retest-doc-runtime-proposal-index-blockers
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT REVIEWER (`gate-reviewer`), re-test the FULL blocker
       set from `dx91-release-readiness.gate` after `dx91-release-readiness.fix-doc-runtime-proposal-index-blockers`.
 
@@ -21780,6 +21780,20 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-13T17:15:19.260036+00:00'
+    done_at: '2026-03-13T17:23:35.054774+00:00'
+    evidence: "Gate decision: BLOCKED\n\nFindings:\n- blockers:\n  - stale release-facing\
+      \ guidance persists in `docs/guides/aider.md` and `docs/guides/multi-agent.md`\
+      \ (retired USBV/agent-era setup still presented as current)\n  - proposal-index\
+      \ drift persists (`docs/proposals/index.md` misclassifications, count drift,\
+      \ and incomplete representation of root proposals)\n- should_fix:\n  - clarify\
+      \ archived guide sections to avoid read-as-current ambiguity\n\nEvidence inventory:\n\
+      - runtime command surface remains stable and aligned\n- targeted fixed files\
+      \ are improved, but sibling release-facing guide family still leaks retired\
+      \ setup\n- proposal index still inconsistent with repo state\n\nBatched follow-up\
+      \ remediation created:\n- `dx91-release-readiness.fix-release-guides-proposal-index-remaining-blockers`\n\
+      - `dx91-release-readiness.retest-release-guides-proposal-index-remaining-blockers`\n\
+      - final gate dependency moved behind new retest chain\n\nNotes:\n- retest step\
+      \ completed as issue-discovery evidence with one batched follow-up loop.\n"
   - id: dx91-release-readiness.fix-release-guides-proposal-index-remaining-blockers
     name: fix-release-guides-proposal-index-remaining-blockers
     status: pending
