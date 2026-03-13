@@ -21783,3 +21783,232 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-13T17:15:19.260036+00:00'
+  - id: dx91-release-readiness.fix-release-guides-proposal-index-remaining-blockers
+    name: fix-release-guides-proposal-index-remaining-blockers
+    status: pending
+    description: 'Fix ALL remaining release-readiness blockers from `dx91-release-readiness.retest-doc-runtime-proposal-index-blockers`
+      in ONE batched remediation step. Fix ALL of these, not just the first.
+
+
+      step_type: implementation
+
+      agent: doc-reviewer
+
+      agent_source: default
+
+      prior_loop:
+
+      - dx91-release-readiness.fix-doc-runtime-proposal-index-blockers
+
+      - dx91-release-readiness.retest-doc-runtime-proposal-index-blockers
+
+      - dx91-release-readiness.gate
+
+      remaining_blocker: release-facing stale guides and proposal-index tables/counts/classifications
+      still drift from the active DX-91 repo state.
+
+      why_new_loop: the prior docs remediation narrowed the blocker set but did not
+      fully close the release-facing guide cleanup and proposal-index reconciliation;
+      this batched follow-up forces one complete docs/index pass instead of another
+      piecemeal correction.
+
+
+      spec_refs:
+
+      - `docs/proposals/DX-91-simplification.md`
+
+      - `docs/proposals/index.md`
+
+      - `docs/reference/index.md`
+
+      - `docs/guides/aider.md`
+
+      - `docs/guides/multi-agent.md`
+
+      - `.invar/context.md`
+
+
+      touch_paths:
+
+      - `docs/guides/aider.md`
+
+      - `docs/guides/multi-agent.md`
+
+      - `docs/proposals/index.md`
+
+      - `docs/reference/index.md`
+
+      - any directly referenced DX-87 / DX-93 root proposal rows or linked proposal
+      files needed to make the index truthful
+
+
+      harness_refs:
+
+      - `dx91-release-readiness.retest-doc-runtime-proposal-index-blockers`
+
+      - filesystem state for `docs/proposals/**`
+
+      - active docs navigation / release-facing guide set
+
+
+      known_risks:
+
+      - Release-facing guide drift can survive in sibling guide pages even after one
+      guide is corrected.
+
+      - Proposal index tables can look locally fixed while archive/active classification,
+      open/deferred counts, and total counts still disagree with the filesystem.
+
+      - Proposal omissions for DX-87 and DX-93 root proposals can keep the index misleading
+      even if row labels are corrected.
+
+
+      ## Blockers to Fix (ALL of these, not just the first)
+
+
+      ### B1: release-facing stale guides still present retired setup/agent-selection
+      as current
+
+      Locations:
+
+      - `docs/guides/aider.md`
+
+      - `docs/guides/multi-agent.md`
+
+      - sibling release-facing guide pages if they still present the same retired
+      setup as active
+
+      Why blocker:
+
+      - `docs/guides/aider.md` still presents USBV / retired setup as current.
+
+      - `docs/guides/multi-agent.md` still presents retired init agent-selection and
+      `.claude/skills` / `.pi/hooks` workflow as operative.
+
+      Remediation:
+
+      - Rewrite active release-facing guidance so it reflects the current DX-91 product
+      surface only.
+
+      - Remove or explicitly historicize retired USBV, init agent-selection, `.claude/skills`,
+      `.pi/hooks`, and similar setup language anywhere it remains actionable.
+
+      Grep hint: `USBV|agent-selection|\.claude/skills|\.pi/hooks|retired setup|init
+      flow|multi-agent`
+
+      IMPORTANT: perform sibling search across release-facing guides; do not stop
+      after fixing `aider.md` or `multi-agent.md`.
+
+
+      ### B2: proposal-index drift in classifications, counts, and represented roots
+
+      Locations:
+
+      - `docs/proposals/index.md`
+
+      - `docs/reference/index.md` classification row
+
+      - sibling rows/summary tables/counts that derive archive/open/deferred/total
+      status
+
+      Why blocker:
+
+      - `docs/proposals/index.md` misclassifies `docs/reference/index.md` as Archive
+      though it is active.
+
+      - open/deferred counts drift and DX-87 / DX-93 root proposals are not represented
+      correctly.
+
+      - archived/total counts drift from actual filesystem state.
+
+      Remediation:
+
+      - Reconcile active/archive classification rows against the current filesystem
+      and active docs surface.
+
+      - Correct open/deferred/archived/total counts so table summaries match the actual
+      proposal set.
+
+      - Add or repair DX-87 and DX-93 root proposal representation so the index reflects
+      the current root proposal inventory truthfully.
+
+      Grep hint: `Archive|Active|open|deferred|archived|total|DX-87|DX-93|reference/index\.md`
+
+      IMPORTANT: search sibling rows, counts, and summary sections together; do not
+      fix one table cell while leaving derived counts or omissions stale.
+
+
+      ## Completion Criteria
+
+      - ALL blockers above are fixed in one coherent remediation pass.
+
+      - Release-facing guides no longer present retired USBV/setup/agent-selection
+      flows as current.
+
+      - `docs/proposals/index.md` classifies `docs/reference/index.md` correctly,
+      represents DX-87 and DX-93 root proposals correctly, and has open/deferred/archived/total
+      counts aligned to filesystem state.
+
+      - Evidence includes sibling-search coverage for both release-facing guides and
+      proposal-index tables/counts/classifications.
+
+
+      Gate Preview (what the follow-up retest WILL reject)
+
+      1. Any release-facing guide that still presents retired setup or agent-selection
+      flows as current.
+
+      2. Any proposal-index table/count still misclassifying `docs/reference/index.md`
+      or omitting/misrepresenting DX-87 / DX-93 roots.
+
+      3. Any archived/open/deferred/total summary that still drifts from filesystem
+      reality.
+
+      4. Any fix that updates one row without reconciling sibling rows and summary
+      counts.'
+    verification: '- Main path: the batched docs/index pass updates all named blocker
+      families together
+
+      - Failure path: focused sibling searches across release-facing guides and proposal-index
+      tables/counts/classifications show no remaining stale blocker in the touched
+      surfaces
+
+      - Proof: evidence lists every corrected guide/index section and explains how
+      filesystem-backed counts/classifications were reconciled
+
+      - Out-of-scope guardrail: broader historical proposal cleanup outside the touched
+      release-facing guides and proposal index remains deferred unless required to
+      remove a direct contradiction'
+    evidence_template: '## Batched Remediation Evidence
+
+
+      **Blocker families fixed**:
+
+      - B1 release-facing guide drift
+
+      - B2 proposal-index classification/count drift
+
+
+      **Sibling search performed**:
+
+      - <release-facing guide search scope and results>
+
+      - <proposal-index row/count search scope and results>
+
+
+      **Filesystem reconciliation basis**:
+
+      - <which proposal files / tables / counts were checked>
+
+
+      **Files changed**:
+
+      - <exact files>
+
+
+      **Why this closes the remaining blocker family**:
+
+      - <brief explanation>'
+    depends_on:
+    - dx91-release-readiness.retest-doc-runtime-proposal-index-blockers
+    agent: doc-reviewer
