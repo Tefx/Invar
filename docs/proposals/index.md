@@ -40,17 +40,21 @@ This directory contains design proposals for Invar development.
 
 ## Open Proposals (14)
 
-### Active Implementation
+> **Counting Basis:** Table rows below. Excludes index.md and completed/ directory.
+
+### Active Implementation (5)
 
 | ID | Name | Status | Description |
 |----|------|--------|-------------|
 | DX-91 | [invar-simplification](DX-91-simplification.md) | **Active** | Python-only, guard-first architecture with minimal agent instruction surface |
 | DX-93 | [mcp-entry-point-policy](DX-93-mcp-entry-point-policy.md) | Draft | MCP-specific entry point thickness calibration (35 vs 15 lines) |
 | DX-87 | [remove-multi-agent-init](DX-87-remove-multi-agent-init.md) | Draft | Remove multi-agent init support (single-agent only) |
-| DX-84 | [security-review-backlog](DX-84-security-review-backlog.md) | Active | Security review backlog for Python Guard |
+| DX-84 | [security-review-backlog](DX-84-security-review-backlog.md) | **Active** | Security review backlog for Python Guard |
 | DX-80 | [guard-cli-mcp-alignment](DX-80-guard-cli-mcp-alignment.md) | Draft | Align Guard CLI default behavior with MCP |
 
-### Deferred / Future
+**Status Rollup:** Active: 2 | Draft: 3 | **Total: 5**
+
+### Deferred / Future (9)
 
 | ID | Name | Status | Description |
 |----|------|--------|-------------|
@@ -64,7 +68,9 @@ This directory contains design proposals for Invar development.
 | DX-29 | [pure-content-detection](DX-29-pure-content-detection.md) | Deferred | Pure content detection marker |
 | DX-25 | [functional-patterns](DX-25-functional-patterns.md) | Deferred | Functional patterns enhancement |
 
-### Legacy / Pre-DX-91 (Archived Concepts)
+**Status Rollup:** Deferred: 7 | Partial: 2 | **Total: 9**
+
+### Legacy / Pre-DX-91 (11)
 
 > These proposals describe features removed or superseded by DX-91.
 > They remain in the index for historical reference but do not describe current behavior.
@@ -82,6 +88,8 @@ This directory contains design proposals for Invar development.
 | LX-16 | [typescript-guard-remaining-gap](LX-16-typescript-guard-remaining-gap.md) | **Removed** | TypeScript Guard removed per DX-91 |
 | LX-11 | [cursor-support](LX-11-cursor-support.md) | Deferred | IDE expansion on hold |
 | LX-01 | [multi-language-feasibility](LX-01-multi-language-feasibility.md) | Deferred | Multi-language exploration on hold |
+
+**Status Rollup:** Superseded: 1 | Removed: 5 | Deferred: 5 | **Total: 11**
 
 ---
 
@@ -101,15 +109,24 @@ See `completed/` directory for detailed implementation notes. Key archived miles
 
 ## Statistics
 
+> **Counting Basis:** Table row counts for status categories; filesystem count for Archived.
+> Excludes `index.md` from all counts.
+
 | Category | Count |
 |----------|-------|
-| **Active** | 3 |
+| **Active** | 2 |
 | **Draft** | 3 |
 | **Partial** | 2 |
-| **Deferred** | 8 |
+| **Deferred** | 7 |
 | **Legacy/Removed** | 11 |
-| **Archived** | 78 |
-| **Total** | 105 |
+| **Archived** | 76 |
+| **Total** | 101 |
+
+**Reconciliation:**
+- **Open Proposals:** 14 (Active Implementation: 5 + Deferred/Future: 9)
+- **Legacy/Pre-DX-91:** 11
+- **Archived (completed/):** 76
+- **Grand Total:** 101 = 14 + 11 + 76
 
 ---
 
@@ -166,3 +183,31 @@ See `completed/` directory for detailed implementation notes and execution histo
 | `docs/reference/workflow/usbv.md` | **Archive** — Historical USBV documentation |
 | `docs/AGENTS.md` | **Archive** — Pre-DX-91 agent roles (skills/hooks era) |
 | `docs/reference/index.md` | **Archive** — Contains USBV references (historical) |
+
+---
+
+## Index Coverage Notes
+
+**Sibling-Search Coverage:**
+
+To find all proposals in this directory, use sibling search patterns:
+
+```bash
+# Root proposals (excludes index.md, includes only DX-*/LX-* patterns)
+ls docs/proposals/*.md | grep -v index.md | sort
+
+# Completed proposals
+ls docs/proposals/completed/*.md | sort
+
+# Count by status (matches table rollups)
+grep -E "^\|" docs/proposals/index.md | grep -E "\|\s+(Active|Draft|Partial|Deferred|Superseded|Removed)" | wc -l
+```
+
+**Statistics Reconciliation:**
+
+| Source | Count | Method |
+|--------|-------|--------|
+| Open Proposals (tables) | 14 | Row counts from Active (5) + Deferred (9) |
+| Legacy/Pre-DX-91 (table) | 11 | Row count from Legacy table |
+| Archived (completed/) | 76 | Filesystem: `ls completed/*.md \| wc -l` |
+| **Grand Total** | **101** | 14 + 11 + 76 |
