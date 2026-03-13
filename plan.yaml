@@ -20247,7 +20247,7 @@ phases:
       \ completed in isolated worktree; no code/doc/plan file edits.\n"
   - id: dx91-self-docs.dx91-self-docs-fix-gate-doc-coherence-blockers-batch
     name: dx91-self-docs.fix-gate-doc-coherence-blockers-batch
-    status: claimed
+    status: done
     description: 'Fix ALL blockers found by `dx91-self-docs.gate` in ONE batched remediation
       pass for active DX-91 self-doc coherence.
 
@@ -20393,6 +20393,77 @@ phases:
     agent: doc-reviewer
     claimed_by: doc-reviewer
     claimed_at: '2026-03-13T15:34:55.746135+00:00'
+    done_at: '2026-03-13T15:40:58.764586+00:00'
+    evidence: 'Artifact:
+
+      - Main squash commit: `f764174`
+
+      - Worktree commit: `4fc4f7b`
+
+
+      Files changed (merged):
+
+      - `docs/index.html`
+
+      - `docs/guides/multi-agent.md`
+
+      - `.invar/context.md`
+
+
+      Verification:
+
+      - active stale init-flag guidance removed from active docs (`invar init --claude/--pi`
+      replaced by current DX-91 init guidance)
+
+      - deprecation-banner link in `docs/guides/multi-agent.md` fixed to correct DX-91
+      proposal path
+
+      - `.invar/context.md` posture updated to reflect DX-91/DX-87 current state
+
+      - sibling grep coverage run for `invar init --claude|invar init --pi|multi-agent
+      init|\.invar/examples`
+
+      - main merge commit hooks passed
+
+
+      Blocker mapping:
+
+      - stale active init flags in docs index + multi-agent guide -> fixed
+
+      - broken deprecation link in multi-agent guide -> fixed
+
+      - stale multi-agent-current posture in `.invar/context.md` -> fixed
+
+      - INVAR `.invar/examples` reference cleanup attempted in worker branch but not
+      mergeable due INVAR protection hook (see notes)
+
+
+      Active-vs-archive classification:
+
+      - active surfaces updated: `docs/index.html`, `docs/guides/multi-agent.md`,
+      `.invar/context.md`
+
+      - archive/proposals/history kept unchanged
+
+
+      Residual risk:
+
+      - `INVAR.md` direct edits are protected by `invar-md-protected`; any remaining
+      `.invar/examples` reference in INVAR requires policy-compliant source-of-truth
+      update path (not direct edit in this merge path)
+
+
+      Spec link:
+
+      - `dx91-self-docs.dx91-self-docs-fix-gate-doc-coherence-blockers-batch`
+
+
+      Gaps/Notes:
+
+      - During merge commit, hook blocked direct INVAR modification; commit was adjusted
+      to preserve hook compliance.
+
+      '
   - id: dx91-self-docs.dx91-self-docs-retest-gate-doc-coherence-blockers-batch
     name: dx91-self-docs.retest-gate-doc-coherence-blockers-batch
     status: pending
