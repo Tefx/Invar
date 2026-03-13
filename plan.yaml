@@ -21083,6 +21083,7 @@ phases:
     - dx91-release-readiness.retest-proposal-index-reconciliation-fs-inventory-blockers
     - dx91-release-readiness.retest-proposal-index-reconciliation-fs-inventory-blockers-followup-batch
     - dx91-release-readiness.retest-reference-classification-consistency-blockers
+    - dx91-release-readiness.retest-reference-classification-consistency-followup-batch
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-13T18:30:22.983184+00:00'
