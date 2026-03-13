@@ -1,6 +1,6 @@
 # Invar Proposals Index
 
-> **Last Updated:** 2026-03-13
+> **Last Updated:** 2026-03-14
 > **Current Direction:** [DX-91: Simplification](./DX-91-simplification.md) — Python-only, guard-first architecture
 
 This directory contains design proposals for Invar development.
@@ -38,14 +38,15 @@ This directory contains design proposals for Invar development.
 
 ---
 
-## Open Proposals (13)
+## Open Proposals (14)
 
 ### Active Implementation
 
 | ID | Name | Status | Description |
 |----|------|--------|-------------|
 | DX-91 | [invar-simplification](DX-91-simplification.md) | **Active** | Python-only, guard-first architecture with minimal agent instruction surface |
-| DX-94 | [mcp-full-guard-support-model](DX-94-mcp-full-guard-support-model.md) | Draft | Deferred full-scan model for MCP timeout-safe `invar_guard(changed=false)` |
+| DX-93 | [mcp-entry-point-policy](DX-93-mcp-entry-point-policy.md) | Draft | MCP-specific entry point thickness calibration (35 vs 15 lines) |
+| DX-87 | [remove-multi-agent-init](DX-87-remove-multi-agent-init.md) | Draft | Remove multi-agent init support (single-agent only) |
 | DX-84 | [security-review-backlog](DX-84-security-review-backlog.md) | Active | Security review backlog for Python Guard |
 | DX-80 | [guard-cli-mcp-alignment](DX-80-guard-cli-mcp-alignment.md) | Draft | Align Guard CLI default behavior with MCP |
 
@@ -53,14 +54,15 @@ This directory contains design proposals for Invar development.
 
 | ID | Name | Status | Description |
 |----|------|--------|-------------|
-| DX-83 | [multi-agent-subagent-support](DX-83-multi-agent-subagent-support.md) | Draft | Subagent support (superseded by DX-91 simplification) |
-| DX-68 | [agent-behavior-optimization](DX-68-agent-behavior-optimization.md) | Draft | Agent reading reliability improvements |
+| DX-94 | [mcp-full-guard-support-model](DX-94-mcp-full-guard-support-model.md) | Deferred | Full-scan model for MCP timeout-safe `invar_guard(changed=false)` |
+| DX-83 | [multi-agent-subagent-support](DX-83-multi-agent-subagent-support.md) | Deferred | Subagent support (superseded by DX-91 simplification) |
+| DX-68 | [agent-behavior-optimization](DX-68-agent-behavior-optimization.md) | Deferred | Agent reading reliability improvements |
 | DX-62 | [proactive-reference-reading](DX-62-proactive-reference-reading.md) | Partial | Task Router (Layer 1) done, Layers 2-4 pending |
-| DX-61 | [functional-pattern-guidance](DX-61-functional-pattern-guidance.md) | Draft | Teach agents functional patterns |
-| DX-60 | [structured-rules-ssot](DX-60-structured-rules-ssot.md) | Draft | Optimize rule token usage |
+| DX-61 | [functional-pattern-guidance](DX-61-functional-pattern-guidance.md) | Deferred | Teach agents functional patterns |
+| DX-60 | [structured-rules-ssot](DX-60-structured-rules-ssot.md) | Deferred | Optimize rule token usage |
 | DX-38 | [contract-quality-rules](DX-38-contract-quality-rules.md) | Partial | Tier 1-2 done, Tier 3-4 deferred |
-| DX-29 | [pure-content-detection](DX-29-pure-content-detection.md) | Defer | Pure content detection marker |
-| DX-25 | [functional-patterns](DX-25-functional-patterns.md) | Defer | Functional patterns enhancement |
+| DX-29 | [pure-content-detection](DX-29-pure-content-detection.md) | Deferred | Pure content detection marker |
+| DX-25 | [functional-patterns](DX-25-functional-patterns.md) | Deferred | Functional patterns enhancement |
 
 ### Legacy / Pre-DX-91 (Archived Concepts)
 
@@ -101,11 +103,13 @@ See `completed/` directory for detailed implementation notes. Key archived miles
 
 | Category | Count |
 |----------|-------|
-| **Active** | 4 |
+| **Active** | 3 |
+| **Draft** | 3 |
+| **Partial** | 2 |
 | **Deferred** | 8 |
 | **Legacy/Removed** | 11 |
 | **Archived** | 78 |
-| **Total** | 101 |
+| **Total** | 105 |
 
 ---
 
@@ -115,16 +119,18 @@ See `completed/` directory for detailed implementation notes. Key archived miles
 
 1. **[DX-91](./DX-91-simplification.md)** — Strategic simplification and product reset
 2. **[DX-84](./DX-84-security-review-backlog.md)** — Security review for production readiness
-3. **[DX-80](./DX-80-guard-cli-mcp-alignment.md)** — CLI/MCP alignment bug fix
+3. **[DX-87](./DX-87-remove-multi-agent-init.md)** — Remove multi-agent init capability
+4. **[DX-93](./DX-93-mcp-entry-point-policy.md)** — MCP entry point thickness calibration
 
 ### Medium Priority (Strategic)
 
-1. **[DX-62](./DX-62-proactive-reference-reading.md)** — Continue Layers 2-4
-2. **[DX-61](./DX-61-functional-pattern-guidance.md)** — Pattern guidance for agents
+1. **[DX-80](./DX-80-guard-cli-mcp-alignment.md)** — CLI/MCP alignment bug fix
+2. **[DX-62](./DX-62-proactive-reference-reading.md)** — Continue Layers 2-4
+3. **[DX-61](./DX-61-functional-pattern-guidance.md)** — Pattern guidance for agents
 
 ### Low Priority / Deferred
 
-- DX-68, DX-60, DX-38, DX-29, DX-25, LX-17 series, LX-11, LX-01
+- DX-94, DX-68, DX-60, DX-38, DX-29, DX-25, LX-17 series, LX-11, LX-01
 
 ---
 
@@ -149,10 +155,12 @@ See `completed/` directory for detailed implementation notes and execution histo
 | `INVAR.md` (project root) | **Active** — Agent semantic spec |
 | [DX-91-simplification.md](./DX-91-simplification.md) | **Active** — Authoritative direction |
 | `README.md` | **Active** — Updated for DX-91 Python-only workflow |
-| `docs/guides/pi.md` | **Archive** — Historical Pi integration (pre-DX-91) |
 | `docs/guides/cursor.md` | **Active** — Updated for DX-91 MCP-only workflow |
 | `docs/guides/continue.md` | **Active** — Updated for DX-91 MCP-only workflow |
 | `docs/guides/cline.md` | **Active** — Updated for DX-91 MCP-only workflow |
+| `docs/guides/pi.md` | **Archive** — Historical Pi integration (pre-DX-91) |
+| `docs/guides/aider.md` | **Archive** — Historical Aider integration (pre-DX-91) |
+| `docs/guides/multi-agent.md` | **Archive** — Historical multi-agent docs (pre-DX-91) |
 | `.invar/context.md` | **Active** — User-managed project context |
 | `.invar/project-additions.md` | **Active** — User-managed project additions |
 | `docs/reference/workflow/usbv.md` | **Archive** — Historical USBV documentation |

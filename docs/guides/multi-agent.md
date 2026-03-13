@@ -1,187 +1,64 @@
 # Using Invar with Different Coding Agents
 
-> **⚠️ DEPRECATED:** This guide describes the pre-DX-91 multi-agent approach (skills, hooks, USBV workflow).
+> **ARCHIVE:** This guide describes historical pre-DX-91 multi-agent approaches (skills, hooks, USBV workflow ceremony). 
 > Per [DX-91](../proposals/DX-91-simplification.md), Invar is now **Python-only and agent-agnostic**.
-> See `CLAUDE.md` (in your project root) and `INVAR.md` for the current simplified approach.
+> 
+> **Current approach:** Use `invar init` for any single agent. See `CLAUDE.md` and `INVAR.md` for current protocol.
 
-Invar's core value—contract-driven development and automated verification—works with any AI coding agent. This guide covers integration with popular alternatives to Claude Code.
+---
 
-## Agent Support Status
+## Current Agent Support
 
 | Agent | Status | Setup |
 |-------|--------|-------|
-| **Claude Code** | ✅ Full | `invar init` |
-| ~~**Pi**~~ | ~~Full~~ | *Simplified per DX-91* |
-| ~~**Multi-Agent**~~ | ~~Full~~ | *Simplified per DX-91* |
-| **Cursor** | ✅ MCP | `invar init` → select Other, add MCP |
-| **Other** | 📝 Manual | `invar init` → select Other, include `AGENT.md` in prompt |
+| **Claude Code** | ✅ MCP | `invar init` → Use MCP tools |
+| **Cursor** | ✅ MCP | `invar init` → Configure MCP |
+| **Cline** | ✅ MCP | `invar init` → Configure MCP |
+| **Continue** | ✅ MCP | `invar init` → Configure MCP |
+| **Pi** | ✅ CLI | `invar init` → Use CLI commands |
+| **Aider** | ✅ CLI | `invar init` → Use CLI commands |
 
-## Quick Comparison
+All agents use the same `CLAUDE.md` and `INVAR.md` files installed by `invar init`.
 
-| Agent | Instruction File | MCP Support | Hooks | Effort |
-|-------|------------------|-------------|-------|--------|
-| [Claude Code](../agents.md) | CLAUDE.md | ✅ Full | ✅ 4 types | Native |
-| [Pi](#pi) | CLAUDE.md (shared) | ❌ | ✅ TypeScript | Native |
-| [Cline](#cline) | .clinerules | ✅ Full | ❌ | Manual |
-| [Cursor](#cursor) | .cursorrules | ✅ Full | ✅ Beta | Manual |
-| [Aider](#aider) | CONVENTIONS.md | ⚠️ CLI | ❌ | Manual |
-| [Continue](#continue) | config.yaml | ✅ Full | ❌ | Manual |
+---
 
 ## What Works Everywhere
 
-| Feature | Mechanism | Portability |
-|---------|-----------|-------------|
-| USBV Workflow | Instruction file | ✅ 100% |
-| Core/Shell Separation | Instruction file | ✅ 100% |
-| Contract Requirements | Instruction file | ✅ 100% |
-| Guard Verification | MCP or CLI | ✅ 100% |
-| Sig/Map Tools | MCP or CLI | ✅ 100% |
-
-## What's Claude Code Specific
-
-| Feature | Alternative |
-|---------|-------------|
-| Skills (auto-routing) | Pi: skills work / Others: Manual triggers |
-| Hooks (pytest blocking) | Pi: TypeScript hooks / Cursor: Beta / Others: Manual |
-| Commands (/audit, /guard) | Direct tool calls |
+| Feature | Mechanism |
+|---------|-----------|
+| Core/Shell Separation | `CLAUDE.md` / `INVAR.md` |
+| Contract Requirements | `CLAUDE.md` / `INVAR.md` |
+| Guard Verification | MCP (`invar_guard`) or CLI (`invar guard`) |
+| Sig/Map Tools | MCP or CLI |
 
 ---
 
-## Pi
+## Current Documentation
 
-**Terminal-based coding agent with CLAUDE.md support**
-
-→ [Full Guide: Pi Integration](./pi.md)
-
-```bash
-# Setup
-invar init    # Select "Pi Coding Agent"
-```
-
-**Key discovery:** Pi reads CLAUDE.md and .claude/skills/ directly — no separate configuration needed!
-
-**Features:**
-- **Same instruction file** — CLAUDE.md (shared with Claude Code)
-- **Same workflow skills** — .claude/skills/ work natively
-- **TypeScript hooks** — .pi/hooks/invar.ts for pytest blocking
-- **Protocol injection** — `pi.send()` for long conversation support
-- Pre-commit hooks
-
-**What's installed:**
-- `.pi/hooks/invar.ts` — pytest/crosshair blocking + protocol refresh
+| Document | Purpose |
+|----------|---------|
+| `CLAUDE.md` (project root) | Active — Agent guidance (~50 lines) |
+| `INVAR.md` (project root) | Active — Protocol reference |
+| [DX-91 Simplification](../proposals/DX-91-simplification.md) | Active — Authoritative direction |
 
 ---
 
-## Cline
+## Historical Reference
 
-**VS Code extension with Plan & Act modes**
+The following sections describe pre-DX-91 approaches for historical context only.
 
-→ [Full Guide: Cline Integration](./cline.md)
+### Pre-DX-91 Agent Table (Historical)
 
-```bash
-# Setup
-invar init    # Select "Other (AGENT.md)", then copy to .clinerules
-```
+| Agent | Status | Notes |
+|-------|--------|-------|
+| Claude Code | Full | Skills, hooks, MCP |
+| Pi | Full | Shared CLAUDE.md, TypeScript hooks |
+| Cursor | MCP | Beta hooks support |
+| Cline | MCP | Plan/Act modes |
+| Aider | CLI | Auto-lint integration |
+| Continue | MCP | First full MCP implementation |
 
-**Key features:**
-- Plan Mode aligns with USBV workflow
-- Full MCP support
-- Open source, active community
-
----
-
-## Cursor
-
-**AI-first IDE with hooks support**
-
-→ [Full Guide: Cursor Integration](./cursor.md)
-
-```bash
-# Setup
-invar init    # Select "Other (AGENT.md)", then copy to .cursorrules
-```
-
-**Key features:**
-- Hooks (beta) for command interception
-- Largest user base
-- .cursor/rules/ for organized rules
-
----
-
-## Aider
-
-**Terminal-based pair programmer**
-
-→ [Full Guide: Aider Integration](./aider.md)
-
-```bash
-# Quick setup - use with auto-lint
-aider --lint-cmd "invar guard --changed" --auto-lint
-```
-
-**Key features:**
-- Built-in auto-lint/test verification
-- Git-aware editing
-- CONVENTIONS.md as persistent memory
-
----
-
-## Continue
-
-**Open-source VS Code/JetBrains extension**
-
-→ [Full Guide: Continue Integration](./continue.md)
-
-```bash
-# Quick setup - add to .continue/config.yaml
-```
-
-**Key features:**
-- First full MCP implementation
-- customCommands for workflows
-- Works with any model
-
----
-
-## MCP Configuration
-
-All MCP-supporting agents can use Invar's tools:
-
-```json
-{
-  "mcpServers": {
-    "invar": {
-      "command": "uvx",
-      "args": ["invar-tools", "mcp"]
-    }
-  }
-}
-```
-
-Or if installed in a virtual environment:
-
-```json
-{
-  "mcpServers": {
-    "invar": {
-      "command": "/path/to/project/.venv/bin/python",
-      "args": ["-m", "invar.mcp"]
-    }
-  }
-}
-```
-
-### Available MCP Tools
-
-| Tool | Purpose |
-|------|---------|
-| `invar_guard` | Smart verification (static + doctests + symbolic) |
-| `invar_sig` | Show function signatures and contracts |
-| `invar_map` | Symbol map with reference counts |
-
----
-
-## Feature Parity Matrix
+### Historical Feature Parity Matrix
 
 | Feature | Claude | Pi | Cursor | Cline | Continue | Aider |
 |---------|--------|-----|--------|-------|----------|-------|
@@ -191,104 +68,19 @@ Or if installed in a virtual environment:
 | pytest Blocking | ✅ Hook | ✅ Hook | ⚠️ Beta | ❌ | ❌ | ✅ Built-in |
 | Auto-routing | ✅ Skills | ✅ Skills | ❌ | ⚠️ Modes | ⚠️ Commands | ❌ |
 | Protocol Refresh | ✅ Hook | ✅ Hook | ❌ | ❌ | ❌ | ❌ |
-| Plan Mode | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ |
 
----
+> **Note:** USBV workflow ceremony, skills, hooks, and TypeScript support were removed per [DX-91](../proposals/DX-91-simplification.md).
 
-## Choosing an Agent
-
-| If you want... | Choose |
-|----------------|--------|
-| Full Invar experience | Claude Code |
-| Terminal + skill sharing | Pi |
-| IDE integration + hooks | Cursor |
-| Open source + Plan Mode | Cline |
-| Terminal + git-aware | Aider |
-| Model flexibility | Continue |
-
----
-
-## Multi-Agent Setup (Historical)
+### Multi-Agent Setup (Historical)
 
 > **Note:** Multi-agent init (`invar init --claude --pi`) was removed per [DX-87](../proposals/DX-87-remove-multi-agent-init.md) as part of DX-91 simplification.
-> 
-> **Current approach:** Use `invar init` (interactive) for any single agent. For multiple agents in the same project, run init separately for each agent you need.
 
-**Use multiple agents in the same project**
-
-```bash
-# Setup for Claude Code
-uvx invar-tools init    # Select "Claude Code"
-
-# Setup for Pi (same project, additional agent)
-uvx invar-tools init    # Select "Pi"
-```
-
-**What gets installed:**
-- `CLAUDE.md` — Protocol reference (shared)
-- `.invar/` — Project context and cache (shared)
-- Agent-specific configuration in respective directories
-
----
-
-## Migration Path
-
-### Adding a Second Agent
-
-Already using Claude Code? Add Pi:
-
-```bash
-# Already have Claude Code, add Pi
-uvx invar-tools init    # Select "Pi" - shared files safely merged
-```
-
-All shared files (CLAUDE.md, .invar/) are safely merged.
-
-### From Claude Code to Others
-
-1. Run `uvx invar-tools init` → select your agent
-2. Copy protocol content to target instruction file
-3. Configure MCP (if supported)
-
----
-
-## Troubleshooting
-
-### MCP Connection Issues
-
-```bash
-# Test MCP server directly
-uvx invar-tools mcp
-
-# Check if invar is installed
-pip show invar-tools
-```
-
-### Guard Not Found
-
-```bash
-# Install invar-tools
-pip install invar-tools
-
-# Or use uvx (no install needed)
-uvx invar-tools guard
-```
-
-### Instruction File Not Loaded
-
-Each agent has specific file locations:
-- Cline: `.clinerules` in project root
-- Cursor: `.cursorrules` or `.cursor/rules/*.mdc`
-- Aider: `CONVENTIONS.md` in project root
-- Continue: `.continue/config.yaml`
+**Current approach:** Run `invar init` separately for each agent you need. Shared files (CLAUDE.md, .invar/) are safely merged.
 
 ---
 
 ## Next Steps
 
-- [Pi Integration Guide](./pi.md) — Native support, shares CLAUDE.md
-- [Cline Integration Guide](./cline.md)
-- [Cursor Integration Guide](./cursor.md)
-- [Aider Integration Guide](./aider.md)
-- [Continue Integration Guide](./continue.md)
-- [Claude Code Setup](../agents.md) (native)
+- See `CLAUDE.md` in your project root for current agent guidance
+- See `INVAR.md` for protocol reference
+- [DX-91 Simplification](../proposals/DX-91-simplification.md) — Current architectural direction
