@@ -19332,14 +19332,16 @@ phases:
 
       - No code or doc changes allowed between this freeze and the subsequent gate
       review for the phase'
-    verification: '- Freeze evidence includes `git rev-parse HEAD`, clean `git status`,
-      and environment declaration
+    verification: '- Freeze occurs only after the independent retest of self-docs
+      blockers completes
 
-      - Active docs entrypoints are named explicitly
+      - Record `git rev-parse HEAD`, confirm `git status` clean, and declare environment
+      used for the snapshot
 
-      - The docs surface is ready for gate review'
+      - State that no code or docs changes are allowed until the subsequent gate review
+      completes'
     depends_on:
-    - verify-self-docs-surface
+    - dx91-self-docs.retest-self-docs-surface-blockers
     agent: integration-verifier
   - id: dx91-self-docs.gate
     name: dx91-self-docs.gate
