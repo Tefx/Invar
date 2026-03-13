@@ -22394,3 +22394,108 @@ phases:
     depends_on:
     - dx91-release-readiness.retest-release-guides-proposal-index-remaining-blockers
     agent: doc-reviewer
+  - id: dx91-release-readiness.retest-proposal-index-reconciliation-remaining-blockers
+    name: retest-proposal-index-reconciliation-remaining-blockers
+    status: pending
+    description: 'As an INDEPENDENT TESTER (`integration-verifier`), validate closure
+      of the remaining proposal-index reconciliation blocker family after `dx91-release-readiness.fix-proposal-index-reconciliation-remaining-blockers`.
+
+
+      YOUR GOAL IS TO FIND PROBLEMS, not to confirm one corrected number.
+
+
+      step_type: verification
+
+      agent: integration-verifier
+
+      agent_source: default
+
+      prior_loop:
+
+      - dx91-release-readiness.fix-release-guides-proposal-index-remaining-blockers
+
+      - dx91-release-readiness.retest-release-guides-proposal-index-remaining-blockers
+
+      - dx91-release-readiness.fix-proposal-index-reconciliation-remaining-blockers
+
+      remaining_blocker: final release readiness stays blocked until `docs/proposals/index.md`
+      has reproducible statistics, row rollups, filesystem counts, and a documented
+      counting basis that all agree.
+
+      why_new_loop: the previous retest isolated a narrower reconciliation blocker
+      after broader docs cleanup; this independent retest verifies the whole accounting
+      family together and prevents another partial numeric adjustment from passing.
+
+
+      spec_refs:
+
+      - `docs/proposals/index.md`
+
+      - `docs/proposals/DX-91-simplification.md`
+
+      - `docs/reference/index.md`
+
+
+      touch_paths:
+
+      - `docs/proposals/index.md`
+
+      - `docs/proposals/*.md` as filesystem inventory source for reconciliation
+
+      - any linked row source referenced by the counting-basis note
+
+
+      harness_refs:
+
+      - `dx91-release-readiness.fix-proposal-index-reconciliation-remaining-blockers`
+
+      - filesystem state for `docs/proposals/**`
+
+      - proposal-index statistics table, row listings, and counting-basis note
+
+
+      Independence Level: L1
+
+      review_depth: THOROUGH
+
+      cross_cutting_focus:
+
+      - Statistics table values must be reproducible from current filesystem state
+
+      - Active/Deferred rollups must match the rows actually listed in the document
+
+      - Counting basis must be explicit enough for a reviewer to recompute the numbers
+      without guesswork
+
+
+      Validate ALL blocker families:
+
+      - B1 statistics table totals and rollups agree with current `docs/proposals/**`
+      counts
+
+      - B2 Active/Deferred published totals agree with the listed rows and classifications
+      in `docs/proposals/index.md`
+
+      - B3 counting basis is documented where a later reviewer can trace filesystem
+      totals versus row-based rollups
+
+      - Sibling search check: no adjacent proposal-index summary text or table still
+      carries a conflicting count or undocumented basis
+
+
+      This re-test must validate ALL of these, not just the first.'
+    verification: '- Main path: independent review reproduces proposal-index statistics
+      from current `docs/proposals/**` files and confirms row-based Active/Deferred
+      rollups match the document
+
+      - Failure path: targeted searches across `docs/proposals/index.md` find no remaining
+      mismatch between summary tables, listed rows, and the documented counting basis
+
+      - Filesystem path: retest explicitly compares filesystem totals, table totals,
+      and row totals and records the counting method used for each
+
+      - Evidence states whether `dx91-release-readiness.gate` may reopen or must remain
+      BLOCKED'
+    depends_on:
+    - dx91-release-readiness.fix-proposal-index-reconciliation-remaining-blockers
+    agent: integration-verifier
