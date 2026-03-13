@@ -225,5 +225,5 @@ If Invar tools aren't installed:
 
 - [Workflow](./index.md) - DX-91 current guidance
 - ~~[USBV](./usbv.md)~~ — **Archive:** Historical four-phase documentation
-- [INVAR.md Check-In section](../../INVAR.md) - Protocol definition
+- [INVAR.md Check-In section](../../../INVAR.md) - Protocol definition
 - [Verification Overview](../verification/index.md) - What guard checks

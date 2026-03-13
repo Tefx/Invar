@@ -261,9 +261,9 @@ A well-designed information hierarchy should satisfy:
 
 ## Related Documents
 
-- [LX-04: Multi-Agent Support](../proposals/LX-04-pi-agent-support.md)
-- [DX-54: Agent Native Context Management](../proposals/completed/DX-54-agent-context.md)
-- [DX-62: Proactive Reference Reading](../proposals/DX-62-proactive-reference.md)
+- [LX-04: Multi-Agent Support](../proposals/completed/LX-04-pi-agent-support.md)
+- [DX-54: Agent Native Context Management](../proposals/completed/DX-54-agent-native-context-management.md)
+- [DX-62: Proactive Reference Reading](../proposals/DX-62-proactive-reference-reading.md)
 
 ---
 

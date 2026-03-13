@@ -1,3 +1,5 @@
+> **ARCHIVE:** This document describes the historical USBV workflow. Current Invar workflow is [DX-91: Session-based Contracts-First](../proposals/DX-91-simplification.md).
+
 # USBV: The Four-Phase Development Workflow
 
 > **"Inspect before Contract. Depth varies naturally. Iterate when needed."**
@@ -106,7 +108,7 @@ If someone sees only @pre, @post, and doctests - can they write the exact same i
 - [ ] Doctests cover: normal, edge, error cases
 - [ ] Three-way consistency: code ↔ contracts ↔ doctests
 
-See [Contract Completeness](../contracts/contract-complete.md) for details.
+See [Contract Completeness](../contracts/completeness.md) for details.
 
 ### Exit Criteria
 
@@ -333,6 +335,6 @@ Task: Add function to find the most common element
 ## See Also
 
 - [Session Start](./session-start.md) - Check-In protocol
-- [Contract Completeness](../contracts/contract-complete.md) - Writing complete contracts
+- [Contract Completeness](../contracts/completeness.md) - Writing complete contracts
 - [Pre/Post Contracts](../contracts/pre-post.md) - Contract syntax
 - [Smart Verification Routing](../verification/smart-routing.md) - How verification works

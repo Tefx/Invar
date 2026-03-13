@@ -257,7 +257,7 @@ def sqrt(x: float) -> float:
 
 **Self-test:** "Given only @pre/@post and doctests, could someone else write the exact same function?"
 
-See [Contract Completeness Principle](./contract-complete.md) for details.
+See [Contract Completeness Principle](./completeness.md) for details.
 
 ## Contract Composition
 
@@ -299,6 +299,6 @@ param_mismatch = "error"      # Lambda must match function
 ## See Also
 
 - [Doctests as Specification](./doctests.md) - Examples complement contracts
-- [Contract Completeness](./contract-complete.md) - How complete is enough?
+- [Contract Completeness](./completeness.md) - How complete is enough?
 - [Smart Verification Routing](../verification/smart-routing.md) - CrossHair vs Hypothesis
 - [DX-12: Hypothesis Fallback](../../proposals/DX-12-hypothesis-fallback.md) - Design history
