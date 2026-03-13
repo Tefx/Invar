@@ -20814,13 +20814,13 @@ phases:
       \ policy.\n"
 - id: dx91-release-readiness
   name: DX-91 Release Readiness Audit
-  status: pending
+  status: in_progress
   depends_on:
   - dx91-self-docs
   steps:
   - id: audit-dx91-consistency
     name: audit-dx91-consistency
-    status: pending
+    status: claimed
     description: 'Audit the full repository for DX-91 consistency before a final release
       recommendation is made.
 
@@ -20842,6 +20842,8 @@ phases:
       - Failure path explicitly checks for stale references or drift between implementation
       and docs'
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-13T16:15:59.394358+00:00'
   - id: prove-final-init-install-smoke
     name: prove-final-init-install-smoke
     status: pending
