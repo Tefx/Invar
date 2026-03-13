@@ -28,7 +28,7 @@ L5: Learning Examples (examples/) ← Task Router triggered
 |----------|------------|-----------------|----------|
 | **Protocol Rules** | What is correct/incorrect | Immutable, authoritative | Six Laws, Contract Rules |
 | **Architecture Guide** | How to organize code | Decision algorithms | Core/Shell decision tree |
-| **Workflow** | In what order to act | Phase sequences | USBV, Check-In/Final |
+| **Workflow** | In what order to act | Phase sequences | Contracts-first (DX-91), Check-In/Final |
 | **Behavioral Triggers** | When to do what | Condition → Action | Task Router, Skill Routing |
 | **Tool Usage** | What commands to use | Command syntax | invar guard, invar sig |
 | **Project State** | What is current context | Dynamic, changing | Current State, Lessons |
@@ -74,7 +74,7 @@ Contains:
 | **Verify** | `invar guard` — NOT pytest, NOT crosshair |
 | **Core** | `@pre/@post` + doctests, NO I/O imports |
 | **Shell** | Returns `Result[T, E]` from `returns` library |
-| **Flow** | USBV: Understand → Specify → Build → Validate |
+| **Flow** | DX-91: Understand → Specify (contracts first) → Build → Validate |
 
 ### Contract Rules (CRITICAL)
 [lambda signature examples]
@@ -103,7 +103,7 @@ Contains:
 
 Contains:
 - Entry Actions (including Task Router reminder)
-- USBV phase detailed instructions
+- DX-91 workflow guidance
 - Error handling, timeout policies
 - Incremental development patterns
 
@@ -115,7 +115,7 @@ Contains:
 - Six Laws
 - Core/Shell complete decision tree
 - Contract Rules complete version
-- USBV complete definition
+- DX-91 workflow guidance
 - Command reference, configuration, troubleshooting
 
 ### L5: Learning Examples (examples/)
@@ -144,7 +144,8 @@ Contains:
 | **Contract Rules** | Full example | — | — | Full |
 | **Core/Shell Decision** | Edge cases | Brief | — | Full tree |
 | **Task Router** | Reference | Full table | Reminder | — |
-| **USBV Workflow** | Brief | Brief | Phase detail | Full |
+| **DX-91 Workflow** | Brief | Brief | Detail | Full |
+| ~~USBV Workflow~~ | ~~Archive~~ | ~~Archive~~ | ~~Archive~~ | ~~Archive~~ |
 | **Tool Commands** | Key | Reference | Phase-specific | Full |
 
 ### Redundancy Justification
@@ -154,7 +155,8 @@ Contains:
 | Contract Rules | High | High | L1 full + L4 authoritative |
 | Core/Shell Decision | Medium | Medium | L1 summary + L4 full |
 | Task Router | Low-Medium | High | L1 ref + L2 full + L3 reminder |
-| USBV Workflow | Low-Medium | Medium | L1 brief + L3 detail |
+| DX-91 Workflow | Low-Medium | Medium | L1 brief + L3 detail |
+| ~~USBV Workflow~~ | ~~Archive~~ | ~~Archive~~ | ~~Archive~~ |
 | Six Laws | Low | Low | L4 only |
 
 ---

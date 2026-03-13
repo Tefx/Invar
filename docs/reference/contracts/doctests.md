@@ -336,6 +336,7 @@ def read_config(path: Path) -> Result[Config, str]:
 ## See Also
 
 - [Pre/Post Contracts](./pre-post.md) - Formal contract definitions
-- [Contract Completeness](./contract-complete.md) - When contracts are "complete"
-- [USBV Workflow](../workflow/usbv.md) - Contract-first development
-- [DX-02: Doctest Best Practices](../../proposals/2025-12-21-dx-improvements.md) - Design history
+- [Contract Completeness](./completeness.md) - When contracts are "complete"
+- [Workflow](../workflow/index.md) - DX-91 current guidance
+- ~~[USBV](../workflow/usbv.md)~~ — **Archive:** Historical four-phase documentation
+- [DX-91 Simplification](../../proposals/DX-91-simplification.md) - Current workflow guidance

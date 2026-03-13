@@ -50,5 +50,6 @@ invar guard
 
 ## See Also
 
-- [USBV Workflow](../workflow/usbv.md) - Contract-first development
-- [Verification Overview](../verification/README.md) - How contracts are verified
+- [Workflow](../workflow/index.md) - DX-91 contracts-first guidance
+- ~~[USBV](../workflow/usbv.md)~~ — **Archive:** Historical four-phase documentation
+- [Verification Overview](../verification/index.md) - How contracts are verified

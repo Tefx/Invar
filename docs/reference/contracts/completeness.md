@@ -169,9 +169,11 @@ def rot13(s: str) -> str:
     """
 ```
 
-## USBV Integration
+## DX-91 Integration
 
-Contract completeness is central to USBV workflow:
+Contract completeness is the core of DX-91 workflow:
+
+> **DX-91: Write @pre/@post contracts BEFORE implementation.**
 
 ```
 U - Understand : Intent, Inspect (invar sig/map), Constraints
@@ -261,5 +263,6 @@ def average(items: list[float]) -> float:
 
 - [Pre/Post Contracts](./pre-post.md) - Contract syntax and patterns
 - [Doctests](./doctests.md) - Examples as specification
-- [USBV Workflow](../workflow/usbv.md) - Contract-first development
+- [Workflow](../workflow/index.md) - DX-91 current guidance
+- ~~[USBV](../workflow/usbv.md)~~ — **Archive:** Historical four-phase documentation
 - [Clover Paper](https://arxiv.org/abs/2310.04625) - Research on contract completeness

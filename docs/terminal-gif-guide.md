@@ -200,16 +200,21 @@ Guard passed.
 
 ## File Placement
 
+> **Note:** Demo GIFs are not currently in the repository. This guide documents the creation process.
+
 ```
+# After creating GIFs, place them in docs/assets/
 docs/
 ├── assets/
-│   ├── demo.gif          # Main demo for README
-│   ├── guard-demo.gif    # Guard-specific demo
-│   └── workflow-demo.gif # USBV workflow demo
+│   ├── demo.gif          # Main demo for README (optional)
+│   ├── guard-demo.gif    # Guard-specific demo (optional)
+│   └── workflow-demo.gif # Workflow demo (optional)
 └── terminal-gif-guide.md # This file
 ```
 
 ## README Integration
+
+If you create a demo GIF, add it to the README:
 
 ```markdown
 ### What It Looks Like

@@ -1,38 +1,29 @@
 # Workflow Mechanisms
 
-Invar's development workflow for agent sessions.
+> **DX-91:** The USBV four-phase workflow is now **archived**. Current guidance: write `@pre/@post` contracts BEFORE implementation. Guard enforces outcomes, not ceremony.
+
+## Current Workflow (DX-91)
+
+### The ONE Mandatory Rule
+
+**Write `@pre/@post` contracts BEFORE implementation.**
+
+Guard rejects uncontracted Core functions. This is not optional.
+
+### Session Pattern
+
+```
+1. Understand → 2. Specify (contracts first) → 3. Build → 4. Validate
+```
+
+**Depth varies naturally.** Some tasks need deep inspection; others need minimal. Let resistance guide you.
 
 ## Quick Reference
 
 | Document | Purpose |
 |----------|---------|
-| [USBV](./usbv.md) | The four-phase development workflow |
-| [Session Start](./session-start.md) | Check-In and Final protocols |
-
-## Core Concept
-
-Every task follows USBV:
-
-```
-U - Understand : Intent, Inspect (invar sig/map), Constraints
-S - Specify    : @pre/@post, Design decomposition, Doctests
-B - Build      : Implement leaves first, Compose
-V - Validate   : invar guard, reflect → iterate → validate
-```
-
-## Session Bookends
-
-```
-Session Start:
-  ✓ Check-In: MyProject | main | clean
-
-... USBV workflow (guard runs in VALIDATE phase) ...
-
-Session End:
-  ✓ Final: guard PASS | 0 errors, 0 warnings
-```
-
-**Both required.** Missing either = incomplete task.
+| [Session Start](./session-start.md) | Check-In and Final protocols (optional) |
+| ~~[USBV](./usbv.md)~~ | **Archive** — Historical four-phase documentation |
 
 ## Key Principle
 
@@ -40,5 +31,6 @@ Session End:
 
 ## See Also
 
-- [Contract Mechanisms](../contracts/README.md) - Writing contracts
-- [Verification Overview](../verification/README.md) - How verification works
+- [Contract Mechanisms](../contracts/index.md) - Writing contracts
+- [Verification Overview](../verification/index.md) - How verification works
+- [DX-91 Proposal](../../proposals/DX-91-simplification.md) - Workflow simplification rationale

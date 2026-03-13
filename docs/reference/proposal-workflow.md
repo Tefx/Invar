@@ -6,14 +6,14 @@ This document describes the proposal-driven development workflow used in the Inv
 
 ## Overview
 
-The proposal workflow applies USBV principles at the feature/architecture level:
+The proposal workflow applies DX-91 principles at the feature/architecture level:
 
-| USBV Phase | Code Level | Proposal Level |
-|------------|------------|----------------|
-| **UNDERSTAND** | Read code, understand context | Problem Statement |
-| **SPECIFY** | @pre/@post, doctests | Success Criteria |
-| **BUILD** | Implement function | Implementation |
-| **VALIDATE** | invar guard | Acceptance testing |
+| DX-91 Phase | Code Level | Proposal Level |
+|-------------|------------|----------------|
+| **Understand** | Read code, understand context | Problem Statement |
+| **Specify (contracts first)** | @pre/@post, doctests | Success Criteria |
+| **Build** | Implement function | Implementation |
+| **Validate** | invar guard | Acceptance testing |
 
 **Key insight:** Proposals are feature-level contracts.
 
@@ -204,9 +204,9 @@ Identify independent proposals that can run concurrently:
 | Stale index.md | Misleading status | Update on every change |
 | Too granular | Overhead exceeds value | Merge related proposals |
 
-## Integration with USBV
+## Integration with DX-91
 
-The proposal workflow is USBV applied at a higher level:
+The proposal workflow is DX-91 applied at a higher level:
 
 ```
 Code Level:

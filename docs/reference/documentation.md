@@ -21,7 +21,8 @@ The Invar Protocol specification. Managed by `invar update`.
 - Six Laws (principles)
 - Core/Shell Architecture
 - Contract requirements
-- USBV Workflow
+- ~~USBV Workflow~~ (archived per DX-91)
+- DX-91 minimal guidance
 - Visible Workflow (DX-30)
 - Review Gate triggers (DX-31)
 - Task Completion criteria
@@ -78,7 +79,8 @@ Project-level (specific)?       → CLAUDE.md
 |-------------|-------|--------|-----------|
 | Six Laws | ✅ | - | Universal principles |
 | Core/Shell Architecture | ✅ | - | Protocol requirement |
-| USBV Workflow | ✅ | Brief | Protocol, CLAUDE references |
+| ~~USBV Workflow~~ | ~~Archive~~ | ~~Archive~~ | ~~Historical (DX-91)~~ |
+| DX-91 Guidance | ✅ | Brief | Contracts-first, minimal ceremony |
 | Visible Workflow | ✅ | Brief | Protocol with examples |
 | Review Gate (triggers) | ✅ | - | Guard rule mechanism |
 | Commands (/audit, /guard) | - | ✅ | User-invokable actions |
@@ -148,7 +150,8 @@ Guard detects conditions ───────→ Agent selects response
 |---------|----------|-----------|---------|
 | Check-In format | ✅ Full | ✅ Quick ref | Visibility |
 | Final format | ✅ (in Task Completion) | ✅ Quick ref | Visibility |
-| USBV overview | ✅ Full | Brief mention | Reference |
+| DX-91 guidance | ✅ Brief | ✅ Quick ref | Contracts-first, minimal ceremony |
+| ~~USBV~~ | ~~Archive~~ | ~~Brief~~ | ~~Historical~~ |
 
 ### Not Allowed
 

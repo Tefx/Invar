@@ -173,6 +173,6 @@ Select the appropriate verification tool.
 
 ## See Also
 
-- [Verification Overview](./README.md) - Full verification pipeline
+- [Verification Overview](./index.md) - Full verification pipeline
 - [DX-22 Proposal](../../proposals/DX-22-verification-strategy.md) - Design history
 - [CrossHair vs Hypothesis](./crosshair-vs-hypothesis.md) - Tool comparison

@@ -94,7 +94,7 @@ Implementation tasks end with Final:
 Session Start:
   ✓ Check-In: MyProject | main | clean
 
-... USBV workflow happens ...
+... DX-91 workflow happens ...
 
 VALIDATE phase:
   Run invar guard
@@ -113,7 +113,7 @@ A task is complete only when **ALL** conditions are met:
 |-----------|---------------|
 | Check-In displayed | First message shows `✓ Check-In:` |
 | Intent stated | Task goal explicitly documented |
-| Contract before implementation | USBV followed |
+| Contract before implementation | DX-91 followed |
 | Final displayed | Last message shows `✓ Final:` |
 | User requirement satisfied | Actual goal achieved |
 
@@ -223,6 +223,7 @@ If Invar tools aren't installed:
 
 ## See Also
 
-- [USBV Workflow](./usbv.md) - Full development workflow
+- [Workflow](./index.md) - DX-91 current guidance
+- ~~[USBV](./usbv.md)~~ — **Archive:** Historical four-phase documentation
 - [INVAR.md Check-In section](../../INVAR.md) - Protocol definition
 - [Verification Overview](../verification/index.md) - What guard checks

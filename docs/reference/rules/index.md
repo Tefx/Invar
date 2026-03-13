@@ -2,7 +2,7 @@
 
 Guard enforces architectural rules with configurable severity.
 
-**See also:** [Severity Design](severity-design.md) for principles behind level assignments.
+**See also:** [Severity Design](./severity.md) for principles behind level assignments.
 
 ## Rule Categories
 
