@@ -20545,7 +20545,7 @@ phases:
       \ of direct protected-file editing.\n"
   - id: dx91-self-docs.dx91-self-docs-fix-gate-doc-coherence-blockers-followup-batch
     name: dx91-self-docs.fix-gate-doc-coherence-blockers-followup-batch
-    status: pending
+    status: claimed
     description: 'Fix ALL remaining blockers found by `dx91-self-docs.dx91-self-docs-retest-gate-doc-coherence-blockers-batch`
       in ONE batched remediation pass for the narrowed `.invar/examples/` drift family.
 
@@ -20658,6 +20658,8 @@ phases:
     depends_on:
     - dx91-self-docs.dx91-self-docs-retest-gate-doc-coherence-blockers-batch
     agent: doc-reviewer
+    claimed_by: doc-reviewer
+    claimed_at: '2026-03-13T15:50:47.856327+00:00'
   - id: dx91-self-docs.dx91-self-docs-retest-gate-doc-coherence-blockers-followup-batch
     name: dx91-self-docs.retest-gate-doc-coherence-blockers-followup-batch
     status: pending
