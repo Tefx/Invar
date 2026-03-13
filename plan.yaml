@@ -19857,7 +19857,7 @@ phases:
       FILES-CHANGED: 6 files, 12 insertions(+), 10 deletions(-)'
   - id: dx91-self-docs.retest-self-docs-active-link-blockers-batch
     name: retest-self-docs-active-link-blockers-batch
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT TESTER (`blind-tester`), validate the batched
       active-docs link remediation from a fresh perspective.
 
@@ -19927,6 +19927,24 @@ phases:
     agent: blind-tester
     claimed_by: blind-tester
     claimed_at: '2026-03-13T14:58:52.333061+00:00'
+    done_at: '2026-03-13T15:05:41.150826+00:00'
+    evidence: "Gate decision: BLOCKED (sibling regressions remain)\n\nFindings:\n\
+      - blockers:\n  - `docs/agents.md` wrong DX-91 proposal base path (`../proposals/...`)\
+      \ in active docs surface\n  - `docs/reference/contracts/pre-post.md` stale moved-proposal\
+      \ link to non-completed DX-12 path\n  - `docs/reference/workflow/usbv.md` archive\
+      \ banner link to DX-91 uses wrong base path\n- should_fix:\n  - add active-doc\
+      \ scoped link checker and normalize proposal-link policy conventions\n- suggestions:\n\
+      \  - treat strikethrough links as first-class in QA; enforce active/archive\
+      \ allowlist checks\n\nEvidence inventory:\n- prior B1/B3/B4/B5 exemplars remain\
+      \ fixed\n- new blocker trio confirmed via targeted validators and sibling grep\
+      \ probes\n- verify-only run made no edits\n\nActive-vs-archive classification:\n\
+      - active blocking: `docs/agents.md`, `docs/reference/contracts/pre-post.md`\n\
+      - archive boundary quality blocker: `docs/reference/workflow/usbv.md` archive\
+      \ banner link misroutes\n\nBatched follow-up remediation created:\n- `dx91-self-docs.fix-self-docs-active-link-blockers-followup-batch`\n\
+      - `dx91-self-docs.retest-self-docs-active-link-blockers-followup-batch`\n- freeze/gate\
+      \ rewired behind new retest chain\n\nNotes:\n- This retest step is completed\
+      \ as issue-discovery evidence and transitioned to a single follow-up batched\
+      \ fix + independent retest loop.\n"
   - id: dx91-self-docs.fix-self-docs-active-link-blockers-followup-batch
     name: fix-self-docs-active-link-blockers-followup-batch
     status: pending
