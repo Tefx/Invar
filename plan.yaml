@@ -23552,7 +23552,7 @@ phases:
       \ inconsistent with active DX-91 mechanisms documentation in `docs/reference/index.md`."
   - id: dx91-release-readiness.fix-reference-classification-consistency-followup-batch
     name: fix-reference-classification-consistency-followup-batch
-    status: pending
+    status: claimed
     description: 'Fix ALL remaining blockers found by `dx91-release-readiness.retest-reference-classification-consistency-blockers`
       in ONE batched remediation step. Fix ALL of these, not just the first.
 
@@ -23725,6 +23725,8 @@ phases:
     depends_on:
     - dx91-release-readiness.retest-reference-classification-consistency-blockers
     agent: doc-reviewer
+    claimed_by: general
+    claimed_at: '2026-03-13T18:43:42.180897+00:00'
   - id: dx91-release-readiness.retest-reference-classification-consistency-followup-batch
     name: retest-reference-classification-consistency-followup-batch
     status: pending
