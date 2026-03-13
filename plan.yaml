@@ -23365,3 +23365,104 @@ phases:
     depends_on:
     - dx91-release-readiness.gate
     agent: doc-reviewer
+  - id: dx91-release-readiness.retest-reference-classification-consistency-blockers
+    name: retest-reference-classification-consistency-blockers
+    status: pending
+    description: 'As an INDEPENDENT TESTER (`integration-verifier`), validate closure
+      of the full reference-classification blocker family after `dx91-release-readiness.fix-reference-classification-consistency-blockers`.
+
+
+      YOUR GOAL IS TO FIND PROBLEMS, not to confirm one row edit.
+
+
+      step_type: verification
+
+      agent: integration-verifier
+
+      agent_source: default
+
+      prior_loop:
+
+      - dx91-release-readiness.gate
+
+      remaining_blocker: release readiness remains blocked until `docs/proposals/index.md`
+      and `docs/reference/index.md` agree that the reference index is active DX-91
+      mechanism documentation rather than archived material.
+
+      why_new_loop: the gate identified a classification inconsistency that survived
+      the earlier inventory-focused remediation loops, so this retest must verify
+      narrative reconciliation and sibling-row cleanup together.
+
+
+      spec_refs:
+
+      - `docs/proposals/index.md`
+
+      - `docs/reference/index.md`
+
+      - `docs/proposals/DX-91-simplification.md`
+
+
+      touch_paths:
+
+      - `docs/proposals/index.md`
+
+      - `docs/reference/index.md`
+
+
+      harness_refs:
+
+      - `dx91-release-readiness.fix-reference-classification-consistency-blockers`
+
+      - proposal-index classification rows for `docs/reference/**`
+
+      - active DX-91 mechanism headings/content in `docs/reference/index.md`
+
+
+      Independence Level: L1
+
+      review_depth: THOROUGH
+
+      cross_cutting_focus:
+
+      - `docs/reference/index.md` must be classified as active DX-91 mechanism documentation,
+      not archive
+
+      - adjacent proposal-index reference rows must not preserve stale archive wording
+      after the sibling search
+
+      - the reconciliation basis must be traceable from current `docs/reference/index.md`
+      content to the proposal-index narrative
+
+
+      Validate ALL blocker checks:
+
+      - `docs/proposals/index.md` no longer labels `docs/reference/index.md` as `Archive`
+
+      - the current content/headings in `docs/reference/index.md` support the classification
+      language used in the proposal index
+
+      - sibling-search across adjacent `docs/reference/**` rows finds no contradictory
+      archive wording or stale status language
+
+      - evidence explicitly states whether `dx91-release-readiness.gate` may reopen
+      or must remain BLOCKED
+
+
+      This retest must validate ALL of these, not just the first.'
+    verification: '- Main path: independent review confirms the `docs/reference/index.md`
+      row and surrounding proposal-index narrative now match the active DX-91 mechanism
+      docs surface
+
+      - Failure path: targeted searches across `docs/proposals/index.md` find no adjacent
+      reference classification row that still mislabels active docs as archived
+
+      - Proof: evidence includes the grep/search scope, the reconciled row outcome,
+      and the specific content in `docs/reference/index.md` used as the classification
+      basis
+
+      - Gate recommendation: state REOPEN only if the blocker family is fully closed;
+      otherwise remain BLOCKED with the exact stale row(s)'
+    depends_on:
+    - dx91-release-readiness.fix-reference-classification-consistency-blockers
+    agent: integration-verifier
