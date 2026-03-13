@@ -22984,7 +22984,7 @@ phases:
       \ legacy formatting persists"
   - id: dx91-release-readiness.fix-proposal-index-reconciliation-fs-inventory-blockers-followup-batch
     name: fix-proposal-index-reconciliation-fs-inventory-blockers-followup-batch
-    status: claimed
+    status: pending
     description: "Fix ALL blockers found by `dx91-release-readiness.retest-proposal-index-reconciliation-fs-inventory-blockers`\
       \ in ONE batched remediation step. Fix ALL of these, not just the first.\n\n\
       step_type: implementation\nagent: doc-reviewer\nagent_source: default\nprior_loop:\n\
@@ -23063,8 +23063,6 @@ phases:
     depends_on:
     - dx91-release-readiness.retest-proposal-index-reconciliation-fs-inventory-blockers
     agent: doc-reviewer
-    claimed_by: doc-reviewer
-    claimed_at: '2026-03-13T18:20:32.871915+00:00'
   - id: dx91-release-readiness.retest-proposal-index-reconciliation-fs-inventory-blockers-followup-batch
     name: retest-proposal-index-reconciliation-fs-inventory-blockers-followup-batch
     status: pending
