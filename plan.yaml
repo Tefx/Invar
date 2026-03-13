@@ -20881,7 +20881,7 @@ phases:
 
       - Evidence is independent and suitable for final gate review'
     depends_on:
-    - audit-dx91-consistency
+    - retest-dx91-consistency-blockers
     agent: blind-tester
   - id: freeze-release-candidate
     name: freeze-release-candidate
