@@ -19237,7 +19237,7 @@ phases:
       \ modified.\n"
   - id: update-proposals-index-and-crosslinks
     name: update-proposals-index-and-crosslinks
-    status: pending
+    status: claimed
     description: 'Update proposal index and repository cross-links so DX-91 is discoverable
       as the authoritative simplification direction and stale references do not point
       readers back to removed surfaces.
@@ -19263,6 +19263,8 @@ phases:
     depends_on:
     - update-runtime-owned-docs
     agent: doc-reviewer
+    claimed_by: doc-reviewer
+    claimed_at: '2026-03-13T14:16:49.925553+00:00'
   - id: verify-self-docs-surface
     name: verify-self-docs-surface
     status: pending
