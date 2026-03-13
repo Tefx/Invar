@@ -20468,7 +20468,7 @@ phases:
       '
   - id: dx91-self-docs.dx91-self-docs-retest-gate-doc-coherence-blockers-batch
     name: dx91-self-docs.retest-gate-doc-coherence-blockers-batch
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT TESTER (`blind-tester`), validate active self-doc
       coherence after `dx91-self-docs.dx91-self-docs-fix-gate-doc-coherence-blockers-batch`
       from a fresh-reader perspective.
@@ -20524,6 +20524,25 @@ phases:
     agent: blind-tester
     claimed_by: blind-tester
     claimed_at: '2026-03-13T15:41:15.538083+00:00'
+    done_at: '2026-03-13T15:50:13.346076+00:00'
+    evidence: "Gate decision: BLOCKED (remaining active blocker found)\n\nFindings:\n\
+      - blockers:\n  - active `.invar/examples/` references remain in `INVAR.md` while\
+      \ `.invar/examples` directory is removed\n- should_fix:\n  - historical/deprecation\
+      \ note in `docs/guides/multi-agent.md` still includes legacy init-flag example\n\
+      \  - active guide pages still link to deprecated multi-agent page\n- suggestions:\n\
+      \  - replace `.invar/examples` mentions with current canonical targets and keep\
+      \ legacy init examples only in archive/proposal surfaces\n\nEvidence inventory:\n\
+      - active init-flag drift largely cleaned; remaining blocker localized to canonical-protected\
+      \ INVAR content\n- `.invar/context.md` posture updated correctly to DX-91/DX-87\
+      \ state\n- no edits performed during verify-only retest\n\nActive-vs-archive\
+      \ classification:\n- active blocker: `INVAR.md` `.invar/examples/` references\n\
+      - canonical/protected historical references elsewhere acceptable\n- archive\
+      \ references in proposals/fixtures/archive acceptable\n\nBatched remediation\
+      \ created:\n- `dx91-self-docs.dx91-self-docs-fix-gate-doc-coherence-blockers-followup-batch`\n\
+      - `dx91-self-docs.dx91-self-docs-retest-gate-doc-coherence-blockers-followup-batch`\n\
+      - `dx91-self-docs.gate` now depends on the new follow-up loop\n\nNotes:\n- Follow-up\
+      \ fix step explicitly routes through compliant INVAR source-of-truth paths instead\
+      \ of direct protected-file editing.\n"
   - id: dx91-self-docs.dx91-self-docs-fix-gate-doc-coherence-blockers-followup-batch
     name: dx91-self-docs.fix-gate-doc-coherence-blockers-followup-batch
     status: pending
