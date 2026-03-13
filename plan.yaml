@@ -20981,7 +20981,7 @@ phases:
     agent: gate-reviewer
   - id: fix-dx91-consistency-blockers
     name: fix-dx91-consistency-blockers
-    status: pending
+    status: claimed
     description: 'Fix ALL blockers found by `audit-dx91-consistency` together; do
       not stop after the first issue.
 
@@ -21075,6 +21075,8 @@ phases:
     depends_on:
     - audit-dx91-consistency
     agent: python-senior
+    claimed_by: python-senior
+    claimed_at: '2026-03-13T16:24:24.961563+00:00'
   - id: retest-dx91-consistency-blockers
     name: retest-dx91-consistency-blockers
     status: pending
