@@ -18779,7 +18779,7 @@ phases:
       \ evidence; progression now flows through the new batched follow-up chain.\n"
   - id: dx91-python-only.dx91-python-only-fix-remaining-gate-blockers
     name: dx91-python-only.fix-remaining-gate-blockers
-    status: claimed
+    status: done
     description: 'Fix ALL remaining blockers from `dx91-python-only.dx91-python-only-retest-gate-blockers`
       in ONE batched remediation step by applying the confirmed product decision:
       DX-91 fully retires `invar uninstall`. Fix ALL of these, not just the first.
@@ -18954,6 +18954,101 @@ phases:
     agent: python-senior
     claimed_by: python-senior
     claimed_at: '2026-03-13T10:59:22.310606+00:00'
+    done_at: '2026-03-13T11:10:05.370675+00:00'
+    evidence: 'Artifact:
+
+      - Main squash commit: `461aea3`
+
+      - Worktree commit: `410264c5e56fa4c04b1a68ce64c37bcde8f64d50`
+
+
+      Files changed:
+
+      - `README.md`
+
+      - `docs/design.md`
+
+      - `docs/test-reports/DX-91-init-runtime-freeze.md`
+
+      - `src/invar/shell/skill_manager.py`
+
+      - `tests/integration/test_dx91_destructive_regression_harness.py`
+
+      - `tests/integration/test_lx07_skills.py`
+
+
+      Verification:
+
+      - `uv run invar --help` confirms active commands: `guard, version, map, sig,
+      refs, rules, init, mcp, doc, dev` (no uninstall/test/verify/mutate/hooks/skill)
+
+      - `invar_guard(changed=true)` in worker -> passed
+
+      - `uv run pytest -q tests/integration/test_dx91_init_entrypoints.py tests/integration/test_dx91_destructive_regression_harness.py
+      tests/integration/test_dx78_ts_compiler.py` -> `19 passed`
+
+      - `uv run pytest -q tests/integration/test_dx91_destructive_regression_harness.py
+      tests/integration/test_lx07_skills.py tests/integration/test_dx78_ts_compiler.py`
+      -> `11 passed, 28 skipped`
+
+      - Main merge commit hooks: INVAR.md Protection PASS, Ruff PASS, mypy PASS, Invar
+      Guard PASS
+
+
+      B1 sibling-search coverage:
+
+      - `rg -n "\buninstall\b|invar\.shell\.commands\.uninstall|collect_removal_targets|execute_removal"`
+      over active docs/tests/skill-manager surfaces
+
+      - result: active-surface uninstall requirement removed; remaining mentions explicitly
+      archival/historical where retained
+
+
+      B3 sibling-search coverage:
+
+      - `rg -n "\btest\b|\bverify\b|\bmutate\b|\bhooks\b|\bhskill\b|init --claude|uninstall"`
+      over active docs/design/tests
+
+      - result: active docs/table/help aligned with actual CLI surface; removed `init
+      --claude` and uninstall active guidance
+
+
+      B2 regression coverage:
+
+      - `rg -n "\.ts\b|TypeScript|typescript|ts_compiler|vitest|eslint|tsc"` over
+      touched active surfaces
+
+      - no new TS runtime guidance introduced; TS-retirement regression test remains
+      green (`test_dx78_ts_compiler.py`)
+
+
+      Residue classification:
+
+      - active-blocker: none
+
+      - historical/archival only: proposals/history corpus and freeze report note
+      (explicitly marked archival)
+
+      - compatibility-only: retired LX-07 skill test module now explicitly historical
+      via skip rationale
+
+
+      Spec link:
+
+      - `dx91-python-only.dx91-python-only-fix-remaining-gate-blockers`
+
+      - refs: `docs/proposals/DX-91-simplification.md`, `docs/proposals/DX-91-migration-semantics.md`,
+      `DX-91-REGRESSION-SURFACES.md`
+
+
+      Gaps/Notes:
+
+      - Uninstall command/module was not restored per user decision; cleanup path
+      enforces retirement policy.
+
+      - No changes to plan/orchestrator state files.
+
+      '
   - id: dx91-python-only.dx91-python-only-retest-remaining-gate-blockers
     name: dx91-python-only.retest-remaining-gate-blockers
     status: pending
