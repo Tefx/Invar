@@ -23707,3 +23707,112 @@ phases:
     depends_on:
     - dx91-release-readiness.retest-reference-classification-consistency-blockers
     agent: doc-reviewer
+  - id: dx91-release-readiness.retest-reference-classification-consistency-followup-batch
+    name: retest-reference-classification-consistency-followup-batch
+    status: pending
+    description: 'As an INDEPENDENT TESTER (`integration-verifier`), validate closure
+      of the full remaining reference-classification blocker family after `dx91-release-readiness.fix-reference-classification-consistency-followup-batch`.
+
+
+      YOUR GOAL IS TO FIND PROBLEMS, not to confirm one edited row.
+
+
+      step_type: verification
+
+      agent: integration-verifier
+
+      agent_source: default
+
+      prior_loop:
+
+      - dx91-release-readiness.fix-reference-classification-consistency-blockers
+
+      - dx91-release-readiness.retest-reference-classification-consistency-blockers
+
+      - dx91-release-readiness.fix-reference-classification-consistency-followup-batch
+
+      remaining_blocker: release readiness remains blocked until `docs/proposals/index.md`
+      and `docs/reference/index.md` agree in the live retest worktree that the reference
+      index is active DX-91 mechanism documentation rather than archived historical
+      material.
+
+      why_new_loop: the previous retest found a surviving contradictory row; this
+      independent retest verifies the entire contradiction family again and explicitly
+      guards against stale-state pass-through.
+
+
+      spec_refs:
+
+      - `docs/proposals/index.md`
+
+      - `docs/reference/index.md`
+
+      - `docs/proposals/DX-91-simplification.md`
+
+
+      touch_paths:
+
+      - `docs/proposals/index.md`
+
+      - `docs/reference/index.md`
+
+
+      harness_refs:
+
+      - `dx91-release-readiness.fix-reference-classification-consistency-followup-batch`
+
+      - proposal-index classification rows and surrounding narrative for `docs/reference/**`
+
+      - active headings/content in `docs/reference/index.md` used as classification
+      basis
+
+
+      Independence Level: L1
+
+      review_depth: THOROUGH
+
+      cross_cutting_focus:
+
+      - the exact stale archive row must be absent from the live retest worktree
+
+      - current `docs/reference/index.md` headings/content must support the active
+      classification language used in the proposal index
+
+      - sibling `docs/reference/**` rows and nearby narrative must not preserve equivalent
+      archive wording after the follow-up batch
+
+      - robustness check must confirm downstream retest is reading the updated working
+      tree, not prior-loop state
+
+
+      Validate ALL blocker checks:
+
+      - `docs/proposals/index.md` in the retest working tree no longer contains `|
+      docs/reference/index.md | **Archive** — Contains USBV references (historical)
+      |`
+
+      - the live `docs/reference/index.md` content (including `# Invar Mechanisms`)
+      supports the active classification/narrative now used in the proposal index
+
+      - sibling-search across adjacent `docs/reference/**` rows and nearby narrative
+      finds no contradictory archive/historical wording for this blocker family
+
+      - evidence explicitly states whether `dx91-release-readiness.gate` may reopen
+      or must remain BLOCKED
+
+
+      This retest must validate ALL of these, not just the first.'
+    verification: '- Main path: independent review of the live retest worktree confirms
+      the corrected row/narrative is present and consistent with `docs/reference/index.md`
+
+      - Failure path: targeted searches across `docs/proposals/index.md` find no stale
+      exact row or sibling archive contradiction in adjacent reference rows/narrative
+
+      - Robustness: evidence quotes the post-fix row/narrative from the same working
+      tree used for retest so stale-state pass-through is ruled out
+
+      - Gate recommendation: state REOPEN only if the blocker family is fully closed;
+      otherwise remain BLOCKED with the exact stale row(s) or narrative'
+    depends_on:
+    - dx91-release-readiness.fix-reference-classification-consistency-followup-batch
+    agent: integration-verifier
