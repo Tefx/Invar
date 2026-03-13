@@ -19855,7 +19855,7 @@ phases:
       FILES-CHANGED: 6 files, 12 insertions(+), 10 deletions(-)'
   - id: dx91-self-docs.retest-self-docs-active-link-blockers-batch
     name: retest-self-docs-active-link-blockers-batch
-    status: pending
+    status: claimed
     description: 'As an INDEPENDENT TESTER (`blind-tester`), validate the batched
       active-docs link remediation from a fresh perspective.
 
@@ -19923,6 +19923,8 @@ phases:
     depends_on:
     - dx91-self-docs.fix-self-docs-active-link-blockers-batch
     agent: blind-tester
+    claimed_by: blind-tester
+    claimed_at: '2026-03-13T14:58:52.333061+00:00'
 - id: dx91-release-readiness
   name: DX-91 Release Readiness Audit
   status: locked
