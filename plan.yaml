@@ -20932,7 +20932,7 @@ phases:
       \ full raw command outputs suitable for final gate review.\n"
   - id: freeze-release-candidate
     name: freeze-release-candidate
-    status: claimed
+    status: done
     description: 'Freeze the DX-91 release candidate snapshot before the final publish/merge
       recommendation is made.
 
@@ -20957,6 +20957,73 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-13T16:48:01.067162+00:00'
+    done_at: '2026-03-13T16:54:31.165044+00:00'
+    evidence: 'Freeze decision: READY
+
+
+      Commands run:
+
+      - `git status --porcelain=v1 --branch` (clean branch status)
+
+      - `git status --short` (no output)
+
+      - `git rev-parse HEAD`
+
+      - `git show -s --format=''%ci %h %s'' HEAD`
+
+      - `git log --oneline --decorate -n 12`
+
+      - `git diff --name-status e679ff16..HEAD`
+
+      - `git diff --name-status e679ff16..HEAD -- . '':(exclude)plan.yaml''`
+
+      - environment capture (`pwd`, `uname`, `python3 --version`)
+
+
+      Snapshot commit:
+
+      - `e3a27b46f46a9b320b6a25ce9a51b041b36547c7`
+
+
+      Working tree status:
+
+      - clean (no staged/unstaged/untracked changes)
+
+
+      Environment declaration:
+
+      - isolated worktree: `.vectl/worktrees/freeze-release-candidate`
+
+      - branch: `vectl/step-freeze-release-candidate`
+
+      - OS/Python: Darwin / Python 3.14.3
+
+
+      Frozen release surfaces:
+
+      - final audit entrypoints from `retest-dx91-consistency-blockers`
+
+      - final smoke entrypoints from `prove-final-init-install-smoke`
+
+      - runtime/help/install/migration and retired-command fail-closed checks listed
+      explicitly in prior evidence chain
+
+
+      Files changed:
+
+      - since smoke commit: `plan.yaml` only
+
+      - non-`plan.yaml` tracked drift: none
+
+
+      Notes:
+
+      - Freeze reassessment treats `plan.yaml` churn as orchestrator metadata, non-blocking
+      for product artifact freeze.
+
+      - release-candidate snapshot is ready for final phase gate review.
+
+      '
   - id: dx91-release-readiness.gate
     name: dx91-release-readiness.gate
     status: pending
