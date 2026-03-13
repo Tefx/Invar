@@ -20247,7 +20247,7 @@ phases:
       \ completed in isolated worktree; no code/doc/plan file edits.\n"
   - id: dx91-self-docs.dx91-self-docs-fix-gate-doc-coherence-blockers-batch
     name: dx91-self-docs.fix-gate-doc-coherence-blockers-batch
-    status: pending
+    status: claimed
     description: 'Fix ALL blockers found by `dx91-self-docs.gate` in ONE batched remediation
       pass for active DX-91 self-doc coherence.
 
@@ -20391,6 +20391,8 @@ phases:
     depends_on:
     - dx91-self-docs.retest-self-docs-active-link-blockers-followup-batch
     agent: doc-reviewer
+    claimed_by: doc-reviewer
+    claimed_at: '2026-03-13T15:34:55.746135+00:00'
   - id: dx91-self-docs.dx91-self-docs-retest-gate-doc-coherence-blockers-batch
     name: dx91-self-docs.retest-gate-doc-coherence-blockers-batch
     status: pending
