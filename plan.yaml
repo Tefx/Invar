@@ -21026,7 +21026,7 @@ phases:
       '
   - id: dx91-release-readiness.gate
     name: dx91-release-readiness.gate
-    status: claimed
+    status: done
     description: 'Gate review: determine whether the repository is genuinely ready
       to recommend DX-91 as the active product direction.
 
@@ -21086,7 +21086,24 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-13T18:30:22.983184+00:00'
-    done_at: '2026-03-13T17:03:08.577859+00:00'
+    done_at: '2026-03-13T18:36:32.937244+00:00'
+    evidence: "Gate-reviewer audit completed with BLOCKED outcome.\n\nVerification\
+      \ (commands + outputs/results)\n- Gate worktree/branch created and verified\
+      \ clean (`git status --short --branch` => clean verify-only branch).\n- Reviewed\
+      \ artifacts: `docs/proposals/index.md`, `docs/reference/index.md`, `docs/proposals/DX-91-simplification.md`.\n\
+      - Checked remediation commit `3bc94c14436776f310b4a99108918efe3ac471f5` and\
+      \ related plan evidence showing totals/coverage closure (`107`, no missing rows,\
+      \ legacy link outliers closed).\n- Recomputed row counts/grand totals against\
+      \ remediated index: coherent for inventory dimension.\n- Coherence check found\
+      \ contradiction:\n  - `docs/reference/index.md` is active DX-91 mechanism documentation.\n\
+      \  - proposal index row classifies `docs/reference/index.md` as `Archive`/historical\
+      \ USBV.\n\nGate decision\n- BLOCKED\n\nfindings\n- blockers:\n  - `docs/proposals/index.md`\
+      \ still misclassifies `docs/reference/index.md` as Archive while the referenced\
+      \ document is active DX-91 mechanism content; runtime/docs/proposal-index consistency\
+      \ unresolved.\n- should_fix: []\n- suggestions: []\n- tech_debt: []\n\nFiles\
+      \ changed\n- none\n\nGaps/Notes\n- Gate step remained verify-only.\n- As required\
+      \ by batched-fix protocol, new remediation loop has been added post-gate failure\
+      \ to address all detected blockers before rerunning gate."
     rejection_reason: New remediation loop added for remaining release-facing guide
       and proposal-index blockers; gate must rerun after `dx91-release-readiness.retest-release-guides-proposal-index-remaining-blockers`
       completes.
