@@ -21518,3 +21518,133 @@ phases:
     depends_on:
     - retest-dx91-consistency-blockers
     agent: doc-reviewer
+  - id: dx91-release-readiness.retest-doc-runtime-proposal-index-blockers
+    name: retest-doc-runtime-proposal-index-blockers
+    status: pending
+    description: 'As an INDEPENDENT REVIEWER (`gate-reviewer`), re-test the FULL blocker
+      set from `dx91-release-readiness.gate` after `dx91-release-readiness.fix-doc-runtime-proposal-index-blockers`.
+
+
+      YOUR GOAL IS TO FIND REMAINING PROBLEMS, not to confirm the first blocker moved.
+
+
+      step_type: verification
+
+      agent: gate-reviewer
+
+      agent_source: default
+
+      prior_loop:
+
+      - dx91-release-readiness.fix-dx91-consistency-blockers
+
+      - dx91-release-readiness.retest-dx91-consistency-blockers
+
+      - dx91-release-readiness.gate
+
+      remaining_blocker: release readiness remains blocked until runtime, active docs,
+      and proposal-index status all agree on the simplified DX-91 surface.
+
+      why_new_loop: the gate narrowed the residual blocker family to active-surface
+      drift and proposal-index status mismatch; this retest verifies the whole family
+      together instead of allowing another location-by-location pass.
+
+
+      spec_refs:
+
+      - `docs/proposals/DX-91-simplification.md`
+
+      - `docs/proposals/index.md`
+
+      - `README.md`
+
+      - `docs/guides/pi.md`
+
+      - `docs/guides/cursor.md`
+
+      - `docs/guides/continue.md`
+
+      - `docs/guides/cline.md`
+
+      - `.invar/context.md`
+
+      - `.invar/project-additions.md`
+
+
+      touch_paths:
+
+      - runtime/help evidence surface for current DX-91 behavior
+
+      - `README.md`
+
+      - `docs/guides/pi.md`
+
+      - `docs/guides/cursor.md`
+
+      - `docs/guides/continue.md`
+
+      - `docs/guides/cline.md`
+
+      - `.invar/context.md`
+
+      - `.invar/project-additions.md`
+
+      - `docs/proposals/index.md`
+
+      - optional touched section in `docs/proposals/DX-91-simplification.md`
+
+
+      harness_refs:
+
+      - `dx91-release-readiness.audit-dx91-consistency`
+
+      - `dx91-release-readiness.prove-final-init-install-smoke`
+
+      - runtime/help output used as the authoritative comparison surface
+
+
+      Independence Level: L1
+
+      review_depth: THOROUGH
+
+      cross_cutting_focus:
+
+      - Runtime/help, active docs, and proposal-index status must agree on the same
+      DX-91 release-facing story
+
+      - Retired USBV / ceremony / rules / update-flow guidance must be absent from
+      active surfaces
+
+      - Optional proposal wording is non-blocking unless touched, but any touched
+      contradictory wording must also be coherent
+
+
+      Validate ALL blocker families:
+
+      - B1 active docs no longer expose retired pre-DX-91 workflow/setup guidance
+
+      - B2 proposal-index status matches current repo state and no longer marks already-fixed
+      surfaces as update-needed
+
+      - Optional note check: if `docs/proposals/DX-91-simplification.md` was touched,
+      the touched rules/version and MCP generation wording no longer contradict runtime
+
+
+      This re-test must verify ALL of these, not just the first.'
+    verification: '- Main path: independent review confirms runtime/help, active docs,
+      and `docs/proposals/index.md` now tell one coherent DX-91 release-readiness
+      story
+
+      - Failure path: focused searches for retired workflow/setup guidance and stale
+      `update-needed` index drift find no remaining active-surface blocker in the
+      listed files
+
+      - Boundary path: if `docs/proposals/DX-91-simplification.md` was touched, the
+      edited wording is checked for runtime consistency; otherwise it is recorded
+      as non-blocking untouched proposal debt
+
+      - Evidence distinguishes active release-facing surfaces from proposal/history/archive
+      material and states whether the final gate should remain BLOCKED or may proceed'
+    depends_on:
+    - dx91-release-readiness.fix-doc-runtime-proposal-index-blockers
+    agent: gate-reviewer
