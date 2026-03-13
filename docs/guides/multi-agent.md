@@ -1,7 +1,7 @@
 # Using Invar with Different Coding Agents
 
 > **⚠️ DEPRECATED:** This guide describes the pre-DX-91 multi-agent approach (skills, hooks, USBV workflow).
-> Per [DX-91](./proposals/DX-91-simplification.md), Invar is now **Python-only and agent-agnostic**.
+> Per [DX-91](../proposals/DX-91-simplification.md), Invar is now **Python-only and agent-agnostic**.
 > See `CLAUDE.md` (in your project root) and `INVAR.md` for the current simplified approach.
 
 Invar's core value—contract-driven development and automated verification—works with any AI coding agent. This guide covers integration with popular alternatives to Claude Code.
@@ -208,41 +208,26 @@ Or if installed in a virtual environment:
 
 ---
 
-## Multi-Agent Setup (DX-81)
+## Multi-Agent Setup (Historical)
+
+> **Note:** Multi-agent init (`invar init --claude --pi`) was removed per [DX-87](../proposals/DX-87-remove-multi-agent-init.md) as part of DX-91 simplification.
+> 
+> **Current approach:** Use `invar init` (interactive) for any single agent. For multiple agents in the same project, run init separately for each agent you need.
 
 **Use multiple agents in the same project**
 
 ```bash
-# Setup both Claude Code and Pi
-invar init --claude --pi
+# Setup for Claude Code
+uvx invar-tools init    # Select "Claude Code"
 
-# Or interactive mode (select multiple with Space key)
-invar init  # Choose both "Claude Code" and "Pi Coding Agent"
+# Setup for Pi (same project, additional agent)
+uvx invar-tools init    # Select "Pi"
 ```
 
 **What gets installed:**
-- `.claude/hooks/` — Claude Code hooks (4 files)
-- `.pi/hooks/` — Pi hooks (1 file)
-- Shared files: `CLAUDE.md`, `.claude/skills/`, `.invar/`
-
-**Use cases:**
-- **Team collaboration** — Different team members use different agents
-- **Agent switching** — Have both configured, use either
-- **Open source** — Contributors can choose their preferred agent
-
-**File structure:**
-```
-project/
-├── CLAUDE.md              # Shared by both agents
-├── .claude/
-│   ├── skills/            # Shared by both agents
-│   └── hooks/             # Claude Code only
-├── .pi/
-│   └── hooks/             # Pi only
-└── .mcp.json              # Claude Code MCP config
-```
-
-**No conflicts:** All files designed for coexistence. Shared files (CLAUDE.md, skills) work identically for both agents. Isolated files (.claude/hooks/, .pi/hooks/) never interfere.
+- `CLAUDE.md` — Protocol reference (shared)
+- `.invar/` — Project context and cache (shared)
+- Agent-specific configuration in respective directories
 
 ---
 
@@ -250,38 +235,20 @@ project/
 
 ### Adding a Second Agent
 
-Already using Claude Code or Pi? Add the other agent:
+Already using Claude Code? Add Pi:
 
 ```bash
 # Already have Claude Code, add Pi
-invar init --pi
-
-# Already have Pi, add Claude Code
-invar init --claude
-
-# Or use combined command (safe, no duplicates)
-invar init --claude --pi
+uvx invar-tools init    # Select "Pi" - shared files safely merged
 ```
 
-All shared files (CLAUDE.md, skills) are safely merged. Only agent-specific hooks are added.
-
-### From Claude Code to Pi
-
-No migration needed! Pi reads the same files:
-- CLAUDE.md → works in Pi
-- .claude/skills/ → works in Pi
-- Just run `invar init --pi` to add Pi hooks
+All shared files (CLAUDE.md, .invar/) are safely merged.
 
 ### From Claude Code to Others
 
-1. Run `invar init` → select "Other (AGENT.md)"
-2. Copy AGENT.md content to target instruction file
+1. Run `uvx invar-tools init` → select your agent
+2. Copy protocol content to target instruction file
 3. Configure MCP (if supported)
-
-### From Others to Claude Code
-
-1. Run `invar init --claude`
-2. All features auto-configured (skills, hooks, MCP)
 
 ---
 

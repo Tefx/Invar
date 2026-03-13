@@ -54,7 +54,7 @@
  - **PyPI:** `invar-tools` v1.17.12 + `invar-runtime` v1.3.0
 - **Protocol:** v5.0 (4-phase workflow, DX-58 critical section)
  - **Status:** Feature complete, Python-only surface stabilization in progress
- - **Recent:** DX-22 (Fix-or-Explain complexity), LX-06 (Unbundled eslint-plugin), DX-81 (Multi-agent init), v1.17.11 (Agent First output)
+ - **Recent:** DX-91 (Python-only simplification), DX-87 (Removed multi-agent init), v1.17.12 (Guard hardening)
 - **Blockers:** None
 
 ## Active Work
@@ -142,7 +142,7 @@ gh release create vX.Y.Z --title "vX.Y.Z - Title" --notes "..."
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| 1.15.0 | 2026-01 | Multi-agent init support (DX-81), checkbox selection UI |
+| 1.17.0 | 2026-03 | Python-only surface, removed multi-agent init (DX-91) |
 | 1.14.0 | 2026-01 | Invar usage feedback collection (DX-79), anonymization tools |
 | 1.12.0 | 2026-01 | Compiler API integration (DX-78), multi-language refs |
 | 1.9.0 | 2026-01 | Extension Skills (LX-07), language support foundation (LX-05/06) |
