@@ -20728,7 +20728,7 @@ phases:
       '
   - id: dx91-self-docs.dx91-self-docs-retest-gate-doc-coherence-blockers-followup-batch
     name: dx91-self-docs.retest-gate-doc-coherence-blockers-followup-batch
-    status: pending
+    status: claimed
     description: 'As an INDEPENDENT TESTER (`blind-tester`), validate the narrowed
       `.invar/examples/` blocker-family remediation after `dx91-self-docs.dx91-self-docs-fix-gate-doc-coherence-blockers-followup-batch`
       from a fresh-reader perspective.
@@ -20788,6 +20788,8 @@ phases:
     depends_on:
     - dx91-self-docs.dx91-self-docs-fix-gate-doc-coherence-blockers-followup-batch
     agent: blind-tester
+    claimed_by: blind-tester
+    claimed_at: '2026-03-13T16:02:55.048879+00:00'
 - id: dx91-release-readiness
   name: DX-91 Release Readiness Audit
   status: locked
