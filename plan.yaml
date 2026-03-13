@@ -21317,7 +21317,7 @@ phases:
       '
   - id: dx91-release-readiness.fix-doc-runtime-proposal-index-blockers
     name: fix-doc-runtime-proposal-index-blockers
-    status: claimed
+    status: done
     description: 'Fix ALL remaining release-readiness blockers from `dx91-release-readiness.gate`
       in ONE batched remediation step. Fix ALL of these, not just the first.
 
@@ -21535,6 +21535,122 @@ phases:
     agent: doc-reviewer
     claimed_by: doc-reviewer
     claimed_at: '2026-03-13T17:03:38.705346+00:00'
+    done_at: '2026-03-13T17:13:22.372823+00:00'
+    evidence: 'BATCHED BLOCKER REMEDIATION COMPLETE
+
+
+      ## Blockers Fixed
+
+
+      ### B1: Active docs exposing retired pre-DX-91 workflow guidance — RESOLVED
+
+
+      **Files Modified (8):**
+
+      1. **README.md** — Session Protocol → Verification Status; added historical
+      note
+
+      2. **docs/guides/pi.md** — Added archive header; removed .claude/skills refs;
+      removed USBV ceremony; added historical notes for retired features
+
+      3. **docs/guides/cursor.md** — Removed USBV/hooks ceremony; kept rules guidance;
+      added historical note
+
+      4. **docs/guides/continue.md** — Removed USBV/skills/Check-In/Final; added historical
+      note
+
+      5. **docs/guides/cline.md** — Removed USBV/Check-In/Final; simplified to 3-phase
+      workflow; added historical note
+
+      6. **.invar/context.md** — Updated workflow description to "Contracts first
+      → Build → Validate"; removed 4-phase references
+
+      7. **.invar/project-additions.md** — Added contracts-first rule; no retired
+      surface references
+
+
+      **Key Pattern:** All retired features (USBV ceremony, skills, hooks, Check-In/Final)
+      now explicitly marked as **historical** with clear non-active disclaimers.
+
+
+      ### B2: Proposal-index active status drift — RESOLVED
+
+
+      **docs/proposals/index.md changes:**
+
+      - Updated Cross-Reference: Active Navigation table
+
+      - Changed all corrected surfaces from "Update needed" → **Active** (README,
+      pi.md, cursor.md, continue.md, cline.md, .invar/*)
+
+      - Changed usbv.md, AGENTS.md, reference/index.md → **Archive** (clear historical
+      classification)
+
+
+      ## Verification
+
+
+      ### Sibling Search Coverage
+
+      - Searched: USBV, Check-In, Final:, .claude/skills, .cursor/rules, invar update,
+      four-phase
+
+      - Active surfaces: Clean or contain only **explicit historical notes**
+
+      - Archive/proposal content: Retains references (intentional for historical context)
+
+      - Test fixtures: Exempt (verify migration behavior)
+
+
+      ### Active vs Archive Classification (Post-Fix)
+
+      | Classification | Documents |
+
+      |---------------|-----------|
+
+      | **Active** | README, cursor.md, continue.md, cline.md, .invar/* (all updated
+      to DX-91) |
+
+      | **Archive** | pi.md (archive header), usbv.md, AGENTS.md, reference/index.md
+      |
+
+
+      ### Residual Risks
+
+      - Archive content may still contain retired terms: **Accepted** (intentionally
+      non-active)
+
+      - Template source files unchanged: **Accepted** (separate from release-facing
+      docs)
+
+
+      ## Git Evidence
+
+      ```
+
+      commit 36af7f6
+
+      9 files changed, 246 insertions(+), 476 deletions(-)
+
+      ```
+
+
+      ## Completion Criteria Met
+
+      - ✅ All blockers fixed in one coherent pass
+
+      - ✅ Active docs present DX-91 Python-only workflow
+
+      - ✅ Proposal index matches post-fix repo state
+
+      - ✅ Historical content clearly marked as non-active
+
+      - ✅ Sibling-search coverage confirmed
+
+      - ✅ All changes committed to worktree branch
+
+
+      **Status:** Ready for retest-dx91-consistency-blockers gate verification.'
   - id: dx91-release-readiness.retest-doc-runtime-proposal-index-blockers
     name: retest-doc-runtime-proposal-index-blockers
     status: pending
