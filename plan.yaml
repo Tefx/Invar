@@ -20954,3 +20954,99 @@ phases:
     - prove-final-init-install-smoke
     - freeze-release-candidate
     agent: gate-reviewer
+  - id: fix-dx91-consistency-blockers
+    name: fix-dx91-consistency-blockers
+    status: pending
+    description: 'Fix ALL blockers found by `audit-dx91-consistency` together; do
+      not stop after the first issue.
+
+
+      ## Blockers to Fix (ALL of these, not just the first)
+
+
+      ### B1: Harness drift in active DX-91 dev-sync suite
+
+      Locations: `tests/integration/test_dx91_dev_sync_template_merge.py` and any
+      runtime/template-manifest paths governing `.invar/context.md`, `create_only`,
+      `template_sync`, or `manifest.toml` behavior.
+
+      Remediation: align harness expectations OR runtime semantics coherently with
+      the DX-91 contract so create/skip behavior, template manifest handling, and
+      actual runtime behavior agree.
+
+      Grep hint: `dx91_dev_sync_template_merge|create_only|context\.md|template_sync|manifest\.toml`
+
+      IMPORTANT: search for sibling assertions, fixtures, helpers, and runtime call
+      sites beyond the named test file before claiming the blocker fixed.
+
+
+      ### B2: Active docs drift vs runtime command surface
+
+      Locations: `docs/reference/documentation.md`, `docs/reference/workflow/session-start.md`,
+      `docs/reference/agent-information-hierarchy.md`, plus any other active DX-91
+      reference docs still describing retired surfaces.
+
+      Remediation: align active docs with the current CLI/runtime DX-91 surface; archive-label
+      or clearly mark historical content rather than leaving retired surfaces presented
+      as current.
+
+      Grep hint: `invar update|\.claude/commands|Check-In|Final|USBV|skills|hooks`
+
+      IMPORTANT: perform sibling-search across active reference docs, workflow docs,
+      and top-level guidance so no parallel active page keeps the retired surface
+      alive.
+
+
+      ### B3: README install/generated surfaces drift
+
+      Locations: `README.md` and any install/init docs describing generated or installed
+      surfaces.
+
+      Remediation: align the generated-surface/install guidance with the real fresh-init
+      output; do not claim `.invar/` or `.mcp.json` are produced unless the current
+      init flow actually does so.
+
+      Grep hint: `\.mcp\.json|\.invar/|generated|installed`
+
+      IMPORTANT: search sibling install/setup references so README fixes do not leave
+      contradictory setup claims elsewhere.
+
+
+      ## Completion Criteria
+
+      - ALL blockers fixed together, not just B1
+
+      - Sibling search completed for each blocker family
+
+      - Runtime, tests, README, and active docs all describe the same DX-91 surface
+
+      - Any archived or historical guidance is explicitly labeled as historical/non-active
+
+
+      ## Evidence Guidance
+
+      Provide concrete evidence for each blocker family, including the sibling search
+      performed and the exact files changed.
+
+
+      Optional suggestions to record if encountered while fixing (non-blocking unless
+      they expand into an active-surface contradiction):
+
+      - proposal/runtime mismatch around `rules`/`version` references
+
+      - proposal index drift coverage for active reference docs'
+    verification: '- Each blocker family is addressed with file-specific evidence
+      and sibling-search notes
+
+      - Grep-guided follow-up search shows no remaining active-surface contradictions
+      for the listed blocker patterns, or explains any intentionally historical retained
+      reference
+
+      - Main path: DX-91 runtime/tests/docs/README agree on the active Python-only
+      command surface
+
+      - Failure path: evidence explicitly covers stale harness expectations and retired-surface
+      doc leakage'
+    depends_on:
+    - audit-dx91-consistency
+    agent: python-senior
