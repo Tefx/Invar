@@ -21300,3 +21300,221 @@ phases:
       on DX-91 Python-only release shape for audited blocker families.
 
       '
+  - id: dx91-release-readiness.fix-doc-runtime-proposal-index-blockers
+    name: fix-doc-runtime-proposal-index-blockers
+    status: pending
+    description: 'Fix ALL remaining release-readiness blockers from `dx91-release-readiness.gate`
+      in ONE batched remediation step. Fix ALL of these, not just the first.
+
+
+      step_type: implementation
+
+      agent: doc-reviewer
+
+      agent_source: default
+
+      prior_loop:
+
+      - dx91-release-readiness.fix-dx91-consistency-blockers
+
+      - dx91-release-readiness.retest-dx91-consistency-blockers
+
+      - dx91-release-readiness.gate
+
+      remaining_blocker: active release-facing docs and proposal index still drift
+      from the shipped DX-91 Python-only runtime and continue to expose retired pre-DX-91
+      workflow/setup guidance.
+
+      why_new_loop: the earlier release-readiness remediation closed broader DX-91
+      consistency work, but the current gate narrowed the blocker family to release-facing
+      doc/runtime/proposal-index drift; one batched docs remediation is required to
+      avoid another fragmented loop.
+
+
+      spec_refs:
+
+      - `docs/proposals/DX-91-simplification.md`
+
+      - `docs/proposals/index.md`
+
+      - `README.md`
+
+      - `docs/guides/pi.md`
+
+      - `docs/guides/cursor.md`
+
+      - `docs/guides/continue.md`
+
+      - `docs/guides/cline.md`
+
+      - `.invar/context.md`
+
+      - `.invar/project-additions.md`
+
+
+      touch_paths:
+
+      - `README.md`
+
+      - `docs/guides/pi.md`
+
+      - `docs/guides/cursor.md`
+
+      - `docs/guides/continue.md`
+
+      - `docs/guides/cline.md`
+
+      - `.invar/context.md`
+
+      - `.invar/project-additions.md`
+
+      - `docs/proposals/index.md`
+
+      - optionally touched proposal text in `docs/proposals/DX-91-simplification.md`
+      only if needed to remove direct contradiction while fixing B2 notes
+
+
+      harness_refs:
+
+      - `dx91-release-readiness.audit-dx91-consistency`
+
+      - `dx91-release-readiness.prove-final-init-install-smoke`
+
+      - current DX-91 runtime/help surface and active docs/proposal index consistency
+      review
+
+
+      known_risks:
+
+      - Release guidance can drift across README, IDE guides, and `.invar/*` surfaces
+      independently unless all active surfaces are rewritten together.
+
+      - Proposal index status can contradict runtime reality even when individual
+      docs are corrected.
+
+      - Optional proposal wording cleanup must stay non-blocking unless the step touches
+      that proposal to remove a direct contradiction.
+
+
+      ## Blockers to Fix (ALL of these, not just the first)
+
+
+      ### B1: active docs still expose retired pre-DX-91 workflow/setup guidance
+
+      Locations:
+
+      - `README.md`
+
+      - `docs/guides/pi.md`
+
+      - `docs/guides/cursor.md`
+
+      - `docs/guides/continue.md`
+
+      - `docs/guides/cline.md`
+
+      - `.invar/context.md`
+
+      - `.invar/project-additions.md`
+
+      Why blocker:
+
+      - Active release-facing surfaces still advertise retired USBV, Check-In/Final
+      ceremony, `.claude/skills`, `.cursor/rules`, and `invar update` era setup flows
+      that contradict the simplified DX-91 runtime and active product direction.
+
+      Remediation:
+
+      - Rewrite or remove active guidance so these surfaces only present the current
+      DX-91 Python-only workflow and supported setup/runtime expectations.
+
+      - Any retained historical mention must be explicitly archival/historical and
+      not actionable release guidance.
+
+      Grep hint: `USBV|Check-In|Final ceremony|\.claude/skills|\.cursor/rules|invar
+      update|update flow|Continue|Cursor|Cline`
+
+      IMPORTANT: search sibling active docs and `.invar/*` surfaces beyond the listed
+      files; do not stop after fixing the first mention.
+
+
+      ### B2: proposal-index active status drift
+
+      Locations:
+
+      - `docs/proposals/index.md`
+
+      Why blocker:
+
+      - The active proposal index still marks already-fixed surfaces as update-needed
+      and therefore contradicts current repo state and the claimed release-readiness
+      posture.
+
+      Remediation:
+
+      - Update proposal-index status rows/notes so active status accurately reflects
+      the repo after B1 cleanup.
+
+      - Remove or rewrite stale `update-needed` markings for surfaces already fixed;
+      if any surface remains intentionally deferred, say so precisely.
+
+      Grep hint: `update-needed|needs update|README|pi\.md|cursor\.md|continue\.md|cline\.md|project-additions|context`
+
+      IMPORTANT: search sibling rows/notes so the index presents one coherent post-fix
+      status view rather than a partially corrected table.
+
+
+      ## Optional should-fix notes (non-blocking unless touched)
+
+      - If this remediation touches `docs/proposals/DX-91-simplification.md`, also
+      resolve proposal/runtime wording drift around rules/version and MCP generation
+      wording in the edited section.
+
+      - Do NOT expand scope into broad proposal cleanup unless needed to remove a
+      direct contradiction from the touched text.
+
+
+      ## Completion Criteria
+
+      - ALL blockers above are fixed in one coherent remediation pass.
+
+      - Active release-facing docs no longer expose retired pre-DX-91 workflow/setup
+      guidance.
+
+      - `docs/proposals/index.md` matches the post-fix repo state and does not incorrectly
+      mark already-fixed surfaces as update-needed.
+
+      - Any retained historical/proposal wording is clearly non-active and cannot
+      be mistaken for current release guidance.
+
+      - Evidence includes sibling-search coverage for both blocker families.
+
+
+      Gate Preview (what the follow-up retest WILL reject)
+
+      1. Any active README/guide/`.invar/*` surface that still presents retired workflow/setup
+      guidance as current
+
+      2. Any proposal-index row/note that still contradicts runtime or the freshly
+      corrected active docs
+
+      3. Any ambiguous historical wording that can still be read as active DX-91 release
+      guidance
+
+      4. Any optional proposal cleanup claimed as complete without being limited to
+      touched contradictory text'
+    verification: '- Main path: active docs and proposal index consistently describe
+      the current DX-91 runtime and release guidance
+
+      - Failure path: grep-based sibling searches show no remaining retired pre-DX-91
+      workflow/setup guidance in active release-facing surfaces and no stale `update-needed`
+      proposal-index drift for the listed surfaces
+
+      - Boundary path: any retained proposal/history wording is explicitly non-active
+      and optional notes are only resolved if the proposal text was actually touched
+
+      - Proof includes before/after status rationale for proposal-index corrections
+      and sibling-search evidence for both blocker families'
+    depends_on:
+    - retest-dx91-consistency-blockers
+    agent: doc-reviewer
