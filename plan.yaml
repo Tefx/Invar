@@ -19551,7 +19551,7 @@ phases:
       Commit: b541618e6cb5e65620a5b6c537765088d9499688'
   - id: dx91-self-docs.retest-self-docs-surface-blockers
     name: retest-self-docs-surface-blockers
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT TESTER (`blind-tester`), re-check the active DX-91
       self-docs surface after the batched blocker fix.
 
@@ -19602,6 +19602,27 @@ phases:
     agent: blind-tester
     claimed_by: blind-tester
     claimed_at: '2026-03-13T14:44:06.199047+00:00'
+    done_at: '2026-03-13T14:51:09.597607+00:00'
+    evidence: "Gate decision: BLOCKED (remaining active docs link blockers)\n\nFindings:\n\
+      - blockers:\n  - broken active link in `docs/reference/workflow/session-start.md`\
+      \ to `../../INVAR.md`\n  - broken active links in `docs/reference/contracts/pre-post.md`\
+      \ to `./contract-complete.md`\n  - broken active link in `docs/reference/verification/smart-routing.md`\
+      \ to moved DX-22 proposal path\n  - broken active link in `docs/vision.md` to\
+      \ wrong DX-91 proposal relative path\n  - broken active link cluster in `docs/reference/agent-information-hierarchy.md`\
+      \ to moved/renamed proposal paths\n- should_fix:\n  - add explicit archive banner\
+      \ in `docs/reference/workflow/usbv.md`\n  - fix legacy contract link inside\
+      \ USBV page if touched\n- suggestions:\n  - enforce CI active-doc internal link\
+      \ checks with fenced-code exclusion\n\nCommands/evidence:\n- independent grep\
+      \ + python markdown-link validation on active docs surfaces identified blocker\
+      \ set\n- verify-only run made no edits\n\nActive-vs-archive classification:\n\
+      - active blocking: broken links on active reference/vision surfaces listed above\n\
+      - active consistent: top-level DX-91 posture framing pages remain mostly aligned\n\
+      - archive non-blocking: historical proposal/completed docs and USBV historical\
+      \ content\n\nBatched remediation created:\n- `dx91-self-docs.fix-self-docs-active-link-blockers-batch`\n\
+      - `dx91-self-docs.retest-self-docs-active-link-blockers-batch`\n- freeze/gate\
+      \ dependencies moved behind new retest chain\n\nNotes:\n- This retest step is\
+      \ completed as issue-discovery evidence and transitioned into a single batched\
+      \ fix + independent retest loop.\n"
   - id: dx91-self-docs.fix-self-docs-active-link-blockers-batch
     name: fix-self-docs-active-link-blockers-batch
     status: pending
