@@ -1,7 +1,7 @@
 # Using Invar with Different Coding Agents
 
 > **⚠️ DEPRECATED:** This guide describes the pre-DX-91 multi-agent approach (skills, hooks, USBV workflow).
-> Per [DX-91](../proposals/DX-91-simplification.md), Invar is now **Python-only and agent-agnostic**.
+> Per [DX-91](./proposals/DX-91-simplification.md), Invar is now **Python-only and agent-agnostic**.
 > See `CLAUDE.md` (in your project root) and `INVAR.md` for the current simplified approach.
 
 Invar's core value—contract-driven development and automated verification—works with any AI coding agent. This guide covers integration with popular alternatives to Claude Code.

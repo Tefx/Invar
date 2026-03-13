@@ -1,4 +1,4 @@
-> **ARCHIVE:** This document describes the historical USBV workflow. Current Invar workflow is [DX-91: Session-based Contracts-First](../proposals/DX-91-simplification.md).
+> **ARCHIVE:** This document describes the historical USBV workflow. Current Invar workflow is [DX-91: Session-based Contracts-First](../../proposals/DX-91-simplification.md).
 
 # USBV: The Four-Phase Development Workflow
 

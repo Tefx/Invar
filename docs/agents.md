@@ -277,7 +277,7 @@ Implementer                    Reviewer                     Adversary
 
 ## Workflow (Historical)
 
-> **Note:** USBV workflow ceremony removed per [DX-91](../proposals/DX-91-simplification.md). Core principle preserved: **contracts before code**.
+> **Note:** USBV workflow ceremony removed per [DX-91](./proposals/DX-91-simplification.md). Core principle preserved: **contracts before code**.
 
 The Reviewer role integrates with the validation phase via **Review Gate**:
 

@@ -301,4 +301,4 @@ param_mismatch = "error"      # Lambda must match function
 - [Doctests as Specification](./doctests.md) - Examples complement contracts
 - [Contract Completeness](./completeness.md) - How complete is enough?
 - [Smart Verification Routing](../verification/smart-routing.md) - CrossHair vs Hypothesis
-- [DX-12: Hypothesis Fallback](../../proposals/DX-12-hypothesis-fallback.md) - Design history
+- [DX-12: Hypothesis Fallback](../../proposals/completed/DX-12-hypothesis-fallback.md) - Design history
