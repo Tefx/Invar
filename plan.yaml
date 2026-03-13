@@ -19489,7 +19489,7 @@ phases:
       - No unresolved blockers remain on active self-docs surfaces
 
       - Ready for `dx91-release-readiness` only after the freeze snapshot and the
-      new retest evidence are both accepted'
+      latest independent retest evidence are both accepted'
     depends_on:
     - update-runtime-owned-docs
     - update-proposals-index-and-crosslinks
@@ -19502,6 +19502,8 @@ phases:
     - dx91-self-docs.retest-self-docs-active-link-blockers-followup-batch
     - dx91-self-docs.dx91-self-docs-fix-gate-doc-coherence-blockers-batch
     - dx91-self-docs.dx91-self-docs-retest-gate-doc-coherence-blockers-batch
+    - dx91-self-docs.dx91-self-docs-fix-gate-doc-coherence-blockers-followup-batch
+    - dx91-self-docs.dx91-self-docs-retest-gate-doc-coherence-blockers-followup-batch
     - freeze-self-docs-snapshot
     agent: gate-reviewer
     claimed_by: gate-reviewer
