@@ -22846,7 +22846,7 @@ phases:
       \ none"
   - id: dx91-release-readiness.retest-proposal-index-reconciliation-fs-inventory-blockers
     name: retest-proposal-index-reconciliation-fs-inventory-blockers
-    status: pending
+    status: claimed
     description: 'As an INDEPENDENT TESTER (`integration-verifier`), validate closure
       of the filesystem-inventory and row-traceability blocker family after `dx91-release-readiness.fix-proposal-index-reconciliation-fs-inventory-blockers`.
 
@@ -22951,3 +22951,5 @@ phases:
     depends_on:
     - dx91-release-readiness.fix-proposal-index-reconciliation-fs-inventory-blockers
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-13T18:14:06.959470+00:00'
