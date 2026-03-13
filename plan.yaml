@@ -20366,6 +20366,62 @@ phases:
     depends_on:
     - dx91-self-docs.retest-self-docs-active-link-blockers-followup-batch
     agent: doc-reviewer
+  - id: dx91-self-docs.dx91-self-docs-retest-gate-doc-coherence-blockers-batch
+    name: dx91-self-docs.retest-gate-doc-coherence-blockers-batch
+    status: pending
+    description: 'As an INDEPENDENT TESTER (`blind-tester`), validate active self-doc
+      coherence after `dx91-self-docs.dx91-self-docs-fix-gate-doc-coherence-blockers-batch`
+      from a fresh-reader perspective.
+
+
+      YOUR GOAL IS TO FIND PROBLEMS, not to confirm it works.
+
+
+      Scope:
+
+      - DX-91 minimal `invar init` flow across active docs surfaces
+
+      - Removed-feature cleanup for `--claude`, `--pi`, `.invar/examples/`, and `multi-agent
+      init`
+
+      - `docs/guides/multi-agent.md` deprecation-banner proposal link correctness
+
+      - `.invar/context.md` posture consistency so removed behavior is clearly historical,
+      not current guidance
+
+
+      Test for:
+
+      - Happy path: a reader can follow active docs without seeing removed multi-agent
+      init choices
+
+      - Edge cases: archived or historical references remain clearly labeled historical
+      and do not read like active instructions
+
+      - Error scenarios: broken relative links, contradictory top-level/index guidance,
+      stale deleted-path references
+
+
+      Suggested sibling search:
+
+      - `rg -n --hidden --glob ''!docs/testing/**'' ''invar init --claude|invar init
+      --pi|--claude|--pi|\.invar/examples/?|multi-agent init'' docs .invar INVAR.md`
+
+
+      Document ALL findings. A retest that discovers issues is a SUCCESS.'
+    verification: '- Main path: active DX-91 self-doc surfaces describe only the minimal
+      init flow now implemented
+
+      - Failure path: regression check proves removed-feature strings and deleted-surface
+      references do not survive in active docs, and the deprecation-banner link resolves
+      correctly
+
+      - Proof includes exact files/locations for any residual contradictions plus
+      explicit note on whether `.invar/project-additions.md` and `docs/testing/**`
+      remain non-blocking historical surfaces'
+    depends_on:
+    - dx91-self-docs.dx91-self-docs-fix-gate-doc-coherence-blockers-batch
+    agent: blind-tester
 - id: dx91-release-readiness
   name: DX-91 Release Readiness Audit
   status: locked
