@@ -30,7 +30,7 @@ SKILLS_REGISTRY = "extensions/_registry.yaml"
 SKILLS_DIR = "extensions"
 PROJECT_SKILLS_DIR = ".claude/skills"
 
-# Core skills managed by Invar (shared with uninstall.py)
+# Core skills managed by Invar (shared with legacy cleanup behavior)
 CORE_SKILLS = {"develop", "review", "investigate", "propose", "guard", "audit"}
 
 

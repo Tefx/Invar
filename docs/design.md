@@ -768,10 +768,8 @@ Create src/core and src/shell? [Y/n]
 
 ```bash
 invar init              # Interactive mode with menus
-invar init --claude     # Auto-select Claude Code, skip prompts
-invar init --preview --claude    # Non-interactive preview for Claude setup
-invar uninstall         # Remove Invar from project (preserves user content)
-invar uninstall --dry-run  # Preview what would be removed
+invar init --preview    # Non-interactive preview for migration/create plan
+invar init --file AGENTS.md  # Write managed block to non-default target file
 ```
 
 ---
@@ -1043,7 +1041,7 @@ invar-tools (PyPI)
 ```bash
 # Recommended: use without installing (always latest)
 uvx invar-tools guard
-uvx invar-tools init --claude
+uvx invar-tools init
 
 # Or install globally
 pip install invar-tools
@@ -1055,7 +1053,7 @@ pip install invar-runtime
 ### `invar init` Behavior
 
 ```bash
-$ uvx invar-tools init --claude
+$ uvx invar-tools init
 
 ✓ Added [tool.invar.guard] to pyproject.toml
 ✓ Created INVAR.md (Invar Protocol)
@@ -1064,7 +1062,6 @@ $ uvx invar-tools init --claude
 ✓ Created src/shell/
 ✓ Created .invar/context.md (context management)
 ✓ Created .mcp.json (MCP server config)
-✓ Ran claude /init
 ```
 
 ### Version Strategy

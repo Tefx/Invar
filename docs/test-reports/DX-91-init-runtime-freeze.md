@@ -17,6 +17,9 @@ Step: freeze-init-runtime-snapshot
 
 These are frozen as protected regression entrypoints for downstream phases.
 
+Historical note: this freeze snapshot captures pre-retirement symbol names and is
+archival evidence only; active DX-91 runtime no longer ships `invar uninstall`.
+
 1. `tests/integration/test_dx91_init_entrypoints.py`
    - Entrypoint under test: `invar.shell.commands.init.init`
    - Covers: main-path generation, relative/absolute target file handling, migration edge handling, explicit deletions, stale-state precedence, interrupted write recovery, repeated-run idempotency.

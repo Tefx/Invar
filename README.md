@@ -414,44 +414,6 @@ src/{project}/
 
 ---
 
-## 🧩 Extension Skills
-
-Beyond the core workflow modes, Invar provides optional extension skills for specialized tasks:
-
-| Skill | Purpose | Install |
-|-------|---------|---------|
-| `/security` | OWASP Top 10 security audit | `invar skill add security` |
-| `/acceptance` | Requirements acceptance review | `invar skill add acceptance` |
-| `/invar-onboard` | Legacy project migration | `invar skill add invar-onboard` |
-
-### Managing Skills
-
-```bash
-invar skill list                    # List available/installed skills
-invar skill add security            # Install (or update) a skill
-invar skill remove security         # Remove a skill
-invar skill remove security --force # Force remove (even with custom extensions)
-```
-
-**Idempotent:** `invar skill add` works for both install and update. User customizations in the `<!--invar:extensions-->` region are preserved on update.
-
-### Custom Extensions
-
-Each skill has an extensions region where you can add project-specific customizations:
-
-```markdown
-<!--invar:extensions-->
-## Project-Specific Security Checks
-
-- [ ] Check for hardcoded AWS credentials in config/
-- [ ] Verify JWT secret rotation policy
-<!--/invar:extensions-->
-```
-
-These customizations are preserved when updating skills via `invar skill add`.
-
----
-
 ## 🔄 Legacy Project Migration
 
 ### Quick Start: MCP Tools Only
@@ -467,57 +429,9 @@ This writes DX-91 managed files (`CLAUDE.md`, `INVAR.md`, `.pre-commit-config.ya
 - **Code navigation** (`invar_sig`, `invar_map`)
 - **Basic verification** (`invar_guard` with minimal rules)
 
-### Full Adoption: `/invar-onboard`
-
-For projects that want to fully adopt Invar's patterns, use the `/invar-onboard` skill:
-
-```bash
-# Install the onboarding skill
-invar skill add invar-onboard
-
-# Run assessment on your project
-# (in Claude Code or Pi)
-> /invar-onboard
-```
-
-### Migration Workflow
-
-```
-/invar-onboard
-       │
-       ▼
-┌─────────────────────────────────────────┐
-│  Phase 1: ASSESS (Automatic)            │
-│  • Code metrics and architecture        │
-│  • Pattern detection (error handling)   │
-│  • Core/Shell separation assessment     │
-│  • Risk and effort estimation           │
-│                                         │
-│  Output: docs/invar-onboard-assessment.md
-└─────────────────────────────────────────┘
-       │
-       ▼
-┌─────────────────────────────────────────┐
-│  Phase 2: DISCUSS (With User)           │
-│  • Present findings                     │
-│  • Discuss risk mitigation              │
-│  • Confirm scope and priorities         │
-└─────────────────────────────────────────┘
-       │
-       ▼ (user confirms)
-┌─────────────────────────────────────────┐
-│  Phase 3: PLAN (Automatic)              │
-│  • Dependency analysis                  │
-│  • Phase decomposition                  │
-│  • Session planning                     │
-│                                         │
-│  Output: docs/invar-onboard-roadmap.md  │
-└─────────────────────────────────────────┘
-```
-
 ### Language Support
 
-The onboarding skill includes Python pattern guides:
+The onboarding workflow examples include Python pattern guides:
 
 ```python
 # Error handling: returns library
@@ -538,12 +452,8 @@ def calculate_tax(amount: float) -> float:
     return amount * 0.1
 ```
 
-### When to Use `/invar-onboard` vs `/refactor`
-
-| Scenario | Skill | Purpose |
-|----------|-------|---------|
-| Existing project → Invar | `/invar-onboard` | One-time framework migration |
-| Already Invar project | `/refactor` (coming soon) | Continuous code improvement |
+Historical extension-skill workflows (`invar skill ...`, `/invar-onboard`) are archived in
+`docs/proposals/completed/LX-07-extension-skills.md` and are not part of the DX-91 runtime command surface.
 
 ---
 
@@ -630,11 +540,12 @@ rules = ["missing_contract", "shell_result"]
 | `invar guard --static` | Static analysis only (~0.5s) |
 | `invar guard --coverage` | Collect branch coverage from tests |
 | `invar init` | Initialize or update project (interactive) |
-| `invar init` | Initialize or migrate DX-91 managed files |
+| `invar init <path>` | Initialize or migrate DX-91 managed files |
 | `invar init --file AGENTS.md` | Write managed block to a non-default target file |
 | `invar init --preview` | Show migration/create plan without writing |
 | `invar sig <file>` | Show signatures and contracts |
 | `invar map` | Symbol map with reference counts |
+| `invar refs <file>::<symbol>` | Find all references to a symbol |
 | `invar doc toc <file>` | View document structure (headings) |
 | `invar doc read <file> <section>` | Read specific section by slug/fuzzy/index |
 | `invar doc find <pattern> <files>` | Search sections by title pattern |
@@ -642,13 +553,8 @@ rules = ["missing_contract", "shell_result"]
 | `invar doc insert <file> <anchor>` | Insert content relative to section |
 | `invar doc delete <file> <section>` | Delete section |
 | `invar rules` | List all rules with severity |
-| `invar test` | Property-based tests (Hypothesis) |
-| `invar verify` | Symbolic verification (CrossHair) |
-| `invar mutate` | Mutation testing (find gaps in tests) |
-| `invar hooks` | Manage Claude Code hooks |
-| `invar skill` | Manage extension skills |
 | `invar mcp` | Start MCP server for Claude Code |
-| `invar dev sync` | Sync Invar protocol updates |
+| `invar dev` | Developer commands for Invar project development |
 | `invar version` | Show version info |
 
 ### MCP Tools

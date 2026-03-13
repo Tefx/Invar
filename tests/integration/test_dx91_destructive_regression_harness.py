@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-"""DX-91 destructive uninstall+sync regression harness.
+"""DX-91 destructive legacy-cleanup+sync regression harness.
 
 This module validates stale-asset cleanup and state convergence for the
-uninstall+template-sync path. Migration-preservation semantics (backup creation
+legacy-cleanup+template-sync path. Migration-preservation semantics (backup creation
 and byte-identical retained originals) are proven by public init migration tests
 in test_dx91_init_entrypoints.py.
 """
@@ -79,13 +79,13 @@ def _delete_path(root: Path, rel_path: str) -> None:
         candidate.unlink()
 
 
-def _uninstall_then_sync_harness_apply_expected_state(
+def _legacy_cleanup_then_sync_harness_apply_expected_state(
     repo_root: Path,
     fixture_root: Path,
     *,
     break_rule: bool = False,
 ) -> None:
-    """Run real uninstall + sync APIs (not init migration proof)."""
+    """Run real cleanup + sync APIs (not init migration proof)."""
 
     # v1 cleanup phase (DX-91 migration cleanup helper)
     _delete_legacy_assets(repo_root)
@@ -190,15 +190,15 @@ def _assert_expected_repo_state(fixture_root: Path, repo_root: Path) -> None:
             assert token not in text, f"Forbidden token present in CLAUDE.md: {token}"
 
 
-def test_happy_path_mainline_fixture_uninstall_sync_converges_end_to_end(tmp_path: Path) -> None:
+def test_happy_path_mainline_fixture_cleanup_sync_converges_end_to_end(tmp_path: Path) -> None:
     fixture_root, repo_root = _clone_input_fixture("mainline-v1-to-v2", tmp_path)
 
-    _uninstall_then_sync_harness_apply_expected_state(repo_root, fixture_root)
+    _legacy_cleanup_then_sync_harness_apply_expected_state(repo_root, fixture_root)
 
     _assert_expected_repo_state(fixture_root, repo_root)
 
 
-def test_edge_case_repeated_uninstall_sync_runs_are_idempotent(tmp_path: Path) -> None:
+def test_edge_case_repeated_cleanup_sync_runs_are_idempotent(tmp_path: Path) -> None:
     fixture_root, repo_root = _clone_input_fixture(
         "repeated-migration-idempotent-v1-source", tmp_path
     )
@@ -206,12 +206,12 @@ def test_edge_case_repeated_uninstall_sync_runs_are_idempotent(tmp_path: Path) -
     run_count = int(assertions.get("run_count", 2))
     assert run_count >= 2
 
-    _uninstall_then_sync_harness_apply_expected_state(repo_root, fixture_root)
+    _legacy_cleanup_then_sync_harness_apply_expected_state(repo_root, fixture_root)
     first = (repo_root / "CLAUDE.md").read_text(encoding="utf-8")
 
     second = first
     for _ in range(run_count - 1):
-        _uninstall_then_sync_harness_apply_expected_state(repo_root, fixture_root)
+        _legacy_cleanup_then_sync_harness_apply_expected_state(repo_root, fixture_root)
         second = (repo_root / "CLAUDE.md").read_text(encoding="utf-8")
 
     _assert_expected_repo_state(fixture_root, repo_root)
@@ -235,12 +235,12 @@ def test_edge_case_repeated_uninstall_sync_runs_are_idempotent(tmp_path: Path) -
         "relative-vs-absolute-template-path",
     ],
 )
-def test_edge_and_error_fixtures_enforce_expected_state_after_uninstall_sync(
+def test_edge_and_error_fixtures_enforce_expected_state_after_cleanup_sync(
     tmp_path: Path, fixture_id: str
 ) -> None:
     fixture_root, repo_root = _clone_input_fixture(fixture_id, tmp_path)
 
-    _uninstall_then_sync_harness_apply_expected_state(repo_root, fixture_root)
+    _legacy_cleanup_then_sync_harness_apply_expected_state(repo_root, fixture_root)
 
     _assert_expected_repo_state(fixture_root, repo_root)
 
@@ -248,7 +248,7 @@ def test_edge_and_error_fixtures_enforce_expected_state_after_uninstall_sync(
 def test_failure_path_harness_detects_broken_preservation_deletion_rule(tmp_path: Path) -> None:
     fixture_root, repo_root = _clone_input_fixture("mainline-v1-to-v2", tmp_path)
 
-    _uninstall_then_sync_harness_apply_expected_state(repo_root, fixture_root, break_rule=True)
+    _legacy_cleanup_then_sync_harness_apply_expected_state(repo_root, fixture_root, break_rule=True)
 
     if os.getenv("DX91_EXPECT_FAILURE") == "1":
         with pytest.raises(AssertionError, match="Unexpected repo files"):

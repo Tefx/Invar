@@ -1,5 +1,4 @@
-"""
-LX-07: Extension Skills integration tests.
+"""Historical LX-07 extension-skills integration tests (pre-DX-91).
 
 Tests:
 1. Skill CLI commands (list, add, remove, update)
@@ -24,6 +23,13 @@ from invar.shell.skill_manager import (
     load_registry,
     remove_skill,
     update_skill,
+)
+
+pytestmark = pytest.mark.skip(
+    reason=(
+        "Historical pre-DX-91 skill CLI coverage: active command surface no longer includes "
+        "`invar skill`"
+    )
 )
 
 # Check tool availability
@@ -288,7 +294,7 @@ class TestSkillCLI:
         assert (test_project / ".claude" / "skills" / "acceptance" / "SKILL.md").exists()
 
     def test_cli_skill_remove(self, test_project: Path):
-        """invar skill remove uninstalls a skill."""
+        """invar skill remove deletes an installed skill."""
         # First add
         subprocess.run(["invar", "skill", "add", "acceptance"], cwd=test_project)
 
