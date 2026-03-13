@@ -19625,7 +19625,7 @@ phases:
       \ fix + independent retest loop.\n"
   - id: dx91-self-docs.fix-self-docs-active-link-blockers-batch
     name: fix-self-docs-active-link-blockers-batch
-    status: pending
+    status: claimed
     description: 'Fix ALL active-link blockers found by `dx91-self-docs.retest-self-docs-surface-blockers`
       in ONE batched remediation step.
 
@@ -19804,6 +19804,8 @@ phases:
     depends_on:
     - dx91-self-docs.retest-self-docs-surface-blockers
     agent: doc-reviewer
+    claimed_by: doc-reviewer
+    claimed_at: '2026-03-13T14:51:41.521113+00:00'
   - id: dx91-self-docs.retest-self-docs-active-link-blockers-batch
     name: retest-self-docs-active-link-blockers-batch
     status: pending
