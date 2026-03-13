@@ -19285,7 +19285,7 @@ phases:
       \ files modified.\n"
   - id: verify-self-docs-surface
     name: verify-self-docs-surface
-    status: pending
+    status: claimed
     description: 'As an INDEPENDENT TESTER (`blind-tester`), review the repository''s
       user-facing docs surface after DX-91 updates.
 
@@ -19314,6 +19314,8 @@ phases:
     depends_on:
     - update-proposals-index-and-crosslinks
     agent: blind-tester
+    claimed_by: blind-tester
+    claimed_at: '2026-03-13T14:25:42.029033+00:00'
   - id: freeze-self-docs-snapshot
     name: freeze-self-docs-snapshot
     status: pending
