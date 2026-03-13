@@ -20522,6 +20522,121 @@ phases:
     agent: blind-tester
     claimed_by: blind-tester
     claimed_at: '2026-03-13T15:41:15.538083+00:00'
+  - id: dx91-self-docs.dx91-self-docs-fix-gate-doc-coherence-blockers-followup-batch
+    name: dx91-self-docs.fix-gate-doc-coherence-blockers-followup-batch
+    status: pending
+    description: 'Fix ALL remaining blockers found by `dx91-self-docs.dx91-self-docs-retest-gate-doc-coherence-blockers-batch`
+      in ONE batched remediation pass for the narrowed `.invar/examples/` drift family.
+
+
+      prior_loop:
+
+      - dx91-self-docs.dx91-self-docs-fix-gate-doc-coherence-blockers-batch
+
+      - dx91-self-docs.dx91-self-docs-retest-gate-doc-coherence-blockers-batch
+
+      remaining_blocker: Active `.invar/examples/` references still remain in canonical/self-doc
+      surfaces after the directory was removed, and direct repo-root `INVAR.md` editing
+      is protected.
+
+      why_new_loop: The prior batched gate-blocker sweep closed the active init-flag,
+      deprecation-link, and context-posture issues, but the independent retest found
+      one narrower protected-surface blocker family that now requires a compliant
+      source-of-truth update plus sibling search across active/canonical surfaces.
+
+
+      Fix ALL of these, not just the first:
+
+
+      ### B1: remaining active `.invar/examples/` references in canonical/self-doc
+      surfaces
+
+      Locations:
+
+      - `INVAR.md` around lines 112, 305, and 434
+
+      - any corresponding canonical/source-of-truth surface that still generates or
+      legitimizes those references
+
+      Remediation:
+
+      - Remove or replace active instructions that send readers to `.invar/examples/`.
+
+      - Because `INVAR.md` is canonical-protected, DO NOT rely on direct protected-file
+      editing if policy or hooks forbid it.
+
+      - Make the compliant source-of-truth path explicit and update that path instead:
+      `docs/proposals/DX-91-invar-md-draft.md` is the content authority for `INVAR.md`,
+      while the managed generation/runtime path may include `src/invar/templates/protocol/INVAR.md.v2.jinja`,
+      fallback `src/invar/templates/protocol/INVAR.md.jinja`, and any still-authoritative
+      managed content constant such as `src/invar/shell/commands/init.py` `INVAR_MANAGED_CONTENT`.
+
+      - Regenerate or otherwise align the repo-root `INVAR.md` only through the allowed
+      managed/reference path required by current policy.
+
+      - Replace deleted-surface references with current DX-91 repository guidance
+      only; do not introduce new shadow examples surfaces.
+
+      Grep hint:
+
+      - `rg -n --hidden ''\.invar/examples/?'' INVAR.md docs/proposals/DX-91-invar-md-draft.md
+      src/invar/templates/protocol src/invar/shell/commands/init.py .invar docs`
+
+      IMPORTANT: Search sibling active/canonical surfaces beyond the listed locations
+      and clear the whole `.invar/examples/` reference family, not only the three
+      cited lines.
+
+
+      ## Optional adjacent cleanup notes (non-blocking unless touched)
+
+      - `docs/guides/multi-agent.md:213`: if this historical/deprecation note is edited
+      during the sweep, rewrite it so it stays clearly historical and does not foreground
+      removed `invar init --claude --pi` usage.
+
+      - Active guide pages `docs/guides/pi.md`, `docs/guides/aider.md`, `docs/guides/cursor.md`,
+      `docs/guides/continue.md`, and `docs/guides/cline.md`: if touched while fixing
+      sibling drift, update deprecated `multi-agent.md` links or label them so they
+      do not surface legacy patterns as current DX-91 guidance.
+
+      - These adjacent cleanups are opportunistic; do not expand scope beyond the
+      `.invar/examples/` blocker family unless the same files are already being updated.
+
+
+      ## Known risks
+
+      - `INVAR.md` protection hooks can reject direct edits; use the compliant canonical
+      path instead of fighting the protection.
+
+      - Drift can reappear if only the repo-root copy is edited while the draft/template
+      source still contains `.invar/examples/`.
+
+
+      ## Completion Criteria
+
+      - ALL remaining `.invar/examples/` references are removed from active/canonical
+      DX-91 self-doc surfaces in one pass.
+
+      - Evidence identifies which source-of-truth/generation path was updated to satisfy
+      `INVAR.md` protection policy.
+
+      - Sibling search covers repo-root `INVAR.md`, DX-91 canonical draft/template
+      inputs, and nearby active guidance surfaces.
+
+      - Optional adjacent cleanups, if touched, do not reintroduce removed `--claude/--pi`
+      or deprecated multi-agent guidance drift.'
+    verification: '- Main path: the `.invar/examples/` grep hint returns no matches
+      on active/canonical DX-91 self-doc surfaces that should define current guidance
+
+      - Failure path: proof shows `INVAR.md` protection was handled via the compliant
+      source-of-truth or managed-generation path, not by an impermissible direct edit
+      workflow
+
+      - Evidence names the exact source-of-truth file(s) updated and, if adjacent
+      cleanup files were touched, confirms they do not reintroduce `invar init --claude/--pi`
+      or deprecated multi-agent drift'
+    depends_on:
+    - dx91-self-docs.dx91-self-docs-retest-gate-doc-coherence-blockers-batch
+    agent: doc-reviewer
 - id: dx91-release-readiness
   name: DX-91 Release Readiness Audit
   status: locked
