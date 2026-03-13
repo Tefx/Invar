@@ -19947,7 +19947,7 @@ phases:
       \ fix + independent retest loop.\n"
   - id: dx91-self-docs.fix-self-docs-active-link-blockers-followup-batch
     name: fix-self-docs-active-link-blockers-followup-batch
-    status: claimed
+    status: done
     description: 'Fix ALL blockers found by `dx91-self-docs.retest-self-docs-active-link-blockers-batch`
       in ONE batched remediation step.
 
@@ -20051,6 +20051,25 @@ phases:
     agent: doc-reviewer
     claimed_by: doc-reviewer
     claimed_at: '2026-03-13T15:06:15.146618+00:00'
+    done_at: '2026-03-13T15:13:59.238767+00:00'
+    evidence: "Artifact:\n- Main squash commit: `2cc6e40`\n- Worktree commit: `ef8f5fe41551e883b88867c0132c7b9bb1e9d49a`\n\
+      \nFiles changed:\n- `docs/agents.md`\n- `docs/guides/multi-agent.md`\n- `docs/reference/contracts/pre-post.md`\n\
+      - `docs/reference/workflow/usbv.md`\n\nVerification:\n- blocker mapping resolved:\n\
+      \  - `docs/agents.md`: `../proposals/DX-91-simplification.md` -> `./proposals/DX-91-simplification.md`\n\
+      \  - `docs/guides/multi-agent.md`: corrected DX-91 proposals base path to docs-level\
+      \ convention\n  - `docs/reference/contracts/pre-post.md`: `../../proposals/DX-12-hypothesis-fallback.md`\
+      \ -> `../../proposals/completed/DX-12-hypothesis-fallback.md`\n  - `docs/reference/workflow/usbv.md`:\
+      \ archive banner link base corrected to `../../proposals/DX-91-simplification.md`\n\
+      - sibling search executed for proposal base-path and moved-completed families;\
+      \ adjacent active files checked for consistency\n- Main merge hooks passed (INVAR\
+      \ protection + no-code checks skipped)\n\nSibling-search coverage:\n- scanned\
+      \ representative workflow/contracts/verification/reference files for same path-family\
+      \ issues\n- no additional active-surface blockers remained in those families\
+      \ after this pass\n\nResidual risk:\n- some completed/archive proposal docs\
+      \ keep internal historical path conventions; out of active self-doc surface\
+      \ scope\n\nSpec link:\n- `dx91-self-docs.fix-self-docs-active-link-blockers-followup-batch`\n\
+      \nGaps/Notes:\n- Fix constrained to active-surface blocker family and immediate\
+      \ siblings; no broad archive churn performed.\n"
   - id: dx91-self-docs.retest-self-docs-active-link-blockers-followup-batch
     name: retest-self-docs-active-link-blockers-followup-batch
     status: pending
