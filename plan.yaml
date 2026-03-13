@@ -20869,7 +20869,7 @@ phases:
       \ tracked file edits.\n"
   - id: prove-final-init-install-smoke
     name: prove-final-init-install-smoke
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT TESTER (`blind-tester`), provide final real-path
       evidence that the simplified DX-91 product is usable from the top-level command
       surface.
@@ -20908,6 +20908,28 @@ phases:
     agent: blind-tester
     claimed_by: blind-tester
     claimed_at: '2026-03-13T16:39:55.168991+00:00'
+    done_at: '2026-03-13T16:47:43.316554+00:00'
+    evidence: "Smoke decision: READY\n\nFindings:\n- blockers: none\n- should_fix:\n\
+      \  - runtime help still exposes `version`/`rules`; reconcile explicitly with\
+      \ any proposal text that still claims removal\n- suggestions:\n  - add CI smoke\
+      \ automation for init/install/help + retired-command checks\n- tech_debt:\n\
+      \  - command-surface parity remains reviewer-driven without machine allowlist/denylist\n\
+      \nCommands run (exact):\n- fresh consumer venv setup and local package install\
+      \ from isolated worktree\n- installed CLI smoke: `invar --help`, `invar init\
+      \ --help`, `invar init`\n- migrated repo edge checks: `invar init --preview\
+      \ <legacy-root>`, `invar init <legacy-root>` with cancel path\n- generated-surface\
+      \ content checks in produced files\n- retired-command failure checks: `invar\
+      \ update --help`, `invar uninstall --help`, `invar hooks --help`\n- retired\
+      \ dependency probe via installed distributions\n\nActual outputs:\n- captured\
+      \ full command outputs showing:\n  - simplified command surface present\n  -\
+      \ init generates `CLAUDE.md`, `INVAR.md`, `.pre-commit-config.yaml`\n  - preview\
+      \ migration lists legacy removals/preserved paths correctly\n  - retired commands\
+      \ fail closed (`No such command`)\n  - no retired TS dependencies installed\
+      \ in fresh consumer venv\n\nPath exercised:\n- isolated audit worktree: `.vectl/worktrees/prove-final-init-install-smoke`\n\
+      - fresh consumer path under `/tmp` using installed `invar` entrypoint\n- migrated\
+      \ legacy path under `/tmp` for preview/cancel behavior\n\nFiles changed:\n-\
+      \ none (verify-only)\n\nNotes:\n- smoke evidence is independent and includes\
+      \ full raw command outputs suitable for final gate review.\n"
   - id: freeze-release-candidate
     name: freeze-release-candidate
     status: pending
