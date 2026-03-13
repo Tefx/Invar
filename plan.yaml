@@ -22499,7 +22499,7 @@ phases:
       - discovered_issues: none'
   - id: dx91-release-readiness.retest-proposal-index-reconciliation-remaining-blockers
     name: retest-proposal-index-reconciliation-remaining-blockers
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT TESTER (`integration-verifier`), validate closure
       of the remaining proposal-index reconciliation blocker family after `dx91-release-readiness.fix-proposal-index-reconciliation-remaining-blockers`.
 
@@ -22604,6 +22604,26 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-13T17:53:44.053346+00:00'
+    done_at: '2026-03-13T17:59:48.939062+00:00'
+    evidence: "Independent retest evidence (integration-verifier):\n\nVerification\
+      \ (commands + outputs/results)\n- `git status --short` => clean worktree.\n\
+      - Filesystem count script:\n  - `ROOT_MD_COUNT 32`\n  - `COMPLETED_MD_COUNT\
+      \ 76`\n  - `TOTAL_FS_EXCL_INDEX_PLUS_COMPLETED 107`\n- Row inventory/count script\
+      \ over `docs/proposals/index.md`:\n  - `ROW_COUNT_TOTAL 25`\n  - `SECTION_active_impl_ROWS\
+      \ 5`\n  - `SECTION_deferred_future_ROWS 9`\n  - `SECTION_legacy_ROWS 11`\n \
+      \ - `FS_ROOT_EXCL_INDEX_COUNT 31`\n  - `ROW_LINK_COUNT 24`\n  - `IN_FS_NOT_IN_ROW_LINKS\
+      \ ['DX-61-implementation-design.md','DX-91-claude-md-draft.md','DX-91-freeze-spec-baseline.md','DX-91-generated-file-contracts.md','DX-91-invar-md-draft.md','DX-91-migration-semantics.md','LX-08-extension-skills-future.md']`\n\
+      - Summary-term sibling search found only `docs/proposals/index.md` for proposal-index\
+      \ summary markers.\n\nFamily checks\n- B1 FAIL: published grand total `101`\
+      \ does not match filesystem grand total `107`.\n- B2 PASS: Active/Deferred row\
+      \ rollups internally match listed rows.\n- B3 PASS: counting-basis documentation\
+      \ exists and is recomputable.\n- Sibling summary drift outside index: PASS (none\
+      \ found).\n\nFiles changed\n- none (verification-only)\n\nGaps/Notes\n- No edits\
+      \ made.\n- Gate recommendation from retest: BLOCKED.\n- Newly detected blocker\
+      \ family captured and batched into follow-up planning loop.\n\ndetected_issues\n\
+      - stale grand total vs filesystem reality (`101` vs `107`)\n- missing root proposal\
+      \ file coverage in index row inventory (DX-61 + six DX-91-era docs)\n- LX-08\
+      \ legacy row not link-formatted"
   - id: dx91-release-readiness.fix-proposal-index-reconciliation-fs-inventory-blockers
     name: fix-proposal-index-reconciliation-fs-inventory-blockers
     status: pending
