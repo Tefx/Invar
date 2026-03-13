@@ -22012,3 +22012,166 @@ phases:
     depends_on:
     - dx91-release-readiness.retest-doc-runtime-proposal-index-blockers
     agent: doc-reviewer
+  - id: dx91-release-readiness.retest-release-guides-proposal-index-remaining-blockers
+    name: retest-release-guides-proposal-index-remaining-blockers
+    status: pending
+    description: 'As an INDEPENDENT TESTER (`integration-verifier`), validate closure
+      of the remaining blocker family after `dx91-release-readiness.fix-release-guides-proposal-index-remaining-blockers`.
+
+
+      YOUR GOAL IS TO FIND PROBLEMS, not to confirm the first row changed.
+
+
+      step_type: verification
+
+      agent: integration-verifier
+
+      agent_source: default
+
+      prior_loop:
+
+      - dx91-release-readiness.fix-doc-runtime-proposal-index-blockers
+
+      - dx91-release-readiness.retest-doc-runtime-proposal-index-blockers
+
+      - dx91-release-readiness.fix-release-guides-proposal-index-remaining-blockers
+
+      remaining_blocker: release readiness stays blocked until release-facing guides
+      and proposal-index tables/counts/classifications fully match the active DX-91
+      repo state.
+
+      why_new_loop: the prior retest isolated the residual blocker family; this independent
+      retest verifies the whole family together and prevents another single-location
+      pass.
+
+
+      spec_refs:
+
+      - `docs/proposals/index.md`
+
+      - `docs/reference/index.md`
+
+      - `docs/guides/aider.md`
+
+      - `docs/guides/multi-agent.md`
+
+      - `docs/proposals/DX-91-simplification.md`
+
+
+      touch_paths:
+
+      - runtime/help evidence surface for current DX-91 behavior as comparison baseline
+
+      - `docs/guides/aider.md`
+
+      - `docs/guides/multi-agent.md`
+
+      - sibling release-facing guides if touched by the fix step
+
+      - `docs/proposals/index.md`
+
+      - `docs/reference/index.md`
+
+      - any DX-87 / DX-93 root proposal rows or linked proposal files touched for
+      index reconciliation
+
+
+      harness_refs:
+
+      - `dx91-release-readiness.prove-final-init-install-smoke`
+
+      - filesystem state for `docs/proposals/**`
+
+      - release-facing guides and proposal index tables/counts
+
+
+      Independence Level: L1
+
+      review_depth: THOROUGH
+
+      cross_cutting_focus:
+
+      - Release-facing guides must no longer present retired setup or agent-selection
+      flows as current
+
+      - Proposal-index classifications and counts must match actual repo/filesystem
+      state
+
+      - DX-87 and DX-93 root proposal representation must be accurate and complete
+      where indexed
+
+
+      Validate ALL blocker families:
+
+      - B1 `docs/guides/aider.md` and `docs/guides/multi-agent.md` no longer present
+      retired USBV / init agent-selection / `.claude/skills` / `.pi/hooks` setup as
+      active guidance
+
+      - B2 `docs/proposals/index.md` classifies `docs/reference/index.md` correctly
+      as active, reconciles open/deferred/archived/total counts with filesystem state,
+      and represents DX-87 / DX-93 roots correctly
+
+      - Sibling search check: no adjacent release-facing guide or proposal-index summary
+      row still carries the same stale blocker family
+
+
+      This re-test must validate ALL of these, not just the first.'
+    verification: '- Main path: independent review confirms release-facing guides
+      and `docs/proposals/index.md` now tell one coherent DX-91 release-readiness
+      story
+
+      - Failure path: targeted searches for retired setup language and proposal-index
+      count/classification drift find no remaining blocker in the listed surfaces
+
+      - Filesystem path: the retest explicitly reconciles indexed archive/open/deferred/total
+      counts against current `docs/proposals/**` state
+
+      - Evidence states whether the final gate may reopen or must remain BLOCKED'
+    evidence_template: '## Independent Retest Report
+
+
+      **Tester**: integration-verifier
+
+      **Scope**: remaining release-facing guides + proposal-index drift
+
+      **Independence Level**: L1
+
+
+      ### Commands / checks
+
+      ```
+
+      <paste exact search / inspection commands or equivalent checks>
+
+      ```
+
+
+      ### Findings
+
+      | Severity | Description | Location | Reproduction |
+
+      | --- | --- | --- | --- |
+
+      | blocker | <issue if any> | <file:line or section> | <steps> |
+
+
+      ### Coverage
+
+      - Release-facing guide drift checked: ✅/❌
+
+      - Proposal-index classification checked: ✅/❌
+
+      - Proposal-index counts reconciled to filesystem: ✅/❌
+
+      - DX-87 / DX-93 root representation checked: ✅/❌
+
+
+      ### Verdict
+
+      - PASS if all blocker families are closed
+
+      - ISSUES_FOUND if any stale guide text, row/classification drift, omission,
+      or count mismatch remains'
+    depends_on:
+    - dx91-release-readiness.fix-release-guides-proposal-index-remaining-blockers
+    agent: integration-verifier
