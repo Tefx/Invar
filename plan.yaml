@@ -22498,7 +22498,7 @@ phases:
       - discovered_issues: none'
   - id: dx91-release-readiness.retest-proposal-index-reconciliation-remaining-blockers
     name: retest-proposal-index-reconciliation-remaining-blockers
-    status: pending
+    status: claimed
     description: 'As an INDEPENDENT TESTER (`integration-verifier`), validate closure
       of the remaining proposal-index reconciliation blocker family after `dx91-release-readiness.fix-proposal-index-reconciliation-remaining-blockers`.
 
@@ -22601,3 +22601,5 @@ phases:
     depends_on:
     - dx91-release-readiness.fix-proposal-index-reconciliation-remaining-blockers
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-13T17:53:44.053346+00:00'
