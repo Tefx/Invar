@@ -19549,7 +19549,7 @@ phases:
       Commit: b541618e6cb5e65620a5b6c537765088d9499688'
   - id: dx91-self-docs.retest-self-docs-surface-blockers
     name: retest-self-docs-surface-blockers
-    status: pending
+    status: claimed
     description: 'As an INDEPENDENT TESTER (`blind-tester`), re-check the active DX-91
       self-docs surface after the batched blocker fix.
 
@@ -19598,6 +19598,8 @@ phases:
     depends_on:
     - dx91-self-docs.fix-self-docs-surface-blockers
     agent: blind-tester
+    claimed_by: blind-tester
+    claimed_at: '2026-03-13T14:44:06.199047+00:00'
 - id: dx91-release-readiness
   name: DX-91 Release Readiness Audit
   status: locked
