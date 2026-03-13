@@ -20029,6 +20029,57 @@ phases:
     depends_on:
     - dx91-self-docs.retest-self-docs-active-link-blockers-batch
     agent: doc-reviewer
+  - id: dx91-self-docs.retest-self-docs-active-link-blockers-followup-batch
+    name: retest-self-docs-active-link-blockers-followup-batch
+    status: pending
+    description: 'As an INDEPENDENT TESTER (`blind-tester`), validate the follow-up
+      batched self-docs link remediation from a fresh perspective.
+
+
+      YOUR GOAL IS TO FIND PROBLEMS, not to confirm it works.
+
+
+      Independence Level: L1
+
+
+      Test for:
+
+      - Happy path: the repaired active docs links resolve to live current targets
+      across the affected docs-root, contracts, and workflow/archive-boundary pages.
+
+      - Edge cases: sibling pages sharing the same proposal base-path conventions
+      or moved-to-completed link families no longer route to stale targets.
+
+      - Error scenarios: archive banner links stay clearly historical, do not point
+      through the wrong base path, and still send readers toward the correct active/current
+      DX-91 material.
+
+
+      Validate all blocker families from `dx91-self-docs.fix-self-docs-active-link-blockers-followup-batch`,
+      with explicit attention to:
+
+      - `docs/agents.md`
+
+      - `docs/reference/contracts/pre-post.md`
+
+      - `docs/reference/workflow/usbv.md`
+
+      - any sibling files changed by the batched fix step
+
+
+      Document ALL findings. A test that discovers issues is a SUCCESS. A test that
+      finds nothing must justify the active-link and archive-boundary coverage achieved.'
+    verification: '- Main path: independently traverse the repaired active docs links
+      and confirm they resolve to live current targets
+
+      - Failure path: explicitly probe sibling proposal-base and moved-to-completed
+      link families plus archive banner DX-91 links for stale or wrong-base regressions
+
+      - Evidence distinguishes active-link integrity from archive-boundary correctness
+      and records whether any sibling path-family regressions remain'
+    depends_on:
+    - dx91-self-docs.fix-self-docs-active-link-blockers-followup-batch
+    agent: blind-tester
 - id: dx91-release-readiness
   name: DX-91 Release Readiness Audit
   status: locked
