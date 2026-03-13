@@ -22054,7 +22054,7 @@ phases:
       \ exact ls"
   - id: dx91-release-readiness.retest-release-guides-proposal-index-remaining-blockers
     name: retest-release-guides-proposal-index-remaining-blockers
-    status: pending
+    status: claimed
     description: 'As an INDEPENDENT TESTER (`integration-verifier`), validate closure
       of the remaining blocker family after `dx91-release-readiness.fix-release-guides-proposal-index-remaining-blockers`.
 
@@ -22215,3 +22215,5 @@ phases:
     depends_on:
     - dx91-release-readiness.fix-release-guides-proposal-index-remaining-blockers
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-13T17:32:56.479732+00:00'
