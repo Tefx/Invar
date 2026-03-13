@@ -18946,7 +18946,8 @@ phases:
     name: dx91-python-only.retest-remaining-gate-blockers
     status: pending
     description: 'As an INDEPENDENT REVIEWER (`gate-reviewer`), re-test the remaining
-      blocker set after `dx91-python-only.fix-remaining-gate-blockers`.
+      blocker set after `dx91-python-only.fix-remaining-gate-blockers` using the confirmed
+      product decision that DX-91 fully retires `invar uninstall`.
 
 
       step_type: verification
@@ -18961,12 +18962,13 @@ phases:
 
       - dx91-python-only.dx91-python-only-retest-gate-blockers
 
-      remaining_blocker: verify that the uninstall-policy decision and active-docs
-      alignment are now coherent, while B2 TS-retirement coherence still holds as
-      a regression check.
+      remaining_blocker: verify that full retirement of `invar uninstall` is coherent
+      across runtime, help, tests, and active docs/design surfaces, while B2 TypeScript-retirement
+      coherence still holds as a regression check.
 
-      why_new_loop: the prior retest found a reduced blocker set; this retest closes
-      the narrowed loop without re-running an unnecessary broader remediation design.
+      why_new_loop: the prior retest found a reduced blocker set; the user decision
+      removes the restore-vs-retire ambiguity, so this retest now closes a retirement-only
+      acceptance loop rather than a policy-selection loop.
 
 
       spec_refs:
@@ -19003,21 +19005,22 @@ phases:
 
       - `uv run invar --help`
 
-      - `uv run invar uninstall --help`
-
 
       YOUR GOAL IS TO FIND REMAINING PROBLEMS, not to confirm the first blocker moved.
 
 
       Validate ALL of these:
 
-      - B1 uninstall/removal-policy coherence across command wiring, module imports,
-      destructive regression tests, and active docs
+      - `uv run invar --help` does NOT advertise uninstall
 
-      - B3 active docs parity with the actual CLI surface shown by `uv run invar --help`
+      - no active docs/tests/help/design surfaces require or advertise uninstall as
+      a supported DX-91 command
+
+      - any remaining uninstall mention appears only in clearly historical, archival,
+      or compatibility-only zones if such zones are allowed
 
       - B2 TypeScript-retirement coherence still passes as a regression check after
-      the B1/B3 remediation
+      the retirement cleanup
 
 
       This re-test must verify ALL of these, not just the first.
@@ -19027,22 +19030,28 @@ phases:
 
       cross_cutting_focus:
 
-      - No split uninstall policy remains between runtime, tests, and docs
+      - No split retirement policy remains between runtime, tests, help, and docs/design
 
-      - No active docs surface advertises commands or flags absent from the current
+      - No active docs surface advertises commands or flows absent from the current
       CLI
+
+      - Any residual uninstall mention is unmistakably non-active/historical
 
       - No TS-facing active surface was reintroduced while resolving the remaining
       blockers'
-    verification: '- Main path: independent review confirms B1 and B3 are resolved
-      together
+    verification: '- Main path: independent review confirms `uv run invar --help`
+      does not advertise uninstall and active DX-91 surfaces are coherent with retirement
 
-      - Regression path: focused checks confirm B2 still passes after the remediation
+      - Failure path: targeted grep/help/doc/test evidence shows no residual active
+      uninstall requirement remains
 
-      - Failure path: targeted grep/help/doc evidence shows no residual uninstall-policy
-      or active-doc mismatch blocker remains
+      - Boundary path: any retained uninstall mention is confined to clearly historical/archival/compatibility-only
+      surfaces
 
-      - Evidence distinguishes active docs/runtime surfaces from historical/archive/proposal
+      - Regression path: focused checks confirm B2 TypeScript-retirement coherence
+      still passes after the retirement cleanup
+
+      - Evidence distinguishes active docs/runtime/help/tests from proposal/history/archive
       material'
     depends_on:
     - dx91-python-only.dx91-python-only-fix-remaining-gate-blockers
