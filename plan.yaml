@@ -19781,6 +19781,76 @@ phases:
     depends_on:
     - dx91-self-docs.retest-self-docs-surface-blockers
     agent: doc-reviewer
+  - id: dx91-self-docs.retest-self-docs-active-link-blockers-batch
+    name: retest-self-docs-active-link-blockers-batch
+    status: pending
+    description: 'As an INDEPENDENT TESTER (`blind-tester`), validate the batched
+      active-docs link remediation from a fresh perspective.
+
+
+      YOUR GOAL IS TO FIND PROBLEMS, not to confirm it works.
+
+
+      Independence Level: L1
+
+
+      Test for:
+
+      - Happy path: active docs links in the affected workflow/contracts/verification/top-level/reference
+      surfaces resolve to live targets.
+
+      - Edge cases: sibling moved/renamed proposal and contract links near the repaired
+      files no longer route to stale paths.
+
+      - Error scenarios: active pages do not silently fall back to archive-only guidance,
+      and workflow boundary messaging remains clear after the link fixes.
+
+
+      Validate all blocker families from `dx91-self-docs.retest-self-docs-surface-blockers`,
+      with explicit attention to:
+
+      - `docs/reference/workflow/session-start.md`
+
+      - `docs/reference/contracts/pre-post.md`
+
+      - `docs/reference/verification/smart-routing.md`
+
+      - `docs/vision.md`
+
+      - `docs/reference/agent-information-hierarchy.md`
+
+      - any sibling files changed by the batched fix step
+
+
+      Document ALL findings. A test that discovers issues is a SUCCESS. A test that
+      finds nothing must justify the active-surface coverage achieved.'
+    verification: '- Main path: independently traverse the repaired active docs links
+      and confirm they resolve to live current targets
+
+      - Failure path: explicitly probe moved/renamed proposal-path and contract-path
+      siblings plus USBV/workflow boundary wording for stale or archive-misrouting
+      regressions
+
+      - Evidence distinguishes active docs integrity from archive references and records
+      whether workflow boundary clarity remains intact'
+    evidence_template: "## Verification Report\n\n**Tester**: blind-tester (independent\
+      \ of implementation)\n**Scope**: active DX-91 docs link integrity and workflow\
+      \ boundary clarity after batched blocker fixes\n**Independence Level**: L1\n\
+      **Timestamp**: <ISO 8601>\n\n### Test Execution\n- Commands or navigation checks\
+      \ executed:\n  ```\n  <actual docs link checks / commands>\n  ```\n- Output\
+      \ summary: <key results>\n\n### Issues Found\n\n| Severity   | Description \
+      \  | Location                | Reproduction |\n| ---------- | -------------\
+      \ | ----------------------- | ------------ |\n| blocker    | <issue>       |\
+      \ <file:line or path>     | <steps>      |\n| should_fix | <issue>       | <location>\
+      \              | <steps>      |\n| suggestion | <improvement> | <context>  \
+      \             | -            |\n| tech_debt  | <known debt>  | <location>  \
+      \            | -            |\n\n### Coverage Assessment\n- Happy path verified:\
+      \ ✅/❌\n- Edge cases tested: <count>\n- NOT tested: <areas not covered and why>\n\
+      \n### Verdict\n- [ ] PASS\n- [ ] ISSUES_FOUND\n- [ ] INCOMPLETE\n\n**Confidence**:\
+      \ high/medium/low"
+    depends_on:
+    - dx91-self-docs.fix-self-docs-active-link-blockers-batch
+    agent: blind-tester
 - id: dx91-release-readiness
   name: DX-91 Release Readiness Audit
   status: locked
