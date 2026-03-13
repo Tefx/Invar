@@ -21026,7 +21026,7 @@ phases:
       '
   - id: dx91-release-readiness.gate
     name: dx91-release-readiness.gate
-    status: rejected
+    status: claimed
     description: 'Gate review: determine whether the repository is genuinely ready
       to recommend DX-91 as the active product direction.
 
@@ -21084,7 +21084,7 @@ phases:
     - dx91-release-readiness.retest-proposal-index-reconciliation-fs-inventory-blockers-followup-batch
     agent: gate-reviewer
     claimed_by: gate-reviewer
-    claimed_at: '2026-03-13T16:54:59.749528+00:00'
+    claimed_at: '2026-03-13T18:30:22.983184+00:00'
     done_at: '2026-03-13T17:03:08.577859+00:00'
     rejection_reason: New remediation loop added for remaining release-facing guide
       and proposal-index blockers; gate must rerun after `dx91-release-readiness.retest-release-guides-proposal-index-remaining-blockers`
