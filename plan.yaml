@@ -22953,3 +22953,84 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-13T18:14:06.959470+00:00'
+  - id: dx91-release-readiness.fix-proposal-index-reconciliation-fs-inventory-blockers-followup-batch
+    name: fix-proposal-index-reconciliation-fs-inventory-blockers-followup-batch
+    status: pending
+    description: "Fix ALL blockers found by `dx91-release-readiness.retest-proposal-index-reconciliation-fs-inventory-blockers`\
+      \ in ONE batched remediation step. Fix ALL of these, not just the first.\n\n\
+      step_type: implementation\nagent: doc-reviewer\nagent_source: default\nprior_loop:\n\
+      - dx91-release-readiness.fix-proposal-index-reconciliation-fs-inventory-blockers\n\
+      - dx91-release-readiness.retest-proposal-index-reconciliation-fs-inventory-blockers\n\
+      remaining_blocker: proposal-index release readiness is still blocked because\
+      \ published totals, row coverage, and legacy-row traceability do not yet align\
+      \ with the current filesystem-backed counting basis.\nwhy_new_loop: the prior\
+      \ filesystem-inventory reconciliation loop improved the index, but the follow-up\
+      \ retest still found three blocker families that must be fixed together so totals,\
+      \ row coverage, and legacy formatting become truthful and reproducible.\n\n\
+      spec_refs:\n- `docs/proposals/index.md`\n- `docs/proposals/DX-91-simplification.md`\n\
+      - `docs/reference/index.md`\n- `.invar/context.md`\n\ntouch_paths:\n- `docs/proposals/index.md`\n\
+      - root proposal files in `docs/proposals/*.md` referenced by the row inventory\n\
+      - `docs/proposals/completed/*.md` as archived-count comparison set\n\nharness_refs:\n\
+      - `dx91-release-readiness.retest-proposal-index-reconciliation-fs-inventory-blockers`\n\
+      - filesystem state for `docs/proposals/**`\n- proposal-index statistics/reconciliation/counting-basis\
+      \ sections and main row tables\n\nknown_risks:\n- Published totals can still\
+      \ be internally consistent while diverging from current filesystem reality.\n\
+      - Row tables can remain incomplete even after summary counts are updated unless\
+      \ sibling rows are checked together.\n- Legacy format outliers can hide traceability\
+      \ gaps and make later inventory audits non-reproducible.\n\n## Blockers to Fix\
+      \ (ALL of these, not just the first)\n\n### B1: Published totals still mismatch\
+      \ filesystem reality\nEvidence:\n- published math `14 + 11 + 76 = 101`\n- filesystem\
+      \ inventory is `31` root + `76` completed = `107`\nLocations:\n- `docs/proposals/index.md`\
+      \ statistics section\n- `docs/proposals/index.md` reconciliation section\n-\
+      \ `docs/proposals/index.md` counting-basis section\nRemediation:\n- Either reconcile\
+      \ totals to current filesystem reality OR tighten an explicit exclusion policy\
+      \ so `101` is truthful, reproducible, and consistent with row inventory.\n-\
+      \ Ensure the same counting basis appears in statistics, reconciliation, and\
+      \ counting-basis text so a reviewer can recompute the totals without guessing.\n\
+      Grep hint: `Grand Total|Total \\(indexed\\)|Reconciliation Check|Counting Basis|Archived\
+      \ \\(completed/\\)`\nIMPORTANT: sibling-search every total, subtotal, and reconciliation\
+      \ note tied to the counting basis; do not stop after changing one number.\n\n\
+      ### B2: Row coverage incompleteness remains\nEvidence:\n- 7 unrepresented root\
+      \ files remain in the row inventory:\n  - `DX-61-implementation-design.md`\n\
+      \  - `DX-91-claude-md-draft.md`\n  - `DX-91-freeze-spec-baseline.md`\n  - `DX-91-generated-file-contracts.md`\n\
+      \  - `DX-91-invar-md-draft.md`\n  - `DX-91-migration-semantics.md`\n  - `LX-08-extension-skills-future.md`\n\
+      Locations:\n- main proposal row tables in `docs/proposals/index.md`\nRemediation:\n\
+      - Represent, link, and categorize these files OR add an explicit documented\
+      \ exclusion policy that matches totals and counting basis.\n- Recompute row-based\
+      \ counts after the coverage pass so row inventory, exclusions, and published\
+      \ totals agree.\nGrep hint: `\\| DX-61|\\| DX-91-|\\| LX-08|Open Proposals|Legacy\
+      \ / Pre-DX-91`\nIMPORTANT: perform sibling-searches across the full main row\
+      \ tables so no other root proposal file remains omitted.\n\n### B3: LX-08 row\
+      \ format outlier persists\nEvidence:\n- legacy row still uses plain text `extension-skills-future`\
+      \ instead of markdown-link format\nLocations:\n- LX-08 row in the legacy table\
+      \ within `docs/proposals/index.md`\nRemediation:\n- Normalize LX-08 to markdown-link\
+      \ format.\n- Sibling-search the legacy table for any other formatting outlier\
+      \ before claiming done.\nGrep hint: `LX-08|extension-skills-future|\\(LX-08-extension-skills-future\\\
+      .md\\)`\nIMPORTANT: verify the full legacy table, not just LX-08.\n\n## Completion\
+      \ Criteria\n- Published totals are truthful against current filesystem reality\
+      \ or against an explicit, reproducible exclusion policy.\n- Row inventory coverage,\
+      \ exclusions, and published totals all agree with the same counting basis.\n\
+      - The seven named root files are either represented and linked or explicitly\
+      \ excluded by policy.\n- LX-08 and sibling legacy rows use traceable markdown-link\
+      \ formatting.\n- Evidence includes sibling-search coverage for totals, row tables,\
+      \ and legacy formatting.\n\n## Gate Preview (what the follow-up retest WILL\
+      \ reject)\n1. Any mismatch between published totals and the documented counting\
+      \ basis.\n2. Any named root file left unrepresented without an explicit policy-backed\
+      \ exclusion.\n3. Any legacy row still using plain text where link formatting\
+      \ is required for traceability.\n4. Any fix that addresses one blocker family\
+      \ without reconciling the sibling sections that share the same inventory story."
+    verification: '- Main path: one batched docs pass fixes totals, row coverage,
+      and LX-08 legacy formatting together
+
+      - Failure path: sibling-searches across totals, row tables, and legacy rows
+      show no remaining mismatch, omission, or format outlier for the named blocker
+      family
+
+      - Proof: evidence lists the chosen counting basis, treatment of each named file,
+      and the sibling-search scope used to clear totals and legacy-format exceptions
+
+      - Out-of-scope guardrail: broader proposal curation outside these blockers remains
+      deferred unless required to keep the published inventory truthful'
+    depends_on:
+    - dx91-release-readiness.retest-proposal-index-reconciliation-fs-inventory-blockers
+    agent: doc-reviewer
