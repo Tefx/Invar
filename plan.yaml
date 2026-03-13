@@ -19343,7 +19343,7 @@ phases:
       \ protocol.\n"
   - id: freeze-self-docs-snapshot
     name: freeze-self-docs-snapshot
-    status: claimed
+    status: done
     description: 'Freeze the repository docs snapshot that release-readiness will
       audit.
 
@@ -19370,6 +19370,80 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-13T15:18:48.362623+00:00'
+    done_at: '2026-03-13T15:21:21.002914+00:00'
+    evidence: 'Freeze decision: READY
+
+
+      Commands run:
+
+      - `git rev-parse HEAD`
+
+      - `git status --porcelain=v1 --branch`
+
+      - `git diff --name-only`
+
+      - `git diff --cached --name-only`
+
+      - environment capture (`pwd`, `uname`, UTC timestamp)
+
+
+      Snapshot commit:
+
+      - `bcf3f0dce05d65c2fea26f376874ead10b417fb7`
+
+
+      Working tree status:
+
+      - clean, no staged/unstaged/untracked changes
+
+      - branch in freeze worktree clean at capture time
+
+
+      Environment declaration:
+
+      - isolated worktree: `.vectl/worktrees/freeze-self-docs-snapshot`
+
+      - repo root: `/Users/tefx/Projects/Invar`
+
+      - OS: Darwin
+
+      - UTC capture recorded
+
+
+      Frozen docs surface:
+
+      - `INVAR.md`
+
+      - `CLAUDE.md`
+
+      - `docs/guide.md`
+
+      - `docs/agents.md`
+
+      - `docs/reference/index.md`
+
+      - `docs/reference/documentation.md`
+
+      - `docs/reference/contracts/pre-post.md`
+
+      - `docs/reference/workflow/index.md`
+
+      - `docs/reference/workflow/session-start.md`
+
+      - `docs/reference/workflow/usbv.md`
+
+
+      Files changed:
+
+      - none
+
+
+      Notes:
+
+      - no code/doc changes between retest and freeze capture; self-docs surface ready
+      for phase gate review.
+
+      '
   - id: dx91-self-docs.gate
     name: dx91-self-docs.gate
     status: pending
