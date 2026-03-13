@@ -23087,7 +23087,7 @@ phases:
       \ edits."
   - id: dx91-release-readiness.retest-proposal-index-reconciliation-fs-inventory-blockers-followup-batch
     name: retest-proposal-index-reconciliation-fs-inventory-blockers-followup-batch
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT TESTER (`integration-verifier`), validate closure
       of the full filesystem-inventory blocker family after `dx91-release-readiness.fix-proposal-index-reconciliation-fs-inventory-blockers-followup-batch`.
 
@@ -23194,3 +23194,25 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-13T18:25:39.629096+00:00'
+    done_at: '2026-03-13T18:29:52.365307+00:00'
+    evidence: "Verification (integration-verifier) with setup-repair + full retest:\n\
+      \nVerification (commands + outputs/results)\n- Setup repair created missing\
+      \ isolated resources:\n  - `git worktree add .vectl/worktrees/dx91-release-readiness.retest-proposal-index-reconciliation-fs-inventory-blockers-followup-batch\
+      \ -b vectl/step-dx91-release-readiness.retest-proposal-index-reconciliation-fs-inventory-blockers-followup-batch\
+      \ vectl/step-dx91-release-readiness.fix-proposal-index-reconciliation-fs-inventory-blockers-followup-batch`\n\
+      \  - output confirmed new branch/worktree prepared at fix-step commit.\n  -\
+      \ `git worktree list` and `git branch --list` confirmed required worktree/branch\
+      \ present.\n- Full reconciliation audit over `docs/proposals/index.md`:\n  -\
+      \ `ROOT_FILES_EXCL_INDEX 31`\n  - `COMPLETED_FILES 76`\n  - `ROW_LINK_TARGETS_UNIQUE\
+      \ 31`\n  - `MISSING_ROOT_FILES_IN_ROWS []`\n  - `EXTRA_ROW_LINK_TARGETS_NOT_IN_FS\
+      \ []`\n  - `ACTIVE_ROWS 10`\n  - `DEFERRED_ROWS 10`\n  - `LEGACY_ROWS 11`\n\
+      \  - `OPEN_TOTAL_ROWS 20`\n  - `STATUS_COUNTS_OPEN {'Active': 3, 'Deferred':\
+      \ 8, 'Draft': 7, 'Partial': 2}`\n  - `LEGACY_LINK_FORMAT_FAILURES 0`\n  - `LX08_TRACEABLE_MD_LINK\
+      \ True`\n  - `GRAND_TOTAL_20_11_76 107`\n  - `GRAND_TOTAL_31_76 107`\n- Explicit\
+      \ previously-missing-file coverage check returned `IN_ROWS True` + `EXISTS True`\
+      \ for all seven named files.\n- `git status --short --branch` => clean verification\
+      \ branch.\n\nFiles changed\n- none (verification-only)\n\nGaps/Notes\n- Totals/counting\
+      \ basis now reproducible and consistent.\n- Row coverage and legacy link formatting\
+      \ are now closed for blocker family.\n- Setup-repair was required because the\
+      \ retest worktree/branch did not exist initially.\n\nGate recommendation\n-\
+      \ REOPEN\n\ndiscovered_issues\n- none"
