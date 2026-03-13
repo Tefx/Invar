@@ -20466,7 +20466,7 @@ phases:
       '
   - id: dx91-self-docs.dx91-self-docs-retest-gate-doc-coherence-blockers-batch
     name: dx91-self-docs.retest-gate-doc-coherence-blockers-batch
-    status: pending
+    status: claimed
     description: 'As an INDEPENDENT TESTER (`blind-tester`), validate active self-doc
       coherence after `dx91-self-docs.dx91-self-docs-fix-gate-doc-coherence-blockers-batch`
       from a fresh-reader perspective.
@@ -20520,6 +20520,8 @@ phases:
     depends_on:
     - dx91-self-docs.dx91-self-docs-fix-gate-doc-coherence-blockers-batch
     agent: blind-tester
+    claimed_by: blind-tester
+    claimed_at: '2026-03-13T15:41:15.538083+00:00'
 - id: dx91-release-readiness
   name: DX-91 Release Readiness Audit
   status: locked
