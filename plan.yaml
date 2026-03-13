@@ -22626,7 +22626,7 @@ phases:
       \ legacy row not link-formatted"
   - id: dx91-release-readiness.fix-proposal-index-reconciliation-fs-inventory-blockers
     name: fix-proposal-index-reconciliation-fs-inventory-blockers
-    status: claimed
+    status: done
     description: 'Fix ALL blockers found by `dx91-release-readiness.retest-proposal-index-reconciliation-remaining-blockers`
       in ONE batched remediation step. Fix ALL of these, not just the first.
 
@@ -22828,6 +22828,22 @@ phases:
     agent: doc-reviewer
     claimed_by: general
     claimed_at: '2026-03-13T18:10:39.269323+00:00'
+    done_at: '2026-03-13T18:13:58.340988+00:00'
+    evidence: "Commit hash(es)\n- a002801fbc67152c6c9abf9f36a4644cf46dc4b3\n\nFiles\
+      \ changed\n- docs/proposals/index.md\n\nVerification (commands + outputs)\n\
+      - `git rev-parse --abbrev-ref HEAD` => `vectl/step-dx91-release-readiness.fix-proposal-index-reconciliation-fs-inventory-blockers`\n\
+      - `invar_guard(path=\".../dx91-release-readiness.fix-proposal-index-reconciliation-fs-inventory-blockers\"\
+      , changed=true)` => passed (no changed Python files; static/doctest passed)\n\
+      - Reconciliation script outputs:\n  - `root_md_excl_index=31`\n  - `completed_md=76`\n\
+      \  - `grand_total_fs=107`\n  - `open_header=20`\n  - `active_header=10`\n  -\
+      \ `deferred_header=10`\n  - `legacy_header=11`\n  - `stats_total=107`\n  - `lx08_link=LX-08-extension-skills-future.md`\n\
+      - `git show --stat --name-only --oneline HEAD` => commit title `reconcile proposal\
+      \ index totals with filesystem inventory`; changed file `docs/proposals/index.md`\n\
+      \nSpec link\n- dx91-release-readiness.fix-proposal-index-reconciliation-fs-inventory-blockers\n\
+      - docs/proposals/index.md\n\nGaps/Notes\n- Scope remained limited to proposal-index\
+      \ reconciliation blockers (totals, missing-file categorization/coverage, LX-08\
+      \ link normalization).\n- No plan/orchestrator state files modified.\n- discovered_issues:\
+      \ none"
   - id: dx91-release-readiness.retest-proposal-index-reconciliation-fs-inventory-blockers
     name: retest-proposal-index-reconciliation-fs-inventory-blockers
     status: pending
