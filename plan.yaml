@@ -22984,7 +22984,7 @@ phases:
       \ legacy formatting persists"
   - id: dx91-release-readiness.fix-proposal-index-reconciliation-fs-inventory-blockers-followup-batch
     name: fix-proposal-index-reconciliation-fs-inventory-blockers-followup-batch
-    status: claimed
+    status: done
     description: "Fix ALL blockers found by `dx91-release-readiness.retest-proposal-index-reconciliation-fs-inventory-blockers`\
       \ in ONE batched remediation step. Fix ALL of these, not just the first.\n\n\
       step_type: implementation\nagent: doc-reviewer\nagent_source: default\nprior_loop:\n\
@@ -23065,6 +23065,26 @@ phases:
     agent: doc-reviewer
     claimed_by: general
     claimed_at: '2026-03-13T18:20:51.075709+00:00'
+    done_at: '2026-03-13T18:25:24.743444+00:00'
+    evidence: "Commit hash(es)\n- 3bc94c14436776f310b4a99108918efe3ac471f5\n\nFiles\
+      \ changed\n- docs/proposals/index.md\n\nVerification (commands + outputs)\n\
+      - `git branch --show-current` => `vectl/step-dx91-release-readiness.fix-proposal-index-reconciliation-fs-inventory-blockers-followup-batch`\n\
+      - Totals/coverage audit script outputs:\n  - `ROOT_FILES_EXCL_INDEX 31`\n  -\
+      \ `COMPLETED_FILES 76`\n  - `OPEN_LINKED_FILES 20`\n  - `LEGACY_LINKED_FILES\
+      \ 11`\n  - `MISSING_ROOT_FILES []`\n  - `LEGACY_ROW_COUNT 11`\n  - `LEGACY_LINK_OUTLIERS\
+      \ 0`\n  - `INDEX_DECLARED_GRAND_TOTAL 107`\n  - `RECOMPUTED_GRAND_TOTAL 107`\n\
+      - `rg -n \"Counting Basis|Grand Total|Root Files Cross-Check|Reproducible Exclusion\
+      \ Policy|Row Coverage for Previously Missing Files|LX-08\" docs/proposals/index.md`\
+      \ => synchronized counting basis + grand totals, explicit exclusion policy,\
+      \ explicit seven-file coverage section, LX-08 linked row present.\n- `git show\
+      \ --name-only --pretty=format: HEAD` => `docs/proposals/index.md`\n\nSpec link\n\
+      - dx91-release-readiness.fix-proposal-index-reconciliation-fs-inventory-blockers-followup-batch\n\
+      - docs/proposals/index.md\n\nGaps/Notes\n- Single-file batched reconciliation\
+      \ pass; totals, row inventory, and counting-basis text aligned.\n- Explicit\
+      \ policy now excludes only `docs/proposals/index.md` for inventory total.\n\
+      - Seven named files were covered in row mapping/coverage notes.\n- Worker discovered\
+      \ initial missing worktree path and created the required isolated worktree before\
+      \ edits."
   - id: dx91-release-readiness.retest-proposal-index-reconciliation-fs-inventory-blockers-followup-batch
     name: retest-proposal-index-reconciliation-fs-inventory-blockers-followup-batch
     status: pending
