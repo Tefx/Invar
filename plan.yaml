@@ -23432,7 +23432,7 @@ phases:
       - discovered_issues: none'
   - id: dx91-release-readiness.retest-reference-classification-consistency-blockers
     name: retest-reference-classification-consistency-blockers
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT TESTER (`integration-verifier`), validate closure
       of the full reference-classification blocker family after `dx91-release-readiness.fix-reference-classification-consistency-blockers`.
 
@@ -23533,6 +23533,23 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-13T18:38:55.693225+00:00'
+    done_at: '2026-03-13T18:43:29.557322+00:00'
+    evidence: "Verification (integration-verifier):\n\nVerification (commands + outputs/results)\n\
+      - Created missing retest worktree/branch and verified isolation:\n  - `git worktree\
+      \ add .vectl/worktrees/dx91-release-readiness.retest-reference-classification-consistency-blockers\
+      \ -b vectl/step-dx91-release-readiness.retest-reference-classification-consistency-blockers`\n\
+      \  - `git status --short --branch` => `## vectl/step-dx91-release-readiness.retest-reference-classification-consistency-blockers`\n\
+      - Classification audit in `docs/proposals/index.md` found stale row:\n  - `|\
+      \ docs/reference/index.md | **Archive** — Contains USBV references (historical)\
+      \ |`\n- Sibling row review:\n  - `docs/reference/workflow/usbv.md` archive wording\
+      \ remained appropriate historical entry.\n- Narrative alignment check against\
+      \ `docs/reference/index.md`:\n  - active `# Invar Mechanisms` content and DX-91\
+      \ workflow guidance contradict archive label in proposal index.\n\nFiles changed\n\
+      - none (verification-only)\n\nGaps/Notes\n- Gate recommendation: BLOCKED.\n\
+      - Retest showed the classification contradiction remains unresolved in the retest-visible\
+      \ working state.\n\nDetected issues\n- `docs/proposals/index.md` still classifies\
+      \ `docs/reference/index.md` as Archive.\n- Cross-reference narrative remains\
+      \ inconsistent with active DX-91 mechanisms documentation in `docs/reference/index.md`."
   - id: dx91-release-readiness.fix-reference-classification-consistency-followup-batch
     name: fix-reference-classification-consistency-followup-batch
     status: pending
