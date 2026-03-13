@@ -23236,7 +23236,7 @@ phases:
       \ REOPEN\n\ndiscovered_issues\n- none"
   - id: dx91-release-readiness.fix-reference-classification-consistency-blockers
     name: fix-reference-classification-consistency-blockers
-    status: claimed
+    status: done
     description: 'Fix ALL blockers found by `dx91-release-readiness.gate` in ONE batched
       remediation step. Fix ALL of these, not just the first.
 
@@ -23385,6 +23385,50 @@ phases:
     agent: doc-reviewer
     claimed_by: general
     claimed_at: '2026-03-13T18:36:42.261700+00:00'
+    done_at: '2026-03-13T18:38:43.467719+00:00'
+    evidence: 'Commit hash(es)
+
+      - 4590dad
+
+
+      Files changed
+
+      - docs/proposals/index.md
+
+      - docs/reference/index.md
+
+
+      Verification (commands + outputs)
+
+      - `git branch --show-current && git status --short` => branch `vectl/step-dx91-release-readiness.fix-reference-classification-consistency-blockers`;
+      modified docs files shown before commit.
+
+      - `git commit -m "Align reference index classification with DX-91 active docs"`
+      => passed protections; committed with `2 files changed, 6 insertions(+), 2 deletions(-)`.
+
+      - `git show --name-status --oneline -1` => commit `4590dad` with expected file
+      set.
+
+      - `git status --short` => clean worktree after commit.
+
+
+      Spec link
+
+      - dx91-release-readiness.fix-reference-classification-consistency-blockers
+
+
+      Gaps/Notes
+
+      - Proposal-index classification for `docs/reference/index.md` reconciled to
+      Active.
+
+      - Neighboring reference row for `docs/reference/workflow/usbv.md` kept as Archive
+      with superseded wording.
+
+      - Added explicit active/archive boundary language in `docs/reference/index.md`
+      to keep one coherent narrative.
+
+      - discovered_issues: none'
   - id: dx91-release-readiness.retest-reference-classification-consistency-blockers
     name: retest-reference-classification-consistency-blockers
     status: pending
