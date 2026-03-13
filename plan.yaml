@@ -19186,13 +19186,13 @@ phases:
       \ active surface.\n"
 - id: dx91-self-docs
   name: DX-91 Self-Docs Update
-  status: pending
+  status: in_progress
   depends_on:
   - dx91-python-only
   steps:
   - id: update-runtime-owned-docs
     name: update-runtime-owned-docs
-    status: pending
+    status: claimed
     description: 'Update repository-owned docs and template-facing guidance so they
       describe the real DX-91 Python-only behavior instead of the removed agent-era
       product surface.
@@ -19216,6 +19216,8 @@ phases:
       - Evidence distinguishes runtime-owned docs from proposal/archive material that
       remains intentionally historical'
     agent: doc-reviewer
+    claimed_by: doc-reviewer
+    claimed_at: '2026-03-13T11:17:22.216848+00:00'
   - id: update-proposals-index-and-crosslinks
     name: update-proposals-index-and-crosslinks
     status: pending
