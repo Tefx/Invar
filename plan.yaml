@@ -22269,7 +22269,7 @@ phases:
       fix step.'
   - id: dx91-release-readiness.fix-proposal-index-reconciliation-remaining-blockers
     name: fix-proposal-index-reconciliation-remaining-blockers
-    status: pending
+    status: claimed
     description: 'Fix ALL remaining proposal-index reconciliation blockers from `dx91-release-readiness.retest-release-guides-proposal-index-remaining-blockers`
       in ONE batched remediation step. Fix ALL of these, not just the first.
 
@@ -22444,6 +22444,8 @@ phases:
     depends_on:
     - dx91-release-readiness.retest-release-guides-proposal-index-remaining-blockers
     agent: doc-reviewer
+    claimed_by: doc-reviewer
+    claimed_at: '2026-03-13T17:46:45.030423+00:00'
   - id: dx91-release-readiness.retest-proposal-index-reconciliation-remaining-blockers
     name: retest-proposal-index-reconciliation-remaining-blockers
     status: pending
