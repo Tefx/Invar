@@ -20869,7 +20869,7 @@ phases:
       \ tracked file edits.\n"
   - id: prove-final-init-install-smoke
     name: prove-final-init-install-smoke
-    status: pending
+    status: claimed
     description: 'As an INDEPENDENT TESTER (`blind-tester`), provide final real-path
       evidence that the simplified DX-91 product is usable from the top-level command
       surface.
@@ -20906,6 +20906,8 @@ phases:
     depends_on:
     - retest-dx91-consistency-blockers
     agent: blind-tester
+    claimed_by: blind-tester
+    claimed_at: '2026-03-13T16:39:55.168991+00:00'
   - id: freeze-release-candidate
     name: freeze-release-candidate
     status: pending
