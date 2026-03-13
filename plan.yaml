@@ -21076,6 +21076,7 @@ phases:
     - dx91-release-readiness.retest-doc-runtime-proposal-index-blockers
     - dx91-release-readiness.retest-release-guides-proposal-index-remaining-blockers
     - dx91-release-readiness.retest-proposal-index-reconciliation-remaining-blockers
+    - dx91-release-readiness.retest-proposal-index-reconciliation-fs-inventory-blockers
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-13T16:54:59.749528+00:00'
