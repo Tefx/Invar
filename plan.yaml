@@ -20981,7 +20981,7 @@ phases:
     agent: gate-reviewer
   - id: fix-dx91-consistency-blockers
     name: fix-dx91-consistency-blockers
-    status: claimed
+    status: done
     description: 'Fix ALL blockers found by `audit-dx91-consistency` together; do
       not stop after the first issue.
 
@@ -21077,6 +21077,36 @@ phases:
     agent: python-senior
     claimed_by: python-senior
     claimed_at: '2026-03-13T16:24:24.961563+00:00'
+    done_at: '2026-03-13T16:34:42.793805+00:00'
+    evidence: "Artifact:\n- Main squash commit: `7affa0e`\n- Worktree commit: `9becb006fb1711efd2d5c71f9a9b80c7cb238a3d`\n\
+      \nFiles changed:\n- `.invar/mcp-setup.md`\n- `README.md`\n- `docs/reference/agent-information-hierarchy.md`\n\
+      - `docs/reference/documentation.md`\n- `docs/reference/workflow/index.md`\n\
+      - `docs/reference/workflow/session-start.md`\n- `src/invar/core/sync_helpers.py`\n\
+      - `tests/integration/test_dx91_dev_sync_template_merge.py`\n\nVerification:\n\
+      - `uv run pytest -q tests/integration/test_dx91_dev_sync_template_merge.py tests/integration/test_dx91_init_entrypoints.py\
+      \ tests/integration/test_dx91_destructive_regression_harness.py` -> `25 passed`\n\
+      - `invar_guard(path=<worktree>, changed=true)` -> passed (0 errors/0 warnings)\n\
+      - Main merge commit hooks passed: INVAR protection, Ruff, mypy, Invar Guard\n\
+      \nB1 sibling-search coverage:\n- searched `dx91_dev_sync_template_merge|create_only|context\\\
+      .md|template_sync|manifest\\.toml`\n- aligned harness expectations in `test_dx91_dev_sync_template_merge.py`\n\
+      - aligned sibling runtime example in `src/invar/core/sync_helpers.py` to current\
+      \ create_only semantics\n\nB2 sibling-search coverage:\n- searched `invar update|\\\
+      .claude/commands|Check-In|Final|USBV|skills|hooks` across active docs surfaces\n\
+      - remediated active reference docs to DX-91 runtime surface:\n  - `docs/reference/documentation.md`\n\
+      \  - `docs/reference/workflow/session-start.md`\n  - `docs/reference/agent-information-hierarchy.md`\n\
+      \  - `docs/reference/workflow/index.md`\n- retained historical USBV material\
+      \ only with explicit archive framing\n\nB3 sibling-search coverage:\n- searched\
+      \ `\\.mcp\\.json|\\.invar/|generated|installed` across README/reference/setup\
+      \ docs\n- aligned README generated/install outputs to observed fresh-init outputs\n\
+      - removed obsolete auto `.mcp.json` claim from `.invar/mcp-setup.md`\n\nActive-vs-archive\
+      \ classification:\n- active runtime/tests/docs/README now consistent with DX-91\
+      \ Python-only surface\n- historical/archive references retained only as explicitly\
+      \ non-active context\n\nOptional suggestions handled/noted:\n- proposal/runtime\
+      \ `rules`/`version` mismatch noted as non-blocking narrative follow-up\n- proposal-index\
+      \ drift coverage noted as separate docs-domain follow-up\n\nSpec link:\n- `fix-dx91-consistency-blockers`\n\
+      - `docs/proposals/DX-91-simplification.md`\n\nGaps/Notes:\n- pre-commit reported\
+      \ unstaged files and stashed/restored automatically during commit; final commit\
+      \ succeeded without hook bypass.\n"
   - id: retest-dx91-consistency-blockers
     name: retest-dx91-consistency-blockers
     status: pending
