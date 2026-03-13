@@ -23742,7 +23742,7 @@ phases:
       \ initial missing worktree/branch for step setup"
   - id: dx91-release-readiness.retest-reference-classification-consistency-followup-batch
     name: retest-reference-classification-consistency-followup-batch
-    status: pending
+    status: claimed
     description: 'As an INDEPENDENT TESTER (`integration-verifier`), validate closure
       of the full remaining reference-classification blocker family after `dx91-release-readiness.fix-reference-classification-consistency-followup-batch`.
 
@@ -23849,3 +23849,5 @@ phases:
     depends_on:
     - dx91-release-readiness.fix-reference-classification-consistency-followup-batch
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-13T18:48:24.078972+00:00'
