@@ -19446,7 +19446,7 @@ phases:
       '
   - id: dx91-self-docs.gate
     name: dx91-self-docs.gate
-    status: claimed
+    status: done
     description: 'Gate review: verify the repository''s active docs now match the
       real DX-91 product surface.
 
@@ -19506,6 +19506,22 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-13T15:21:33.162793+00:00'
+    done_at: '2026-03-13T15:34:19.594347+00:00'
+    evidence: "Gate decision: BLOCKED (active self-doc coherence blockers found)\n\
+      \nFindings:\n- blockers:\n  - active docs still advertise removed `invar init\
+      \ --claude/--pi` flows (`docs/index.html`, `docs/guides/multi-agent.md`)\n \
+      \ - `INVAR.md` still references removed `.invar/examples/` surface\n  - broken\
+      \ deprecation-banner link in `docs/guides/multi-agent.md`\n  - `.invar/context.md`\
+      \ still frames multi-agent init as current/recent\n- should_fix:\n  - `.invar/project-additions.md`\
+      \ standalone-link behavior\n  - historical docs/testing wording drift classification\n\
+      \nEvidence:\n- `uv run invar init --help` confirms only `--file`/`--preview`\
+      \ supported\n- targeted grep/read scans identified stale active-surface references\
+      \ listed above\n- verify-only gate run made no tracked edits\n\nBatched remediation\
+      \ created:\n- `dx91-self-docs.dx91-self-docs-fix-gate-doc-coherence-blockers-batch`\n\
+      - `dx91-self-docs.dx91-self-docs-retest-gate-doc-coherence-blockers-batch`\n\
+      - `dx91-self-docs.gate` dependency chain updated behind new retest (freeze dependency\
+      \ preserved)\n\nNotes:\n- Gate step completed as issue-discovery evidence and\
+      \ transitioned to single batched fix + independent retest loop.\n"
   - id: dx91-self-docs.fix-self-docs-surface-blockers
     name: fix-self-docs-surface-blockers
     status: done
