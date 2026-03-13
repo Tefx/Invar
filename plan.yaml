@@ -18781,7 +18781,8 @@ phases:
     name: dx91-python-only.fix-remaining-gate-blockers
     status: pending
     description: 'Fix ALL remaining blockers from `dx91-python-only.dx91-python-only-retest-gate-blockers`
-      in ONE batched remediation step. Fix ALL of these, not just the first.
+      in ONE batched remediation step by applying the confirmed product decision:
+      DX-91 fully retires `invar uninstall`. Fix ALL of these, not just the first.
 
 
       step_type: implementation
@@ -18796,14 +18797,14 @@ phases:
 
       - dx91-python-only.dx91-python-only-retest-gate-blockers
 
-      remaining_blocker: uninstall/removal-policy mismatch and active-docs/CLI drift
-      remain unresolved; TypeScript-retirement coherence must stay covered as a regression
-      check in the follow-up retest.
+      remaining_blocker: full retirement of `invar uninstall` must be made coherent
+      across runtime, active docs, tests, help, and design surfaces, while TypeScript-retirement
+      coherence stays preserved as a regression check.
 
-      why_new_loop: the existing retest isolated a narrower remaining blocker set;
-      extending the chain is safer than reopening the earlier broad gate-fix step
-      because the unresolved work is now concentrated on CLI policy, command/module
-      coherence, and active docs alignment.
+      why_new_loop: the earlier retest narrowed the blocker family to command-retirement
+      policy and active-surface drift; the user has now resolved the product ambiguity
+      by choosing retirement, so this loop converts the remaining work from policy
+      selection into a focused retirement cleanup.
 
 
       spec_refs:
@@ -18831,7 +18832,8 @@ phases:
 
       - `src/invar/cli/`
 
-      - CLI help / command-table surfaces defining the active DX-91 command set
+      - CLI help / command-table / design surfaces defining the active DX-91 command
+      set
 
 
       harness_refs:
@@ -18842,63 +18844,70 @@ phases:
 
       - `uv run invar --help`
 
-      - `uv run invar uninstall --help`
-
 
       ## Blockers to Fix (ALL of these, not just the first)
 
 
-      ### B1: uninstall surface mismatch
+      ### B1: fully retire `invar uninstall`
 
-      Locations: CLI help surface, `invar.shell.commands.uninstall`, destructive regression
-      harness, `docs/design.md`
+      Locations: CLI help surface, command routing/import surfaces, destructive regression
+      harness, `docs/design.md`, `README.md`, active command tables/help/design text
 
-      Remediation: choose ONE coherent DX-91 policy and apply it consistently across
-      code, tests, and docs. If uninstall is removed, docs/tests/imports must stop
-      requiring it. If uninstall is retained, restore command/module wiring and help
-      surface consistently.
+      Remediation: DO NOT restore `invar uninstall` command/module wiring. Remove,
+      rewrite, or clearly archive all active references so the supported DX-91 surface
+      no longer requires or advertises uninstall anywhere in runtime/help/tests/contracts/design
+      docs. If archival or compatibility mentions remain, they must be explicitly
+      historical/archival/compatibility-only and not presented as active user guidance.
 
-      Grep hint: `uninstall|invar\.shell\.commands\.uninstall|collect_removal_targets|execute_removal`
+      Grep hint: `\buninstall\b|invar\.shell\.commands\.uninstall|collect_removal_targets|execute_removal`
 
-      IMPORTANT: search sibling command-routing, import, regression-harness, and docs
-      references beyond the listed locations.
+      IMPORTANT: search sibling command-routing, import, help-text, design, README,
+      and regression-harness references beyond the listed locations.
 
 
-      ### B3: active docs mismatch with actual CLI
+      ### B3: align active docs/tests/help/design surfaces to the retired-command
+      policy
 
-      Locations: `README.md`, `docs/design.md`, CLI help output
+      Locations: `README.md`, `docs/design.md`, active tests, CLI help output, active
+      DX-91 contract/design surfaces
 
-      Remediation: align active docs with the real DX-91 CLI surface exposed by `uv
-      run invar --help`; remove or update command-table entries and flow docs that
-      still advertise commands/flags/flows not actually supported.
+      Remediation: update all active docs/tests/help/design surfaces to match the
+      actual supported CLI surface exposed by `uv run invar --help`; remove or rewrite
+      any flow, table, assertion, or contract that still requires uninstall as an
+      active command.
 
-      Grep hint: `\btest\b|\bverify\b|\bmutate\b|\bhooks\b|\bskill\b|init --claude|uninstall`
+      Grep hint: `\btest\b|\bverify\b|\bmutate\b|\bhooks\b|\bhskill\b|init --claude|uninstall`
 
-      IMPORTANT: fix active docs against the real CLI surface, not against stale historical
-      wording.
+      IMPORTANT: fix active surfaces against the actual current CLI, not against stale
+      proposal wording.
 
 
       ### B2: retain regression coverage for TS retirement coherence
 
       Locations: prior B2 evidence surfaces in tests/templates/docs/modules
 
-      Remediation: do not reopen B2 as a new blocker unless the B1/B3 policy fix regresses
-      TS-retirement coherence; preserve the regression expectation in the follow-up
-      retest.
+      Remediation: do not reopen B2 as a new blocker unless the uninstall-retirement
+      cleanup regresses TS-retirement coherence; preserve the regression expectation
+      in the follow-up retest.
 
       Grep hint: `\.ts\b|TypeScript|typescript|ts_compiler|vitest|eslint|tsc`
 
-      IMPORTANT: follow-up evidence must show B2 still passes after the B1/B3 remediation.
+      IMPORTANT: follow-up evidence must show B2 still passes after the uninstall-retirement
+      cleanup.
 
 
       ## Completion Criteria
 
       - ALL remaining blockers above are fixed in one coherent remediation pass.
 
-      - Uninstall policy is singular and consistent across CLI wiring, module surface,
-      destructive-regression tests, and active docs.
+      - `invar uninstall` is fully retired from active runtime/help/docs/tests/contracts/design
+      surfaces; the plan does not permit restoring the command/module.
 
-      - Active docs match the actual DX-91 CLI help surface.
+      - Active docs and active tests match the actual DX-91 CLI help surface and no
+      longer require uninstall.
+
+      - Any remaining uninstall mention is explicitly historical, archival, or compatibility-only
+      and cannot be mistaken for current supported behavior.
 
       - B2 regression expectations remain intact; no TS-facing active surface is reintroduced
       while fixing B1/B3.
@@ -18908,37 +18917,38 @@ phases:
 
       known_risks:
 
-      - Partial uninstall removal/restoration will recreate the same split-surface
-      blocker family.
+      - Partial retirement will recreate the same split-surface blocker family.
 
-      - README/design docs can drift from the real CLI even when tests are updated.
+      - README/design/help/tests can drift independently unless all active surfaces
+      are rewritten together.
 
-      - Narrow fixes for B1/B3 can accidentally reintroduce TypeScript-facing guidance
+      - Retirement cleanup can accidentally reintroduce TypeScript-facing guidance
       unless B2 remains under regression watch.
 
 
       Gate Preview (what the follow-up retest WILL reject)
 
-      1. Any surviving uninstall import/help/docs path that contradicts the chosen
-      DX-91 policy
+      1. Any attempt to restore or keep `invar uninstall` as an active command/module/help
+      surface
 
-      2. Any active README/design command table or flow doc that still disagrees with
-      `uv run invar --help`
+      2. Any active README/design/help/test surface that still presents uninstall
+      as supported DX-91 behavior
 
-      3. Any B2 TypeScript-retirement regression reopened by the remediation
+      3. Any uninstall mention left ambiguous rather than clearly historical/archival/compatibility-only
 
-      '
-    verification: '- Main path: chosen uninstall policy is internally consistent across
-      CLI/module/docs/test surfaces
+      4. Any B2 TypeScript-retirement regression reopened by the retirement cleanup'
+    verification: '- Main path: active CLI/runtime/help/docs/tests/design surfaces
+      all reflect full retirement of `invar uninstall`
 
-      - Failure path: grep-based sibling searches show no residual uninstall/doc-drift
-      blocker remains in active surfaces
+      - Failure path: grep-based sibling searches show no residual active uninstall
+      requirement or active-doc/help drift remains
 
-      - Regression path: TS-retirement coherence checks remain green after the B1/B3
-      fixes
+      - Boundary path: any retained uninstall mention is clearly marked historical/archival/compatibility-only
 
-      - Proof distinguishes active docs/runtime surfaces from historical or proposal-only
-      references'
+      - Regression path: TS-retirement coherence checks remain green after the retirement
+      cleanup
+
+      - Proof distinguishes active surfaces from proposal/history/archive material'
     depends_on:
     - dx91-python-only.dx91-python-only-retest-gate-blockers
     agent: python-senior
