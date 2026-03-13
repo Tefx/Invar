@@ -19417,7 +19417,7 @@ phases:
     agent: gate-reviewer
   - id: dx91-self-docs.fix-self-docs-surface-blockers
     name: fix-self-docs-surface-blockers
-    status: claimed
+    status: done
     description: 'Fix ALL blockers found by `verify-self-docs-surface` across the
       active DX-91 docs surface.
 
@@ -19518,6 +19518,35 @@ phases:
     agent: doc-reviewer
     claimed_by: doc-reviewer
     claimed_at: '2026-03-13T14:33:21.868868+00:00'
+    done_at: '2026-03-13T14:42:43.958312+00:00'
+    evidence: 'Fixed B1 and B2 blockers across docs/reference/ family:
+
+
+      B1 - Stale README.md links: Replaced all (verification/README.md → verification/index.md,
+      architecture/README.md → architecture/index.md, contracts/README.md → contracts/index.md,
+      rules/README.md → rules/index.md, workflow/README.md → workflow/index.md). Fixed
+      severity-design.md → severity.md in rules/index.md.
+
+
+      B2 - USBV/DX-91 contradiction: Updated docs/reference/workflow/index.md to present
+      DX-91 as current guidance with USBV clearly marked as Archive. Updated sibling
+      files (agent-information-hierarchy.md, documentation.md, session-start.md, completeness.md,
+      doctests.md, contracts/index.md, proposal-workflow.md) to use DX-91 language
+      and mark USBV as historical/archive.
+
+
+      Active-vs-archive boundary: USBV content preserved in usbv.md with explicit
+      archive markers in all referencing docs. All active workflow guidance now presents
+      consistent DX-91 posture (contracts-first, minimal ceremony, guard-enforced).
+
+
+      Files changed: 12 (docs/reference/agent-information-hierarchy.md, contracts/completeness.md,
+      contracts/doctests.md, contracts/index.md, documentation.md, index.md, proposal-workflow.md,
+      rules/index.md, verification/smart-routing.md, workflow/index.md, workflow/session-start.md,
+      terminal-gif-guide.md)
+
+
+      Commit: b541618e6cb5e65620a5b6c537765088d9499688'
   - id: dx91-self-docs.retest-self-docs-surface-blockers
     name: retest-self-docs-surface-blockers
     status: pending
