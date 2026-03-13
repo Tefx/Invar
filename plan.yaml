@@ -19192,7 +19192,7 @@ phases:
   steps:
   - id: update-runtime-owned-docs
     name: update-runtime-owned-docs
-    status: claimed
+    status: done
     description: 'Update repository-owned docs and template-facing guidance so they
       describe the real DX-91 Python-only behavior instead of the removed agent-era
       product surface.
@@ -19218,6 +19218,23 @@ phases:
     agent: doc-reviewer
     claimed_by: doc-reviewer
     claimed_at: '2026-03-13T11:17:22.216848+00:00'
+    done_at: '2026-03-13T14:16:29.365674+00:00'
+    evidence: "Artifact:\n- Main commit: `7519ec22`\n\nFiles changed:\n- `README.md`\n\
+      - `src/invar/templates/CLAUDE.md.template`\n\nVerification:\n- Active docs aligned\
+      \ with current CLI/runtime guidance; removed retired skills/hooks routing from\
+      \ active surfaces.\n- High-signal stale references cleaned from runtime-owned\
+      \ docs/templates.\n- Guard check reported pass with no new blocking violations.\n\
+      \nSibling-search coverage:\n- Checked active surfaces for TypeScript and retired\
+      \ skills/hooks command references.\n- Removed active `invar skill` / `invar\
+      \ hooks` guidance from runtime-facing docs/template surfaces.\n\nActive-vs-archive\
+      \ classification:\n- active cleaned:\n  - `README.md`\n  - `src/invar/templates/CLAUDE.md.template`\n\
+      - archive/proposal/test-report surfaces intentionally unchanged per DX-91 policy:\n\
+      \  - `docs/proposals/**`\n  - `docs/proposals/completed/**`\n  - `CHANGELOG.md`\n\
+      \  - `.invar/examples/**`\n  - `tests/fixtures/**`\n\nSpec link:\n- `update-runtime-owned-docs`\n\
+      - `docs/dx91-python-only-scan-policy.md`\n- `docs/proposals/DX-91-simplification.md`\n\
+      \nGaps/Notes:\n- Check-In/Final protocol in current INVAR/session surfaces remains\
+      \ active DX-91 protocol and was not removed.\n- No plan/orchestrator state files\
+      \ modified.\n"
   - id: update-proposals-index-and-crosslinks
     name: update-proposals-index-and-crosslinks
     status: pending
