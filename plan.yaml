@@ -19343,7 +19343,7 @@ phases:
       \ protocol.\n"
   - id: freeze-self-docs-snapshot
     name: freeze-self-docs-snapshot
-    status: pending
+    status: claimed
     description: 'Freeze the repository docs snapshot that release-readiness will
       audit.
 
@@ -19368,6 +19368,8 @@ phases:
     depends_on:
     - dx91-self-docs.retest-self-docs-active-link-blockers-followup-batch
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-13T15:18:48.362623+00:00'
   - id: dx91-self-docs.gate
     name: dx91-self-docs.gate
     status: pending
