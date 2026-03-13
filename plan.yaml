@@ -23532,3 +23532,178 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-13T18:38:55.693225+00:00'
+  - id: dx91-release-readiness.fix-reference-classification-consistency-followup-batch
+    name: fix-reference-classification-consistency-followup-batch
+    status: pending
+    description: 'Fix ALL remaining blockers found by `dx91-release-readiness.retest-reference-classification-consistency-blockers`
+      in ONE batched remediation step. Fix ALL of these, not just the first.
+
+
+      step_type: implementation
+
+      agent: doc-reviewer
+
+      agent_source: default
+
+      prior_loop:
+
+      - dx91-release-readiness.fix-reference-classification-consistency-blockers
+
+      - dx91-release-readiness.retest-reference-classification-consistency-blockers
+
+      remaining_blocker: `docs/proposals/index.md` still contains classification/narrative
+      text that contradicts the active `docs/reference/index.md` mechanism index,
+      so release readiness remains blocked until the proposal index and sibling reference
+      rows tell one coherent active-vs-archive story.
+
+      why_new_loop: the prior remediation targeted the main reference-index row, but
+      the retest found a surviving contradiction in the proposal-index row/narrative
+      and requires one more batched sibling-row cleanup plus a stale-state guard so
+      downstream verification inspects the actual updated working tree.
+
+
+      spec_refs:
+
+      - `docs/proposals/index.md`
+
+      - `docs/reference/index.md`
+
+      - `docs/proposals/DX-91-simplification.md`
+
+
+      touch_paths:
+
+      - `docs/proposals/index.md`
+
+      - `docs/reference/index.md` only if needed to tighten the classification basis
+      text cited by the proposal index
+
+
+      harness_refs:
+
+      - `dx91-release-readiness.retest-reference-classification-consistency-blockers`
+
+      - proposal-index classification rows and surrounding narrative covering `docs/reference/**`
+
+      - active headings/content in `docs/reference/index.md` (`# Invar Mechanisms`
+      and current DX-91 mechanism sections)
+
+
+      known_risks:
+
+      - Correcting one row can still leave neighboring proposal-index rows or narrative
+      text implying the reference index is archival.
+
+      - A stale worktree can make downstream verification read the pre-fix row and
+      falsely preserve the blocker family.
+
+      - Classification wording must match the active `docs/reference/index.md` content,
+      not a remembered or prior-state narrative.
+
+
+      ## Blockers to Fix (ALL of these, not just the first)
+
+
+      ### B1: surviving archive classification contradiction for `docs/reference/index.md`
+
+      Evidence:
+
+      - `docs/proposals/index.md` still contains the row `| docs/reference/index.md
+      | **Archive** — Contains USBV references (historical) |`.
+
+      - `docs/reference/index.md` is active DX-91 mechanism documentation headed by
+      `# Invar Mechanisms`, not archived historical material.
+
+      Locations:
+
+      - the `docs/reference/index.md` row in `docs/proposals/index.md`
+
+      - any nearby narrative/summary text in `docs/proposals/index.md` that explains
+      reference-doc classification
+
+      - sibling `docs/reference/**` rows adjacent to the corrected row
+
+      Remediation:
+
+      - Replace the stale archive row/narrative with classification language that
+      matches the active mechanism-doc role of `docs/reference/index.md`.
+
+      - Sibling-search adjacent `docs/reference/**` rows and any nearby narrative
+      so no related row still preserves the same archive/historical contradiction.
+
+      - If `docs/reference/index.md` itself is cited as the basis, ensure the referenced
+      heading/narrative remains explicitly active and compatible with the proposal-index
+      wording.
+
+      Grep hint: `docs/reference/index\.md|Contains USBV references|Archive|historical|Invar
+      Mechanisms|docs/reference/`
+
+      IMPORTANT: fix the full contradiction family together; do not stop after changing
+      the first row hit.
+
+
+      ### B2: stale-state pass-through risk for downstream retest
+
+      Locations:
+
+      - working-tree content used by the downstream retest for `docs/proposals/index.md`
+
+      - any evidence note produced by the remediation step
+
+      Remediation:
+
+      - Include explicit evidence that the edited row/narrative is present in the
+      same working tree that downstream retest will inspect.
+
+      - Record the exact updated row text or equivalent narrative excerpt after the
+      change so the retest can compare against the live working tree instead of prior-loop
+      memory.
+
+      Grep hint: `docs/reference/index\.md|Invar Mechanisms|historical|active`
+
+      IMPORTANT: evidence must prove presence of the post-fix text in the current
+      working tree, not merely state that a file was edited.
+
+
+      ## Completion Criteria
+
+      - ALL classification contradictions in this blocker family are fixed in one
+      coherent pass.
+
+      - `docs/proposals/index.md` no longer contains the stale archive/historical
+      row for `docs/reference/index.md`.
+
+      - Adjacent `docs/reference/**` rows and nearby narrative have been sibling-searched
+      and no related archive contradiction remains.
+
+      - Evidence captures the exact post-fix row/narrative present in the working
+      tree used by downstream retest.
+
+
+      ## Gate Preview (what the follow-up retest WILL reject)
+
+      1. The exact stale row or equivalent archive wording still appears anywhere
+      relevant in `docs/proposals/index.md`.
+
+      2. The updated proposal-index language still contradicts the active `# Invar
+      Mechanisms` basis in `docs/reference/index.md`.
+
+      3. A sibling `docs/reference/**` row or nearby narrative still preserves the
+      same archive/historical contradiction.
+
+      4. The fix claims completion without proving the updated row/narrative is present
+      in the live working tree.'
+    verification: '- Main path: update the proposal-index row/narrative so it matches
+      the active `docs/reference/index.md` mechanism role
+
+      - Failure path: sibling-search across adjacent `docs/reference/**` rows and
+      nearby narrative finds no remaining archive/historical contradiction
+
+      - Robustness: evidence includes the exact post-fix row/narrative as it appears
+      in the current working tree that downstream retest will inspect
+
+      - Proof: remediation notes identify what changed, what sibling rows were checked,
+      and why the active-basis text is now consistent'
+    depends_on:
+    - dx91-release-readiness.retest-reference-classification-consistency-blockers
+    agent: doc-reviewer
