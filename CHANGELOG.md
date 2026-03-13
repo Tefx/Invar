@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.20.0] - 2026-03-14
+
+### Changed
+- **DX-91 simplifies the distributed Invar surface to the active Python workflow**
+  - Removes retired TypeScript tooling, skills, hooks, and example/template residue from shipped assets and synced protocol files
+  - Tightens generated `CLAUDE.md`, `INVAR.md`, and context outputs so release-facing guidance tells one coherent Python-only story
+
+### Fixed
+- **Legacy project migrations now clean up stale agent assets and release-facing docs more reliably**
+  - Hardens `init`/`dev sync` migration coverage for v1-to-v2 upgrades, destructive cleanup cases, and template merge edge cases
+  - Reconciles proposal/reference release docs so packaged guidance and active mechanism indexes stay consistent
+
 ## [1.19.7] - 2026-03-10
 
 ### Fixed
@@ -546,7 +558,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[Unreleased]: https://github.com/yourusername/invar/compare/v1.19.7...HEAD
+[Unreleased]: https://github.com/yourusername/invar/compare/v1.20.0...HEAD
+[1.20.0]: https://github.com/yourusername/invar/compare/v1.19.7...v1.20.0
 [1.19.7]: https://github.com/yourusername/invar/compare/v1.19.6...v1.19.7
 [1.19.6]: https://github.com/yourusername/invar/compare/v1.19.5...v1.19.6
 [1.19.5]: https://github.com/yourusername/invar/compare/v1.19.4...v1.19.5
