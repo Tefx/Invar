@@ -19186,7 +19186,7 @@ phases:
       \ active surface.\n"
 - id: dx91-self-docs
   name: DX-91 Self-Docs Update
-  status: in_progress
+  status: done
   depends_on:
   - dx91-python-only
   steps:
@@ -20728,7 +20728,7 @@ phases:
       '
   - id: dx91-self-docs.dx91-self-docs-retest-gate-doc-coherence-blockers-followup-batch
     name: dx91-self-docs.retest-gate-doc-coherence-blockers-followup-batch
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT TESTER (`blind-tester`), validate the narrowed
       `.invar/examples/` blocker-family remediation after `dx91-self-docs.dx91-self-docs-fix-gate-doc-coherence-blockers-followup-batch`
       from a fresh-reader perspective.
@@ -20790,9 +20790,31 @@ phases:
     agent: blind-tester
     claimed_by: blind-tester
     claimed_at: '2026-03-13T16:02:55.048879+00:00'
+    done_at: '2026-03-13T16:07:14.212067+00:00'
+    evidence: "Gate decision: OPEN\n\nFindings:\n- blockers: none\n- should_fix:\n\
+      \  - `README.md` still contains a struck-through historical multi-agent guide\
+      \ mention\n  - `docs/design.md` / `docs/vision.md` still carry adjacent historical\
+      \ USBV wording outside canonical gate-critical surfaces\n- suggestions:\n  -\
+      \ keep gate checks pinned to canonical DX-91 self-doc surfaces and add active-surface\
+      \ grep allowlist\n- tech_debt:\n  - active proposal set still contains historical\
+      \ legacy references; archive/completed set intentionally does as well\n\nCommands\
+      \ run:\n- `git show`/`git log` on fix commit `125feb7`\n- grep scans for `.invar/examples`,\
+      \ `init --claude`, `init --pi`, `multi-agent` across canonical and proposal\
+      \ surfaces\n- git status verification (clean worktree)\n\nEvidence inventory:\n\
+      - `INVAR.md`: no `.invar/examples`, no `--claude/--pi/multi-agent` matches\n\
+      - `CLAUDE.md`: no `.invar/examples`, no legacy init-flag/multi-agent matches\n\
+      - `README.md`: no `.invar/examples`; only a struck-through historical multi-agent\
+      \ mention\n- fix commit modified both source templates and generated outputs,\
+      \ demonstrating compliant source-of-truth regeneration path\n\nActive-vs-archive\
+      \ classification:\n- active/canonical clean: `INVAR.md`, `CLAUDE.md`\n- active\
+      \ contextual spec docs may mention removals historically, not as instructions\n\
+      - archive/historical: completed proposals retain legacy references by design\n\
+      \nFiles changed:\n- none (verify-only)\n\nNotes:\n- Retest confirms `.invar/examples`\
+      \ blocker family is closed and source-of-truth handling complied with protected-file\
+      \ policy.\n"
 - id: dx91-release-readiness
   name: DX-91 Release Readiness Audit
-  status: locked
+  status: pending
   depends_on:
   - dx91-self-docs
   steps:
