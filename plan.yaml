@@ -18779,7 +18779,7 @@ phases:
       \ evidence; progression now flows through the new batched follow-up chain.\n"
   - id: dx91-python-only.dx91-python-only-fix-remaining-gate-blockers
     name: dx91-python-only.fix-remaining-gate-blockers
-    status: pending
+    status: claimed
     description: 'Fix ALL remaining blockers from `dx91-python-only.dx91-python-only-retest-gate-blockers`
       in ONE batched remediation step by applying the confirmed product decision:
       DX-91 fully retires `invar uninstall`. Fix ALL of these, not just the first.
@@ -18952,6 +18952,8 @@ phases:
     depends_on:
     - dx91-python-only.dx91-python-only-retest-gate-blockers
     agent: python-senior
+    claimed_by: python-senior
+    claimed_at: '2026-03-13T10:59:22.310606+00:00'
   - id: dx91-python-only.dx91-python-only-retest-remaining-gate-blockers
     name: dx91-python-only.retest-remaining-gate-blockers
     status: pending
