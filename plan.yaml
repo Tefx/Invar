@@ -20951,6 +20951,8 @@ phases:
       recommendation; otherwise it must recommend BLOCKED with the specific blocker'
     depends_on:
     - audit-dx91-consistency
+    - fix-dx91-consistency-blockers
+    - retest-dx91-consistency-blockers
     - prove-final-init-install-smoke
     - freeze-release-candidate
     agent: gate-reviewer
