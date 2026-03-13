@@ -7,7 +7,7 @@
 ### 1. Install Invar
 
 ```bash
-pip install invar-tools
+uv add --dev invar-tools invar-runtime
 ```
 
 ### 2. Configure Continue
@@ -27,8 +27,8 @@ Open Continue configuration (`Ctrl+Shift+P` → "Continue: Open config.json"):
   "mcpServers": [
     {
       "name": "invar",
-      "command": "uvx",
-      "args": ["invar-tools", "mcp"]
+      "command": "uv",
+      "args": ["run", "invar", "mcp"]
     }
   ],
   "customCommands": [
@@ -92,21 +92,21 @@ Never use pytest or crosshair directly.
 
 Continue has complete MCP support. Configure in `config.json`:
 
-### Option A: Using uvx (Recommended)
+### Option A: Using project environment (Recommended)
 
 ```json
 {
   "mcpServers": [
     {
       "name": "invar",
-      "command": "uvx",
-      "args": ["invar-tools", "mcp"]
+      "command": "uv",
+      "args": ["run", "invar", "mcp"]
     }
   ]
 }
 ```
 
-### Option B: Using Project Venv
+### Option B: Using Project Venv Python Directly
 
 ```json
 {
@@ -120,15 +120,15 @@ Continue has complete MCP support. Configure in `config.json`:
 }
 ```
 
-### Option C: Global Installation
+### Option C: One-off uvx fallback
 
 ```json
 {
   "mcpServers": [
     {
       "name": "invar",
-      "command": "python",
-      "args": ["-m", "invar.mcp"]
+      "command": "uvx",
+      "args": ["invar-tools", "mcp"]
     }
   ]
 }
@@ -319,8 +319,8 @@ def read_config(path: str) -> Result[Config, str]:
   "mcpServers": [
     {
       "name": "invar",
-      "command": "uvx",
-      "args": ["invar-tools", "mcp"]
+      "command": "uv",
+      "args": ["run", "invar", "mcp"]
     }
   ],
   "customCommands": [
@@ -376,7 +376,7 @@ your-project/
 
 1. Check MCP configuration in config.json
 2. Verify invar-tools: `pip show invar-tools`
-3. Test MCP: `uvx invar-tools mcp`
+3. Test MCP: `uv run invar mcp`
 4. Restart Continue extension
 
 ### Custom Commands Not Working

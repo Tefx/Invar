@@ -345,7 +345,8 @@ Invar provides MCP (Model Context Protocol) tools for deeper integration with Cl
 ### Setup
 
 ```bash
-uvx invar-tools init    # Interactive mode, auto-creates .mcp.json
+uv add --dev invar-tools invar-runtime
+uv run invar init
 ```
 
 ### Available Tools
@@ -383,20 +384,18 @@ uvx invar-tools init    # Interactive mode, auto-creates .mcp.json
 
 ### Manual Setup
 
-If `invar init` doesn't auto-configure, create `.mcp.json` at project root:
+DX-91 does not auto-generate `.mcp.json`. Create it manually at project root and point it at the project-local environment:
 
 ```json
 {
   "mcpServers": {
     "invar": {
-      "command": "/path/to/your/.venv/bin/python",
-      "args": ["-m", "invar.mcp"]
+      "command": "uv",
+      "args": ["run", "invar", "mcp"]
     }
   }
 }
 ```
-
-Find your Python path: `python -c "import sys; print(sys.executable)"`
 
 ---
 

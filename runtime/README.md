@@ -98,9 +98,8 @@ while lo < hi:
 For static analysis and verification tools, install `invar-tools`:
 
 ```bash
-pip install invar-tools
-# or use without installing:
-uvx invar-tools guard
+uv add --dev invar-tools invar-runtime
+uv run invar guard
 ```
 
 ## License

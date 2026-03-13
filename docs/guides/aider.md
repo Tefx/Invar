@@ -9,14 +9,14 @@
 ## Quick Start (Current)
 
 ```bash
-# Install Invar
-pip install invar-tools
+# Install Invar in the project environment
+uv add --dev invar-tools invar-runtime
 
 # Initialize project (creates CLAUDE.md, INVAR.md)
-uvx invar-tools init
+uv run invar init
 
 # Use Aider with Invar verification
-aider --lint-cmd "invar guard --changed" --auto-lint
+aider --lint-cmd "uv run invar guard --changed" --auto-lint
 ```
 
 See `CLAUDE.md` and `INVAR.md` (installed by `invar init`) for current Invar protocol.

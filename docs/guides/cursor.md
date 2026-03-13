@@ -7,14 +7,14 @@
 ### 1. Install Invar
 
 ```bash
-pip install invar-tools
+uv add --dev invar-tools invar-runtime
 ```
 
 ### 2. Initialize Project
 
 ```bash
 cd your-project
-uvx invar-tools init
+uv run invar init
 ```
 
 This creates:
@@ -93,14 +93,14 @@ def calculate(x: int) -> int:
 
 In Cursor settings, add MCP server configuration:
 
-**Option A: Using uvx**
+**Option A: Using project environment (recommended)**
 
 ```json
 {
   "mcpServers": {
     "invar": {
-      "command": "uvx",
-      "args": ["invar-tools", "mcp"]
+      "command": "uv",
+      "args": ["run", "invar", "mcp"]
     }
   }
 }
@@ -242,7 +242,7 @@ your-project/
 
 1. Check Cursor MCP settings
 2. Verify installation: `pip show invar-tools`
-3. Test directly: `uvx invar-tools mcp`
+3. Test directly: `uv run invar mcp`
 
 ### Rules Not Applied
 

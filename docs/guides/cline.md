@@ -7,7 +7,7 @@
 ### 1. Install Invar
 
 ```bash
-pip install invar-tools
+uv add --dev invar-tools invar-runtime
 ```
 
 ### 2. Create `.clinerules`
@@ -94,14 +94,14 @@ Use Plan Mode for exploration and contract design, Act Mode for implementation.
 
 In VS Code, open Cline settings and add MCP server:
 
-**Option A: Using uvx (recommended)**
+**Option A: Using project environment (recommended)**
 
 ```json
 {
   "mcpServers": {
     "invar": {
-      "command": "uvx",
-      "args": ["invar-tools", "mcp"]
+      "command": "uv",
+      "args": ["run", "invar", "mcp"]
     }
   }
 }
@@ -295,7 +295,7 @@ def read_config(path: str) -> Result[Config, str]:
 
 1. Check Cline MCP configuration
 2. Verify invar-tools is installed: `pip show invar-tools`
-3. Test MCP server: `uvx invar-tools mcp`
+3. Test MCP server: `uv run invar mcp`
 
 ### Cline Ignores .clinerules
 

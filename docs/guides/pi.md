@@ -9,11 +9,7 @@
 ### 1. Install Invar
 
 ```bash
-# Install runtime contracts (add to your project)
-pip install invar-runtime
-
-# Development tools (use with uvx)
-uvx invar-tools guard
+uv add --dev invar-tools invar-runtime
 ```
 
 ### 2. Initialize Project
@@ -22,7 +18,7 @@ uvx invar-tools guard
 cd your-project
 
 # Initialize DX-91 managed files
-uvx invar-tools init
+uv run invar init
 
 # This installs:
 # - CLAUDE.md (agent guidance)
@@ -57,16 +53,16 @@ Pi doesn't support MCP, so use CLI commands:
 
 ```bash
 # Full verification
-invar guard
+uv run invar guard
 
 # Only changed files
-invar guard --changed
+uv run invar guard --changed
 
 # Show signatures
-invar sig src/core/module.py
+uv run invar sig src/core/module.py
 
 # Symbol map
-invar map --top 10
+uv run invar map --top 10
 ```
 
 ---
@@ -101,11 +97,8 @@ Current Invar follows a simplified contracts-first workflow:
 ### Guard Command Not Found
 
 ```bash
-# Install invar-tools
-pip install invar-tools
-
-# Or use uvx (no install needed)
-uvx invar-tools guard
+uv add --dev invar-tools invar-runtime
+uv run invar guard
 ```
 
 ---
