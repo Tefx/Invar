@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.20.1] - 2026-03-14
+
+### Changed
+- **Documentation now defaults to project-local Invar installs and execution**
+  - Recommends `uv add --dev invar-tools invar-runtime` instead of `uvx` for normal project setup
+  - Updates README, agent guides, and integration docs to use `uv run invar ...` for guard/init/MCP flows
+
+### Fixed
+- **Release-facing setup guidance now matches the current Python-only workflow**
+  - Removes user-facing proposal-code references from README so setup instructions focus on current behavior
+  - Aligns MCP examples around the project-local environment instead of transient `uvx` defaults
+
 ## [1.20.0] - 2026-03-14
 
 ### Changed
@@ -558,7 +570,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[Unreleased]: https://github.com/yourusername/invar/compare/v1.20.0...HEAD
+[Unreleased]: https://github.com/yourusername/invar/compare/v1.20.1...HEAD
+[1.20.1]: https://github.com/yourusername/invar/compare/v1.20.0...v1.20.1
 [1.20.0]: https://github.com/yourusername/invar/compare/v1.19.7...v1.20.0
 [1.19.7]: https://github.com/yourusername/invar/compare/v1.19.6...v1.19.7
 [1.19.6]: https://github.com/yourusername/invar/compare/v1.19.5...v1.19.6
