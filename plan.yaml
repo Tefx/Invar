@@ -23363,7 +23363,7 @@ phases:
       `docs/reference/**` classification family remain deferred unless required to
       close this blocker'
     depends_on:
-    - dx91-release-readiness.gate
+    - dx91-release-readiness.retest-proposal-index-reconciliation-fs-inventory-blockers-followup-batch
     agent: doc-reviewer
   - id: dx91-release-readiness.retest-reference-classification-consistency-blockers
     name: retest-reference-classification-consistency-blockers
