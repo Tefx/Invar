@@ -19385,6 +19385,107 @@ phases:
     - verify-self-docs-surface
     - freeze-self-docs-snapshot
     agent: gate-reviewer
+  - id: dx91-self-docs.fix-self-docs-surface-blockers
+    name: fix-self-docs-surface-blockers
+    status: pending
+    description: 'Fix ALL blockers found by `verify-self-docs-surface` across the
+      active DX-91 docs surface.
+
+
+      ## Blockers to Fix (ALL of these, not just the first)
+
+
+      ### B1: Active docs navigation broken due to stale `README.md` link targets
+      and other active broken targets
+
+      Locations: `docs/reference/index.md`, `docs/reference/workflow/`, `docs/reference/contracts/`,
+      `docs/reference/verification/`, `docs/reference/rules/`, `docs/vision`, `docs/terminal-gif-guide`,
+      `.invar/project-additions.md`
+
+      Remediation:
+
+      - Replace active links pointing at non-existent `README.md` section files with
+      the current `index.md` targets.
+
+      - Repair active link targets in workflow/contracts/verification/rules surfaces
+      and any active references to removed files such as `severity-design.md` or stale
+      demo asset paths.
+
+      - Ensure active navigation traversal works from top-level reference pages through
+      nested sections without relying on archived path shapes.
+
+      - Make active-vs-archive boundaries explicit anywhere archived USBV or historical
+      material is retained so active surfaces do not route readers into stale paths.
+
+      Grep hint: `README\.md\)|\]\(\.\./verification/README\.md|\]\(\.\./contracts/README\.md|\]\(\.\/README\.md|severity-design\.md|\.\/docs\/assets\/demo\.gif`
+
+      IMPORTANT: Search for siblings beyond the listed locations and fix the whole
+      active navigation family, not just the examples.
+
+
+      ### B2: Active guidance contradiction with DX-91 workflow posture
+
+      Locations: `docs/reference/workflow/index.md` and any linked active workflow
+      pages still presenting USBV as current mandatory ceremony
+
+      Remediation:
+
+      - Align active workflow guidance with the current DX-91 minimal, guard-enforced
+      direction.
+
+      - If USBV/four-phase guidance is retained, classify it as archived or historical
+      and prevent active navigation from presenting it as current required workflow.
+
+      - Ensure proposal index/archive labels and active workflow pages agree on posture.
+
+      Grep hint: `USBV|UNDERSTAND|SPECIFY|VALIDATE|four-phase|minimal ceremony|guard-enforced`
+
+      IMPORTANT: Search for sibling active guidance pages so contradictions are removed
+      across the active workflow family, not only in `docs/reference/workflow/index.md`.
+
+
+      ## Active vs Archive Boundary
+
+      - Active docs must describe current DX-91 guidance and use live targets only.
+
+      - Archived or update-needed material may remain, but must be clearly labeled
+      and must not break active navigation traversal.
+
+      - Do not silently preserve stale active links just because the destination exists
+      in archive form.
+
+
+      ## Optional should-fix notes (non-blocking)
+
+      - Carry through any should-fix suggestions from `verify-self-docs-surface` as
+      notes or opportunistic cleanups when they are adjacent.
+
+      - Do not block completion on suggestion-only items once both blockers above
+      and active/archive boundaries are resolved.
+
+
+      ## Completion Criteria
+
+      - ALL blocker families addressed, not just the first example in each family.
+
+      - Active docs navigation traverses without stale `README.md` assumptions.
+
+      - Active workflow guidance is internally consistent with DX-91 posture.
+
+      - Archived material is clearly separated from active guidance.'
+    verification: '- Each blocker family addressed across the active surface, not
+      just exemplar files
+
+      - Broken-link grep hints reviewed and no active stale-target pattern remains
+      where the remediation scope requires cleanup
+
+      - Active workflow pages present one consistent DX-91 posture or explicitly classify
+      historical material as archive
+
+      - Evidence lists any should-fix suggestions left optional and why they are non-blocking'
+    depends_on:
+    - verify-self-docs-surface
+    agent: doc-reviewer
 - id: dx91-release-readiness
   name: DX-91 Release Readiness Audit
   status: locked
