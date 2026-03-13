@@ -21050,3 +21050,40 @@ phases:
     depends_on:
     - audit-dx91-consistency
     agent: python-senior
+  - id: retest-dx91-consistency-blockers
+    name: retest-dx91-consistency-blockers
+    status: pending
+    description: 'As an INDEPENDENT TESTER (`integration-verifier`), re-audit the
+      combined DX-91 consistency blockers after the batched remediation step.
+
+
+      YOUR GOAL IS TO FIND PROBLEMS, not to confirm it works.
+
+
+      Retest all blocker families together:
+
+      - B1 harness/runtime DX-91 dev-sync consistency around `.invar/context.md`,
+      create/skip behavior, and template manifest semantics
+
+      - B2 active documentation surface alignment with the current DX-91 CLI/runtime
+      command surface
+
+      - B3 README install/generated-surface accuracy against fresh init behavior
+
+
+      Document any remaining drift across runtime, tests, docs, and README in one
+      consolidated report. A retest that finds new or remaining issues is successful
+      verification.'
+    verification: '- Re-audit evidence covers B1, B2, and B3 together, not separately
+
+      - Main path confirms harness/runtime/docs/README alignment on the active DX-91
+      surface
+
+      - Failure path explicitly checks for lingering retired-surface references, stale
+      generated-surface claims, and template-manifest drift
+
+      - Evidence is independent and suitable to unblock downstream smoke/freeze/gate
+      work only if all blockers are closed'
+    depends_on:
+    - fix-dx91-consistency-blockers
+    agent: integration-verifier
