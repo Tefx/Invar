@@ -19051,7 +19051,7 @@ phases:
       '
   - id: dx91-python-only.dx91-python-only-retest-remaining-gate-blockers
     name: dx91-python-only.retest-remaining-gate-blockers
-    status: pending
+    status: claimed
     description: 'As an INDEPENDENT REVIEWER (`gate-reviewer`), re-test the remaining
       blocker set after `dx91-python-only.fix-remaining-gate-blockers` using the confirmed
       product decision that DX-91 fully retires `invar uninstall`.
@@ -19163,6 +19163,8 @@ phases:
     depends_on:
     - dx91-python-only.dx91-python-only-fix-remaining-gate-blockers
     agent: gate-reviewer
+    claimed_by: gate-reviewer
+    claimed_at: '2026-03-13T11:10:21.485583+00:00'
 - id: dx91-self-docs
   name: DX-91 Self-Docs Update
   status: locked
