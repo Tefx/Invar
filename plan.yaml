@@ -23236,7 +23236,7 @@ phases:
       \ REOPEN\n\ndiscovered_issues\n- none"
   - id: dx91-release-readiness.fix-reference-classification-consistency-blockers
     name: fix-reference-classification-consistency-blockers
-    status: pending
+    status: claimed
     description: 'Fix ALL blockers found by `dx91-release-readiness.gate` in ONE batched
       remediation step. Fix ALL of these, not just the first.
 
@@ -23383,6 +23383,8 @@ phases:
     depends_on:
     - dx91-release-readiness.retest-proposal-index-reconciliation-fs-inventory-blockers-followup-batch
     agent: doc-reviewer
+    claimed_by: general
+    claimed_at: '2026-03-13T18:36:42.261700+00:00'
   - id: dx91-release-readiness.retest-reference-classification-consistency-blockers
     name: retest-reference-classification-consistency-blockers
     status: pending
