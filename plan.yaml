@@ -21041,6 +21041,9 @@ phases:
 
       - A false OPEN here would ship contradictory guidance or incomplete cleanup
 
+      - Proposal-index reconciliation now has a follow-up batched remediation loop
+      that must complete before gate review can reopen
+
 
       cross_cutting_focus:
 
@@ -21051,6 +21054,9 @@ phases:
 
       - Migration and destructive cleanup evidence must remain traceable to the committed
       DX-91 semantics
+
+      - Proposal-index totals, row coverage, and legacy link formatting must be reconciled
+      against the same counting basis
 
 
       As an INDEPENDENT REVIEWER (`gate-reviewer`), block progress if any repo-level
@@ -21075,6 +21081,7 @@ phases:
     - dx91-release-readiness.retest-release-guides-proposal-index-remaining-blockers
     - dx91-release-readiness.retest-proposal-index-reconciliation-remaining-blockers
     - dx91-release-readiness.retest-proposal-index-reconciliation-fs-inventory-blockers
+    - dx91-release-readiness.retest-proposal-index-reconciliation-fs-inventory-blockers-followup-batch
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-13T16:54:59.749528+00:00'
