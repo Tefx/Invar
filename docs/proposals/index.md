@@ -40,9 +40,9 @@ This directory contains design proposals for Invar development.
 
 ## Open Proposals (14)
 
-> **Counting Basis:** Table rows below. Excludes index.md and completed/ directory.
+> **Counting Basis:** Table rows below. Excludes index.md, completed/ directory, and DX-91-* supporting documents listed under "Related DX-91 Documents".
 
-### Active Implementation (5)
+### Active Implementation (6)
 
 | ID | Name | Status | Description |
 |----|------|--------|-------------|
@@ -51,10 +51,11 @@ This directory contains design proposals for Invar development.
 | DX-87 | [remove-multi-agent-init](DX-87-remove-multi-agent-init.md) | Draft | Remove multi-agent init support (single-agent only) |
 | DX-84 | [security-review-backlog](DX-84-security-review-backlog.md) | **Active** | Security review backlog for Python Guard |
 | DX-80 | [guard-cli-mcp-alignment](DX-80-guard-cli-mcp-alignment.md) | Draft | Align Guard CLI default behavior with MCP |
+| DX-61 | [implementation-design](DX-61-implementation-design.md) | Draft | Implementation design patterns |
 
-**Status Rollup:** Active: 2 | Draft: 3 | **Total: 5**
+**Status Rollup:** Active: 2 | Draft: 4 | **Total: 6**
 
-### Deferred / Future (9)
+### Deferred / Future (8)
 
 | ID | Name | Status | Description |
 |----|------|--------|-------------|
@@ -68,9 +69,9 @@ This directory contains design proposals for Invar development.
 | DX-29 | [pure-content-detection](DX-29-pure-content-detection.md) | Deferred | Pure content detection marker |
 | DX-25 | [functional-patterns](DX-25-functional-patterns.md) | Deferred | Functional patterns enhancement |
 
-**Status Rollup:** Deferred: 7 | Partial: 2 | **Total: 9**
+**Status Rollup:** Deferred: 7 | Partial: 2 | **Total: 8**
 
-### Legacy / Pre-DX-91 (11)
+### Legacy / Pre-DX-91 (10)
 
 > These proposals describe features removed or superseded by DX-91.
 > They remain in the index for historical reference but do not describe current behavior.
@@ -81,7 +82,7 @@ This directory contains design proposals for Invar development.
 | DX-79 | [invar-usage-feedback](DX-79-invar-usage-feedback.md) | Removed | Feedback collection removed per DX-91 |
 | LX-13 | [typescript-runtime-optimization](LX-13-typescript-runtime-optimization.md) | **Removed** | TypeScript support removed per DX-91 |
 | LX-09 | [legacy-onboarding](LX-09-legacy-onboarding.md) | **Removed** | Onboarding system removed per DX-91 |
-| LX-08 | extension-skills-future | **Removed** | Skills system removed per DX-91 |
+| LX-08 | [extension-skills-future](LX-08-extension-skills-future.md) | **Removed** | Skills system removed per DX-91 |
 | LX-17 | [haskell-elm-feasibility](LX-17-haskell-elm-feasibility.md) | Deferred | Multi-language exploration on hold |
 | LX-17 | [implementation-matrix](LX-17-implementation-matrix.md) | Deferred | Implementation matrix |
 | LX-17 | [summary](LX-17-summary.md) | Deferred | Go & Rust feasibility summary |
@@ -89,7 +90,7 @@ This directory contains design proposals for Invar development.
 | LX-11 | [cursor-support](LX-11-cursor-support.md) | Deferred | IDE expansion on hold |
 | LX-01 | [multi-language-feasibility](LX-01-multi-language-feasibility.md) | Deferred | Multi-language exploration on hold |
 
-**Status Rollup:** Superseded: 1 | Removed: 5 | Deferred: 5 | **Total: 11**
+**Status Rollup:** Superseded: 1 | Removed: 5 | Deferred: 4 | **Total: 10**
 
 ---
 
@@ -110,23 +111,24 @@ See `completed/` directory for detailed implementation notes. Key archived miles
 ## Statistics
 
 > **Counting Basis:** Table row counts for status categories; filesystem count for Archived.
-> Excludes `index.md` from all counts.
+> Excludes `index.md` and DX-91-* supporting documents (listed under "Related DX-91 Documents") from row counts.
+> Filesystem total: 32 root proposals (including 6 DX-91 supporting docs) + 76 completed = 108 total markdown files.
 
 | Category | Count |
 |----------|-------|
 | **Active** | 2 |
-| **Draft** | 3 |
+| **Draft** | 4 |
 | **Partial** | 2 |
 | **Deferred** | 7 |
-| **Legacy/Removed** | 11 |
+| **Legacy/Removed** | 10 |
 | **Archived** | 76 |
 | **Total** | 101 |
 
 **Reconciliation:**
-- **Open Proposals:** 14 (Active Implementation: 5 + Deferred/Future: 9)
-- **Legacy/Pre-DX-91:** 11
+- **Open Proposals:** 14 (Active Implementation: 6 + Deferred/Future: 8)
+- **Legacy/Pre-DX-91:** 10
 - **Archived (completed/):** 76
-- **Grand Total:** 101 = 14 + 11 + 76
+- **Grand Total:** 101 = 14 + 10 + 76 (excludes 6 DX-91 supporting docs counted under "Related DX-91 Documents" section)
 
 ---
 
@@ -207,7 +209,7 @@ grep -E "^\|" docs/proposals/index.md | grep -E "\|\s+(Active|Draft|Partial|Defe
 
 | Source | Count | Method |
 |--------|-------|--------|
-| Open Proposals (tables) | 14 | Row counts from Active (5) + Deferred (9) |
-| Legacy/Pre-DX-91 (table) | 11 | Row count from Legacy table |
+| Open Proposals (tables) | 14 | Row counts from Active (6) + Deferred (8) |
+| Legacy/Pre-DX-91 (table) | 10 | Row count from Legacy table |
 | Archived (completed/) | 76 | Filesystem: `ls completed/*.md \| wc -l` |
-| **Grand Total** | **101** | 14 + 11 + 76 |
+| **Grand Total** | **101** | 14 + 10 + 76 (excludes 6 DX-91 supporting docs) |
