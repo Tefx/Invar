@@ -17227,7 +17227,7 @@ phases:
       \ (not parity contradiction)\n- tech_debt: none\n"
 - id: dx91-python-only
   name: DX-91 Python-Only Cleanup
-  status: in_progress
+  status: done
   depends_on:
   - dx91-init-runtime
   steps:
@@ -19051,7 +19051,7 @@ phases:
       '
   - id: dx91-python-only.dx91-python-only-retest-remaining-gate-blockers
     name: dx91-python-only.retest-remaining-gate-blockers
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT REVIEWER (`gate-reviewer`), re-test the remaining
       blocker set after `dx91-python-only.fix-remaining-gate-blockers` using the confirmed
       product decision that DX-91 fully retires `invar uninstall`.
@@ -19165,9 +19165,28 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-13T11:10:21.485583+00:00'
+    done_at: '2026-03-13T11:17:03.829078+00:00'
+    evidence: "Gate decision: OPEN\n\nFindings:\n- blockers: none\n- should_fix:\n\
+      \  - archival docs index entry (`docs/proposals/index.md`) mentions `invar uninstall`\
+      \ without explicit retired-in-DX-91 callout\n- suggestions:\n  - MCP wrapper\
+      \ instability observed during one guard wrapper path; authoritative CLI full-scan\
+      \ path passes\n- tech_debt: none\n\nCommands run:\n- `uv run invar --help`\n\
+      - `uv run invar uninstall --help`\n- `uvx invar-tools guard --all`\n- repo-wide\
+      \ scans for uninstall/TS residue patterns\n\nEvidence inventory:\n- `uv run\
+      \ invar --help` has no uninstall command\n- `uv run invar uninstall --help`\
+      \ => `No such command 'uninstall'`\n- `uvx invar-tools guard --all` => passed,\
+      \ errors=0\n- Python source scan found no active uninstall wiring in `src/*.py`\n\
+      - TS-retirement coherence remained intact (no active node_tools, retirement\
+      \ regression tests intact)\n\nResidue classification:\n- active-blocker: none\n\
+      - historical/archival only: plan metadata, proposals, test reports, DX-91 internal\
+      \ inventory surfaces\n- explicit retired context preserved in DX-91 design/regression\
+      \ docs as non-active guidance\n\nFiles changed:\n- none (verify-only; transient\
+      \ uv.lock side effect reverted)\n\nNotes:\n- Retest closes remaining blocker\
+      \ family under confirmed product decision: uninstall fully retired in DX-91\
+      \ active surface.\n"
 - id: dx91-self-docs
   name: DX-91 Self-Docs Update
-  status: locked
+  status: pending
   depends_on:
   - dx91-python-only
   steps:
