@@ -19415,6 +19415,8 @@ phases:
     - dx91-self-docs.retest-self-docs-surface-blockers
     - dx91-self-docs.fix-self-docs-active-link-blockers-batch
     - dx91-self-docs.retest-self-docs-active-link-blockers-batch
+    - dx91-self-docs.fix-self-docs-active-link-blockers-followup-batch
+    - dx91-self-docs.retest-self-docs-active-link-blockers-followup-batch
     - freeze-self-docs-snapshot
     agent: gate-reviewer
   - id: dx91-self-docs.fix-self-docs-surface-blockers
