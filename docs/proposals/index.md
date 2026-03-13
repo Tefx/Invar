@@ -1,146 +1,99 @@
 # Invar Proposals Index
 
-> **Last Updated:** 2026-03-11
+> **Last Updated:** 2026-03-13
+> **Current Direction:** [DX-91: Simplification](./DX-91-simplification.md) — Python-only, guard-first architecture
 
 This directory contains design proposals for Invar development.
 
 ## Naming Convention
 
 - `DX-XX-name.md` — Developer Experience improvements
-- `LX-XX-name.md` — Language eXtension (multi-language evolution)
+- `LX-XX-name.md` — Language eXtension (historically TypeScript/multi-language; now deferred)
 - Completed/archived proposals in `completed/` subdirectory
 
 ---
 
-## Open Proposals (23)
+## Strategic Direction: DX-91 Simplification
 
-### DX Series (Developer Experience)
+**[DX-91: Invar Simplification](./DX-91-simplification.md)** defines the current architectural direction:
 
-| ID | Name | Status | Description |
-|----|------|--------|-------------|
-| DX-91 | [invar-simplification](DX-91-simplification.md) | Active | Simplify Invar to a Python-only, guard-first architecture with minimal agent instruction surface |
-| DX-94 | [mcp-full-guard-support-model](DX-94-mcp-full-guard-support-model.md) | Draft | Deferred full-scan model for MCP timeout-safe `invar_guard(changed=false)` |
-| DX-84 | [security-review-backlog](DX-84-security-review-backlog.md) | Active | Security review backlog for Python Guard; TypeScript items are legacy under DX-91 |
-| DX-83 | [multi-agent-subagent-support](DX-83-multi-agent-subagent-support.md) | Draft | Subagent support and fallback strategy for multi-agent environments |
-| DX-80 | [guard-cli-mcp-alignment](DX-80-guard-cli-mcp-alignment.md) | Draft | Align Guard CLI default behavior with MCP (bug fix) |
-| DX-79 | [invar-usage-feedback](DX-79-invar-usage-feedback.md) | Draft | Invar usage feedback collection |
-| DX-68 | [agent-behavior-optimization](DX-68-agent-behavior-optimization.md) | Draft | Agent reading reliability improvements (P3-P5) |
-| DX-62 | [proactive-reference-reading](DX-62-proactive-reference-reading.md) | Partial | Task Router (Layer 1) done, Layers 2-4 pending |
-| DX-61 | [functional-pattern-guidance](DX-61-functional-pattern-guidance.md) | Draft | Teach agents functional patterns (NewType, Validation, etc.) |
-| DX-60 | [structured-rules-ssot](DX-60-structured-rules-ssot.md) | Draft | Optimize DX-57 token usage (1,800t → 600t) |
+| Aspect | Pre-DX-91 | Post-DX-91 |
+|--------|-----------|------------|
+| **Scope** | Python + TypeScript + Multi-agent | Python-only |
+| **Workflow** | USBV four-phase with ceremony | Guard-enforced, minimal ceremony |
+| **Agent Support** | Claude Code-specific (skills, hooks) | Agent-agnostic (MCP + contracts) |
+| **Instruction Surface** | ~200 lines in CLAUDE.md + skills + hooks | ~50 lines in CLAUDE.md + INVAR.md |
+| **Core Value** | guard, sig, map, refs, Core/Shell, @pre/@post | Same core, less baggage |
 
-### Agent Ecosystem
+### Related DX-91 Documents
 
-| ID | Name | Status | Description |
-|----|------|--------|-------------|
-| DX-85 | [opencode-support](DX-85-opencode-support.md) | Draft | Native OpenCode init (`AGENTS.md` + `opencode.json`) |
-
-### LX Series (TypeScript Focus)
-
-| ID | Name | Status | Description |
-|----|------|--------|-------------|
-| LX-13 | [typescript-runtime-optimization](LX-13-typescript-runtime-optimization.md) | Deferred | On hold under DX-91 Python-only scope |
-| LX-09 | [legacy-onboarding](LX-09-legacy-onboarding.md) | Deferred | On hold under DX-91 Python-only scope |
-| LX-08 | extension-skills-future | Deferred | Future extension skills (split from LX-07) |
-
-### Deferred (Low Priority)
-
-| ID | Name | Status | Description |
-|----|------|--------|-------------|
-| DX-38 | [contract-quality-rules](DX-38-contract-quality-rules.md) | Partial | Tier 1-2 done, Tier 3-4 deferred |
-| DX-29 | [pure-content-detection](DX-29-pure-content-detection.md) | Defer | Pure content detection (`@invar:module` marker) |
-| DX-25 | [functional-patterns](DX-25-functional-patterns.md) | Defer | Functional patterns enhancement |
-| LX-17 | [haskell-elm-feasibility](LX-17-haskell-elm-feasibility.md) | Deferred | Haskell & Elm feasibility assessment |
-| LX-17 | [implementation-matrix](LX-17-implementation-matrix.md) | Deferred | Implementation matrix for language feasibility |
-| LX-17 | [summary](LX-17-summary.md) | Deferred | Summary of Go & Rust feasibility |
-| LX-16 | [typescript-guard-remaining-gap](LX-16-typescript-guard-remaining-gap.md) | Deferred | TypeScript Guard remaining gap analysis |
-| LX-11 | [cursor-support](LX-11-cursor-support.md) | Deferred | Cursor IDE native support |
-| LX-01 | [multi-language-feasibility](LX-01-multi-language-feasibility.md) | Deferred | Strategic exploration for multi-language Invar |
+| Document | Purpose |
+|----------|---------|
+| [DX-91-simplification.md](./DX-91-simplification.md) | Main proposal — what to keep/remove |
+| [DX-91-invar-md-draft.md](./DX-91-invar-md-draft.md) | Draft INVAR.md structure |
+| [DX-91-claude-md-draft.md](./DX-91-claude-md-draft.md) | Draft CLAUDE.md content |
+| [DX-91-migration-semantics.md](./DX-91-migration-semantics.md) | v1 → v2 migration behavior |
+| [DX-91-generated-file-contracts.md](./DX-91-generated-file-contracts.md) | Contract for init-generated files |
+| [DX-91-freeze-spec-baseline.md](./DX-91-freeze-spec-baseline.md) | Pre-implementation spec freeze |
 
 ---
 
-## Archived Proposals (78)
+## Open Proposals (13)
+
+### Active Implementation
+
+| ID | Name | Status | Description |
+|----|------|--------|-------------|
+| DX-91 | [invar-simplification](DX-91-simplification.md) | **Active** | Python-only, guard-first architecture with minimal agent instruction surface |
+| DX-94 | [mcp-full-guard-support-model](DX-94-mcp-full-guard-support-model.md) | Draft | Deferred full-scan model for MCP timeout-safe `invar_guard(changed=false)` |
+| DX-84 | [security-review-backlog](DX-84-security-review-backlog.md) | Active | Security review backlog for Python Guard |
+| DX-80 | [guard-cli-mcp-alignment](DX-80-guard-cli-mcp-alignment.md) | Draft | Align Guard CLI default behavior with MCP |
+
+### Deferred / Future
+
+| ID | Name | Status | Description |
+|----|------|--------|-------------|
+| DX-83 | [multi-agent-subagent-support](DX-83-multi-agent-subagent-support.md) | Draft | Subagent support (superseded by DX-91 simplification) |
+| DX-68 | [agent-behavior-optimization](DX-68-agent-behavior-optimization.md) | Draft | Agent reading reliability improvements |
+| DX-62 | [proactive-reference-reading](DX-62-proactive-reference-reading.md) | Partial | Task Router (Layer 1) done, Layers 2-4 pending |
+| DX-61 | [functional-pattern-guidance](DX-61-functional-pattern-guidance.md) | Draft | Teach agents functional patterns |
+| DX-60 | [structured-rules-ssot](DX-60-structured-rules-ssot.md) | Draft | Optimize rule token usage |
+| DX-38 | [contract-quality-rules](DX-38-contract-quality-rules.md) | Partial | Tier 1-2 done, Tier 3-4 deferred |
+| DX-29 | [pure-content-detection](DX-29-pure-content-detection.md) | Defer | Pure content detection marker |
+| DX-25 | [functional-patterns](DX-25-functional-patterns.md) | Defer | Functional patterns enhancement |
+
+### Legacy / Pre-DX-91 (Archived Concepts)
+
+> These proposals describe features removed or superseded by DX-91.
+> They remain in the index for historical reference but do not describe current behavior.
+
+| ID | Name | Status | Notes |
+|----|------|--------|-------|
+| DX-85 | [opencode-support](DX-85-opencode-support.md) | Superseded | Native OpenCode init — see DX-91 for simplified approach |
+| DX-79 | [invar-usage-feedback](DX-79-invar-usage-feedback.md) | Removed | Feedback collection removed per DX-91 |
+| LX-13 | [typescript-runtime-optimization](LX-13-typescript-runtime-optimization.md) | **Removed** | TypeScript support removed per DX-91 |
+| LX-09 | [legacy-onboarding](LX-09-legacy-onboarding.md) | **Removed** | Onboarding system removed per DX-91 |
+| LX-08 | extension-skills-future | **Removed** | Skills system removed per DX-91 |
+| LX-17 | [haskell-elm-feasibility](LX-17-haskell-elm-feasibility.md) | Deferred | Multi-language exploration on hold |
+| LX-17 | [implementation-matrix](LX-17-implementation-matrix.md) | Deferred | Implementation matrix |
+| LX-17 | [summary](LX-17-summary.md) | Deferred | Go & Rust feasibility summary |
+| LX-16 | [typescript-guard-remaining-gap](LX-16-typescript-guard-remaining-gap.md) | **Removed** | TypeScript Guard removed per DX-91 |
+| LX-11 | [cursor-support](LX-11-cursor-support.md) | Deferred | IDE expansion on hold |
+| LX-01 | [multi-language-feasibility](LX-01-multi-language-feasibility.md) | Deferred | Multi-language exploration on hold |
+
+---
+
+## Archived Proposals (completed/)
 
 > All completed proposals have been moved to `completed/` directory.
 
-### Recently Archived (2026-02-18)
+See `completed/` directory for detailed implementation notes. Key archived milestones:
 
-| ID | Name | Status | Description |
-|----|------|--------|-------------|
-| DX-87 | remove-multi-agent-init | Superseded | Absorbed into DX-91 simplification → `DX-91-simplification.md` |
-| DX-23 | entry-point-detection | ✅ Complete | Entry point detection & Monad Runner pattern |
-| DX-78 | mcp-protocol-sync | ✅ Implemented | MCP protocol synced to v5.0 + TypeScript support |
-| DX-85 | mcp-typescript-descriptions | ✅ Fixed | MCP tool descriptions fixed for TypeScript |
-| DX-81 | multi-agent-init | ✅ Implemented | Multi-agent init support (v1.15.0) |
-| DX-74 | tiered-attention-defense | ✅ Validation Complete | Multi-tier defense experiment validated |
-| DX-75 | attention-aware-framework | ✅ Phase B Complete | Attention-aware framework architecture |
-| LX-04 | pi-agent-support | ✅ Complete | Pi native support (--pi flag, init/uninstall, docs) |
-| LX-07 | extension-skills | ✅ T0 Complete | T0 skills implemented, CLI implemented |
-| LX-15 | typescript-guard-parity | ✅ Complete | TS Guard achieved parity with Python |
-
-### Earlier Archive (by category)
-
-**Core Framework (DX):**
-
-| ID | Name | Status | Description |
-|----|------|--------|-------------|
-| DX-67 | explicit-skill-invocation | ✅ Complete | Require Skill tool call for workflow routing |
-| DX-66 | escape-hatch-visibility | ✅ Complete | Guard shows escape hatch summary |
-| DX-65 | single-file-guard | ✅ Complete | `invar guard file.py` support |
-| DX-64 | version-display-unification | ✅ Complete | Use importlib.metadata for accurate version |
-| DX-63 | contracts-first-enforcement | ✅ Complete | Guard -c flag + function-level gates |
-| DX-58 | document-structure-optimization | ✅ Complete | Critical section in CLAUDE.md |
-| DX-57 | claude-code-hooks | ✅ Complete | Claude Code hooks (4 hooks) |
-| DX-56 | template-sync-unification | ✅ Complete | Unified init/dev sync |
-| DX-55 | claude-init-conflict-resolution | ✅ Complete | Unified idempotent init |
-| DX-54 | agent-native-context-management | ✅ Complete | Long conversation resilience |
-| DX-53 | review-loop-effectiveness | ✅ Complete | Isolated reviewer + scope expansion |
-| DX-52 | venv-dependency-injection | ✅ Complete | PYTHONPATH injection for uvx |
-| DX-51 | workflow-phase-visibility | ✅ Complete | USBV phase headers |
-| DX-49 | protocol-distribution-unification | ✅ Complete | SSOT for INVAR.md, CLAUDE.md, skills/ |
-| DX-48 | code-structure-reorganization | ✅ Complete | Dead code + shell/ restructure |
-| DX-47 | command-skill-naming | ✅ Complete | /audit, /guard commands; /review skill |
-| DX-46 | documentation-audit | ✅ Complete | docs/ directory audit |
-| DX-43 | cross-platform-distribution | ✅ Complete | Absorbed by DX-49 |
-| DX-42 | workflow-auto-routing | ✅ Complete | Visible Workflow Routing |
-| DX-41 | automatic-review-orchestration | ✅ Complete | Automatic review orchestration |
-| DX-40 | smart-tool-redirect-hook | ✗ Dropped | Contradicts Lesson #19 |
-| DX-39 | workflow-efficiency | ✅ Complete | Error Pattern Guide + bug fixes |
-| DX-37 | coverage-integration | ✅ Complete | Coverage integration for Guard |
-| DX-36 | documentation-restructuring | ✅ Complete | Sections (Phase 5-6 → DX-43) |
-| DX-35 | workflow-phase-separation | ✅ Complete | Workflow skills (Phase 3-5) |
-| DX-33 | verification-blind-spots | ✅ Complete | Analysis (→ DX-37, DX-38) |
-| DX-32 | workflow-iteration | ✅ Complete | USBV is now standard workflow |
-| DX-31 | adversarial-reviewer | ✅ Complete | /review skill |
-| DX-30 | visible-workflow | ✅ Complete | TodoList convention |
-| DX-28 | semantic-verification | ✅ Complete | @relates, format specs |
-| DX-27 | system-prompt-protocol | ✅ Merged | → DX-39 |
-| DX-26 | guard-simplification | ✅ Complete | Guard CLI simplification |
-| DX-24 | mechanism-documentation | ✅ Complete | 13/13 mechanism docs |
-| DX-22 | verification-strategy | ✅ Complete | Smart routing, Shell rules |
-| DX-21 | package-and-init | ✅ Complete | Two-package architecture |
-| DX-17 | workflow-enforcement | ✅ Evolved | Check-In format |
-| DX-16 | agent-tool-enforcement | ✅ Complete | MCP server |
-| DX-14 | expanded-prove-usage | ✅ Complete | Expanded --prove usage |
-| DX-13 | incremental-prove | ✅ Complete | Incremental CrossHair verification |
-| DX-12 | hypothesis-fallback | ✅ Complete | Hypothesis as CrossHair fallback |
-| DX-11 | documentation-restructure | ✅ Complete | Multi-agent support |
-| DX-45 | template-consistency | Superseded | → DX-49 |
-| DX-34 | review-cycle | Superseded | → DX-35 |
-| DX-70 | init-simplification | ✅ Complete | Simplified init with interactive menus |
-| DX-69 | project-uninstall | ✅ Complete | `invar uninstall` command |
-
-**Language Extension (LX):**
-
-| ID | Name | Status | Description |
-|----|------|--------|-------------|
-| LX-14 | typescript-doctest-execution | Merged → LX-15 | Doctest execution merged |
-| LX-12 | typescript-contract-enforcement | Merged → LX-15 | Contract enforcement merged |
-| LX-06 | typescript-tooling | ✅ Phase 1-3 Complete | TypeScript verification |
-| LX-05 | language-agnostic-protocol | ✅ Protocol Complete | Universal protocol extracted |
-| LX-03 | multi-agent-support | ✅ Complete | docs/guides/ created |
-| LX-02 | agent-portability-analysis | ✅ Complete | Research: 6 agents |
-| LX-09 | legacy-onboarding | ✅ Implemented | Legacy onboarding skill |
+- **v1.15.0**: Multi-agent init support (DX-81) — _superseded by DX-91_
+- **v1.12.0**: MCP protocol sync (DX-78)
+- **v1.11.0**: TypeScript Guard parity (LX-15) — _removed per DX-91_
+- **v1.9.0**: Extension skills architecture (LX-07) — _removed per DX-91_
+- **v1.7.0**: Pi agent support (LX-04) — _simplified per DX-91_
 
 ---
 
@@ -148,19 +101,11 @@ This directory contains design proposals for Invar development.
 
 | Category | Count |
 |----------|-------|
-| **Open** | 23 |
-| **Deferred** | 11 |
+| **Active** | 4 |
+| **Deferred** | 8 |
+| **Legacy/Removed** | 11 |
 | **Archived** | 78 |
-| **Total** | 105 |
-
-### Active Breakdown
-
-| Status | Count |
-|--------|-------|
-| Draft | 8 |
-| Active | 2 |
-| Partial | 2 |
-| Deferred | 11 |
+| **Total** | 101 |
 
 ---
 
@@ -168,23 +113,18 @@ This directory contains design proposals for Invar development.
 
 ### High Priority (Actionable Now)
 
-1. **DX-84** (Security Review) — Active, blocking for production readiness
-2. **DX-91** (Invar Simplification) — Strategic product reset and document-model simplification
-3. **DX-80** (Guard CLI/MCP Alignment) — Bug fix, user impact
+1. **[DX-91](./DX-91-simplification.md)** — Strategic simplification and product reset
+2. **[DX-84](./DX-84-security-review-backlog.md)** — Security review for production readiness
+3. **[DX-80](./DX-80-guard-cli-mcp-alignment.md)** — CLI/MCP alignment bug fix
 
 ### Medium Priority (Strategic)
 
-1. **LX-09** (Legacy Onboarding) — Improves adoption
-2. **DX-85** (OpenCode Support) — Ecosystem expansion
-3. **LX-13** (TypeScript Runtime Optimization) — TypeScript performance
-4. **DX-62** (Proactive Reference Reading) — Layer 1 done, continue
+1. **[DX-62](./DX-62-proactive-reference-reading.md)** — Continue Layers 2-4
+2. **[DX-61](./DX-61-functional-pattern-guidance.md)** — Pattern guidance for agents
 
-### Low Priority (Future) — All Deferred
+### Low Priority / Deferred
 
-1. **LX-11** (Cursor Support) — IDE expansion (Deferred)
-2. **DX-68** (Agent Behavior Optimization) — Reliability improvements
-3. **LX-17** (Haskell/Elm/Go/Rust Feasibility) — Multi-language exploration
-4. **LX-01** (Multi-Language Feasibility) — Strategic exploration
+- DX-68, DX-60, DX-38, DX-29, DX-25, LX-17 series, LX-11, LX-01
 
 ---
 
@@ -192,9 +132,23 @@ This directory contains design proposals for Invar development.
 
 See `completed/` directory for detailed implementation notes and execution history of archived proposals.
 
-Key milestones:
-- **v1.15.0**: Multi-agent init support (DX-81)
-- **v1.12.0**: MCP protocol sync (DX-78)
-- **v1.11.0**: TypeScript Guard parity (LX-15)
-- **v1.9.0**: Extension skills architecture (LX-07)
-- **v1.7.0**: Pi agent support (LX-04)
+**Pre-DX-91 Concepts (for historical context):**
+
+- **USBV Workflow**: Four-phase protocol (Understand → Specify → Build → Validate) — _ceremony removed per DX-91, core intent preserved as "contracts before code"_
+- **Skills System**: `.claude/skills/` with 8 skills — _removed per DX-91_
+- **Hooks**: PreToolUse, PostToolUse, Stop, UserPromptSubmit — _removed per DX-91_
+- **TypeScript Support**: Full TS/JS guard and verification — _removed per DX-91_
+
+---
+
+## Cross-Reference: Active Navigation
+
+| Document | Relevance Post-DX-91 |
+|----------|----------------------|
+| `CLAUDE.md` (project root) | **Active** — DX-91 managed block (~50 lines) |
+| `INVAR.md` (project root) | **Active** — Agent semantic spec |
+| [DX-91-simplification.md](./DX-91-simplification.md) | **Active** — Authoritative direction |
+| `docs/reference/workflow/usbv.md` | **Archive** — Historical USBV documentation |
+| `docs/AGENTS.md` | **Archive** — Pre-DX-91 agent roles (skills/hooks era) |
+| `docs/reference/index.md` | **Update needed** — Contains USBV references |
+| `README.md` | **Update needed** — Contains legacy workflow descriptions |

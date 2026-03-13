@@ -233,22 +233,15 @@ Agent writes code
 
 ### ✅ Solution 3: Workflow Discipline
 
-The four-phase workflow forces "specify before implement":
+Contracts before implementation — the single required rule per [DX-91](./docs/proposals/DX-91-simplification.md):
 
 ```
-🔍 Understand  →  📝 Specify  →  🔨 Build  →  ✓ Validate
-      │              │              │            │
-   Context        Contracts        Code        Guard
+📝 Specify  →  🔨 Build  →  ✓ Validate
+     │              │            │
+ Contracts        Code        Guard
 ```
 
-Agent follows a four-phase workflow based on user intent:
-
-| User Intent | Mode | Behavior |
-|-------------|------|----------|
-| "why does X fail?" | investigate | Research only, no code changes |
-| "should we use A or B?" | propose | Present options with trade-offs |
-| "add feature X" | implement | Full four-phase workflow |
-| (after implementation) | review | Adversarial review with fix loop |
+Guard enforces outcomes, not ceremony. The essential intent: specify with `@pre`/`@post` before implementing.
 
 ### ✅ Solution 4: Architecture Constraints
 
@@ -349,13 +342,13 @@ AlphaCodium · Parsel · Reflexion · Clover
 | **Cursor** | ✅ MCP | `invar init` → select Other, add MCP config |
 | **Other** | 📝 Manual | `invar init` → select Other, include `AGENT.md` in prompt |
 
-> **See also:** [Multi-Agent Guide](./docs/guides/multi-agent.md) for detailed integration instructions.
+> **See also:** ~~[Multi-Agent Guide](./docs/guides/multi-agent.md)~~ — *simplified per [DX-91](./docs/proposals/DX-91-simplification.md)*. See INVAR.md for agent-agnostic protocol.
 
 ### Claude Code (Full Experience)
 
 All features auto-configured:
 - MCP tools (`invar_guard`, `invar_sig`, `invar_map`)
-- Workflow modes (implement, review, investigate, propose)
+- ~~Workflow modes (implement, review, investigate, propose)~~ — *simplified per [DX-91](./docs/proposals/DX-91-simplification.md)*
 - Pre-commit hooks
 
 ### [Pi](https://shittycodingagent.ai/) (MCP Support)
@@ -394,7 +387,7 @@ Cursor users get full verification via MCP:
 | `.pre-commit-config.yaml` | Verification before commit (Ruff, mypy*, Guard) | Optional |
 | `src/core/`, `src/shell/` | Recommended structure | Optional |
 | `CLAUDE.md` | Agent instructions | Claude Code |
-| `.claude/commands/` | User commands (/audit, /guard) | Claude Code |
+| `.claude/commands/` | ~~User commands (/audit, /guard)~~ — *removed per DX-91* | N/A |
 | `.mcp.json` | MCP server config | Claude Code |
 | `AGENT.md` | Universal agent instructions | Other agents |
 

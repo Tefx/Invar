@@ -10,7 +10,7 @@ Technical documentation for Invar's verification and architecture mechanisms.
 | [Architecture](architecture/README.md) | Core/Shell separation, Result monads, Entry points | Code design |
 | [Contracts](contracts/README.md) | `@pre`/`@post` contracts, doctests, completeness | Writing functions |
 | [Rules](rules/README.md) | Static analysis checks and Fix-or-Explain | Continuous |
-| [Workflow](workflow/README.md) | USBV methodology, Check-In/Final protocols | Every session |
+| [Workflow](workflow/README.md) | ~~USBV~~ (historical) → Contracts-first per [DX-91](../proposals/DX-91-simplification.md) | Every session |
 | [Proposal Workflow](proposal-workflow.md) | Feature-level planning, DX proposals | Large changes |
 | [Documentation](documentation.md) | INVAR vs CLAUDE attribution, templates | Project setup |
 

@@ -55,7 +55,7 @@
 
 **What agents do:**
 - Read and internalize INVAR.md
-- Follow USBV workflow (Understand → Specify → Build → Validate)
+- ~~Follow USBV workflow~~ → **Write contracts before code** (per [DX-91](../proposals/DX-91-simplification.md))
 - Write contracts, separate Core/Shell
 - Run `invar guard` to verify compliance
 - Fix violations before presenting to human
