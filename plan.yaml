@@ -19451,7 +19451,7 @@ phases:
       real DX-91 product surface.
 
 
-      review_depth: STANDARD
+      review_depth: THOROUGH
 
 
       review_depth_rationale:
@@ -19459,7 +19459,11 @@ phases:
       - This phase is documentation-heavy but still cross-cutting because it defines
       the active guidance surface
 
-      - Prior phases changed core product scope and removed significant legacy behavior
+      - Prior remediation loops did not fully close removed-feature guidance drift
+      across active docs
+
+      - The current blocker set spans index, guide, INVAR, and context surfaces and
+      includes broken navigation
 
 
       cross_cutting_focus:
@@ -19470,19 +19474,22 @@ phases:
 
       - Proposal index and top-level navigation must send readers to the right places
 
+      - Removed `invar init --claude/--pi`, `.invar/examples/`, and `multi-agent init`
+      guidance must be absent from active self-doc surfaces
+
 
       As an INDEPENDENT REVIEWER (`gate-reviewer`), block progress if active docs
       remain contradictory, stale, or navigationally broken.'
-    verification: '- All phase steps completed successfully, including the batched
-      fix and independent retest for `verify-self-docs-surface`
+    verification: '- All phase steps completed successfully, including the new batched
+      gate-blocker fix and independent retest
 
-      - Evidence collected and reviewed for active link integrity, workflow consistency,
-      and active-vs-archive boundaries
+      - Evidence collected and reviewed for active link integrity, minimal-init workflow
+      consistency, deleted-surface cleanup, and active-vs-archive boundaries
 
       - No unresolved blockers remain on active self-docs surfaces
 
-      - Ready for `dx91-release-readiness` only after the freeze snapshot and retest
-      evidence are both accepted'
+      - Ready for `dx91-release-readiness` only after the freeze snapshot and the
+      new retest evidence are both accepted'
     depends_on:
     - update-runtime-owned-docs
     - update-proposals-index-and-crosslinks
@@ -19493,6 +19500,8 @@ phases:
     - dx91-self-docs.retest-self-docs-active-link-blockers-batch
     - dx91-self-docs.fix-self-docs-active-link-blockers-followup-batch
     - dx91-self-docs.retest-self-docs-active-link-blockers-followup-batch
+    - dx91-self-docs.dx91-self-docs-fix-gate-doc-coherence-blockers-batch
+    - dx91-self-docs.dx91-self-docs-retest-gate-doc-coherence-blockers-batch
     - freeze-self-docs-snapshot
     agent: gate-reviewer
     claimed_by: gate-reviewer
