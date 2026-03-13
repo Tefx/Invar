@@ -22853,7 +22853,7 @@ phases:
       \ none"
   - id: dx91-release-readiness.retest-proposal-index-reconciliation-fs-inventory-blockers
     name: retest-proposal-index-reconciliation-fs-inventory-blockers
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT TESTER (`integration-verifier`), validate closure
       of the filesystem-inventory and row-traceability blocker family after `dx91-release-readiness.fix-proposal-index-reconciliation-fs-inventory-blockers`.
 
@@ -22960,6 +22960,28 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-13T18:14:06.959470+00:00'
+    done_at: '2026-03-13T18:20:20.216274+00:00'
+    evidence: "Verification evidence (integration-verifier):\n\nVerification (commands\
+      \ + outputs/results)\n- Worktree inventory check showed requested isolated path\
+      \ for this exact retest step absent.\n- Verification executed in nearest matching\
+      \ retest worktree branch:\n  - `git rev-parse --abbrev-ref HEAD` => `vectl/step-dx91-release-readiness.retest-proposal-index-reconciliation-remaining-blockers`\n\
+      - Proposal-index audit script outputs:\n  - `rows_total 25`\n  - `row_targets_total\
+      \ 24`\n  - `rows_without_markdown_link 1`\n  - outlier: `NO_LINK_ROW line=84:\
+      \ | LX-08 | extension-skills-future | **Removed** | ... |`\n  - `root_files_not_represented_by_rows\
+      \ 7`\n  - missing list: `DX-61-implementation-design.md`, `DX-91-claude-md-draft.md`,\
+      \ `DX-91-freeze-spec-baseline.md`, `DX-91-generated-file-contracts.md`, `DX-91-invar-md-draft.md`,\
+      \ `DX-91-migration-semantics.md`, `LX-08-extension-skills-future.md`\n  - `published_math\
+      \ 14 11 76 101`\n  - `filesystem_math 31 76 sum=107`\n- Sibling checks:\n  -\
+      \ `ls docs/proposals/*.md | grep -v 'index.md' | wc -l` => `31`\n  - `ls docs/proposals/completed/*.md\
+      \ | wc -l` => `76`\n  - `rg -n '^\\|\\s+LX-08\\s+\\|\\s+extension-skills-future\\\
+      s+\\|' docs/proposals/index.md` => line 84 hit.\n\nFiles changed\n- none (verification-only)\n\
+      \nGaps/Notes\n- Gate recommendation: BLOCKED.\n- Detected blocker family remains:\
+      \ totals mismatch vs filesystem, incomplete row coverage, LX-08 formatting outlier.\n\
+      - Additional environment note: expected worktree path for this step was missing;\
+      \ verification still produced concrete blocker evidence.\n\nDetected issues\
+      \ requiring batched follow-up\n- B1: published total 101 vs filesystem 107\n\
+      - B2: 7 unrepresented root proposal files in row inventory\n- B3: LX-08 non-link\
+      \ legacy formatting persists"
   - id: dx91-release-readiness.fix-proposal-index-reconciliation-fs-inventory-blockers-followup-batch
     name: fix-proposal-index-reconciliation-fs-inventory-blockers-followup-batch
     status: pending
