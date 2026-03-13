@@ -23431,7 +23431,7 @@ phases:
       - discovered_issues: none'
   - id: dx91-release-readiness.retest-reference-classification-consistency-blockers
     name: retest-reference-classification-consistency-blockers
-    status: pending
+    status: claimed
     description: 'As an INDEPENDENT TESTER (`integration-verifier`), validate closure
       of the full reference-classification blocker family after `dx91-release-readiness.fix-reference-classification-consistency-blockers`.
 
@@ -23530,3 +23530,5 @@ phases:
     depends_on:
     - dx91-release-readiness.fix-reference-classification-consistency-blockers
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-13T18:38:55.693225+00:00'
