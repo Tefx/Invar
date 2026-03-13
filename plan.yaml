@@ -19446,7 +19446,7 @@ phases:
       '
   - id: dx91-self-docs.gate
     name: dx91-self-docs.gate
-    status: pending
+    status: claimed
     description: 'Gate review: verify the repository''s active docs now match the
       real DX-91 product surface.
 
@@ -19495,6 +19495,8 @@ phases:
     - dx91-self-docs.retest-self-docs-active-link-blockers-followup-batch
     - freeze-self-docs-snapshot
     agent: gate-reviewer
+    claimed_by: gate-reviewer
+    claimed_at: '2026-03-13T15:21:33.162793+00:00'
   - id: dx91-self-docs.fix-self-docs-surface-blockers
     name: fix-self-docs-surface-blockers
     status: done
