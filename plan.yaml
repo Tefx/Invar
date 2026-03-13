@@ -20545,7 +20545,7 @@ phases:
       \ of direct protected-file editing.\n"
   - id: dx91-self-docs.dx91-self-docs-fix-gate-doc-coherence-blockers-followup-batch
     name: dx91-self-docs.fix-gate-doc-coherence-blockers-followup-batch
-    status: claimed
+    status: done
     description: 'Fix ALL remaining blockers found by `dx91-self-docs.dx91-self-docs-retest-gate-doc-coherence-blockers-batch`
       in ONE batched remediation pass for the narrowed `.invar/examples/` drift family.
 
@@ -20660,6 +20660,72 @@ phases:
     agent: doc-reviewer
     claimed_by: doc-reviewer
     claimed_at: '2026-03-13T15:50:47.856327+00:00'
+    done_at: '2026-03-13T16:02:43.084857+00:00'
+    evidence: 'Artifact:
+
+      - Main commit: `125feb713dc06832a4ad6a356392090182844b8a`
+
+
+      Files changed:
+
+      - `INVAR.md`
+
+      - `CLAUDE.md`
+
+      - `src/invar/templates/protocol/python/architecture-examples.md`
+
+      - `src/invar/templates/protocol/universal/completion.md`
+
+
+      Verification:
+
+      - `grep -rn ''\.invar/examples'' INVAR.md` -> no matches
+
+      - `uv run invar dev sync --check` -> no changes detected (templates and generated
+      docs in sync)
+
+      - `git diff --stat HEAD~1` -> 4 files changed, 64 insertions, 386 deletions
+
+
+      Source-of-truth path used:
+
+      - primary source updated: `src/invar/templates/protocol/python/architecture-examples.md`
+
+      - secondary template touch: `src/invar/templates/protocol/universal/completion.md`
+
+      - compliant regeneration path: `invar dev sync` produced synchronized `INVAR.md`
+      and `CLAUDE.md`
+
+
+      Sibling-search coverage:
+
+      - `INVAR.md` checked -> zero `.invar/examples` references
+
+      - `docs/proposals/DX-91-invar-md-draft.md` checked -> already compliant
+
+      - `src/invar/templates/protocol/**` checked -> updated authoritative template
+      surfaces
+
+      - `src/invar/shell/commands/init.py` checked -> `.invar/examples` appears only
+      in legacy removal path (correct migration cleanup behavior)
+
+      - `.invar/` checked -> no `examples/` directory present
+
+
+      Residual risk:
+
+      - accepted non-blocking historical references remain in migration fixtures,
+      archived proposals, and cleanup code paths
+
+      - active agent-facing surfaces are clean for `.invar/examples` drift family
+
+
+      Notes:
+
+      - Fix used compliant source-of-truth + regeneration path rather than impermissible
+      direct protected-file editing workflow.
+
+      '
   - id: dx91-self-docs.dx91-self-docs-retest-gate-doc-coherence-blockers-followup-batch
     name: dx91-self-docs.retest-gate-doc-coherence-blockers-followup-batch
     status: pending
