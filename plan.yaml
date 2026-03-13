@@ -20072,7 +20072,7 @@ phases:
       \ siblings; no broad archive churn performed.\n"
   - id: dx91-self-docs.retest-self-docs-active-link-blockers-followup-batch
     name: retest-self-docs-active-link-blockers-followup-batch
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT TESTER (`blind-tester`), validate the follow-up
       batched self-docs link remediation from a fresh perspective.
 
@@ -20123,6 +20123,25 @@ phases:
     agent: blind-tester
     claimed_by: blind-tester
     claimed_at: '2026-03-13T15:14:14.263519+00:00'
+    done_at: '2026-03-13T15:18:33.938700+00:00'
+    evidence: "Gate decision: OPEN\n\nFindings:\n- blockers: none (all three follow-up\
+      \ blockers resolved)\n- should_fix: none in active-surface scope\n- suggestions:\n\
+      \  - continue enforcing proposal base-path conventions by surface depth\n  -\
+      \ keep completed-proposal links under `/completed/` on active reference pages\n\
+      - tech_debt:\n  - one archive-only stale link remains in `docs/proposals/completed/DX-24-mechanism-documentation.md`\
+      \ (outside active-surface blocker scope)\n\nCommands run:\n- active-surface\
+      \ proposal-link resolution audit (no broken links)\n- sibling base-convention\
+      \ checks across active doc families (no mismatches)\n- targeted verification\
+      \ of the 3 blocker files and USBV archive boundary markers\n\nEvidence inventory:\n\
+      - `docs/agents.md:280` DX-91 link base fixed and target exists\n- `docs/reference/contracts/pre-post.md:304`\
+      \ DX-12 moved-completed path fixed and target exists\n- `docs/reference/workflow/usbv.md:1`\
+      \ archive-banner DX-91 link base fixed and target exists\n- active workflow/documentation\
+      \ pages continue to classify USBV as archived\n\nActive-vs-archive classification:\n\
+      - active: `docs/agents.md`, `docs/reference/workflow/index.md`, `docs/reference/workflow/session-start.md`,\
+      \ `docs/reference/contracts/pre-post.md`\n- archive: `docs/reference/workflow/usbv.md`\
+      \ (explicit archive banner)\n- boundary: clear and coherent in reviewed surfaces\n\
+      \nFiles changed:\n- none (verify-only)\n\nNotes:\n- Verification-only audit\
+      \ completed in isolated worktree; no code/doc/plan file edits.\n"
 - id: dx91-release-readiness
   name: DX-91 Release Readiness Audit
   status: locked
