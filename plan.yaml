@@ -21109,7 +21109,7 @@ phases:
       \ succeeded without hook bypass.\n"
   - id: retest-dx91-consistency-blockers
     name: retest-dx91-consistency-blockers
-    status: pending
+    status: claimed
     description: 'As an INDEPENDENT TESTER (`integration-verifier`), re-audit the
       combined DX-91 consistency blockers after the batched remediation step.
 
@@ -21144,3 +21144,5 @@ phases:
     depends_on:
     - fix-dx91-consistency-blockers
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-13T16:34:54.406245+00:00'
