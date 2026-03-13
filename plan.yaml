@@ -19625,7 +19625,7 @@ phases:
       \ fix + independent retest loop.\n"
   - id: dx91-self-docs.fix-self-docs-active-link-blockers-batch
     name: fix-self-docs-active-link-blockers-batch
-    status: claimed
+    status: done
     description: 'Fix ALL active-link blockers found by `dx91-self-docs.retest-self-docs-surface-blockers`
       in ONE batched remediation step.
 
@@ -19806,6 +19806,53 @@ phases:
     agent: doc-reviewer
     claimed_by: doc-reviewer
     claimed_at: '2026-03-13T14:51:41.521113+00:00'
+    done_at: '2026-03-13T14:56:50.584343+00:00'
+    evidence: 'Commit 640c426: Fixed all 5 blocker families (B1-B5) in active self-docs
+      surface with sibling search verification.
+
+
+      B1-FIXED: docs/reference/workflow/session-start.md line 228 - changed ../../INVAR.md
+      → ../../../INVAR.md (correct relative path from 3-level nesting)
+
+
+      B2-FIXED: docs/reference/contracts/pre-post.md lines 260, 302 - changed ./contract-complete.md
+      → ./completeness.md (target was renamed)
+
+
+      B3-FIXED: docs/reference/verification/smart-routing.md line 177 - changed ../../proposals/DX-22-verification-strategy.md
+      → ../../proposals/completed/DX-22-verification-strategy.md (target moved to
+      completed/)
+
+
+      B4-FIXED: docs/vision.md line 58 - changed ../proposals/DX-91-simplification.md
+      → ./proposals/DX-91-simplification.md (correct path from docs/ root)
+
+
+      B5-FIXED: docs/reference/agent-information-hierarchy.md lines 264-266 - fixed
+      3 proposal links:
+
+      - LX-04: ../proposals/LX-04-pi-agent-support.md → ../proposals/completed/LX-04-pi-agent-support.md
+
+      - DX-54: ../proposals/completed/DX-54-agent-context.md → ../proposals/completed/DX-54-agent-native-context-management.md
+      (correct filename)
+
+      - DX-62: DX-62-proactive-reference.md → DX-62-proactive-reference-reading.md
+      (correct filename)
+
+
+      OPTIONAL-SHOULD-FIX-COMPLETED: docs/reference/workflow/usbv.md
+
+      - Added explicit ARCHIVE banner at top
+
+      - Fixed contract-complete.md → completeness.md (lines 111, 338)
+
+
+      SIBLING-SEARCH: Verified no additional instances of same pattern families in
+      active docs under docs/reference/ and docs/ root. Archive documents (proposals/completed/,
+      history/) left untouched per active/archive boundary policy.
+
+
+      FILES-CHANGED: 6 files, 12 insertions(+), 10 deletions(-)'
   - id: dx91-self-docs.retest-self-docs-active-link-blockers-batch
     name: retest-self-docs-active-link-blockers-batch
     status: pending
