@@ -19285,7 +19285,7 @@ phases:
       \ files modified.\n"
   - id: verify-self-docs-surface
     name: verify-self-docs-surface
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT TESTER (`blind-tester`), review the repository''s
       user-facing docs surface after DX-91 updates.
 
@@ -19316,6 +19316,31 @@ phases:
     agent: blind-tester
     claimed_by: blind-tester
     claimed_at: '2026-03-13T14:25:42.029033+00:00'
+    done_at: '2026-03-13T14:32:51.540128+00:00'
+    evidence: "Gate decision: BLOCKED (issues detected)\n\nFindings:\n- blockers:\n\
+      \  - active docs navigation breakage: multiple active reference links target\
+      \ non-existent `README.md` section files instead of `index.md` paths across\
+      \ `docs/reference/**`\n  - additional active-link breakages in `docs/reference/workflow/**`,\
+      \ `docs/reference/contracts/**`, `docs/reference/verification/**`, `docs/reference/rules/**`,\
+      \ `docs/vision.md`, `docs/terminal-gif-guide.md`, `.invar/project-additions.md`\n\
+      \  - active workflow contradiction: `docs/reference/workflow/index.md` still\
+      \ presents USBV mandatory ceremony while active proposals index marks DX-91\
+      \ minimal guard-enforced direction\n- should_fix:\n  - README generated-guidance\
+      \ naming consistency (`AGENTS.md` vs `AGENT.md`)\n  - `docs/agents.md` proposal\
+      \ path normalization if kept user-visible\n- suggestions:\n  - enforce CI markdown\
+      \ link checks for active docs root/reference surfaces\n  - add explicit active/historical\
+      \ labels\n\nEvidence inventory:\n- independent markdown link scan found active-surface\
+      \ missing local links and classified archive/canonical residuals\n- verification-only\
+      \ run made no code/doc edits\n\nActive-vs-archive classification (from tester):\n\
+      - active blockers requiring fix: active docs/reference/root navigation and workflow\
+      \ consistency\n- canonical-protected non-blocking: INVAR canonical legacy references\n\
+      - historical/archive non-blocking: proposals/history/test-report surfaces\n\n\
+      Batched remediation created:\n- `dx91-self-docs.fix-self-docs-surface-blockers`\
+      \ (single batched fix for all blockers)\n- `dx91-self-docs.retest-self-docs-surface-blockers`\
+      \ (independent retest)\n- downstream dependencies rewired so freeze/gate depend\
+      \ on new retest\n\nNotes:\n- This verification step is completed as issue-discovery\
+      \ evidence and transitioned into one batched fix + retest chain per anti-rework\
+      \ protocol.\n"
   - id: freeze-self-docs-snapshot
     name: freeze-self-docs-snapshot
     status: pending
