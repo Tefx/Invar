@@ -19417,7 +19417,7 @@ phases:
     agent: gate-reviewer
   - id: dx91-self-docs.fix-self-docs-surface-blockers
     name: fix-self-docs-surface-blockers
-    status: pending
+    status: claimed
     description: 'Fix ALL blockers found by `verify-self-docs-surface` across the
       active DX-91 docs surface.
 
@@ -19516,6 +19516,8 @@ phases:
     depends_on:
     - verify-self-docs-surface
     agent: doc-reviewer
+    claimed_by: doc-reviewer
+    claimed_at: '2026-03-13T14:33:21.868868+00:00'
   - id: dx91-self-docs.retest-self-docs-surface-blockers
     name: retest-self-docs-surface-blockers
     status: pending
