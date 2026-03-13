@@ -22603,3 +22603,205 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-13T17:53:44.053346+00:00'
+  - id: dx91-release-readiness.fix-proposal-index-reconciliation-fs-inventory-blockers
+    name: fix-proposal-index-reconciliation-fs-inventory-blockers
+    status: pending
+    description: 'Fix ALL blockers found by `dx91-release-readiness.retest-proposal-index-reconciliation-remaining-blockers`
+      in ONE batched remediation step. Fix ALL of these, not just the first.
+
+
+      step_type: implementation
+
+      agent: doc-reviewer
+
+      agent_source: default
+
+      prior_loop:
+
+      - dx91-release-readiness.fix-release-guides-proposal-index-remaining-blockers
+
+      - dx91-release-readiness.retest-release-guides-proposal-index-remaining-blockers
+
+      - dx91-release-readiness.fix-proposal-index-reconciliation-remaining-blockers
+
+      - dx91-release-readiness.retest-proposal-index-reconciliation-remaining-blockers
+
+      remaining_blocker: `docs/proposals/index.md` still misstates filesystem-backed
+      proposal inventory and row traceability because published grand totals, row
+      coverage, and one legacy row format do not fully match current `docs/proposals/**`
+      reality.
+
+      why_new_loop: the previous reconciliation loop aligned internal arithmetic,
+      but the retest found a narrower blocker family where published totals stayed
+      stale against current filesystem inventory, several root proposal files were
+      omitted from row tables, and one legacy row remained non-linked.
+
+
+      spec_refs:
+
+      - `docs/proposals/index.md`
+
+      - `docs/proposals/DX-91-simplification.md`
+
+      - `docs/reference/index.md`
+
+      - `.invar/context.md`
+
+
+      touch_paths:
+
+      - `docs/proposals/index.md`
+
+      - root proposal files in `docs/proposals/*.md` used by the row inventory
+
+      - `docs/proposals/completed/*.md` as archived-count inventory input
+
+
+      harness_refs:
+
+      - `dx91-release-readiness.retest-proposal-index-reconciliation-remaining-blockers`
+
+      - filesystem state for `docs/proposals/**`
+
+      - proposal-index statistics/reconciliation sections and row tables
+
+
+      known_risks:
+
+      - Grand totals can be internally reconciled while still lying about current
+      filesystem reality.
+
+      - Missing row entries will keep published totals unrecomputable even if one
+      summary table is adjusted.
+
+      - Legacy rows with inconsistent link formatting reduce traceability and make
+      later sibling scans miss exceptions.
+
+
+      ## Blockers to Fix (ALL of these, not just the first)
+
+
+      ### B1: Proposal index grand totals are internally reconciled but stale against
+      filesystem reality
+
+      Evidence:
+
+      - filesystem total `107` (`31` root excluding index + `76` completed) vs published
+      `101`
+
+      Locations:
+
+      - `docs/proposals/index.md` statistics section
+
+      - `docs/proposals/index.md` reconciliation section
+
+      Remediation:
+
+      - Reconcile published totals with the current filesystem inventory, OR explicitly
+      and correctly scope exclusions so counts are truthful and reproducible.
+
+      - Ensure any exclusion policy is written next to the published totals so a later
+      reviewer can recompute the numbers without guessing.
+
+      Grep hint: `Grand Total|Archived \(completed/\)|Total \(indexed\)|Reconciliation
+      Check|Counting Basis`
+
+      IMPORTANT: do not stop after fixing one number; sibling-search every total,
+      subtotal, and reconciliation note tied to the counting basis.
+
+
+      ### B2: Missing root proposal files from index row inventory
+
+      Missing files:
+
+      - `DX-61-implementation-design.md`
+
+      - `DX-91-claude-md-draft.md`
+
+      - `DX-91-freeze-spec-baseline.md`
+
+      - `DX-91-generated-file-contracts.md`
+
+      - `DX-91-invar-md-draft.md`
+
+      - `DX-91-migration-semantics.md`
+
+      Locations:
+
+      - `docs/proposals/index.md` row tables
+
+      Remediation:
+
+      - Represent, link, and categorize all missing files in the row inventory, OR
+      document an explicit exclusion policy that is consistent with the published
+      totals and counting basis.
+
+      - Recompute row-based counts after the missing-file pass so the row inventory
+      and published totals agree.
+
+      Grep hint: `\| DX-61|\| DX-91-|Open Proposals|Legacy / Pre-DX-91`
+
+      IMPORTANT: perform sibling-searches across adjacent row tables and status sections
+      so no other root proposal file remains omitted.
+
+
+      ### B3: LX-08 row lacks markdown link formatting, reducing traceability/recomputability
+
+      Locations:
+
+      - `docs/proposals/index.md` legacy row for LX-08
+
+      Remediation:
+
+      - Convert the LX-08 row to the linked row format used by comparable entries.
+
+      - Verify no other legacy row is still a plain-text filename exception.
+
+      Grep hint: `LX-08|extension-skills-future|\(LX-08-extension-skills-future\.md\)`
+
+      IMPORTANT: sibling-search the full legacy table for formatting outliers, not
+      just LX-08.
+
+
+      ## Completion Criteria
+
+      - Published totals in `docs/proposals/index.md` are truthful against current
+      filesystem inventory or explicitly scoped with a reproducible exclusion policy.
+
+      - All root proposal files intended to count toward the published inventory are
+      represented and linked in the row tables, with categorization consistent with
+      the totals.
+
+      - Legacy row formatting is consistent enough that row inventory remains traceable
+      and recomputable.
+
+      - Evidence includes sibling-search coverage for totals, row tables, and legacy
+      link formatting.
+
+
+      ## Gate Preview (what the follow-up retest WILL reject)
+
+      1. Any grand total that still differs from the documented filesystem/counting
+      basis.
+
+      2. Any root proposal file counted by policy but absent from the row inventory.
+
+      3. Any row-format exception in legacy tables that prevents traceable recomputation.
+
+      4. Any fix that updates one section without reconciling sibling totals, row
+      tables, and counting-basis text together.'
+    verification: '- Main path: one batched docs pass updates the filesystem-backed
+      totals, row inventory coverage, and legacy-row traceability together
+
+      - Failure path: sibling-searches across totals, row tables, and legacy rows
+      show no remaining mismatch, omission, or link-format outlier in the declared
+      blocker family
+
+      - Proof: evidence lists the counting basis used, the missing-file coverage decision
+      for each named file, and the legacy-row formatting check scope
+
+      - Out-of-scope guardrail: broader proposal curation outside the blocker family
+      remains deferred unless required to keep published totals truthful'
+    depends_on:
+    - dx91-release-readiness.retest-proposal-index-reconciliation-remaining-blockers
+    agent: doc-reviewer
