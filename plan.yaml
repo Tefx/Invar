@@ -20820,7 +20820,7 @@ phases:
   steps:
   - id: audit-dx91-consistency
     name: audit-dx91-consistency
-    status: claimed
+    status: done
     description: 'Audit the full repository for DX-91 consistency before a final release
       recommendation is made.
 
@@ -20844,6 +20844,29 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-13T16:15:59.394358+00:00'
+    done_at: '2026-03-13T16:24:04.863210+00:00'
+    evidence: "Audit decision: BLOCKED\n\nFindings:\n- blockers:\n  - B1 harness drift:\
+      \ `tests/integration/test_dx91_dev_sync_template_merge.py` fails against current\
+      \ DX-91 runtime/template semantics\n  - B2 active docs drift: active reference\
+      \ docs still describe retired surfaces/workflow posture not matching current\
+      \ CLI/runtime\n  - B3 README drift: generated/install surface claims (`.invar/`,\
+      \ `.mcp.json`) do not match observed fresh-init outputs\n- should_fix:\n  -\
+      \ proposal/runtime narrative mismatch (`rules`/`version`) and proposal-index\
+      \ drift coverage across active references\n\nCommands run (from verifier):\n\
+      - CLI/runtime checks (`uv run invar --help`, `uv run invar init --help`, `uv\
+      \ run invar dev --help`)\n- focused integration suites including dx91 init/destructive/ts\
+      \ retirement and dev-sync merge tests\n- fresh-init smoke in temp directory\
+      \ to verify actual generated files\n- targeted scans/read checks across runtime/docs/proposals/tests\
+      \ surfaces\n\nSurfaces reviewed:\n- runtime/product: shell commands, template\
+      \ manifest, CLI help\n- active docs/reference/readme surfaces\n- proposal index\
+      \ + DX-91 proposal corpus\n- harness evidence suites\n\nActive-vs-archive classification:\n\
+      - active runtime mostly passes DX-91 Python-only shape\n- active docs + one\
+      \ active harness are out of sync -> blocking\n- historical/archive surfaces\
+      \ classified as non-blocking\n\nBatched remediation created (anti-rework):\n\
+      - `fix-dx91-consistency-blockers` (single batched fix for B1+B2+B3)\n- `retest-dx91-consistency-blockers`\
+      \ (independent consolidated retest)\n- downstream release steps rewired so smoke/gate\
+      \ remain behind new retest chain\n\nNotes:\n- verify-only audit produced no\
+      \ tracked file edits.\n"
   - id: prove-final-init-install-smoke
     name: prove-final-init-install-smoke
     status: pending
