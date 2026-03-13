@@ -20072,7 +20072,7 @@ phases:
       \ siblings; no broad archive churn performed.\n"
   - id: dx91-self-docs.retest-self-docs-active-link-blockers-followup-batch
     name: retest-self-docs-active-link-blockers-followup-batch
-    status: pending
+    status: claimed
     description: 'As an INDEPENDENT TESTER (`blind-tester`), validate the follow-up
       batched self-docs link remediation from a fresh perspective.
 
@@ -20121,6 +20121,8 @@ phases:
     depends_on:
     - dx91-self-docs.fix-self-docs-active-link-blockers-followup-batch
     agent: blind-tester
+    claimed_by: blind-tester
+    claimed_at: '2026-03-13T15:14:14.263519+00:00'
 - id: dx91-release-readiness
   name: DX-91 Release Readiness Audit
   status: locked
