@@ -19366,7 +19366,7 @@ phases:
       - State that no code or docs changes are allowed until the subsequent gate review
       completes'
     depends_on:
-    - dx91-self-docs.retest-self-docs-active-link-blockers-batch
+    - dx91-self-docs.retest-self-docs-active-link-blockers-followup-batch
     agent: integration-verifier
   - id: dx91-self-docs.gate
     name: dx91-self-docs.gate
