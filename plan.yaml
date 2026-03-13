@@ -19486,6 +19486,57 @@ phases:
     depends_on:
     - verify-self-docs-surface
     agent: doc-reviewer
+  - id: dx91-self-docs.retest-self-docs-surface-blockers
+    name: retest-self-docs-surface-blockers
+    status: pending
+    description: 'As an INDEPENDENT TESTER (`blind-tester`), re-check the active DX-91
+      self-docs surface after the batched blocker fix.
+
+
+      YOUR GOAL IS TO FIND PROBLEMS, not to confirm it works.
+
+
+      Validate all blocker families from `verify-self-docs-surface` on active surfaces:
+
+      - Link integrity: active navigation no longer points at stale `README.md` section
+      targets or other removed active targets.
+
+      - Workflow consistency: active workflow guidance now matches the DX-91 minimal,
+      guard-enforced posture, or historical USBV guidance is clearly labeled as archived.
+
+      - Boundary clarity: active versus archived/update-needed surfaces are clearly
+      separated so readers are not misrouted.
+
+
+      Document any remaining contradictions or stale links explicitly. Finding issues
+      is a success for the retest.
+
+
+      Independence Level: L1'
+    verification: '- Main path: independently traverse active docs navigation and
+      confirm active links resolve to live surfaces
+
+      - Failure path: explicitly search for stale `README.md`/removed-target links
+      and USBV-vs-DX-91 contradictions on active surfaces
+
+      - Evidence distinguishes active guidance from archived material and lists any
+      remaining should-fix suggestions'
+    evidence_template: "## Verification Report\n\n**Tester**: blind-tester (independent\
+      \ of implementation)\n**Scope**: DX-91 active self-docs surfaces affected by\
+      \ `verify-self-docs-surface`\n**Independence Level**: L1\n\n### Test Execution\n\
+      - Navigation path(s) checked:\n  - `docs/reference/index.md` into workflow/contracts/verification/rules\n\
+      \  - `docs/vision`\n  - `docs/terminal-gif-guide`\n  - `.invar/project-additions.md`\n\
+      - Search patterns checked:\n  - `README\\.md\\)|\\]\\(\\.\\./verification/README\\\
+      .md|\\]\\(\\.\\./contracts/README\\.md|\\]\\(\\.\\/README\\.md|severity-design\\\
+      .md|\\.\\/docs\\/assets\\/demo\\.gif`\n  - `USBV|UNDERSTAND|SPECIFY|VALIDATE|four-phase|minimal\
+      \ ceremony|guard-enforced`\n\n### Issues Found\n- blocker: <issue or none>\n\
+      - should_fix: <issue or none>\n- suggestion: <issue or none>\n\n### Coverage\
+      \ Assessment\n- Active link integrity verified: ✅/❌\n- Workflow posture consistency\
+      \ verified: ✅/❌\n- Active/archive boundaries checked: ✅/❌\n\n### Verdict\n-\
+      \ PASS | ISSUES_FOUND | INCOMPLETE"
+    depends_on:
+    - dx91-self-docs.fix-self-docs-surface-blockers
+    agent: blind-tester
 - id: dx91-release-readiness
   name: DX-91 Release Readiness Audit
   status: locked
