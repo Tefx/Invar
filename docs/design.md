@@ -351,7 +351,7 @@ jobs:
         # --strict: treat warnings as errors
 ```
 
-> **Tip:** Use `uvx invar-tools guard` locally to run without installing.
+> **Tip:** Install invar-tools as a dev dependency with `uv add --dev invar-tools invar-runtime`, then run `uv run invar guard`.
 
 ---
 
@@ -1039,29 +1039,23 @@ invar-tools (PyPI)
 ### Installation Options
 
 ```bash
-# Recommended: use without installing (always latest)
-uvx invar-tools guard
-uvx invar-tools init
+# Recommended: install as project dev dependency
+uv add --dev invar-tools invar-runtime
 
-# Or install globally
-pip install invar-tools
-
-# For projects using contracts at runtime
-pip install invar-runtime
+# Then use via uv run
+uv run invar guard
+uv run invar init
 ```
 
 ### `invar init` Behavior
 
 ```bash
-$ uvx invar-tools init
+$ uv run invar init
 
 ✓ Added [tool.invar.guard] to pyproject.toml
 ✓ Created INVAR.md (Invar Protocol)
 ✓ Created CLAUDE.md (customize for your project)
-✓ Created src/core/
-✓ Created src/shell/
-✓ Created .invar/context.md (context management)
-✓ Created .mcp.json (MCP server config)
+✓ Created .pre-commit-config.yaml (verification hook)
 ```
 
 ### Version Strategy

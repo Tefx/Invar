@@ -75,21 +75,13 @@ def guard(
 
 **调用方式**：
 ```bash
-# 新默认行为（对齐MCP）
-invar guard                      # 检查修改文件（快）✨
-uvx invar-tools guard            # 同上
+# 推荐方式：项目本地环境
+uv run invar guard              # 检查修改文件（快）✨
 
 # 显式全检查
-invar guard --all                # 检查全部文件
-uvx invar-tools guard --all
+uv run invar guard --all        # 检查全部文件
 
 # 向后兼容
-invar guard --changed            # 仍然有效（显式指定默认行为）
-```
-
-**Typer实现细节**：
-```python
-# Typer的--changed/--all语法自动处理互斥：
 # --changed → changed=True
 # --all → changed=False
 # 无标志 → changed=True（默认值）
@@ -122,11 +114,12 @@ Invar tools can be called in 3 ways. **Try in order:**
    - No Bash wrapper needed
 
 2. **CLI command** (if `invar` installed in PATH)
-   - Via Bash: `invar guard`, `invar sig`, etc.
-   - Install: `pip install invar-tools`
+    - Via Bash: `invar guard`, `invar sig`, etc.
+    - Install: `uv add --dev invar-tools invar-runtime`
 
 3. **uvx fallback** (always available, no install needed)
-   - Via Bash: `uvx invar-tools guard`, `uvx invar-tools sig`, etc.
+    - Via Bash: `uvx invar-tools guard`, `uvx invar-tools sig`, etc.
+    - Note: May not have access to project dependencies for CrossHair/Hypothesis
 
 ---
 
@@ -187,18 +180,17 @@ invar doc read docs/spec.md intro
 ### Quick Examples
 
 ```python
-# Verify after changes (all three methods identical)
+# Verify after changes (all methods identical)
 invar_guard()                        # MCP
-bash("invar guard")                  # CLI
-bash("uvx invar-tools guard")        # uvx
+bash("uv run invar guard")           # CLI via uv run
 
 # Full project check
 invar_guard(changed=False)           # MCP
-bash("invar guard --all")            # CLI
+bash("uv run invar guard --all")     # CLI via uv run
 
 # See function contracts
 invar_sig(target="src/core/parser.py")
-bash("invar sig src/core/parser.py")
+bash("uv run invar sig src/core/parser.py")
 ```
 
 **Note**: All three methods now have identical default behavior.

@@ -12,35 +12,30 @@ This project includes an MCP server that provides Invar tools to AI agents.
 
 ## Configuration
 
-`invar init` does not auto-create `.mcp.json` in DX-91. Add MCP config manually using one of the templates below.
+Add MCP config manually using one of the templates below.
 
-### Recommended: uvx (isolated environment)
+### Recommended: project-local environment
+
+First, install Invar in your project dev dependencies:
+
+```bash
+uv add --dev invar-tools invar-runtime
+```
+
+Then configure MCP to use the project environment:
 
 ```json
 {
   "mcpServers": {
     "invar": {
-      "command": "uvx",
-      "args": ["invar-tools", "mcp"]
+      "command": "uv",
+      "args": ["run", "invar", "mcp"]
     }
   }
 }
 ```
 
-### Alternative: invar command
-
-```json
-{
-  "mcpServers": {
-    "invar": {
-      "command": "invar",
-      "args": ["mcp"]
-    }
-  }
-}
-```
-
-### Fallback: Python path
+### Alternative: direct Python path
 
 ```json
 {
@@ -55,28 +50,32 @@ This project includes an MCP server that provides Invar tools to AI agents.
 
 Find your Python path: `python -c "import sys; print(sys.executable)"`
 
-## Installation
+### Fallback: uvx (isolated, not recommended)
 
-```bash
-# Recommended: use uvx (no installation needed)
-uvx invar-tools guard
+Use this only if you cannot install invar-tools in the project:
 
-# Or install globally
-pip install invar-tools
-
-# Or install in project
-pip install invar-tools
+```json
+{
+  "mcpServers": {
+    "invar": {
+      "command": "uvx",
+      "args": ["invar-tools", "mcp"]
+    }
+  }
+}
 ```
+
+Note: uvx runs in an isolated environment and may not have access to project dependencies, which can cause issues with CrossHair and Hypothesis.
 
 ## Testing
 
 Run the MCP server directly:
 
 ```bash
-# Using uvx
-uvx invar-tools mcp
+# Using project environment
+uv run invar mcp
 
-# Or if installed
+# Or if installed globally
 invar mcp
 ```
 

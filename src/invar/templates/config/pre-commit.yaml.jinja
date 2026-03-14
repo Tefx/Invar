@@ -22,6 +22,7 @@ repos:
       # Invar Guard (full verification by default)
       # Uses incremental mode: only verifies changed files, caches results
       # Smart mode: runs full guard when rule files change, --changed otherwise
+      # Requires: uv add --dev invar-tools invar-runtime
       - id: invar-guard
         name: Invar Guard
         entry: bash
@@ -36,9 +37,9 @@ repos:
             done
             if [ "$FULL" = true ]; then
               echo "⚠️  Rule change detected - running FULL guard"
-              invar guard
+              uv run invar guard
             else
-              invar guard --changed
+              uv run invar guard --changed
             fi
         language: system
         pass_filenames: false

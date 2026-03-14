@@ -72,7 +72,7 @@ Note (scope transparency):
 Cross-project run command (anima):
 
 ```bash
-uvx invar-tools guard --all --static
+uv run invar guard --all --static
 ```
 
 Observed summary:
