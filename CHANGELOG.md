@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.20.2] - 2026-03-14
+
+### Changed
+- **Pre-commit hook and docs now prefer `uv run invar` over `uvx invar-tools`**
+  - Pre-commit hook template uses `uv run invar guard` instead of bare `invar guard`
+  - MCP setup guide recommends project-local `uv run invar mcp` as primary option
+  - Design docs and integration guides updated to prefer `uv run` for all invar commands
+  - Draft proposals updated to reflect current recommended usage patterns
+
 ## [1.20.1] - 2026-03-14
 
 ### Changed
@@ -570,7 +579,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[Unreleased]: https://github.com/yourusername/invar/compare/v1.20.1...HEAD
+[Unreleased]: https://github.com/yourusername/invar/compare/v1.20.2...HEAD
+[1.20.2]: https://github.com/yourusername/invar/compare/v1.20.1...v1.20.2
 [1.20.1]: https://github.com/yourusername/invar/compare/v1.20.0...v1.20.1
 [1.20.0]: https://github.com/yourusername/invar/compare/v1.19.7...v1.20.0
 [1.19.7]: https://github.com/yourusername/invar/compare/v1.19.6...v1.19.7
