@@ -25034,3 +25034,34 @@ phases:
 
       - `uv run pytest tests/ -x` passes'
     agent: python-executor
+  - id: cat-e-dead-assign.verify-dead-assign-cleanup
+    name: Verify dead_assign cleanup
+    status: pending
+    description: 'As an INDEPENDENT TESTER, verify that all 5 dead_assign escape hatches
+      have been eliminated without behavioral regression.
+
+
+      Independence Level: L1
+
+
+      Test for:
+
+      - All 5 markers removed from source (not from docstrings/suggestions)
+
+      - Guard passes clean on affected files
+
+      - Loop behavior preserved (no off-by-one, no infinite loops)
+
+      - Existing tests pass
+
+
+      Files to check: handlers.py, doc_parser.py, purity.py, hypothesis_strategies.py'
+    verification: '- `grep -rn ''@invar:allow dead_assign'' src/invar/` returns only
+      docstring/suggestion occurrences
+
+      - `uv run invar guard --all` clean
+
+      - `uv run pytest tests/ -x` passes'
+    depends_on:
+    - cat-e-dead-assign.fix-dead-assign-escape-hatches-5-markers
+    agent: integration-verifier
