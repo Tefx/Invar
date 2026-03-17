@@ -24812,34 +24812,31 @@ phases:
       marker classified as exempt-candidate, should-fix, or ambiguous. Proposed exempt
       patterns listed for each exempt-candidate group.
     agent: python-senior
-  - id: p0-migration.create-pyproject-toml-exempt-config-and-migrate-markers
-    name: Create pyproject.toml exempt config and migrate markers
+  - id: p0-migration.human-review-and-approve-exemptions
+    name: Human review and approve exemptions (HUMAN ACTION)
     status: pending
-    description: "Based on the inventory from the previous step:\n\n1. Add [tool.invar.exempt.&lt;rule&gt;]\
-      \ sections to pyproject.toml for each non-suppressible rule with legitimate\
-      \ uses:\n   - [tool.invar.exempt.dead_export] patterns = [...] for CLI entry\
-      \ points, MCP handlers\n   - [tool.invar.exempt.missing_contract] patterns =\
-      \ [...] for abstract properties, boolean predicates\n   - [tool.invar.exempt.missing_doctest]\
+    description: "**THIS STEP REQUIRES HUMAN INTERVENTION — agents MUST NOT execute\
+      \ this step.**\n\nDX-96 trust boundary: agents MUST NOT modify pyproject.toml\
+      \ to add exemptions. Only a human may approve and write exempt patterns.\n\n\
+      Human action required:\n1. Review the migration report produced by the inventory\
+      \ step\n2. For each exempt-candidate group, decide: approve / reject / modify\
+      \ the proposed pattern\n3. Resolve any markers classified as \"ambiguous\"\n\
+      4. Write the approved [tool.invar.exempt.<rule>] sections into pyproject.toml:\n\
+      \   - [tool.invar.exempt.dead_export] patterns = [...] for CLI entry points,\
+      \ MCP handlers\n   - [tool.invar.exempt.missing_contract] patterns = [...] for\
+      \ abstract properties, boolean predicates\n   - [tool.invar.exempt.missing_doctest]\
       \ patterns = [...] as needed\n   - [tool.invar.exempt.stub_body] patterns =\
-      \ [...] as needed\n\n2. Add exempt sections for expensive-tier rules that exceed\
-      \ default budgets:\n   - [tool.invar.exempt.shell_result] patterns = [...] for\
+      \ [...] as needed\n   - [tool.invar.exempt.shell_result] patterns = [...] for\
       \ MCP handlers\n   - [tool.invar.exempt.entry_point_too_thick] patterns = [...]\
-      \ as needed\n\n3. Remove @invar:allow inline markers for rules now covered by\
-      \ exempt patterns. Keep inline markers only for cases that genuinely need per-occurrence\
-      \ suppression and fit within default budgets.\n\n4. Verify remaining inline\
-      \ markers fit within DX-96 default budgets:\n   - Suppressible: 3 per-file,\
-      \ 10 per-project per-rule\n   - Expensive: 2 per-file, 5 per-project per-rule\n\
-      \   - Aggregate budget: 15 points\n\nUse file_glob::symbol_glob syntax where\
-      \ appropriate (e.g., mcp/server.py::create_*).\n\nFiles: pyproject.toml, all\
-      \ src/invar/**/*.py files with @invar:allow markers\n\nIMPORTANT: This migration\
-      \ happens BEFORE the gating code exists. The exempt config format must match\
-      \ the design in the DX-96 proposal exactly."
-    verification: pyproject.toml has [tool.invar.exempt.*] sections. Remaining inline
-      @invar:allow markers fit within default budgets. No non-suppressible rules remain
-      as inline markers (only in exempt config).
+      \ as needed\n5. Use file_glob::symbol_glob syntax where appropriate (e.g., mcp/server.py::create_*)\n\
+      \nThe exempt config format must match the design in the DX-96 proposal exactly.\n\
+      \nMark this step complete manually after writing the approved patterns."
+    verification: pyproject.toml contains [tool.invar.exempt.*] sections with human-approved
+      patterns. Patterns use correct file_glob or file_glob::symbol_glob syntax. TOML
+      is valid.
     depends_on:
     - p0-migration.inventory-current-escape-hatch-markers
-    agent: python-senior
+    agent: human
   - id: p0-migration.verify-guard-passes-after-migration
     name: Verify guard passes after migration
     status: pending
@@ -24865,7 +24862,7 @@ phases:
     verification: uv run invar guard --all passes. No non-suppressible inline markers
       remain. pyproject.toml is valid TOML.
     depends_on:
-    - p0-migration.create-pyproject-toml-exempt-config-and-migrate-markers
+    - p0-migration.human-review-and-approve-exemptions
     agent: integration-verifier
   - id: p0-migration.phase-0-gate
     name: Phase 0 Gate
