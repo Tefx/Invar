@@ -24961,3 +24961,6 @@ phases:
     depends_on:
     - p0-migration.human-review-and-approve-exemptions
     agent: python-executor
+- id: cat-e-dead-assign
+  name: 'Category E: dead_assign Fixes (5 markers)'
+  status: pending
