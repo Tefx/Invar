@@ -24210,6 +24210,42 @@ phases:
   status: locked
   depends_on:
   - p2-by-file
+  steps:
+  - id: p3-budget-core.implement
+    name: Implement core/escape_budget.py check_escape_budget
+    status: pending
+    description: "Create NEW file: src/invar/core/escape_budget.py\n\nSingle-responsibility\
+      \ Core module. Main function:\n\n```python\n@pre(lambda summary, config: isinstance(summary,\
+      \ EscapeHatchSummary) and isinstance(config, RuleConfig))\n@post(lambda result:\
+      \ all(isinstance(v, Violation) for v in result))\ndef check_escape_budget(summary:\
+      \ EscapeHatchSummary, config: RuleConfig) -> list[Violation]:\n```\n\nMust implement\
+      \ ALL of these checks (from proposal):\n\n1. Per-file per-rule limits:\n   -\
+      \ Suppressible: config.escape_suppressible_per_file (default 3)\n   - Expensive:\
+      \ config.escape_expensive_per_file (default 2)\n   - At 80% (config.escape_warning_threshold)\
+      \ -> WARNING\n   - At 100% -> ERROR (rule: escape_hatch_file_limit)\n\n2. Per-project\
+      \ per-rule limits:\n   - Suppressible: config.escape_suppressible_per_project\
+      \ (default 10)\n   - Expensive: config.escape_expensive_per_project (default\
+      \ 5)\n   - At 80% -> WARNING, at 100% -> ERROR (rule: escape_hatch_project_limit)\n\
+      \n3. Aggregate weighted budget:\n   - Total = sum(Suppressible x 1 + Expensive\
+      \ x 3)\n   - Limit: config.escape_budget_limit (default 15)\n   - At 80% ->\
+      \ WARNING, at 100% -> ERROR (rule: escape_hatch_budget)\n\n4. Combination penalty\
+      \ (per-function stacking):\n   - 2 escape hatches on same function: each counts\
+      \ DOUBLE toward budget\n   - 3+ escape hatches on same function: unconditional\
+      \ ERROR (rule: escape_hatch_combination)\n\n5. Non-suppressible inline detection:\n\
+      \   - Any inline marker for dead_export, stub_body, missing_contract, missing_doctest\
+      \ -> ERROR (rule: escape_hatch_non_suppressible)\n   - Error message: '{rule}\
+      \ cannot be suppressed inline. This rule requires human authorization. Ask the\
+      \ project owner to declare an exemption in pyproject.toml. Do NOT modify pyproject.toml\
+      \ yourself.'\n\n6. Config exempt filtering:\n   - Entries in config.escape_exempt_patterns\
+      \ are excluded from budget counting\n   - Exempt patterns have their own limit:\
+      \ config.escape_exempt_limit (default 20)\n\nMust include doctests covering:\
+      \ empty summary, under-limit, at-warning-threshold, over-limit, non-suppressible\
+      \ detection, combination penalty, budget calculation.\n\nUses: EscapeHatchSummary,\
+      \ RuleConfig, Violation, Severity, EscapeHatchTier, ESCAPE_TIER_MAP, ESCAPE_TIER_COST\
+      \ from models.py.\n\nThis is a Core module: NO I/O imports allowed."
+    verification: uv run invar guard --all passes. All doctests pass. check_escape_budget
+      importable from invar.core.escape_budget. All 5 violation types producible.
+    agent: python-senior
 - id: p4-guard-integration
   name: 'Phase 4: guard.py _scan_and_check integration'
   status: locked
