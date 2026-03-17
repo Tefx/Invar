@@ -67,50 +67,23 @@ The Protocol is a document that defines how agents should work. It provides sign
 └────────────────────────────────────────────────────────────────┘
 ```
 
-### The USBV Workflow (DX-32)
+### Contracts Before Code (DX-91)
 
-```
-  ┌──────────┐   ┌──────────┐   ┌──────────┐   ┌──────────┐
-  │UNDERSTAND│ ▶ │ SPECIFY  │ ▶ │  BUILD   │ ▶ │ VALIDATE │
-  └──────────┘   └──────────┘   └──────────┘   └──────────┘
-       │              │              │              │
-       ▼              ▼              ▼              ▼
-    Intent         Contract       Implement      Verify
-    Inspect        Design         Compose        Integrate
-    Constraints    Test Cases                    Reflect
-```
+> **The ONE mandatory workflow rule:** Write `@pre/@post` contracts BEFORE implementation.
 
-**Key insight:** Inspect before Contract — understand existing code before writing interfaces.
+This replaces the USBV workflow (DX-32), which has been removed per DX-91 simplification. Guard enforces this rule — uncontracted Core functions are rejected.
 
-### Visible Checkpoints (3)
+**Why contracts first:**
+- Contract defines the boundary (what the function promises)
+- Implementation fills the interior (how it delivers)
+- Doctests verify at the boundary (examples of the promise)
+- Guard checks the structure (no I/O in Core, Result in Shell)
 
-For complex tasks, show 3 checkpoints in TodoList:
-
-**[UNDERSTAND]** — User verifies intent and context
-```
-□ Task intent clearly stated
-□ Codebase context examined (invar sig, invar map)
-□ Edge cases and constraints identified
-□ Classified as Core or Shell
-```
-
-**[SPECIFY]** — User approves contracts before implementation
-```
-□ @pre AND @post decorators defined (complete contract)
-□ Docstring has Examples (>>> normal, boundary, edge)
-□ Self-test: Can this contract regenerate the function?
-□ Complex task decomposed into sub-functions
-□ Three-way consistency: Code ↔ Contract ↔ Doctests
-```
-
-**[VALIDATE]** — User confirms correctness
-```
-□ invar guard passes
-□ If violations: reflected on WHY before fixing
-□ Integration tested (if applicable)
-```
-
-**BUILD is internal work** — not shown in TodoList (no user decision needed).
+**Before implementing any Core function:**
+1. Write `@pre` with ALL parameters (including defaults)
+2. Write `@post` receiving only `result`
+3. Add doctests: normal case, zero/boundary case, edge case
+4. Run `invar guard` — fix violations before proceeding
 
 ---
 
@@ -877,7 +850,7 @@ invar init --file AGENTS.md  # Write managed block to non-default target file
 **Rule Engine:**
 - Rules YAML化 - Machine-readable with priorities
 - Rule conflict resolution
-- USBV phase precheck command
+- Phase-aware contract validation (historical: USBV precheck, superseded by DX-91 guard enforcement)
 
 **Config & Profiles:**
 - Config profiles ("strict", "standard", "relaxed" presets)
