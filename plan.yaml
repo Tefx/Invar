@@ -24293,7 +24293,7 @@ phases:
       \ blocker follow-up remediation"
   - id: dx91-usbv-cleanup.retest-root-surface-usbv-removal
     name: Re-test USBV removal across active project-root surfaces
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT TESTER (integration-verifier), re-test the USBV
       cleanup after the root-surface fix.
 
@@ -24376,6 +24376,17 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-17T20:12:16.228409+00:00'
+    done_at: '2026-03-17T20:20:07.075700+00:00'
+    evidence: "Independent retest executed with required grep command family and pasted-output\
+      \ review.\n\nFindings:\n- Root config surface scan (`.aider.conf.yml`, `.github`,\
+      \ `.claude`, README/CONTRIBUTING/etc.) returned clean for active USBV references.\n\
+      - Broader repo scan found a remaining active-surface issue in `docs/design.md`\
+      \ where USBV is still presented as current workflow guidance (not archived framing).\n\
+      \nIssue classification:\n- blocker: active design-surface USBV residue contradicting\
+      \ DX-91 contracts-first guidance.\n\nBatched remediation handling:\n- Planner\
+      \ created one fix + one retest loop for this blocker family:\n  - `dx91-usbv-cleanup.fix-active-design-surface-usbv-residue`\n\
+      \  - `dx91-usbv-cleanup.retest-active-design-surface-usbv-removal`\n- Phase\
+      \ gate rewired to depend on latest retest path.\n\nSpec link:\n- `docs/proposals/DX-91-simplification.md`\n"
   - id: dx91-usbv-cleanup.fix-active-design-surface-usbv-residue
     name: Fix active design-surface USBV residue in docs/design.md
     status: pending
