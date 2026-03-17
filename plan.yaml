@@ -25033,11 +25033,11 @@ phases:
     agent: python-executor
 - id: cat-e-dead-assign
   name: 'Category E: dead_assign Fixes (5 markers)'
-  status: pending
+  status: in_progress
   steps:
   - id: cat-e-dead-assign.fix-dead-assign-escape-hatches-5-markers
     name: Fix dead_assign escape hatches (5 markers)
-    status: pending
+    status: claimed
     description: 'Eliminate all 5 `@invar:allow dead_assign` markers in source code.
 
 
@@ -25102,6 +25102,8 @@ phases:
 
       - `uv run pytest tests/ -x` passes'
     agent: python-executor
+    claimed_by: python-executor
+    claimed_at: '2026-03-17T19:32:29.206540+00:00'
   - id: cat-e-dead-assign.verify-dead-assign-cleanup
     name: Verify dead_assign cleanup
     status: pending
