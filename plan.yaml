@@ -25979,3 +25979,8 @@ phases:
     depends_on:
     - cat-d-file-size.verify-file-size-extraction
     agent: gate-reviewer
+- id: final-verify
+  name: 'Final Verification: Escape Hatch Census'
+  status: locked
+  depends_on:
+  - cat-d-file-size
