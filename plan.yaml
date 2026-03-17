@@ -24128,3 +24128,8 @@ phases:
   status: locked
   depends_on:
   - p3-budget-core
+- id: p7-non-suppressible
+  name: 'Phase 7: Non-suppressible enforcement'
+  status: locked
+  depends_on:
+  - p3-budget-core
