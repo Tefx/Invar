@@ -24661,3 +24661,20 @@ phases:
 
       **Output**: <exit 0>'
     agent: integration-verifier
+  - id: final-gate.gate
+    name: Final Gate Review
+    status: pending
+    description: "Final gate review for DX-96: Escape Hatch Strict Gating.\n\nreview_depth:\
+      \ THOROUGH\nreview_depth_rationale: |\n  - Security-critical feature (prevents\
+      \ agent abuse of escape hatches)\n  - 7 implementation phases touching 6+ files\n\
+      \  - New Core module + integration + output formatting + config parsing + enforcement\
+      \ change\n\nReview all 7 phase gate results. Verify:\n1. All phases complete\
+      \ with evidence\n2. No regressions on Invar's own codebase\n3. All 7 acceptance\
+      \ criteria met\n4. Trust boundary preserved (non-suppressible error messages\
+      \ do not leak pyproject.toml syntax)\n5. Core zone compliance for escape_budget.py\n\
+      6. Output formats match proposal spec exactly"
+    verification: DX-96 complete. All acceptance criteria met. Guard passes on own
+      codebase. Ready for release.
+    depends_on:
+    - final-gate.acceptance
+    agent: gate-reviewer
