@@ -25248,7 +25248,7 @@ phases:
     agent: python-executor
 - id: cat-e-dead-assign
   name: 'Category E: dead_assign Fixes (5 markers)'
-  status: in_progress
+  status: done
   steps:
   - id: cat-e-dead-assign.fix-dead-assign-escape-hatches-5-markers
     name: Fix dead_assign escape hatches (5 markers)
@@ -25420,7 +25420,7 @@ phases:
       verifier'
   - id: cat-e-dead-assign.gate-category-e-dead-assign
     name: 'Gate: Category E dead_assign'
-    status: claimed
+    status: done
     description: 'Gate review: Verify Category E (dead_assign) phase completion.
 
 
@@ -25450,9 +25450,40 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-17T20:12:12.326758+00:00'
+    done_at: '2026-03-17T20:17:37.908910+00:00'
+    evidence: 'Gate review completed (QUICK depth) by independent gate-reviewer.
+
+
+      Reviewed acceptance criteria:
+
+      1) All 5 dead_assign markers eliminated -> verified via grep on targeted files
+      (0 active markers).
+
+      2) Guard passes -> verifier reported clean guard result for relevant scope.
+
+      3) Tests pass -> targeted dead_assign/cross-repo harness tests passed.
+
+      4) Behavioral regression -> reviewer confirmed marker-removal-only pattern and
+      loop-carried-state behavior preserved.
+
+
+      Reviewer verdict:
+
+      - PASS with high confidence for Category E scope.
+
+      - No blocker/should-fix findings within this phase gate.
+
+
+      Spec link:
+
+      - `cat-e-dead-assign.fix-dead-assign-escape-hatches-5-markers`
+
+      - `cat-e-dead-assign.verify-dead-assign-cleanup`
+
+      '
 - id: cat-b-dead-export
   name: 'Category B: dead_export Fixes (20 markers)'
-  status: locked
+  status: pending
   depends_on:
   - cat-e-dead-assign
   steps:
