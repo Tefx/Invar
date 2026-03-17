@@ -24722,3 +24722,31 @@ phases:
     verification: Inventory produced with per-rule and per-file counts. Each marker
       classified as exempt-eligible or removable.
     agent: python-senior
+  - id: p0-migration.create-pyproject-toml-exempt-config-and-migrate-markers
+    name: Create pyproject.toml exempt config and migrate markers
+    status: pending
+    description: "Based on the inventory from the previous step:\n\n1. Add [tool.invar.exempt.&lt;rule&gt;]\
+      \ sections to pyproject.toml for each non-suppressible rule with legitimate\
+      \ uses:\n   - [tool.invar.exempt.dead_export] patterns = [...] for CLI entry\
+      \ points, MCP handlers\n   - [tool.invar.exempt.missing_contract] patterns =\
+      \ [...] for abstract properties, boolean predicates\n   - [tool.invar.exempt.missing_doctest]\
+      \ patterns = [...] as needed\n   - [tool.invar.exempt.stub_body] patterns =\
+      \ [...] as needed\n\n2. Add exempt sections for expensive-tier rules that exceed\
+      \ default budgets:\n   - [tool.invar.exempt.shell_result] patterns = [...] for\
+      \ MCP handlers\n   - [tool.invar.exempt.entry_point_too_thick] patterns = [...]\
+      \ as needed\n\n3. Remove @invar:allow inline markers for rules now covered by\
+      \ exempt patterns. Keep inline markers only for cases that genuinely need per-occurrence\
+      \ suppression and fit within default budgets.\n\n4. Verify remaining inline\
+      \ markers fit within DX-96 default budgets:\n   - Suppressible: 3 per-file,\
+      \ 10 per-project per-rule\n   - Expensive: 2 per-file, 5 per-project per-rule\n\
+      \   - Aggregate budget: 15 points\n\nUse file_glob::symbol_glob syntax where\
+      \ appropriate (e.g., mcp/server.py::create_*).\n\nFiles: pyproject.toml, all\
+      \ src/invar/**/*.py files with @invar:allow markers\n\nIMPORTANT: This migration\
+      \ happens BEFORE the gating code exists. The exempt config format must match\
+      \ the design in the DX-96 proposal exactly."
+    verification: pyproject.toml has [tool.invar.exempt.*] sections. Remaining inline
+      @invar:allow markers fit within default budgets. No non-suppressible rules remain
+      as inline markers (only in exempt config).
+    depends_on:
+    - p0-migration.inventory-current-escape-hatch-markers
+    agent: python-senior
