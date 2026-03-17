@@ -24467,7 +24467,7 @@ phases:
       \ (\"contracts before code\" rule).\n\nSpec link:\n- `docs/proposals/DX-91-simplification.md`\n"
   - id: dx91-usbv-cleanup.retest-active-design-surface-usbv-removal
     name: Re-test active design-surface USBV removal in docs/design.md
-    status: pending
+    status: claimed
     description: 'As an INDEPENDENT TESTER (integration-verifier), re-test the design-surface
       USBV cleanup after the archival-framing fix.
 
@@ -24518,6 +24518,8 @@ phases:
     depends_on:
     - dx91-usbv-cleanup.fix-active-design-surface-usbv-residue
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-17T20:38:28.224532+00:00'
 - id: p1-models-tier
   name: 'Phase 1: RuleConfig fields + EscapeHatchTier + ESCAPE_TIER_MAP'
   status: locked
