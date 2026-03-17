@@ -2,7 +2,7 @@
 
 [meta]
 version = "5.0"
-workflow = "USBV"
+workflow = "contracts-first"
 
 [ownership]
 fully_managed = [

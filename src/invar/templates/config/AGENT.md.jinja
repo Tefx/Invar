@@ -10,7 +10,7 @@
 {% endif -%}
 | **Core** | `@pre/@post` + doctests, NO I/O imports |
 | **Shell** | Returns `Result[T, E]` from `returns` library |
-| **Flow** | USBV: Understand → Specify → Build → Validate |
+| **Flow** | Contracts-first: write `@pre/@post` before implementation |
 
 ### Contract Rules (CRITICAL)
 
@@ -35,7 +35,7 @@ def calc(x: int, y: int = 0): ...
 <!--invar:managed version="{{ version }}"-->
 # Project Development Guide
 
-> **Protocol:** Follow [INVAR.md](./INVAR.md) — includes Check-In, USBV workflow, and Task Completion requirements.
+> **Protocol:** Follow [INVAR.md](./INVAR.md) — includes contracts-first rules, Check-In, and Task Completion requirements.
 
 ## Check-In
 
@@ -101,57 +101,20 @@ src/{project}/
 
 > **Before writing code:** Check Task Router in `.invar/context.md`
 
-## USBV Workflow
+## Contracts-First Practice
 
-For complex tasks (3+ functions), follow these phases:
+For implementation tasks:
 
-### 1. UNDERSTAND
-
-- **Intent:** What exactly needs to be done?
-{% if syntax == "mcp" -%}
-- **Inspect:** Use `invar_sig` to see existing contracts
-{% else -%}
-- **Inspect:** Use `invar sig` to see existing contracts
-{% endif -%}
-- **Context:** Read relevant code, understand patterns
-- **Constraints:** What must NOT change?
-
-### 2. SPECIFY
-
-- **Contracts FIRST:** Write `@pre`/`@post` before implementation
-- **Doctests:** Add examples for expected behavior
-- **Design:** Decompose complex tasks into sub-functions
-
-```python
-# SPECIFY before BUILD:
-@pre(lambda x: x > 0)
-@post(lambda result: result >= 0)
-def calculate(x: int) -> int:
-    """
-    >>> calculate(10)
-    100
-    """
-    ...  # Implementation comes in BUILD
-```
-
-### 3. BUILD
-
-- Follow the contracts written in SPECIFY
-{% if syntax == "mcp" -%}
-- Run `invar_guard(changed=true)` frequently
-{% else -%}
-- Run `invar guard --changed` frequently
-{% endif -%}
-- Commit after each logical unit
-
-### 4. VALIDATE
+1. State intent and constraints.
+2. Define `@pre/@post` contracts and doctests before code.
+3. Implement only after contracts are present.
+4. Verify before completion.
 
 {% if syntax == "mcp" -%}
-- Run `invar_guard()` (full verification)
+Use `invar_guard(changed=true)` during development and `invar_guard()` before final output.
 {% else -%}
-- Run `invar guard` (full verification)
+Use `invar guard --changed` during development and `invar guard` before final output.
 {% endif -%}
-- Integration works (if applicable)
 
 ---
 

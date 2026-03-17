@@ -6,14 +6,14 @@
 | **Verify** | `invar_guard` — NOT pytest, NOT crosshair |
 | **Core** | `@pre/@post` + doctests, NO I/O imports |
 | **Shell** | Returns `Result[T, E]` from `returns` library |
-| **Flow** | USBV: Understand → Specify → Build → Validate |
+| **Flow** | Contracts-first: write `@pre/@post` before implementation |
 
 <!--/invar:critical-->
 
 <!--invar:managed version="5.0"-->
 # Project Development Guide
 
-> **Protocol:** Follow [INVAR.md](./INVAR.md) — includes Check-In, USBV workflow, and Task Completion requirements.
+> **Protocol:** Follow [INVAR.md](./INVAR.md) — includes contracts-first rules, Check-In, and Task Completion requirements.
 
 ## Check-In
 
@@ -92,7 +92,7 @@ For complex tasks (3+ functions), show 3 checkpoints in TodoList:
 
 **BUILD is internal work** — not shown in TodoList.
 
-**Show contracts before code.** Use `INVAR.md` USBV guidance as the canonical workflow reference.
+**Show contracts before code.** Use `INVAR.md` as the canonical contracts-first reference.
 
 ---
 

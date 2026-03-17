@@ -12,8 +12,8 @@
 - **Core** (`**/core/**`): @pre/@post + doctests, NO I/O imports
 - **Shell** (`**/shell/**`): Result[T, E] return type
 
-### USBV Workflow
-1. Understand → 2. Specify (contracts first) → 3. Build → 4. Validate
+### Contracts-First Rule
+- Write `@pre/@post` contracts before implementing Core code
 
 ### Verification
 - `invar_guard` = static + doctests + CrossHair + Hypothesis
@@ -32,7 +32,7 @@
 **Quick rule check:**
 - Am I in Core or Shell?
 - Do I have @pre/@post contracts?
-- Am I following USBV workflow?
+- Did I define contracts before implementation?
 - Did I run guard before claiming "done"?
 
 ---

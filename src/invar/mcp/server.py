@@ -51,7 +51,7 @@ Your first message MUST display:
 **Do NOT run guard at Check-In.**
 
 Run guard only when:
-- Entering VALIDATE phase of USBV workflow
+- Before task completion
 - User explicitly requests verification
 - After making code changes
 

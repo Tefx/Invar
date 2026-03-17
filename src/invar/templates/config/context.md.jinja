@@ -16,8 +16,8 @@
 - **Core** (`**/core/**`): @pre/@post + doctests, NO I/O imports
 - **Shell** (`**/shell/**`): Result[T, E] return type
 
-### USBV Workflow
-1. Understand → 2. Specify (contracts first) → 3. Build → 4. Validate
+### Contracts-First Rule
+- Write `@pre/@post` contracts before implementing Core code
 
 ### Verification
 {% if syntax == "mcp" -%}
@@ -37,7 +37,7 @@
 | Write code in `shell/` | `INVAR.md#core-vs-shell` |
 | Add `@pre`/`@post` contracts | `INVAR.md#contract-syntax-python` |
 | Use functional patterns | `INVAR.md#core-example-python` |
-| Implement a feature | `INVAR.md#usbv-workflow` |
+| Implement a feature | `INVAR.md#before-writing-code` |
 
 **Rule:** Match found above? Read the file BEFORE writing code.
 
@@ -54,7 +54,7 @@
 **Quick rule check:**
 - Am I in Core or Shell?
 - Do I have @pre/@post contracts?
-- Am I following USBV workflow?
+- Did I define contracts before implementation?
 - Did I run guard before claiming "done"?
 
 ---
@@ -83,7 +83,7 @@
 **When to consult INVAR.md:**
 - Unsure about Core/Shell separation rules
 - Need to understand Six Laws principles
-- Checking USBV workflow details
+- Confirming contracts-first requirements
 
 ## Technical Debt
 
