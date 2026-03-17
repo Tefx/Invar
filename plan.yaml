@@ -25942,3 +25942,40 @@ phases:
     depends_on:
     - cat-d-file-size.extract-and-split-large-core-files-5-markers
     agent: integration-verifier
+  - id: cat-d-file-size.gate-category-d-file-size
+    name: 'Gate: Category D file_size'
+    status: pending
+    description: 'Gate review: Verify file_size phase completion.
+
+
+      review_depth: THOROUGH
+
+      review_depth_rationale: Heaviest refactoring phase — splits 5 core modules into
+      sub-packages. High risk of breaking imports, contracts, and doctests.
+
+
+      Review criteria:
+
+      1. 4-5 file_size markers eliminated
+
+      2. All public APIs preserved (import paths)
+
+      3. All @pre/@post contracts intact
+
+      4. All doctests pass
+
+      5. No circular imports
+
+      6. Guard passes, tests pass
+
+      7. If hypothesis_strategies.py retained, justification is sound'
+    verification: '- All evidence reviewed
+
+      - Markers eliminated as expected
+
+      - Guard clean
+
+      - Core module structure sound'
+    depends_on:
+    - cat-d-file-size.verify-file-size-extraction
+    agent: gate-reviewer
