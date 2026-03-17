@@ -25065,3 +25065,33 @@ phases:
     depends_on:
     - cat-e-dead-assign.fix-dead-assign-escape-hatches-5-markers
     agent: integration-verifier
+  - id: cat-e-dead-assign.gate-category-e-dead-assign
+    name: 'Gate: Category E dead_assign'
+    status: pending
+    description: 'Gate review: Verify Category E (dead_assign) phase completion.
+
+
+      review_depth: QUICK
+
+      review_depth_rationale: Small scope, 5 mechanical loop restructurings.
+
+
+      Review criteria:
+
+      1. All 5 dead_assign markers eliminated
+
+      2. Guard passes
+
+      3. Tests pass
+
+      4. No behavioral regression'
+    verification: '- All step evidence reviewed
+
+      - 5/5 markers eliminated
+
+      - Guard clean
+
+      - Ready for next phase'
+    depends_on:
+    - cat-e-dead-assign.verify-dead-assign-cleanup
+    agent: gate-reviewer
