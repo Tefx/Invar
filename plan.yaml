@@ -23968,7 +23968,7 @@ phases:
       marked for removal in follow-up step.'
   - id: dx91-usbv-cleanup.remove-usbv-from-active-surfaces
     name: remove-usbv-from-active-surfaces
-    status: claimed
+    status: done
     description: 'Remove or replace ALL active USBV references per the inventory.
 
 
@@ -24065,6 +24065,35 @@ phases:
     agent: python-senior
     claimed_by: python-senior
     claimed_at: '2026-03-17T19:22:18.397382+00:00'
+    done_at: '2026-03-17T19:31:51.054622+00:00'
+    evidence: 'Artifact:
+
+      - PR: commit 61a5a98 (squash merge of worktree commits b9b43f2, f733dd9)
+
+
+      Verification:
+
+      - Run: `rg -n "USBV|usbv" src/invar/` -> no output (zero hits).
+
+      - Run: `uv run invar guard --all` -> passed (status passed, errors 0, warnings
+      64).
+
+      - Run: `tmpdir=$(mktemp -d) && uv run invar init "$tmpdir" && rg -n "USBV|usbv"
+      "$tmpdir"` -> init succeeded, no USBV branding.
+
+      - Run: `uv run python -c "import invar; import invar.mcp.server; import invar.core.inspect"`
+      -> succeeded.
+
+
+      Spec link:
+
+      - `docs/proposals/DX-91-simplification.md:65`
+
+      - `docs/proposals/DX-91-simplification.md:334`
+
+      - `docs/proposals/DX-91-simplification.md:374`
+
+      '
   - id: dx91-usbv-cleanup.verify-usbv-removal
     name: verify-usbv-removal
     status: pending
