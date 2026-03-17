@@ -24185,6 +24185,17 @@ phases:
     verification: uv run invar guard --all passes. by_file property returns correct
       grouping.
     agent: python-executor
+  - id: p2-by-file.verify
+    name: Verify Phase 2 by_file
+    status: pending
+    description: 'Independent verification: test EscapeHatchSummary.by_file with multiple
+      files and rules. Verify empty case, single file, multiple files, multiple rules
+      per file. Run uv run invar guard --all.'
+    verification: uv run invar guard --all passes. by_file grouping correct for all
+      cases.
+    depends_on:
+    - p2-by-file.implement
+    agent: integration-verifier
 - id: p3-budget-core
   name: 'Phase 3: core/escape_budget.py check_escape_budget'
   status: locked
