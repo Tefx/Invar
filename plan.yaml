@@ -25728,7 +25728,7 @@ phases:
       '
   - id: cat-b-dead-export.human-review-dead-export-migration-report
     name: 'Human review: dead_export migration report'
-    status: pending
+    status: claimed
     description: 'HUMAN REVIEW CHECKPOINT: Review the migration report from the previous
       step.
 
@@ -25757,6 +25757,8 @@ phases:
     depends_on:
     - cat-b-dead-export.audit-and-fix-dead-export-markers-20-markers
     agent: gate-reviewer
+    claimed_by: gate-reviewer
+    claimed_at: '2026-03-17T20:38:23.279901+00:00'
   - id: cat-b-dead-export.verify-dead-export-cleanup
     name: Verify dead_export cleanup
     status: pending
