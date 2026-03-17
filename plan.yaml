@@ -25557,3 +25557,8 @@ phases:
     depends_on:
     - cat-a-handlers.verify-handlers-py-shell-result-cleanup
     agent: gate-reviewer
+- id: cat-a-server
+  name: 'Category A: shell_result in server.py (14 markers)'
+  status: locked
+  depends_on:
+  - cat-a-handlers
