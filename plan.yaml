@@ -24832,7 +24832,7 @@ phases:
   steps:
   - id: p0-migration.inventory-current-escape-hatch-markers
     name: Inventory current escape hatch markers
-    status: claimed
+    status: done
     description: 'Inventory all @invar:allow markers in Invar''s own codebase (READ-ONLY
       analysis, no code changes).
 
@@ -24875,6 +24875,42 @@ phases:
     agent: python-senior
     claimed_by: python-senior
     claimed_at: '2026-03-17T19:22:42.062957+00:00'
+    done_at: '2026-03-17T19:32:10.767412+00:00'
+    evidence: 'Artifact:
+
+      - PR: commit fe6491d (squash merge of worktree commit 49c1900)
+
+      - Report: `artifacts/p0-migration-escape-hatch-inventory.md`
+
+
+      Verification:
+
+      - Run: `grep -rn ''@invar:allow'' src/invar/ --include=''*.py''` -> 145 raw
+      matches (includes examples/comments/docstrings).
+
+      - Run: tokenized python comment scan over `src/invar/**/*.py` -> 96 real `#
+      @invar:allow <rule>: <reason>` markers extracted and classified.
+
+      - Run: report sanity checks -> sections for per-rule/per-file counts present,
+      all 96 markers classified, exempt patterns provided.
+
+
+      Spec link:
+
+      - Step: `p0-migration.inventory-current-escape-hatch-markers`
+
+      - Related proposal: `docs/proposals/completed/DX-66-escape-hatch-visibility.md`
+
+
+      Summary from report:
+
+      - Rule counts: shell_result 43, dead_export 15, entry_point_too_thick 10, missing_contract
+      9, dead_assign 7, file_size 5, missing_doctest 4, shell_too_complex 2, shell_pure_logic
+      1.
+
+      - Classification counts: exempt candidate 72, ambiguous 9, should fix 15.
+
+      '
   - id: p0-migration.human-review-and-approve-exemptions
     name: Human review and approve exemptions (HUMAN ACTION)
     status: pending
