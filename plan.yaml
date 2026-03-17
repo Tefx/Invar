@@ -24966,3 +24966,71 @@ phases:
 - id: cat-e-dead-assign
   name: 'Category E: dead_assign Fixes (5 markers)'
   status: pending
+  steps:
+  - id: cat-e-dead-assign.fix-dead-assign-escape-hatches-5-markers
+    name: Fix dead_assign escape hatches (5 markers)
+    status: pending
+    description: 'Eliminate all 5 `@invar:allow dead_assign` markers in source code.
+
+
+      ## Markers to fix:
+
+
+      ### 1. src/invar/mcp/handlers.py:562
+
+      `i += 1  # @invar:allow dead_assign: loop index consumed by next while iteration`
+
+
+      ### 2. src/invar/mcp/handlers.py:584
+
+      `i += 1  # @invar:allow dead_assign: loop index consumed by next while iteration`
+
+
+      ### 3. src/invar/core/doc_parser.py:377
+
+      `current_list = section.children  # @invar:allow dead_assign: traversed in next
+      for-iteration`
+
+
+      ### 4. src/invar/core/purity.py:290
+
+      `in_doctest = False  # @invar:allow dead_assign: loop-carried state read next
+      iteration`
+
+
+      ### 5. src/invar/core/hypothesis_strategies.py:468
+
+      `i = j  # @invar:allow dead_assign: loop index consumed by next while condition`
+
+
+      ## Strategy:
+
+      These are all loop-carried state patterns. The dead_assign rule flags them because
+      the assignment appears dead at end-of-block but is consumed by the next iteration.
+      Options:
+
+      - Restructure loops (e.g., use for-range, itertools, or move increment to while
+      condition)
+
+      - If restructuring is impossible without harming readability, check whether
+      the `fp-dead-assign` phase (DX-92) improved the rule to handle these patterns
+      — if so, simply removing the marker may suffice
+
+
+      grep hint: `grep -rn ''@invar:allow dead_assign'' src/invar/`
+
+
+      ## Completion Criteria:
+
+      - ALL 5 markers removed
+
+      - `uv run invar guard --all` passes clean
+
+      - No behavioral regression in affected functions'
+    verification: '- `grep -rn ''@invar:allow dead_assign'' src/invar/` returns 0
+      matches (excluding docstrings/suggestions)
+
+      - `uv run invar guard --all` passes
+
+      - `uv run pytest tests/ -x` passes'
+    agent: python-executor
