@@ -24096,7 +24096,7 @@ phases:
       '
   - id: dx91-usbv-cleanup.verify-usbv-removal
     name: verify-usbv-removal
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT TESTER (integration-verifier), validate that USBV
       has been fully removed from active surfaces.
 
@@ -24131,6 +24131,19 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-17T19:32:33.382979+00:00'
+    done_at: '2026-03-17T20:03:06.055565+00:00'
+    evidence: "Independent verification detected blocker findings and triggered batched\
+      \ remediation planning.\n\nVerification results:\n- `grep -rn 'USBV|usbv' src/invar/`\
+      \ -> zero hits in active `src/invar/` surfaces.\n- Active blocker found: `.aider.conf.yml:18`\
+      \ still contains `Workflow (USBV)` language (active project-root surface).\n\
+      - Archive check: `docs/reference/workflow/usbv.md` retains archive banner.\n\
+      - Full guard run in verifier context timed out (not treated as the blocker root\
+      \ cause).\n\nIssue classification:\n- blocker: missed active root-surface USBV\
+      \ residue outside prior inventory scope.\n\nBatched remediation handling:\n\
+      - Planner created one fix step and one retest step for the blocker family:\n\
+      \  - `dx91-usbv-cleanup.fix-root-surface-usbv-residue`\n  - `dx91-usbv-cleanup.retest-root-surface-usbv-removal`\n\
+      - Gate wiring updated to flow through fix -> retest before phase gate completion.\n\
+      \nSpec link:\n- `docs/proposals/DX-91-simplification.md`\n"
   - id: dx91-usbv-cleanup.dx91-usbv-cleanup-gate
     name: dx91-usbv-cleanup.gate
     status: pending
