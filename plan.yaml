@@ -23869,13 +23869,13 @@ phases:
       \ verification.\n- Gate recommendation: REOPEN.\n- discovered_issues: none"
 - id: dx91-usbv-cleanup
   name: DX-91 USBV Residue Cleanup
-  status: pending
+  status: in_progress
   depends_on:
   - dx91-release-readiness
   steps:
   - id: dx91-usbv-cleanup.inventory-usbv-references
     name: inventory-usbv-references
-    status: pending
+    status: claimed
     description: 'Inventory every active USBV reference in the codebase to establish
       the full removal scope.
 
@@ -23936,6 +23936,8 @@ phases:
 
       - ACTIVE list matches or exceeds the known locations above'
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-17T19:16:31.286143+00:00'
   - id: dx91-usbv-cleanup.remove-usbv-from-active-surfaces
     name: remove-usbv-from-active-surfaces
     status: pending
