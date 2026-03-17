@@ -25818,7 +25818,7 @@ phases:
       - `cat-b-dead-export.audit-and-fix-dead-export-markers-20-markers`'
   - id: cat-b-dead-export.verify-dead-export-cleanup
     name: Verify dead_export cleanup
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT TESTER, verify dead_export escape hatch elimination.
 
 
@@ -25847,6 +25847,18 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-17T20:42:54.323643+00:00'
+    done_at: '2026-03-17T20:59:22.777044+00:00'
+    evidence: "Independent verification completed for dead_export cleanup.\n\nVerification\
+      \ results:\n- `grep -rn '@invar:allow dead_export' src/invar/` -> no active\
+      \ shell/source markers; remaining hits are documentation/suggestion text in\
+      \ `src/invar/core/dead_export.py`.\n- `uv run invar guard --all` -> passed for\
+      \ dead_export violation criteria (no dead_export blockers in edited surfaces).\n\
+      - Test checks:\n  - `uv run pytest tests/core/test_dead_export.py` passed.\n\
+      \  - Broader `uv run pytest tests/ -x` stopped at pre-existing unrelated failure\
+      \ (`test_dx55_regression.py`) not attributable to dead_export cleanup.\n\nB1/B2\
+      \ checks:\n- Marker cleanup path validated using explicit export/public intent\
+      \ and removal of escape-hatch comments.\n- No unauthorized pyproject exemption\
+      \ changes involved.\n\nSpec link:\n- `cat-b-dead-export.audit-and-fix-dead-export-markers-20-markers`"
   - id: cat-b-dead-export.gate-category-b-dead-export
     name: 'Gate: Category B dead_export'
     status: pending
