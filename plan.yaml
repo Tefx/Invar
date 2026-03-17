@@ -25984,3 +25984,82 @@ phases:
   status: locked
   depends_on:
   - cat-d-file-size
+  steps:
+  - id: final-verify.full-escape-hatch-census-and-guard-run
+    name: Full escape hatch census and guard run
+    status: pending
+    description: 'Final comprehensive verification of the escape hatch cleanup project.
+
+
+      ## Required actions:
+
+
+      ### 1. Full guard run
+
+      ```
+
+      uv run invar guard --all
+
+      ```
+
+      Must pass clean.
+
+
+      ### 2. Escape hatch census
+
+      ```
+
+      grep -rn ''@invar:allow'' src/invar/ | grep -v ''^\s*#.*suggestion='' | grep
+      -v ''hint='' | grep -v ''>>>''
+
+      ```
+
+      Count and categorize ALL remaining `@invar:allow` markers in source code.
+
+
+      ### 3. Expected remaining markers (KEPT by design):
+
+      - `missing_contract` on `__init__` in registry.py (1) — KEPT
+
+      - `shell_pure_logic` in handlers.py (1) — KEPT
+
+      - `shell_too_complex` in handlers.py (1) — KEPT (standalone marker, not @invar:allow)
+
+      - `shell_too_complex` in guard_runs.py (1) — KEPT
+
+      - `shell_complexity` in commands/init.py (1) — KEPT
+
+      - Possibly `file_size` in hypothesis_strategies.py (0-1) — justified if extraction
+      increases coupling
+
+
+      ### 4. Produce final report:
+
+      - Total markers before: ~83 real @invar:allow markers
+
+      - Total markers eliminated: <count>
+
+      - Total markers remaining: <count> (expected: 5-6 kept)
+
+      - Breakdown by category
+
+      - Any human-approved deferrals from Category B
+
+
+      ### 5. Full test suite
+
+      ```
+
+      uv run pytest tests/ -x
+
+      ```
+
+      Must pass.'
+    verification: '- `uv run invar guard --all` passes clean
+
+      - Escape hatch census matches expected remaining count (5-6)
+
+      - `uv run pytest tests/ -x` passes
+
+      - Final report produced with before/after counts'
+    agent: integration-verifier
