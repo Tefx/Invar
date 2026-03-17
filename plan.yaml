@@ -24542,6 +24542,25 @@ phases:
       stub_body, missing_contract, missing_doctest) are NOT suppressed by inline @invar:allow
       markers. Suppressible and expensive rules still work as before.
     agent: python-executor
+  - id: p7-non-suppressible.verify
+    name: Verify non-suppressible enforcement
+    status: pending
+    description: "Independent verification:\n1. Run uv run invar guard --all -- must\
+      \ pass on Invar's own codebase\n2. Verify that has_allow_marker returns False\
+      \ for non-suppressible rules even when marker is present\n3. Verify that has_allow_marker\
+      \ still returns True for suppressible/expensive rules when marker is present\n\
+      4. Verify that the mcp-tela scenario (40 dead_export markers) would produce\
+      \ errors, not be silently suppressed\n5. Check that existing @invar:allow markers\
+      \ in Invar's codebase (all are for suppressible/expensive rules like entry_point_too_thick,\
+      \ shell_complexity, dead_export in guard_output.py) still work correctly\n \
+      \  - NOTE: Invar has one dead_export marker in guard_output.py -- this will\
+      \ now NOT be suppressed. Either remove it or add a pyproject.toml exempt. Verify\
+      \ this is handled."
+    verification: uv run invar guard --all passes. Non-suppressible enforcement correct.
+      Existing codebase handled.
+    depends_on:
+    - p7-non-suppressible.implement
+    agent: integration-verifier
 - id: final-gate
   name: 'Final Gate: Full Integration Verification'
   status: locked
