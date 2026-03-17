@@ -25398,3 +25398,96 @@ phases:
   status: locked
   depends_on:
   - cat-a-guard-runs
+  steps:
+  - id: cat-a-handlers.fix-shell-result-in-handlers-py-21-markers
+    name: Fix shell_result in handlers.py (21 markers)
+    status: pending
+    description: 'Eliminate all 21 `@invar:allow shell_result` markers in `src/invar/mcp/handlers.py`.
+
+
+      ## Markers:
+
+
+      ### MCP handlers (do I/O — refactor to Result[T,E]):
+
+      1. Line 70: MCP handler for guard tool
+
+      2. Line 127: MCP handler for guard status tool
+
+      3. Line 140: MCP handler for guard wait tool
+
+      4. Line 164: MCP handler for sig tool
+
+      5. Line 182: MCP handler for map tool
+
+      6. Line 201: MCP handler for refs tool
+
+      7. Line 231: MCP handler for doc_toc tool
+
+      8. Line 279: MCP handler for doc_read tool
+
+      9. Line 308: MCP handler for doc_read_many tool
+
+      10. Line 340: MCP handler for doc_find tool
+
+      11. Line 384: MCP handler for doc_replace tool
+
+      12. Line 418: MCP handler for doc_insert tool
+
+      13. Line 458: MCP handler for doc_delete tool
+
+      14. Line 487: MCP subprocess wrapper utility
+
+
+      ### Pure helpers (no I/O — candidate for Core):
+
+      15. Line 29: Pure validation helper, returns tuple not Result
+
+      16. Line 261: Pure data transformation, no I/O
+
+      17. Line 545: Pure transformation, returns str not Result
+
+      18. Line 588: Pure argument parsing helper for MCP
+
+      19. Line 599: Planner returns bool for handler branching
+
+      20. Line 607: Planner computes scalar estimate only
+
+      21. Line 633: Planner helper returns file count scalar
+
+
+      ## Strategy:
+
+      Follow the pattern established in cat-a-guard-runs phase:
+
+      - MCP handlers (lines 70-487): These call subprocess/file I/O. Refactor to return
+      `Result[T, E]`. Update server.py callers to handle Result.
+
+      - Pure helpers (lines 29, 261, 545, 588, 599, 607, 633): Verify no I/O. If pure,
+      move to Core module. If they use I/O, wrap with Result.
+
+
+      **IMPORTANT**: handlers.py has 21 markers — work methodically. Do NOT skip any.
+
+      **IMPORTANT**: server.py calls these handlers — update all call sites in server.py.
+
+
+      grep hint: `grep -n ''@invar:allow shell_result'' src/invar/mcp/handlers.py`
+
+
+      ## Completion Criteria:
+
+      - ALL 21 markers removed from handlers.py
+
+      - All callers in server.py updated
+
+      - `uv run invar guard --all` passes
+
+      - `uv run pytest tests/ -x` passes'
+    verification: '- `grep -n ''@invar:allow shell_result'' src/invar/mcp/handlers.py`
+      returns 0 matches
+
+      - `uv run invar guard --all` passes
+
+      - `uv run pytest tests/ -x` passes'
+    agent: python-senior
