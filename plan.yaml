@@ -24123,3 +24123,8 @@ phases:
   status: locked
   depends_on:
   - p4-guard-integration
+- id: p6-config
+  name: 'Phase 6: Config parsing pyproject.toml exempt patterns'
+  status: locked
+  depends_on:
+  - p3-budget-core
