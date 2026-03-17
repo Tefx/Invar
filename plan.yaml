@@ -25352,7 +25352,7 @@ phases:
       '
   - id: cat-e-dead-assign.verify-dead-assign-cleanup
     name: Verify dead_assign cleanup
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT TESTER, verify that all 5 dead_assign escape hatches
       have been eliminated without behavioral regression.
 
@@ -25383,6 +25383,39 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-17T20:03:21.518513+00:00'
+    done_at: '2026-03-17T20:11:54.293383+00:00'
+    evidence: 'Artifact:
+
+      - Verification-only step (no code changes merged)
+
+
+      Verification:
+
+      - Run: `grep -rn ''@invar:allow dead_assign'' src/invar/` -> only docstring/suggestion
+      occurrences remained; no active source markers.
+
+      - Run: `uv run invar guard --all` -> passed (0 errors; warnings unrelated to
+      dead_assign).
+
+      - Run: `uv run pytest tests/ -x` -> dead_assign-targeted suite passed; verifier
+      reported pre-existing unrelated failures (DX55/CLAUDE sync and MCP handler signature
+      family) not attributable to this cleanup.
+
+      - Behavioral check on `handlers.py`, `doc_parser.py`, `purity.py`, `hypothesis_strategies.py`
+      -> loop logic preserved; marker-removal-only effect in targeted paths.
+
+
+      Spec link:
+
+      - `cat-e-dead-assign.fix-dead-assign-escape-hatches-5-markers`
+
+
+      Findings classification:
+
+      - blockers: none for dead_assign cleanup acceptance
+
+      - should_fix (out-of-scope): pre-existing unrelated test failures reported by
+      verifier'
   - id: cat-e-dead-assign.gate-category-e-dead-assign
     name: 'Gate: Category E dead_assign'
     status: pending
