@@ -25188,3 +25188,32 @@ phases:
     depends_on:
     - cat-b-dead-export.audit-and-fix-dead-export-markers-20-markers
     agent: gate-reviewer
+  - id: cat-b-dead-export.verify-dead-export-cleanup
+    name: Verify dead_export cleanup
+    status: pending
+    description: 'As an INDEPENDENT TESTER, verify dead_export escape hatch elimination.
+
+
+      Independence Level: L1
+
+
+      Test for:
+
+      - All B1 markers (CLI/Typer commands) eliminated — entry point detection works
+
+      - All B2 markers either eliminated or documented in migration report
+
+      - No functions accidentally removed that have real callers
+
+      - Guard passes clean
+
+      - All tests pass'
+    verification: '- `grep -rn ''@invar:allow dead_export'' src/invar/` count matches
+      expected (0 or only human-approved deferrals)
+
+      - `uv run invar guard --all` passes
+
+      - `uv run pytest tests/ -x` passes'
+    depends_on:
+    - cat-b-dead-export.human-review-dead-export-migration-report
+    agent: integration-verifier
