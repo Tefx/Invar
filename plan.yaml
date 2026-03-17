@@ -25741,3 +25741,34 @@ phases:
 
       - `uv run pytest tests/ -x` passes'
     agent: python-senior
+  - id: cat-c-entry-point.verify-entry-point-too-thick-cleanup
+    name: Verify entry_point_too_thick cleanup
+    status: pending
+    description: 'As an INDEPENDENT TESTER, verify entry_point_too_thick elimination.
+
+
+      Independence Level: L1
+
+
+      Test for:
+
+      - All 10 markers removed
+
+      - Entry points are thin (small function body, delegates to helper)
+
+      - Shell helpers return Result[T,E]
+
+      - CLI commands still work (doc toc, doc read, guard, refs, rules)
+
+      - Guard passes, tests pass'
+    verification: '- `grep -rn ''@invar:allow entry_point_too_thick'' src/invar/`
+      returns only rule code
+
+      - `uv run invar guard --all` passes
+
+      - `uv run pytest tests/ -x` passes
+
+      - CLI smoke test: `uv run invar guard --help`, `uv run invar doc --help`'
+    depends_on:
+    - cat-c-entry-point.refactor-thick-entry-points-10-markers
+    agent: integration-verifier
