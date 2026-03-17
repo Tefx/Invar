@@ -24293,7 +24293,7 @@ phases:
       \ blocker follow-up remediation"
   - id: dx91-usbv-cleanup.retest-root-surface-usbv-removal
     name: Re-test USBV removal across active project-root surfaces
-    status: pending
+    status: claimed
     description: 'As an INDEPENDENT TESTER (integration-verifier), re-test the USBV
       cleanup after the root-surface fix.
 
@@ -24374,6 +24374,8 @@ phases:
     depends_on:
     - dx91-usbv-cleanup.fix-root-surface-usbv-residue
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-17T20:12:16.228409+00:00'
 - id: p1-models-tier
   name: 'Phase 1: RuleConfig fields + EscapeHatchTier + ESCAPE_TIER_MAP'
   status: locked
