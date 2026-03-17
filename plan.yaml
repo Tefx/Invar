@@ -24246,6 +24246,24 @@ phases:
     verification: uv run invar guard --all passes. All doctests pass. check_escape_budget
       importable from invar.core.escape_budget. All 5 violation types producible.
     agent: python-senior
+  - id: p3-budget-core.verify
+    name: Verify check_escape_budget
+    status: pending
+    description: "Independent verification of core/escape_budget.py:\n\n1. Construct\
+      \ EscapeHatchSummary with known escape hatches and verify:\n   - Per-file limit\
+      \ exceeded -> escape_hatch_file_limit ERROR\n   - Per-project limit exceeded\
+      \ -> escape_hatch_project_limit ERROR\n   - Aggregate budget exceeded -> escape_hatch_budget\
+      \ ERROR\n   - 3+ hatches on same function line -> escape_hatch_combination ERROR\n\
+      \   - Non-suppressible inline marker -> escape_hatch_non_suppressible ERROR\n\
+      \   - 80% threshold -> WARNING violations\n\n2. Verify exempt patterns exclude\
+      \ from counting\n3. Verify combination penalty doubles cost at 2 hatches\n4.\
+      \ Run: uv run invar guard --all\n5. Verify module has no I/O imports (Core zone\
+      \ compliance)"
+    verification: All 5 violation types tested. Budget math correct. Guard passes.
+      Core zone compliance verified.
+    depends_on:
+    - p3-budget-core.implement
+    agent: integration-verifier
 - id: p4-guard-integration
   name: 'Phase 4: guard.py _scan_and_check integration'
   status: locked
