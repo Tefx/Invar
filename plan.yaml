@@ -24389,7 +24389,7 @@ phases:
       \ gate rewired to depend on latest retest path.\n\nSpec link:\n- `docs/proposals/DX-91-simplification.md`\n"
   - id: dx91-usbv-cleanup.fix-active-design-surface-usbv-residue
     name: Fix active design-surface USBV residue in docs/design.md
-    status: pending
+    status: claimed
     description: 'Fix the remaining active USBV residue family in `docs/design.md`,
       not just one line.
 
@@ -24455,6 +24455,8 @@ phases:
     depends_on:
     - dx91-usbv-cleanup.retest-root-surface-usbv-removal
     agent: doc-reviewer
+    claimed_by: doc-reviewer
+    claimed_at: '2026-03-17T20:20:24.856210+00:00'
   - id: dx91-usbv-cleanup.retest-active-design-surface-usbv-removal
     name: Re-test active design-surface USBV removal in docs/design.md
     status: pending
