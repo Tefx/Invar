@@ -16,6 +16,9 @@ context: 'DX-96: Escape Hatch Strict Gating. Implements tiered escape hatch limi
   gating, combination penalties, and non-suppressible enforcement. Proposal: docs/proposals/DX-96-escape-hatch-strict-gating.md.
   All code is Python. Core modules require @pre/@post contracts + doctests. Shell
   modules return Result[T, E].'
+project_guidance: 'DX-96: Eliminate all remaining escape hatches in Invar codebase
+  except: missing_contract on __init__ (1, kept), shell_pure_logic (1, kept), shell_too_complex/shell_complexity
+  (3, kept). Target: reduce ~83 real @invar:allow markers to 5-6 kept markers.'
 phases:
 - id: dx-80
   name: DX-80
