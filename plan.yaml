@@ -25095,3 +25095,8 @@ phases:
     depends_on:
     - cat-e-dead-assign.verify-dead-assign-cleanup
     agent: gate-reviewer
+- id: cat-b-dead-export
+  name: 'Category B: dead_export Fixes (20 markers)'
+  status: locked
+  depends_on:
+  - cat-e-dead-assign
