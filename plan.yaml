@@ -24561,6 +24561,16 @@ phases:
     depends_on:
     - p7-non-suppressible.implement
     agent: integration-verifier
+  - id: p7-non-suppressible.gate
+    name: Phase 7 Gate
+    status: pending
+    description: 'Gate review: Verify Phase 7 completion. Non-suppressible rules cannot
+      be silently suppressed. Existing Invar codebase passes (any dead_export inline
+      markers handled via exempt or removal). Guard passes.'
+    verification: Phase 7 complete. Non-suppressible enforcement correct.
+    depends_on:
+    - p7-non-suppressible.verify
+    agent: gate-reviewer
 - id: final-gate
   name: 'Final Gate: Full Integration Verification'
   status: locked
