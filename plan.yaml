@@ -25522,3 +25522,38 @@ phases:
     depends_on:
     - cat-a-handlers.fix-shell-result-in-handlers-py-21-markers
     agent: integration-verifier
+  - id: cat-a-handlers.gate-category-a-handlers-py
+    name: 'Gate: Category A handlers.py'
+    status: pending
+    description: 'Gate review: Verify handlers.py shell_result phase completion.
+
+
+      review_depth: THOROUGH
+
+      review_depth_rationale: Largest batch (21 markers), touches MCP handler layer
+      + server.py callers, high integration risk.
+
+
+      Review criteria:
+
+      1. All 21 shell_result markers eliminated
+
+      2. Core/Shell boundary respected
+
+      3. Result[T,E] used correctly
+
+      4. Server.py callers all updated
+
+      5. No broken MCP tool paths
+
+      6. Guard passes, tests pass'
+    verification: '- All evidence reviewed
+
+      - 21/21 markers eliminated
+
+      - Guard clean
+
+      - MCP tool invocations verified'
+    depends_on:
+    - cat-a-handlers.verify-handlers-py-shell-result-cleanup
+    agent: gate-reviewer
