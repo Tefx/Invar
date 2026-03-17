@@ -25491,3 +25491,34 @@ phases:
 
       - `uv run pytest tests/ -x` passes'
     agent: python-senior
+  - id: cat-a-handlers.verify-handlers-py-shell-result-cleanup
+    name: Verify handlers.py shell_result cleanup
+    status: pending
+    description: 'As an INDEPENDENT TESTER, verify handlers.py shell_result elimination.
+
+
+      Independence Level: L1
+
+
+      Test for:
+
+      - All 21 markers removed
+
+      - Pure helpers moved to Core have no I/O
+
+      - Shell functions return Result[T,E]
+
+      - Server.py callers updated correctly
+
+      - MCP tool invocations still work end-to-end
+
+      - Guard passes, tests pass'
+    verification: '- `grep -n ''@invar:allow shell_result'' src/invar/mcp/handlers.py`
+      returns 0
+
+      - `uv run invar guard --all` passes
+
+      - `uv run pytest tests/ -x` passes'
+    depends_on:
+    - cat-a-handlers.fix-shell-result-in-handlers-py-21-markers
+    agent: integration-verifier
