@@ -24862,7 +24862,7 @@ phases:
     verification: uv run invar guard --all passes. No non-suppressible inline markers
       remain. pyproject.toml is valid TOML.
     depends_on:
-    - p0-migration.human-review-and-approve-exemptions
+    - p0-migration.remove-migrated-inline-markers
     agent: integration-verifier
   - id: p0-migration.phase-0-gate
     name: Phase 0 Gate
