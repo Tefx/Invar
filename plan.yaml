@@ -24149,6 +24149,16 @@ phases:
     depends_on:
     - p1-models-tier.implement
     agent: integration-verifier
+  - id: p1-models-tier.gate
+    name: Phase 1 Gate
+    status: pending
+    description: 'Gate review: Verify Phase 1 completion. All new data model types
+      are pure (no I/O), correctly typed, and guard passes.'
+    verification: All Phase 1 steps complete. No regressions. New types follow existing
+      patterns.
+    depends_on:
+    - p1-models-tier.verify
+    agent: gate-reviewer
 - id: p2-by-file
   name: 'Phase 2: EscapeHatchSummary.by_file property'
   status: locked
