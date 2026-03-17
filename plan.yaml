@@ -24587,10 +24587,25 @@ phases:
       for clear error messaging. It just must not SUPPRESS the violation.
 
 
-      File: src/invar/core/entry_points.py (has_allow_marker function, ~line 392)'
+      SEVERITY_OVERRIDES IMMUNITY (AC #9):
+
+      escape_hatch_non_suppressible violations MUST be immune to severity_overrides
+      configuration. This prevents an agent from suggesting severity_overrides changes
+      to bypass the non-suppressible gate. Implementation: wherever severity_overrides
+      are applied to violations (likely in guard.py or the violation emission pipeline),
+      add a check that skips the override for escape_hatch_non_suppressible rule violations.
+      Other gating violations (escape_hatch_file_limit, escape_hatch_project_limit,
+      escape_hatch_budget, escape_hatch_combination) CAN be overridden by the project
+      owner.
+
+
+      File: src/invar/core/entry_points.py (has_allow_marker function, ~line 392)
+      + wherever severity_overrides are applied'
     verification: uv run invar guard --all passes. Non-suppressible rules (dead_export,
       stub_body, missing_contract, missing_doctest) are NOT suppressed by inline @invar:allow
-      markers. Suppressible and expensive rules still work as before.
+      markers. Suppressible and expensive rules still work as before. escape_hatch_non_suppressible
+      violations are immune to severity_overrides (adding severity_overrides for this
+      rule in pyproject.toml has no effect).
     agent: python-executor
   - id: p7-non-suppressible.verify
     name: Verify non-suppressible enforcement
