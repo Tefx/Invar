@@ -24396,6 +24396,66 @@ phases:
   status: locked
   depends_on:
   - p3-budget-core
+  steps:
+  - id: p6-config.implement
+    name: Implement config parsing for escape gating fields
+    status: pending
+    description: 'Extend config parsing to read new escape_* fields from pyproject.toml.
+
+
+      File: src/invar/core/utils.py (parse_guard_config function) -- verify this is
+      where TOML fields are mapped to RuleConfig. If the mapping is automatic via
+      Pydantic (TOML keys -> RuleConfig fields), then the new fields added in Phase
+      1 may already work. In that case, only the exempt patterns need special handling.
+
+
+      The new pyproject.toml fields to support:
+
+      ```toml
+
+      [tool.invar.guard]
+
+      escape_suppressible_per_file = 3
+
+      escape_expensive_per_file = 2
+
+      escape_suppressible_per_project = 10
+
+      escape_expensive_per_project = 5
+
+      escape_budget_limit = 15
+
+      escape_warning_threshold = 0.8
+
+      escape_exempt_limit = 20
+
+
+      [tool.invar.exempt.dead_export]
+
+      patterns = ["cli/commands/*.py", "mcp/server.py::create_*"]
+
+
+      [tool.invar.exempt.missing_contract]
+
+      patterns = ["core/patterns/detector.py::*.description"]
+
+      ```
+
+
+      The exempt patterns need to be parsed from [tool.invar.exempt.<rule>] sections
+      and mapped to RuleConfig.escape_exempt_patterns dict.
+
+
+      Check src/invar/core/utils.py extract_guard_section and parse_guard_config to
+      understand the current parsing flow. The exempt section is under [tool.invar.exempt],
+      NOT under [tool.invar.guard], so it needs special extraction.
+
+
+      Files: src/invar/core/utils.py (or src/invar/shell/config.py depending on where
+      TOML parsing lives)'
+    verification: uv run invar guard --all passes. New escape_* fields read from pyproject.toml
+      correctly. Exempt patterns parsed from [tool.invar.exempt.*] sections.
+    agent: python-executor
 - id: p7-non-suppressible
   name: 'Phase 7: Non-suppressible enforcement'
   status: locked
