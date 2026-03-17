@@ -24264,6 +24264,17 @@ phases:
     depends_on:
     - p3-budget-core.implement
     agent: integration-verifier
+  - id: p3-budget-core.gate
+    name: Phase 3 Gate
+    status: pending
+    description: 'Gate review: Verify Phase 3 completion. check_escape_budget has
+      @pre/@post contracts and comprehensive doctests. All 5 violation types (file_limit,
+      project_limit, budget, combination, non_suppressible) are producible. Core zone
+      compliance (no I/O). Guard passes.'
+    verification: Phase 3 complete. Core module contracted, tested, and zone-compliant.
+    depends_on:
+    - p3-budget-core.verify
+    agent: gate-reviewer
 - id: p4-guard-integration
   name: 'Phase 4: guard.py _scan_and_check integration'
   status: locked
