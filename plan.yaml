@@ -3,8 +3,8 @@
 # This file is owned by vectl. Direct edits bypass CAS write
 # protection, lock recalculation, and schema validation.
 #
-# Use: uvx vectl <command>  OR  vectl_* MCP tools
-# Docs: uvx vectl guide
+# Use: vectl_* MCP tools (preferred)  OR  vectl <command> (CLI fallback)
+# Docs: vectl guide  OR  MCP: vectl_guide
 # =============================================================
 version: 1
 project: invar
@@ -23871,3 +23871,8 @@ phases:
       \nFiles changed\n- none (verification-only)\n\nGaps/Notes\n- Scope remained\
       \ exact to retest step.\n- Initial stale-state condition was repaired before\
       \ verification.\n- Gate recommendation: REOPEN.\n- discovered_issues: none"
+- id: dx91-usbv-cleanup
+  name: DX-91 USBV Residue Cleanup
+  status: pending
+  depends_on:
+  - dx91-release-readiness
