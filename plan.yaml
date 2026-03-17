@@ -24380,6 +24380,17 @@ phases:
     depends_on:
     - p5-output.implement
     agent: integration-verifier
+  - id: p5-output.gate
+    name: Phase 5 Gate
+    status: pending
+    description: 'Gate review: Verify Phase 5 completion. JSON and Rich output match
+      proposal Output Design section. Guard passes on own codebase. Non-suppressible
+      error messages do NOT leak pyproject.toml exempt syntax.'
+    verification: Phase 5 complete. Output formats correct. Trust boundary preserved
+      in error messages.
+    depends_on:
+    - p5-output.verify
+    agent: gate-reviewer
 - id: p6-config
   name: 'Phase 6: Config parsing pyproject.toml exempt patterns'
   status: locked
