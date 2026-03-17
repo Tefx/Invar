@@ -25365,3 +25365,31 @@ phases:
     depends_on:
     - cat-a-guard-runs.fix-shell-result-in-guard-runs-py-8-markers
     agent: integration-verifier
+  - id: cat-a-guard-runs.gate-category-a-guard-runs-py
+    name: 'Gate: Category A guard_runs.py'
+    status: pending
+    description: 'Gate review: Verify guard_runs.py shell_result phase completion.
+
+
+      review_depth: STANDARD
+
+      review_depth_rationale: Touches MCP infrastructure, function signatures change,
+      callers must be updated.
+
+
+      Review criteria:
+
+      1. All 8 shell_result markers eliminated
+
+      2. Core/Shell boundary respected
+
+      3. Result[T,E] used correctly for Shell functions
+
+      4. No I/O in Core functions
+
+      5. Guard passes, tests pass'
+    verification: '- All evidence reviewed\n- 8/8 markers eliminated\n- Guard clean\n-
+      Pattern established for handlers.py and server.py phases'
+    depends_on:
+    - cat-a-guard-runs.verify-guard-runs-py-shell-result-cleanup
+    agent: gate-reviewer
