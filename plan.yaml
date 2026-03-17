@@ -24102,7 +24102,9 @@ phases:
     agent: gate-reviewer
 - id: p1-models-tier
   name: 'Phase 1: RuleConfig fields + EscapeHatchTier + ESCAPE_TIER_MAP'
-  status: pending
+  status: locked
+  depends_on:
+  - p0-migration
   steps:
   - id: p1-models-tier.implement
     name: Implement EscapeHatchTier enum, ESCAPE_TIER_MAP, ESCAPE_TIER_COST, and RuleConfig
