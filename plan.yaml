@@ -24456,6 +24456,26 @@ phases:
     verification: uv run invar guard --all passes. New escape_* fields read from pyproject.toml
       correctly. Exempt patterns parsed from [tool.invar.exempt.*] sections.
     agent: python-executor
+  - id: p6-config.verify
+    name: Verify config parsing
+    status: pending
+    description: 'Independent verification:
+
+      1. Run uv run invar guard --all -- must pass
+
+      2. Verify default RuleConfig values are correct when no pyproject.toml escape
+      fields
+
+      3. Verify custom escape_* values are read from pyproject.toml when present
+
+      4. Verify exempt patterns are parsed from [tool.invar.exempt.<rule>] sections
+
+      5. Verify invalid values (negative, >1.0 threshold) are rejected by Pydantic
+      validation'
+    verification: uv run invar guard --all passes. Config fields parsed correctly.
+    depends_on:
+    - p6-config.implement
+    agent: integration-verifier
 - id: p7-non-suppressible
   name: 'Phase 7: Non-suppressible enforcement'
   status: locked
