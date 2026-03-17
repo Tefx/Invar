@@ -24096,7 +24096,7 @@ phases:
       '
   - id: dx91-usbv-cleanup.verify-usbv-removal
     name: verify-usbv-removal
-    status: pending
+    status: claimed
     description: 'As an INDEPENDENT TESTER (integration-verifier), validate that USBV
       has been fully removed from active surfaces.
 
@@ -24129,6 +24129,8 @@ phases:
     depends_on:
     - dx91-usbv-cleanup.remove-usbv-from-active-surfaces
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-17T19:32:33.382979+00:00'
   - id: dx91-usbv-cleanup.dx91-usbv-cleanup-gate
     name: dx91-usbv-cleanup.gate
     status: pending
