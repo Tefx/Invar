@@ -25336,3 +25336,32 @@ phases:
 
       - `uv run pytest tests/ -x` passes'
     agent: python-senior
+  - id: cat-a-guard-runs.verify-guard-runs-py-shell-result-cleanup
+    name: Verify guard_runs.py shell_result cleanup
+    status: pending
+    description: 'As an INDEPENDENT TESTER, verify guard_runs.py shell_result elimination.
+
+
+      Independence Level: L1
+
+
+      Test for:
+
+      - All 8 markers removed
+
+      - Functions moved to Core have no I/O imports
+
+      - Functions kept in Shell return Result[T,E]
+
+      - All callers updated correctly
+
+      - Guard passes, tests pass'
+    verification: '- `grep -n ''@invar:allow shell_result'' src/invar/mcp/guard_runs.py`
+      returns 0
+
+      - `uv run invar guard --all` passes
+
+      - `uv run pytest tests/ -x` passes'
+    depends_on:
+    - cat-a-guard-runs.fix-shell-result-in-guard-runs-py-8-markers
+    agent: integration-verifier
