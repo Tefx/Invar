@@ -25810,3 +25810,99 @@ phases:
   status: locked
   depends_on:
   - cat-c-entry-point
+  steps:
+  - id: cat-d-file-size.extract-and-split-large-core-files-5-markers
+    name: Extract and split large Core files (5 markers)
+    status: pending
+    description: 'Eliminate all 5 `@invar:allow file_size` markers by splitting large
+      Core files into sub-modules.
+
+
+      ## Markers:
+
+
+      ### 1. src/invar/core/dead_assign.py (line 2)
+
+      `AST walker stays explicit to keep rule behavior auditable`
+
+      Strategy: Extract helper functions into a sub-module (e.g., `core/dead_assign/`
+      package). Keep the main rule function in the original module path. Re-export
+      from `__init__.py` to preserve import paths.
+
+
+      ### 2. src/invar/core/doc_parser.py (line 7)
+
+      `DX-77 Phase A adds Unicode fuzzy matching, extraction planned`
+
+      Strategy: Extract Unicode fuzzy matching and/or section manipulation helpers
+      into sub-module.
+
+
+      ### 3. src/invar/core/hypothesis_strategies.py (line 7)
+
+      `Strategy gen inherently complex, extraction increases coupling`
+
+      Strategy: This one claims extraction increases coupling. Investigate whether
+      there are natural seams. If truly monolithic, may need to accept the marker
+      or find creative splits.
+
+
+      ### 4. src/invar/core/models.py (line 1)
+
+      `LX-10 added layer types and functions, extraction planned`
+
+      Strategy: Split into sub-modules by domain (e.g., `core/models/base.py`, `core/models/layers.py`,
+      `core/models/escape_hatch.py`). Re-export all public names from `__init__.py`.
+
+
+      ### 5. src/invar/core/rules.py (line 1)
+
+      `LX-10 added doctests, consider extraction later`
+
+      Strategy: Extract individual rule implementations into separate modules under
+      `core/rules/` package. Keep the rule registry/dispatch in the main module.
+
+
+      ## CRITICAL constraints:
+
+      - ALL public imports must continue to work (re-export from __init__.py or original
+      path)
+
+      - ALL `@pre`/`@post` contracts must be preserved on Core functions
+
+      - ALL doctests must be preserved and pass
+
+      - Guard must pass on the new module structure
+
+
+      ## For hypothesis_strategies.py:
+
+      If extraction genuinely increases coupling, document WHY and propose the least
+      invasive alternative (e.g., extract only the obviously separable parts). If
+      no extraction is possible, this is the ONE marker that may remain — document
+      the decision.
+
+
+      grep hint: `grep -rn ''@invar:allow file_size'' src/invar/core/`
+
+
+      ## Completion Criteria:
+
+      - 4-5 of 5 markers removed (hypothesis_strategies.py may be justified)
+
+      - All public APIs preserved
+
+      - All contracts and doctests preserved
+
+      - `uv run invar guard --all` passes
+
+      - `uv run pytest tests/ -x` passes'
+    verification: '- `grep -rn ''@invar:allow file_size'' src/invar/core/` returns
+      0-1 matches (hypothesis_strategies.py may be justified)
+
+      - `uv run invar guard --all` passes
+
+      - `uv run pytest tests/ -x` passes
+
+      - All existing imports still work'
+    agent: python-senior
