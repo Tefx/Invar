@@ -25,6 +25,12 @@ from invar.core.template_parser import (
 )
 from invar.shell.template_engine import generate_from_manifest
 
+__all__ = [
+    "ProjectState",
+    "detect_project_state",
+    "merge_claude_md",
+]
+
 # =============================================================================
 # DX-55: Project State Detection
 # =============================================================================
@@ -60,7 +66,6 @@ class ProjectState:
 
 
 # @shell_complexity: State detection requires multiple file existence checks
-# @invar:allow dead_export: Public helper API exported for external integrations
 def detect_project_state(path: Path) -> ProjectState:
     """Detect Invar initialization state.
 
@@ -112,7 +117,6 @@ def detect_project_state(path: Path) -> ProjectState:
 
 
 # @shell_complexity: Smart merge with multiple state handling paths
-# @invar:allow dead_export: Public helper API exported for external integrations
 def merge_claude_md(path: Path, state: ClaudeMdState) -> Result[str, str]:
     """Smart merge CLAUDE.md based on detected state.
 

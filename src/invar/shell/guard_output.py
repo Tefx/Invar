@@ -19,6 +19,14 @@ from invar.core.utils import get_combined_status
 
 console = Console()
 
+__all__ = [
+    "VerificationStats",
+    "format_verification_stats",
+    "output_agent",
+    "output_rich",
+    "show_file_context",
+]
+
 
 @dataclass
 class VerificationStats:
@@ -50,7 +58,6 @@ class VerificationStats:
 
 # @shell_orchestration: Rich markup formatting tightly coupled to shell output
 # @shell_complexity: Conditional formatting for each stat category
-# @invar:allow dead_export: Public helper API exported for external integrations
 def format_verification_stats(stats: VerificationStats) -> str:
     """
     Format verification statistics for display.

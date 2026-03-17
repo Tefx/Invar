@@ -8,6 +8,12 @@ Shell module: Extracted for file size compliance.
 
 from __future__ import annotations
 
+__all__ = [
+    "extract_function_from_counterexample",
+    "get_crosshair_accept_reasons",
+    "has_verifiable_contracts",
+]
+
 
 # @shell_orchestration: Contract analysis helper for CrossHair prove module
 # @shell_complexity: AST traversal for contract detection
@@ -54,7 +60,6 @@ def has_verifiable_contracts(source: str) -> bool:
 
 # @shell_orchestration: Acceptance criteria analysis for CrossHair prove
 # @shell_complexity: AST traversal for decorator extraction
-# @invar:allow dead_export: Public helper API exported for external integrations
 def get_crosshair_accept_reasons(source: str) -> dict[str, str]:
     """
     Extract @crosshair_accept reasons from source.
@@ -99,7 +104,6 @@ def get_crosshair_accept_reasons(source: str) -> dict[str, str]:
 
 
 # @shell_orchestration: Counterexample parsing helper for CrossHair output
-# @invar:allow dead_export: Public helper API exported for external integrations
 def extract_function_from_counterexample(ce: str) -> str | None:
     """
     Extract function name from CrossHair counterexample.

@@ -13,6 +13,15 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any
 
+__all__ = [
+    "McpExecConfig",
+    "McpMethod",
+    "detect_available_methods",
+    "generate_mcp_json",
+    "get_method_by_name",
+    "get_recommended_method",
+]
+
 
 class McpMethod(Enum):
     """Available MCP execution methods."""
@@ -117,7 +126,6 @@ def get_recommended_method() -> McpExecConfig:
 
 
 # @shell_orchestration: MCP method lookup helper
-# @invar:allow dead_export: Public helper API exported for external integrations
 def get_method_by_name(name: str) -> McpExecConfig | None:
     """
     Get a specific MCP method by name.

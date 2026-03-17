@@ -82,7 +82,6 @@ class VerificationResult:
 
 
 # @shell_orchestration: Verifier discovery helper
-# @invar:allow dead_export: Public helper API used by external integrations
 def get_available_verifiers() -> list[str]:
     """
     Detect installed verification tools.
@@ -224,7 +223,6 @@ def run_doctests_on_files(
 
 
 # @shell_complexity: Property test orchestration with subprocess
-# @invar:allow dead_export: Backward-compatible CLI helper invoked by external callers
 def run_test(
     target: str,
     json_output: bool = False,

@@ -198,7 +198,7 @@ RULE_META: dict[str, RuleMeta] = {
             "Reflection-only callers with no static registration site",
             "External consumers outside src/",
         ),
-        hint="Add a caller in src/ or mark with: # @invar:allow dead_export: <reason>",
+        hint="Add a caller in src/ or mark with: # @invar:allow <rule>: <reason>",
     ),
     "dead_param": RuleMeta(
         name="dead_param",
