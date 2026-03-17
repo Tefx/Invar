@@ -24146,7 +24146,7 @@ phases:
       \nSpec link:\n- `docs/proposals/DX-91-simplification.md`\n"
   - id: dx91-usbv-cleanup.dx91-usbv-cleanup-gate
     name: dx91-usbv-cleanup.gate
-    status: claimed
+    status: done
     description: 'Gate review: Verify USBV cleanup phase completion.
 
 
@@ -24178,6 +24178,38 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-17T20:42:59.108522+00:00'
+    done_at: '2026-03-17T21:01:03.591958+00:00'
+    evidence: 'Gate review executed; blocker family detected and remediation loop
+      created.
+
+
+      Gate findings:
+
+      - blocker: `docs/diagrams.md` contains active USBV workflow framing (non-archived)
+      in design diagram surfaces.
+
+      - should_fix: `docs/agents.md` archival framing consistency could be improved.
+
+
+      Batched remediation handling (created before completing gate step):
+
+      - `dx91-usbv-cleanup.fix-active-usbv-archive-framing`
+
+      - `dx91-usbv-cleanup.retest-active-usbv-archive-framing`
+
+      - Gate rewired to depend on latest retest step.
+
+
+      Classification:
+
+      - gate outcome: issues found; phase not yet closed pending fix/retest loop.
+
+
+      Spec link:
+
+      - `docs/proposals/DX-91-simplification.md`
+
+      '
   - id: dx91-usbv-cleanup.fix-root-surface-usbv-residue
     name: Fix ALL remaining USBV residue across active project-root surfaces
     status: done
