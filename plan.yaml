@@ -25805,3 +25805,8 @@ phases:
     depends_on:
     - cat-c-entry-point.verify-entry-point-too-thick-cleanup
     agent: gate-reviewer
+- id: cat-d-file-size
+  name: 'Category D: file_size Fixes (5 markers)'
+  status: locked
+  depends_on:
+  - cat-c-entry-point
