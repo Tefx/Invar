@@ -24295,6 +24295,26 @@ phases:
       guard execution. Invar's own codebase does not trigger any new violations (existing
       escape hatches are within default limits).
     agent: python-executor
+  - id: p4-guard-integration.verify
+    name: Verify guard integration
+    status: pending
+    description: 'Independent verification:
+
+      1. Run uv run invar guard --all on Invar''s own codebase -- must PASS (existing
+      escape hatches within limits)
+
+      2. Verify that check_escape_budget is actually called by checking the import
+      exists in guard.py
+
+      3. Verify the integration point is after escape hatch collection and after DX-33
+      duplicate check
+
+      4. No new violations introduced on Invar''s own codebase (acceptance criterion
+      7)'
+    verification: uv run invar guard --all passes. Integration point correct. No regressions.
+    depends_on:
+    - p4-guard-integration.implement
+    agent: integration-verifier
 - id: p5-output
   name: 'Phase 5: formatter.py + guard_output.py gating output'
   status: locked
