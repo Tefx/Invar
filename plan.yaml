@@ -24178,7 +24178,7 @@ phases:
     agent: gate-reviewer
   - id: dx91-usbv-cleanup.fix-root-surface-usbv-residue
     name: Fix ALL remaining USBV residue across active project-root surfaces
-    status: pending
+    status: claimed
     description: 'Fix ALL current blockers in the USBV residue family, not just the
       first hit.
 
@@ -24274,6 +24274,8 @@ phases:
     depends_on:
     - dx91-usbv-cleanup.verify-usbv-removal
     agent: python-senior
+    claimed_by: python-senior
+    claimed_at: '2026-03-17T20:03:18.151999+00:00'
   - id: dx91-usbv-cleanup.retest-root-surface-usbv-removal
     name: Re-test USBV removal across active project-root surfaces
     status: pending
