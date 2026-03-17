@@ -24118,3 +24118,8 @@ phases:
   status: locked
   depends_on:
   - p3-budget-core
+- id: p5-output
+  name: 'Phase 5: formatter.py + guard_output.py gating output'
+  status: locked
+  depends_on:
+  - p4-guard-integration
