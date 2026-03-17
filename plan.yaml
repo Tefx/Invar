@@ -24100,3 +24100,6 @@ phases:
     depends_on:
     - dx91-usbv-cleanup.verify-usbv-removal
     agent: gate-reviewer
+- id: p1-models-tier
+  name: 'Phase 1: RuleConfig fields + EscapeHatchTier + ESCAPE_TIER_MAP'
+  status: pending
