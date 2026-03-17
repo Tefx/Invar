@@ -24113,3 +24113,8 @@ phases:
   status: locked
   depends_on:
   - p2-by-file
+- id: p4-guard-integration
+  name: 'Phase 4: guard.py _scan_and_check integration'
+  status: locked
+  depends_on:
+  - p3-budget-core
