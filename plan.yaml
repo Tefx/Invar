@@ -25615,13 +25615,13 @@ phases:
       '
 - id: cat-b-dead-export
   name: 'Category B: dead_export Fixes (20 markers)'
-  status: pending
+  status: in_progress
   depends_on:
   - cat-e-dead-assign
   steps:
   - id: cat-b-dead-export.audit-and-fix-dead-export-markers-20-markers
     name: Audit and fix dead_export markers (20 markers)
-    status: pending
+    status: claimed
     description: "Eliminate all 20 `@invar:allow dead_export` markers in source code.\n\
       \n## Markers by file and sub-strategy:\n\n### B1: CLI/Typer commands (should\
       \ be detected as entry points — 8 markers)\n\nThese functions are registered\
@@ -25675,6 +25675,8 @@ phases:
 
       - `uv run pytest tests/ -x` passes'
     agent: python-senior
+    claimed_by: python-senior
+    claimed_at: '2026-03-17T20:20:20.891412+00:00'
   - id: cat-b-dead-export.human-review-dead-export-migration-report
     name: 'Human review: dead_export migration report'
     status: pending
