@@ -457,7 +457,7 @@ def _extract_pre_lambdas_from_source(source: str) -> list[str]:
             if content.startswith("lambda"):
                 results.append(content)
 
-        i = j  # @invar:allow dead_assign: loop index consumed by next while condition
+        i = j
 
     return results
 

@@ -287,7 +287,7 @@ def count_doctest_lines(node: ast.FunctionDef | ast.AsyncFunctionDef) -> int:
             count += 1  # Expected output line
             # Note: Empty line ends doctest, handled by else branch below
         else:
-            in_doctest = False  # @invar:allow dead_assign: loop-carried state read next iteration
+            in_doctest = False
     return count
 
 
