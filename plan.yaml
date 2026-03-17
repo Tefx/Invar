@@ -25639,3 +25639,32 @@ phases:
 
       - `uv run pytest tests/ -x` passes'
     agent: python-senior
+  - id: cat-a-server.verify-server-py-shell-result-cleanup
+    name: Verify server.py shell_result cleanup
+    status: pending
+    description: 'As an INDEPENDENT TESTER, verify server.py shell_result elimination.
+
+
+      Independence Level: L1
+
+
+      Test for:
+
+      - All 14 markers removed
+
+      - All functions return Result[T,E]
+
+      - MCP server creation works
+
+      - Tool registration works end-to-end
+
+      - Guard passes, tests pass'
+    verification: '- `grep -n ''@invar:allow shell_result'' src/invar/mcp/server.py`
+      returns 0
+
+      - `uv run invar guard --all` passes
+
+      - `uv run pytest tests/ -x` passes'
+    depends_on:
+    - cat-a-server.fix-shell-result-in-server-py-14-markers
+    agent: integration-verifier
