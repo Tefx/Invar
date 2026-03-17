@@ -24647,8 +24647,8 @@ phases:
   - id: final-gate.acceptance
     name: Final acceptance verification against all 7 criteria
     status: pending
-    description: 'End-to-end acceptance verification against ALL 7 acceptance criteria
-      from proposal:
+    description: 'End-to-end acceptance verification against ALL 10 acceptance criteria
+      from revised proposal:
 
 
       1. `invar guard` fails (exit 1) when any per-file, per-project, or aggregate
@@ -24659,21 +24659,43 @@ phases:
 
       3. 3+ escape hatches on same function -> unconditional ERROR
 
-      4. 80% threshold produces WARNING with remaining count
+      4. 2 escape hatches on same function count double toward their respective rule
+      budgets
 
-      5. pyproject.toml exempt patterns bypass inline budget
+      5. 80% threshold produces WARNING (at >= ceil(limit * threshold))
 
-      6. mcp-tela scenario (40 dead_export) fails at the first file
+      6. pyproject.toml exempt patterns bypass inline budget
 
-      7. Invar''s own codebase passes with current escape hatch usage
+      7. mcp-tela scenario (40 dead_export) fails at the first marker
+
+      8. Invar''s own codebase passes with current escape hatch usage (after Phase
+      0 migration)
+
+      9. escape_hatch_non_suppressible is immune to severity_overrides
+
+      10. JSON output distinguishes file-level from project-level violations (file_violations
+      vs project_violations in gating output)
 
 
       Test each criterion with constructed test scenarios or by running against the
       real codebase. Provide explicit evidence for each criterion.
 
 
-      Run: uv run invar guard --all (must pass for criterion 7)'
-    verification: All 7 acceptance criteria verified with explicit evidence. uv run
+      For AC #4: Create a test file with 2 @invar:allow markers on the same function.
+      Verify both count double (e.g., 2 dead_param on same function = 4 budget points
+      instead of 2).
+
+
+      For AC #9: Add a severity_overrides entry for escape_hatch_non_suppressible
+      in test config. Verify it has no effect -- the violation remains ERROR.
+
+
+      For AC #10: Run guard with JSON output and verify the gating section has separate
+      file_violations and project_violations arrays.
+
+
+      Run: uv run invar guard --all (must pass for criterion 8)'
+    verification: All 10 acceptance criteria verified with explicit evidence. uv run
       invar guard --all passes.
     evidence_template: '## Final Acceptance Evidence
 
