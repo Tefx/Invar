@@ -24678,3 +24678,6 @@ phases:
     depends_on:
     - final-gate.acceptance
     agent: gate-reviewer
+- id: p0-migration
+  name: 'Phase 0: Migration — Move Invar''s own escape hatches to pyproject.toml exempt'
+  status: pending
