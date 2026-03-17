@@ -24164,6 +24164,27 @@ phases:
   status: locked
   depends_on:
   - p1-models-tier
+  steps:
+  - id: p2-by-file.implement
+    name: Implement EscapeHatchSummary.by_file property
+    status: pending
+    description: 'Add by_file property to EscapeHatchSummary in src/invar/core/models.py
+      (after existing by_rule property):
+
+
+      Returns dict mapping file path -> {rule: count}. Must have @post contract and
+      doctests covering: empty summary, single file single rule, single file multiple
+      rules, multiple files.
+
+
+      Implementation: iterate self.details, group by file then by rule, count occurrences.
+
+      Pattern: Follow existing by_rule property pattern.
+
+      File: src/invar/core/models.py'
+    verification: uv run invar guard --all passes. by_file property returns correct
+      grouping.
+    agent: python-executor
 - id: p3-budget-core
   name: 'Phase 3: core/escape_budget.py check_escape_budget'
   status: locked
