@@ -24389,7 +24389,7 @@ phases:
       \ gate rewired to depend on latest retest path.\n\nSpec link:\n- `docs/proposals/DX-91-simplification.md`\n"
   - id: dx91-usbv-cleanup.fix-active-design-surface-usbv-residue
     name: Fix active design-surface USBV residue in docs/design.md
-    status: claimed
+    status: done
     description: 'Fix the remaining active USBV residue family in `docs/design.md`,
       not just one line.
 
@@ -24457,6 +24457,14 @@ phases:
     agent: doc-reviewer
     claimed_by: doc-reviewer
     claimed_at: '2026-03-17T20:20:24.856210+00:00'
+    done_at: '2026-03-17T20:33:55.622746+00:00'
+    evidence: "Artifact:\n- PR: commit `f8ac458` (squash merge of worktree commit\
+      \ `3aec345`)\n- File updated: `docs/design.md`\n\nVerification:\n- Run: `rg\
+      \ -n 'USBV|The USBV Workflow|phase precheck' docs/design.md`\n- Resulting references\
+      \ are explicitly archival/historical only:\n  - USBV workflow noted as removed/superseded\
+      \ by DX-91\n  - USBV precheck wording marked historical and superseded by DX-91\
+      \ guard enforcement\n- Active guidance replaced with DX-91 contracts-first wording\
+      \ (\"contracts before code\" rule).\n\nSpec link:\n- `docs/proposals/DX-91-simplification.md`\n"
   - id: dx91-usbv-cleanup.retest-active-design-surface-usbv-removal
     name: Re-test active design-surface USBV removal in docs/design.md
     status: pending
