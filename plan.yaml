@@ -25772,3 +25772,36 @@ phases:
     depends_on:
     - cat-c-entry-point.refactor-thick-entry-points-10-markers
     agent: integration-verifier
+  - id: cat-c-entry-point.gate-category-c-entry-point-too-thick
+    name: 'Gate: Category C entry_point_too_thick'
+    status: pending
+    description: 'Gate review: Verify entry_point_too_thick phase completion.
+
+
+      review_depth: STANDARD
+
+      review_depth_rationale: Refactoring 10 CLI entry points, moderate risk of breaking
+      CLI behavior.
+
+
+      Review criteria:
+
+      1. All 10 markers eliminated
+
+      2. Entry points are genuinely thin
+
+      3. Shell helpers properly structured
+
+      4. CLI commands still work
+
+      5. Guard passes, tests pass'
+    verification: '- All evidence reviewed
+
+      - 10/10 markers eliminated
+
+      - Guard clean
+
+      - CLI behavior preserved'
+    depends_on:
+    - cat-c-entry-point.verify-entry-point-too-thick-cleanup
+    agent: gate-reviewer
