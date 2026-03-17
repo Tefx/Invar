@@ -24578,3 +24578,86 @@ phases:
   - p5-output
   - p6-config
   - p7-non-suppressible
+  steps:
+  - id: final-gate.acceptance
+    name: Final acceptance verification against all 7 criteria
+    status: pending
+    description: 'End-to-end acceptance verification against ALL 7 acceptance criteria
+      from proposal:
+
+
+      1. `invar guard` fails (exit 1) when any per-file, per-project, or aggregate
+      limit is exceeded
+
+      2. Non-suppressible inline markers produce ERROR directing agent to request
+      human authorization
+
+      3. 3+ escape hatches on same function -> unconditional ERROR
+
+      4. 80% threshold produces WARNING with remaining count
+
+      5. pyproject.toml exempt patterns bypass inline budget
+
+      6. mcp-tela scenario (40 dead_export) fails at the first file
+
+      7. Invar''s own codebase passes with current escape hatch usage
+
+
+      Test each criterion with constructed test scenarios or by running against the
+      real codebase. Provide explicit evidence for each criterion.
+
+
+      Run: uv run invar guard --all (must pass for criterion 7)'
+    verification: All 7 acceptance criteria verified with explicit evidence. uv run
+      invar guard --all passes.
+    evidence_template: '## Final Acceptance Evidence
+
+
+      ### Criterion 1: Guard fails on limit exceeded
+
+      **Command**: <test command>
+
+      **Output**: <exit code 1, violation shown>
+
+
+      ### Criterion 2: Non-suppressible inline ERROR
+
+      **Command**: <test command>
+
+      **Output**: <ERROR message directing to human authorization>
+
+
+      ### Criterion 3: 3+ escape hatches combination ERROR
+
+      **Command**: <test command>
+
+      **Output**: <unconditional ERROR>
+
+
+      ### Criterion 4: 80% threshold WARNING
+
+      **Command**: <test command>
+
+      **Output**: <WARNING with count>
+
+
+      ### Criterion 5: Config exempt bypass
+
+      **Command**: <test command>
+
+      **Output**: <exempt patterns not counted>
+
+
+      ### Criterion 6: mcp-tela scenario fails
+
+      **Command**: <test command with 40 dead_export>
+
+      **Output**: <fails at first file>
+
+
+      ### Criterion 7: Invar own codebase passes
+
+      **Command**: uv run invar guard --all
+
+      **Output**: <exit 0>'
+    agent: integration-verifier
