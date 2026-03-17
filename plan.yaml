@@ -24796,11 +24796,11 @@ phases:
     agent: gate-reviewer
 - id: p0-migration
   name: 'Phase 0: Migration — Move Invar''s own escape hatches to pyproject.toml exempt'
-  status: pending
+  status: in_progress
   steps:
   - id: p0-migration.inventory-current-escape-hatch-markers
     name: Inventory current escape hatch markers
-    status: pending
+    status: claimed
     description: 'Inventory all @invar:allow markers in Invar''s own codebase (READ-ONLY
       analysis, no code changes).
 
@@ -24841,6 +24841,8 @@ phases:
       marker classified as exempt-candidate, should-fix, or ambiguous. Proposed exempt
       patterns listed for each exempt-candidate group.
     agent: python-senior
+    claimed_by: python-senior
+    claimed_at: '2026-03-17T19:22:42.062957+00:00'
   - id: p0-migration.human-review-and-approve-exemptions
     name: Human review and approve exemptions (HUMAN ACTION)
     status: pending
