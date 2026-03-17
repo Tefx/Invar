@@ -25217,3 +25217,36 @@ phases:
     depends_on:
     - cat-b-dead-export.human-review-dead-export-migration-report
     agent: integration-verifier
+  - id: cat-b-dead-export.gate-category-b-dead-export
+    name: 'Gate: Category B dead_export'
+    status: pending
+    description: 'Gate review: Verify Category B (dead_export) phase completion.
+
+
+      review_depth: STANDARD
+
+      review_depth_rationale: 20 markers across many files, includes entry point detection
+      changes and potential dead code removal.
+
+
+      Review criteria:
+
+      1. All 20 dead_export markers addressed (eliminated or human-approved)
+
+      2. Entry point detection improvements correct
+
+      3. No functions with real callers accidentally removed
+
+      4. Guard passes
+
+      5. Tests pass'
+    verification: '- All step evidence reviewed
+
+      - 20/20 markers addressed
+
+      - Guard clean
+
+      - Ready for next phase'
+    depends_on:
+    - cat-b-dead-export.verify-dead-export-cleanup
+    agent: gate-reviewer
