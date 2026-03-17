@@ -25699,3 +25699,8 @@ phases:
     depends_on:
     - cat-a-server.verify-server-py-shell-result-cleanup
     agent: gate-reviewer
+- id: cat-c-entry-point
+  name: 'Category C: entry_point_too_thick Fixes (10 markers)'
+  status: locked
+  depends_on:
+  - cat-a-server
