@@ -24146,7 +24146,7 @@ phases:
       \nSpec link:\n- `docs/proposals/DX-91-simplification.md`\n"
   - id: dx91-usbv-cleanup.dx91-usbv-cleanup-gate
     name: dx91-usbv-cleanup.gate
-    status: pending
+    status: claimed
     description: 'Gate review: Verify USBV cleanup phase completion.
 
 
@@ -24176,6 +24176,8 @@ phases:
     depends_on:
     - dx91-usbv-cleanup.retest-active-design-surface-usbv-removal
     agent: gate-reviewer
+    claimed_by: gate-reviewer
+    claimed_at: '2026-03-17T20:42:59.108522+00:00'
   - id: dx91-usbv-cleanup.fix-root-surface-usbv-residue
     name: Fix ALL remaining USBV residue across active project-root surfaces
     status: done
