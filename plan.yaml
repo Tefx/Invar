@@ -25906,3 +25906,39 @@ phases:
 
       - All existing imports still work'
     agent: python-senior
+  - id: cat-d-file-size.verify-file-size-extraction
+    name: Verify file_size extraction
+    status: pending
+    description: 'As an INDEPENDENT TESTER, verify file_size extraction.
+
+
+      Independence Level: L2 (cross-module refactoring of core modules)
+
+
+      Test for:
+
+      - 4-5 file_size markers removed
+
+      - All public imports still work (`from invar.core.models import ...`, `from
+      invar.core.rules import ...`, etc.)
+
+      - All @pre/@post contracts preserved on Core functions
+
+      - All doctests pass
+
+      - Guard passes on new module structure
+
+      - No circular imports introduced
+
+      - If hypothesis_strategies.py marker retained, justification documented'
+    verification: '- `uv run invar guard --all` passes
+
+      - `uv run pytest tests/ -x` passes
+
+      - `python -c ''from invar.core.models import FileInfo, EscapeHatchDetail''`
+      succeeds
+
+      - `python -c ''from invar.core.rules import check_rules''` succeeds'
+    depends_on:
+    - cat-d-file-size.extract-and-split-large-core-files-5-markers
+    agent: integration-verifier
