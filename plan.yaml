@@ -24444,6 +24444,59 @@ phases:
     depends_on:
     - dx91-usbv-cleanup.retest-root-surface-usbv-removal
     agent: doc-reviewer
+  - id: dx91-usbv-cleanup.retest-active-design-surface-usbv-removal
+    name: Re-test active design-surface USBV removal in docs/design.md
+    status: pending
+    description: 'As an INDEPENDENT TESTER (integration-verifier), re-test the design-surface
+      USBV cleanup after the archival-framing fix.
+
+
+      YOUR GOAL IS TO FIND ANY REMAINING ACTIVE USBV GUIDANCE in `docs/design.md`,
+      not to confirm the edit looks reasonable.
+
+
+      Retest scope:
+
+      - Re-run targeted grep checks for `docs/design.md`
+
+      - Verify the former `The USBV Workflow (DX-32)` section is no longer an active
+      workflow instruction surface
+
+      - Verify the line item about a USBV phase precheck no longer appears as active
+      roadmap guidance
+
+      - Verify any remaining USBV mention in `docs/design.md` is explicitly archival/historical
+      and consistent with DX-91 contracts-first guidance
+
+
+      Grep hints:
+
+      - `rg -n ''USBV|The USBV Workflow|phase precheck'' docs/design.md`
+
+      - `rg -n ''contracts before code|DX-91|archive|historical'' docs/design.md`
+
+
+      Acceptance language:
+
+      - PASS only if `docs/design.md` no longer presents USBV as active workflow guidance
+
+      - FAIL/ISSUES_FOUND if any USBV wording in `docs/design.md` still reads as current
+      process, active roadmap, or non-archived instruction
+
+      - Pasted command output is required; do not summarize with "looks archived now"'
+    verification: '- Run `rg -n ''USBV|The USBV Workflow|phase precheck'' docs/design.md`
+      and paste the output
+
+      - Run `rg -n ''contracts before code|DX-91|archive|historical'' docs/design.md`
+      and paste the output
+
+      - State explicitly whether each remaining `USBV` mention is archival/historical
+      or still active
+
+      - Report PASS only when active design-surface USBV residue is fully closed'
+    depends_on:
+    - dx91-usbv-cleanup.fix-active-design-surface-usbv-residue
+    agent: integration-verifier
 - id: p1-models-tier
   name: 'Phase 1: RuleConfig fields + EscapeHatchTier + ESCAPE_TIER_MAP'
   status: locked
