@@ -24261,6 +24261,89 @@ phases:
     depends_on:
     - dx91-usbv-cleanup.verify-usbv-removal
     agent: python-senior
+  - id: dx91-usbv-cleanup.retest-root-surface-usbv-removal
+    name: Re-test USBV removal across active project-root surfaces
+    status: pending
+    description: 'As an INDEPENDENT TESTER (integration-verifier), re-test the USBV
+      cleanup after the root-surface fix.
+
+
+      YOUR GOAL IS TO FIND REMAINING ACTIVE USBV REFERENCES, not to confirm the fix
+      looks plausible.
+
+
+      Retest scope:
+
+      - Re-run active-surface grep checks across project-root config/tooling surfaces
+
+      - Confirm `.aider.conf.yml` no longer presents USBV as active workflow guidance
+
+      - Confirm any remaining `USBV|usbv` hits are archival only and clearly labeled
+      as such
+
+      - Confirm prior active-surface omission is closed, not merely shifted to another
+      root file
+
+
+      Grep hints:
+
+      - `rg -n ''Workflow \(USBV\)|USBV|usbv'' .aider.conf.yml .github .vscode .cursor
+      .claude README.md CONTRIBUTING.md Makefile pyproject.toml justfile package.json`
+
+      - `rg -n ''USBV|usbv'' .`
+
+
+      Independence Level: L1'
+    verification: '- Run `rg -n ''Workflow \(USBV\)|USBV|usbv'' .aider.conf.yml .github
+      .vscode .cursor .claude README.md CONTRIBUTING.md Makefile pyproject.toml justfile
+      package.json` and capture the output
+
+      - Run `rg -n ''USBV|usbv'' .` and verify any remaining hits are archival-only
+      with explicit justification
+
+      - Report whether active project-root surfaces are clean and whether the blocker
+      family is fully closed
+
+      - Do not summarize as "looks good" without pasted command output'
+    evidence_template: '## USBV Root-Surface Retest Report
+
+
+      **Tester**: integration-verifier
+
+      **Commands executed**:
+
+      ```
+
+      rg -n ''Workflow \(USBV\)|USBV|usbv'' .aider.conf.yml .github .vscode .cursor
+      .claude README.md CONTRIBUTING.md Makefile pyproject.toml justfile package.json
+
+      rg -n ''USBV|usbv'' .
+
+      ```
+
+
+      **Command output**:
+
+      ```
+
+      <paste actual output>
+
+      ```
+
+
+      **Remaining hits classification**:
+
+      - <archival only / blocker persists>
+
+
+      **Verdict**:
+
+      - PASS | ISSUES_FOUND
+
+      '
+    depends_on:
+    - dx91-usbv-cleanup.fix-root-surface-usbv-residue
+    agent: integration-verifier
 - id: p1-models-tier
   name: 'Phase 1: RuleConfig fields + EscapeHatchTier + ESCAPE_TIER_MAP'
   status: locked
