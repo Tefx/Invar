@@ -24163,6 +24163,104 @@ phases:
     depends_on:
     - dx91-usbv-cleanup.verify-usbv-removal
     agent: gate-reviewer
+  - id: dx91-usbv-cleanup.fix-root-surface-usbv-residue
+    name: Fix ALL remaining USBV residue across active project-root surfaces
+    status: pending
+    description: 'Fix ALL current blockers in the USBV residue family, not just the
+      first hit.
+
+
+      Issue family: active USBV references remain after the original cleanup because
+      inventory scope covered `src/invar/` and `docs/` but missed active project-root
+      surfaces.
+
+
+      Current blocker(s):
+
+      - `.aider.conf.yml:18` still contains an active `Workflow (USBV): ...` reference.
+
+
+      Required remediation:
+
+      - Remove or replace ALL remaining active `USBV|usbv` references across project-root
+      active surfaces, including config, workflow, and developer-tooling files that
+      influence current repo behavior.
+
+      - Do not touch archived/historical references that are intentionally preserved
+      with archive labeling.
+
+      - Search for siblings beyond the listed hit before claiming completion.
+
+
+      Grep hints:
+
+      - `rg -n ''USBV|usbv'' .aider.conf.yml .github .vscode .cursor .claude README.md
+      CONTRIBUTING.md Makefile pyproject.toml justfile package.json`
+
+      - `rg -n ''Workflow \(USBV\)|USBV|usbv'' .`
+
+
+      Completion criteria:
+
+      - ALL active project-root USBV references removed or converted to the approved
+      replacement wording
+
+      - Sibling search completed for root-level active surfaces, not just `.aider.conf.yml`
+
+      - Archived USBV docs remain explicitly archived and are not reactivated
+
+
+      Out-of-scope guardrail:
+
+      - Do not rewrite archived historical docs unless they are incorrectly presented
+      as active guidance.'
+    verification: '- Run `rg -n ''Workflow \(USBV\)|USBV|usbv'' .aider.conf.yml .github
+      .vscode .cursor .claude README.md CONTRIBUTING.md Makefile pyproject.toml justfile
+      package.json` and show that no active project-root hits remain
+
+      - If broader search is needed, run `rg -n ''USBV|usbv'' .` and classify any
+      remaining hits as archived/intentional only
+
+      - Evidence must explicitly state why each remaining hit (if any) is archival
+      rather than active
+
+      - Use exact verification command family noted above; do not replace with a vague
+      "cleanup verified" statement'
+    evidence_template: '## USBV Root-Surface Fix Evidence
+
+
+      **Commands executed**:
+
+      ```
+
+      rg -n ''Workflow \(USBV\)|USBV|usbv'' .aider.conf.yml .github .vscode .cursor
+      .claude README.md CONTRIBUTING.md Makefile pyproject.toml justfile package.json
+
+      rg -n ''USBV|usbv'' .
+
+      ```
+
+
+      **Files updated**:
+
+      - <list>
+
+
+      **Sibling-search findings**:
+
+      - <active hits removed>
+
+      - <archival hits retained with justification>
+
+
+      **Why this closes the blocker family**:
+
+      - <explain how root-surface scope is now covered>
+
+      '
+    depends_on:
+    - dx91-usbv-cleanup.verify-usbv-removal
+    agent: python-senior
 - id: p1-models-tier
   name: 'Phase 1: RuleConfig fields + EscapeHatchTier + ESCAPE_TIER_MAP'
   status: locked
