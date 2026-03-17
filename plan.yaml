@@ -24376,6 +24376,74 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-17T20:12:16.228409+00:00'
+  - id: dx91-usbv-cleanup.fix-active-design-surface-usbv-residue
+    name: Fix active design-surface USBV residue in docs/design.md
+    status: pending
+    description: 'Fix the remaining active USBV residue family in `docs/design.md`,
+      not just one line.
+
+
+      Blocker family:
+
+      - `docs/design.md:70-104` still presents "The USBV Workflow (DX-32)" as an active
+      workflow section instead of archived historical context.
+
+      - `docs/design.md:880` still lists a "USBV phase precheck command" as forward-looking
+      active roadmap language.
+
+      - This conflicts with DX-91 contracts-first guidance, which keeps USBV only
+      as archived history.
+
+
+      Required remediation:
+
+      - Reframe or remove ALL active USBV guidance in `docs/design.md` so the file
+      no longer presents USBV as a current workflow.
+
+      - If any USBV mention remains in `docs/design.md`, it MUST be explicitly archival/historical
+      and must point readers to the active DX-91 contracts-first guidance.
+
+      - Search for sibling active wording in the same file beyond the reported lines
+      before claiming done.
+
+
+      Grep hints:
+
+      - `rg -n ''USBV|The USBV Workflow|phase precheck'' docs/design.md`
+
+      - `rg -n ''contracts before code|DX-91|archive|historical'' docs/design.md docs/proposals/DX-91-simplification.md
+      docs/reference/workflow/usbv.md`
+
+
+      Completion criteria:
+
+      - `docs/design.md` contains no active-tense USBV workflow instructions or roadmap
+      items presented as current guidance
+
+      - Any retained USBV mention in `docs/design.md` is explicitly marked archival/historical
+
+      - The file aligns with DX-91 contracts-first wording and no sibling active USBV
+      residue remains in the document
+
+
+      Out-of-scope guardrail:
+
+      - Do not rewrite already archived USBV reference pages unless this design-surface
+      fix requires adding a cross-link to the existing archive location.'
+    verification: '- Run `rg -n ''USBV|The USBV Workflow|phase precheck'' docs/design.md`
+      and show the resulting lines
+
+      - Evidence must explain why each remaining `USBV` hit in `docs/design.md` is
+      archival/historical rather than active guidance
+
+      - Evidence must cite the DX-91 contracts-first replacement wording used for
+      the design surface
+
+      - Do not stop at editing one heading; sibling active wording in the same file
+      must be checked and accounted for'
+    depends_on:
+    - dx91-usbv-cleanup.retest-root-surface-usbv-removal
+    agent: doc-reviewer
 - id: p1-models-tier
   name: 'Phase 1: RuleConfig fields + EscapeHatchTier + ESCAPE_TIER_MAP'
   status: locked
