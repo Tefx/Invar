@@ -24491,6 +24491,57 @@ phases:
   status: locked
   depends_on:
   - p3-budget-core
+  steps:
+  - id: p7-non-suppressible.implement
+    name: Implement non-suppressible enforcement
+    status: pending
+    description: 'Modify the escape hatch suppression mechanism so that non-suppressible
+      rules (dead_export, stub_body, missing_contract, missing_doctest) always produce
+      ERROR even when @invar:allow is present inline.
+
+
+      Two implementation approaches (choose the simpler one):
+
+
+      Option A: Modify has_allow_marker() in src/invar/core/entry_points.py to return
+      False for non-suppressible rules. This is the simplest -- callers already check
+      has_allow_marker before skipping violations.
+
+
+      Option B: Add a post-check in check_escape_budget that detects inline markers
+      for non-suppressible rules and emits escape_hatch_non_suppressible violations.
+      This is already partially implemented in Phase 3.
+
+
+      The key callers of has_allow_marker are in:
+
+      - src/invar/core/rules.py
+
+      - src/invar/core/dead_export.py
+
+      - src/invar/core/dead_param.py
+
+      - src/invar/core/stub_body.py
+
+      - src/invar/core/shell_architecture.py
+
+
+      For Option A: Import ESCAPE_TIER_MAP and EscapeHatchTier from models.py. If
+      the rule is NON_SUPPRESSIBLE, return False regardless of marker presence. The
+      existing escape hatch collection (extract_escape_hatches) already records the
+      marker, so check_escape_budget (Phase 3) will still detect it and emit the proper
+      non-suppressible error message.
+
+
+      IMPORTANT: The @invar:allow marker must still be RECOGNIZED (collected by extract_escape_hatches)
+      for clear error messaging. It just must not SUPPRESS the violation.
+
+
+      File: src/invar/core/entry_points.py (has_allow_marker function, ~line 392)'
+    verification: uv run invar guard --all passes. Non-suppressible rules (dead_export,
+      stub_body, missing_contract, missing_doctest) are NOT suppressed by inline @invar:allow
+      markers. Suppressible and expensive rules still work as before.
+    agent: python-executor
 - id: final-gate
   name: 'Final Gate: Full Integration Verification'
   status: locked
