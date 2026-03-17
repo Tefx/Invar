@@ -24196,6 +24196,15 @@ phases:
     depends_on:
     - p2-by-file.implement
     agent: integration-verifier
+  - id: p2-by-file.gate
+    name: Phase 2 Gate
+    status: pending
+    description: 'Gate review: Verify Phase 2 completion. by_file property has @post
+      contract and doctests. Guard passes.'
+    verification: Phase 2 complete. Property contracted and tested.
+    depends_on:
+    - p2-by-file.verify
+    agent: gate-reviewer
 - id: p3-budget-core
   name: 'Phase 3: core/escape_budget.py check_escape_budget'
   status: locked
