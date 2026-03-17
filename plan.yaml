@@ -24178,7 +24178,7 @@ phases:
     agent: gate-reviewer
   - id: dx91-usbv-cleanup.fix-root-surface-usbv-residue
     name: Fix ALL remaining USBV residue across active project-root surfaces
-    status: claimed
+    status: done
     description: 'Fix ALL current blockers in the USBV residue family, not just the
       first hit.
 
@@ -24276,6 +24276,21 @@ phases:
     agent: python-senior
     claimed_by: python-senior
     claimed_at: '2026-03-17T20:03:18.151999+00:00'
+    done_at: '2026-03-17T20:11:31.221698+00:00'
+    evidence: "## USBV Root-Surface Fix Evidence\n\n**Commands executed**:\n```\n\
+      rg -n 'Workflow \\(USBV\\)|USBV|usbv' .aider.conf.yml .github .vscode .cursor\
+      \ .claude README.md CONTRIBUTING.md Makefile pyproject.toml justfile package.json\n\
+      rg -n 'USBV|usbv' .\n```\n\n**Files updated**:\n- `.aider.conf.yml`\n- Artifact\
+      \ commit: `b9b6ea8` (squash merge of worktree commit `7bc5e7a`)\n\n**Sibling-search\
+      \ findings**:\n- Active hits removed:\n  - `.aider.conf.yml:18` `Workflow (USBV)`\
+      \ replaced with contracts-first wording.\n- Archival/historical hits retained\
+      \ with justification:\n  - `docs/reference/workflow/usbv.md`, `docs/proposals/**`,\
+      \ `docs/history/**`, and inventory/evidence docs remain as historical/archive\
+      \ context.\n\n**Why this closes the blocker family**:\n- The known active root-surface\
+      \ blocker is removed.\n- Required root-surface grep family returned no remaining\
+      \ active hits in targeted project-root surfaces.\n- Remaining repo-wide hits\
+      \ are archival/historical and explicitly non-active.\n\nSpec link:\n- `dx91-usbv-cleanup.verify-usbv-removal`\
+      \ blocker follow-up remediation"
   - id: dx91-usbv-cleanup.retest-root-surface-usbv-removal
     name: Re-test USBV removal across active project-root surfaces
     status: pending
