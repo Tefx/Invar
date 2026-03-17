@@ -25418,7 +25418,7 @@ phases:
       verifier'
   - id: cat-e-dead-assign.gate-category-e-dead-assign
     name: 'Gate: Category E dead_assign'
-    status: pending
+    status: claimed
     description: 'Gate review: Verify Category E (dead_assign) phase completion.
 
 
@@ -25446,6 +25446,8 @@ phases:
     depends_on:
     - cat-e-dead-assign.verify-dead-assign-cleanup
     agent: gate-reviewer
+    claimed_by: gate-reviewer
+    claimed_at: '2026-03-17T20:12:12.326758+00:00'
 - id: cat-b-dead-export
   name: 'Category B: dead_export Fixes (20 markers)'
   status: locked
