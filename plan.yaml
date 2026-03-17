@@ -25250,3 +25250,8 @@ phases:
     depends_on:
     - cat-b-dead-export.verify-dead-export-cleanup
     agent: gate-reviewer
+- id: cat-a-guard-runs
+  name: 'Category A: shell_result in guard_runs.py (8 markers)'
+  status: locked
+  depends_on:
+  - cat-b-dead-export
