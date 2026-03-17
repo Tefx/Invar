@@ -23875,7 +23875,7 @@ phases:
   steps:
   - id: dx91-usbv-cleanup.inventory-usbv-references
     name: inventory-usbv-references
-    status: claimed
+    status: done
     description: 'Inventory every active USBV reference in the codebase to establish
       the full removal scope.
 
@@ -23938,6 +23938,31 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-17T19:16:31.286143+00:00'
+    done_at: '2026-03-17T19:22:01.939292+00:00'
+    evidence: 'Artifact:
+
+      - PR: commit 61d722a (squash merge of worktree commit 16acb92)
+
+
+      Verification:
+
+      - Run: `rg -n ''USBV|usbv'' src/invar/` -> identified and categorized references;
+      ACTIVE inventory documented and matches all known locations from step description.
+
+      - Output artifact: `USBV-INVENTORY.md` added with categorized ACTIVE/ARCHIVED/HISTORICAL
+      inventory and counts.
+
+
+      Spec link:
+
+      - DX-91 Simplification proposal (USBV residue cleanup scope)
+
+
+      Notes:
+
+      - Subagent reported all 10 known locations verified and classified; ACTIVE list
+      includes template/runtime references and `src/invar/templates/protocol/universal/usbv.md`
+      marked for removal in follow-up step.'
   - id: dx91-usbv-cleanup.remove-usbv-from-active-surfaces
     name: remove-usbv-from-active-surfaces
     status: pending
