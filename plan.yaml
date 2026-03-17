@@ -23876,3 +23876,231 @@ phases:
   status: pending
   depends_on:
   - dx91-release-readiness
+  steps:
+  - id: dx91-usbv-cleanup.inventory-usbv-references
+    name: inventory-usbv-references
+    status: pending
+    description: 'Inventory every active USBV reference in the codebase to establish
+      the full removal scope.
+
+
+      File: all files under src/invar/ and docs/ on Main
+
+
+      KNOWN LOCATIONS (from discovery):
+
+
+      ## Active template files (generate new project content):
+
+      - src/invar/templates/CLAUDE.md.template (3 refs)
+
+      - src/invar/templates/context.md.template (2 refs)
+
+      - src/invar/templates/manifest.toml (workflow = "USBV")
+
+      - src/invar/templates/config/AGENT.md.jinja (3 refs)
+
+      - src/invar/templates/config/context.md.jinja (4 refs)
+
+      - src/invar/templates/protocol/universal/completion.md (1 ref)
+
+      - src/invar/templates/protocol/universal/usbv.md (THE template file itself)
+
+
+      ## Active source code:
+
+      - src/invar/mcp/server.py line 54 (VALIDATE phase of USBV)
+
+      - src/invar/core/inspect.py line 2 (module docstring)
+
+
+      ## Docs (55 files, mix of active and archived):
+
+      - docs/reference/workflow/usbv.md (has archive banner)
+
+      - docs/ -- 54 other files
+
+
+      Grep command: rg -n ''USBV|usbv'' src/invar/ docs/
+
+
+      Output: A categorized list of every USBV reference, classified as:
+
+      - ACTIVE (generates content or influences runtime) -- MUST be removed/replaced
+
+      - ARCHIVED (historical reference with archive banner) -- MAY be kept with banner
+
+      - HISTORICAL (proposals, completed docs) -- KEEP as-is
+
+
+      This inventory drives the scope of the removal step.'
+    verification: '- rg -n ''USBV|usbv'' src/invar/ returns categorized results
+
+      - Every hit classified as ACTIVE/ARCHIVED/HISTORICAL
+
+      - ACTIVE list matches or exceeds the known locations above'
+    agent: integration-verifier
+  - id: dx91-usbv-cleanup.remove-usbv-from-active-surfaces
+    name: remove-usbv-from-active-surfaces
+    status: pending
+    description: 'Remove or replace ALL active USBV references per the inventory.
+
+
+      Spec authority: docs/proposals/DX-91-simplification.md lines 65, 334, 374.
+
+
+      ## Required changes:
+
+
+      ### 1. Delete the USBV template file
+
+      - DELETE src/invar/templates/protocol/universal/usbv.md
+
+
+      ### 2. Update manifest.toml
+
+      - src/invar/templates/manifest.toml: change workflow = "USBV" to workflow =
+      "contracts-first" (or remove the field if DX-91 spec says no workflow branding)
+
+
+      ### 3. Update CLAUDE.md.template
+
+      - src/invar/templates/CLAUDE.md.template: replace USBV references with contracts-first
+      language per DX-91 spec ("Write @pre/@post contracts BEFORE implementation")
+
+
+      ### 4. Update context.md.template
+
+      - src/invar/templates/context.md.template: replace USBV workflow section with
+      contracts-first guidance
+
+
+      ### 5. Update AGENT.md.jinja
+
+      - src/invar/templates/config/AGENT.md.jinja: replace USBV references with contracts-first
+      language
+
+
+      ### 6. Update context.md.jinja
+
+      - src/invar/templates/config/context.md.jinja: replace USBV references with
+      contracts-first language
+
+
+      ### 7. Update completion.md
+
+      - src/invar/templates/protocol/universal/completion.md: remove USBV version
+      reference
+
+
+      ### 8. Update source code
+
+      - src/invar/mcp/server.py line 54: replace USBV reference
+
+      - src/invar/core/inspect.py line 2: replace USBV reference in docstring
+
+
+      ## Out of scope:
+
+      - docs/reference/workflow/usbv.md (already has archive banner, keep as historical)
+
+      - docs/proposals/* (historical, keep as-is)
+
+      - docs/ files that only reference USBV in historical/archived context
+
+
+      ## Completion criteria:
+
+      - rg -n ''USBV|usbv'' src/invar/ returns ZERO hits outside archived/historical
+      docs
+
+      - invar guard passes after changes
+
+      - No import errors, no broken template rendering
+
+
+      ## KNOWN RISKS (from project history):
+
+      - Template rendering: changes to .jinja and .template files can break invar
+      init/dev-sync. Test with invar init in a temp dir.
+
+      - manifest.toml: changing workflow field may affect code that reads it. Grep
+      for ''workflow'' in src/invar/ before changing.'
+    verification: '- rg -n ''USBV|usbv'' src/invar/ returns zero hits (excluding test
+      fixtures if any)
+
+      - uv run invar guard --all passes
+
+      - Template rendering smoke test: invar init produces no USBV-branded output
+
+      - No import errors in src/invar/'
+    depends_on:
+    - dx91-usbv-cleanup.inventory-usbv-references
+    agent: python-senior
+  - id: dx91-usbv-cleanup.verify-usbv-removal
+    name: verify-usbv-removal
+    status: pending
+    description: 'As an INDEPENDENT TESTER (integration-verifier), validate that USBV
+      has been fully removed from active surfaces.
+
+
+      YOUR GOAL IS TO FIND REMAINING USBV REFERENCES, not to confirm removal works.
+
+
+      Test for:
+
+      - Happy path: rg ''USBV|usbv'' src/invar/ returns zero active hits
+
+      - Edge cases: template rendering (invar init in temp dir), manifest.toml consumers,
+      MCP server help text
+
+      - Error scenarios: broken template references, missing workflow field consumers
+
+      - Cross-cutting: docs/reference/workflow/usbv.md archive banner is intact and
+      correct
+
+
+      Independence Level: L1'
+    verification: '- Grep proof: rg output showing zero active USBV references in
+      src/invar/
+
+      - Template proof: invar init output contains no USBV
+
+      - Guard proof: uv run invar guard --all clean
+
+      - Archive proof: docs/reference/workflow/usbv.md still has archive banner'
+    depends_on:
+    - dx91-usbv-cleanup.remove-usbv-from-active-surfaces
+    agent: integration-verifier
+  - id: dx91-usbv-cleanup.dx91-usbv-cleanup-gate
+    name: dx91-usbv-cleanup.gate
+    status: pending
+    description: 'Gate review: Verify USBV cleanup phase completion.
+
+
+      review_depth: STANDARD
+
+
+      Review criteria:
+
+      1. Completeness: All USBV references removed from active template/source surfaces
+
+      2. Evidence Quality: Grep proof, template rendering proof, guard proof
+
+      3. Archive integrity: Historical/archived USBV docs preserved with banners
+
+      4. No regressions: invar guard passes, no broken imports
+
+
+      Independence: You MUST NOT be the same agent as python-senior (implementation
+      agent).'
+    verification: '- All phase steps completed successfully
+
+      - Evidence collected: grep proof, template proof, guard proof
+
+      - No unresolved blockers
+
+      - USBV fully removed from active surfaces per DX-91 spec'
+    depends_on:
+    - dx91-usbv-cleanup.verify-usbv-removal
+    agent: gate-reviewer
