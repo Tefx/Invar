@@ -25255,3 +25255,84 @@ phases:
   status: locked
   depends_on:
   - cat-b-dead-export
+  steps:
+  - id: cat-a-guard-runs.fix-shell-result-in-guard-runs-py-8-markers
+    name: Fix shell_result in guard_runs.py (8 markers)
+    status: pending
+    description: 'Eliminate all 8 `@invar:allow shell_result` markers in `src/invar/mcp/guard_runs.py`.
+
+
+      ## Markers:
+
+
+      1. Line 39: `Envelope helper returns dict for MCP error payload`
+
+      2. Line 68: `Timestamp helper for shell lifecycle metadata`
+
+      3. Line 73: `Timestamp formatting helper for shell lifecycle metadata`
+
+      4. Line 80: `Pure transformation helper used by MCP shell layer`
+
+      5. Line 115: `Parses subprocess JSON payload for shell orchestration`
+
+      6. Line 133: `Helper returns scalar boolean for summary output`
+
+      7. Line 151: `Converts guard payload to report dict for MCP output`
+
+      8. Line 196: `MCP state registry does not expose Result[T, E]`
+
+
+      ## Strategy per function:
+
+
+      **A1 (Refactor to Result[T,E])**: For functions that do I/O or can fail:
+
+      - Line 115 (parses subprocess JSON) — can fail on bad JSON, wrap with Result
+
+      - Line 196 (MCP state registry) — has side effects, wrap with Result
+
+
+      **A2 (Move to Core)**: For pure transformation helpers with no I/O:
+
+      - Lines 39, 68, 73, 80, 133, 151 — these are pure data transformations (dict
+      building, timestamp formatting, boolean extraction). If they genuinely have
+      no I/O imports, move to an appropriate core module.
+
+
+      For each function:
+
+      1. Check if it imports/uses any I/O (files, network, env vars, time, subprocess)
+
+      2. If pure: move to core (e.g., `core/guard_report.py` or similar)
+
+      3. If I/O: wrap return type with `Result[T, E]` and update all callers
+
+      4. Remove the `@invar:allow shell_result` marker
+
+
+      **IMPORTANT**: `time` module counts as I/O per Invar rules. Timestamp helpers
+      (lines 68, 73) likely use `time` or `datetime` — if so, they must stay in Shell
+      and return Result[T,E].
+
+
+      grep hint: `grep -n ''@invar:allow shell_result'' src/invar/mcp/guard_runs.py`
+
+
+      ## Completion Criteria:
+
+      - ALL 8 markers removed from guard_runs.py
+
+      - Functions either moved to Core or returning Result[T,E]
+
+      - All callers updated
+
+      - `uv run invar guard --all` passes
+
+      - `uv run pytest tests/ -x` passes'
+    verification: '- `grep -n ''@invar:allow shell_result'' src/invar/mcp/guard_runs.py`
+      returns 0 matches
+
+      - `uv run invar guard --all` passes
+
+      - `uv run pytest tests/ -x` passes'
+    agent: python-senior
