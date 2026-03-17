@@ -25562,3 +25562,80 @@ phases:
   status: locked
   depends_on:
   - cat-a-handlers
+  steps:
+  - id: cat-a-server.fix-shell-result-in-server-py-14-markers
+    name: Fix shell_result in server.py (14 markers)
+    status: pending
+    description: 'Eliminate all 14 `@invar:allow shell_result` markers in `src/invar/mcp/server.py`.
+
+
+      ## Markers:
+
+
+      1. Line 162: MCP tool factory for guard command
+
+      2. Line 209: MCP tool factory for guard status command
+
+      3. Line 233: MCP tool factory for guard wait command
+
+      4. Line 262: MCP tool factory for sig command
+
+      5. Line 284: MCP tool factory for map command
+
+      6. Line 306: MCP tool factory for refs command
+
+      7. Line 335: MCP tool factory for doc_toc command
+
+      8. Line 362: MCP tool factory for doc_read command
+
+      9. Line 392: MCP tool factory for doc_read_many command
+
+      10. Line 424: MCP tool factory for doc_find command
+
+      11. Line 455: MCP tool factory for doc_replace command
+
+      12. Line 489: MCP tool factory for doc_insert command
+
+      13. Line 524: MCP tool factory for doc_delete command
+
+      14. Line 549: MCP framework API returns Server
+
+
+      ## Strategy:
+
+      These are all MCP tool factory functions that register tools on the MCP Server.
+      They perform I/O (calling handlers which do subprocess/file ops). They must
+      return `Result[T, E]`.
+
+
+      - Lines 162-524: Tool factory functions. Wrap return values with Result. Each
+      calls a handler function (already refactored in cat-a-handlers phase to return
+      Result). Chain the Results.
+
+      - Line 549: `create_server()` — this is the MCP Server factory. Returns a Server
+      object. Wrap with Result since server creation can fail.
+
+
+      **NOTE**: The handlers.py phase may have already changed handler return types
+      to Result. server.py functions that call them need to unwrap/chain Results properly.
+
+
+      grep hint: `grep -n ''@invar:allow shell_result'' src/invar/mcp/server.py`
+
+
+      ## Completion Criteria:
+
+      - ALL 14 markers removed from server.py
+
+      - All functions return Result[T,E]
+
+      - `uv run invar guard --all` passes
+
+      - `uv run pytest tests/ -x` passes'
+    verification: '- `grep -n ''@invar:allow shell_result'' src/invar/mcp/server.py`
+      returns 0 matches
+
+      - `uv run invar guard --all` passes
+
+      - `uv run pytest tests/ -x` passes'
+    agent: python-senior
