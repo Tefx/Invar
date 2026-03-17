@@ -24329,6 +24329,36 @@ phases:
   status: locked
   depends_on:
   - p4-guard-integration
+  steps:
+  - id: p5-output.implement
+    name: Implement gating output in formatter.py and guard_output.py
+    status: pending
+    description: "Two files to modify:\n\n1. src/invar/core/formatter.py - Extend\
+      \ format_guard_agent() JSON output:\n   When escape_hatches exist AND gating\
+      \ violations exist, add gating structure to the escape_hatches dict:\n   ```json\n\
+      \   \"escape_hatches\": {\n     \"count\": 14,\n     \"by_rule\": {\"dead_param\"\
+      : 8, ...},\n     \"gating\": {\n       \"status\": \"exceeded\" | \"warning\"\
+      \ | \"ok\",\n       \"per_rule_violations\": [{\"rule\": \"dead_param\", \"\
+      count\": 11, \"limit\": 10}],\n       \"budget\": {\"used\": 20, \"limit\":\
+      \ 15},\n       \"non_suppressible\": [],\n       \"combination\": []\n     }\n\
+      \   }\n   ```\n   To populate this, scan report.violations for escape_hatch_*\
+      \ rules and extract the gating data.\n   Update doctests for format_guard_agent.\n\
+      \n2. src/invar/shell/guard_output.py - Extend output_rich():\n   When escape\
+      \ hatch gating violations exist, replace the simple escape hatch line with a\
+      \ Rich Panel box:\n   ```\n   +-- Escape Hatch Limit --------+\n   | Escape\
+      \ hatches: 14 (...)     |\n   | 1 per-rule limit exceeded... |\n   | ERROR dead_param:\
+      \ 11/10 ...  |\n   +------------------------------+\n   ```\n   For non-suppressible\
+      \ inline attempts, show:\n   ```\n   ERROR shell/api.py:42 dead_export cannot\
+      \ be suppressed inline\n     -> This rule requires human authorization.\n  \
+      \      Ask the project owner to declare an exemption in pyproject.toml.\n  \
+      \      Do NOT modify pyproject.toml yourself.\n   ```\n   Use rich.panel.Panel\
+      \ for the box display.\n\nPattern: Follow existing escape_hatches output section\
+      \ in guard_output.py (lines 211-216).\nPattern: Follow existing format_guard_agent\
+      \ escape_hatches section in formatter.py (lines 265-279).\n\nFiles: src/invar/core/formatter.py,\
+      \ src/invar/shell/guard_output.py"
+    verification: uv run invar guard --all passes. JSON output includes gating structure
+      when violations present. Rich Panel displays correctly for limit-exceeded scenario.
+    agent: python-senior
 - id: p6-config
   name: 'Phase 6: Config parsing pyproject.toml exempt patterns'
   status: locked
