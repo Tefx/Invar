@@ -8,18 +8,14 @@
 # =============================================================
 version: 1
 project: invar
-context: 'DX-91 simplification execution plan. Product decisions: keep core Python
-  tooling (`guard`, `sig`, `map`, `refs`), `invar-runtime`, MCP server, pre-commit
-  integration, and mandatory core/shell architecture; remove USBV enforcement, skills,
-  agent-specific hooks, onboarding system, feedback collection, TypeScript/JS support,
-  and other stale agent-era assets. `invar init` and `invar dev sync` converge on
-  a simplified pipeline that emits `INVAR.md`, a minimal injected `CLAUDE.md` section,
-  and the minimal `.invar/` support files with idempotent merge semantics. v1 -> v2
-  migration behavior must be explicit, loss-averse, and covered by regression fixtures
-  before destructive removals land. Repository docs and proposal index must reflect
-  the new Python-only product surface before release-readiness audit. Primary specs:
-  `docs/proposals/DX-91-simplification.md`, `docs/proposals/DX-91-invar-md-draft.md`,
-  `docs/proposals/DX-91-claude-md-draft.md`, `docs/proposals/index.md`.'
+strategy_ref: Contract-first where applicable. 7 implementation phases matching proposal
+  exactly, plus final gate. Phases 5 and 6 can run in parallel. All other phases are
+  serial per proposal dependency chain.
+context: 'DX-96: Escape Hatch Strict Gating. Implements tiered escape hatch limits
+  (suppressible/expensive/non-suppressible), per-file + per-project + aggregate budget
+  gating, combination penalties, and non-suppressible enforcement. Proposal: docs/proposals/DX-96-escape-hatch-strict-gating.md.
+  All code is Python. Core modules require @pre/@post contracts + doctests. Shell
+  modules return Result[T, E].'
 phases:
 - id: dx-80
   name: DX-80
