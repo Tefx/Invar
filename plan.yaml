@@ -24280,6 +24280,21 @@ phases:
   status: locked
   depends_on:
   - p3-budget-core
+  steps:
+  - id: p4-guard-integration.implement
+    name: Integrate check_escape_budget into _scan_and_check
+    status: pending
+    description: "Add 3-5 lines to src/invar/shell/commands/guard.py in _scan_and_check(),\
+      \ after the DX-33 duplicate escape reasons check (~line 176, after check_duplicate_escape_reasons):\n\
+      \n```python\n# DX-96: Check escape hatch budget limits\nfrom invar.core.escape_budget\
+      \ import check_escape_budget\nfor budget_violation in check_escape_budget(report.escape_hatches,\
+      \ config):\n    report.add_violation(budget_violation)\n```\n\nThis is pure\
+      \ wiring -- import and call. No logic changes.\n\nFile: src/invar/shell/commands/guard.py\
+      \ (function _scan_and_check, after line ~176)"
+    verification: uv run invar guard --all passes. check_escape_budget is called during
+      guard execution. Invar's own codebase does not trigger any new violations (existing
+      escape hatches are within default limits).
+    agent: python-executor
 - id: p5-output
   name: 'Phase 5: formatter.py + guard_output.py gating output'
   status: locked
