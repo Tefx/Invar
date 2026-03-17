@@ -24467,7 +24467,7 @@ phases:
       \ (\"contracts before code\" rule).\n\nSpec link:\n- `docs/proposals/DX-91-simplification.md`\n"
   - id: dx91-usbv-cleanup.retest-active-design-surface-usbv-removal
     name: Re-test active design-surface USBV removal in docs/design.md
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT TESTER (integration-verifier), re-test the design-surface
       USBV cleanup after the archival-framing fix.
 
@@ -24520,6 +24520,35 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-17T20:38:28.224532+00:00'
+    done_at: '2026-03-17T20:42:44.134329+00:00'
+    evidence: 'Independent re-test executed for `docs/design.md` with required grep
+      outputs.
+
+
+      Verification:
+
+      - `rg -n ''USBV|The USBV Workflow|phase precheck'' docs/design.md` output only
+      historical-context mentions.
+
+      - `rg -n ''contracts before code|DX-91|archive|historical'' docs/design.md`
+      confirms active guidance is DX-91 contracts-first; USBV mentions are marked
+      removed/superseded historical references.
+
+
+      Classification:
+
+      - Remaining USBV mentions in `docs/design.md` are archival/historical only,
+      not active workflow/process guidance.
+
+
+      Verdict:
+
+      - PASS; active design-surface USBV residue closed.
+
+
+      Spec link:
+
+      - `dx91-usbv-cleanup.fix-active-design-surface-usbv-residue`'
 - id: p1-models-tier
   name: 'Phase 1: RuleConfig fields + EscapeHatchTier + ESCAPE_TIER_MAP'
   status: locked
