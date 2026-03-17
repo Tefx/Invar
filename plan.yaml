@@ -24644,6 +24644,97 @@ phases:
     depends_on:
     - dx91-usbv-cleanup.retest-active-design-surface-usbv-removal
     agent: doc-reviewer
+  - id: dx91-usbv-cleanup.retest-active-usbv-archive-framing
+    name: Re-test USBV archival framing across active docs surfaces
+    status: pending
+    description: 'As an INDEPENDENT TESTER (integration-verifier), validate USBV archival
+      framing from a fresh perspective.
+
+
+      YOUR GOAL IS TO FIND PROBLEMS, not to confirm it works.
+
+
+      Test for:
+
+      - Happy path: `docs/diagrams.md` and `docs/agents.md` clearly present retained
+      USBV material as archived/historical only
+
+      - Edge cases: captions, headings, surrounding prose, and duplicate references
+      in `docs/` do not reintroduce active-tense workflow guidance
+
+      - Error scenarios: any remaining active workflow wording, inconsistent archive
+      labels, or missing archival framing in sibling docs
+
+
+      Document ALL findings. A test that discovers issues is a SUCCESS.
+
+      A test that finds nothing must justify the coverage achieved.
+
+
+      Independence Level: L1'
+    verification: '- Run grep-based review across `docs/` for USBV references and
+      archive/history framing
+
+      - Confirm the listed blocker files no longer describe USBV as active/current
+      workflow
+
+      - Record any remaining historical USBV mentions and verify each is explicitly
+      archived/historical'
+    evidence_template: '## Verification Report
+
+
+      **Tester**: integration-verifier (independent of implementation)
+
+      **Scope**: USBV archival framing in active documentation surfaces
+
+      **Independence Level**: L1
+
+
+      ### Test Execution
+
+      - Commands executed:
+
+      ```bash
+
+      rg -n "USBV|USBV workflow|usbv" docs/
+
+      rg -n "active|current|workflow|archive|historical" docs/diagrams.md docs/agents.md
+
+      ```
+
+      - Output summary: <key results>
+
+
+      ### Issues Found
+
+      | Severity | Description | Location | Reproduction |
+
+      |----------|-------------|----------|--------------|
+
+      | blocker | <issue> | <file:line> | <grep or read path> |
+
+      | should_fix | <issue> | <file:line> | <grep or read path> |
+
+
+      ### Coverage Assessment
+
+      - Blocker files reviewed: ✅/❌
+
+      - Sibling docs reviewed: <list>
+
+      - Remaining historical references justified: ✅/❌
+
+
+      ### Verdict
+
+      - [ ] PASS
+
+      - [ ] ISSUES_FOUND
+
+      - [ ] INCOMPLETE'
+    depends_on:
+    - dx91-usbv-cleanup.fix-active-usbv-archive-framing
+    agent: integration-verifier
 - id: p1-models-tier
   name: 'Phase 1: RuleConfig fields + EscapeHatchTier + ESCAPE_TIER_MAP'
   status: locked
