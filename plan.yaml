@@ -24315,6 +24315,15 @@ phases:
     depends_on:
     - p4-guard-integration.implement
     agent: integration-verifier
+  - id: p4-guard-integration.gate
+    name: Phase 4 Gate
+    status: pending
+    description: 'Gate review: Verify Phase 4 completion. Integration is minimal (3-5
+      lines). Guard passes on own codebase. No regressions.'
+    verification: Phase 4 complete. Integration wiring correct and non-regressing.
+    depends_on:
+    - p4-guard-integration.verify
+    agent: gate-reviewer
 - id: p5-output
   name: 'Phase 5: formatter.py + guard_output.py gating output'
   status: locked
