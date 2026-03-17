@@ -25100,3 +25100,60 @@ phases:
   status: locked
   depends_on:
   - cat-e-dead-assign
+  steps:
+  - id: cat-b-dead-export.audit-and-fix-dead-export-markers-20-markers
+    name: Audit and fix dead_export markers (20 markers)
+    status: pending
+    description: "Eliminate all 20 `@invar:allow dead_export` markers in source code.\n\
+      \n## Markers by file and sub-strategy:\n\n### B1: CLI/Typer commands (should\
+      \ be detected as entry points — 8 markers)\n\nThese functions are registered\
+      \ via `app.command()` or are Typer CLI entry points. The guard's `is_entry_point()`\
+      \ mechanism should detect them. If it does not, investigate why and fix the\
+      \ detection.\n\n- src/invar/shell/commands/init.py:87 — CLI entry point called\
+      \ by framework\n- src/invar/shell/commands/init.py:184 — CLI entry point called\
+      \ by framework\n- src/invar/shell/templates.py:154 — Typer CLI command registered\
+      \ at runtime via app.command()\n- src/invar/shell/templates.py:181 — Typer CLI\
+      \ command registered at runtime via app.command()\n- src/invar/shell/templates.py:212\
+      \ — Typer CLI command registered at runtime via app.command()\n- src/invar/shell/templates.py:247\
+      \ — Typer CLI command registered at runtime via app.command()\n\nFor init.py\
+      \ commands: check if guard's entry_point detection covers them. If not, fix\
+      \ detection.\nFor templates.py commands: these use `app.command()` decorator.\
+      \ Check if `is_entry_point()` detects `app.command()` pattern.\n\n### B2: Public\
+      \ helper APIs (need caller verification — 12 markers)\n\nThese claim to be public\
+      \ APIs for external integrations. Verify each has at least one real caller in\
+      \ src/ (not tests/). If no caller exists, the function may be dead code to remove.\n\
+      \n- src/invar/shell/testing.py:85 — `Public helper API used by external integrations`\n\
+      - src/invar/shell/testing.py:227 — `Backward-compatible CLI helper invoked by\
+      \ external callers`\n- src/invar/shell/prove/accept.py:57 — `Public helper API\
+      \ exported for external integrations`\n- src/invar/shell/prove/accept.py:102\
+      \ — `Public helper API exported for external integrations`\n- src/invar/shell/guard_output.py:53\
+      \ — `Public helper API exported for external integrations`\n- src/invar/shell/coverage.py:206\
+      \ — `Public helper API exported for external integrations`\n- src/invar/shell/coverage.py:265\
+      \ — `Public helper API exported for external integrations`\n- src/invar/shell/coverage.py:309\
+      \ — `Public helper API exported for external integrations`\n- src/invar/shell/mcp_config.py:120\
+      \ — `Public helper API exported for external integrations`\n- src/invar/shell/commands/merge.py:63\
+      \ — `Public helper API exported for external integrations`\n- src/invar/shell/commands/merge.py:115\
+      \ — `Public helper API exported for external integrations`\n\nFor EACH B2 marker:\n\
+      1. Run `uv run invar refs <file>::<function_name>` to find callers\n2. If caller\
+      \ exists in src/ → remove the marker (guard should be satisfied)\n3. If NO caller\
+      \ exists:\n   a. If function is clearly dead code → remove the function AND\
+      \ the marker\n   b. If function is genuinely public API for external consumers\
+      \ → add to migration report\n\n## CRITICAL: HUMAN REVIEW requirement\nIf ANY\
+      \ B2 markers cannot be eliminated by finding callers or removing dead code,\
+      \ produce a migration report listing:\n- Function name and location\n- Why it\
+      \ cannot be auto-fixed\n- Recommended action (pyproject.toml exempt or removal)\n\
+      \nAgent MUST NOT modify pyproject.toml. The migration report is the deliverable\
+      \ for human review.\n\n## Completion Criteria:\n- All B1 markers (8) eliminated\
+      \ by fixing entry point detection\n- All B2 markers (12) either eliminated or\
+      \ documented in migration report\n- `uv run invar guard --all` passes (or documents\
+      \ remaining markers needing human action)\n- grep hint: `grep -rn '@invar:allow\
+      \ dead_export' src/invar/`"
+    verification: '- `grep -rn ''@invar:allow dead_export'' src/invar/` returns 0
+      real markers (excluding rule code/docstrings)
+
+      - `uv run invar guard --all` passes
+
+      - If migration report produced: clearly lists functions needing human action
+
+      - `uv run pytest tests/ -x` passes'
+    agent: python-senior
