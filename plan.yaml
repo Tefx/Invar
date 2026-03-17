@@ -24112,24 +24112,31 @@ phases:
     status: pending
     description: "Add to src/invar/core/models.py:\n\n1. EscapeHatchTier(StrEnum)\
       \ with values: SUPPRESSIBLE, EXPENSIVE, NON_SUPPRESSIBLE\n\n2. ESCAPE_TIER_MAP:\
-      \ dict[str, EscapeHatchTier] mapping all 12 escape hatch rules to their tier:\n\
-      \   - Suppressible: dead_assign, dead_param, shell_pure_logic, shell_complexity\n\
-      \   - Expensive: shell_result, entry_point_too_thick, file_size, function_size\n\
-      \   - Non-suppressible: dead_export, stub_body, missing_contract, missing_doctest\n\
-      \n3. ESCAPE_TIER_COST: dict[EscapeHatchTier, int] = {SUPPRESSIBLE: 1, EXPENSIVE:\
-      \ 3, NON_SUPPRESSIBLE: 0}\n\n4. New RuleConfig fields (after existing pattern_exclude\
-      \ field):\n   - escape_suppressible_per_file: int = Field(default=3, ge=0)\n\
-      \   - escape_expensive_per_file: int = Field(default=2, ge=0)\n   - escape_suppressible_per_project:\
-      \ int = Field(default=10, ge=0)\n   - escape_expensive_per_project: int = Field(default=5,\
-      \ ge=0)\n   - escape_budget_limit: int = Field(default=15, ge=0)\n   - escape_warning_threshold:\
-      \ float = Field(default=0.8, ge=0.0, le=1.0)\n   - escape_exempt_patterns: dict[str,\
-      \ list[str]] = Field(default_factory=dict)\n   - escape_exempt_limit: int =\
-      \ Field(default=20, ge=0)\n\nPlace EscapeHatchTier after CodeLayer enum. Place\
-      \ tier maps after PYTHON_LAYER_LIMITS.\n\nPattern: Follow existing StrEnum pattern\
-      \ (Severity, CodeLayer). Follow existing RuleConfig Field pattern.\n\nFile:\
-      \ src/invar/core/models.py"
+      \ dict[str, EscapeHatchTier] mapping all 11 escape hatch rules to their tier:\n\
+      \   - Suppressible: dead_assign, dead_param, shell_pure_logic\n   - Expensive:\
+      \ shell_result, entry_point_too_thick, file_size, function_size\n   - Non-suppressible:\
+      \ dead_export, stub_body, missing_contract, missing_doctest\n\n   NOTE: shell_complexity\
+      \ is NOT in the tier map. The shell_too_complex rule uses the standalone @shell_complexity:\
+      \ marker syntax, not @invar:allow. It is governed by check_complexity_debt,\
+      \ not DX-96. The map has exactly 11 entries.\n\n3. ESCAPE_TIER_COST: dict[EscapeHatchTier,\
+      \ int] = {SUPPRESSIBLE: 1, EXPENSIVE: 3, NON_SUPPRESSIBLE: 0}\n\n4. Extend EscapeHatchDetail\
+      \ model with function context for combination penalty detection:\n   function_name:\
+      \ str | None = None  # enclosing function, populated during collection\n\n5.\
+      \ New RuleConfig fields (after existing pattern_exclude field):\n   - escape_suppressible_per_file:\
+      \ int = Field(default=3, ge=0)\n   - escape_expensive_per_file: int = Field(default=2,\
+      \ ge=0)\n   - escape_suppressible_per_project: int = Field(default=10, ge=0)\n\
+      \   - escape_expensive_per_project: int = Field(default=5, ge=0)\n   - escape_budget_limit:\
+      \ int = Field(default=15, ge=0)\n   - escape_warning_threshold: float = Field(default=0.8,\
+      \ ge=0.0, le=1.0)\n   - escape_exempt_patterns: dict[str, list[str]] = Field(default_factory=dict)\n\
+      \   - escape_exempt_limit: int = Field(default=20, ge=0)\n   - escape_exempt_warning:\
+      \ int = Field(default=15, ge=0)\n\nPlace EscapeHatchTier after CodeLayer enum.\
+      \ Place tier maps after PYTHON_LAYER_LIMITS.\n\nPattern: Follow existing StrEnum\
+      \ pattern (Severity, CodeLayer). Follow existing RuleConfig Field pattern.\n\
+      \nFile: src/invar/core/models.py"
     verification: uv run invar guard --all passes. EscapeHatchTier enum importable.
-      ESCAPE_TIER_MAP has exactly 12 entries. RuleConfig() instantiates with new defaults.
+      ESCAPE_TIER_MAP has exactly 11 entries (not 12 -- shell_complexity excluded).
+      RuleConfig() instantiates with new defaults including escape_exempt_warning=15.
+      EscapeHatchDetail has function_name field defaulting to None.
     agent: python-executor
   - id: p1-models-tier.verify
     name: Verify Phase 1 models
