@@ -25337,7 +25337,7 @@ phases:
       '
   - id: cat-e-dead-assign.verify-dead-assign-cleanup
     name: Verify dead_assign cleanup
-    status: pending
+    status: claimed
     description: 'As an INDEPENDENT TESTER, verify that all 5 dead_assign escape hatches
       have been eliminated without behavioral regression.
 
@@ -25366,6 +25366,8 @@ phases:
     depends_on:
     - cat-e-dead-assign.fix-dead-assign-escape-hatches-5-markers
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-17T20:03:21.518513+00:00'
   - id: cat-e-dead-assign.gate-category-e-dead-assign
     name: 'Gate: Category E dead_assign'
     status: pending
