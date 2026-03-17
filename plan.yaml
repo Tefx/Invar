@@ -24108,3 +24108,8 @@ phases:
   status: locked
   depends_on:
   - p1-models-tier
+- id: p3-budget-core
+  name: 'Phase 3: core/escape_budget.py check_escape_budget'
+  status: locked
+  depends_on:
+  - p2-by-file
