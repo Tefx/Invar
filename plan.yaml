@@ -24129,6 +24129,26 @@ phases:
     verification: uv run invar guard --all passes. EscapeHatchTier enum importable.
       ESCAPE_TIER_MAP has exactly 12 entries. RuleConfig() instantiates with new defaults.
     agent: python-executor
+  - id: p1-models-tier.verify
+    name: Verify Phase 1 models
+    status: pending
+    description: 'Independent verification: import EscapeHatchTier, ESCAPE_TIER_MAP,
+      ESCAPE_TIER_COST from invar.core.models. Verify:
+
+      - EscapeHatchTier has 3 members
+
+      - ESCAPE_TIER_MAP has 12 entries covering all rules from proposal
+
+      - ESCAPE_TIER_COST maps correctly (1, 3, 0)
+
+      - RuleConfig() new fields have correct defaults (3, 2, 10, 5, 15, 0.8, {}, 20)
+
+      - uv run invar guard --all passes (no regressions)'
+    verification: uv run invar guard --all passes. All new symbols importable and
+      correct.
+    depends_on:
+    - p1-models-tier.implement
+    agent: integration-verifier
 - id: p2-by-file
   name: 'Phase 2: EscapeHatchSummary.by_file property'
   status: locked
