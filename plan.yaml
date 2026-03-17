@@ -24133,3 +24133,10 @@ phases:
   status: locked
   depends_on:
   - p3-budget-core
+- id: final-gate
+  name: 'Final Gate: Full Integration Verification'
+  status: locked
+  depends_on:
+  - p5-output
+  - p6-config
+  - p7-non-suppressible
