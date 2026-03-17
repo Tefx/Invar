@@ -25730,7 +25730,7 @@ phases:
       '
   - id: cat-b-dead-export.human-review-dead-export-migration-report
     name: 'Human review: dead_export migration report'
-    status: claimed
+    status: done
     description: 'HUMAN REVIEW CHECKPOINT: Review the migration report from the previous
       step.
 
@@ -25761,6 +25761,30 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-17T20:38:23.279901+00:00'
+    done_at: '2026-03-17T20:42:31.334970+00:00'
+    evidence: 'Checkpoint review completed by gate-reviewer.
+
+
+      Findings:
+
+      - Previous dead_export fix step eliminated marker set directly; no migration
+      report required.
+
+      - No unauthorized `pyproject.toml` modifications detected.
+
+      - Remaining `dead_export` string occurrences are documentation/suggestion text
+      in rule implementation, not active escape-hatch markers.
+
+
+      Verdict:
+
+      - Auto-pass condition satisfied (no migration report necessary when markers
+      were eliminated in-place).
+
+
+      Spec link:
+
+      - `cat-b-dead-export.audit-and-fix-dead-export-markers-20-markers`'
   - id: cat-b-dead-export.verify-dead-export-cleanup
     name: Verify dead_export cleanup
     status: pending
