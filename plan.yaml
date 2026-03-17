@@ -24750,3 +24750,30 @@ phases:
     depends_on:
     - p0-migration.inventory-current-escape-hatch-markers
     agent: python-senior
+  - id: p0-migration.verify-guard-passes-after-migration
+    name: Verify guard passes after migration
+    status: pending
+    description: 'Run uv run invar guard --all and confirm Invar''s own codebase passes
+      cleanly after the marker migration.
+
+
+      Verify:
+
+      - All existing tests still pass
+
+      - Guard output shows no new violations
+
+      - The pyproject.toml exempt sections are well-formed TOML
+
+      - No inline @invar:allow markers remain for non-suppressible rules (dead_export,
+      stub_body, missing_contract, missing_doctest)
+
+
+      Note: The exempt config is not yet consumed by guard (that''s Phase 6). This
+      step only verifies that removing/migrating inline markers doesn''t break existing
+      guard behavior.'
+    verification: uv run invar guard --all passes. No non-suppressible inline markers
+      remain. pyproject.toml is valid TOML.
+    depends_on:
+    - p0-migration.create-pyproject-toml-exempt-config-and-migrate-markers
+    agent: integration-verifier
