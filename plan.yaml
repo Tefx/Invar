@@ -24551,6 +24551,99 @@ phases:
       Spec link:
 
       - `dx91-usbv-cleanup.fix-active-design-surface-usbv-residue`'
+  - id: dx91-usbv-cleanup.fix-active-usbv-archive-framing
+    name: Fix active USBV residue archival framing across docs surfaces
+    status: pending
+    description: 'Fix ALL active-design diagram residue for the USBV blocker family.
+
+
+      ## Blockers to Fix (ALL of these, not just the first)
+
+      - `docs/diagrams.md` around lines 7 and 146 still presents the USBV workflow
+      as active instead of clearly archived/historical.
+
+      - `docs/agents.md` historical section framing is inconsistent and should be
+      aligned with the archive posture.
+
+
+      ## Root Cause vs Symptom
+
+      - Root cause: archival cleanup left sibling documentation surfaces with active-tense
+      workflow framing after USBV was retired.
+
+      - Symptom: design and agent docs still read as if USBV is part of the current
+      workflow.
+
+      - Why this fix is not surface-level: update all active-facing wording and labels
+      together, then search sibling docs for the same framing pattern.
+
+
+      ## Required sibling checks
+
+      - Search `docs/` for active-tense USBV framing beyond the listed files.
+
+      - Confirm diagrams, captions, headings, and nearby prose consistently mark USBV
+      as archived/historical when retained.
+
+      - Preserve historical references only when explicitly framed as archive/history,
+      not active guidance.
+
+
+      ## Grep hints
+
+      - `rg -n "USBV|USBV workflow|usbv" docs/`
+
+      - `rg -n "active|current|workflow|archive|historical" docs/diagrams.md docs/agents.md`
+
+
+      ## Completion Criteria
+
+      - `docs/diagrams.md` frames USBV only as archived/historical where retained.
+
+      - `docs/agents.md` historical wording matches the same archival posture.
+
+      - Sibling doc search finds no additional active USBV workflow residue in active
+      documentation surfaces.'
+    verification: '- Grep evidence shows listed files no longer present USBV as an
+      active workflow
+
+      - Sibling search evidence is provided for `docs/`
+
+      - Historical USBV references, if retained, are explicitly archived/historical
+      rather than active guidance'
+    evidence_template: '## USBV archival framing fix
+
+
+      **Files updated**:
+
+      - <path>
+
+
+      **Sibling search commands**:
+
+      ```bash
+
+      rg -n "USBV|USBV workflow|usbv" docs/
+
+      rg -n "active|current|workflow|archive|historical" docs/diagrams.md docs/agents.md
+
+      ```
+
+
+      **Findings addressed**:
+
+      - <list each active-framing occurrence fixed>
+
+
+      **Remaining historical references**:
+
+      - <file:line with archival framing justification, or `none`>
+
+
+      **Verdict**: PASS | ISSUES_FOUND'
+    depends_on:
+    - dx91-usbv-cleanup.retest-active-design-surface-usbv-removal
+    agent: doc-reviewer
 - id: p1-models-tier
   name: 'Phase 1: RuleConfig fields + EscapeHatchTier + ESCAPE_TIER_MAP'
   status: locked
