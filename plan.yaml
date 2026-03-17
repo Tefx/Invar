@@ -24103,3 +24103,8 @@ phases:
 - id: p1-models-tier
   name: 'Phase 1: RuleConfig fields + EscapeHatchTier + ESCAPE_TIER_MAP'
   status: pending
+- id: p2-by-file
+  name: 'Phase 2: EscapeHatchSummary.by_file property'
+  status: locked
+  depends_on:
+  - p1-models-tier
