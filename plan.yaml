@@ -24174,7 +24174,7 @@ phases:
 
       - USBV fully removed from active surfaces per DX-91 spec'
     depends_on:
-    - dx91-usbv-cleanup.retest-active-design-surface-usbv-removal
+    - dx91-usbv-cleanup.retest-active-usbv-archive-framing
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-17T20:42:59.108522+00:00'
