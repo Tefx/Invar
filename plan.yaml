@@ -24424,7 +24424,8 @@ phases:
   - id: p6-config.implement
     name: Implement config parsing for escape gating fields
     status: pending
-    description: 'Extend config parsing to read new escape_* fields from pyproject.toml.
+    description: 'Extend config parsing to read new escape_* fields and exempt patterns
+      from pyproject.toml. Effort: Medium (symbol-level glob is new capability).
 
 
       File: src/invar/core/utils.py (parse_guard_config function) -- verify this is
@@ -24453,6 +24454,8 @@ phases:
 
       escape_exempt_limit = 20
 
+      escape_exempt_warning = 15
+
 
       [tool.invar.exempt.dead_export]
 
@@ -24470,6 +24473,26 @@ phases:
       and mapped to RuleConfig.escape_exempt_patterns dict.
 
 
+      NEW CAPABILITY: :: pattern syntax parser
+
+      - file_glob::symbol_glob separates file path from symbol name
+
+      - file_glob matches file paths using standard glob wildcards (*, **, ?)
+
+      - :: is the separator between file path and symbol name
+
+      - symbol_glob matches function/method names using * wildcards
+
+      - Examples: cli/commands/*.py (file-only), mcp/server.py::create_* (file + symbol),
+      core/patterns/detector.py::*.description (file + dotted symbol)
+
+      - Must implement a pattern matcher that can check whether a given (file_path,
+      symbol_name) pair matches a pattern
+
+      - This is a NEW parsing capability not present in the codebase -- requires careful
+      design
+
+
       Check src/invar/core/utils.py extract_guard_section and parse_guard_config to
       understand the current parsing flow. The exempt section is under [tool.invar.exempt],
       NOT under [tool.invar.guard], so it needs special extraction.
@@ -24477,9 +24500,12 @@ phases:
 
       Files: src/invar/core/utils.py (or src/invar/shell/config.py depending on where
       TOML parsing lives)'
-    verification: uv run invar guard --all passes. New escape_* fields read from pyproject.toml
-      correctly. Exempt patterns parsed from [tool.invar.exempt.*] sections.
-    agent: python-executor
+    verification: 'uv run invar guard --all passes. New escape_* fields (including
+      escape_exempt_warning) read from pyproject.toml correctly. Exempt patterns parsed
+      from [tool.invar.exempt.*] sections. :: symbol-glob patterns correctly match
+      (file_path, symbol_name) pairs. Pattern matcher handles: file-only globs, file::symbol
+      globs, wildcards in both parts.'
+    agent: python-senior
   - id: p6-config.verify
     name: Verify config parsing
     status: pending
