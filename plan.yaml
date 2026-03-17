@@ -25704,3 +25704,40 @@ phases:
   status: locked
   depends_on:
   - cat-a-server
+  steps:
+  - id: cat-c-entry-point.refactor-thick-entry-points-10-markers
+    name: Refactor thick entry points (10 markers)
+    status: pending
+    description: "Eliminate all 10 `@invar:allow entry_point_too_thick` markers by\
+      \ extracting logic into Shell helper functions.\n\n## Markers:\n\n### commands/doc.py\
+      \ (6 markers):\n1. Line 140: `Multi-file glob + dual output format orchestration`\n\
+      2. Line 211: `Section addressing + output format orchestration`\n3. Line 246:\
+      \ `Multi-file glob + pattern/level filtering orchestration`\n4. Line 311: `Content\
+      \ input + section replacement orchestration`\n5. Line 348: `Content input +\
+      \ position-based insertion orchestration`\n6. Line 395: `Section deletion with\
+      \ children handling`\n\n### commands/guard.py (3 markers):\n7. Line 185: `Main\
+      \ CLI entry point, orchestrates all verification phases`\n8. Line 585: `Python\
+      \ reference finding with examples`\n9. Line 606: `Rules display with filtering\
+      \ and dual output modes`\n\n### config.py (1 marker):\n10. Line 533: `False\
+      \ positive - .get() matches router.get pattern`\n\n## Strategy:\n\nFor doc.py\
+      \ and guard.py (9 markers): Extract the orchestration logic from each entry\
+      \ point into a dedicated Shell helper function (e.g., `_do_doc_toc(...)`, `_do_guard_run(...)`)\
+      \ that returns `Result[T, E]`. The entry point becomes a thin wrapper: parse\
+      \ args, call helper, handle Result.\n\nFor config.py (1 marker): This is marked\
+      \ as a false positive — `.get()` matches the router.get pattern in the entry_point_too_thick\
+      \ heuristic. Options:\n- If guard's heuristic can be improved to not flag `.get()`\
+      \ as a route registration — fix in guard (preferred)\n- If not fixable in guard\
+      \ — refactor the function to avoid triggering the heuristic\n\n**Pattern**:\
+      \ Each thick entry point should become:\n```python\n@app.command()\ndef my_command(args...):\n\
+      \    result = _do_my_command(args...)\n    if result.is_err:\n        # handle\
+      \ error\n    # handle success\n```\n\ngrep hint: `grep -rn '@invar:allow entry_point_too_thick'\
+      \ src/invar/`\n\n## Completion Criteria:\n- ALL 10 markers removed\n- Entry\
+      \ points are thin wrappers\n- Shell helpers return Result[T,E]\n- `uv run invar\
+      \ guard --all` passes\n- `uv run pytest tests/ -x` passes"
+    verification: '- `grep -rn ''@invar:allow entry_point_too_thick'' src/invar/`
+      returns 0 matches (excluding rule code/docstrings)
+
+      - `uv run invar guard --all` passes
+
+      - `uv run pytest tests/ -x` passes'
+    agent: python-senior
