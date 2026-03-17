@@ -24476,6 +24476,16 @@ phases:
     depends_on:
     - p6-config.implement
     agent: integration-verifier
+  - id: p6-config.gate
+    name: Phase 6 Gate
+    status: pending
+    description: 'Gate review: Verify Phase 6 completion. Config parsing handles all
+      new fields. Exempt patterns parsed correctly. Pydantic validation catches invalid
+      values. Guard passes.'
+    verification: Phase 6 complete. Config parsing correct and validated.
+    depends_on:
+    - p6-config.verify
+    agent: gate-reviewer
 - id: p7-non-suppressible
   name: 'Phase 7: Non-suppressible enforcement'
   status: locked
