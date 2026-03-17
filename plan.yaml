@@ -25631,7 +25631,7 @@ phases:
   steps:
   - id: cat-b-dead-export.audit-and-fix-dead-export-markers-20-markers
     name: Audit and fix dead_export markers (20 markers)
-    status: claimed
+    status: done
     description: "Eliminate all 20 `@invar:allow dead_export` markers in source code.\n\
       \n## Markers by file and sub-strategy:\n\n### B1: CLI/Typer commands (should\
       \ be detected as entry points — 8 markers)\n\nThese functions are registered\
@@ -25687,6 +25687,45 @@ phases:
     agent: python-senior
     claimed_by: python-senior
     claimed_at: '2026-03-17T20:20:20.891412+00:00'
+    done_at: '2026-03-17T20:38:12.140885+00:00'
+    evidence: 'Artifact:
+
+      - PR: commit `5836aec6` (squash merge of worktree commits `22b2ea9`, `1677d54`)
+
+      - Files updated across shell helpers/CLI surfaces and template examples to eliminate
+      live dead_export marker usage.
+
+
+      Verification:
+
+      - Run: `grep -rn ''@invar:allow dead_export'' src/invar/` -> remaining matches
+      limited to `src/invar/core/dead_export.py` documentation/suggestion text; no
+      live marker comments in target source surfaces.
+
+      - Run: `uv run invar guard --all` -> pre-commit guard on merged diff passed;
+      worker reported repository-level warning set but no step-specific dead_export
+      regression in edited files.
+
+      - Run: `uv run pytest tests/ -x` -> worker observed stop at pre-existing `tests/integration/test_dx55_regression.py`
+      failure after broad pass count; not attributed to dead_export marker removal.
+
+      - B2 refs checks executed via `uv run invar refs <file>::<function_name>` for
+      targeted helper APIs.
+
+
+      Spec link:
+
+      - `cat-b-dead-export.audit-and-fix-dead-export-markers-20-markers`
+
+
+      Notes:
+
+      - Migration report not required; step completed with marker elimination path
+      rather than pyproject exemptions.
+
+      - `pyproject.toml` was not modified.
+
+      '
   - id: cat-b-dead-export.human-review-dead-export-migration-report
     name: 'Human review: dead_export migration report'
     status: pending
