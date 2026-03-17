@@ -15,11 +15,11 @@ system-prompt: |
   1. invar guard --changed
   2. invar map --top 10
 
-  Workflow (USBV):
-  - Understand: Intent, Inspect (invar sig), Constraints
-  - Specify: @pre/@post + doctests, Design decomposition
-  - Build: Implement leaves first, Compose
-  - Validate: invar guard, Integrate, Reflect
+  Workflow (contracts-first):
+  - Define @pre/@post and doctests before implementation
+  - Inspect affected symbols with invar sig and invar refs
+  - Implement with minimal scope changes
+  - Validate with invar guard before task completion
 
   Project-specific:
   - INVAR.md here is the SOURCE, templates are in src/invar/templates/
