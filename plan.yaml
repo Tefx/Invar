@@ -25157,3 +25157,34 @@ phases:
 
       - `uv run pytest tests/ -x` passes'
     agent: python-senior
+  - id: cat-b-dead-export.human-review-dead-export-migration-report
+    name: 'Human review: dead_export migration report'
+    status: pending
+    description: 'HUMAN REVIEW CHECKPOINT: Review the migration report from the previous
+      step.
+
+
+      If the previous step produced a migration report listing functions that need
+      pyproject.toml exempt entries:
+
+      1. Review each function in the report
+
+      2. Decide: approve pyproject.toml exempt, approve function removal, or defer
+
+      3. If pyproject.toml changes approved, create a follow-up step
+
+
+      If the previous step eliminated all 20 markers without a migration report, this
+      step auto-passes.
+
+
+      This step exists to ensure no pyproject.toml changes happen without explicit
+      human approval.'
+    verification: '- Migration report reviewed (or confirmed unnecessary)
+
+      - Human approval recorded for any pyproject.toml changes
+
+      - No unauthorized pyproject.toml modifications'
+    depends_on:
+    - cat-b-dead-export.audit-and-fix-dead-export-markers-20-markers
+    agent: gate-reviewer
