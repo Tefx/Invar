@@ -25668,3 +25668,34 @@ phases:
     depends_on:
     - cat-a-server.fix-shell-result-in-server-py-14-markers
     agent: integration-verifier
+  - id: cat-a-server.gate-category-a-server-py
+    name: 'Gate: Category A server.py'
+    status: pending
+    description: 'Gate review: Verify server.py shell_result phase completion.
+
+
+      review_depth: STANDARD
+
+      review_depth_rationale: 14 markers, follows established pattern from guard_runs
+      + handlers phases.
+
+
+      Review criteria:
+
+      1. All 14 shell_result markers eliminated
+
+      2. Result[T,E] used correctly
+
+      3. MCP server creation and tool registration verified
+
+      4. Guard passes, tests pass
+
+      5. ALL 43 shell_result markers across 3 files now eliminated'
+    verification: '- All evidence reviewed
+
+      - 14/14 markers eliminated (43/43 total shell_result complete)
+
+      - Guard clean'
+    depends_on:
+    - cat-a-server.verify-server-py-shell-result-cleanup
+    agent: gate-reviewer
