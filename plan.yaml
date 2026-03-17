@@ -24161,7 +24161,7 @@ phases:
 
       - USBV fully removed from active surfaces per DX-91 spec'
     depends_on:
-    - dx91-usbv-cleanup.verify-usbv-removal
+    - dx91-usbv-cleanup.retest-root-surface-usbv-removal
     agent: gate-reviewer
   - id: dx91-usbv-cleanup.fix-root-surface-usbv-residue
     name: Fix ALL remaining USBV residue across active project-root surfaces
