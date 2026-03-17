@@ -24681,3 +24681,44 @@ phases:
 - id: p0-migration
   name: 'Phase 0: Migration — Move Invar''s own escape hatches to pyproject.toml exempt'
   status: pending
+  steps:
+  - id: p0-migration.inventory-current-escape-hatch-markers
+    name: Inventory current escape hatch markers
+    status: pending
+    description: 'Inventory all @invar:allow markers in Invar''s own codebase.
+
+
+      Run: grep -rn ''@invar:allow'' src/invar/ --include=''*.py''
+
+
+      Produce a structured inventory:
+
+      - Count by rule (dead_export, shell_result, stub_body, missing_contract, missing_doctest,
+      entry_point_too_thick, etc.)
+
+      - Count by file
+
+      - Classify each as: legitimate (needs pyproject.toml exempt) vs removable (marker
+      can be deleted because the underlying issue can be fixed)
+
+
+      Expected approximate counts (from proposal):
+
+      - ~43 shell_result (MCP handlers)
+
+      - ~22 dead_export (CLI entry points, MCP handlers)
+
+      - ~9 entry_point_too_thick
+
+      - ~9 missing_contract (abstract properties, boolean predicates)
+
+      - Various missing_doctest, stub_body
+
+
+      File: n/a (inventory only, no code changes)
+
+
+      Output: Structured inventory table with classification.'
+    verification: Inventory produced with per-rule and per-file counts. Each marker
+      classified as exempt-eligible or removable.
+    agent: python-senior
