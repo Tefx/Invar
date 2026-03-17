@@ -24359,6 +24359,27 @@ phases:
     verification: uv run invar guard --all passes. JSON output includes gating structure
       when violations present. Rich Panel displays correctly for limit-exceeded scenario.
     agent: python-senior
+  - id: p5-output.verify
+    name: Verify gating output
+    status: pending
+    description: 'Independent verification:
+
+      1. Run uv run invar guard --all -- should pass (no gating violations on own
+      codebase)
+
+      2. Verify JSON output structure matches proposal spec when gating violations
+      exist (construct test scenario)
+
+      3. Verify Rich Panel output renders correctly for limit-exceeded case
+
+      4. Verify non-suppressible error message matches proposal exactly (no pyproject.toml
+      syntax leaked)
+
+      5. Verify that when under limit, output is unchanged from current behavior'
+    verification: uv run invar guard --all passes. Output formats match proposal spec.
+    depends_on:
+    - p5-output.implement
+    agent: integration-verifier
 - id: p6-config
   name: 'Phase 6: Config parsing pyproject.toml exempt patterns'
   status: locked
