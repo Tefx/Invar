@@ -26063,3 +26063,41 @@ phases:
 
       - Final report produced with before/after counts'
     agent: integration-verifier
+  - id: final-verify.gate-final-escape-hatch-cleanup
+    name: 'Gate: Final escape hatch cleanup'
+    status: pending
+    description: 'FINAL GATE: Verify the entire DX-96 escape hatch cleanup project
+      is complete.
+
+
+      review_depth: THOROUGH
+
+      review_depth_rationale: Project-level gate covering ~83 eliminated markers across
+      all categories.
+
+
+      Review criteria:
+
+      1. All categories addressed (A through E)
+
+      2. Escape hatch census shows only kept markers remain
+
+      3. Guard passes clean
+
+      4. Full test suite passes
+
+      5. No regressions
+
+      6. Human-approved deferrals documented
+
+      7. Final report is complete and accurate'
+    verification: '- All phase gates passed
+
+      - Census report verified
+
+      - Guard clean
+
+      - Project complete'
+    depends_on:
+    - final-verify.full-escape-hatch-census-and-guard-run
+    agent: gate-reviewer
