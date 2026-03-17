@@ -25039,7 +25039,7 @@ phases:
   steps:
   - id: cat-e-dead-assign.fix-dead-assign-escape-hatches-5-markers
     name: Fix dead_assign escape hatches (5 markers)
-    status: claimed
+    status: done
     description: 'Eliminate all 5 `@invar:allow dead_assign` markers in source code.
 
 
@@ -25106,6 +25106,39 @@ phases:
     agent: python-executor
     claimed_by: python-executor
     claimed_at: '2026-03-17T19:32:29.206540+00:00'
+    done_at: '2026-03-17T20:00:49.866907+00:00'
+    evidence: 'Artifact:
+
+      - PR: commit 9bdf6a5 (squash merge of worktree commit 2a741cf)
+
+
+      Verification:
+
+      - Run: `grep -rn ''@invar:allow dead_assign'' src/invar/mcp/handlers.py src/invar/core/purity.py
+      src/invar/core/hypothesis_strategies.py src/invar/core/doc_parser.py` -> no
+      matches.
+
+      - Run: `uv run pytest tests/core/test_dead_assign.py tests/integration/test_guard_fp_harness_cross_repo.py`
+      -> 38 passed, 1 warning.
+
+      - Run: `uv run invar guard` (targeted dead_assign check on affected files) ->
+      0 violations.
+
+
+      Spec link:
+
+      - `cat-e-dead-assign.fix-dead-assign-escape-hatches-5-markers`
+
+
+      Notes:
+
+      - Removed dead_assign escape-hatch markers in targeted loop-carried-state locations;
+      behavior preserved.
+
+      - Out-of-scope issue reported by worker: `test_dx55_regression.py` failure related
+      to CLAUDE template sync (not part of this step).
+
+      '
   - id: cat-e-dead-assign.verify-dead-assign-cleanup
     name: Verify dead_assign cleanup
     status: pending
