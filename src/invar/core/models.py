@@ -99,6 +99,7 @@ ESCAPE_TIER_MAP: dict[str, EscapeHatchTier] = {
     "entry_point_too_thick": EscapeHatchTier.EXPENSIVE,
     "file_size": EscapeHatchTier.EXPENSIVE,
     "function_size": EscapeHatchTier.EXPENSIVE,
+    "shell_too_complex": EscapeHatchTier.EXPENSIVE,
     # Non-suppressible: Zero-cost, must fix
     "dead_export": EscapeHatchTier.NON_SUPPRESSIBLE,
     "stub_body": EscapeHatchTier.NON_SUPPRESSIBLE,
