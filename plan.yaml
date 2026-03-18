@@ -25231,7 +25231,7 @@ phases:
   steps:
   - id: p2-by-file.implement
     name: Implement EscapeHatchSummary.by_file property
-    status: claimed
+    status: done
     description: 'Add by_file property to EscapeHatchSummary in src/invar/core/models.py
       (after existing by_rule property):
 
@@ -25251,6 +25251,39 @@ phases:
     agent: python-executor
     claimed_by: python-executor
     claimed_at: '2026-03-18T17:58:53.766633+00:00'
+    done_at: '2026-03-18T18:02:52.068220+00:00'
+    evidence: 'Artifact:
+
+      - Commit: 8c089318fdef7309d6b9ae2b19944bb1eb4cbc9e
+
+      - File changed: src/invar/core/models.py
+
+
+      Verification:
+
+      - Implemented `EscapeHatchSummary.by_file` property using existing `by_rule`
+      pattern
+
+      - Added @post contract and doctests covering: empty summary, single file single
+      rule, single file multiple rules, multiple files
+
+      - Run: uv run python -m doctest src/invar/core/models.py -v -> 85 passed, 0
+      failed
+
+      - Run: uv run pyright src/invar/core/models.py -> 0 errors, 0 warnings
+
+      - Commit hook evidence: INVAR.md protection, Ruff, mypy, Invar Guard passed
+
+
+      Spec link:
+
+      - p2-by-file.implement step requirement for `by_file` grouped mapping and doctest
+      coverage
+
+
+      Gaps/Notes:
+
+      - Scope limited to Phase 2 implementation surface only.'
   - id: p2-by-file.verify
     name: Verify Phase 2 by_file
     status: pending
