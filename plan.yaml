@@ -28296,10 +28296,10 @@ phases:
       Guard passes.
     agent: gate-reviewer
   - id: p0-migration.verify-guard-passes-after-migration
-    name: Verify guard passes after migration
+    name: Verify guard passes after post-config migration finalization
     status: pending
     description: 'Run uv run invar guard --all and confirm Invar''s own codebase passes
-      cleanly after the marker migration.
+      cleanly after post-config marker migration finalization.
 
 
       Verify:
@@ -28308,17 +28308,19 @@ phases:
 
       - Guard output shows no new violations
 
-      - The pyproject.toml exempt sections are well-formed TOML
+      - The pyproject.toml exempt sections are well-formed TOML and actively honored
+      by the implemented config path
 
       - No inline @invar:allow markers remain for non-suppressible rules (dead_export,
       stub_body, missing_contract, missing_doctest)
 
 
-      Note: The exempt config is not yet consumed by guard (that''s Phase 6). This
-      step only verifies that removing/migrating inline markers doesn''t break existing
-      guard behavior.'
+      This verification now belongs to post-p6 migration finalization because guard
+      must consume exempt config before inline-marker removal can be validated.'
     verification: uv run invar guard --all passes. No non-suppressible inline markers
-      remain. pyproject.toml is valid TOML.
+      remain. pyproject.toml is valid TOML and exempt config is honored by guard.
+    depends_on:
+    - p0-migration.remove-migrated-inline-markers
     agent: integration-verifier
   - id: p0-migration.remove-migrated-inline-markers
     name: Remove migrated inline markers after config support is live
