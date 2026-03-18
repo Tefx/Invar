@@ -29846,3 +29846,61 @@ phases:
     depends_on:
     - p0-migration.remove-safe-migrated-inline-markers
     agent: integration-verifier
+  - id: p0-migration.fix-remaining-guard-blockers
+    name: Fix remaining guard blockers from safe marker removal and final acceptance
+    status: pending
+    description: 'Batched p8-only remediation to achieve a deterministic Invar codebase
+      guard pass after the failed safe-marker-removal verification and failed final
+      acceptance criterion 8.
+
+
+      Scope is intentionally narrow:
+
+      - Resolve only the remaining `uv run invar guard --all` blockers surfaced by
+      `p0-migration.remove-safe-migrated-inline-markers` and `final-gate.acceptance`
+
+      - Limit changes to localized contract/doctest fallout, dead export cleanup,
+      and similarly local guard repairs in the touched migration-finalization surface
+
+      - Do NOT perform broad refactors, architecture changes, cross-phase cleanup,
+      or `pyproject.toml` edits
+
+
+      Required execution behavior:
+
+      - Use the exact command family `uv run invar guard --all`
+
+      - Diagnose the current failing guard findings and batch-fix ALL remaining blockers
+      needed for a clean pass, not just the first failure
+
+      - If a blocker would require non-local redesign, leave the code unchanged and
+      document why it exceeds this rework scope
+
+
+      Out-of-scope guardrail:
+
+      - No broad migration redesign
+
+      - No new exemption config
+
+      - No unrelated cleanup beyond what is required to make the localized guard blockers
+      pass
+
+
+      Completion criteria:
+
+      - Remaining guard blockers caused by safe marker removal / final acceptance
+      fallout are resolved with localized fixes only
+
+      - Evidence distinguishes fixed blockers from any intentionally deferred items
+      that exceed this narrow rework scope
+
+      - The rework path replaces the failed execution path without reviving failed
+      steps as active blockers'
+    verification: '- Main path: targeted local fixes close the remaining guard blockers
+
+      - Required proof command: `uv run invar guard --all`
+
+      - Failure-path evidence explains any item intentionally left deferred because
+      it would require broad refactoring outside this rework scope'
+    agent: python-senior
