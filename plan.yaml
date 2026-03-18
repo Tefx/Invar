@@ -26483,7 +26483,7 @@ phases:
       - `cat-a-guard-runs.verify-guard-runs-py-shell-result-cleanup`'
 - id: cat-a-handlers
   name: 'Category A: shell_result in handlers.py (21 markers)'
-  status: in_progress
+  status: done
   depends_on:
   - cat-a-guard-runs
   steps:
@@ -26685,7 +26685,7 @@ phases:
       - `cat-a-handlers.fix-shell-result-in-handlers-py-21-markers`'
   - id: cat-a-handlers.gate-category-a-handlers-py
     name: 'Gate: Category A handlers.py'
-    status: claimed
+    status: done
     description: 'Gate review: Verify handlers.py shell_result phase completion.
 
 
@@ -26720,9 +26720,39 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-18T02:44:50.815419+00:00'
+    done_at: '2026-03-18T02:50:06.552525+00:00'
+    evidence: 'Category A handlers gate review completed (STANDARD depth).
+
+
+      Gate findings:
+
+      - 21/21 `@invar:allow shell_result` markers in `handlers.py` addressed and removed.
+
+      - Core/Shell boundary respected; handlers remain shell-layer with Result-based
+      contracts.
+
+      - Result flow correctness validated end-to-end for handlers and server boundary
+      unwrapping/error conversion.
+
+      - Guard checks pass for modified scope.
+
+      - MCP-related test suites pass; one unrelated pre-existing regression family
+      outside handler scope noted as non-blocking.
+
+
+      Verdict:
+
+      - PASS; Category A handlers phase ready to advance to `cat-a-server`.
+
+
+      Spec link:
+
+      - `cat-a-handlers.fix-shell-result-in-handlers-py-21-markers`
+
+      - `cat-a-handlers.verify-handlers-py-shell-result-cleanup`'
 - id: cat-a-server
   name: 'Category A: shell_result in server.py (14 markers)'
-  status: locked
+  status: pending
   depends_on:
   - cat-a-handlers
   steps:
