@@ -175,6 +175,12 @@ def _scan_and_check(
     for escape_violation in check_duplicate_escape_reasons(all_escapes):
         report.add_violation(escape_violation)
 
+    # P4: Check escape hatch budget and policy constraints
+    from invar.core.escape_budget import check_escape_budget
+
+    for budget_violation in check_escape_budget(report.escape_hatches, config, all_file_infos):
+        report.add_violation(budget_violation)
+
     return Success(report)
 
 
