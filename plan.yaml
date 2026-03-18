@@ -28229,8 +28229,11 @@ phases:
       - authoritative_contract_source: <template/policy source now using shell_complexity>
 
       '
+    refs:
+    - tests/integration/test_dx91_destructive_regression_harness.py
+    - INVAR.md
     depends_on:
-    - final-verify.gate-final-escape-hatch-cleanup
+    - final-verify.retest-template-sync-guard-complexity
     agent: python-senior
   - id: final-verify.retest-dx91-expected-invar-fixtures
     name: Retest DX91 expected INVAR.md fixture synchronization
