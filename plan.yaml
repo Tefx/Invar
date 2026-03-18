@@ -25954,7 +25954,7 @@ phases:
       output extensions'
   - id: p5-output.verify
     name: Verify gating output
-    status: pending
+    status: claimed
     description: 'Independent verification:
 
       1. Run uv run invar guard --all -- should pass (no gating violations on own
@@ -25973,6 +25973,8 @@ phases:
     depends_on:
     - p5-output.implement
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-18T20:38:40.276168+00:00'
   - id: p5-output.gate
     name: Phase 5 Gate
     status: pending
