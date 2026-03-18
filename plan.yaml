@@ -25707,7 +25707,7 @@ phases:
       no silent drop paths'
   - id: p4-guard-integration.verify
     name: Verify guard integration
-    status: pending
+    status: claimed
     description: "As an INDEPENDENT TESTER (`integration-verifier`), validate the\
       \ guard pipeline integration from a fresh perspective.\n\nYOUR GOAL IS TO FIND\
       \ PROBLEMS, not to confirm it works.\n\nTargeted checks:\n1. Run the real guard\
@@ -25738,6 +25738,8 @@ phases:
     depends_on:
     - p4-guard-integration.implement
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-18T20:16:48.221089+00:00'
   - id: p4-guard-integration.gate
     name: Phase 4 Gate
     status: pending
