@@ -26426,7 +26426,7 @@ phases:
       closure path.'
   - id: p7-non-suppressible.gate
     name: Phase 7 Gate
-    status: pending
+    status: claimed
     description: 'Gate review: Verify Phase 7 completion. Non-suppressible rules cannot
       be silently suppressed. Existing Invar codebase passes (any dead_export inline
       markers handled via exempt or removal). Guard passes.'
@@ -26434,6 +26434,8 @@ phases:
     depends_on:
     - p7-non-suppressible.verify
     agent: gate-reviewer
+    claimed_by: gate-reviewer
+    claimed_at: '2026-03-18T20:56:34.544511+00:00'
 - id: final-gate
   name: 'Final Gate: Full Integration Verification'
   status: locked
