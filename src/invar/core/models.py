@@ -1,4 +1,3 @@
-# @invar:allow file_size: LX-10 added layer types and functions, extraction planned
 """
 Pydantic models for Invar.
 

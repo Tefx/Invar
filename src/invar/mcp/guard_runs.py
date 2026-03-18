@@ -112,6 +112,7 @@ def _fix_json_newlines(text: str) -> Result[str, str]:
 
 
 # @shell_orchestration: MCP deferred guard JSON parsing (kept local for protocol parity)
+# @shell_complexity: Fallback parse path preserves behavior for malformed newline-containing JSON
 def _parse_guard_json(stdout: str) -> Result[dict[str, Any], str]:
     text = stdout.strip()
     if not text:
