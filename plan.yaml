@@ -25393,7 +25393,7 @@ phases:
   steps:
   - id: p3-budget-core.implement
     name: Implement core/escape_budget.py check_escape_budget
-    status: claimed
+    status: done
     description: "Create NEW file: src/invar/core/escape_budget.py\n\nSingle-responsibility\
       \ Core module. Main function:\n\n```python\n@pre(lambda summary, config, file_infos:\
       \ isinstance(summary, EscapeHatchSummary) and isinstance(config, RuleConfig)\
@@ -25443,6 +25443,33 @@ phases:
     agent: python-senior
     claimed_by: python-senior
     claimed_at: '2026-03-18T18:24:44.782530+00:00'
+    done_at: '2026-03-18T18:38:53.291084+00:00'
+    evidence: 'Artifact:
+
+      - Commit: c43cc9e1bdb72d1e0c22af89b97348837bd3aa5f
+
+      - New file: src/invar/core/escape_budget.py
+
+
+      Verification:
+
+      - Run: uv run python -m doctest -v src/invar/core/escape_budget.py -> 32 passed,
+      0 failed
+
+      - Run: uv run invar guard --all -> passed (errors=0)
+
+      - Run: uv run python -c "from invar.core.escape_budget import check_escape_budget;
+      print(callable(check_escape_budget))" -> True
+
+      - Run: mixed-case exercise script -> produced all required rules: escape_hatch_file_limit,
+      escape_hatch_project_limit, escape_hatch_budget, escape_hatch_combination, escape_hatch_non_suppressible
+
+      - Combination behavior includes 3+ stacked hatch unconditional error behavior
+
+
+      Spec link:
+
+      - p3-budget-core.implement step definition and acceptance criteria'
   - id: p3-budget-core.verify
     name: Verify check_escape_budget
     status: pending
