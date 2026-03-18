@@ -27552,7 +27552,7 @@ phases:
 
       - Project complete'
     depends_on:
-    - final-verify.full-escape-hatch-census-and-guard-run
+    - final-verify.retest-marker-format-contract-mismatch
     agent: gate-reviewer
   - id: final-verify.fix-marker-format-contract-mismatch
     name: Fix marker format contract mismatch across managed templates and regressions
