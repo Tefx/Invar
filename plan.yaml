@@ -25311,13 +25311,15 @@ phases:
       \ and verification completeness"
   - id: p2-by-file.gate
     name: Phase 2 Gate
-    status: pending
+    status: claimed
     description: 'Gate review: Verify Phase 2 completion. by_file property has @post
       contract and doctests. Guard passes.'
     verification: Phase 2 complete. Property contracted and tested.
     depends_on:
     - p2-by-file.verify
     agent: gate-reviewer
+    claimed_by: gate-reviewer
+    claimed_at: '2026-03-18T18:10:53.971152+00:00'
 - id: p3-budget-core
   name: 'Phase 3: core/escape_budget.py check_escape_budget'
   status: locked
