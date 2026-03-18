@@ -25225,7 +25225,7 @@ phases:
       \ mismatch remains."
 - id: p2-by-file
   name: 'Phase 2: EscapeHatchSummary.by_file property'
-  status: in_progress
+  status: done
   depends_on:
   - p1-models-tier
   steps:
@@ -25311,7 +25311,7 @@ phases:
       \ and verification completeness"
   - id: p2-by-file.gate
     name: Phase 2 Gate
-    status: claimed
+    status: done
     description: 'Gate review: Verify Phase 2 completion. by_file property has @post
       contract and doctests. Guard passes.'
     verification: Phase 2 complete. Property contracted and tested.
@@ -25320,9 +25320,74 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-18T18:10:53.971152+00:00'
+    done_at: '2026-03-18T18:16:43.696998+00:00'
+    evidence: 'Artifact:
+
+      - Commit under review: 8ea9f89 (Phase 2 implementation merged)
+
+      - Verify step evidence reviewed as verify-only
+
+
+      Verification:
+
+      - Run: invar guard --all -> passed
+
+      - Run: pyright src/invar/core/models.py -> 0 errors
+
+      - Run: ruff check src/invar/core/models.py -> passed
+
+      - Run: doctest + inline by_file scenarios -> passed
+
+
+      Wiring audit:
+
+      - W1 PASS: by_file public property present on EscapeHatchSummary
+
+      - W2 PASS: downstream consumer planned in p3-budget-core check_escape_budget
+      flow
+
+      - W3 N/A: no CLI registration surface in this phase
+
+      - W4 PASS: no NotImplemented/stub bodies introduced
+
+      - W5 PASS: no write-only state, deterministic grouping logic
+
+      - W6 PASS: integration path defined in dependency chain to phase 3 consumer
+
+      - W7 PASS: public export remains reachable and non-orphaned in module surface
+
+      - W8 PASS: dependency chain ensures by_file consumed next phase (non-orphan)
+
+
+      Escape hatch audit:
+
+      - No new `@invar:allow` markers introduced in this phase
+
+      - Existing marker count in touched file unchanged and legitimate
+
+
+      Integration claim integrity:
+
+      - Evidence based on real command executions (guard/type/lint/doctest/inline
+      checks), not fixture-only substitution
+
+
+      Liveness/smoke:
+
+      - N/A (non-runnable data-model phase)
+
+
+      Spec link:
+
+      - p2-by-file.implement and p2-by-file.verify acceptance criteria
+
+
+      Verdict:
+
+      - PASS; no blockers and no should-fix issues.'
 - id: p3-budget-core
   name: 'Phase 3: core/escape_budget.py check_escape_budget'
-  status: locked
+  status: pending
   depends_on:
   - p2-by-file
   steps:
