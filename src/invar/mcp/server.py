@@ -11,11 +11,14 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 from mcp.server import Server
 from mcp.types import TextContent, Tool
-from returns.result import Failure
+from returns.result import Failure, Result, Success
 
 from invar.mcp.handlers import (
     _run_doc_delete,
@@ -160,417 +163,445 @@ the MCP tools and may not follow the correct workflow.
 
 
 # @shell_orchestration: MCP tool factory - creates Tool objects
-# @invar:allow shell_result: MCP tool factory for guard command
-def _get_guard_tool() -> Tool:
+def _get_guard_tool() -> Result[Tool, str]:
     """Define the invar_guard tool."""
-    return Tool(
-        name="invar_guard",
-        title="Smart Guard",
-        description=(
-            "Smart Guard: Verify Python code quality with static analysis + tests. "
-            "Runs pytest + doctest + CrossHair + Hypothesis. "
-            "Uses pyproject.toml as project marker. "
-            "For DX-91 full-scan gate parity, authoritative CLI path is 'uvx invar-tools guard --all'. "
-            "Use this INSTEAD of Bash('pytest ...') or Bash('npm test ...')."
-        ),
-        inputSchema={
-            "type": "object",
-            "properties": {
-                "path": {
-                    "type": "string",
-                    "description": "Project path (default: .)",
-                    "default": ".",
-                },
-                "changed": {
-                    "type": "boolean",
-                    "description": "Only verify git-changed files",
-                    "default": True,
-                },
-                "strict": {
-                    "type": "boolean",
-                    "description": "Treat warnings as errors",
-                    "default": False,
-                },
-                "coverage": {
-                    "type": "boolean",
-                    "description": "DX-37: Collect branch coverage from doctest + hypothesis",
-                    "default": False,
-                },
-                "contracts_only": {
-                    "type": "boolean",
-                    "description": "DX-63: Contract coverage check only (skip tests)",
-                    "default": False,
+    return Success(
+        Tool(
+            name="invar_guard",
+            title="Smart Guard",
+            description=(
+                "Smart Guard: Verify Python code quality with static analysis + tests. "
+                "Runs pytest + doctest + CrossHair + Hypothesis. "
+                "Uses pyproject.toml as project marker. "
+                "For DX-91 full-scan gate parity, authoritative CLI path is 'uvx invar-tools guard --all'. "
+                "Use this INSTEAD of Bash('pytest ...') or Bash('npm test ...')."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "Project path (default: .)",
+                        "default": ".",
+                    },
+                    "changed": {
+                        "type": "boolean",
+                        "description": "Only verify git-changed files",
+                        "default": True,
+                    },
+                    "strict": {
+                        "type": "boolean",
+                        "description": "Treat warnings as errors",
+                        "default": False,
+                    },
+                    "coverage": {
+                        "type": "boolean",
+                        "description": "DX-37: Collect branch coverage from doctest + hypothesis",
+                        "default": False,
+                    },
+                    "contracts_only": {
+                        "type": "boolean",
+                        "description": "DX-63: Contract coverage check only (skip tests)",
+                        "default": False,
+                    },
                 },
             },
-        },
+        )
     )
 
 
 # @shell_orchestration: MCP tool factory - creates Tool objects
-# @invar:allow shell_result: MCP tool factory for guard status command
-def _get_guard_status_tool() -> Tool:
+def _get_guard_status_tool() -> Result[Tool, str]:
     """Define the invar_guard_status tool."""
-    return Tool(
-        name="invar_guard_status",
-        title="Guard Run Status",
-        description=(
-            "Get status snapshot for a deferred invar_guard full scan run. "
-            "Use this after invar_guard returns status=deferred."
-        ),
-        inputSchema={
-            "type": "object",
-            "properties": {
-                "run_id": {
-                    "type": "string",
-                    "description": "Deferred run ID returned by invar_guard",
+    return Success(
+        Tool(
+            name="invar_guard_status",
+            title="Guard Run Status",
+            description=(
+                "Get status snapshot for a deferred invar_guard full scan run. "
+                "Use this after invar_guard returns status=deferred."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "run_id": {
+                        "type": "string",
+                        "description": "Deferred run ID returned by invar_guard",
+                    },
                 },
+                "required": ["run_id"],
             },
-            "required": ["run_id"],
-        },
+        )
     )
 
 
 # @shell_orchestration: MCP tool factory - creates Tool objects
-# @invar:allow shell_result: MCP tool factory for guard wait command
-def _get_guard_wait_tool() -> Tool:
+def _get_guard_wait_tool() -> Result[Tool, str]:
     """Define the invar_guard_wait tool."""
-    return Tool(
-        name="invar_guard_wait",
-        title="Wait For Guard Run",
-        description=(
-            "Wait for deferred invar_guard full-scan completion with bounded polling. "
-            "Returns running/complete/failed/cancelled status."
-        ),
-        inputSchema={
-            "type": "object",
-            "properties": {
-                "run_id": {
-                    "type": "string",
-                    "description": "Deferred run ID returned by invar_guard",
+    return Success(
+        Tool(
+            name="invar_guard_wait",
+            title="Wait For Guard Run",
+            description=(
+                "Wait for deferred invar_guard full-scan completion with bounded polling. "
+                "Returns running/complete/failed/cancelled status."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "run_id": {
+                        "type": "string",
+                        "description": "Deferred run ID returned by invar_guard",
+                    },
+                    "wait_ms": {
+                        "type": "integer",
+                        "description": "Long-poll duration in milliseconds (0-10000)",
+                        "default": 8000,
+                    },
                 },
-                "wait_ms": {
-                    "type": "integer",
-                    "description": "Long-poll duration in milliseconds (0-10000)",
-                    "default": 8000,
-                },
+                "required": ["run_id"],
             },
-            "required": ["run_id"],
-        },
+        )
     )
 
 
 # @shell_orchestration: MCP tool factory - creates Tool objects
-# @invar:allow shell_result: MCP tool factory for sig command
-def _get_sig_tool() -> Tool:
+def _get_sig_tool() -> Result[Tool, str]:
     """Define the invar_sig tool."""
-    return Tool(
-        name="invar_sig",
-        title="Show Signatures",
-        description=(
-            "Show function signatures and contracts (@pre/@post). "
-            "Supports Python projects. "
-            "Use this INSTEAD of Read('file.py') when you want to understand structure."
-        ),
-        inputSchema={
-            "type": "object",
-            "properties": {
-                "target": {"type": "string", "description": "File or file::symbol path"},
+    return Success(
+        Tool(
+            name="invar_sig",
+            title="Show Signatures",
+            description=(
+                "Show function signatures and contracts (@pre/@post). "
+                "Supports Python projects. "
+                "Use this INSTEAD of Read('file.py') when you want to understand structure."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "target": {"type": "string", "description": "File or file::symbol path"},
+                },
+                "required": ["target"],
             },
-            "required": ["target"],
-        },
+        )
     )
 
 
 # @shell_orchestration: MCP tool factory - creates Tool objects
-# @invar:allow shell_result: MCP tool factory for map command
-def _get_map_tool() -> Tool:
+def _get_map_tool() -> Result[Tool, str]:
     """Define the invar_map tool."""
-    return Tool(
-        name="invar_map",
-        title="Symbol Map",
-        description=(
-            "Symbol map with reference counts. "
-            "Supports Python projects. "
-            "Use this INSTEAD of Grep for 'def ' or 'function ' to find symbols."
-        ),
-        inputSchema={
-            "type": "object",
-            "properties": {
-                "path": {"type": "string", "description": "Project path", "default": "."},
-                "top": {"type": "integer", "description": "Show top N symbols", "default": 10},
+    return Success(
+        Tool(
+            name="invar_map",
+            title="Symbol Map",
+            description=(
+                "Symbol map with reference counts. "
+                "Supports Python projects. "
+                "Use this INSTEAD of Grep for 'def ' or 'function ' to find symbols."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "path": {"type": "string", "description": "Project path", "default": "."},
+                    "top": {"type": "integer", "description": "Show top N symbols", "default": 10},
+                },
             },
-        },
+        )
     )
 
 
 # @shell_orchestration: MCP tool factory - creates tool definition for framework
-# @invar:allow shell_result: MCP tool factory for refs command
-def _get_refs_tool() -> Tool:
+def _get_refs_tool() -> Result[Tool, str]:
     """Define the invar_refs tool.
 
     Cross-file reference finding.
     """
-    return Tool(
-        name="invar_refs",
-        title="Find References",
-        description=(
-            "Find all references to a symbol. "
-            "Supports Python (via jedi). "
-            "Use this to understand symbol usage across the codebase."
-        ),
-        inputSchema={
-            "type": "object",
-            "properties": {
-                "target": {
-                    "type": "string",
-                    "description": "Target format: 'file.py::symbol'",
+    return Success(
+        Tool(
+            name="invar_refs",
+            title="Find References",
+            description=(
+                "Find all references to a symbol. "
+                "Supports Python (via jedi). "
+                "Use this to understand symbol usage across the codebase."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "target": {
+                        "type": "string",
+                        "description": "Target format: 'file.py::symbol'",
+                    },
                 },
+                "required": ["target"],
             },
-            "required": ["target"],
-        },
+        )
     )
 
 
 # DX-76: Document query tools
 # @shell_orchestration: MCP tool factory - creates Tool objects
-# @invar:allow shell_result: MCP tool factory for doc_toc command
-def _get_doc_toc_tool() -> Tool:
+def _get_doc_toc_tool() -> Result[Tool, str]:
     """Define the invar_doc_toc tool."""
-    return Tool(
-        name="invar_doc_toc",
-        title="Markdown TOC",
-        description=(
-            "Extract document structure (Table of Contents) from markdown files. "
-            "Shows headings hierarchy with line numbers and character counts. "
-            "Use this INSTEAD of Read() to understand markdown structure."
-        ),
-        inputSchema={
-            "type": "object",
-            "properties": {
-                "file": {"type": "string", "description": "Path to markdown file"},
-                "depth": {
-                    "type": "integer",
-                    "description": "Maximum heading depth to include (1-6)",
-                    "default": 6,
+    return Success(
+        Tool(
+            name="invar_doc_toc",
+            title="Markdown TOC",
+            description=(
+                "Extract document structure (Table of Contents) from markdown files. "
+                "Shows headings hierarchy with line numbers and character counts. "
+                "Use this INSTEAD of Read() to understand markdown structure."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "file": {"type": "string", "description": "Path to markdown file"},
+                    "depth": {
+                        "type": "integer",
+                        "description": "Maximum heading depth to include (1-6)",
+                        "default": 6,
+                    },
                 },
+                "required": ["file"],
             },
-            "required": ["file"],
-        },
+        )
     )
 
 
 # @shell_orchestration: MCP tool factory - creates Tool objects
-# @invar:allow shell_result: MCP tool factory for doc_read command
-def _get_doc_read_tool() -> Tool:
+def _get_doc_read_tool() -> Result[Tool, str]:
     """Define the invar_doc_read tool."""
-    return Tool(
-        name="invar_doc_read",
-        title="Read Markdown Section",
-        description=(
-            "Read a specific section from a markdown document. "
-            "Supports multiple addressing formats: slug path, fuzzy match, "
-            "index (#0/#1), or line anchor (@48). "
-            "Use this INSTEAD of Read() with manual line counting."
-        ),
-        inputSchema={
-            "type": "object",
-            "properties": {
-                "file": {"type": "string", "description": "Path to markdown file"},
-                "section": {
-                    "type": "string",
-                    "description": (
-                        "Section path: slug ('requirements/auth'), "
-                        "fuzzy ('auth'), index ('#0/#1'), or line ('@48')"
-                    ),
+    return Success(
+        Tool(
+            name="invar_doc_read",
+            title="Read Markdown Section",
+            description=(
+                "Read a specific section from a markdown document. "
+                "Supports multiple addressing formats: slug path, fuzzy match, "
+                "index (#0/#1), or line anchor (@48). "
+                "Use this INSTEAD of Read() with manual line counting."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "file": {"type": "string", "description": "Path to markdown file"},
+                    "section": {
+                        "type": "string",
+                        "description": (
+                            "Section path: slug ('requirements/auth'), "
+                            "fuzzy ('auth'), index ('#0/#1'), or line ('@48')"
+                        ),
+                    },
                 },
+                "required": ["file", "section"],
             },
-            "required": ["file", "section"],
-        },
+        )
     )
 
 
 # @shell_orchestration: MCP tool factory - creates Tool objects
-# @invar:allow shell_result: MCP tool factory for doc_read_many command
-def _get_doc_read_many_tool() -> Tool:
+def _get_doc_read_many_tool() -> Result[Tool, str]:
     """Define the invar_doc_read_many tool."""
-    return Tool(
-        name="invar_doc_read_many",
-        title="Read Multiple Markdown Sections",
-        description=(
-            "Read multiple sections from a markdown document in one call. "
-            "Reduces tool calls by batching section reads. "
-            "Use this INSTEAD of multiple invar_doc_read() calls."
-        ),
-        inputSchema={
-            "type": "object",
-            "properties": {
-                "file": {"type": "string", "description": "Path to markdown file"},
-                "sections": {
-                    "type": "array",
-                    "items": {"type": "string"},
-                    "description": ("List of section paths (slug, fuzzy, index, or line anchor)"),
+    return Success(
+        Tool(
+            name="invar_doc_read_many",
+            title="Read Multiple Markdown Sections",
+            description=(
+                "Read multiple sections from a markdown document in one call. "
+                "Reduces tool calls by batching section reads. "
+                "Use this INSTEAD of multiple invar_doc_read() calls."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "file": {"type": "string", "description": "Path to markdown file"},
+                    "sections": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": (
+                            "List of section paths (slug, fuzzy, index, or line anchor)"
+                        ),
+                    },
+                    "include_children": {
+                        "type": "boolean",
+                        "description": "Include child sections in output",
+                        "default": True,
+                    },
                 },
-                "include_children": {
-                    "type": "boolean",
-                    "description": "Include child sections in output",
-                    "default": True,
-                },
+                "required": ["file", "sections"],
             },
-            "required": ["file", "sections"],
-        },
+        )
     )
 
 
 # @shell_orchestration: MCP tool factory - creates Tool objects
-# @invar:allow shell_result: MCP tool factory for doc_find command
-def _get_doc_find_tool() -> Tool:
+def _get_doc_find_tool() -> Result[Tool, str]:
     """Define the invar_doc_find tool."""
-    return Tool(
-        name="invar_doc_find",
-        title="Find Markdown Sections",
-        description=(
-            "Find sections in markdown documents matching a pattern. "
-            "Supports glob patterns for titles and optional content search. "
-            "Use this INSTEAD of Grep in markdown files."
-        ),
-        inputSchema={
-            "type": "object",
-            "properties": {
-                "file": {"type": "string", "description": "Path to markdown file"},
-                "pattern": {
-                    "type": "string",
-                    "description": "Title pattern (glob-style, e.g., '*auth*')",
+    return Success(
+        Tool(
+            name="invar_doc_find",
+            title="Find Markdown Sections",
+            description=(
+                "Find sections in markdown documents matching a pattern. "
+                "Supports glob patterns for titles and optional content search. "
+                "Use this INSTEAD of Grep in markdown files."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "file": {"type": "string", "description": "Path to markdown file"},
+                    "pattern": {
+                        "type": "string",
+                        "description": "Title pattern (glob-style, e.g., '*auth*')",
+                    },
+                    "content": {
+                        "type": "string",
+                        "description": "Optional content search pattern",
+                    },
                 },
-                "content": {
-                    "type": "string",
-                    "description": "Optional content search pattern",
-                },
+                "required": ["file", "pattern"],
             },
-            "required": ["file", "pattern"],
-        },
+        )
     )
 
 
 # DX-76 Phase A-2: Extended editing tools
 # @shell_orchestration: MCP tool factory - creates Tool objects
-# @invar:allow shell_result: MCP tool factory for doc_replace command
-def _get_doc_replace_tool() -> Tool:
+def _get_doc_replace_tool() -> Result[Tool, str]:
     """Define the invar_doc_replace tool."""
-    return Tool(
-        name="invar_doc_replace",
-        title="Replace Markdown Section",
-        description=(
-            "Replace a section's content in a markdown document. "
-            "Use this INSTEAD of Edit()/Write() for section replacement."
-        ),
-        inputSchema={
-            "type": "object",
-            "properties": {
-                "file": {"type": "string", "description": "Path to markdown file"},
-                "section": {
-                    "type": "string",
-                    "description": "Section path to replace (slug, fuzzy, index, or line anchor)",
+    return Success(
+        Tool(
+            name="invar_doc_replace",
+            title="Replace Markdown Section",
+            description=(
+                "Replace a section's content in a markdown document. "
+                "Use this INSTEAD of Edit()/Write() for section replacement."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "file": {"type": "string", "description": "Path to markdown file"},
+                    "section": {
+                        "type": "string",
+                        "description": "Section path to replace (slug, fuzzy, index, or line anchor)",
+                    },
+                    "content": {
+                        "type": "string",
+                        "description": "New content to replace the section with",
+                    },
+                    "keep_heading": {
+                        "type": "boolean",
+                        "description": "If true, preserve the original heading line",
+                        "default": True,
+                    },
                 },
-                "content": {
-                    "type": "string",
-                    "description": "New content to replace the section with",
-                },
-                "keep_heading": {
-                    "type": "boolean",
-                    "description": "If true, preserve the original heading line",
-                    "default": True,
-                },
+                "required": ["file", "section", "content"],
             },
-            "required": ["file", "section", "content"],
-        },
+        )
     )
 
 
 # @shell_orchestration: MCP tool factory - creates Tool objects
-# @invar:allow shell_result: MCP tool factory for doc_insert command
-def _get_doc_insert_tool() -> Tool:
+def _get_doc_insert_tool() -> Result[Tool, str]:
     """Define the invar_doc_insert tool."""
-    return Tool(
-        name="invar_doc_insert",
-        title="Insert Markdown Section",
-        description=(
-            "Insert new content relative to a section in a markdown document. "
-            "Use this INSTEAD of Edit()/Write() for section insertion."
-        ),
-        inputSchema={
-            "type": "object",
-            "properties": {
-                "file": {"type": "string", "description": "Path to markdown file"},
-                "anchor": {
-                    "type": "string",
-                    "description": "Section path for the anchor (slug, fuzzy, index, or line anchor)",
+    return Success(
+        Tool(
+            name="invar_doc_insert",
+            title="Insert Markdown Section",
+            description=(
+                "Insert new content relative to a section in a markdown document. "
+                "Use this INSTEAD of Edit()/Write() for section insertion."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "file": {"type": "string", "description": "Path to markdown file"},
+                    "anchor": {
+                        "type": "string",
+                        "description": "Section path for the anchor (slug, fuzzy, index, or line anchor)",
+                    },
+                    "content": {
+                        "type": "string",
+                        "description": "Content to insert (include heading if new section)",
+                    },
+                    "position": {
+                        "type": "string",
+                        "description": "Where to insert: 'before', 'after', 'first_child', 'last_child'",
+                        "default": "after",
+                        "enum": ["before", "after", "first_child", "last_child"],
+                    },
                 },
-                "content": {
-                    "type": "string",
-                    "description": "Content to insert (include heading if new section)",
-                },
-                "position": {
-                    "type": "string",
-                    "description": "Where to insert: 'before', 'after', 'first_child', 'last_child'",
-                    "default": "after",
-                    "enum": ["before", "after", "first_child", "last_child"],
-                },
+                "required": ["file", "anchor", "content"],
             },
-            "required": ["file", "anchor", "content"],
-        },
+        )
     )
 
 
 # @shell_orchestration: MCP tool factory - creates Tool objects
-# @invar:allow shell_result: MCP tool factory for doc_delete command
-def _get_doc_delete_tool() -> Tool:
+def _get_doc_delete_tool() -> Result[Tool, str]:
     """Define the invar_doc_delete tool."""
-    return Tool(
-        name="invar_doc_delete",
-        title="Delete Markdown Section",
-        description=(
-            "Delete a section from a markdown document. "
-            "Use this INSTEAD of Edit()/Write() for section deletion."
-        ),
-        inputSchema={
-            "type": "object",
-            "properties": {
-                "file": {"type": "string", "description": "Path to markdown file"},
-                "section": {
-                    "type": "string",
-                    "description": "Section path to delete (slug, fuzzy, index, or line anchor)",
+    return Success(
+        Tool(
+            name="invar_doc_delete",
+            title="Delete Markdown Section",
+            description=(
+                "Delete a section from a markdown document. "
+                "Use this INSTEAD of Edit()/Write() for section deletion."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "file": {"type": "string", "description": "Path to markdown file"},
+                    "section": {
+                        "type": "string",
+                        "description": "Section path to delete (slug, fuzzy, index, or line anchor)",
+                    },
                 },
+                "required": ["file", "section"],
             },
-            "required": ["file", "section"],
-        },
+        )
     )
+
+
+def _collect_tools() -> Result[list[Tool], str]:
+    """Build all MCP tool definitions with Result chaining."""
+    factories: tuple[Callable[[], Result[Tool, str]], ...] = (
+        _get_guard_tool,
+        _get_guard_status_tool,
+        _get_guard_wait_tool,
+        _get_sig_tool,
+        _get_map_tool,
+        _get_refs_tool,
+        _get_doc_toc_tool,
+        _get_doc_read_tool,
+        _get_doc_read_many_tool,
+        _get_doc_find_tool,
+        _get_doc_replace_tool,
+        _get_doc_insert_tool,
+        _get_doc_delete_tool,
+    )
+
+    tools: list[Tool] = []
+    for factory in factories:
+        tool = factory()
+        if isinstance(tool, Failure):
+            return Failure(tool.failure())
+        tools.append(tool.unwrap())
+    return Success(tools)
 
 
 # @shell_orchestration: MCP server setup - registers handlers with framework
-# @invar:allow shell_result: MCP framework API returns Server
-def create_server() -> Server:
+def create_server() -> Result[Server, str]:
     """Create and configure the Invar MCP server."""
     server = Server(name="invar", version="0.1.0", instructions=INVAR_INSTRUCTIONS)
 
     @server.list_tools()
     async def list_tools() -> list[Tool]:
-        return [
-            _get_guard_tool(),
-            _get_guard_status_tool(),
-            _get_guard_wait_tool(),
-            _get_sig_tool(),
-            _get_map_tool(),
-            _get_refs_tool(),  # DX-78: Reference finding
-            # DX-76: Document query tools
-            _get_doc_toc_tool(),
-            _get_doc_read_tool(),
-            _get_doc_read_many_tool(),  # DX-77: Batch section reading
-            _get_doc_find_tool(),
-            # DX-76 Phase A-2: Document editing tools
-            _get_doc_replace_tool(),
-            _get_doc_insert_tool(),
-            _get_doc_delete_tool(),
-        ]
+        tools = _collect_tools()
+        if isinstance(tools, Failure):
+            raise RuntimeError(tools.failure())
+        return tools.unwrap()
 
     @server.call_tool()
     async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
@@ -599,7 +630,7 @@ def create_server() -> Server:
             return result.unwrap()
         return [TextContent(type="text", text=f"Unknown tool: {name}")]
 
-    return server
+    return Success(server)
 
 
 # @shell_orchestration: MCP server entry point - runs async server
@@ -635,7 +666,10 @@ def run_server() -> None:
 
     # Phase 1 fallback: Continue with uvx + PYTHONPATH injection
     async def main() -> None:
-        server = create_server()
+        server_result = create_server()
+        if isinstance(server_result, Failure):
+            raise RuntimeError(server_result.failure())
+        server = server_result.unwrap()
         async with stdio_server() as (read_stream, write_stream):
             await server.run(
                 read_stream,
