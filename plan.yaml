@@ -27799,3 +27799,55 @@ phases:
     depends_on:
     - final-verify.retest-marker-format-contract-mismatch
     agent: python-senior
+  - id: final-verify.retest-dx56-project-additions-template-sync
+    name: Retest DX56 project additions template sync contract
+    status: pending
+    description: 'Re-test the downstream DX56 project-additions sync blocker family
+      from a fresh, independent perspective after the batched contract repair.
+
+
+      As an INDEPENDENT TESTER (integration-verifier), your goal is to find remaining
+      sync-contract mismatches, not to confirm the first fix worked.
+
+
+      Test for:
+
+      - Happy path: CLAUDE.md template sync output includes the expected project additions
+      block under the normalized managed-marker contract
+
+      - Edge cases: sibling DX56 sync cases preserve ordering, placement, and non-duplication
+      of project additions
+
+      - Error scenarios: no path drops additions during sync, merge, regeneration,
+      or re-sync
+
+      - Coverage focus: full guard remains clean and full pytest no longer fails on
+      the DX56 project-additions blocker family
+
+
+      Fresh/cold environment required before retest.'
+    verification: '- Run `uv run invar guard --all` in a fresh/cold environment
+
+      - Run `uv run pytest tests/ -x` in a fresh/cold environment
+
+      - Record whether `tests/integration/test_dx56_sync.py::TestSyncTemplates::test_project_additions_injection`
+      and sibling DX56 sync cases are clear
+
+      - Evidence must distinguish DX56 project-additions sync regressions from unrelated
+      failures'
+    evidence_template: '## DX56 Project Additions Sync Retest
+
+      - fresh_environment: <how cold/fresh state was ensured>
+
+      - guard_result: <pass/fail>
+
+      - pytest_result: <first failing test or pass>
+
+      - dx56_family_status: <cleared / remaining cases>
+
+      - unrelated_failures: <none or list>
+
+      '
+    depends_on:
+    - final-verify.fix-dx56-project-additions-template-sync
+    agent: integration-verifier
