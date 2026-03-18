@@ -25387,7 +25387,7 @@ phases:
       - PASS; no blockers and no should-fix issues.'
 - id: p3-budget-core
   name: 'Phase 3: core/escape_budget.py check_escape_budget'
-  status: in_progress
+  status: done
   depends_on:
   - p2-by-file
   steps:
@@ -25529,7 +25529,7 @@ phases:
       behavior, exempt filtering, budget math, and Core purity'
   - id: p3-budget-core.gate
     name: Phase 3 Gate
-    status: claimed
+    status: done
     description: 'Gate review: Verify Phase 3 completion. check_escape_budget has
       @pre/@post contracts and comprehensive doctests. All 5 violation types (file_limit,
       project_limit, budget, combination, non_suppressible) are producible. Core zone
@@ -25540,9 +25540,73 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-18T18:50:40.555311+00:00'
+    done_at: '2026-03-18T18:57:58.292493+00:00'
+    evidence: 'Artifact:
+
+      - Commit under review: 51b59c7 (adds src/invar/core/escape_budget.py)
+
+
+      Verification:
+
+      - Run: uv run python -m doctest src/invar/core/escape_budget.py -> doctests
+      pass (32 assertions)
+
+      - Run: uv run invar guard --all -> passed
+
+      - Run: import/function checks -> contracts present, no stub bodies, no I/O imports
+      in Core module
+
+      - Requirement coverage confirmed: file_limit, project_limit, weighted budget,
+      combination penalties (2x and 3+), non-suppressible inline detection, exempt
+      filtering
+
+
+      Wiring audit:
+
+      - W1 N/A: primary runtime consumer is downstream Phase 4 integration path
+
+      - W2 PASS: dependency chain includes p4-guard-integration consumer
+
+      - W3 N/A: no CLI/runnable entrypoint added in this phase
+
+      - W4 PASS: no NotImplemented/stub placeholders
+
+      - W5 PASS: computed metadata (function_name) is both set and consumed in checks
+
+      - W6 PASS: integration path defined by phase dependencies
+
+      - W7 PASS: no phantom dependencies/import anomalies
+
+      - W8 PASS: escape budget config fields referenced by enforcement logic
+
+
+      Escape hatch audit:
+
+      - Touched file contains no new `@invar:allow` annotations
+
+
+      Integration claim integrity:
+
+      - Evidence derives from real guard/doctest/import executions, not fixture-only
+      substitution
+
+
+      Liveness/smoke:
+
+      - N/A for Core computation module (non-runnable surface)
+
+
+      Spec link:
+
+      - p3-budget-core.implement and p3-budget-core.verify acceptance criteria
+
+
+      Verdict:
+
+      - PASS; no blockers and no should-fix issues.'
 - id: p4-guard-integration
   name: 'Phase 4: guard.py _scan_and_check integration'
-  status: locked
+  status: pending
   depends_on:
   - p3-budget-core
   steps:
@@ -25658,7 +25722,7 @@ phases:
     agent: gate-reviewer
 - id: p6-config
   name: 'Phase 6: Config parsing pyproject.toml exempt patterns'
-  status: locked
+  status: pending
   depends_on:
   - p3-budget-core
   steps:
@@ -25779,7 +25843,7 @@ phases:
     agent: gate-reviewer
 - id: p7-non-suppressible
   name: 'Phase 7: Non-suppressible enforcement'
-  status: locked
+  status: pending
   depends_on:
   - p3-budget-core
   steps:
