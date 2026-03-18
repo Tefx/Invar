@@ -28055,7 +28055,7 @@ phases:
       \ `src/invar/shell/commands/template_sync.py`\n"
   - id: final-verify.retest-template-sync-guard-complexity
     name: Retest template_sync guard complexity repair
-    status: claimed
+    status: done
     description: 'Re-test the template_sync guard-regression family from a fresh,
       independent perspective after the complexity repair.
 
@@ -28106,3 +28106,14 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-18T14:53:18.374227+00:00'
+    done_at: '2026-03-18T15:03:00.778710+00:00'
+    evidence: "## Template Sync Guard Complexity Retest\n- fresh_environment: executed\
+      \ in isolated clean worktree branch for retest.\n- guard_result: PASS (`uv run\
+      \ invar guard --all` with 0 errors; prior shell_too_complex regression removed).\n\
+      - dx56_behavior_status: PRESERVED (DX56 sync suite fully green: 18/18 passed).\n\
+      - pytest_first_remaining_failure: `tests/integration/test_dx91_destructive_regression_harness.py::test_happy_path_mainline_fixture_cleanup_sync_converges_end_to_end`\n\
+      - unrelated_failures: 8 total remain, classified as\n  - DX91 fixture/content\
+      \ expectation drift family (7)\n  - subprocess uvx respawn behavior family (1)\n\
+      \nConclusion:\n- This retest objective passed (guard complexity regression fixed,\
+      \ DX56 behavior preserved).\n- Full-suite blockers now belong to distinct downstream\
+      \ families outside template-sync-complexity scope."
