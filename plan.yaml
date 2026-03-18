@@ -28271,9 +28271,10 @@ phases:
   - p7-non-suppressible
   steps:
   - id: p0-migration.phase-0-gate
-    name: Phase 0 Gate
+    name: Migration finalization gate
     status: pending
-    description: 'Gate review: Verify Phase 0 migration completion and quality.
+    description: 'Gate review: Verify post-config migration finalization completion
+      and quality.
 
 
       review_depth: STANDARD
@@ -28281,7 +28282,7 @@ phases:
 
       Verify:
 
-      - Inventory was thorough (all @invar:allow markers accounted for)
+      - Inventory and human approval were completed earlier in p0
 
       - Exempt patterns use correct syntax (file_glob or file_glob::symbol_glob)
 
@@ -28289,11 +28290,13 @@ phases:
 
       - Remaining inline markers fit within DX-96 default budgets
 
-      - Guard passes cleanly
+      - Guard passes cleanly with config-backed exemptions active
 
       - No unintended behavioral changes'
-    verification: Migration complete. All markers properly classified and migrated.
-      Guard passes.
+    verification: Migration finalization complete. All markers properly classified
+      and migrated. Guard passes with config-backed exemptions active.
+    depends_on:
+    - p0-migration.verify-guard-passes-after-migration
     agent: gate-reviewer
   - id: p0-migration.verify-guard-passes-after-migration
     name: Verify guard passes after post-config migration finalization
