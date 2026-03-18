@@ -27005,7 +27005,7 @@ phases:
   steps:
   - id: cat-c-entry-point.refactor-thick-entry-points-10-markers
     name: Refactor thick entry points (10 markers)
-    status: claimed
+    status: done
     description: "Eliminate all 10 `@invar:allow entry_point_too_thick` markers by\
       \ extracting logic into Shell helper functions.\n\n## Markers:\n\n### commands/doc.py\
       \ (6 markers):\n1. Line 140: `Multi-file glob + dual output format orchestration`\n\
@@ -27041,6 +27041,21 @@ phases:
     agent: python-senior
     claimed_by: python-senior
     claimed_at: '2026-03-18T03:14:01.847620+00:00'
+    done_at: '2026-03-18T03:42:56.919091+00:00'
+    evidence: "Artifact:\n- PR: commit `599cfbc` (squash merge of worktree commit\
+      \ `1fb3607`)\n- Files changed:\n  - `src/invar/shell/commands/doc.py`\n  - `src/invar/shell/commands/guard.py`\n\
+      \  - `src/invar/shell/config.py`\n\nVerification:\n- `grep -rn '@invar:allow\
+      \ entry_point_too_thick' src/invar/` -> remaining hits only in rule docs/examples\
+      \ (`core/entry_points.py`, `core/rules.py`), none in target files.\n- `uv run\
+      \ invar guard --all` -> no target `entry_point_too_thick` blockers; worker reported\
+      \ existing project-level complexity debt threshold warning state.\n- `uv run\
+      \ pytest tests/ -x` -> worker stopped at pre-existing unrelated DX55 regression\
+      \ (`test_a2_new_project_existing_claudemd`).\n\nImplementation notes:\n- Refactored\
+      \ thick Typer command entry points into thin wrappers delegating to shell helpers\
+      \ returning `Result[T,E]`.\n- Adjusted config false-positive trigger area by\
+      \ using module-level logger usage pattern.\n\nSpec link:\n- `cat-c-entry-point.refactor-thick-entry-points-10-markers`\n\
+      \nGaps/Notes:\n- Unrelated baseline failures (DX55 regression, project-level\
+      \ complexity debt threshold) not modified in this step."
   - id: cat-c-entry-point.verify-entry-point-too-thick-cleanup
     name: Verify entry_point_too_thick cleanup
     status: pending
