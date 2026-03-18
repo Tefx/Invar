@@ -25612,7 +25612,7 @@ phases:
   steps:
   - id: p4-guard-integration.implement
     name: Integrate check_escape_budget into _scan_and_check
-    status: pending
+    status: claimed
     description: 'Integrate `check_escape_budget(summary, config, file_infos)` into
       `_scan_and_check` in `src/invar/shell/commands/guard.py` using the Phase 3 contract
       exactly.
@@ -25672,6 +25672,8 @@ phases:
       - API integrity: no remaining 2-argument call or compatibility shim exists in
       the guard integration path'
     agent: python-executor
+    claimed_by: python-executor
+    claimed_at: '2026-03-18T19:45:16.939337+00:00'
   - id: p4-guard-integration.verify
     name: Verify guard integration
     status: pending
