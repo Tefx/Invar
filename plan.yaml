@@ -27364,7 +27364,7 @@ phases:
       - `cat-d-file-size.extract-and-split-large-core-files-5-markers`"
   - id: cat-d-file-size.gate-category-d-file-size
     name: 'Gate: Category D file_size'
-    status: pending
+    status: claimed
     description: 'Gate review: Verify file_size phase completion.
 
 
@@ -27399,6 +27399,8 @@ phases:
     depends_on:
     - cat-d-file-size.verify-file-size-extraction
     agent: gate-reviewer
+    claimed_by: gate-reviewer
+    claimed_at: '2026-03-18T04:33:32.405350+00:00'
 - id: final-verify
   name: 'Final Verification: Escape Hatch Census'
   status: locked
