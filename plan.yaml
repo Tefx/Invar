@@ -26086,7 +26086,7 @@ phases:
       - PASS; no blockers.'
 - id: p6-config
   name: 'Phase 6: Config parsing pyproject.toml exempt patterns'
-  status: in_progress
+  status: done
   depends_on:
   - p3-budget-core
   steps:
@@ -26417,7 +26417,7 @@ phases:
       - Scope stayed within Phase 6 blocker family only'
   - id: p6-config.retest-gate-blockers
     name: Retest p6 gate blocker wiring
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT TESTER (`integration-verifier`), validate the
       Phase 6 blocker-family repair from a fresh perspective.
 
@@ -26461,6 +26461,18 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-18T21:42:43.301791+00:00'
+    done_at: '2026-03-18T21:45:42.897626+00:00'
+    evidence: "## Verification Report\n\n**Tester**: integration-verifier\n**Scope**:\
+      \ Phase 6 blocker-family import/export wiring\n**Independence Level**: L1\n\n\
+      ### Test Execution\n- Commands executed:\n  - `uv run pytest tests/core/test_escape_exempt_patterns.py\
+      \ -v`\n  - `uv run pytest tests/core/test_entry_point_thresholds.py -v`\n  -\
+      \ import-path probes for `matches_file_symbol_pattern` via public and owning\
+      \ modules\n- Output summary:\n  - exempt-pattern tests pass\n  - sibling threshold\
+      \ tests pass\n  - both public (`invar.core.utils`) and owning (`invar.core.exempt_patterns`)\
+      \ import paths resolve\n\n### Issues Found\n- blocker: none\n\n### Coverage\
+      \ Assessment\n- Happy path verified: yes\n- Sibling wiring checked: yes\n- Not\
+      \ tested: broader escape-budget integration suite beyond blocker family\n\n\
+      ### Verdict\n- PASS"
 - id: p7-non-suppressible
   name: 'Phase 7: Non-suppressible enforcement'
   status: done
@@ -26696,7 +26708,7 @@ phases:
       - PASS; phase-level non-suppressible enforcement behavior is in place.'
 - id: final-gate
   name: 'Final Gate: Full Integration Verification'
-  status: locked
+  status: pending
   depends_on:
   - p5-output
   - p6-config
