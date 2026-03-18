@@ -21,10 +21,21 @@ __all__ = ["SyncConfig", "SyncReport", "sync_templates"]
 
 MANAGED_BEGIN = "<!--invar:begin-->"
 MANAGED_END = "<!--invar:end-->"
+PROJECT_ADDITIONS_BEGIN = "<!--invar:project-additions:begin-->"
+PROJECT_ADDITIONS_END = "<!--invar:project-additions:end-->"
 V2_MANAGED_PATTERN = re.compile(r"<!--invar:begin-->.*?<!--invar:end-->", re.DOTALL)
-LEGACY_BLOCK_PATTERN = re.compile(
-    r"<!--invar:(critical|managed|project)(?:\s+version=[\"'][^\"']+[\"'])?-->"
+PROJECT_ADDITIONS_BLOCK_PATTERN = re.compile(
+    r"<!--invar:project-additions:begin-->.*?<!--invar:project-additions:end-->",
+    re.DOTALL,
+)
+LEGACY_PRIMARY_BLOCK_PATTERN = re.compile(
+    r"<!--invar:(critical|managed)(?:\s+version=[\"'][^\"']+[\"'])?-->"
     r".*?<!--/invar:\1-->",
+    re.DOTALL,
+)
+LEGACY_PROJECT_PATTERN = re.compile(
+    r"<!--invar:project(?:\s+version=[\"'][^\"']+[\"'])?-->"
+    r"(.*?)<!--/invar:project-->",
     re.DOTALL,
 )
 LEGACY_USER_PATTERN = re.compile(
@@ -66,11 +77,23 @@ def sync_templates(path: Path, config: SyncConfig) -> Result[SyncReport, str]:
         return assets_result
     assets = assets_result.unwrap()
 
+    project_additions_result = _read_project_additions(repo_root, config)
+    if isinstance(project_additions_result, Failure):
+        return project_additions_result
+    project_additions = project_additions_result.unwrap()
+
     target_file = _resolve_target_file(repo_root, config.target_file)
     target_rel = _display_path(repo_root, target_file)
 
     try:
-        _sync_managed_target(target_file, target_rel, assets.claude_managed_block, config, report)
+        _sync_managed_target(
+            target_file,
+            target_rel,
+            assets.claude_managed_block,
+            project_additions,
+            config,
+            report,
+        )
         written.append(target_rel)
 
         invar_file = repo_root / "INVAR.md"
@@ -193,6 +216,23 @@ def _extract_managed_block(rendered_claude: str) -> Result[str, str]:
     return Failure("Rendered CLAUDE template missing managed markers (v2 or legacy)")
 
 
+def _read_project_additions(repo_root: Path, config: SyncConfig) -> Result[str | None, str]:
+    """Read optional project additions configured for CLAUDE sync."""
+    if not config.inject_project_additions:
+        return Success(None)
+
+    additions_path = repo_root / ".invar" / "project-additions.md"
+    if not additions_path.exists():
+        return Success(None)
+
+    try:
+        content = additions_path.read_text(encoding="utf-8").strip("\n")
+    except OSError as exc:
+        return Failure(f"Failed to read {additions_path}: {exc}")
+
+    return Success(content or None)
+
+
 # @shell_complexity: merge must handle legacy migration, v2 replacement, and append mode.
 def _merge_managed(existing_content: str, managed_block: str) -> str:
     if LEGACY_SIGNAL_PATTERN.search(existing_content):
@@ -220,8 +260,37 @@ def _merge_managed(existing_content: str, managed_block: str) -> str:
 
 
 def _strip_legacy_blocks(content: str) -> str:
-    without_primary = LEGACY_BLOCK_PATTERN.sub("", content)
-    return LEGACY_USER_PATTERN.sub(lambda m: m.group(1), without_primary)
+    without_primary = LEGACY_PRIMARY_BLOCK_PATTERN.sub("", content)
+    without_project_markers = LEGACY_PROJECT_PATTERN.sub(
+        lambda m: m.group(1).strip("\n"), without_primary
+    )
+    return LEGACY_USER_PATTERN.sub(lambda m: m.group(1), without_project_markers)
+
+
+def _merge_project_additions(existing_content: str, project_additions: str | None) -> str:
+    """Inject or replace project additions outside managed markers."""
+    if project_additions is None:
+        return existing_content
+
+    additions_body = project_additions.strip("\n")
+    if not additions_body:
+        return existing_content
+
+    additions_block = f"{PROJECT_ADDITIONS_BEGIN}\n{additions_body}\n{PROJECT_ADDITIONS_END}"
+
+    if PROJECT_ADDITIONS_BLOCK_PATTERN.search(existing_content):
+        first = PROJECT_ADDITIONS_BLOCK_PATTERN.search(existing_content)
+        if first is None:
+            return existing_content
+        head = existing_content[: first.start()]
+        tail = existing_content[first.end() :]
+        tail_without_duplicates = PROJECT_ADDITIONS_BLOCK_PATTERN.sub("", tail)
+        return head + additions_block + tail_without_duplicates
+
+    preserved = existing_content.strip("\n")
+    if preserved:
+        return f"{preserved}\n\n{additions_block}\n"
+    return f"{additions_block}\n"
 
 
 # @shell_complexity: target sync branches on existence, force/check, and change detection.
@@ -229,12 +298,14 @@ def _sync_managed_target(
     target_file: Path,
     target_rel: str,
     managed_block: str,
+    project_additions: str | None,
     config: SyncConfig,
     report: SyncReport,
 ) -> None:
     existed = target_file.exists()
     existing_content = _read_utf8_or_empty(target_file) if existed else ""
     merged = _merge_managed(existing_content, managed_block)
+    merged = _merge_project_additions(merged, project_additions)
 
     if existed and merged == existing_content and not config.force:
         report.skipped.append(target_rel)

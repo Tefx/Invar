@@ -15,7 +15,6 @@ import pytest
 from returns.result import Success
 
 from invar.core.sync_helpers import SyncConfig, SyncReport, should_skip_file
-from invar.core.template_parser import parse_invar_regions
 from invar.shell.commands.template_sync import sync_templates
 
 
@@ -138,6 +137,45 @@ class TestSyncTemplates:
         claude_md = (tmp_path / "CLAUDE.md").read_text()
         assert "My Custom Rules" in claude_md
 
+    def test_project_additions_idempotent_replace(self, tmp_path):
+        """Project additions block is replaced, not duplicated, on re-sync."""
+        invar_dir = tmp_path / ".invar"
+        invar_dir.mkdir()
+        additions_path = invar_dir / "project-additions.md"
+        additions_path.write_text("## Rules v1\n- first")
+
+        config = SyncConfig(syntax="cli", inject_project_additions=True)
+        first = sync_templates(tmp_path, config)
+        assert isinstance(first, Success)
+
+        additions_path.write_text("## Rules v2\n- second")
+        second = sync_templates(tmp_path, config)
+        assert isinstance(second, Success)
+
+        claude_md = (tmp_path / "CLAUDE.md").read_text()
+        assert "Rules v1" not in claude_md
+        assert "Rules v2" in claude_md
+        assert claude_md.count("<!--invar:project-additions:begin-->") == 1
+
+    def test_legacy_project_region_preserved_through_v2_normalization(self, tmp_path):
+        """Legacy <!--invar:project--> content survives marker normalization."""
+        claude_md = tmp_path / "CLAUDE.md"
+        claude_md.write_text(
+            "prefix\n"
+            "<!--invar:managed-->\nold managed\n<!--/invar:managed-->\n"
+            "<!--invar:project-->\n## Legacy Project Rules\n- keep me\n<!--/invar:project-->\n"
+            "suffix\n"
+        )
+
+        result = sync_templates(tmp_path, SyncConfig(syntax="cli"))
+        assert isinstance(result, Success)
+
+        content = claude_md.read_text()
+        assert "## Legacy Project Rules" in content
+        assert "- keep me" in content
+        assert "<!--invar:project-->" not in content
+        assert content.count("<!--invar:begin-->") == 1
+
     def test_force_update(self, tmp_path):
         """--force updates even if current."""
         # First sync
@@ -167,21 +205,25 @@ class TestSyncTemplates:
 
     def test_dx55_intact_state(self, tmp_path):
         """Intact CLAUDE.md preserves user content."""
-        # Create initial CLAUDE.md with user content
+        # Create initial CLAUDE.md
         config = SyncConfig(syntax="cli")
         sync_templates(tmp_path, config)
 
-        # Add user content
+        # Add user content outside managed markers
         claude_md = tmp_path / "CLAUDE.md"
-        content = claude_md.read_text()
-        parsed = parse_invar_regions(content)
+        initial = claude_md.read_text()
+        claude_md.write_text(f"# Project Notes\n\nKeep this\n\n{initial}")
 
-        # Verify user region exists
-        assert "user" in parsed.regions or "<!--invar:user-->" in content
+        updated = claude_md.read_text()
+        assert updated.count("<!--invar:begin-->") == 1
+        assert "Keep this" in updated
 
         # Update should preserve user content
         result = sync_templates(tmp_path, SyncConfig(syntax="cli", force=True))
         assert isinstance(result, Success)
+        final = claude_md.read_text()
+        assert "Keep this" in final
+        assert final.count("<!--invar:begin-->") == 1
 
     def test_dx55_missing_state(self, tmp_path):
         """Existing CLAUDE.md without regions gets content preserved."""
