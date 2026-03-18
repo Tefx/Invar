@@ -29777,3 +29777,69 @@ phases:
 
       - Result: <pass/fail output excerpt>'
     agent: python-senior
+  - id: p0-migration.retest-safe-marker-removal
+    name: Retest guard after safe marker removal rework
+    status: pending
+    description: 'As an INDEPENDENT TESTER (integration-verifier), retest the p8 migration-finalization
+      rework from a fresh perspective.
+
+
+      YOUR GOAL IS TO FIND PROBLEMS, not to confirm it works.
+
+
+      Scope:
+
+      - Re-run the exact project command `uv run invar guard --all` after `p0-migration.remove-safe-migrated-inline-markers`.
+
+      - Confirm the reworked migration path is executable without relying on rejected
+      step `p0-migration.remove-migrated-inline-markers`.
+
+      - Verify removed markers stay removed, intentionally retained markers are justified
+      by p8-only scope, and no new blocking violations are introduced.
+
+
+      Check both:
+
+      - Main path: guard passes cleanly after the safe removal set and minimal coupled
+      fixes.
+
+      - Failure path: verify there is no hidden dependency on broader cleanup, pyproject
+      edits, or resurrecting the rejected step.
+
+
+      This is a gate-ready retest for the rework, not a broad new migration phase.'
+    verification: '- `uv run invar guard --all` passes in the reworked state
+
+      - Evidence confirms the rejected step is no longer needed on the completion
+      path
+
+      - Any intentionally retained inline markers are listed with p8-only-scope justification'
+    evidence_template: '## Rework Retest Report
+
+      **Command executed**:
+
+      `uv run invar guard --all`
+
+
+      **Observed result**:
+
+      <paste guard result>
+
+
+      **Removed markers verified**:
+
+      <file:line list>
+
+
+      **Retained markers verified with p8-only reason**:
+
+      <file:line list>
+
+
+      **Completion-path check**:
+
+      - Rejected step `p0-migration.remove-migrated-inline-markers` is not required
+      by downstream steps: yes/no'
+    depends_on:
+    - p0-migration.remove-safe-migrated-inline-markers
+    agent: integration-verifier
