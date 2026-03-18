@@ -28134,7 +28134,7 @@ phases:
   - id: final-verify.fix-dx91-expected-invar-fixtures
     name: Sync DX91 expected INVAR.md fixtures to authoritative shell_complexity template
       contract
-    status: pending
+    status: claimed
     description: 'Fix the deterministic DX91 harness blocker family where expected
       fixture INVAR.md files still encode the stale `dead_export` escape-hatch example
       while the authoritative template/policy now uses the `shell_complexity` example.
@@ -28247,6 +28247,8 @@ phases:
     depends_on:
     - final-verify.retest-template-sync-guard-complexity
     agent: python-senior
+    claimed_by: python-senior
+    claimed_at: '2026-03-18T15:09:59.579798+00:00'
   - id: final-verify.retest-dx91-expected-invar-fixtures
     name: Retest DX91 expected INVAR.md fixture synchronization
     status: pending
