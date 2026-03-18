@@ -302,6 +302,48 @@ class EscapeHatchSummary(BaseModel):
             counts[detail.rule] = counts.get(detail.rule, 0) + 1
         return counts
 
+    @property
+    @post(
+        lambda result: all(
+            isinstance(v, dict) and all(c >= 0 for c in v.values()) for v in result.values()
+        )
+    )
+    def by_file(self) -> dict[str, dict[str, int]]:
+        """
+        Count of escape hatches grouped by file then by rule.
+
+        Returns a mapping from file path to rule counts.
+
+        Examples:
+            >>> EscapeHatchSummary().by_file
+            {}
+            >>> # single file single rule
+            >>> s = EscapeHatchSummary()
+            >>> s.add(EscapeHatchDetail(file="a.py", line=1, rule="shell_result", reason="x"))
+            >>> s.by_file
+            {'a.py': {'shell_result': 1}}
+            >>> # single file multiple rules
+            >>> s2 = EscapeHatchSummary()
+            >>> s2.add(EscapeHatchDetail(file="a.py", line=1, rule="shell_result", reason="x"))
+            >>> s2.add(EscapeHatchDetail(file="a.py", line=2, rule="file_size", reason="y"))
+            >>> s2.by_file
+            {'a.py': {'shell_result': 1, 'file_size': 1}}
+            >>> # multiple files
+            >>> s3 = EscapeHatchSummary()
+            >>> s3.add(EscapeHatchDetail(file="a.py", line=1, rule="shell_result", reason="x"))
+            >>> s3.add(EscapeHatchDetail(file="b.py", line=1, rule="file_size", reason="y"))
+            >>> s3.by_file
+            {'a.py': {'shell_result': 1}, 'b.py': {'file_size': 1}}
+        """
+        result: dict[str, dict[str, int]] = {}
+        for detail in self.details:
+            if detail.file not in result:
+                result[detail.file] = {}
+            if detail.rule not in result[detail.file]:
+                result[detail.file][detail.rule] = 0
+            result[detail.file][detail.rule] += 1
+        return result
+
     @pre(lambda self, detail: bool(detail.rule) and bool(detail.file))
     def add(self, detail: EscapeHatchDetail) -> None:
         """
