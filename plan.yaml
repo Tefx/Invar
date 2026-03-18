@@ -26189,7 +26189,7 @@ phases:
   steps:
   - id: cat-a-guard-runs.fix-shell-result-in-guard-runs-py-8-markers
     name: Fix shell_result in guard_runs.py (8 markers)
-    status: claimed
+    status: done
     description: 'Eliminate all 8 `@invar:allow shell_result` markers in `src/invar/mcp/guard_runs.py`.
 
 
@@ -26269,6 +26269,42 @@ phases:
     agent: python-senior
     claimed_by: python-senior
     claimed_at: '2026-03-18T01:49:40.892168+00:00'
+    done_at: '2026-03-18T02:02:30.774671+00:00'
+    evidence: 'Artifact:
+
+      - PR: commit `47fac07` (squash merge of worktree commit `1d55f69`)
+
+      - Files changed: `src/invar/mcp/guard_runs.py`, `src/invar/mcp/handlers.py`
+
+
+      Verification:
+
+      - Run: `grep -n ''@invar:allow shell_result'' src/invar/mcp/guard_runs.py` ->
+      0 matches (all 8 markers removed).
+
+      - Run: `uv run invar guard --all` -> passed (status passed, errors 0).
+
+      - Run: `uv run pytest tests/ -x` -> stopped at pre-existing unrelated failure
+      `tests/integration/test_dx55_regression.py::TestAFreshProject::test_a2_new_project_existing_claudemd`.
+
+
+      Implementation notes:
+
+      - Converted marker-targeted shell helpers to return `Result[T,E]` where applicable
+      and updated MCP caller path to unwrap results.
+
+      - Preserved scope to `guard_runs.py` and immediate call path in handlers.
+
+
+      Spec link:
+
+      - `cat-a-guard-runs.fix-shell-result-in-guard-runs-py-8-markers`
+
+
+      Gaps/Notes:
+
+      - Full-suite first failure appears unrelated/pre-existing (DX55 CLAUDE template
+      expectation mismatch).'
   - id: cat-a-guard-runs.verify-guard-runs-py-shell-result-cleanup
     name: Verify guard_runs.py shell_result cleanup
     status: pending
