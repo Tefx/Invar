@@ -548,8 +548,6 @@ async def _execute_command(
         return Failure(str(exc))
 
 
-# @invar:allow shell_too_complex: Simple state machine, 6 branches is minimal
-# @invar:allow shell_pure_logic: No I/O, but called from shell context
 # @shell_complexity: Character-level scan and escaping requires multiple branches
 # @shell_orchestration: MCP output normalization (shell-owned, not reusable core API)
 def _fix_json_newlines(text: str) -> Result[str, str]:

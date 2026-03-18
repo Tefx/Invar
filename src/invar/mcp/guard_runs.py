@@ -201,7 +201,6 @@ class GuardRun:
     done_event: asyncio.Event = field(default_factory=asyncio.Event)
 
 
-# @invar:allow shell_too_complex: State lifecycle management needs branching
 # @shell_orchestration: Coordinates async subprocess lifecycle for MCP
 class GuardRunRegistry:
     """In-memory run registry for DX-94 deferred guard execution."""
