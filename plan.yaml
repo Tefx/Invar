@@ -29613,29 +29613,38 @@ phases:
   - id: p0-migration.verify-guard-passes-after-migration
     name: Verify guard passes after post-config migration finalization
     status: pending
-    description: 'Run uv run invar guard --all and confirm Invar''s own codebase passes
-      cleanly after post-config marker migration finalization.
+    description: 'Run a final independent verification of post-config migration finalization
+      after the safe-removal rework completes.
 
 
-      Verify:
+      Scope:
 
-      - All existing tests still pass
+      - Re-confirm `uv run invar guard --all` passes for Invar''s own codebase after
+      `p0-migration.retest-safe-marker-removal`.
 
-      - Guard output shows no new violations
+      - Review the rework evidence to ensure any still-inline markers are intentionally
+      retained because removing them would exceed p8-only migration-finalization scope.
 
-      - The pyproject.toml exempt sections are well-formed TOML and actively honored
-      by the implemented config path
+      - Confirm the completion path for p8 uses the reworked safe-removal step and
+      retest, not the rejected historical attempt.
 
-      - No inline @invar:allow markers remain for non-suppressible rules (dead_export,
-      stub_body, missing_contract, missing_doctest)
+      - Confirm no non-suppressible rules remain inline and no `pyproject.toml` edits
+      were needed.
 
 
-      This verification now belongs to post-p6 migration finalization because guard
-      must consume exempt config before inline-marker removal can be validated.'
-    verification: uv run invar guard --all passes. No non-suppressible inline markers
-      remain. pyproject.toml is valid TOML and exempt config is honored by guard.
+      This verification remains the final integration-verifier check before gate review,
+      but now consumes the reworked execution path instead of the rejected step.'
+    verification: '- `uv run invar guard --all` passes in the post-rework state
+
+      - No non-suppressible inline markers remain
+
+      - Any retained inline markers are explicitly justified as outside p8-only finalization
+      scope
+
+      - The rejected step `p0-migration.remove-migrated-inline-markers` is not on
+      the downstream dependency path'
     depends_on:
-    - p0-migration.remove-migrated-inline-markers
+    - p0-migration.retest-safe-marker-removal
     agent: integration-verifier
   - id: p0-migration.remove-migrated-inline-markers
     name: Remove migrated inline markers after config support is live
