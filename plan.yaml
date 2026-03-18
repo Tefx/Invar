@@ -25387,13 +25387,13 @@ phases:
       - PASS; no blockers and no should-fix issues.'
 - id: p3-budget-core
   name: 'Phase 3: core/escape_budget.py check_escape_budget'
-  status: pending
+  status: in_progress
   depends_on:
   - p2-by-file
   steps:
   - id: p3-budget-core.implement
     name: Implement core/escape_budget.py check_escape_budget
-    status: pending
+    status: claimed
     description: "Create NEW file: src/invar/core/escape_budget.py\n\nSingle-responsibility\
       \ Core module. Main function:\n\n```python\n@pre(lambda summary, config, file_infos:\
       \ isinstance(summary, EscapeHatchSummary) and isinstance(config, RuleConfig)\
@@ -25441,6 +25441,8 @@ phases:
       Combination penalty correctly doubles cost for 2-hatch functions and produces
       unconditional ERROR for 3+ hatch functions.
     agent: python-senior
+    claimed_by: python-senior
+    claimed_at: '2026-03-18T18:24:44.782530+00:00'
   - id: p3-budget-core.verify
     name: Verify check_escape_budget
     status: pending
