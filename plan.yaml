@@ -25943,7 +25943,7 @@ phases:
       pattern matching'
   - id: p6-config.verify
     name: Verify config parsing
-    status: pending
+    status: claimed
     description: 'Independent verification:
 
       1. Run uv run invar guard --all -- must pass
@@ -25961,6 +25961,8 @@ phases:
     depends_on:
     - p6-config.implement
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-18T19:45:22.261599+00:00'
   - id: p6-config.gate
     name: Phase 6 Gate
     status: pending
