@@ -29649,46 +29649,35 @@ phases:
   - id: p0-migration.remove-migrated-inline-markers
     name: Remove migrated inline markers after config support is live
     status: rejected
-    description: 'Remove inline @invar:allow markers only after pyproject.toml exempt-pattern
+    description: 'REJECTED HISTORICAL ATTEMPT - kept for plan history only.
+
+
+      This original broad marker-removal step surfaced 10 blocking guard violations
+      and is superseded for execution by `p0-migration.remove-safe-migrated-inline-markers`
+      plus `p0-migration.retest-safe-marker-removal` in p8.
+
+
+      Do not use this rejected step as the active completion path.
+
+
+      Original intent:
+
+      - Remove inline @invar:allow markers only after pyproject.toml exempt-pattern
       support is implemented and verified in the preceding config phases.
 
-
-      Blocking dependency rationale:
-
-      - This step now runs in post-p6 migration finalization and MUST NOT dispatch
-      before config support exists.
-
-      - Inline-marker removal before verified config support causes false failures
-      because migrated suppressions are not yet honored.
-
-
-      Scope:
-
       - Read pyproject.toml [tool.invar.exempt.*] sections to determine which rules/patterns
-      are covered
+      are covered.
 
-      - For each covered marker in src/invar/**/*.py, remove the @invar:allow comment
-
-      - Keep inline markers ONLY for cases that: (a) are not covered by an exempt
-      pattern, AND (b) genuinely need per-occurrence suppression and fit within DX-96
-      default budgets
+      - Remove covered markers in src/invar/**/*.py while preserving only markers
+      not covered by exempt patterns and still justified by DX-96 budgets.
 
 
-      Budget reference (DX-96 defaults):
+      Reason superseded:
 
-      - Suppressible: 3 per-file, 10 per-project per-rule
+      - Broad removal exposed coupled guard fallout that must be handled with a narrower
+      safe-removal pass and minimal local fixes limited to p8 migration finalization.
 
-      - Expensive: 2 per-file, 5 per-project per-rule
-
-      - Aggregate budget: 15 points
-
-
-      Files: all src/invar/**/*.py files that currently contain @invar:allow markers
-
-      DO NOT modify pyproject.toml.
-
-
-      Grep hint: grep -rn ''@invar:allow'' src/invar/ --include=''*.py'''
+      - The active downstream dependency path no longer relies on this rejected step.'
     verification: '- This post-p6 finalization phase is reached only after config
       support phases complete
 
