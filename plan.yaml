@@ -26685,7 +26685,7 @@ phases:
       - `cat-a-handlers.fix-shell-result-in-handlers-py-21-markers`'
   - id: cat-a-handlers.gate-category-a-handlers-py
     name: 'Gate: Category A handlers.py'
-    status: pending
+    status: claimed
     description: 'Gate review: Verify handlers.py shell_result phase completion.
 
 
@@ -26718,6 +26718,8 @@ phases:
     depends_on:
     - cat-a-handlers.verify-handlers-py-shell-result-cleanup
     agent: gate-reviewer
+    claimed_by: gate-reviewer
+    claimed_at: '2026-03-18T02:44:50.815419+00:00'
 - id: cat-a-server
   name: 'Category A: shell_result in server.py (14 markers)'
   status: locked
