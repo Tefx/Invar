@@ -25675,20 +25675,33 @@ phases:
   - id: p4-guard-integration.verify
     name: Verify guard integration
     status: pending
-    description: 'Independent verification:
+    description: "As an INDEPENDENT TESTER (`integration-verifier`), validate the\
+      \ guard pipeline integration from a fresh perspective.\n\nYOUR GOAL IS TO FIND\
+      \ PROBLEMS, not to confirm it works.\n\nTargeted checks:\n1. Run the real guard\
+      \ path with `uv run invar guard --all` and confirm the `_scan_and_check` pipeline\
+      \ reaches the 3-argument integration call for `check_escape_budget(report.escape_hatches,\
+      \ config, file_infos)`.\n2. Verify the import and wiring location in `src/invar/shell/commands/guard.py`\
+      \ is after escape hatch collection and after the DX-33 duplicate check, with\
+      \ no silent drop path that bypasses budget checking.\n3. Add or require targeted\
+      \ regression coverage for the helper/API-signature integration risk:\n   - normal\
+      \ path with populated `file_infos`\n   - fallback path when symbol/file info\
+      \ is unavailable or partial\n   - regression assertion that the guard pipeline\
+      \ does not revert to a 2-argument call shape\n4. Confirm existing guard behavior\
+      \ is preserved on Invar's own codebase apart from the intended budget enforcement\
+      \ path.\n\nIndependence Level: L2 (helper-signature integration across pipeline\
+      \ wiring)."
+    verification: '- Real path: `uv run invar guard --all` passes on Invar''s own
+      codebase and evidence identifies the 3-arg integration path in the executed
+      guard pipeline
 
-      1. Run uv run invar guard --all on Invar''s own codebase -- must PASS (existing
-      escape hatches within limits)
+      - Regression coverage: targeted test(s) or equivalent focused proof cover both
+      populated `file_infos` and explicit missing/partial metadata fallback behavior
 
-      2. Verify that check_escape_budget is actually called by checking the import
-      exists in guard.py
+      - API-shape check: verification confirms no 2-arg integration call remains on
+      the guard path
 
-      3. Verify the integration point is after escape hatch collection and after DX-33
-      duplicate check
-
-      4. No new violations introduced on Invar''s own codebase (acceptance criterion
-      7)'
-    verification: uv run invar guard --all passes. Integration point correct. No regressions.
+      - Wiring check: evidence demonstrates no silent drop path between escape hatch
+      collection, duplicate check, and budget evaluation'
     depends_on:
     - p4-guard-integration.implement
     agent: integration-verifier
