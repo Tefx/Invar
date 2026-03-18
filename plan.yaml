@@ -25880,7 +25880,7 @@ phases:
   steps:
   - id: p7-non-suppressible.implement
     name: Implement non-suppressible enforcement
-    status: claimed
+    status: done
     description: 'Modify the escape hatch suppression mechanism so that non-suppressible
       rules (dead_export, stub_body, missing_contract, missing_doctest) always produce
       ERROR even when @invar:allow is present inline.
@@ -25945,6 +25945,33 @@ phases:
     agent: python-executor
     claimed_by: python-executor
     claimed_at: '2026-03-18T18:58:35.482030+00:00'
+    done_at: '2026-03-18T19:27:51.022538+00:00'
+    evidence: 'Artifact:
+
+      - Commit: ccc0c7cb7131ccd5cfce3637da1fe2ac55901af7
+
+
+      Verification:
+
+      - Run: uv run invar guard --changed -> passed (errors: 0)
+
+      - Run: uv run pytest tests/core/test_entry_points.py tests/core/test_stub_body.py
+      --doctest-modules src/invar/core/entry_points.py src/invar/core/rules.py -v
+      -> all passed (32 tests)
+
+      - `has_allow_marker` now returns False for non-suppressible rules via centralized
+      check
+
+      - `escape_hatch_non_suppressible` made immune to `severity_overrides` in override
+      path
+
+      - Marker extraction remains intact for budget/messaging flows
+
+
+      Spec link:
+
+      - p7-non-suppressible.implement acceptance criteria for non-suppressible enforcement
+      and severity override immunity'
   - id: p7-non-suppressible.verify
     name: Verify non-suppressible enforcement
     status: pending
