@@ -29707,7 +29707,7 @@ phases:
       timestamp: '2026-03-18T21:42:15.167075+00:00'
   - id: p0-migration.remove-safe-migrated-inline-markers
     name: Remove only config-backed inline markers with minimal coupled guard fixes
-    status: claimed
+    status: pending
     description: 'Rework the rejected post-config marker-removal attempt with p8-only
       scope.
 
@@ -29777,8 +29777,6 @@ phases:
 
       - Result: <pass/fail output excerpt>'
     agent: python-senior
-    claimed_by: python-senior
-    claimed_at: '2026-03-18T21:49:47.642360+00:00'
   - id: p0-migration.retest-safe-marker-removal
     name: Retest guard after safe marker removal rework
     status: pending
