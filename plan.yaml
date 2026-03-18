@@ -27717,7 +27717,7 @@ phases:
       \ remediation.\n\nSpec link:\n- `final-verify.fix-marker-format-contract-mismatch`"
   - id: final-verify.fix-dx56-project-additions-template-sync
     name: Fix DX56 project additions contract mismatches in template sync behavior
-    status: pending
+    status: claimed
     description: 'Fix ALL currently known downstream DX56 blocker-family mismatches
       where project additions injection into managed template sync outputs is missing
       or inconsistent after marker-contract normalization.
@@ -27829,6 +27829,8 @@ phases:
     depends_on:
     - final-verify.retest-marker-format-contract-mismatch
     agent: python-senior
+    claimed_by: python-senior
+    claimed_at: '2026-03-18T14:37:34.378694+00:00'
   - id: final-verify.retest-dx56-project-additions-template-sync
     name: Retest DX56 project additions template sync contract
     status: pending
