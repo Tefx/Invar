@@ -26483,13 +26483,13 @@ phases:
       - `cat-a-guard-runs.verify-guard-runs-py-shell-result-cleanup`'
 - id: cat-a-handlers
   name: 'Category A: shell_result in handlers.py (21 markers)'
-  status: pending
+  status: in_progress
   depends_on:
   - cat-a-guard-runs
   steps:
   - id: cat-a-handlers.fix-shell-result-in-handlers-py-21-markers
     name: Fix shell_result in handlers.py (21 markers)
-    status: pending
+    status: claimed
     description: 'Eliminate all 21 `@invar:allow shell_result` markers in `src/invar/mcp/handlers.py`.
 
 
@@ -26579,6 +26579,8 @@ phases:
 
       - `uv run pytest tests/ -x` passes'
     agent: python-senior
+    claimed_by: python-senior
+    claimed_at: '2026-03-18T02:16:34.936200+00:00'
   - id: cat-a-handlers.verify-handlers-py-shell-result-cleanup
     name: Verify handlers.py shell_result cleanup
     status: pending
