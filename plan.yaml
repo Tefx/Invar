@@ -27921,7 +27921,7 @@ phases:
   - id: final-verify.fix-template-sync-guard-complexity
     name: Fix template_sync guard complexity regression while preserving DX56 additions
       behavior
-    status: claimed
+    status: done
     description: 'Fix the guard regression introduced by the DX56 template-sync repair:
       `shell_too_complex` in `_merge_project_additions` within `template_sync.py`
       (5 branches > max 3), while preserving the now-passing DX56 project-additions
@@ -28033,6 +28033,26 @@ phases:
     agent: python-senior
     claimed_by: python-senior
     claimed_at: '2026-03-18T14:47:21.472982+00:00'
+    done_at: '2026-03-18T14:53:11.402933+00:00'
+    evidence: "## Template Sync Guard Complexity Repair\n- blocker_fingerprint: template-sync-shell-too-complex\n\
+      - root_cause_hypothesis: `_merge_project_additions` concentrated replacement/append/normalization\
+      \ branches in one shell helper after DX56 repair.\n- why_previous_fix_failed:\
+      \ behavior restoration succeeded but complexity budget was exceeded in single\
+      \ helper.\n- structural_change:\n  - decomposed logic into helpers:\n    - `_normalize_project_additions(...)`\n\
+      \    - `_build_project_additions_block(...)`\n    - `_replace_project_additions_block(...)`\n\
+      \    - `_append_project_additions_block(...)`\n  - reduced `_merge_project_additions(...)`\
+      \ to orchestration-only flow.\n- preserved_behaviors: DX56 additions injection,\
+      \ ordering, idempotent replacement, and legacy-preservation path remain intact.\n\
+      - sibling_search_evidence:\n  - `rg -n \"_merge_project_additions|project additions|shell_too_complex|template_sync\"\
+      \ src tests`\n  - `rg -n \"test_project_additions_injection|idempot|legacy|project\
+      \ additions|template_sync\" tests src`\n\nVerification:\n- `uv run invar guard\
+      \ --all` -> PASSED (0 errors).\n- Targeted regression suites: `uv run pytest\
+      \ tests/integration/test_dx56_sync.py tests/integration/test_dx55_regression.py\
+      \ tests/integration/test_dx91_dev_sync_template_merge.py -x` -> 45 passed.\n\
+      - Full suite command reaches next unrelated blocker family in DX91 destructive\
+      \ harness (fixture/content mismatch), outside this step scope.\n\nArtifact:\n\
+      - commit `0d16bd1` (squash merge of worker commit `f8f136a`)\n- file changed:\
+      \ `src/invar/shell/commands/template_sync.py`\n"
   - id: final-verify.retest-template-sync-guard-complexity
     name: Retest template_sync guard complexity repair
     status: pending
