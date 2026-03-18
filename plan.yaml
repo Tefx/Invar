@@ -25286,7 +25286,7 @@ phases:
       - Scope limited to Phase 2 implementation surface only.'
   - id: p2-by-file.verify
     name: Verify Phase 2 by_file
-    status: pending
+    status: claimed
     description: 'Independent verification: test EscapeHatchSummary.by_file with multiple
       files and rules. Verify empty case, single file, multiple files, multiple rules
       per file. Run uv run invar guard --all.'
@@ -25295,6 +25295,8 @@ phases:
     depends_on:
     - p2-by-file.implement
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-18T18:04:07.887266+00:00'
   - id: p2-by-file.gate
     name: Phase 2 Gate
     status: pending
