@@ -25606,13 +25606,13 @@ phases:
       - PASS; no blockers and no should-fix issues.'
 - id: p4-guard-integration
   name: 'Phase 4: guard.py _scan_and_check integration'
-  status: pending
+  status: in_progress
   depends_on:
   - p3-budget-core
   steps:
   - id: p4-guard-integration.implement
     name: Integrate check_escape_budget into _scan_and_check
-    status: pending
+    status: claimed
     description: "Add 3-5 lines to src/invar/shell/commands/guard.py in _scan_and_check(),\
       \ after the DX-33 duplicate escape reasons check (~line 176, after check_duplicate_escape_reasons):\n\
       \n```python\n# DX-96: Check escape hatch budget limits\nfrom invar.core.escape_budget\
@@ -25624,6 +25624,8 @@ phases:
       guard execution. Invar's own codebase does not trigger any new violations (existing
       escape hatches are within default limits).
     agent: python-executor
+    claimed_by: python-executor
+    claimed_at: '2026-03-18T18:58:12.256995+00:00'
   - id: p4-guard-integration.verify
     name: Verify guard integration
     status: pending
