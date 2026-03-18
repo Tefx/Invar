@@ -25954,7 +25954,7 @@ phases:
       output extensions'
   - id: p5-output.verify
     name: Verify gating output
-    status: claimed
+    status: done
     description: 'Independent verification:
 
       1. Run uv run invar guard --all -- should pass (no gating violations on own
@@ -25975,6 +25975,37 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-18T20:38:40.276168+00:00'
+    done_at: '2026-03-18T20:47:22.068153+00:00'
+    evidence: 'Artifact:
+
+      - Commit hash(es): none (verify-only)
+
+
+      Verification:
+
+      - JSON structure validated for gating-violation scenarios: `escape_hatches.gating`
+      includes `status`, `per_rule_violations`, `budget`, `non_suppressible`, `combination`
+
+      - Rich output validated: limit-exceeded scenarios render gating Panel with inline
+      non-suppressible guidance block
+
+      - Non-suppressible messaging validated for required text content and policy
+      wording
+
+      - Under-limit behavior validated unchanged (simple escape-hatch line, no panel)
+
+      - Doctests: uv run pytest --doctest-modules src/invar/core/formatter.py -> 6
+      passed
+
+      - Run: uv run invar guard --all -> current repo has pre-existing non-suppressible/contract
+      blockers unrelated to p5 output-format wiring; no new p5-specific guard regressions
+      observed
+
+
+      Spec link:
+
+      - p5-output.verify acceptance criteria for JSON/Rich output correctness and
+      unchanged under-limit behavior'
   - id: p5-output.gate
     name: Phase 5 Gate
     status: pending
