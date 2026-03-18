@@ -24933,7 +24933,7 @@ phases:
       - `p1-models-tier.implement`'
   - id: p1-models-tier.verify
     name: Verify Phase 1 models
-    status: claimed
+    status: pending
     description: 'Independent verification: import EscapeHatchTier, ESCAPE_TIER_MAP,
       ESCAPE_TIER_COST from invar.core.models. Verify:
 
@@ -24951,8 +24951,6 @@ phases:
     depends_on:
     - p1-models-tier.implement
     agent: integration-verifier
-    claimed_by: integration-verifier
-    claimed_at: '2026-03-18T16:40:14.192779+00:00'
   - id: p1-models-tier.gate
     name: Phase 1 Gate
     status: pending
