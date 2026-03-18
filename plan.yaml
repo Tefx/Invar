@@ -26360,7 +26360,7 @@ phases:
       expectation mismatch).'
   - id: cat-a-guard-runs.verify-guard-runs-py-shell-result-cleanup
     name: Verify guard_runs.py shell_result cleanup
-    status: pending
+    status: claimed
     description: 'As an INDEPENDENT TESTER, verify guard_runs.py shell_result elimination.
 
 
@@ -26387,6 +26387,8 @@ phases:
     depends_on:
     - cat-a-guard-runs.fix-shell-result-in-guard-runs-py-8-markers
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-18T02:03:36.102450+00:00'
   - id: cat-a-guard-runs.gate-category-a-guard-runs-py
     name: 'Gate: Category A guard_runs.py'
     status: pending
