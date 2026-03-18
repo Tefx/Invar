@@ -25703,7 +25703,7 @@ phases:
     agent: gate-reviewer
   - id: p0-migration.remove-migrated-inline-markers
     name: Remove migrated inline markers
-    status: claimed
+    status: pending
     description: 'Remove inline @invar:allow markers that are now covered by the human-approved
       pyproject.toml exempt patterns.
 
@@ -25742,8 +25742,6 @@ phases:
     depends_on:
     - p0-migration.human-review-and-approve-exemptions
     agent: python-executor
-    claimed_by: python-executor
-    claimed_at: '2026-03-18T16:09:03.970104+00:00'
 - id: cat-e-dead-assign
   name: 'Category E: dead_assign Fixes (5 markers)'
   status: done
