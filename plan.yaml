@@ -25529,7 +25529,7 @@ phases:
       behavior, exempt filtering, budget math, and Core purity'
   - id: p3-budget-core.gate
     name: Phase 3 Gate
-    status: pending
+    status: claimed
     description: 'Gate review: Verify Phase 3 completion. check_escape_budget has
       @pre/@post contracts and comprehensive doctests. All 5 violation types (file_limit,
       project_limit, budget, combination, non_suppressible) are producible. Core zone
@@ -25538,6 +25538,8 @@ phases:
     depends_on:
     - p3-budget-core.verify
     agent: gate-reviewer
+    claimed_by: gate-reviewer
+    claimed_at: '2026-03-18T18:50:40.555311+00:00'
 - id: p4-guard-integration
   name: 'Phase 4: guard.py _scan_and_check integration'
   status: locked
