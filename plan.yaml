@@ -27311,7 +27311,7 @@ phases:
       \ satisfy project-level complexity-debt gate during commit path."
   - id: cat-d-file-size.verify-file-size-extraction
     name: Verify file_size extraction
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT TESTER, verify file_size extraction.
 
 
@@ -27347,6 +27347,21 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-18T04:24:49.773552+00:00'
+    done_at: '2026-03-18T04:33:14.982955+00:00'
+    evidence: "Independent verification completed for file-size extraction step.\n\
+      \nVerification:\n- `grep -rn '@invar:allow file_size' src/invar/core/` -> exactly\
+      \ 1 marker remains (`src/invar/core/hypothesis_strategies.py`), matching allowed\
+      \ justified exception case.\n- Module split integrity verified:\n  - `dead_assign`\
+      \ internals extracted into `dead_assign_common.py` + `dead_assign_walk.py`\n\
+      \  - `doc_parser` API preserved via facade over `doc_parser_core.py` + `doc_parser_query.py`\n\
+      \  - `rules` extracted helpers into `rules_basic.py`\n- Public API/import compatibility\
+      \ checks for moved symbols passed.\n- Contract/doctest presence across extracted\
+      \ core files verified as preserved.\n- `uv run invar guard --all` -> passed\
+      \ (0 errors).\n- `uv run pytest tests/ -x` -> worker reported only pre-existing\
+      \ failure family on main branch; no file-size extraction regression signal.\n\
+      \nClassification:\n- blocker: none for category D acceptance.\n- should_fix:\
+      \ unrelated pre-existing test failures outside this step scope.\n\nSpec link:\n\
+      - `cat-d-file-size.extract-and-split-large-core-files-5-markers`"
   - id: cat-d-file-size.gate-category-d-file-size
     name: 'Gate: Category D file_size'
     status: pending
