@@ -25023,6 +25023,41 @@ phases:
     depends_on:
     - p1-models-tier.verify
     agent: python-executor
+  - id: p1-models-tier.retest-canonical-count
+    name: Retest Phase 1 canonical tier mapping
+    status: pending
+    description: 'Independent retest after `p1-models-tier.fix-canonical-count`.
+
+
+      Rerun focused checks for:
+
+      - `EscapeHatchTier` exported members and intended semantics
+
+      - `ESCAPE_TIER_MAP` cardinality and canonical per-rule content (expected 12
+      entries)
+
+      - `ESCAPE_TIER_COST` values
+
+      - `RuleConfig` defaults introduced in Phase 1
+
+      - `uv run invar guard --all`
+
+
+      This retest must verify the blocker family is closed, not just that one assertion
+      changed.'
+    verification: '- Targeted checks confirm `ESCAPE_TIER_MAP` has 12 canonical entries
+      with correct content
+
+      - Targeted checks confirm `EscapeHatchTier`, `ESCAPE_TIER_COST`, and `RuleConfig`
+      defaults remain correct
+
+      - `uv run invar guard --all` passes
+
+      - Evidence states whether any mismatch remains between proposal, models, and
+      tests'
+    depends_on:
+    - p1-models-tier.fix-canonical-count
+    agent: integration-verifier
 - id: p2-by-file
   name: 'Phase 2: EscapeHatchSummary.by_file property'
   status: locked
