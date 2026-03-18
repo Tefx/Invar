@@ -26752,7 +26752,7 @@ phases:
       - `cat-a-handlers.verify-handlers-py-shell-result-cleanup`'
 - id: cat-a-server
   name: 'Category A: shell_result in server.py (14 markers)'
-  status: in_progress
+  status: done
   depends_on:
   - cat-a-handlers
   steps:
@@ -26937,7 +26937,7 @@ phases:
       - `cat-a-server.fix-shell-result-in-server-py-14-markers`'
   - id: cat-a-server.gate-category-a-server-py
     name: 'Gate: Category A server.py'
-    status: claimed
+    status: done
     description: 'Gate review: Verify server.py shell_result phase completion.
 
 
@@ -26968,9 +26968,38 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-18T03:09:02.194368+00:00'
+    done_at: '2026-03-18T03:13:51.572232+00:00'
+    evidence: 'Category A server gate review completed (STANDARD depth).
+
+
+      Gate findings:
+
+      - 14/14 `@invar:allow shell_result` markers in `server.py` removed.
+
+      - Result-contract migration validated across server tool factory and server
+      creation paths.
+
+      - Core/Shell boundary respected; no improper core-side I/O concerns introduced.
+
+      - Guard checks pass for modified server surface; no blocking errors.
+
+      - Test verification indicates no server-specific regressions; unrelated pre-existing
+      DX55 regression family remains non-blocking to this phase.
+
+
+      Verdict:
+
+      - PASS; Category A server phase complete.
+
+
+      Spec link:
+
+      - `cat-a-server.fix-shell-result-in-server-py-14-markers`
+
+      - `cat-a-server.verify-server-py-shell-result-cleanup`'
 - id: cat-c-entry-point
   name: 'Category C: entry_point_too_thick Fixes (10 markers)'
-  status: locked
+  status: pending
   depends_on:
   - cat-a-server
   steps:
