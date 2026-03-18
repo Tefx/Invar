@@ -26262,10 +26262,12 @@ phases:
     status: claimed
     description: 'Gate review: Verify Phase 6 completion. Config parsing handles all
       new fields. Exempt patterns parsed correctly. Pydantic validation catches invalid
-      values. Guard passes.'
+      values. Guard passes. Gate remains blocked until the blocker-family retest confirms
+      import wiring / exports consistency for the Phase 6 exempt-pattern surface.'
     verification: Phase 6 complete. Config parsing correct and validated.
     depends_on:
     - p6-config.verify
+    - p6-config.retest-gate-blockers
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-18T20:56:26.537426+00:00'
