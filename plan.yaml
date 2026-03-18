@@ -27058,7 +27058,7 @@ phases:
       \ complexity debt threshold) not modified in this step."
   - id: cat-c-entry-point.verify-entry-point-too-thick-cleanup
     name: Verify entry_point_too_thick cleanup
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT TESTER, verify entry_point_too_thick elimination.
 
 
@@ -27089,6 +27089,39 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-18T03:43:03.539477+00:00'
+    done_at: '2026-03-18T03:48:20.329208+00:00'
+    evidence: 'Independent verification completed for entry_point_too_thick cleanup.
+
+
+      Verification:
+
+      - `grep -rn ''@invar:allow entry_point_too_thick'' src/invar/` -> only rule-doc/example
+      occurrences remain (doctest/string literal), no production marker hatches in
+      target modules.
+
+      - Entry-point structure audit: command entry points are thin wrappers delegating
+      orchestration to helper functions.
+
+      - Helper contract audit: extracted helpers use Result-based return paths in
+      shell command flow.
+
+      - Guard audit: no `entry_point_too_thick` violations in target `src/invar/`
+      surfaces; worker observed separate project-level complexity debt warning state.
+
+      - `pytest tests/ -x` reached unrelated pre-existing DX55 regression failure
+      in template-sync path, not attributed to entry-point refactor.
+
+
+      Classification:
+
+      - blocker: none for cat-c acceptance.
+
+      - should_fix: unrelated pre-existing DX55 regression family.
+
+
+      Spec link:
+
+      - `cat-c-entry-point.refactor-thick-entry-points-10-markers`'
   - id: cat-c-entry-point.gate-category-c-entry-point-too-thick
     name: 'Gate: Category C entry_point_too_thick'
     status: pending
