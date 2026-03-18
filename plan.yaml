@@ -26758,7 +26758,7 @@ phases:
   steps:
   - id: cat-a-server.fix-shell-result-in-server-py-14-markers
     name: Fix shell_result in server.py (14 markers)
-    status: claimed
+    status: done
     description: 'Eliminate all 14 `@invar:allow shell_result` markers in `src/invar/mcp/server.py`.
 
 
@@ -26834,6 +26834,46 @@ phases:
     agent: python-senior
     claimed_by: python-senior
     claimed_at: '2026-03-18T02:50:16.303315+00:00'
+    done_at: '2026-03-18T03:01:07.931769+00:00'
+    evidence: 'Artifact:
+
+      - PR: commit `38f68b7` (squash merge of worktree commit `37f9c09`)
+
+      - File changed: `src/invar/mcp/server.py`
+
+
+      Verification:
+
+      - Run: `grep -n ''@invar:allow shell_result'' src/invar/mcp/server.py` -> 0
+      matches (all 14 markers removed).
+
+      - Run: `uv run invar guard --all` -> worker observed `status=failed` with warnings-only
+      profile (`errors=0`), no shell_result regressions on server target; local pre-commit
+      guard on merged diff passed.
+
+      - Run: `uv run pytest tests/ -x` -> stopped at pre-existing unrelated `tests/integration/test_dx55_regression.py::TestAFreshProject::test_a2_new_project_existing_claudemd`
+      after large pass count.
+
+
+      Implementation notes:
+
+      - Refactored MCP tool factory functions to Result-based contracts.
+
+      - Added helper flow to collect/chain tool registration results.
+
+      - Updated `create_server` / server startup path for explicit Result unwrapping
+      at boundary.
+
+
+      Spec link:
+
+      - `cat-a-server.fix-shell-result-in-server-py-14-markers`
+
+
+      Gaps/Notes:
+
+      - Full-suite first-failure remains pre-existing DX55 template-sync regression
+      family, out-of-scope for server shell_result migration.'
   - id: cat-a-server.verify-server-py-shell-result-cleanup
     name: Verify server.py shell_result cleanup
     status: pending
