@@ -26183,13 +26183,13 @@ phases:
       - `cat-b-dead-export.verify-dead-export-cleanup`'
 - id: cat-a-guard-runs
   name: 'Category A: shell_result in guard_runs.py (8 markers)'
-  status: pending
+  status: in_progress
   depends_on:
   - cat-b-dead-export
   steps:
   - id: cat-a-guard-runs.fix-shell-result-in-guard-runs-py-8-markers
     name: Fix shell_result in guard_runs.py (8 markers)
-    status: pending
+    status: claimed
     description: 'Eliminate all 8 `@invar:allow shell_result` markers in `src/invar/mcp/guard_runs.py`.
 
 
@@ -26267,6 +26267,8 @@ phases:
 
       - `uv run pytest tests/ -x` passes'
     agent: python-senior
+    claimed_by: python-senior
+    claimed_at: '2026-03-18T01:49:40.892168+00:00'
   - id: cat-a-guard-runs.verify-guard-runs-py-shell-result-cleanup
     name: Verify guard_runs.py shell_result cleanup
     status: pending
