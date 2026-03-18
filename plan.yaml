@@ -27432,7 +27432,7 @@ phases:
       - `cat-d-file-size.verify-file-size-extraction`'
 - id: final-verify
   name: 'Final Verification: Escape Hatch Census'
-  status: in_progress
+  status: done
   depends_on:
   - cat-d-file-size
   steps:
@@ -28273,7 +28273,7 @@ phases:
       - commit `b9d9536` (squash merge of worktree commit `260385d`)\n"
   - id: final-verify.retest-dx91-expected-invar-fixtures
     name: Retest DX91 expected INVAR.md fixture synchronization
-    status: claimed
+    status: done
     description: 'Re-test the DX91 expected-fixture contract blocker family from a
       fresh, independent perspective after syncing the expected INVAR.md corpus.
 
@@ -28325,3 +28325,25 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-18T15:13:32.391415+00:00'
+    done_at: '2026-03-18T15:18:19.880770+00:00'
+    evidence: '## DX91 Expected Fixture Retest
+
+      - fresh_environment: executed in isolated clean worktree branch.
+
+      - guard_result: PASS (`uv run invar guard --all` -> 0 errors).
+
+      - dx91_fixture_family_status: CLEARED (`tests/integration/test_dx91_destructive_regression_harness.py`
+      -> 8/8 passed).
+
+      - pytest_first_remaining_failure: `tests/test_subprocess_env.py::test_uses_running_source_for_version_mismatch_respawn`
+
+      - unrelated_blockers: only subprocess/uvx respawn behavior family remains; template-sync
+      and DX55/DX56/DX91 fixture families are all green.
+
+
+      Summary:
+
+      - Template-related blocker families resolved.
+
+      - Full suite now near-green with one unrelated remaining failure outside this
+      fixture-sync scope.'
