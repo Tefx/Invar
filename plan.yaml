@@ -24585,7 +24585,7 @@ phases:
       - `dx91-usbv-cleanup.fix-active-design-surface-usbv-residue`'
   - id: dx91-usbv-cleanup.fix-active-usbv-archive-framing
     name: Fix active USBV residue archival framing across docs surfaces
-    status: claimed
+    status: done
     description: 'Fix ALL active-design diagram residue for the USBV blocker family.
 
 
@@ -24678,6 +24678,44 @@ phases:
     agent: doc-reviewer
     claimed_by: doc-reviewer
     claimed_at: '2026-03-18T01:49:04.207993+00:00'
+    done_at: '2026-03-18T01:49:15.255675+00:00'
+    evidence: '## USBV archival framing fix
+
+
+      **Files updated**:
+
+      - `docs/diagrams.md`
+
+      - Artifact commit: `e5a01f8` (squash merge of worker commit `3e9b6e5`)
+
+
+      **Sibling search commands**:
+
+      ```bash
+
+      rg -n "USBV|USBV workflow|usbv" docs/
+
+      rg -n "active|current|workflow|archive|historical" docs/diagrams.md docs/agents.md
+
+      ```
+
+
+      **Findings addressed**:
+
+      - Reframed `docs/diagrams.md` USBV workflow section as historical and added
+      explicit archive notice with DX-91 pointer.
+
+      - Updated session protocol wording that implied active USBV workflow.
+
+      - Confirmed `docs/agents.md` historical framing remains consistent.
+
+
+      **Remaining historical references**:
+
+      - Remaining docs USBV hits are archival/historical context, not active guidance.
+
+
+      **Verdict**: PASS'
   - id: dx91-usbv-cleanup.retest-active-usbv-archive-framing
     name: Re-test USBV archival framing across active docs surfaces
     status: pending
