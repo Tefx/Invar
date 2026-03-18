@@ -26999,13 +26999,13 @@ phases:
       - `cat-a-server.verify-server-py-shell-result-cleanup`'
 - id: cat-c-entry-point
   name: 'Category C: entry_point_too_thick Fixes (10 markers)'
-  status: pending
+  status: in_progress
   depends_on:
   - cat-a-server
   steps:
   - id: cat-c-entry-point.refactor-thick-entry-points-10-markers
     name: Refactor thick entry points (10 markers)
-    status: pending
+    status: claimed
     description: "Eliminate all 10 `@invar:allow entry_point_too_thick` markers by\
       \ extracting logic into Shell helper functions.\n\n## Markers:\n\n### commands/doc.py\
       \ (6 markers):\n1. Line 140: `Multi-file glob + dual output format orchestration`\n\
@@ -27039,6 +27039,8 @@ phases:
 
       - `uv run pytest tests/ -x` passes'
     agent: python-senior
+    claimed_by: python-senior
+    claimed_at: '2026-03-18T03:14:01.847620+00:00'
   - id: cat-c-entry-point.verify-entry-point-too-thick-cleanup
     name: Verify entry_point_too_thick cleanup
     status: pending
