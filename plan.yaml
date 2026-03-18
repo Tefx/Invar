@@ -29613,7 +29613,7 @@ phases:
     agent: gate-reviewer
   - id: p0-migration.verify-guard-passes-after-migration
     name: Verify guard passes after post-config migration finalization
-    status: claimed
+    status: done
     description: 'Run a final independent verification of post-config migration finalization
       after the safe-removal rework completes.
 
@@ -29649,6 +29649,77 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-18T23:28:29.754019+00:00'
+    done_at: '2026-03-18T23:38:28.800213+00:00'
+    evidence: '## Verification Summary
+
+
+      ### 1. Guard Passes After Migration
+
+      **Result: PASS**
+
+      - `uv run invar guard --all` → status: "passed"
+
+      - Static: 0 errors, 57 warnings (all acceptable), 4 infos
+
+      - Doctests: passed
+
+      - Property tests: 304 functions tested, 304 passed, 0 failures
+
+      - CrossHair: counterexample_found (normal verification result)
+
+
+      ### 2. Non-Suppressible Inline Markers Check
+
+      **Result: PASS - No non-suppressible inline markers remain**
+
+
+      NON_SUPPRESSIBLE_INLINE_RULES = frozenset({''missing_contract'', ''dead_export'',
+      ''missing_doctest'', ''stub_body''})
+
+
+      Remaining inline markers are ALL for suppressible rules:
+
+      - file_size (2 markers) - EXPENSIVE tier
+
+      - entry_point_too_thick (1 marker) - SUPPRESSIBLE tier
+
+      - shell_complexity (3 markers) - Shell zone allowed
+
+
+      ### 3. Retained Marker Justification Check
+
+      **Result: PASS - All 6 retained markers explicitly justified**
+
+
+      | File | Rule | Justification |
+
+      |------|------|---------------|
+
+      | hypothesis_strategies.py:7 | file_size | Exempted in pyproject.toml; strategy
+      gen complexity |
+
+      | models.py:1 | file_size | Core models aggregation - data classes belong together
+      |
+
+      | init.py:87,184,185 | shell_complexity | Shell zone; orchestration complexity
+      |
+
+      | runtime/invariant.py:26 | entry_point_too_thick | False positive - .get()
+      pattern |
+
+
+      ### 4. Rejected Step Path Check
+
+      **Result: PASS - Rejected step NOT on downstream path**
+
+
+      - `p0-migration.remove-migrated-inline-markers`: skipped, reason="superseded"
+
+      - Active path: remove-safe-migrated-inline-markers → retest-safe-marker-removal
+      → fix-remaining-guard-blockers → retest-guard-pass-after-remediation (all ✓
+      completed)
+
+      - Downstream dependency does NOT rely on rejected step'
   - id: p0-migration.remove-migrated-inline-markers
     name: Remove migrated inline markers after config support is live
     status: skipped
