@@ -29529,7 +29529,7 @@ phases:
       fixture-sync scope.'
 - id: p8-migration-finalization
   name: 'Phase 8: Migration finalization after config support'
-  status: pending
+  status: in_progress
   depends_on:
   - p7-non-suppressible
   steps:
@@ -29590,7 +29590,7 @@ phases:
     agent: integration-verifier
   - id: p0-migration.remove-migrated-inline-markers
     name: Remove migrated inline markers after config support is live
-    status: pending
+    status: claimed
     description: 'Remove inline @invar:allow markers only after pyproject.toml exempt-pattern
       support is implemented and verified in the preceding config phases.
 
@@ -29645,3 +29645,5 @@ phases:
     refs:
     - p6-config
     agent: python-executor
+    claimed_by: python-executor
+    claimed_at: '2026-03-18T21:12:35.372775+00:00'
