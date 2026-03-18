@@ -25775,7 +25775,7 @@ phases:
       behavior, no 2-arg regression'
   - id: p4-guard-integration.gate
     name: Phase 4 Gate
-    status: pending
+    status: claimed
     description: 'Gate review: Verify Phase 4 helper/API-signature integration is
       complete and unambiguous.
 
@@ -25820,6 +25820,8 @@ phases:
     depends_on:
     - p4-guard-integration.verify
     agent: gate-reviewer
+    claimed_by: gate-reviewer
+    claimed_at: '2026-03-18T20:20:35.509082+00:00'
 - id: p5-output
   name: 'Phase 5: formatter.py + guard_output.py gating output'
   status: locked
