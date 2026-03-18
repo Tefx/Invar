@@ -25003,7 +25003,7 @@ phases:
     agent: gate-reviewer
   - id: p1-models-tier.fix-canonical-count
     name: Fix canonical ESCAPE_TIER_MAP coverage
-    status: claimed
+    status: done
     description: 'Fix all blockers found by `p1-models-tier.verify`, not just the
       first.
 
@@ -25063,6 +25063,42 @@ phases:
     agent: python-executor
     claimed_by: python-executor
     claimed_at: '2026-03-18T17:18:52.017122+00:00'
+    done_at: '2026-03-18T17:33:53.150038+00:00'
+    evidence: 'Artifact:
+
+      - Commit: 79a98a4
+
+
+      Verification:
+
+      - Root cause identified: `shell_too_complex` rule missing from `ESCAPE_TIER_MAP`
+      due mismatch between prior implement acceptance (11) and canonical proposal
+      expectation (12)
+
+      - Run: uv run python -c "from invar.core.models import ESCAPE_TIER_MAP; print(len(ESCAPE_TIER_MAP))"
+      -> 12
+
+      - Run: uv run invar guard --all -> passed (errors: 0)
+
+      - ESCAPE_TIER_MAP tiers after fix: SUPPRESSIBLE=3, EXPENSIVE=5, NON_SUPPRESSIBLE=4
+      (total 12)
+
+      - ESCAPE_TIER_COST unchanged and correct: {SUPPRESSIBLE:1, EXPENSIVE:3, NON_SUPPRESSIBLE:0}
+
+      - RuleConfig defaults remain aligned with expected values
+
+
+      Spec link:
+
+      - plan.yaml `p1-models-tier.verify` expected 12 canonical entries
+
+      - plan.yaml `p1-models-tier.fix-canonical-count` completion criteria
+
+
+      Gaps/Notes:
+
+      - Added canonical rule coverage for `shell_too_complex`; no downstream feature
+      expansion.'
   - id: p1-models-tier.retest-canonical-count
     name: Retest Phase 1 canonical tier mapping
     status: pending
