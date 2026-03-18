@@ -28134,7 +28134,7 @@ phases:
   - id: final-verify.fix-dx91-expected-invar-fixtures
     name: Sync DX91 expected INVAR.md fixtures to authoritative shell_complexity template
       contract
-    status: claimed
+    status: done
     description: 'Fix the deterministic DX91 harness blocker family where expected
       fixture INVAR.md files still encode the stale `dead_export` escape-hatch example
       while the authoritative template/policy now uses the `shell_complexity` example.
@@ -28249,6 +28249,28 @@ phases:
     agent: python-senior
     claimed_by: python-senior
     claimed_at: '2026-03-18T15:09:59.579798+00:00'
+    done_at: '2026-03-18T15:13:25.253386+00:00'
+    evidence: "## DX91 Expected INVAR Fixture Sync\n- blocker_fingerprint: dx91-expected-invar-template-drift\n\
+      - root_cause_hypothesis: DX91 expected fixture corpus retained stale dead_export\
+      \ example after authoritative template contract moved to shell_complexity examples.\n\
+      - why_previous_fix_failed: prior loops addressed marker normalization, DX56\
+      \ additions, and complexity, but did not touch expected fixture corpus.\n- updated_fixture_paths:\n\
+      \  - `tests/fixtures/dx91_migration/clear-null-overwrite-removed-managed/expected/INVAR.md`\n\
+      \  - `tests/fixtures/dx91_migration/interrupted-partial-migration-recovery/expected/INVAR.md`\n\
+      \  - `tests/fixtures/dx91_migration/mainline-v1-to-v2/expected/INVAR.md`\n \
+      \ - `tests/fixtures/dx91_migration/missing-file-fallback-partial-repo/expected/INVAR.md`\n\
+      \  - `tests/fixtures/dx91_migration/relative-vs-absolute-template-path/expected/INVAR.md`\n\
+      \  - `tests/fixtures/dx91_migration/repeated-migration-idempotent-v1-source/expected/INVAR.md`\n\
+      \  - `tests/fixtures/dx91_migration/stale-legacy-vs-new-state-precedence/expected/INVAR.md`\n\
+      - sibling_search_evidence:\n  - `rg -n \"dead_export|shell_complexity|INVAR\\\
+      .md\" tests`\n  - `rg -n \"dx91|expected.*INVAR|fixture|shell_complexity|dead_export\"\
+      \ tests src`\n  - no remaining stale `@invar:allow dead_export: CLI entry point\
+      \ called by framework` in affected INVAR expected fixtures.\n- authoritative_contract_source:\
+      \ `src/invar/templates/protocol/INVAR.md.v2.jinja`\n\nVerification:\n- Targeted\
+      \ blocker family test: `uv run pytest tests/integration/test_dx91_destructive_regression_harness.py\
+      \ -x` -> 8 passed.\n- Full suite command: `uv run pytest tests/ -x` now fails\
+      \ at distinct unrelated blocker family in subprocess respawn test.\n\nArtifact:\n\
+      - commit `b9d9536` (squash merge of worktree commit `260385d`)\n"
   - id: final-verify.retest-dx91-expected-invar-fixtures
     name: Retest DX91 expected INVAR.md fixture synchronization
     status: pending
