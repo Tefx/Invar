@@ -26717,7 +26717,7 @@ phases:
   steps:
   - id: final-gate.acceptance
     name: Final acceptance verification against all 7 criteria
-    status: claimed
+    status: pending
     description: 'End-to-end acceptance verification against ALL 10 acceptance criteria
       from revised proposal:
 
@@ -26819,8 +26819,6 @@ phases:
 
       **Output**: <exit 0>'
     agent: integration-verifier
-    claimed_by: integration-verifier
-    claimed_at: '2026-03-18T21:49:42.282243+00:00'
   - id: final-gate.gate
     name: Final Gate Review
     status: pending
