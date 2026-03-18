@@ -29808,7 +29808,7 @@ phases:
       removal + explicit retained rationale'
   - id: p0-migration.retest-safe-marker-removal
     name: Retest guard after safe marker removal rework
-    status: pending
+    status: claimed
     description: 'As an INDEPENDENT TESTER (integration-verifier), retest the p8 migration-finalization
       rework from a fresh perspective.
 
@@ -29872,6 +29872,8 @@ phases:
     depends_on:
     - p0-migration.remove-safe-migrated-inline-markers
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-18T22:46:37.399421+00:00'
   - id: p0-migration.fix-remaining-guard-blockers
     name: Fix remaining guard blockers from safe marker removal and final acceptance
     status: done
