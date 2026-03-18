@@ -26236,7 +26236,7 @@ phases:
       - `cat-b-dead-export.verify-dead-export-cleanup`'
 - id: cat-a-guard-runs
   name: 'Category A: shell_result in guard_runs.py (8 markers)'
-  status: in_progress
+  status: done
   depends_on:
   - cat-b-dead-export
   steps:
@@ -26422,7 +26422,7 @@ phases:
       - `cat-a-guard-runs.fix-shell-result-in-guard-runs-py-8-markers`'
   - id: cat-a-guard-runs.gate-category-a-guard-runs-py
     name: 'Gate: Category A guard_runs.py'
-    status: claimed
+    status: done
     description: 'Gate review: Verify guard_runs.py shell_result phase completion.
 
 
@@ -26450,9 +26450,40 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-18T02:11:06.816567+00:00'
+    done_at: '2026-03-18T02:16:23.467744+00:00'
+    evidence: 'Gate review completed (STANDARD depth) for Category A guard_runs shell_result
+      cleanup.
+
+
+      Gate findings:
+
+      - 8/8 `@invar:allow shell_result` markers in `guard_runs.py` eliminated.
+
+      - Core/Shell boundary respected: changes remain in shell/MCP layer; no improper
+      core I/O introduced.
+
+      - Result-contract migration validated: helper functions use `Result[T,E]`, callers
+      updated with Failure checks before unwrap.
+
+      - Guard checks pass for the category scope.
+
+      - Test status: targeted/related checks pass; one pre-existing unrelated failure
+      on main branch noted and classified non-regression.
+
+
+      Verdict:
+
+      - PASS; pattern established for downstream Category A phases.
+
+
+      Spec link:
+
+      - `cat-a-guard-runs.fix-shell-result-in-guard-runs-py-8-markers`
+
+      - `cat-a-guard-runs.verify-guard-runs-py-shell-result-cleanup`'
 - id: cat-a-handlers
   name: 'Category A: shell_result in handlers.py (21 markers)'
-  status: locked
+  status: pending
   depends_on:
   - cat-a-guard-runs
   steps:
