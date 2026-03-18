@@ -29808,7 +29808,7 @@ phases:
       removal + explicit retained rationale'
   - id: p0-migration.retest-safe-marker-removal
     name: Retest guard after safe marker removal rework
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT TESTER (integration-verifier), retest the p8 migration-finalization
       rework from a fresh perspective.
 
@@ -29874,6 +29874,35 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-18T22:46:37.399421+00:00'
+    done_at: '2026-03-18T23:28:01.953011+00:00'
+    evidence: '## Rework Retest Report
+
+      **Command executed**:
+
+      `uv run invar guard --all`
+
+
+      **Observed result**:
+
+      - Passed on post-remediation path (errors=0)
+
+
+      **Removed markers verified**:
+
+      - Safe config-backed shell complexity / shell pure-logic markers removed in
+      MCP surfaces as reported by implementation step
+
+
+      **Retained markers verified with p8-only reason**:
+
+      - Remaining file-size and non-local complexity markers retained with explicit
+      p8 scope rationale
+
+
+      **Completion-path check**:
+
+      - Rejected historical step `p0-migration.remove-migrated-inline-markers` is
+      not required on downstream path (superseded/skipped)'
   - id: p0-migration.fix-remaining-guard-blockers
     name: Fix remaining guard blockers from safe marker removal and final acceptance
     status: done
