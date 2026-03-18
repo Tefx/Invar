@@ -26296,7 +26296,7 @@ phases:
       - Scope constrained to Phase 6 blocker family (test import/export wiring consistency).'
   - id: p6-config.fix-gate-blockers
     name: Fix p6 gate blocker wiring
-    status: pending
+    status: claimed
     description: 'Fix ALL Phase 6 gate blockers in the test import wiring / exports
       consistency family.
 
@@ -26380,6 +26380,8 @@ phases:
     depends_on:
     - p6-config.verify
     agent: python-executor
+    claimed_by: python-executor
+    claimed_at: '2026-03-18T21:12:39.723496+00:00'
   - id: p6-config.retest-gate-blockers
     name: Retest p6 gate blocker wiring
     status: pending
