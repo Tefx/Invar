@@ -23872,7 +23872,7 @@ phases:
       \ verification.\n- Gate recommendation: REOPEN.\n- discovered_issues: none"
 - id: dx91-usbv-cleanup
   name: DX-91 USBV Residue Cleanup
-  status: in_progress
+  status: done
   depends_on:
   - dx91-release-readiness
   steps:
@@ -24718,7 +24718,7 @@ phases:
       **Verdict**: PASS'
   - id: dx91-usbv-cleanup.retest-active-usbv-archive-framing
     name: Re-test USBV archival framing across active docs surfaces
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT TESTER (integration-verifier), validate USBV archival
       framing from a fresh perspective.
 
@@ -24809,6 +24809,57 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-18T02:03:08.694086+00:00'
+    done_at: '2026-03-18T02:03:22.868091+00:00'
+    evidence: '## Verification Report
+
+
+      **Tester**: integration-verifier (independent of implementation)
+
+      **Scope**: USBV archival framing in active documentation surfaces
+
+      **Independence Level**: L1
+
+
+      ### Test Execution
+
+      - Commands executed:
+
+      ```bash
+
+      rg -n "USBV|USBV workflow|usbv" docs/
+
+      rg -n "active|current|workflow|archive|historical" docs/diagrams.md docs/agents.md
+
+      ```
+
+      - Output summary: docs-surface USBV references reviewed; blocker files (`docs/diagrams.md`,
+      `docs/agents.md`) now present USBV only in historical/archive framing.
+
+
+      ### Issues Found
+
+      | Severity | Description | Location | Reproduction |
+
+      |----------|-------------|----------|--------------|
+
+      | blocker | none | n/a | n/a |
+
+      | should_fix | none | n/a | n/a |
+
+
+      ### Coverage Assessment
+
+      - Blocker files reviewed: ✅
+
+      - Sibling docs reviewed: `docs/design.md`, `docs/reference/workflow/*`, `docs/guides/*`,
+      `docs/proposals/index.md`
+
+      - Remaining historical references justified: ✅
+
+
+      ### Verdict
+
+      - PASS'
 - id: p1-models-tier
   name: 'Phase 1: RuleConfig fields + EscapeHatchTier + ESCAPE_TIER_MAP'
   status: locked
