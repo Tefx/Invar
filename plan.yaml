@@ -25890,7 +25890,7 @@ phases:
       - PASS; no blockers and no should-fix issues.'
 - id: p5-output
   name: 'Phase 5: formatter.py + guard_output.py gating output'
-  status: in_progress
+  status: done
   depends_on:
   - p4-guard-integration
   steps:
@@ -26008,7 +26008,7 @@ phases:
       unchanged under-limit behavior'
   - id: p5-output.gate
     name: Phase 5 Gate
-    status: claimed
+    status: done
     description: 'Gate review: Verify Phase 5 completion. JSON and Rich output match
       proposal Output Design section. Guard passes on own codebase. Non-suppressible
       error messages do NOT leak pyproject.toml exempt syntax.'
@@ -26019,6 +26019,71 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-18T20:47:58.438819+00:00'
+    done_at: '2026-03-18T20:54:50.406830+00:00'
+    evidence: 'Artifact:
+
+      - Implementation commit reviewed: 3e9b2be
+
+
+      Verification:
+
+      - Formatter doctests pass for gating output scenarios
+
+      - Agent JSON output includes expected gating structure fields and status derivation
+
+      - Rich panel rendering validated for exceeded/warning/ok scenarios
+
+      - Non-suppressible guidance message preserves trust boundary and does not leak
+      exempt-pattern syntax details
+
+      - Core/Shell boundary respected (`formatter.py` pure computation; rich output
+      logic in shell)
+
+
+      Wiring audit:
+
+      - W1 PASS: `format_guard_agent` output consumed by guard output path
+
+      - W2 N/A: no new CLI registration in this phase
+
+      - W3 N/A: no new config field parsing in this phase
+
+      - W4 PASS: no stubs/NotImplemented paths introduced
+
+      - W5 PASS: no write-only structures in new gating payload
+
+      - W6 PASS: non-suppressible category surfaced in gating payload
+
+      - W7 PASS: no syntax leakage in user-facing non-suppressible guidance
+
+      - W8 PASS: Core formatting logic remains I/O free
+
+
+      Escape hatch audit:
+
+      - No new `@invar:allow` introduced in touched files
+
+
+      Integration claim integrity:
+
+      - Evidence based on executed doctest/test outputs and concrete output-shape
+      checks, not fixture-only assertion
+
+
+      Liveness/smoke:
+
+      - N/A (formatting/output phase, no new runnable service)
+
+
+      Spec link:
+
+      - p5-output.{implement,verify,gate} acceptance criteria and DX-66 output design
+      expectations
+
+
+      Verdict:
+
+      - PASS; no blockers.'
 - id: p6-config
   name: 'Phase 6: Config parsing pyproject.toml exempt patterns'
   status: in_progress
