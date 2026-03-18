@@ -28377,3 +28377,8 @@ phases:
 
       - Full suite now near-green with one unrelated remaining failure outside this
       fixture-sync scope.'
+- id: p8-migration-finalization
+  name: 'Phase 8: Migration finalization after config support'
+  status: locked
+  depends_on:
+  - p7-non-suppressible
