@@ -24585,7 +24585,7 @@ phases:
       - `dx91-usbv-cleanup.fix-active-design-surface-usbv-residue`'
   - id: dx91-usbv-cleanup.fix-active-usbv-archive-framing
     name: Fix active USBV residue archival framing across docs surfaces
-    status: pending
+    status: claimed
     description: 'Fix ALL active-design diagram residue for the USBV blocker family.
 
 
@@ -24676,6 +24676,8 @@ phases:
     depends_on:
     - dx91-usbv-cleanup.retest-active-design-surface-usbv-removal
     agent: doc-reviewer
+    claimed_by: doc-reviewer
+    claimed_at: '2026-03-18T01:49:04.207993+00:00'
   - id: dx91-usbv-cleanup.retest-active-usbv-archive-framing
     name: Re-test USBV archival framing across active docs surfaces
     status: pending
