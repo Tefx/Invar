@@ -26271,7 +26271,7 @@ phases:
     claimed_at: '2026-03-18T20:56:26.537426+00:00'
 - id: p7-non-suppressible
   name: 'Phase 7: Non-suppressible enforcement'
-  status: in_progress
+  status: done
   depends_on:
   - p3-budget-core
   steps:
@@ -26426,7 +26426,7 @@ phases:
       closure path.'
   - id: p7-non-suppressible.gate
     name: Phase 7 Gate
-    status: claimed
+    status: done
     description: 'Gate review: Verify Phase 7 completion. Non-suppressible rules cannot
       be silently suppressed. Existing Invar codebase passes (any dead_export inline
       markers handled via exempt or removal). Guard passes.'
@@ -26436,6 +26436,72 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-18T20:56:34.544511+00:00'
+    done_at: '2026-03-18T21:10:27.770713+00:00'
+    evidence: 'Artifact:
+
+      - Implementation commit reviewed: 3f7a39f4378aef2f410bf0b6960aa74c1d48213f
+
+
+      Verification:
+
+      - Non-suppressible rules are enforced as unsuppressible at inline marker check
+      (`has_allow_marker` returns False for configured non-suppressible set)
+
+      - Suppressible/expensive marker behavior remains functional
+
+      - Non-suppressible inline attempts produce dedicated `escape_hatch_non_suppressible`
+      violation path with human-authorization guidance
+
+      - Marker extraction remains intact for reporting/budget accounting
+
+      - Unit and doctest coverage for updated behavior passes
+
+
+      Wiring audit:
+
+      - W1 PASS: non-suppressible constant wired from core budget policy into marker
+      decision path
+
+      - W2 PASS: all key rule-call paths route through updated allow-marker check
+
+      - W3 PASS: non-suppressible violations emitted in budget/policy flow
+
+      - W4 PASS: no dead/stub path introduced
+
+      - W5 PASS: enforcement metadata consumed by guard output path
+
+      - W6 PASS: integration path present across dead_export/stub_body/rule checks
+
+      - W7 PASS: policy guidance text preserves trust boundary
+
+      - W8 PASS: enforcement behavior observed in guard output structure
+
+
+      Escape hatch audit:
+
+      - Non-suppressible inline markers are treated as violations, not suppressions
+
+
+      Integration claim integrity:
+
+      - Evidence combines static call-path checks + executed tests; not fixture-only
+      assertion
+
+
+      Liveness/smoke:
+
+      - Guard command executes and emits expected structured findings under stricter
+      enforcement
+
+
+      Spec link:
+
+      - p7-non-suppressible.{implement,verify,gate} acceptance criteria
+
+
+      Verdict:
+
+      - PASS; phase-level non-suppressible enforcement behavior is in place.'
 - id: final-gate
   name: 'Final Gate: Full Integration Verification'
   status: locked
@@ -29308,7 +29374,7 @@ phases:
       fixture-sync scope.'
 - id: p8-migration-finalization
   name: 'Phase 8: Migration finalization after config support'
-  status: locked
+  status: pending
   depends_on:
   - p7-non-suppressible
   steps:
