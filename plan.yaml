@@ -26489,7 +26489,7 @@ phases:
   steps:
   - id: cat-a-handlers.fix-shell-result-in-handlers-py-21-markers
     name: Fix shell_result in handlers.py (21 markers)
-    status: claimed
+    status: done
     description: 'Eliminate all 21 `@invar:allow shell_result` markers in `src/invar/mcp/handlers.py`.
 
 
@@ -26581,6 +26581,44 @@ phases:
     agent: python-senior
     claimed_by: python-senior
     claimed_at: '2026-03-18T02:16:34.936200+00:00'
+    done_at: '2026-03-18T02:37:37.501917+00:00'
+    evidence: 'Artifact:
+
+      - PR: commit `af263f5` (squash merge of worktree commit `1d40e06`)
+
+      - Files changed: `src/invar/mcp/handlers.py`, `src/invar/mcp/server.py`, related
+      MCP integration tests.
+
+
+      Verification:
+
+      - Run: `grep -n ''@invar:allow shell_result'' src/invar/mcp/handlers.py` ->
+      0 matches (all 21 markers removed).
+
+      - Run: `uv run invar guard --all` -> passed (status passed, errors 0).
+
+      - Run: targeted MCP integration suites touching updated handler paths -> passed
+      (63 tests).
+
+      - Run: `uv run pytest tests/ -x` -> fails at pre-existing unrelated `tests/integration/test_dx55_regression.py::TestAFreshProject::test_a2_new_project_existing_claudemd`
+      assertion mismatch (not in handler scope).
+
+
+      Implementation notes:
+
+      - Refactored handlers to use `Result[T,E]` contract pattern and updated `server.py`
+      call-site adaptation for Failure->MCP error conversion.
+
+
+      Spec link:
+
+      - `cat-a-handlers.fix-shell-result-in-handlers-py-21-markers`
+
+
+      Gaps/Notes:
+
+      - Full-suite first-failure remains pre-existing/out-of-scope regression family
+      (DX55 template marker expectation).'
   - id: cat-a-handlers.verify-handlers-py-shell-result-cleanup
     name: Verify handlers.py shell_result cleanup
     status: pending
