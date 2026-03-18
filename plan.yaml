@@ -27665,7 +27665,7 @@ phases:
       - Final gate rewired to latest retest path.\n\nSpec link:\n- `final-verify.fix-marker-format-contract-mismatch`\n"
   - id: final-verify.retest-marker-format-contract-mismatch
     name: Retest full verification after marker format contract fix
-    status: claimed
+    status: done
     description: 'Re-test the marker-format blocker family from a fresh, independent
       perspective after the batched contract fix.
 
@@ -27703,6 +27703,18 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-18T14:32:35.580448+00:00'
+    done_at: '2026-03-18T14:37:17.621288+00:00'
+    evidence: "Fresh/cold independent retest executed.\n\nVerification:\n- `uv run\
+      \ invar guard --all` -> PASS (0 errors).\n- `uv run pytest tests/ -x` -> 317\
+      \ passed, 10 failed.\n\nBlocker-family verdict:\n- Marker-format contract mismatch\
+      \ (`<!--invar:managed` vs `<!--invar:begin-->`) is RESOLVED.\n  - DX55 marker-format\
+      \ regression failures previously observed are gone in this retest.\n\nRemaining\
+      \ failures (distinct families, not marker-format drift):\n1) DX56 template merge/project\
+      \ additions injection behavior (2 failures)\n2) DX91 destructive harness fixture/content\
+      \ expectation drift (7 failures)\n3) subprocess env/respawn behavior mismatch\
+      \ (1 failure)\n\nConclusion:\n- Retest step PASS for marker-format closure objective.\n\
+      - Full suite still blocked by additional regression families requiring separate\
+      \ remediation.\n\nSpec link:\n- `final-verify.fix-marker-format-contract-mismatch`"
   - id: final-verify.fix-dx56-project-additions-template-sync
     name: Fix DX56 project additions contract mismatches in template sync behavior
     status: pending
