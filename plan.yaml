@@ -27432,13 +27432,13 @@ phases:
       - `cat-d-file-size.verify-file-size-extraction`'
 - id: final-verify
   name: 'Final Verification: Escape Hatch Census'
-  status: pending
+  status: in_progress
   depends_on:
   - cat-d-file-size
   steps:
   - id: final-verify.full-escape-hatch-census-and-guard-run
     name: Full escape hatch census and guard run
-    status: pending
+    status: claimed
     description: 'Final comprehensive verification of the escape hatch cleanup project.
 
 
@@ -27514,6 +27514,8 @@ phases:
 
       - Final report produced with before/after counts'
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-18T04:42:19.115301+00:00'
   - id: final-verify.gate-final-escape-hatch-cleanup
     name: 'Gate: Final escape hatch cleanup'
     status: pending
