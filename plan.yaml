@@ -28119,3 +28119,116 @@ phases:
       \nConclusion:\n- This retest objective passed (guard complexity regression fixed,\
       \ DX56 behavior preserved).\n- Full-suite blockers now belong to distinct downstream\
       \ families outside template-sync-complexity scope."
+  - id: final-verify.fix-dx91-expected-invar-fixtures
+    name: Sync DX91 expected INVAR.md fixtures to authoritative shell_complexity template
+      contract
+    status: pending
+    description: 'Fix the deterministic DX91 harness blocker family where expected
+      fixture INVAR.md files still encode the stale `dead_export` escape-hatch example
+      while the authoritative template/policy now uses the `shell_complexity` example.
+
+
+      symbolic_testing: false
+
+      prior_loop:
+
+      - final-verify.retest-template-sync-guard-complexity
+
+      remaining_blocker: 7 DX91 migration expected fixture files contain stale expected
+      INVAR.md content and now fail deterministic harness checks.
+
+      why_new_loop: The latest retest cleared the template_sync guard regression and
+      isolated a distinct DX91 fixture-contract blocker family that must be repaired
+      before final gate can pass.
+
+      why_previous_fix_failed: Prior loops repaired marker normalization, DX56 additions
+      sync, and template_sync complexity, but none updated the DX91 expected fixture
+      corpus to the current authoritative INVAR.md contract.
+
+
+      ## Root Cause vs Symptom:
+
+      - Root cause: DX91 expected fixture files drifted from the authoritative INVAR.md
+      template contract after policy/examples changed from `dead_export` to `shell_complexity`.
+
+      - Symptom: deterministic harness failures in DX91 migration expected fixtures
+      even though runtime/template behavior now follows the newer contract.
+
+      - Why this fix is not surface-level: align the full expected-fixture family
+      to the single authoritative template contract instead of patching one fixture
+      ad hoc.
+
+
+      ## Blockers to Fix (ALL of these, not just the first):
+
+
+      ### B1: Stale dead_export example in expected INVAR.md fixtures
+
+      Locations: all affected DX91 migration expected fixture INVAR.md files and any
+      shared helpers/snapshots that derive expected template content
+
+      Remediation: update every affected expected fixture file to the authoritative
+      shell_complexity example and verify no stale dead_export example remains in
+      the DX91 expected-fixture family.
+
+      Grep hint: `rg -n "dead_export|shell_complexity|INVAR\.md" tests`
+
+      IMPORTANT: search all sibling DX91 expected fixture directories and helper snapshots;
+      do not stop after the first mismatching fixture.
+
+
+      ### B2: Fixture/template contract drift in DX91 harness expectations
+
+      Locations: DX91 harness assertions, expected fixture builders, and fixture README/notes
+      if they codify the old example contract
+
+      Remediation: update all expectation surfaces so deterministic harness comparisons
+      enforce the current authoritative INVAR.md contract consistently.
+
+      Grep hint: `rg -n "dx91|expected.*INVAR|fixture|shell_complexity|dead_export"
+      tests src`
+
+
+      ## Completion Criteria:
+
+      - All 7 affected DX91 expected INVAR.md fixture files synced to the authoritative
+      template contract
+
+      - No stale dead_export example remains in the affected DX91 expected-fixture
+      family unless explicitly justified as legacy coverage
+
+      - Evidence identifies every updated expected fixture and any related expectation
+      helper changed
+
+      - Out-of-scope guardrail: remaining non-DX91 blocker families, including subprocess
+      respawn behavior, are deferred unless directly impacted by this fixture-sync
+      repair'
+    verification: '- Use the exact project command family for verification (`uv run
+      pytest tests/ -x`)
+
+      - Grep hint searches show the affected DX91 expected fixture family consistently
+      reflects the authoritative shell_complexity example
+
+      - Evidence lists all updated fixture paths and any harness/helper expectations
+      adjusted
+
+      - Root-cause evidence explains why fixture drift is closed across the entire
+      deterministic DX91 family, not only one file'
+    evidence_template: '## DX91 Expected INVAR Fixture Sync
+
+      - blocker_fingerprint: dx91-expected-invar-template-drift
+
+      - root_cause_hypothesis: <why expected fixtures kept the stale dead_export example>
+
+      - why_previous_fix_failed: <why prior loops never touched expected fixture corpus>
+
+      - updated_fixture_paths: <all 7 fixture files + helpers>
+
+      - sibling_search_evidence: <grep results / directories checked>
+
+      - authoritative_contract_source: <template/policy source now using shell_complexity>
+
+      '
+    depends_on:
+    - final-verify.gate-final-escape-hatch-cleanup
+    agent: python-senior
