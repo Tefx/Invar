@@ -29705,3 +29705,75 @@ phases:
         blocking violations; step needs rework with coupled contract fixes or narrower
         marker scope.'
       timestamp: '2026-03-18T21:42:15.167075+00:00'
+  - id: p0-migration.remove-safe-migrated-inline-markers
+    name: Remove only config-backed inline markers with minimal coupled guard fixes
+    status: pending
+    description: 'Rework the rejected post-config marker-removal attempt with p8-only
+      scope.
+
+
+      Supersedes execution of rejected step `p0-migration.remove-migrated-inline-markers`
+      for completion purposes while preserving that step as history.
+
+
+      Scope:
+
+      - Start from the migrated inline-marker inventory already approved in p0 and
+      the live `pyproject.toml` exempt coverage.
+
+      - Remove ONLY inline `@invar:allow` markers in `src/invar/**/*.py` that are
+      already covered by config-backed exemptions and can be finalized without broad
+      refactors.
+
+      - When a marker removal exposes guard failures in the same touched files, apply
+      the MINIMAL coupled fixes required for guard to pass (for example missing `@pre`/`@post`,
+      missing doctest, dead export cleanup, or similar local contract fallout).
+
+      - If a candidate removal would require broader architecture work, cross-phase
+      cleanup, or non-local refactors, keep that marker inline and document it in
+      evidence as intentionally deferred outside p8.
+
+
+      Deterministic execution rules:
+
+      - Use the exact command family `uv run invar guard --all` for validation during
+      the step; do not switch command families.
+
+      - Do not modify `pyproject.toml`.
+
+      - Do not broaden scope beyond p8 migration finalization.
+
+      - Final state must make the post-config migration path executable without reviving
+      the rejected step.
+
+
+      Completion criteria:
+
+      - Safe config-backed markers are removed.
+
+      - Any guard fallout caused by those removals is fixed in the same step when
+      local and minimal.
+
+      - Remaining inline markers, if any, are only the intentionally retained cases
+      described above.
+
+      - Evidence names which markers were removed versus retained and why.'
+    verification: '- `uv run invar guard --all` passes after the safe removal set
+      and minimal coupled fixes are applied
+
+      - No `pyproject.toml` changes are required
+
+      - Evidence distinguishes removed markers from intentionally retained markers
+      that would exceed p8-only scope'
+    evidence_template: '## Safe Marker Removal Report
+
+      - Removed markers: <file:line list>
+
+      - Minimal coupled fixes applied: <file:line list>
+
+      - Intentionally retained markers: <file:line list + reason retained>
+
+      - Guard command: `uv run invar guard --all`
+
+      - Result: <pass/fail output excerpt>'
+    agent: python-senior
