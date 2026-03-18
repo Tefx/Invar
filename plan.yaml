@@ -29845,7 +29845,7 @@ phases:
     agent: integration-verifier
   - id: p0-migration.fix-remaining-guard-blockers
     name: Fix remaining guard blockers from safe marker removal and final acceptance
-    status: claimed
+    status: done
     description: 'Batched p8-only remediation to achieve a deterministic Invar codebase
       guard pass after the failed safe-marker-removal verification and failed final
       acceptance criterion 8.
@@ -29903,6 +29903,30 @@ phases:
     agent: python-senior
     claimed_by: python-senior
     claimed_at: '2026-03-18T22:13:07.637170+00:00'
+    done_at: '2026-03-18T22:25:51.422753+00:00'
+    evidence: 'Artifact:
+
+      - Commit: 3600969d2b83686b42b1c5c4e3eefdffb8fb820e
+
+
+      Verification:
+
+      - Run: uv run invar guard --all -> passed
+
+      - Fixed blocker set includes localized contract/doctest fallout in touched migration-finalization
+      surfaces
+
+      - Non-suppressible inline allow fallout addressed without pyproject edits
+
+      - Updated related doctest expectations for non-suppressible behavior where needed
+
+      - Deferred blockers: none
+
+
+      Spec link:
+
+      - p0-migration.fix-remaining-guard-blockers acceptance (localized remediation
+      + deterministic guard-pass)'
   - id: p0-migration.retest-guard-pass-after-remediation
     name: Retest full Invar guard pass after batched remediation
     status: pending
