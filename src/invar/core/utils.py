@@ -12,8 +12,14 @@ from typing import Any
 
 from deal import post, pre
 
-from invar.core.exempt_patterns import parse_escape_exempt_patterns
+from invar.core.exempt_patterns import matches_file_symbol_pattern, parse_escape_exempt_patterns
 from invar.core.models import GuardReport, RuleConfig, RuleExclusion
+
+# Re-export for public API
+__all__ = [
+    "matches_file_symbol_pattern",
+    "parse_escape_exempt_patterns",
+]
 
 
 @pre(
