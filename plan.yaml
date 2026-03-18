@@ -26077,7 +26077,7 @@ phases:
       \ changes involved.\n\nSpec link:\n- `cat-b-dead-export.audit-and-fix-dead-export-markers-20-markers`"
   - id: cat-b-dead-export.gate-category-b-dead-export
     name: 'Gate: Category B dead_export'
-    status: pending
+    status: claimed
     description: 'Gate review: Verify Category B (dead_export) phase completion.
 
 
@@ -26108,6 +26108,8 @@ phases:
     depends_on:
     - cat-b-dead-export.verify-dead-export-cleanup
     agent: gate-reviewer
+    claimed_by: gate-reviewer
+    claimed_at: '2026-03-18T01:41:43.373830+00:00'
 - id: cat-a-guard-runs
   name: 'Category A: shell_result in guard_runs.py (8 markers)'
   status: locked
