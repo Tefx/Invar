@@ -25724,13 +25724,13 @@ phases:
     agent: gate-reviewer
 - id: p6-config
   name: 'Phase 6: Config parsing pyproject.toml exempt patterns'
-  status: pending
+  status: in_progress
   depends_on:
   - p3-budget-core
   steps:
   - id: p6-config.implement
     name: Implement config parsing for escape gating fields
-    status: pending
+    status: claimed
     description: 'Extend config parsing to read new escape_* fields and exempt patterns
       from pyproject.toml. Effort: Medium (symbol-level glob is new capability).
 
@@ -25813,6 +25813,8 @@ phases:
       (file_path, symbol_name) pairs. Pattern matcher handles: file-only globs, file::symbol
       globs, wildcards in both parts.'
     agent: python-senior
+    claimed_by: python-senior
+    claimed_at: '2026-03-18T18:58:25.327236+00:00'
   - id: p6-config.verify
     name: Verify config parsing
     status: pending
