@@ -27665,7 +27665,7 @@ phases:
       - Final gate rewired to latest retest path.\n\nSpec link:\n- `final-verify.fix-marker-format-contract-mismatch`\n"
   - id: final-verify.retest-marker-format-contract-mismatch
     name: Retest full verification after marker format contract fix
-    status: pending
+    status: claimed
     description: 'Re-test the marker-format blocker family from a fresh, independent
       perspective after the batched contract fix.
 
@@ -27701,6 +27701,8 @@ phases:
     depends_on:
     - final-verify.fix-marker-format-contract-mismatch
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-18T14:32:35.580448+00:00'
   - id: final-verify.fix-dx56-project-additions-template-sync
     name: Fix DX56 project additions contract mismatches in template sync behavior
     status: pending
