@@ -27189,7 +27189,7 @@ phases:
       - `cat-c-entry-point.verify-entry-point-too-thick-cleanup`'
 - id: cat-d-file-size
   name: 'Category D: file_size Fixes (5 markers)'
-  status: in_progress
+  status: done
   depends_on:
   - cat-c-entry-point
   steps:
@@ -27364,7 +27364,7 @@ phases:
       - `cat-d-file-size.extract-and-split-large-core-files-5-markers`"
   - id: cat-d-file-size.gate-category-d-file-size
     name: 'Gate: Category D file_size'
-    status: claimed
+    status: done
     description: 'Gate review: Verify file_size phase completion.
 
 
@@ -27401,9 +27401,38 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-18T04:33:32.405350+00:00'
+    done_at: '2026-03-18T04:42:01.080450+00:00'
+    evidence: 'Category D file-size gate review completed.
+
+
+      Gate findings:
+
+      - 4/5 `file_size` markers removed, with exactly 1 justified retained marker
+      in `hypothesis_strategies.py`.
+
+      - Core module split outcomes validated (`dead_assign`, `doc_parser`, `rules`
+      extracted into focused submodules).
+
+      - Public API compatibility preserved through facade/re-export paths.
+
+      - Contracts and doctests preserved across extracted core surfaces.
+
+      - Guard checks pass for post-split state; no category-specific regressions identified.
+
+
+      Verdict:
+
+      - PASS; Category D complete and ready for final verification phase.
+
+
+      Spec link:
+
+      - `cat-d-file-size.extract-and-split-large-core-files-5-markers`
+
+      - `cat-d-file-size.verify-file-size-extraction`'
 - id: final-verify
   name: 'Final Verification: Escape Hatch Census'
-  status: locked
+  status: pending
   depends_on:
   - cat-d-file-size
   steps:
