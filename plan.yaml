@@ -27564,7 +27564,7 @@ phases:
 
       - Project complete'
     depends_on:
-    - final-verify.retest-dx56-project-additions-template-sync
+    - final-verify.retest-template-sync-guard-complexity
     agent: gate-reviewer
   - id: final-verify.fix-marker-format-contract-mismatch
     name: Fix marker format contract mismatch across managed templates and regressions
