@@ -25847,13 +25847,13 @@ phases:
     agent: gate-reviewer
 - id: p7-non-suppressible
   name: 'Phase 7: Non-suppressible enforcement'
-  status: pending
+  status: in_progress
   depends_on:
   - p3-budget-core
   steps:
   - id: p7-non-suppressible.implement
     name: Implement non-suppressible enforcement
-    status: pending
+    status: claimed
     description: 'Modify the escape hatch suppression mechanism so that non-suppressible
       rules (dead_export, stub_body, missing_contract, missing_doctest) always produce
       ERROR even when @invar:allow is present inline.
@@ -25916,6 +25916,8 @@ phases:
       violations are immune to severity_overrides (adding severity_overrides for this
       rule in pyproject.toml has no effect).
     agent: python-executor
+    claimed_by: python-executor
+    claimed_at: '2026-03-18T18:58:35.482030+00:00'
   - id: p7-non-suppressible.verify
     name: Verify non-suppressible enforcement
     status: pending
