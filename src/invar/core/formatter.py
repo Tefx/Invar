@@ -9,6 +9,8 @@ No I/O operations - returns formatted strings/dicts only.
 
 from __future__ import annotations
 
+import re
+
 from deal import post, pre
 
 from invar.core.models import GuardReport, PerceptionMap, Symbol, SymbolRefs, Violation
@@ -235,6 +237,28 @@ def format_guard_agent(report: GuardReport, combined_status: str | None = None) 
         'failed'
         >>> d2["static"]["passed"]  # Static still shows passed
         True
+        >>> from invar.core.models import EscapeHatchDetail
+        >>> report.escape_hatches.add(EscapeHatchDetail(file="test.py", line=11, rule="missing_contract", reason="legacy"))
+        >>> report.add_violation(Violation(
+        ...     rule="escape_hatch_non_suppressible",
+        ...     severity=Severity.ERROR,
+        ...     file="test.py",
+        ...     line=11,
+        ...     message="missing_contract cannot be suppressed inline."
+        ... ))
+        >>> report.add_violation(Violation(
+        ...     rule="escape_hatch_budget",
+        ...     severity=Severity.WARNING,
+        ...     file="<project>",
+        ...     message="Escape hatch weighted budget: 12/15"
+        ... ))
+        >>> d3 = format_guard_agent(report)
+        >>> d3["escape_hatches"]["gating"]["status"]
+        'exceeded'
+        >>> d3["escape_hatches"]["gating"]["budget"]
+        {'used': 12, 'limit': 15}
+        >>> len(d3["escape_hatches"]["gating"]["non_suppressible"])
+        1
     """
     # DX-26: Use combined status if provided, else fall back to static-only
     status = combined_status if combined_status else ("passed" if report.passed else "failed")
@@ -263,7 +287,7 @@ def format_guard_agent(report: GuardReport, combined_status: str | None = None) 
         result["summary"]["suggests"] = report.suggests
     # DX-66: Add escape hatch summary if any exist
     if report.escape_hatches.count > 0:
-        result["escape_hatches"] = {
+        escape_hatches_result: dict = {
             "count": report.escape_hatches.count,
             "by_rule": report.escape_hatches.by_rule,
             "details": [
@@ -276,6 +300,56 @@ def format_guard_agent(report: GuardReport, combined_status: str | None = None) 
                 for d in report.escape_hatches.details
             ],
         }
+        gating_violations = [v for v in report.violations if v.rule.startswith("escape_hatch_")]
+        if gating_violations:
+            severity_rank = {"info": 0, "suggest": 0, "warning": 1, "error": 2}
+            max_rank = max(severity_rank.get(v.severity.value, 0) for v in gating_violations)
+            status = "ok"
+            if max_rank >= 2:
+                status = "exceeded"
+            elif max_rank == 1:
+                status = "warning"
+
+            grouped: dict[str, list[Violation]] = {}
+            for violation in gating_violations:
+                grouped.setdefault(violation.rule, []).append(violation)
+
+            budget_used = 0
+            budget_limit = 0
+            for violation in grouped.get("escape_hatch_budget", []):
+                budget_match = re.search(r"(\d+)\s*/\s*(\d+)", violation.message)
+                if budget_match:
+                    budget_used = int(budget_match.group(1))
+                    budget_limit = int(budget_match.group(2))
+                    break
+
+            def _to_gating_item(v: Violation) -> dict:
+                return {
+                    "severity": v.severity.value,
+                    "file": v.file,
+                    "line": v.line,
+                    "message": v.message,
+                }
+
+            escape_hatches_result["gating"] = {
+                "status": status,
+                "per_rule_violations": [
+                    {
+                        "rule": rule,
+                        "count": len(violations),
+                        "violations": [_to_gating_item(violation) for violation in violations],
+                    }
+                    for rule, violations in sorted(grouped.items())
+                ],
+                "budget": {"used": budget_used, "limit": budget_limit},
+                "non_suppressible": [
+                    _to_gating_item(v) for v in grouped.get("escape_hatch_non_suppressible", [])
+                ],
+                "combination": [
+                    _to_gating_item(v) for v in grouped.get("escape_hatch_combination", [])
+                ],
+            }
+        result["escape_hatches"] = escape_hatches_result
     return result
 
 

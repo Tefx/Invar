@@ -12,6 +12,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from rich.console import Console
+from rich.panel import Panel
 
 from invar.core.formatter import format_guard_agent
 from invar.core.models import GuardReport, Severity
@@ -220,7 +221,59 @@ def output_rich(
         escape_count = report.escape_hatches.count
         by_rule = report.escape_hatches.by_rule
         rule_parts = [f"{count} {rule}" for rule, count in sorted(by_rule.items())]
-        console.print(f"\n[bold]Escape hatches:[/bold] {escape_count} ({', '.join(rule_parts)})")
+        agent_payload = format_guard_agent(report)
+        gating = agent_payload.get("escape_hatches", {}).get("gating")
+        if gating:
+            status = gating.get("status", "ok")
+            status_color = {"exceeded": "red", "warning": "yellow", "ok": "green"}.get(
+                status, "cyan"
+            )
+            budget = gating.get("budget", {})
+            used = budget.get("used", 0)
+            limit = budget.get("limit", 0)
+            panel_lines = [
+                f"[bold]Total:[/bold] {escape_count} ({', '.join(rule_parts)})",
+                f"[bold]Gating status:[/bold] [{status_color}]{status}[/{status_color}]",
+                f"[bold]Weighted budget:[/bold] {used}/{limit}",
+            ]
+
+            per_rule = gating.get("per_rule_violations", [])
+            if per_rule:
+                panel_lines.append("[bold]Violations by rule:[/bold]")
+                for item in per_rule:
+                    panel_lines.append(f"- {item.get('rule', '<unknown>')}: {item.get('count', 0)}")
+
+            non_suppressible = gating.get("non_suppressible", [])
+            if non_suppressible:
+                panel_lines.append("")
+                panel_lines.append("[bold red]Inline suppression attempt blocked[/bold red]")
+                for item in non_suppressible:
+                    line_suffix = f":{item.get('line')}" if item.get("line") else ""
+                    panel_lines.append(
+                        f"[red]- {item.get('file', '<unknown>')}{line_suffix}[/red] {item.get('message', '')}"
+                    )
+
+            combinations = gating.get("combination", [])
+            if combinations:
+                panel_lines.append("")
+                panel_lines.append("[bold]Stacked combination violations:[/bold]")
+                for item in combinations:
+                    line_suffix = f":{item.get('line')}" if item.get("line") else ""
+                    panel_lines.append(
+                        f"- {item.get('file', '<unknown>')}{line_suffix} {item.get('message', '')}"
+                    )
+
+            console.print(
+                Panel(
+                    "\n".join(panel_lines),
+                    title="Escape hatch gating",
+                    border_style=status_color,
+                )
+            )
+        else:
+            console.print(
+                f"\n[bold]Escape hatches:[/bold] {escape_count} ({', '.join(rule_parts)})"
+            )
 
     # Code Health display (only when guard passes)
     if report.passed and report.files_checked > 0:
