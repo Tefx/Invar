@@ -26417,7 +26417,7 @@ phases:
       - Scope stayed within Phase 6 blocker family only'
   - id: p6-config.retest-gate-blockers
     name: Retest p6 gate blocker wiring
-    status: pending
+    status: claimed
     description: 'As an INDEPENDENT TESTER (`integration-verifier`), validate the
       Phase 6 blocker-family repair from a fresh perspective.
 
@@ -26459,6 +26459,8 @@ phases:
     depends_on:
     - p6-config.fix-gate-blockers
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-18T21:42:43.301791+00:00'
 - id: p7-non-suppressible
   name: 'Phase 7: Non-suppressible enforcement'
   status: done
