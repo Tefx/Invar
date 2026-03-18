@@ -27568,7 +27568,7 @@ phases:
     agent: gate-reviewer
   - id: final-verify.fix-marker-format-contract-mismatch
     name: Fix marker format contract mismatch across managed templates and regressions
-    status: pending
+    status: claimed
     description: 'Fix ALL blocker-family instances where managed template markers
       use `<!--invar:begin-->` while regression expectations still require `<!--invar:managed`
       semantics.
@@ -27645,6 +27645,8 @@ phases:
     depends_on:
     - final-verify.full-escape-hatch-census-and-guard-run
     agent: python-senior
+    claimed_by: python-senior
+    claimed_at: '2026-03-18T04:49:27.264445+00:00'
   - id: final-verify.retest-marker-format-contract-mismatch
     name: Retest full verification after marker format contract fix
     status: pending
