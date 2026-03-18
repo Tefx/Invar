@@ -24862,7 +24862,7 @@ phases:
       - PASS'
 - id: p1-models-tier
   name: 'Phase 1: RuleConfig fields + EscapeHatchTier + ESCAPE_TIER_MAP'
-  status: locked
+  status: pending
   depends_on:
   - p0-migration
   steps:
@@ -25527,7 +25527,9 @@ phases:
     agent: gate-reviewer
 - id: p0-migration
   name: 'Phase 0: Migration — Move Invar''s own escape hatches to pyproject.toml exempt'
-  status: in_progress
+  status: done
+  evidence: p0 phase shows 2/2 steps completed; moved marker-removal/verify/gate to
+    p8-migration-finalization.
   steps:
   - id: p0-migration.inventory-current-escape-hatch-markers
     name: Inventory current escape hatch markers
