@@ -25472,7 +25472,7 @@ phases:
       - p3-budget-core.implement step definition and acceptance criteria'
   - id: p3-budget-core.verify
     name: Verify check_escape_budget
-    status: pending
+    status: claimed
     description: "Independent verification of core/escape_budget.py:\n\n1. Construct\
       \ EscapeHatchSummary with known escape hatches and verify:\n   - Per-file limit\
       \ exceeded -> escape_hatch_file_limit ERROR\n   - Per-project limit exceeded\
@@ -25488,6 +25488,8 @@ phases:
     depends_on:
     - p3-budget-core.implement
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-18T18:39:49.852819+00:00'
   - id: p3-budget-core.gate
     name: Phase 3 Gate
     status: pending
