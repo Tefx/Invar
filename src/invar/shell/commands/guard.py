@@ -182,8 +182,6 @@ def _determine_output_mode(human: bool, agent: bool = False, json_output: bool =
     return agent or json_output or (not human)
 
 
-# @invar:allow entry_point_too_thick: Main CLI entry point, orchestrates all verification phases
-@app.command()
 def guard(
     path: Path = typer.Argument(
         Path(),
@@ -194,9 +192,7 @@ def guard(
     ),
     strict: bool = typer.Option(False, "--strict", help="Treat warnings as errors"),
     changed: bool = typer.Option(
-        True,
-        "--changed/--all",
-        help="Check only changed files (default) or all files",
+        True, "--changed/--all", help="Check only changed files (default) or all files"
     ),
     static: bool = typer.Option(
         False, "--static", help="Static analysis only, skip all runtime tests"
@@ -205,7 +201,6 @@ def guard(
     human: bool = typer.Option(
         False, "--human", help="Force Rich human-readable output (opt-in, default is JSON)"
     ),
-    # DX-26: Deprecated flags kept for backward compatibility
     no_strict_pure: bool = typer.Option(
         False, "--no-strict-pure", hidden=True, help="[Deprecated] Disable purity checks"
     ),
@@ -234,17 +229,46 @@ def guard(
         help="Check contract coverage only (skip all tests). Use during SPECIFY phase when functions are stubs.",
     ),
 ) -> None:
-    """Check project against Invar architecture rules.
+    """Check project against Invar rules."""
+    result = _run_guard_command(
+        path=path,
+        strict=strict,
+        changed=changed,
+        static=static,
+        verbose=verbose,
+        human=human,
+        no_strict_pure=no_strict_pure,
+        pedantic=pedantic,
+        explain=explain,
+        agent=agent,
+        json_output=json_output,
+        coverage=coverage,
+        suggest=suggest,
+        contracts_only=contracts_only,
+    )
+    if isinstance(result, Failure):
+        console.print(f"[red]Error:[/red] {result.failure()}")
+        raise typer.Exit(1)
+    raise typer.Exit(result.unwrap())
 
-    Smart Guard: Runs static analysis + doctests + CrossHair + Hypothesis by default.
 
-    By default, checks only git-modified files for fast feedback during development.
-    Use --all to check the entire project (useful for CI/release).
-    Use --changed to explicitly check only changed files (backward-compatible alias).
-    Use --static for quick static-only checks (~0.5s vs ~5s full).
-    Use --suggest to get functional pattern suggestions (NewType, Validation, etc.).
-    Use --contracts-only (-c) to check contract coverage without running tests (SPECIFY phase).
-    """
+def _run_guard_command(
+    path: Path,
+    strict: bool,
+    changed: bool,
+    static: bool,
+    verbose: bool,
+    human: bool,
+    no_strict_pure: bool,
+    pedantic: bool,
+    explain: bool,
+    agent: bool,
+    json_output: bool,
+    coverage: bool,
+    suggest: bool,
+    contracts_only: bool,
+) -> Result[int, str]:
+    """Run guard orchestration and return process exit code."""
     from invar.shell.guard_helpers import (
         collect_files_to_check,
         handle_changed_mode,
@@ -260,16 +284,12 @@ def guard(
     single_file: Path | None = None
     if single_file_mode:
         if path.suffix != ".py":
-            console.print(f"[red]Error:[/red] {path} is not a Python file")
-            raise typer.Exit(1)
+            return Failure(f"{path} is not a Python file")
         single_file = path.resolve()
 
     pyproject_root = find_pyproject_root(single_file if single_file else path)
     if pyproject_root is None:
-        console.print(
-            "[red]Error:[/red] pyproject.toml not found (searched upward from the target path)"
-        )
-        raise typer.Exit(1)
+        return Failure("pyproject.toml not found (searched upward from the target path)")
     path = pyproject_root
 
     from invar.shell.subprocess_env import get_uvx_respawn_command
@@ -289,8 +309,7 @@ def guard(
     # Load and configure
     config_result = load_config(path)
     if isinstance(config_result, Failure):
-        console.print(f"[red]Error:[/red] {config_result.failure()}")
-        raise typer.Exit(1)
+        return Failure(config_result.failure())
 
     config = config_result.unwrap()
     if no_strict_pure:
@@ -310,8 +329,7 @@ def guard(
         coverage_path = single_file if single_file else path
         coverage_result = calculate_contract_coverage(coverage_path, changed_only=changed)
         if isinstance(coverage_result, Failure):
-            console.print(f"[red]Error:[/red] {coverage_result.failure()}")
-            raise typer.Exit(1)
+            return Failure(coverage_result.failure())
 
         report_data = coverage_result.unwrap()
         use_agent_output = not human
@@ -323,7 +341,7 @@ def guard(
         else:
             console.print(format_contract_coverage_report(report_data))
 
-        raise typer.Exit(0 if report_data.ready_for_build else 1)
+        return Success(0 if report_data.ready_for_build else 1)
 
     # Handle --changed mode or single file mode (DX-65)
     only_files: set[Path] | None = None
@@ -368,16 +386,14 @@ def guard(
                     )
                 else:
                     console.print("[green]No changed files to verify.[/green]")
-                raise typer.Exit(0)
-            console.print(f"[red]Error:[/red] {changed_result.failure()}")
-            raise typer.Exit(1)
+                return Success(0)
+            return Failure(changed_result.failure())
         only_files, checked_files = changed_result.unwrap()
 
     # Run static analysis
     scan_result = _scan_and_check(path, config, only_files, verbose=verbose)
     if isinstance(scan_result, Failure):
-        console.print(f"[red]Error:[/red] {scan_result.failure()}")
-        raise typer.Exit(1)
+        return Failure(scan_result.failure())
     report = scan_result.unwrap()
 
     # DX-61: Run pattern detection if --suggest flag is set
@@ -526,7 +542,7 @@ def guard(
     # Exit with combined status
     all_passed = doctest_passed and crosshair_passed and property_passed
     final_exit = static_exit_code if all_passed else 1
-    raise typer.Exit(final_exit)
+    return Success(final_exit)
 
 
 def _show_verification_level(verification_level) -> None:
@@ -582,7 +598,6 @@ def sig_command(
         raise typer.Exit(1)
 
 
-# @invar:allow entry_point_too_thick: Python reference finding with examples
 @app.command("refs")
 def refs_command(
     target: str = typer.Argument(..., help="file.py::symbol"),
@@ -593,35 +608,46 @@ def refs_command(
     Examples:
         invar refs src/auth.py::AuthService
     """
-    from invar.shell.commands.perception import run_refs
-
     _ = json_output
     use_json = True
-    result = run_refs(target, use_json)
+    result = _run_refs_command(target, use_json)
     if isinstance(result, Failure):
         console.print(f"[red]Error:[/red] {result.failure()}")
         raise typer.Exit(1)
 
 
-# @invar:allow entry_point_too_thick: Rules display with filtering and dual output modes
+def _run_refs_command(target: str, use_json: bool) -> Result[None, str]:
+    """Run refs command logic and return status."""
+    from invar.shell.commands.perception import run_refs
+
+    return run_refs(target, use_json)
+
+
 @app.command()
 def rules(
     json_output: bool = typer.Option(False, "--json", help="Output as JSON"),
-    category: str = typer.Option(
+    category: str | None = typer.Option(
         None, "--category", "-c", help="Filter by category (size, contracts, purity, shell, docs)"
     ),
 ) -> None:
-    """
-    List all Guard rules with their metadata.
+    """List all Guard rules with metadata."""
+    _ = json_output
+    use_json = True
 
-    Shows what each rule detects and its limitations.
-    """
+    result = _run_rules_command(category, use_json)
+    if isinstance(result, Failure):
+        console.print(f"[red]Error:[/red] {result.failure()}")
+        raise typer.Exit(1)
+
+
+def _run_rules_command(
+    category: str | None,
+    use_json: bool,
+) -> Result[None, str]:
+    """Run rules listing and output rendering."""
     import json as json_lib
 
     from invar.core.rule_meta import RULE_META, RuleCategory, get_rules_by_category
-
-    _ = json_output
-    use_json = True
 
     # Filter by category if specified
     if category:
@@ -630,13 +656,11 @@ def rules(
             rules_list = get_rules_by_category(cat)
         except ValueError:
             valid = ", ".join(c.value for c in RuleCategory)
-            console.print(f"[red]Error:[/red] Invalid category '{category}'. Valid: {valid}")
-            raise typer.Exit(1)
+            return Failure(f"Invalid category '{category}'. Valid: {valid}")
     else:
         rules_list = list(RULE_META.values())
 
     if use_json:
-        # JSON output for agents
         data = {
             "rules": [
                 {
@@ -651,29 +675,30 @@ def rules(
             ]
         }
         console.print(json_lib.dumps(data, indent=2))
-    else:
-        # Rich table output for humans
-        table = Table(title="Invar Guard Rules")
-        table.add_column("Rule", style="cyan")
-        table.add_column("Severity", style="yellow")
-        table.add_column("Category")
-        table.add_column("Detects")
-        table.add_column("Hint", style="green")
+        return Success(None)
 
-        for r in rules_list:
-            sev_style = {"error": "red", "warning": "yellow", "info": "blue"}.get(
-                r.severity.value, ""
-            )
-            table.add_row(
-                r.name,
-                f"[{sev_style}]{r.severity.value.upper()}[/{sev_style}]",
-                r.category.value,
-                r.detects[:50] + "..." if len(r.detects) > 50 else r.detects,
-                r.hint[:40] + "..." if len(r.hint) > 40 else r.hint,
-            )
+    table = Table(title="Invar Guard Rules")
+    table.add_column("Rule", style="cyan")
+    table.add_column("Severity", style="yellow")
+    table.add_column("Category")
+    table.add_column("Detects")
+    table.add_column("Hint", style="green")
 
-        console.print(table)
-        console.print(f"\n[dim]{len(rules_list)} rules total. Use --json for full details.[/dim]")
+    for rule in rules_list:
+        sev_style = {"error": "red", "warning": "yellow", "info": "blue"}.get(
+            rule.severity.value, ""
+        )
+        table.add_row(
+            rule.name,
+            f"[{sev_style}]{rule.severity.value.upper()}[/{sev_style}]",
+            rule.category.value,
+            rule.detects[:50] + "..." if len(rule.detects) > 50 else rule.detects,
+            rule.hint[:40] + "..." if len(rule.hint) > 40 else rule.hint,
+        )
+
+    console.print(table)
+    console.print(f"\n[dim]{len(rules_list)} rules total. Use --json for full details.[/dim]")
+    return Success(None)
 
 
 # DX-48b: Import commands from shell/commands/
@@ -682,6 +707,7 @@ from invar.shell.commands.init import init
 from invar.shell.commands.sync_self import sync_self  # DX-49
 
 app.command()(init)
+app.command()(guard)
 
 # DX-56: Create dev subcommand group for developer commands
 dev_app = typer.Typer(

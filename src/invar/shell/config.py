@@ -14,6 +14,7 @@ DX-22: Added content-based auto-detection for Core/Shell classification.
 from __future__ import annotations
 
 import ast
+import logging
 import tomllib
 import warnings
 from enum import Enum
@@ -66,6 +67,7 @@ _CONTRACT_DECORATORS = frozenset(["pre", "post", "invariant"])
 
 # Result monad types
 _RESULT_TYPES = frozenset(["Result", "Success", "Failure"])
+_LOGGER = logging.getLogger(__name__)
 
 
 # @shell_orchestration: AST analysis
@@ -530,7 +532,6 @@ def get_exclude_paths(project_root: Path) -> Result[list[str], str]:
 
 
 # @shell_complexity: Classification decision tree requires multiple config lookups and priority checks
-# @invar:allow entry_point_too_thick: False positive - .get() matches router.get pattern
 def classify_file(
     file_path: str, project_root: Path, source: str = ""
 ) -> Result[tuple[bool, bool], str]:
@@ -562,11 +563,7 @@ def classify_file(
         core_patterns, shell_patterns = pattern_result.unwrap()
     else:
         # Log warning about config error, use defaults
-        import logging
-
-        logging.getLogger(__name__).debug(
-            "Pattern classification failed: %s, using defaults", pattern_result.failure()
-        )
+        _LOGGER.debug("Pattern classification failed: %s, using defaults", pattern_result.failure())
         core_patterns, shell_patterns = ([], [])
 
     path_result = get_path_classification(project_root)
@@ -574,11 +571,7 @@ def classify_file(
         core_paths, shell_paths = path_result.unwrap()
     else:
         # Log warning about config error, use defaults
-        import logging
-
-        logging.getLogger(__name__).debug(
-            "Path classification failed: %s, using defaults", path_result.failure()
-        )
+        _LOGGER.debug("Path classification failed: %s, using defaults", path_result.failure())
         core_paths, shell_paths = (_DEFAULT_CORE_PATHS, _DEFAULT_SHELL_PATHS)
 
     # Priority 1: Pattern-based classification
