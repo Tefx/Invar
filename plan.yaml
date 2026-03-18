@@ -26075,7 +26075,7 @@ phases:
       and severity override immunity'
   - id: p7-non-suppressible.verify
     name: Verify non-suppressible enforcement
-    status: pending
+    status: claimed
     description: "Independent verification:\n1. Run uv run invar guard --all -- must\
       \ pass on Invar's own codebase\n2. Verify that has_allow_marker returns False\
       \ for non-suppressible rules even when marker is present\n3. Verify that has_allow_marker\
@@ -26092,6 +26092,8 @@ phases:
     depends_on:
     - p7-non-suppressible.implement
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-18T19:45:32.521927+00:00'
   - id: p7-non-suppressible.gate
     name: Phase 7 Gate
     status: pending
