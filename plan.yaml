@@ -25874,7 +25874,7 @@ phases:
       '
 - id: cat-b-dead-export
   name: 'Category B: dead_export Fixes (20 markers)'
-  status: in_progress
+  status: done
   depends_on:
   - cat-e-dead-assign
   steps:
@@ -26077,7 +26077,7 @@ phases:
       \ changes involved.\n\nSpec link:\n- `cat-b-dead-export.audit-and-fix-dead-export-markers-20-markers`"
   - id: cat-b-dead-export.gate-category-b-dead-export
     name: 'Gate: Category B dead_export'
-    status: claimed
+    status: done
     description: 'Gate review: Verify Category B (dead_export) phase completion.
 
 
@@ -26110,9 +26110,40 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-18T01:41:43.373830+00:00'
+    done_at: '2026-03-18T01:48:32.019897+00:00'
+    evidence: 'Category B gate review completed by independent gate-reviewer (STANDARD
+      depth).
+
+
+      Gate conclusions:
+
+      - 20/20 dead_export markers addressed in scope.
+
+      - Entry-point/public-export path validated (explicit public API export strategy
+      used instead of escape-hatch comments).
+
+      - No accidental function removals with real callers identified.
+
+      - Guard checks for category scope passed.
+
+      - dead_export-focused test suites and related core wiring tests passed; broad
+      suite pre-existing unrelated DX55 regression failures noted as non-blocking
+      for this gate.
+
+
+      Verdict:
+
+      - PASS; Category B ready to advance.
+
+
+      Spec link:
+
+      - `cat-b-dead-export.audit-and-fix-dead-export-markers-20-markers`
+
+      - `cat-b-dead-export.verify-dead-export-cleanup`'
 - id: cat-a-guard-runs
   name: 'Category A: shell_result in guard_runs.py (8 markers)'
-  status: locked
+  status: pending
   depends_on:
   - cat-b-dead-export
   steps:
