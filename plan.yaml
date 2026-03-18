@@ -27685,3 +27685,117 @@ phases:
     depends_on:
     - final-verify.fix-marker-format-contract-mismatch
     agent: integration-verifier
+  - id: final-verify.fix-dx56-project-additions-template-sync
+    name: Fix DX56 project additions contract mismatches in template sync behavior
+    status: pending
+    description: 'Fix ALL currently known downstream DX56 blocker-family mismatches
+      where project additions injection into managed template sync outputs is missing
+      or inconsistent after marker-contract normalization.
+
+
+      symbolic_testing: false
+
+      prior_loop:
+
+      - final-verify.fix-marker-format-contract-mismatch
+
+      - final-verify.retest-marker-format-contract-mismatch
+
+      remaining_blocker: DX56 project-additions injection contract mismatch during
+      template sync (`tests/integration/test_dx56_sync.py::TestSyncTemplates::test_project_additions_injection`).
+
+      why_new_loop: The prior remediation normalized marker contracts, but verification
+      exposed a narrower downstream sync-behavior regression family around project-additions
+      injection that requires its own batched fix/retest loop.
+
+      why_previous_fix_failed: The previous loop closed marker-token drift but did
+      not fully preserve the template-sync contract that injects project additions
+      into CLAUDE.md after normalization.
+
+
+      ## Root Cause vs Symptom:
+
+      - Root cause: template-sync behavior no longer preserves or injects the authoritative
+      project additions block into CLAUDE.md under the normalized managed-marker contract.
+
+      - Symptom: `test_project_additions_injection` fails because expected project
+      additions are missing after sync.
+
+      - Why this fix is not surface-level: restore the full project-additions sync
+      contract across emitters, mergers, and DX56 assertions instead of patching one
+      fixture.
+
+
+      ## Blockers to Fix (ALL of these, not just the first):
+
+
+      ### B1: Missing project additions injection in CLAUDE.md sync output
+
+      Locations: DX56 template sync implementation surfaces, CLAUDE.md managed-template
+      merge/injection logic, and related sync helpers/assertions
+
+      Remediation: identify the authoritative project-additions injection contract,
+      restore insertion/preservation behavior under the normalized markers, and update
+      all sibling sync paths that should carry the same injected block.
+
+      Grep hint: `rg -n "project additions|CLAUDE\.md|sync.*template|managed template|inject"
+      src tests`
+
+      IMPORTANT: Search sibling DX56 template-sync cases beyond the currently failing
+      test; do not stop after one assertion path.
+
+
+      ### B2: Template sync regression fixtures/helpers drift
+
+      Locations: DX56 integration fixtures, template snapshots, and helper assertions
+      that verify project additions presence or placement
+
+      Remediation: update fixtures/helpers/assertions so they validate the restored
+      project-additions contract consistently across template sync behavior.
+
+      Grep hint: `rg -n "test_project_additions_injection|project additions|CLAUDE\.md|sync"
+      tests src`
+
+
+      ## Completion Criteria:
+
+      - ALL currently known DX56 project-additions contract mismatches fixed, not
+      just one assertion
+
+      - Sibling search completed for template sync producer/consumer paths involving
+      CLAUDE.md additions
+
+      - Evidence explains how project additions are preserved/injected after marker
+      normalization
+
+      - Out-of-scope guardrail: unrelated post-DX56 pytest failures outside the project-additions
+      sync family are deferred unless directly resolved by this contract repair'
+    verification: '- Use the exact project command family for verification (`uv run
+      pytest tests/ -x`)
+
+      - Grep hint searches show project-additions injection/preservation behavior
+      is consistent across DX56 sync paths
+
+      - Evidence identifies every implementation surface and regression/helper updated
+      for the project-additions contract
+
+      - Root-cause evidence shows why CLAUDE.md additions now survive or reappear
+      correctly after template sync'
+    evidence_template: '## DX56 Project Additions Sync Repair
+
+      - blocker_fingerprint: dx56-project-additions-sync
+
+      - root_cause_hypothesis: <why additions were dropped after marker normalization>
+
+      - why_previous_fix_failed: <what marker-only normalization missed>
+
+      - updated_surfaces: <implementation + tests>
+
+      - sibling_search_evidence: <grep results / paths checked>
+
+      - contract_restored: <how CLAUDE.md additions are injected/preserved>
+
+      '
+    depends_on:
+    - final-verify.retest-marker-format-contract-mismatch
+    agent: python-senior
