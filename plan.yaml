@@ -28232,3 +28232,55 @@ phases:
     depends_on:
     - final-verify.gate-final-escape-hatch-cleanup
     agent: python-senior
+  - id: final-verify.retest-dx91-expected-invar-fixtures
+    name: Retest DX91 expected INVAR.md fixture synchronization
+    status: pending
+    description: 'Re-test the DX91 expected-fixture contract blocker family from a
+      fresh, independent perspective after syncing the expected INVAR.md corpus.
+
+
+      As an INDEPENDENT TESTER (integration-verifier), your goal is to find remaining
+      deterministic harness mismatches, not to confirm the first fixture update worked.
+
+
+      Test for:
+
+      - Happy path: all affected DX91 expected INVAR.md fixtures match the authoritative
+      shell_complexity template contract
+
+      - Edge cases: sibling migration fixtures and harness comparisons remain deterministic
+      and no stale dead_export example survives in the expected corpus
+
+      - Error scenarios: no helper/snapshot path still emits the old expected content
+      and no new mismatch appears from partial fixture updates
+
+      - Coverage focus: distinguish this DX91 expected-fixture family from remaining
+      unrelated blockers such as subprocess respawn behavior
+
+
+      Fresh/cold environment required before retest.'
+    verification: '- Run `uv run invar guard --all` in a fresh/cold environment
+
+      - Run `uv run pytest tests/ -x` in a fresh/cold environment
+
+      - Record whether the DX91 expected-fixture mismatch family is cleared and identify
+      the first remaining unrelated failure, if any
+
+      - Evidence must distinguish DX91 expected-fixture status from unrelated blocker
+      families'
+    evidence_template: '## DX91 Expected Fixture Retest
+
+      - fresh_environment: <how cold/fresh state was ensured>
+
+      - guard_result: <pass/fail>
+
+      - dx91_fixture_family_status: <cleared / remaining cases>
+
+      - pytest_first_remaining_failure: <none or test id>
+
+      - unrelated_blockers: <none or list>
+
+      '
+    depends_on:
+    - final-verify.fix-dx91-expected-invar-fixtures
+    agent: integration-verifier
