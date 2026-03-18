@@ -25674,33 +25674,6 @@ phases:
     depends_on:
     - p0-migration.remove-migrated-inline-markers
     agent: integration-verifier
-  - id: p0-migration.phase-0-gate
-    name: Phase 0 Gate
-    status: pending
-    description: 'Gate review: Verify Phase 0 migration completion and quality.
-
-
-      review_depth: STANDARD
-
-
-      Verify:
-
-      - Inventory was thorough (all @invar:allow markers accounted for)
-
-      - Exempt patterns use correct syntax (file_glob or file_glob::symbol_glob)
-
-      - No non-suppressible markers remain inline
-
-      - Remaining inline markers fit within DX-96 default budgets
-
-      - Guard passes cleanly
-
-      - No unintended behavioral changes'
-    verification: Migration complete. All markers properly classified and migrated.
-      Guard passes.
-    depends_on:
-    - p0-migration.verify-guard-passes-after-migration
-    agent: gate-reviewer
   - id: p0-migration.remove-migrated-inline-markers
     name: Remove migrated inline markers
     status: pending
@@ -28382,3 +28355,29 @@ phases:
   status: locked
   depends_on:
   - p7-non-suppressible
+  steps:
+  - id: p0-migration.phase-0-gate
+    name: Phase 0 Gate
+    status: pending
+    description: 'Gate review: Verify Phase 0 migration completion and quality.
+
+
+      review_depth: STANDARD
+
+
+      Verify:
+
+      - Inventory was thorough (all @invar:allow markers accounted for)
+
+      - Exempt patterns use correct syntax (file_glob or file_glob::symbol_glob)
+
+      - No non-suppressible markers remain inline
+
+      - Remaining inline markers fit within DX-96 default budgets
+
+      - Guard passes cleanly
+
+      - No unintended behavioral changes'
+    verification: Migration complete. All markers properly classified and migrated.
+      Guard passes.
+    agent: gate-reviewer
