@@ -25612,7 +25612,7 @@ phases:
   steps:
   - id: p4-guard-integration.implement
     name: Integrate check_escape_budget into _scan_and_check
-    status: claimed
+    status: done
     description: 'Integrate `check_escape_budget(summary, config, file_infos)` into
       `_scan_and_check` in `src/invar/shell/commands/guard.py` using the Phase 3 contract
       exactly.
@@ -25674,6 +25674,37 @@ phases:
     agent: python-executor
     claimed_by: python-executor
     claimed_at: '2026-03-18T19:45:16.939337+00:00'
+    done_at: '2026-03-18T20:15:03.646946+00:00'
+    evidence: 'Artifact:
+
+      - Commit: 8013be51d48d0caf2a7d7d96bf27a3344d6f0690
+
+      - File changed: src/invar/shell/commands/guard.py
+
+
+      Verification:
+
+      - Integration location in `_scan_and_check`: lines 178-182, after DX-33 duplicate
+      escape-reasons check
+
+      - 3-arg API call wired: `check_escape_budget(report.escape_hatches, config,
+      all_file_infos)`
+
+      - Single import + single callsite; no shadow integration path
+
+      - No 2-arg call remains in guard integration path
+
+      - Run: uv run invar guard --all -> executed with escape hatch reporting path
+      exercised
+
+      - Fallback path preserved: call receives collected `all_file_infos`; helper
+      invocation remains explicit and non-skipping when metadata is partial
+
+
+      Spec link:
+
+      - p4-guard-integration.implement strengthened acceptance for 3-arg wiring and
+      no silent drop paths'
   - id: p4-guard-integration.verify
     name: Verify guard integration
     status: pending
