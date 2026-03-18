@@ -25606,7 +25606,7 @@ phases:
       - PASS; no blockers and no should-fix issues.'
 - id: p4-guard-integration
   name: 'Phase 4: guard.py _scan_and_check integration'
-  status: in_progress
+  status: done
   depends_on:
   - p3-budget-core
   steps:
@@ -25775,7 +25775,7 @@ phases:
       behavior, no 2-arg regression'
   - id: p4-guard-integration.gate
     name: Phase 4 Gate
-    status: claimed
+    status: done
     description: 'Gate review: Verify Phase 4 helper/API-signature integration is
       complete and unambiguous.
 
@@ -25822,9 +25822,75 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-18T20:20:35.509082+00:00'
+    done_at: '2026-03-18T20:30:27.863781+00:00'
+    evidence: 'Artifact:
+
+      - Implementation commit under review: af5b31d90772b5cefb79428d0b0d7168a1897d5b
+
+
+      Verification:
+
+      - Verified real pipeline callsite in `_scan_and_check`: `check_escape_budget(report.escape_hatches,
+      config, all_file_infos)`
+
+      - Verified placement is after DX-33 duplicate escape-reason check and before
+      report return
+
+      - Verified only 3-arg call shape exists on guard path; no 2-arg shim/callsite
+      found
+
+      - Verified no silent-drop behavior: returned budget violations are added to
+      report
+
+      - Verified fallback behavior for missing/partial metadata is explicit and non-crashing
+
+
+      Wiring audit:
+
+      - W1 PASS: core import exists at integration point
+
+      - W2 PASS: 3-arg signature used at callsite
+
+      - W3 PASS: `all_file_infos` populated in scan flow before call
+
+      - W4 PASS: report escape-hatch summary type aligns with helper input
+
+      - W5 PASS: integration consistent with check_* pipeline pattern
+
+      - W6 PASS: call placed on real `_scan_and_check` execution path
+
+      - W7 PASS: no shell-core boundary violation in import path
+
+      - W8 PASS: no 2-arg/shim/silent-drop path remains
+
+
+      Escape hatch audit:
+
+      - No new `@invar:allow` added for this wiring change
+
+
+      Integration claim integrity:
+
+      - Evidence based on concrete callsite inspection + executed verification commands;
+      not fixture-only claim
+
+
+      Liveness/smoke:
+
+      - N/A (integration within existing guard command path, not new runnable surface)
+
+
+      Spec link:
+
+      - p4-guard-integration.{implement,verify,gate} acceptance criteria
+
+
+      Verdict:
+
+      - PASS; no blockers and no should-fix issues.'
 - id: p5-output
   name: 'Phase 5: formatter.py + guard_output.py gating output'
-  status: locked
+  status: pending
   depends_on:
   - p4-guard-integration
   steps:
