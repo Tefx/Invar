@@ -29579,13 +29579,13 @@ phases:
       fixture-sync scope.'
 - id: p8-migration-finalization
   name: 'Phase 8: Migration finalization after config support'
-  status: in_progress
+  status: done
   depends_on:
   - p7-non-suppressible
   steps:
   - id: p0-migration.phase-0-gate
     name: Migration finalization gate
-    status: claimed
+    status: done
     description: 'Gate review: Verify post-config migration finalization completion
       and quality.
 
@@ -29613,6 +29613,155 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-18T23:39:20.789060+00:00'
+    done_at: '2026-03-18T23:46:02.689028+00:00'
+    evidence: '## Migration Finalization Gate - PASS
+
+
+      ### Summary
+
+      Migration to config-backed escape hatch exemptions is complete. All non-suppressible
+      rules have been migrated to pyproject.toml, no inline markers for NON_SUPPRESSIBLE_INLINE_RULES
+      remain, and the rejected historical step is not on the downstream path.
+
+
+      ### Phase 0: Automated Gates
+
+      - **Guard pass**: `invar guard --all --static` → passed (errors=0)
+
+      - **Non-suppressible inline marker scan**: 0 matches (PASS)
+
+      - **Config syntax validation**: All 17 exempt patterns use valid `file_glob`
+      or `file_glob::symbol_glob` syntax
+
+
+      ### Phase 1: Risk Classification
+
+      - **STANDARD**: Migration verification with human-approved config changes
+
+      - All changes are to pyproject.toml exemptions (human-approved in p0-migration.human-review-and-approve-exemptions)
+
+
+      ### Phase 2: Expert Findings
+
+
+      #### E1: Spec Alignment
+
+      - [x] All 96 markers from inventory were classified (72 exempt-candidate, 9
+      ambiguous, 15 should-fix)
+
+      - [x] Human-approved exemptions written to pyproject.toml with correct syntax
+
+      - [x] Non-suppressible rules (dead_export, missing_contract, missing_doctest,
+      stub_body) have ZERO inline markers
+
+      - [x] Remaining 5 inline markers are suppressible/expensive tier, not NON_SUPPRESSIBLE
+
+
+      #### E2: Architecture
+
+      - [x] Config parsing path complete: `pyproject.toml` → `shell/config.py` → `parse_escape_exempt_patterns`
+      → `RuleConfig.escape_exempt_patterns`
+
+      - [x] Escape budget check integrates config exemptions into rule enforcement
+
+      - [x] No circular dependencies introduced
+
+      - [x] Rejected historical step properly marked as superseded
+
+
+      #### E3: Developer Experience
+
+      - [x] pyproject.toml exempt patterns are documented and human-reviewed
+
+      - [x] Remaining inline markers have justification comments
+
+      - [x] No behavioral changes from migration
+
+
+      #### E4: SE Quality
+
+      - [x] Guard passes cleanly with config-backed exemptions
+
+      - [x] Wiring audit W1-W8 complete
+
+      - [x] Escape hatch trust boundary enforced (non-suppressible rules cannot be
+      inlined)
+
+      - [x] Tier classification correct: file_size=EXPENSIVE, shell_complexity=SUPPRESSIBLE
+
+
+      ### Wiring Audit (W1-W8)
+
+      - **W1 (exempt patterns load)**: `parse_escape_exempt_patterns` in `core/exempt_patterns.py`
+      called from `core/utils.py:344`
+
+      - **W2 (CLI commands registered)**: All commands registered via `@app.command()`
+      or `app.add_typer()`
+
+      - **W3 (escape budget check)**: `check_escape_budget` integrated, `_is_exempt`
+      checks config patterns
+
+      - **W4 (non-suppressible enforcement)**: `NON_SUPPRESSIBLE_INLINE_RULES` enforced
+      at `escape_budget.py:322`
+
+      - **W5 (tier classification)**: ESCAPE_TIER_MAP correctly maps rules to tiers
+
+      - **W6 (migrated markers removed)**: All non-suppressible inline markers removed
+
+      - **W7 (rejected step status)**: `p0-migration.remove-migrated-inline-markers`
+      = skipped/superseded
+
+      - **W8 (retained markers justified)**: 5 suppressible markers within budget
+
+
+      ### Escape Hatch Audit
+
+      - **Config-exempt patterns**: 17 total (missing_contract=9, missing_doctest=4,
+      file_size=1, shell_too_complex=2, shell_pure_logic=1)
+
+      - **Remaining inline markers**: 5 total (file_size=2, shell_complexity=3)
+
+      - **Non-suppressible inline markers**: 0 (PASS)
+
+      - **Human approval**: Confirmed at step p0-migration.human-review-and-approve-exemptions
+
+
+      ### Integration Claim Integrity
+
+      - Guard passes with config-backed exemptions active (no behavioral change)
+
+      - Rejected historical step NOT on downstream dependency path
+
+      - Active path: remove-safe-migrated-inline-markers → retest-safe-marker-removal
+      → fix-remaining-guard-blockers → retest-guard-pass-after-remediation (all ✓)
+
+
+      ### Liveness/Smoke Status
+
+      - Import test: PASS (`from invar.shell.commands.guard import app`)
+
+      - CLI help: PASS (`uv run invar guard --help`)
+
+      - Static guard: PASS (errors=0)
+
+
+      ### Confidence Calibration
+
+      - **High**: Guard passes, non-suppressible marker count verified, config syntax
+      validated, wiring complete
+
+      - **High**: Human approval and rejected step status confirmed via vectl status
+
+
+      ### Non-Goals
+
+      - Runtime behavior verification (static analysis only)
+
+      - Performance benchmarks
+
+      - 100% code path audit
+
+      - Dependency vulnerability scan'
   - id: p0-migration.verify-guard-passes-after-migration
     name: Verify guard passes after post-config migration finalization
     status: done
