@@ -25707,7 +25707,7 @@ phases:
       no silent drop paths'
   - id: p4-guard-integration.verify
     name: Verify guard integration
-    status: claimed
+    status: done
     description: "As an INDEPENDENT TESTER (`integration-verifier`), validate the\
       \ guard pipeline integration from a fresh perspective.\n\nYOUR GOAL IS TO FIND\
       \ PROBLEMS, not to confirm it works.\n\nTargeted checks:\n1. Run the real guard\
@@ -25740,6 +25740,39 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-18T20:16:48.221089+00:00'
+    done_at: '2026-03-18T20:20:11.505272+00:00'
+    evidence: 'Artifact:
+
+      - Commit hash(es): none
+
+      - Verification session: ses_2fd679bc0ffeIqPtIL88P3x1n3
+
+
+      Verification:
+
+      - Verified 3-arg integration call in `src/invar/shell/commands/guard.py` at
+      `_scan_and_check`: `check_escape_budget(report.escape_hatches, config, all_file_infos)`
+
+      - Verified ordering: DX-33 duplicate check precedes budget integration call,
+      then violations appended to report
+
+      - Verified no silent-drop path: budget violations iterated and added via `report.add_violation(...)`
+
+      - Verified fallback behavior for missing/partial metadata is graceful (`_resolve_enclosing_function`
+      can return None without crash)
+
+      - Verified no 2-arg integration call remains on production guard path
+
+      - Run: uv run invar guard --all -> executed; overall status reflects separate
+      repository-wide quality blockers outside this wiring path
+
+      - Run: doctests for escape budget helper -> pass
+
+
+      Spec link:
+
+      - p4-guard-integration.verify acceptance: 3-arg wiring proof, ordering, fallback
+      behavior, no 2-arg regression'
   - id: p4-guard-integration.gate
     name: Phase 4 Gate
     status: pending
