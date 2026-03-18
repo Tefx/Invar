@@ -25730,7 +25730,7 @@ phases:
   steps:
   - id: p6-config.implement
     name: Implement config parsing for escape gating fields
-    status: claimed
+    status: done
     description: 'Extend config parsing to read new escape_* fields and exempt patterns
       from pyproject.toml. Effort: Medium (symbol-level glob is new capability).
 
@@ -25815,6 +25815,33 @@ phases:
     agent: python-senior
     claimed_by: python-senior
     claimed_at: '2026-03-18T18:58:25.327236+00:00'
+    done_at: '2026-03-18T19:27:39.238851+00:00'
+    evidence: 'Artifact:
+
+      - Commit: f65589d
+
+
+      Verification:
+
+      - Run: uv run pytest tests/core/test_escape_exempt_patterns.py tests/test_config_cleanup.py
+      -v -> 10 passed
+
+      - Run: uv run invar guard --all -> passed (static, doctest, crosshair, property
+      tests)
+
+      - Implemented parsing of `[tool.invar.exempt.<rule>]` patterns into `RuleConfig.escape_exempt_patterns`
+
+      - Implemented/verified matcher support for file-only and `file::symbol` glob
+      patterns including wildcard cases
+
+      - Verified new escape_* config fields (including `escape_exempt_warning`) are
+      read correctly
+
+
+      Spec link:
+
+      - p6-config.implement acceptance criteria for escape field parsing and exempt
+      pattern matching'
   - id: p6-config.verify
     name: Verify config parsing
     status: pending
