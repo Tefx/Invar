@@ -24718,7 +24718,7 @@ phases:
       **Verdict**: PASS'
   - id: dx91-usbv-cleanup.retest-active-usbv-archive-framing
     name: Re-test USBV archival framing across active docs surfaces
-    status: pending
+    status: claimed
     description: 'As an INDEPENDENT TESTER (integration-verifier), validate USBV archival
       framing from a fresh perspective.
 
@@ -24807,6 +24807,8 @@ phases:
     depends_on:
     - dx91-usbv-cleanup.fix-active-usbv-archive-framing
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-18T02:03:08.694086+00:00'
 - id: p1-models-tier
   name: 'Phase 1: RuleConfig fields + EscapeHatchTier + ESCAPE_TIER_MAP'
   status: locked
