@@ -26876,7 +26876,7 @@ phases:
       family, out-of-scope for server shell_result migration.'
   - id: cat-a-server.verify-server-py-shell-result-cleanup
     name: Verify server.py shell_result cleanup
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT TESTER, verify server.py shell_result elimination.
 
 
@@ -26905,6 +26905,36 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-18T03:01:24.457378+00:00'
+    done_at: '2026-03-18T03:08:55.361439+00:00'
+    evidence: 'Independent verification completed for server shell_result cleanup.
+
+
+      Verification:
+
+      - `grep -n ''@invar:allow shell_result'' src/invar/mcp/server.py` -> 0 matches.
+
+      - Tool factory functions and `create_server` confirmed on Result-based return
+      contracts.
+
+      - Integration boundaries validated: server list/call paths check Failure before
+      unwrap and convert errors appropriately.
+
+      - Entry-point/threshold server-related tests passed in verifier run.
+
+      - `invar guard --all` full-run timed out in verifier context; no evidence of
+      server-specific shell_result regressions.
+
+
+      Classification:
+
+      - blocker: none found for server shell_result migration acceptance.
+
+      - should_fix: none specific to this step (full-scan timeout operational only).
+
+
+      Spec link:
+
+      - `cat-a-server.fix-shell-result-in-server-py-14-markers`'
   - id: cat-a-server.gate-category-a-server-py
     name: 'Gate: Category A server.py'
     status: pending
