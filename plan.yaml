@@ -29904,3 +29904,36 @@ phases:
       - Failure-path evidence explains any item intentionally left deferred because
       it would require broad refactoring outside this rework scope'
     agent: python-senior
+  - id: p0-migration.retest-guard-pass-after-remediation
+    name: Retest full Invar guard pass after batched remediation
+    status: pending
+    description: 'Independent retest of the deterministic rework path for the failed
+      migration-finalization and final-acceptance guard path.
+
+
+      As an INDEPENDENT TESTER, validate the batched remediation from a fresh perspective.
+
+
+      Required checks:
+
+      - Run the exact project command `uv run invar guard --all` against the Invar
+      codebase
+
+      - Confirm the command exits cleanly and no remaining blocker from safe marker
+      removal / final acceptance criterion 8 remains
+
+      - Confirm the new rework path is the executable completion path and the earlier
+      failed steps remain historical only
+
+
+      This retest is the single unblocker for downstream migration verification and
+      final acceptance.'
+    verification: '- `uv run invar guard --all` passes for the Invar codebase
+
+      - Evidence confirms the new remediation path, not the failed historical path,
+      is the active unblock path
+
+      - Any unresolved item is explicitly reported as a blocker'
+    depends_on:
+    - p0-migration.fix-remaining-guard-blockers
+    agent: integration-verifier
