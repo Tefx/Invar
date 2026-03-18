@@ -27568,7 +27568,7 @@ phases:
     agent: gate-reviewer
   - id: final-verify.fix-marker-format-contract-mismatch
     name: Fix marker format contract mismatch across managed templates and regressions
-    status: claimed
+    status: done
     description: 'Fix ALL blocker-family instances where managed template markers
       use `<!--invar:begin-->` while regression expectations still require `<!--invar:managed`
       semantics.
@@ -27647,6 +27647,22 @@ phases:
     agent: python-senior
     claimed_by: python-senior
     claimed_at: '2026-03-18T04:49:27.264445+00:00'
+    done_at: '2026-03-18T14:32:20.311761+00:00'
+    evidence: "Artifact:\n- PR: commit `196db6f` (squash merge of worktree commit\
+      \ `7370c31`)\n- Updated surfaces:\n  - `src/invar/core/template_parser.py`\n\
+      \  - `src/invar/shell/commands/template_sync.py`\n  - `tests/integration/test_dx55_regression.py`\n\
+      \  - `tests/integration/test_dx91_destructive_regression_harness.py`\n\nVerification:\n\
+      - `rg -n \"<!--invar:(managed|begin)\" src tests` used to audit producer/consumer\
+      \ drift and sibling surfaces.\n- Marker contract normalized toward canonical\
+      \ DX-91 begin/end semantics with explicit legacy-compat parsing boundary retained\
+      \ where needed.\n- `uv run pytest tests/ -x` advanced past prior DX55 marker-format\
+      \ blocker family, but exposed new downstream blocker in DX56 project-additions\
+      \ sync behavior:\n  - `tests/integration/test_dx56_sync.py::TestSyncTemplates::test_project_additions_injection`\n\
+      \nIssue classification:\n- blocker: DX56 project-additions template-sync contract\
+      \ mismatch discovered after marker-format normalization.\n\nBatched remediation\
+      \ handling:\n- Added one fix + one retest step for newly surfaced blocker family:\n\
+      \  - `final-verify.fix-dx56-project-additions-template-sync`\n  - `final-verify.retest-dx56-project-additions-template-sync`\n\
+      - Final gate rewired to latest retest path.\n\nSpec link:\n- `final-verify.fix-marker-format-contract-mismatch`\n"
   - id: final-verify.retest-marker-format-contract-mismatch
     name: Retest full verification after marker format contract fix
     status: pending
