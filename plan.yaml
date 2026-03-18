@@ -29646,7 +29646,7 @@ phases:
       - The rejected step `p0-migration.remove-migrated-inline-markers` is not on
       the downstream dependency path'
     depends_on:
-    - p0-migration.retest-safe-marker-removal
+    - p0-migration.retest-guard-pass-after-remediation
     agent: integration-verifier
   - id: p0-migration.remove-migrated-inline-markers
     name: Remove migrated inline markers after config support is live
