@@ -27633,3 +27633,41 @@ phases:
     depends_on:
     - final-verify.full-escape-hatch-census-and-guard-run
     agent: python-senior
+  - id: final-verify.retest-marker-format-contract-mismatch
+    name: Retest full verification after marker format contract fix
+    status: pending
+    description: 'Re-test the marker-format blocker family from a fresh, independent
+      perspective after the batched contract fix.
+
+
+      As an INDEPENDENT TESTER (integration-verifier), your goal is to find remaining
+      contract mismatches, not to confirm the first fix worked.
+
+
+      Test for:
+
+      - Happy path: managed template generation and regression expectations agree
+      on one authoritative marker contract
+
+      - Edge cases: DX55, DX56, and DX91 suites all exercise the normalized marker
+      path
+
+      - Error scenarios: no lingering mixed expectations between `<!--invar:managed`
+      and `<!--invar:begin-->`
+
+      - Coverage focus: full guard remains clean and full pytest no longer fails on
+      this blocker family
+
+
+      Fresh/cold environment required before retest.'
+    verification: '- Run `uv run invar guard --all` in a fresh/cold environment
+
+      - Run `uv run pytest tests/ -x` in a fresh/cold environment
+
+      - Record whether DX55/DX56/DX91 marker-format failures are gone or identify
+      any remaining blocker-family cases
+
+      - Evidence must distinguish marker-format regressions from unrelated failures'
+    depends_on:
+    - final-verify.fix-marker-format-contract-mismatch
+    agent: integration-verifier
