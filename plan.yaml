@@ -25003,7 +25003,7 @@ phases:
     agent: gate-reviewer
   - id: p1-models-tier.fix-canonical-count
     name: Fix canonical ESCAPE_TIER_MAP coverage
-    status: pending
+    status: claimed
     description: 'Fix all blockers found by `p1-models-tier.verify`, not just the
       first.
 
@@ -25061,6 +25061,8 @@ phases:
     depends_on:
     - p1-models-tier.verify
     agent: python-executor
+    claimed_by: python-executor
+    claimed_at: '2026-03-18T17:18:52.017122+00:00'
   - id: p1-models-tier.retest-canonical-count
     name: Retest Phase 1 canonical tier mapping
     status: pending
