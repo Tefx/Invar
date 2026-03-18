@@ -28018,3 +28018,54 @@ phases:
     depends_on:
     - final-verify.retest-dx56-project-additions-template-sync
     agent: python-senior
+  - id: final-verify.retest-template-sync-guard-complexity
+    name: Retest template_sync guard complexity repair
+    status: pending
+    description: 'Re-test the template_sync guard-regression family from a fresh,
+      independent perspective after the complexity repair.
+
+
+      As an INDEPENDENT TESTER (integration-verifier), your goal is to find remaining
+      guard or DX56 behavioral regressions, not to confirm the first refactor worked.
+
+
+      Test for:
+
+      - Happy path: `uv run invar guard --all` is clear for `template_sync.py`, especially
+      `_merge_project_additions`
+
+      - Edge cases: DX56 project-additions injection, ordering, non-duplication, and
+      legacy-preservation behavior still hold after structural simplification
+
+      - Error scenarios: no new complexity finding appears in adjacent extracted helpers
+      and no DX56 regression reappears
+
+      - Coverage focus: distinguish this guard-regression family from remaining unrelated
+      pytest blockers
+
+
+      Fresh/cold environment required before retest.'
+    verification: '- Run `uv run invar guard --all` in a fresh/cold environment and
+      confirm `shell_too_complex` is gone for the template_sync path
+
+      - Run `uv run pytest tests/ -x` in a fresh/cold environment and report the first
+      remaining failure after the guard regression is cleared
+
+      - Evidence must distinguish template_sync guard/DX56 status from unrelated downstream
+      blockers'
+    evidence_template: '## Template Sync Guard Complexity Retest
+
+      - fresh_environment: <how cold/fresh state was ensured>
+
+      - guard_result: <pass/fail>
+
+      - dx56_behavior_status: <preserved / regressed>
+
+      - pytest_first_remaining_failure: <none or test id>
+
+      - unrelated_blockers: <none or list>
+
+      '
+    depends_on:
+    - final-verify.fix-template-sync-guard-complexity
+    agent: integration-verifier
