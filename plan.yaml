@@ -27438,7 +27438,7 @@ phases:
   steps:
   - id: final-verify.full-escape-hatch-census-and-guard-run
     name: Full escape hatch census and guard run
-    status: claimed
+    status: done
     description: 'Final comprehensive verification of the escape hatch cleanup project.
 
 
@@ -27516,6 +27516,18 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-18T04:42:19.115301+00:00'
+    done_at: '2026-03-18T04:49:13.216508+00:00'
+    evidence: "Final verification run executed and detected blocker family requiring\
+      \ batched remediation.\n\nVerification results:\n- `uv run invar guard --all`\
+      \ -> passed (0 errors).\n- Escape-hatch census produced categorized inventory\
+      \ of remaining markers.\n- `uv run pytest tests/ -x` (and suite evidence) ->\
+      \ blocker family detected: template marker format contract mismatch (`<!--invar:managed`\
+      \ expected vs `<!--invar:begin-->` produced), impacting DX55/DX56/DX91 regression\
+      \ suites.\n\nIssue classification:\n- blocker: marker-format contract mismatch\
+      \ across related regression families.\n\nBatched remediation handling:\n- Added\
+      \ one fix + one retest step via planner:\n  - `final-verify.fix-marker-format-contract-mismatch`\n\
+      \  - `final-verify.retest-marker-format-contract-mismatch`\n- Final gate rewired\
+      \ to depend on latest retest path.\n\nSpec link:\n- `final-verify.full-escape-hatch-census-and-guard-run`\n"
   - id: final-verify.gate-final-escape-hatch-cleanup
     name: 'Gate: Final escape hatch cleanup'
     status: pending
