@@ -25647,65 +25647,6 @@ phases:
       \ pattern)\n- Run: `uv run invar guard --all` -> passed (`errors=0`, warnings/info\
       \ unchanged baseline)\n- Counts match approved policy: missing_contract=9, missing_doctest=4,\
       \ file_size=1, shell_too_complex=2, shell_pure_logic=1\n\nSpec link:\n- `p0-migration.human-review-and-approve-exemptions`"
-  - id: p0-migration.remove-migrated-inline-markers
-    name: Remove migrated inline markers
-    status: pending
-    description: 'Remove inline @invar:allow markers only after pyproject.toml exempt-pattern
-      support is implemented and verified.
-
-
-      Blocking dependency rationale:
-
-      - This step MUST NOT run until guard actually reads `[tool.invar.exempt.*]`
-      config.
-
-      - Inline-marker removal before verified config support causes false failures
-      because migrated suppressions are not yet honored.
-
-
-      Scope:
-
-      - Read pyproject.toml [tool.invar.exempt.*] sections to determine which rules/patterns
-      are covered
-
-      - For each covered marker in src/invar/**/*.py, remove the @invar:allow comment
-
-      - Keep inline markers ONLY for cases that: (a) are not covered by an exempt
-      pattern, AND (b) genuinely need per-occurrence suppression and fit within DX-96
-      default budgets
-
-
-      Budget reference (DX-96 defaults):
-
-      - Suppressible: 3 per-file, 10 per-project per-rule
-
-      - Expensive: 2 per-file, 5 per-project per-rule
-
-      - Aggregate budget: 15 points
-
-
-      Files: all src/invar/**/*.py files that currently contain @invar:allow markers
-
-      DO NOT modify pyproject.toml.
-
-
-      Grep hint: grep -rn ''@invar:allow'' src/invar/ --include=''*.py'''
-    verification: '- Phase `p6-config` completed, proving config parsing support is
-      implemented and independently verified before inline-marker removal
-
-      - All inline @invar:allow markers covered by pyproject.toml exempt patterns
-      have been removed after config readiness
-
-      - Remaining inline markers (if any) fit within DX-96 default budgets
-
-      - No non-suppressible rules remain as inline markers
-
-      - pyproject.toml was NOT modified by this step'
-    refs:
-    - p6-config
-    depends_on:
-    - p0-migration.human-review-and-approve-exemptions
-    agent: python-executor
 - id: cat-e-dead-assign
   name: 'Category E: dead_assign Fixes (5 markers)'
   status: done
@@ -28379,3 +28320,60 @@ phases:
     verification: uv run invar guard --all passes. No non-suppressible inline markers
       remain. pyproject.toml is valid TOML.
     agent: integration-verifier
+  - id: p0-migration.remove-migrated-inline-markers
+    name: Remove migrated inline markers
+    status: pending
+    description: 'Remove inline @invar:allow markers only after pyproject.toml exempt-pattern
+      support is implemented and verified.
+
+
+      Blocking dependency rationale:
+
+      - This step MUST NOT run until guard actually reads `[tool.invar.exempt.*]`
+      config.
+
+      - Inline-marker removal before verified config support causes false failures
+      because migrated suppressions are not yet honored.
+
+
+      Scope:
+
+      - Read pyproject.toml [tool.invar.exempt.*] sections to determine which rules/patterns
+      are covered
+
+      - For each covered marker in src/invar/**/*.py, remove the @invar:allow comment
+
+      - Keep inline markers ONLY for cases that: (a) are not covered by an exempt
+      pattern, AND (b) genuinely need per-occurrence suppression and fit within DX-96
+      default budgets
+
+
+      Budget reference (DX-96 defaults):
+
+      - Suppressible: 3 per-file, 10 per-project per-rule
+
+      - Expensive: 2 per-file, 5 per-project per-rule
+
+      - Aggregate budget: 15 points
+
+
+      Files: all src/invar/**/*.py files that currently contain @invar:allow markers
+
+      DO NOT modify pyproject.toml.
+
+
+      Grep hint: grep -rn ''@invar:allow'' src/invar/ --include=''*.py'''
+    verification: '- Phase `p6-config` completed, proving config parsing support is
+      implemented and independently verified before inline-marker removal
+
+      - All inline @invar:allow markers covered by pyproject.toml exempt patterns
+      have been removed after config readiness
+
+      - Remaining inline markers (if any) fit within DX-96 default budgets
+
+      - No non-suppressible rules remain as inline markers
+
+      - pyproject.toml was NOT modified by this step'
+    refs:
+    - p6-config
+    agent: python-executor
