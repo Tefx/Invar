@@ -267,30 +267,47 @@ def _strip_legacy_blocks(content: str) -> str:
     return LEGACY_USER_PATTERN.sub(lambda m: m.group(1), without_project_markers)
 
 
-def _merge_project_additions(existing_content: str, project_additions: str | None) -> str:
-    """Inject or replace project additions outside managed markers."""
+def _normalize_project_additions(project_additions: str | None) -> str | None:
     if project_additions is None:
-        return existing_content
+        return None
+    normalized = project_additions.strip("\n")
+    return normalized or None
 
-    additions_body = project_additions.strip("\n")
-    if not additions_body:
-        return existing_content
 
-    additions_block = f"{PROJECT_ADDITIONS_BEGIN}\n{additions_body}\n{PROJECT_ADDITIONS_END}"
+def _build_project_additions_block(additions_body: str) -> str:
+    return f"{PROJECT_ADDITIONS_BEGIN}\n{additions_body}\n{PROJECT_ADDITIONS_END}"
 
-    if PROJECT_ADDITIONS_BLOCK_PATTERN.search(existing_content):
-        first = PROJECT_ADDITIONS_BLOCK_PATTERN.search(existing_content)
-        if first is None:
-            return existing_content
-        head = existing_content[: first.start()]
-        tail = existing_content[first.end() :]
-        tail_without_duplicates = PROJECT_ADDITIONS_BLOCK_PATTERN.sub("", tail)
-        return head + additions_block + tail_without_duplicates
 
+def _replace_project_additions_block(existing_content: str, additions_block: str) -> str | None:
+    first = PROJECT_ADDITIONS_BLOCK_PATTERN.search(existing_content)
+    if first is None:
+        return None
+
+    head = existing_content[: first.start()]
+    tail = existing_content[first.end() :]
+    tail_without_duplicates = PROJECT_ADDITIONS_BLOCK_PATTERN.sub("", tail)
+    return head + additions_block + tail_without_duplicates
+
+
+def _append_project_additions_block(existing_content: str, additions_block: str) -> str:
     preserved = existing_content.strip("\n")
     if preserved:
         return f"{preserved}\n\n{additions_block}\n"
     return f"{additions_block}\n"
+
+
+def _merge_project_additions(existing_content: str, project_additions: str | None) -> str:
+    """Inject or replace project additions outside managed markers."""
+    additions_body = _normalize_project_additions(project_additions)
+    if additions_body is None:
+        return existing_content
+
+    additions_block = _build_project_additions_block(additions_body)
+    replaced = _replace_project_additions_block(existing_content, additions_block)
+    if replaced is not None:
+        return replaced
+
+    return _append_project_additions_block(existing_content, additions_block)
 
 
 # @shell_complexity: target sync branches on existence, force/check, and change detection.
