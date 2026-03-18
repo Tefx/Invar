@@ -27189,13 +27189,13 @@ phases:
       - `cat-c-entry-point.verify-entry-point-too-thick-cleanup`'
 - id: cat-d-file-size
   name: 'Category D: file_size Fixes (5 markers)'
-  status: pending
+  status: in_progress
   depends_on:
   - cat-c-entry-point
   steps:
   - id: cat-d-file-size.extract-and-split-large-core-files-5-markers
     name: Extract and split large Core files (5 markers)
-    status: pending
+    status: claimed
     description: 'Eliminate all 5 `@invar:allow file_size` markers by splitting large
       Core files into sub-modules.
 
@@ -27288,6 +27288,8 @@ phases:
 
       - All existing imports still work'
     agent: python-senior
+    claimed_by: python-senior
+    claimed_at: '2026-03-18T03:53:52.715882+00:00'
   - id: cat-d-file-size.verify-file-size-extraction
     name: Verify file_size extraction
     status: pending
