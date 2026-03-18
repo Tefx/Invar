@@ -24862,14 +24862,14 @@ phases:
       - PASS'
 - id: p1-models-tier
   name: 'Phase 1: RuleConfig fields + EscapeHatchTier + ESCAPE_TIER_MAP'
-  status: pending
+  status: in_progress
   depends_on:
   - p0-migration
   steps:
   - id: p1-models-tier.implement
     name: Implement EscapeHatchTier enum, ESCAPE_TIER_MAP, ESCAPE_TIER_COST, and RuleConfig
       fields
-    status: pending
+    status: claimed
     description: "Add to src/invar/core/models.py:\n\n1. EscapeHatchTier(StrEnum)\
       \ with values: SUPPRESSIBLE, EXPENSIVE, NON_SUPPRESSIBLE\n\n2. ESCAPE_TIER_MAP:\
       \ dict[str, EscapeHatchTier] mapping all 11 escape hatch rules to their tier:\n\
@@ -24898,6 +24898,8 @@ phases:
       RuleConfig() instantiates with new defaults including escape_exempt_warning=15.
       EscapeHatchDetail has function_name field defaulting to None.
     agent: python-executor
+    claimed_by: python-executor
+    claimed_at: '2026-03-18T16:32:33.284335+00:00'
   - id: p1-models-tier.verify
     name: Verify Phase 1 models
     status: pending
