@@ -28055,7 +28055,7 @@ phases:
       \ `src/invar/shell/commands/template_sync.py`\n"
   - id: final-verify.retest-template-sync-guard-complexity
     name: Retest template_sync guard complexity repair
-    status: pending
+    status: claimed
     description: 'Re-test the template_sync guard-regression family from a fresh,
       independent perspective after the complexity repair.
 
@@ -28104,3 +28104,5 @@ phases:
     depends_on:
     - final-verify.fix-template-sync-guard-complexity
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-18T14:53:18.374227+00:00'
