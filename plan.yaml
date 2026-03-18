@@ -24963,6 +24963,66 @@ phases:
     depends_on:
     - p1-models-tier.verify
     agent: gate-reviewer
+  - id: p1-models-tier.fix-canonical-count
+    name: Fix canonical ESCAPE_TIER_MAP coverage
+    status: pending
+    description: 'Fix all blockers found by `p1-models-tier.verify`, not just the
+      first.
+
+
+      Blockers to resolve together:
+
+      - Reconcile `ESCAPE_TIER_MAP` rule coverage with the approved proposal so the
+      canonical mapping count is 12, not 11
+
+      - Update the corresponding model/test/spec mapping surfaces together so the
+      canonical rule set, tier assignments, and assertions agree
+
+      - Confirm `ESCAPE_TIER_COST` and `RuleConfig` defaults remain aligned with the
+      same proposal after the coverage fix
+
+
+      Required search scope:
+
+      - `src/**/models*.py` or equivalent model definitions for `EscapeHatchTier`,
+      `ESCAPE_TIER_MAP`, and `ESCAPE_TIER_COST`
+
+      - tests asserting escape-tier cardinality/content and `RuleConfig` defaults
+
+      - authoritative proposal/spec references describing the canonical rule count
+      and per-rule tier mapping
+
+
+      Completion criteria:
+
+      - Canonical rule coverage is 12 and represented consistently across model constants,
+      tests, and spec-linked expectations
+
+      - No stale 11-entry assumptions remain in targeted tests or mapping references
+
+      - Evidence explains which missing or incorrect rule coverage caused the mismatch
+      and why the final set is canonical
+
+      - Scope is limited to this Phase 1 blocker family; no downstream feature expansion
+
+
+      known_risks:
+
+      - Cardinality-only patch without reconciling content can leave the wrong rule
+      mapped even if the count reaches 12
+
+      - Test-only updates without model/spec alignment will cause repeated verification
+      churn'
+    verification: '- Root-cause evidence identifies the missing or incorrect canonical
+      rule coverage
+
+      - Targeted model/test/spec-linked checks are updated consistently for EscapeHatchTier,
+      ESCAPE_TIER_MAP cardinality/content, ESCAPE_TIER_COST, and RuleConfig defaults
+
+      - No residual 11-entry expectation remains in the affected Phase 1 surfaces'
+    depends_on:
+    - p1-models-tier.verify
+    agent: python-executor
 - id: p2-by-file
   name: 'Phase 2: EscapeHatchSummary.by_file property'
   status: locked
