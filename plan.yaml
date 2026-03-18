@@ -26269,6 +26269,92 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-18T20:56:26.537426+00:00'
+  - id: p6-config.fix-gate-blockers
+    name: Fix p6 gate blocker wiring
+    status: pending
+    description: 'Fix ALL Phase 6 gate blockers in the test import wiring / exports
+      consistency family.
+
+
+      ## Blockers to Fix (ALL of these, not just the first)
+
+      - Test wiring break: `tests/core/test_escape_exempt_patterns.py` imports `matches_file_symbol_pattern`
+      from `invar.core.utils`, but the symbol currently lives in `invar.core.exempt_patterns`.
+
+      - Scope is strictly limited to Phase 6 blocker family: import wiring, compatibility
+      export placement, and related public symbol consistency for this exempt-pattern
+      parsing surface.
+
+
+      ## Root Cause vs Symptom
+
+      - Root cause: Phase 6 moved or introduced the helper on the exempt-pattern module
+      surface without preserving the expected import path used by the regression tests.
+
+      - Symptom: test collection/runtime fails because the expected symbol is not
+      reachable from `invar.core.utils`.
+
+      - Why this fix is not surface-level: resolve the public wiring consistently
+      so test imports and module exports agree, rather than patching a single import
+      in isolation.
+
+
+      ## Required search and repair
+
+      - Inspect the exempt-pattern helper export surface and the utils compatibility
+      surface for sibling inconsistencies.
+
+      - Confirm whether Phase 6 intends `matches_file_symbol_pattern` to be re-exported
+      from `invar.core.utils`, moved permanently with updated call sites, or exposed
+      through a stable compatibility shim.
+
+      - Keep the repair bounded to this blocker family; do not expand into unrelated
+      config behavior.
+
+
+      ## Completion Criteria
+
+      - `matches_file_symbol_pattern` is reachable from the intended public import
+      path used by Phase 6 tests.
+
+      - Related exempt-pattern import/export wiring is internally consistent.
+
+      - No sibling import-path mismatch remains in this blocker family.'
+    verification: '- Public import path used by `tests/core/test_escape_exempt_patterns.py`
+      resolves successfully
+
+      - Focused regression evidence covers the failing import/export wiring path
+
+      - Repair remains scoped to Phase 6 blocker family only'
+    evidence_template: '## Wiring Blocker Fix Evidence
+
+
+      **Blocker family**: test import wiring / exports consistency
+
+      **Primary symbol**: `matches_file_symbol_pattern`
+
+      **Expected public path**: `invar.core.utils`
+
+      **Owning implementation path**: `invar.core.exempt_patterns`
+
+
+      **Sibling search performed**:
+
+      - checked related exempt-pattern helper exports
+
+      - checked compatibility import surface in utils
+
+
+      **Result**:
+
+      - describe final wiring choice
+
+      - list any related import/export updates made
+
+      - confirm no unrelated Phase 6 scope expansion'
+    depends_on:
+    - p6-config.verify
+    agent: python-executor
 - id: p7-non-suppressible
   name: 'Phase 7: Non-suppressible enforcement'
   status: done
