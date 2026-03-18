@@ -27921,7 +27921,7 @@ phases:
   - id: final-verify.fix-template-sync-guard-complexity
     name: Fix template_sync guard complexity regression while preserving DX56 additions
       behavior
-    status: pending
+    status: claimed
     description: 'Fix the guard regression introduced by the DX56 template-sync repair:
       `shell_too_complex` in `_merge_project_additions` within `template_sync.py`
       (5 branches > max 3), while preserving the now-passing DX56 project-additions
@@ -28031,6 +28031,8 @@ phases:
     depends_on:
     - final-verify.retest-dx56-project-additions-template-sync
     agent: python-senior
+    claimed_by: python-senior
+    claimed_at: '2026-03-18T14:47:21.472982+00:00'
   - id: final-verify.retest-template-sync-guard-complexity
     name: Retest template_sync guard complexity repair
     status: pending
