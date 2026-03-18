@@ -28321,16 +28321,16 @@ phases:
       remain. pyproject.toml is valid TOML.
     agent: integration-verifier
   - id: p0-migration.remove-migrated-inline-markers
-    name: Remove migrated inline markers
+    name: Remove migrated inline markers after config support is live
     status: pending
     description: 'Remove inline @invar:allow markers only after pyproject.toml exempt-pattern
-      support is implemented and verified.
+      support is implemented and verified in the preceding config phases.
 
 
       Blocking dependency rationale:
 
-      - This step MUST NOT run until guard actually reads `[tool.invar.exempt.*]`
-      config.
+      - This step now runs in post-p6 migration finalization and MUST NOT dispatch
+      before config support exists.
 
       - Inline-marker removal before verified config support causes false failures
       because migrated suppressions are not yet honored.
@@ -28363,8 +28363,8 @@ phases:
 
 
       Grep hint: grep -rn ''@invar:allow'' src/invar/ --include=''*.py'''
-    verification: '- Phase `p6-config` completed, proving config parsing support is
-      implemented and independently verified before inline-marker removal
+    verification: '- This post-p6 finalization phase is reached only after config
+      support phases complete
 
       - All inline @invar:allow markers covered by pyproject.toml exempt patterns
       have been removed after config readiness
