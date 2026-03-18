@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
 from mcp.types import TextContent
-from returns.result import Success
+from returns.result import Failure, Success
 
 from invar.mcp.guard_runs import (
     GUARD_RUNS,
@@ -512,7 +512,9 @@ async def _execute_command(
                 subprocess_exit_code=result.returncode,
                 stderr=result.stderr.strip(),
             )
-            return [TextContent(type="text", text=json.dumps(payload, indent=2))]
+            if isinstance(payload, Failure):
+                return [TextContent(type="text", text=f"Error: {payload.failure()}")]
+            return [TextContent(type="text", text=json.dumps(payload.unwrap(), indent=2))]
 
         # Try to parse as JSON
         try:

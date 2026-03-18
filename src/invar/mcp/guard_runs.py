@@ -19,6 +19,8 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from typing import Any, Literal
 
+from returns.result import Failure, Result, Success
+
 RunStatus = Literal["deferred", "running", "complete", "failed", "cancelled"]
 
 AUTHORITATIVE_FULL_SCAN_COMMAND = "uvx invar-tools guard --all"
@@ -36,7 +38,6 @@ class GuardWrapperInstabilityError(RuntimeError):
 
 
 # @shell_orchestration: Shared envelope keeps deferred/sync wrapper failures consistent
-# @invar:allow shell_result: Envelope helper returns dict for MCP error payload
 def build_wrapper_instability_envelope(
     *,
     run_id: str,
@@ -44,41 +45,40 @@ def build_wrapper_instability_envelope(
     changed: bool,
     subprocess_exit_code: int,
     stderr: str,
-) -> dict[str, Any]:
+) -> Result[dict[str, Any], str]:
     """Build explicit tooling-parity envelope for wrapper failures."""
-    return {
-        "status": "failed",
-        "run_id": run_id,
-        "error_kind": "wrapper_instability",
-        "classification": WRAPPER_INSTABILITY_CLASSIFICATION,
-        "path": path,
-        "changed": changed,
-        "subprocess_exit_code": subprocess_exit_code,
-        "stderr": stderr,
-        "accepted_verification_path": {
-            "command": AUTHORITATIVE_FULL_SCAN_COMMAND,
-            "reason": (
-                "When MCP wrapper fails but CLI full-scan passes, treat this as tooling-path "
-                "instability, not DX-91 semantic regression."
-            ),
-        },
-    }
+    return Success(
+        {
+            "status": "failed",
+            "run_id": run_id,
+            "error_kind": "wrapper_instability",
+            "classification": WRAPPER_INSTABILITY_CLASSIFICATION,
+            "path": path,
+            "changed": changed,
+            "subprocess_exit_code": subprocess_exit_code,
+            "stderr": stderr,
+            "accepted_verification_path": {
+                "command": AUTHORITATIVE_FULL_SCAN_COMMAND,
+                "reason": (
+                    "When MCP wrapper fails but CLI full-scan passes, treat this as tooling-path "
+                    "instability, not DX-91 semantic regression."
+                ),
+            },
+        }
+    )
 
 
-# @invar:allow shell_result: Timestamp helper for shell lifecycle metadata
-def _utc_now() -> datetime:
-    return datetime.now(UTC)
+def _utc_now() -> Result[datetime, str]:
+    return Success(datetime.now(UTC))
 
 
-# @invar:allow shell_result: Timestamp formatting helper for shell lifecycle metadata
-def _iso(ts: datetime) -> str:
-    return ts.isoformat().replace("+00:00", "Z")
+def _iso(ts: datetime) -> Result[str, str]:
+    return Success(ts.isoformat().replace("+00:00", "Z"))
 
 
 # @shell_orchestration: MCP deferred guard JSON normalization (kept local for protocol parity)
 # @shell_complexity: Character-level JSON newline escaping requires stateful scan
-# @invar:allow shell_result: Pure transformation helper used by MCP shell layer
-def _fix_json_newlines(text: str) -> str:
+def _fix_json_newlines(text: str) -> Result[str, str]:
     """Fix unescaped newlines in JSON string values.
 
     Matches existing MCP parsing fallback in handlers.py.
@@ -108,49 +108,56 @@ def _fix_json_newlines(text: str) -> str:
         else:
             result.append(text[i])
             i += 1
-    return "".join(result)
+    return Success("".join(result))
 
 
 # @shell_orchestration: MCP deferred guard JSON parsing (kept local for protocol parity)
-# @invar:allow shell_result: Parses subprocess JSON payload for shell orchestration
-def _parse_guard_json(stdout: str) -> dict[str, Any]:
+def _parse_guard_json(stdout: str) -> Result[dict[str, Any], str]:
     text = stdout.strip()
     if not text:
-        raise RuntimeError("Guard command returned empty output")
+        return Failure("Guard command returned empty output")
 
     try:
         parsed = json.loads(text)
     except json.JSONDecodeError:
-        parsed = json.loads(_fix_json_newlines(text))
+        fixed = _fix_json_newlines(text)
+        if isinstance(fixed, Failure):
+            return Failure(fixed.failure())
+        try:
+            parsed = json.loads(fixed.unwrap())
+        except json.JSONDecodeError:
+            return Failure("Guard command returned invalid JSON output")
 
     if not isinstance(parsed, dict):
-        raise RuntimeError("Guard command output must be a JSON object")
-    return parsed
+        return Failure("Guard command output must be a JSON object")
+    return Success(parsed)
 
 
 # @shell_orchestration: MCP deferred guard summary normalization (kept local for protocol parity)
 # @shell_complexity: Review trigger detection branches over nested payload fields
-# @invar:allow shell_result: Helper returns scalar boolean for summary output
-def _review_suggested(payload: dict[str, Any]) -> bool:
+def _review_suggested(payload: dict[str, Any]) -> Result[bool, str]:
     static = payload.get("static")
     if not isinstance(static, dict):
-        return False
+        return Success(False)
 
     findings = static.get("findings")
     if not isinstance(findings, list):
-        return False
+        return Success(False)
 
     for item in findings:
         if isinstance(item, dict) and item.get("rule") == "review_suggested":
-            return True
-    return False
+            return Success(True)
+    return Success(False)
 
 
 # @shell_orchestration: MCP deferred guard report summarization (kept local for protocol parity)
 # @shell_complexity: Summary normalization handles optional/malformed payload fields
-# @invar:allow shell_result: Converts guard payload to report dict for MCP output
-def summarize_guard_payload(payload: dict[str, Any]) -> dict[str, Any]:
+def summarize_guard_payload(payload: dict[str, Any]) -> Result[dict[str, Any], str]:
     """Convert full guard payload to DX-94 final summary contract."""
+    review_suggested = _review_suggested(payload)
+    if isinstance(review_suggested, Failure):
+        return Failure(review_suggested.failure())
+
     summary = payload.get("summary")
     if not isinstance(summary, dict):
         summary = {}
@@ -161,14 +168,16 @@ def summarize_guard_payload(payload: dict[str, Any]) -> dict[str, Any]:
     files_checked = summary.get("files_checked", 0)
     status = payload.get("status")
 
-    return {
-        "ok": status == "passed",
-        "errors": int(errors) if isinstance(errors, int | float) else 0,
-        "warnings": int(warnings) if isinstance(warnings, int | float) else 0,
-        "infos": int(infos) if isinstance(infos, int | float) else 0,
-        "files_checked": int(files_checked) if isinstance(files_checked, int | float) else 0,
-        "review_suggested": _review_suggested(payload),
-    }
+    return Success(
+        {
+            "ok": status == "passed",
+            "errors": int(errors) if isinstance(errors, int | float) else 0,
+            "warnings": int(warnings) if isinstance(warnings, int | float) else 0,
+            "infos": int(infos) if isinstance(infos, int | float) else 0,
+            "files_checked": int(files_checked) if isinstance(files_checked, int | float) else 0,
+            "review_suggested": review_suggested.unwrap(),
+        }
+    )
 
 
 @dataclass
@@ -193,7 +202,6 @@ class GuardRun:
 
 # @invar:allow shell_too_complex: State lifecycle management needs branching
 # @shell_orchestration: Coordinates async subprocess lifecycle for MCP
-# @invar:allow shell_result: MCP state registry does not expose Result[T, E]
 class GuardRunRegistry:
     """In-memory run registry for DX-94 deferred guard execution."""
 
@@ -221,15 +229,15 @@ class GuardRunRegistry:
         changed: bool,
         timeout_reason: str,
     ) -> GuardRun:
-        now = _utc_now()
+        now = _utc_now().unwrap()
         run_id = f"grd_{uuid.uuid4().hex[:24]}"
         run = GuardRun(
             run_id=run_id,
             path=path,
             changed=changed,
             status="deferred",
-            accepted_at=_iso(now),
-            updated_at=_iso(now),
+            accepted_at=_iso(now).unwrap(),
+            updated_at=_iso(now).unwrap(),
             timeout_reason=timeout_reason,
         )
 
@@ -242,7 +250,7 @@ class GuardRunRegistry:
 
     async def status(self, run_id: str) -> dict[str, Any]:
         async with self._lock:
-            self._cleanup_locked(_utc_now())
+            self._cleanup_locked(_utc_now().unwrap())
             run = self._runs.get(run_id)
             if run is None:
                 if run_id in self._expired:
@@ -262,7 +270,7 @@ class GuardRunRegistry:
 
     async def wait(self, run_id: str, wait_ms: int) -> dict[str, Any]:
         async with self._lock:
-            self._cleanup_locked(_utc_now())
+            self._cleanup_locked(_utc_now().unwrap())
             run = self._runs.get(run_id)
             if run is None:
                 if run_id in self._expired:
@@ -289,7 +297,7 @@ class GuardRunRegistry:
             await asyncio.wait_for(done_event.wait(), timeout=timeout_seconds)
 
         async with self._lock:
-            self._cleanup_locked(_utc_now())
+            self._cleanup_locked(_utc_now().unwrap())
             run = self._runs.get(run_id)
             if run is None:
                 if run_id in self._expired:
@@ -338,11 +346,21 @@ class GuardRunRegistry:
                 subprocess_exit_code=exc.returncode,
                 stderr=exc.stderr,
             )
+            if isinstance(details, Failure):
+                detail_payload = {
+                    "status": "failed",
+                    "run_id": run_id,
+                    "error_kind": "wrapper_instability",
+                    "classification": WRAPPER_INSTABILITY_CLASSIFICATION,
+                    "message": details.failure(),
+                }
+            else:
+                detail_payload = details.unwrap()
             await self._set_failed(
                 run_id,
                 "wrapper_instability",
                 str(exc),
-                details=details,
+                details=detail_payload,
             )
         except subprocess.TimeoutExpired as exc:
             message = f"Guard subprocess timed out ({exc.timeout}s)"
@@ -353,27 +371,31 @@ class GuardRunRegistry:
             heartbeat.cancel()
 
     async def _set_running(self, run_id: str) -> None:
-        now = _utc_now()
+        now = _utc_now().unwrap()
         async with self._lock:
             run = self._runs.get(run_id)
             if run is None:
                 return
             run.status = "running"
-            run.started_at = _iso(now)
-            run.updated_at = _iso(now)
+            run.started_at = _iso(now).unwrap()
+            run.updated_at = _iso(now).unwrap()
 
     async def _set_complete(self, run_id: str, payload: dict[str, Any]) -> None:
-        now = _utc_now()
+        now = _utc_now().unwrap()
+        report = summarize_guard_payload(payload)
+        if isinstance(report, Failure):
+            await self._set_failed(run_id, "execution_error", report.failure())
+            return
         expires_at = now + timedelta(seconds=self._retention_seconds)
         async with self._lock:
             run = self._runs.get(run_id)
             if run is None:
                 return
             run.status = "complete"
-            run.report = summarize_guard_payload(payload)
-            run.completed_at = _iso(now)
-            run.updated_at = _iso(now)
-            run.expires_at = _iso(expires_at)
+            run.report = report.unwrap()
+            run.completed_at = _iso(now).unwrap()
+            run.updated_at = _iso(now).unwrap()
+            run.expires_at = _iso(expires_at).unwrap()
             run.done_event.set()
 
     async def _set_failed(
@@ -384,7 +406,7 @@ class GuardRunRegistry:
         *,
         details: dict[str, Any] | None = None,
     ) -> None:
-        now = _utc_now()
+        now = _utc_now().unwrap()
         expires_at = now + timedelta(seconds=self._retention_seconds)
         async with self._lock:
             run = self._runs.get(run_id)
@@ -394,13 +416,13 @@ class GuardRunRegistry:
             run.error_kind = error_kind
             run.message = message
             run.details = details
-            run.completed_at = _iso(now)
-            run.updated_at = _iso(now)
-            run.expires_at = _iso(expires_at)
+            run.completed_at = _iso(now).unwrap()
+            run.updated_at = _iso(now).unwrap()
+            run.expires_at = _iso(expires_at).unwrap()
             run.done_event.set()
 
     async def _set_cancelled(self, run_id: str, error_kind: str, message: str) -> None:
-        now = _utc_now()
+        now = _utc_now().unwrap()
         expires_at = now + timedelta(seconds=self._retention_seconds)
         async with self._lock:
             run = self._runs.get(run_id)
@@ -409,9 +431,9 @@ class GuardRunRegistry:
             run.status = "cancelled"
             run.error_kind = error_kind
             run.message = message
-            run.completed_at = _iso(now)
-            run.updated_at = _iso(now)
-            run.expires_at = _iso(expires_at)
+            run.completed_at = _iso(now).unwrap()
+            run.updated_at = _iso(now).unwrap()
+            run.expires_at = _iso(expires_at).unwrap()
             run.done_event.set()
 
     async def _run_guard_command(self, cmd: list[str]) -> dict[str, Any]:
@@ -450,21 +472,24 @@ class GuardRunRegistry:
         if returncode != 0:
             raise GuardWrapperInstabilityError(returncode, stderr)
 
-        return _parse_guard_json(stdout)
+        parsed = _parse_guard_json(stdout)
+        if isinstance(parsed, Failure):
+            raise RuntimeError(parsed.failure())
+        return parsed.unwrap()
 
     async def _heartbeat(self, run_id: str) -> None:
         """Update updated_at periodically while a run is active."""
         interval = max(0.01, float(self._heartbeat_interval_seconds))
         while True:
             await asyncio.sleep(interval)
-            now = _utc_now()
+            now = _utc_now().unwrap()
             async with self._lock:
                 run = self._runs.get(run_id)
                 if run is None:
                     return
                 if run.status not in ("deferred", "running"):
                     return
-                run.updated_at = _iso(now)
+                run.updated_at = _iso(now).unwrap()
 
     def _cleanup_locked(self, now: datetime) -> None:
         stale_running: list[GuardRun] = []
@@ -486,9 +511,9 @@ class GuardRunRegistry:
             run.status = "cancelled"
             run.error_kind = "run_expired"
             run.message = "Run exceeded max runtime and was cancelled"
-            run.updated_at = _iso(now)
-            run.completed_at = _iso(now)
-            run.expires_at = _iso(now + timedelta(seconds=self._retention_seconds))
+            run.updated_at = _iso(now).unwrap()
+            run.completed_at = _iso(now).unwrap()
+            run.expires_at = _iso(now + timedelta(seconds=self._retention_seconds)).unwrap()
             run.done_event.set()
             if run.task and not run.task.done():
                 run.task.cancel()
