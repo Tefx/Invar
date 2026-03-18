@@ -27554,3 +27554,82 @@ phases:
     depends_on:
     - final-verify.full-escape-hatch-census-and-guard-run
     agent: gate-reviewer
+  - id: final-verify.fix-marker-format-contract-mismatch
+    name: Fix marker format contract mismatch across managed templates and regressions
+    status: pending
+    description: 'Fix ALL blocker-family instances where managed template markers
+      use `<!--invar:begin-->` while regression expectations still require `<!--invar:managed`
+      semantics.
+
+
+      symbolic_testing: false
+
+
+      ## Blockers to Fix (ALL of these, not just the first):
+
+
+      ## Root Cause vs Symptom:
+
+      - Root cause: marker-format contract drift between implementation surfaces that
+      emit managed template markers and regression suites that still encode the older
+      `<!--invar:managed` expectation.
+
+      - Symptom: DX55/DX56/DX91 full pytest failures despite clean `uv run invar guard
+      --all`.
+
+      - Why this fix is not surface-level: normalize the authoritative marker contract
+      across both generation and verification surfaces, then update all sibling expectations
+      so the format is consistent end-to-end.
+
+
+      ### B1: Managed template marker mismatch
+
+      Locations: affected managed-template emitters and DX55/DX56/DX91 regression
+      expectations
+
+      Remediation: identify the single authoritative marker contract, update every
+      producer/consumer pair to that contract, and remove split expectations between
+      `<!--invar:managed` and `<!--invar:begin-->`.
+
+      Grep hint: `rg -n "<!--invar:(managed|begin)" src tests`
+
+      IMPORTANT: Search for siblings beyond the listed regression suites; do not stop
+      after the first failing fixture.
+
+
+      ### B2: Regression fixture drift after contract normalization
+
+      Locations: DX55, DX56, DX91 regression fixtures/assertions and any helper snapshots
+      that compare managed markers
+
+      Remediation: update fixtures/assertions/helpers so at least one authoritative
+      format is enforced consistently across all managed-template paths.
+
+      Grep hint: `rg -n "DX55|DX56|DX91|managed template|<!--invar:(managed|begin)"
+      tests src`
+
+
+      ## Completion Criteria:
+
+      - ALL marker-format blockers fixed, not just one suite
+
+      - Sibling search completed for all managed marker producers/consumers
+
+      - No mixed marker contract remains unless explicitly justified as backward-compatible
+
+      - Out-of-scope guardrail: unrelated pytest failures outside the marker-format
+      blocker family are deferred unless this contract change directly resolves them'
+    verification: '- Use the exact project command family for verification (`uv run
+      pytest tests/ -x`, not alternate wrappers)
+
+      - Grep hint `rg -n "<!--invar:(managed|begin)" src tests` shows a single coherent
+      contract or explicitly justified compatibility boundary
+
+      - Root-cause evidence explains why producer/consumer contract drift is closed
+      across DX55/DX56/DX91, not only one failing assertion
+
+      - Evidence includes which implementation surfaces and regression suites were
+      updated'
+    depends_on:
+    - final-verify.full-escape-hatch-census-and-guard-run
+    agent: python-senior
