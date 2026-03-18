@@ -27717,7 +27717,7 @@ phases:
       \ remediation.\n\nSpec link:\n- `final-verify.fix-marker-format-contract-mismatch`"
   - id: final-verify.fix-dx56-project-additions-template-sync
     name: Fix DX56 project additions contract mismatches in template sync behavior
-    status: claimed
+    status: done
     description: 'Fix ALL currently known downstream DX56 blocker-family mismatches
       where project additions injection into managed template sync outputs is missing
       or inconsistent after marker-contract normalization.
@@ -27831,6 +27831,26 @@ phases:
     agent: python-senior
     claimed_by: python-senior
     claimed_at: '2026-03-18T14:37:34.378694+00:00'
+    done_at: '2026-03-18T14:44:07.230422+00:00'
+    evidence: "## DX56 Project Additions Sync Repair\n- blocker_fingerprint: dx56-project-additions-sync\n\
+      - root_cause_hypothesis: `sync_templates` did not consume `SyncConfig.inject_project_additions`\
+      \ and normalization logic stripped legacy project-additions regions, causing\
+      \ CLAUDE.md additions to disappear.\n- why_previous_fix_failed: marker-token\
+      \ normalization fixed marker drift but did not restore project-additions producer/consumer\
+      \ contract.\n- updated_surfaces:\n  - `src/invar/shell/commands/template_sync.py`\n\
+      \  - `tests/integration/test_dx56_sync.py`\n- sibling_search_evidence:\n  -\
+      \ `rg -n \"project additions|CLAUDE\\.md|sync.*template|managed template|inject\"\
+      \ src tests`\n  - `rg -n \"test_project_additions_injection|project additions|CLAUDE\\\
+      .md|sync\" tests src`\n- contract_restored: added explicit project-additions\
+      \ read+merge flow (idempotent block markers) and preserved legacy project region\
+      \ content through v1→v2 normalization.\n\nVerification:\n- Focused family verification:\
+      \ `uv run pytest tests/integration/test_dx56_sync.py tests/integration/test_dx55_regression.py\
+      \ tests/integration/test_dx91_dev_sync_template_merge.py -x` -> 45 passed.\n\
+      - Full suite gate command: `uv run pytest tests/ -x` now fails at a distinct\
+      \ blocker family (`tests/integration/test_dx91_destructive_regression_harness.py`\
+      \ content mismatch), not DX56 project-additions injection.\n\nNotes:\n- Added\
+      \ idempotence and legacy-preservation tests in DX56 suite.\n- Unrelated downstream\
+      \ blocker family deferred for next remediation loop."
   - id: final-verify.retest-dx56-project-additions-template-sync
     name: Retest DX56 project additions template sync contract
     status: pending
