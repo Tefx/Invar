@@ -26008,7 +26008,7 @@ phases:
       unchanged under-limit behavior'
   - id: p5-output.gate
     name: Phase 5 Gate
-    status: pending
+    status: claimed
     description: 'Gate review: Verify Phase 5 completion. JSON and Rich output match
       proposal Output Design section. Guard passes on own codebase. Non-suppressible
       error messages do NOT leak pyproject.toml exempt syntax.'
@@ -26017,6 +26017,8 @@ phases:
     depends_on:
     - p5-output.verify
     agent: gate-reviewer
+    claimed_by: gate-reviewer
+    claimed_at: '2026-03-18T20:47:58.438819+00:00'
 - id: p6-config
   name: 'Phase 6: Config parsing pyproject.toml exempt patterns'
   status: in_progress
