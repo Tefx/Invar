@@ -99,10 +99,12 @@ def main():
     assert _violation_count(source) == 0
 
 
-def test_allow_marker_suppresses_stub_body() -> None:
+def test_allow_marker_does_not_suppress_stub_body() -> None:
+    """stub_body is non-suppressible - inline markers have no effect."""
     source = """
 # @invar:allow stub_body: compatibility shim
 def shim():
     ...
 """
-    assert _violation_count(source) == 0
+    # Non-suppressible rules ignore @invar:allow markers
+    assert _violation_count(source) == 1

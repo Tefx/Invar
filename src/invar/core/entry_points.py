@@ -16,6 +16,8 @@ from typing import TYPE_CHECKING, Literal
 
 from deal import post, pre
 
+from invar.core.escape_budget import NON_SUPPRESSIBLE_INLINE_RULES
+
 if TYPE_CHECKING:
     from invar.core.models import Symbol
 
@@ -396,6 +398,9 @@ def has_allow_marker(symbol: Symbol, source: str, rule: str) -> bool:
     DX-22: Unified escape hatch mechanism. Format:
         # @invar:allow <rule>: <reason>
 
+    Non-suppressible rules (dead_export, stub_body, missing_contract, missing_doctest)
+    always return False - inline markers cannot suppress them.
+
     Examples:
         >>> from invar.core.models import Symbol, SymbolKind
         >>> sym = Symbol(name="handler", kind=SymbolKind.FUNCTION, line=3, end_line=20)
@@ -417,7 +422,21 @@ def has_allow_marker(symbol: Symbol, source: str, rule: str) -> bool:
         ... '''
         >>> has_allow_marker(sym2, source2, "shell_result")
         True
+
+        >>> # Non-suppressible rules always return False
+        >>> sym3 = Symbol(name="bad", kind=SymbolKind.FUNCTION, line=2, end_line=5)
+        >>> source3 = '# @invar:allow dead_export: legacy\\ndef bad(): pass'
+        >>> has_allow_marker(sym3, source3, "dead_export")
+        False
+        >>> has_allow_marker(sym3, source3, "stub_body")
+        False
+        >>> has_allow_marker(sym3, source3, "missing_contract")
+        False
     """
+    # Non-suppressible rules cannot be suppressed by inline markers
+    if rule in NON_SUPPRESSIBLE_INLINE_RULES:
+        return False
+
     lines = source.splitlines()
     if not lines:
         return False
