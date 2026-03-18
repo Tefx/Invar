@@ -372,6 +372,34 @@ def _read_toml(path: Path) -> Result[dict[str, Any], str]:
         return Failure(f"Failed to read {path.name}: {e}")
 
 
+# @shell_complexity: Nested shape validation for [tool.invar.exempt.<rule>] TOML table
+def _extract_pyproject_exempt_patterns(data: dict[str, Any]) -> dict[str, list[str]]:
+    """Extract [tool.invar.exempt.<rule>] patterns from pyproject data."""
+    tool_section = data.get("tool")
+    if not isinstance(tool_section, dict):
+        return {}
+
+    invar_section = tool_section.get("invar")
+    if not isinstance(invar_section, dict):
+        return {}
+
+    exempt_section = invar_section.get("exempt")
+    if not isinstance(exempt_section, dict):
+        return {}
+
+    parsed: dict[str, list[str]] = {}
+    for rule, rule_config in exempt_section.items():
+        if not isinstance(rule, str) or not isinstance(rule_config, dict):
+            continue
+        patterns_raw = rule_config.get("patterns")
+        if not isinstance(patterns_raw, list):
+            continue
+        patterns = [str(pattern) for pattern in patterns_raw if isinstance(pattern, str)]
+        if patterns:
+            parsed[rule] = patterns
+    return parsed
+
+
 # @shell_complexity: Config loading with multiple sources and parse error handling
 def load_config(project_root: Path) -> Result[RuleConfig, str]:
     """
@@ -414,9 +442,13 @@ def load_config(project_root: Path) -> Result[RuleConfig, str]:
 
         data = result.unwrap()
         guard_config = extract_guard_section(data, source)
+        exempt_patterns = _extract_pyproject_exempt_patterns(data) if source == "pyproject" else {}
 
-        if guard_config:  # Found valid guard config
-            return Success(parse_guard_config(guard_config))
+        if guard_config or exempt_patterns:
+            merged_guard_config = dict(guard_config)
+            if exempt_patterns:
+                merged_guard_config["escape_exempt_patterns"] = exempt_patterns
+            return Success(parse_guard_config(merged_guard_config))
 
     # No config found in any source, use defaults
     return Success(RuleConfig())

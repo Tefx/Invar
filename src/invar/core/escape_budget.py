@@ -6,11 +6,11 @@ No I/O imports.
 
 from __future__ import annotations
 
-from fnmatch import fnmatch
 from math import ceil
 
 from deal import post, pre
 
+from invar.core.exempt_patterns import matches_file_symbol_pattern
 from invar.core.models import (
     ESCAPE_TIER_COST,
     ESCAPE_TIER_MAP,
@@ -82,8 +82,27 @@ def _rule_tier(rule: str) -> EscapeHatchTier:
 )
 @post(lambda result: isinstance(result, bool))
 def _is_exempt(detail: EscapeHatchDetail, config: RuleConfig) -> bool:
+    # Preferred shape: rule -> [file_or_symbol_patterns]
+    direct_patterns: list[str] = []
+    if (rule_patterns := config.escape_exempt_patterns.get(detail.rule)) is not None:
+        direct_patterns.extend(rule_patterns)
+    if (wildcard_patterns := config.escape_exempt_patterns.get("*")) is not None:
+        direct_patterns.extend(wildcard_patterns)
+
+    if direct_patterns:
+        return any(
+            matches_file_symbol_pattern(detail.file, detail.function_name, pattern)
+            for pattern in direct_patterns
+            if pattern
+        )
+
+    # Backward-compatible shape: file_pattern -> [rules]
     for file_pattern, rules in config.escape_exempt_patterns.items():
-        if fnmatch(detail.file, file_pattern) and ("*" in rules or detail.rule in rules):
+        if not file_pattern:
+            continue
+        if matches_file_symbol_pattern(detail.file, detail.function_name, file_pattern) and (
+            "*" in rules or detail.rule in rules
+        ):
             return True
     return False
 

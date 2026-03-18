@@ -53,3 +53,32 @@ def test_find_project_root_does_not_use_invar_directory_marker(tmp_path) -> None
     child.mkdir()
 
     assert find_project_root(child) == child
+
+
+def test_load_config_reads_pyproject_exempt_patterns_and_warning_threshold(tmp_path) -> None:
+    (tmp_path / "pyproject.toml").write_text(
+        """
+[tool.invar.guard]
+escape_exempt_warning = 5
+
+[tool.invar.exempt.dead_assign]
+patterns = ["cli/commands/*.py", "mcp/server.py::create_*"]
+
+[tool.invar.exempt.missing_doctest]
+patterns = ["core/patterns/detector.py::*.description"]
+""".strip(),
+        encoding="utf-8",
+    )
+
+    result = load_config(tmp_path)
+
+    assert isinstance(result, Success)
+    config = result.unwrap()
+    assert config.escape_exempt_warning == 5
+    assert config.escape_exempt_patterns["dead_assign"] == [
+        "cli/commands/*.py",
+        "mcp/server.py::create_*",
+    ]
+    assert config.escape_exempt_patterns["missing_doctest"] == [
+        "core/patterns/detector.py::*.description"
+    ]

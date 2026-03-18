@@ -12,6 +12,7 @@ from typing import Any
 
 from deal import post, pre
 
+from invar.core.exempt_patterns import parse_escape_exempt_patterns
 from invar.core.models import GuardReport, RuleConfig, RuleExclusion
 
 
@@ -297,6 +298,13 @@ def parse_guard_config(guard_config: dict[str, Any]) -> RuleConfig:
         "timeout_hypothesis",
         "timeout_crosshair",
         "timeout_crosshair_per_condition",
+        "escape_suppressible_per_file",
+        "escape_expensive_per_file",
+        "escape_suppressible_per_project",
+        "escape_expensive_per_project",
+        "escape_budget_limit",
+        "escape_exempt_limit",
+        "escape_exempt_warning",
     ):
         if (val := _get_int(guard_config, key)) is not None:
             kwargs[key] = val
@@ -310,6 +318,8 @@ def parse_guard_config(guard_config: dict[str, Any]) -> RuleConfig:
     # Float fields
     if (val := _get_float(guard_config, "size_warning_threshold")) is not None:
         kwargs["size_warning_threshold"] = val
+    if (val := _get_float(guard_config, "escape_warning_threshold")) is not None:
+        kwargs["escape_warning_threshold"] = val
 
     # List fields (convert to tuple for forbidden_imports)
     if (val := _get_str_list(guard_config, "forbidden_imports")) is not None:
@@ -325,6 +335,8 @@ def parse_guard_config(guard_config: dict[str, Any]) -> RuleConfig:
         kwargs["severity_overrides"] = val
     if (val := _parse_entry_point_thresholds(guard_config)) is not None:
         kwargs["entry_point_thresholds"] = val
+    if (val := parse_escape_exempt_patterns(guard_config)) is not None:
+        kwargs["escape_exempt_patterns"] = val
 
     try:
         return RuleConfig(**kwargs)
