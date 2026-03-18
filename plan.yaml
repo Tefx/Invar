@@ -27853,7 +27853,7 @@ phases:
       \ blocker family deferred for next remediation loop."
   - id: final-verify.retest-dx56-project-additions-template-sync
     name: Retest DX56 project additions template sync contract
-    status: pending
+    status: claimed
     description: 'Re-test the downstream DX56 project-additions sync blocker family
       from a fresh, independent perspective after the batched contract repair.
 
@@ -27903,3 +27903,5 @@ phases:
     depends_on:
     - final-verify.fix-dx56-project-additions-template-sync
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-18T14:44:13.231617+00:00'
