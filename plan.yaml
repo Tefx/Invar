@@ -25472,7 +25472,7 @@ phases:
       - p3-budget-core.implement step definition and acceptance criteria'
   - id: p3-budget-core.verify
     name: Verify check_escape_budget
-    status: claimed
+    status: done
     description: "Independent verification of core/escape_budget.py:\n\n1. Construct\
       \ EscapeHatchSummary with known escape hatches and verify:\n   - Per-file limit\
       \ exceeded -> escape_hatch_file_limit ERROR\n   - Per-project limit exceeded\
@@ -25490,6 +25490,43 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-18T18:39:49.852819+00:00'
+    done_at: '2026-03-18T18:50:04.409770+00:00'
+    evidence: 'Artifact:
+
+      - Commit hash(es): none
+
+      - Verify-only rationale: independent verification only; no code/test/doc changes
+
+
+      Verification:
+
+      - File-limit breach -> escape_hatch_file_limit ERROR (PASS)
+
+      - Project-limit breach -> escape_hatch_project_limit ERROR (PASS)
+
+      - Weighted budget breach -> escape_hatch_budget ERROR (PASS)
+
+      - 3+ same-function hatches -> escape_hatch_combination ERROR (PASS)
+
+      - Non-suppressible inline marker -> escape_hatch_non_suppressible ERROR (PASS)
+
+      - Threshold path at 80% -> WARNING generated before ERROR threshold (PASS)
+
+      - Exempt pattern filter excludes matched entries from counting (PASS)
+
+      - Two-hatch same-function doubling confirmed in budget effect (PASS)
+
+      - Budget math message/value validated (PASS)
+
+      - Run: uv run invar guard --all -> passed (errors: 0)
+
+      - Core compliance: no I/O imports in src/invar/core/escape_budget.py (PASS)
+
+
+      Spec link:
+
+      - p3-budget-core.verify acceptance criteria for all 5 violation families, threshold
+      behavior, exempt filtering, budget math, and Core purity'
   - id: p3-budget-core.gate
     name: Phase 3 Gate
     status: pending
