@@ -26621,7 +26621,7 @@ phases:
       (DX55 template marker expectation).'
   - id: cat-a-handlers.verify-handlers-py-shell-result-cleanup
     name: Verify handlers.py shell_result cleanup
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT TESTER, verify handlers.py shell_result elimination.
 
 
@@ -26652,6 +26652,37 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-18T02:37:45.087130+00:00'
+    done_at: '2026-03-18T02:44:45.693106+00:00'
+    evidence: 'Independent verification completed for handlers shell_result cleanup.
+
+
+      Verification:
+
+      - `grep -n ''@invar:allow shell_result'' src/invar/mcp/handlers.py` -> 0 matches.
+
+      - Handler call paths validated to use `Result[T,E]` contracts consistently;
+      Failure checks before unwrap across handler flow.
+
+      - `server.py` caller path validated: Failure converted to MCP error text, Success
+      unwrapped correctly.
+
+      - `invar guard` on modified handler surface passed (no errors; size warning
+      non-blocking).
+
+      - Broad `pytest tests/ -x` reached unrelated pre-existing failure in DX55 regression/template
+      sync path after extensive pass count; not attributed to handlers cleanup.
+
+
+      Classification:
+
+      - blocker: none for handlers cleanup acceptance
+
+      - should_fix: unrelated pre-existing DX55 regression family
+
+
+      Spec link:
+
+      - `cat-a-handlers.fix-shell-result-in-handlers-py-21-markers`'
   - id: cat-a-handlers.gate-category-a-handlers-py
     name: 'Gate: Category A handlers.py'
     status: pending
