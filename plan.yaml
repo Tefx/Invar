@@ -27311,7 +27311,7 @@ phases:
       \ satisfy project-level complexity-debt gate during commit path."
   - id: cat-d-file-size.verify-file-size-extraction
     name: Verify file_size extraction
-    status: pending
+    status: claimed
     description: 'As an INDEPENDENT TESTER, verify file_size extraction.
 
 
@@ -27345,6 +27345,8 @@ phases:
     depends_on:
     - cat-d-file-size.extract-and-split-large-core-files-5-markers
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-18T04:24:49.773552+00:00'
   - id: cat-d-file-size.gate-category-d-file-size
     name: 'Gate: Category D file_size'
     status: pending
