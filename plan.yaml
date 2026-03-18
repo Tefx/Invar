@@ -25101,7 +25101,7 @@ phases:
       expansion.'
   - id: p1-models-tier.retest-canonical-count
     name: Retest Phase 1 canonical tier mapping
-    status: claimed
+    status: done
     description: 'Independent retest after `p1-models-tier.fix-canonical-count`.
 
 
@@ -25136,6 +25136,23 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-18T17:35:16.341242+00:00'
+    done_at: '2026-03-18T17:46:14.606428+00:00'
+    evidence: "Artifact:\n- Verification step: p1-models-tier.retest-canonical-count\n\
+      - Worktree state: clean; no code changes required\n\nVerification:\n- EscapeHatchTier\
+      \ exported members: SUPPRESSIBLE, EXPENSIVE, NON_SUPPRESSIBLE (3)\n- ESCAPE_TIER_MAP\
+      \ cardinality/content: 12 canonical entries\n  - SUPPRESSIBLE: dead_assign,\
+      \ dead_param, shell_pure_logic\n  - EXPENSIVE: entry_point_too_thick, file_size,\
+      \ function_size, shell_result, shell_too_complex\n  - NON_SUPPRESSIBLE: dead_export,\
+      \ missing_contract, missing_doctest, stub_body\n- ESCAPE_TIER_COST values: {SUPPRESSIBLE:1,\
+      \ EXPENSIVE:3, NON_SUPPRESSIBLE:0}\n- RuleConfig Phase 1 defaults verified:\
+      \ 3,2,10,5,15,0.8,{},20 (+ escape_exempt_warning=15)\n- Run: uv run invar guard\
+      \ --changed -> passed (errors: 0)\n- Run: uv run invar guard src/invar/core/models.py\
+      \ -> passed (doctest true, property tests 2/2)\n- Residual stale expectation\
+      \ check: no remaining 11-entry expectation detected in tests\n\nSpec link:\n\
+      - plan.yaml p1-models-tier.retest-canonical-count acceptance criteria\n- plan.yaml\
+      \ p1-models-tier.fix-canonical-count canonical-count closure criteria\n\nGaps/Notes:\n\
+      - Blocker family from `p1-models-tier.verify` is closed; no proposal/models/tests\
+      \ mismatch remains."
 - id: p2-by-file
   name: 'Phase 2: EscapeHatchSummary.by_file property'
   status: locked
