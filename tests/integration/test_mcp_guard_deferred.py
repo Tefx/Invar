@@ -7,11 +7,20 @@ import json
 from types import SimpleNamespace
 
 import pytest
+from mcp.types import TextContent
+from returns.result import Result, Success
 
 from invar.mcp import handlers
 from invar.mcp.guard_runs import GuardRunRegistry
 
 pytestmark = pytest.mark.anyio
+
+
+def _unwrap_success(result: Result[handlers.HandlerPayload, str]) -> list[TextContent]:
+    assert isinstance(result, Success)
+    payload = result.unwrap()
+    assert isinstance(payload, list)
+    return payload
 
 
 def _payload(
@@ -63,10 +72,10 @@ async def test_changed_true_remains_sync(monkeypatch: pytest.MonkeyPatch) -> Non
     """DX-94: changed=true path must preserve synchronous behavior."""
     captured: dict[str, list[str]] = {}
 
-    async def fake_execute(cmd: list[str], timeout: int = 600):
-        del timeout
+    async def fake_execute(cmd: list[str], timeout: int = 600, **kwargs: object):
+        del timeout, kwargs
         captured["cmd"] = cmd
-        return [handlers.TextContent(type="text", text="sync")]
+        return Success([handlers.TextContent(type="text", text="sync")])
 
     monkeypatch.setattr(handlers, "_execute_command", fake_execute)
 
@@ -76,9 +85,10 @@ async def test_changed_true_remains_sync(monkeypatch: pytest.MonkeyPatch) -> Non
     monkeypatch.setattr(handlers.GUARD_RUNS, "start", fail_start)
 
     result = await handlers._run_guard({"path": ".", "changed": True})
+    payload = _unwrap_success(result)
 
-    assert len(result) == 1
-    assert result[0].text == "sync"
+    assert len(payload) == 1
+    assert payload[0].text == "sync"
     assert "--changed" in captured["cmd"]
     assert "--all" not in captured["cmd"]
 
@@ -88,12 +98,15 @@ async def test_changed_false_defers_when_estimate_exceeds_budget(
 ) -> None:
     """DX-94: changed=false defers with run handle for long scans."""
     monkeypatch.setattr(handlers, "GUARD_RUNS", _FakeRegistry())
-    monkeypatch.setattr(handlers, "_should_defer_full_scan", lambda path, args, budget: True)
+    monkeypatch.setattr(
+        handlers, "_should_defer_full_scan", lambda path, args, budget: Success(True)
+    )
 
     result = await handlers._run_guard({"path": ".", "changed": False})
+    payload = _unwrap_success(result)
 
-    assert len(result) == 1
-    payload = json.loads(result[0].text)
+    assert len(payload) == 1
+    payload = json.loads(payload[0].text)
     assert payload["status"] == "deferred"
     assert payload["run_id"] == "grd_test_123"
     assert payload["mode"] == "full_scan"
@@ -109,9 +122,11 @@ async def test_guard_status_and_wait_handlers_use_run_registry(
 
     status_result = await handlers._run_guard_status({"run_id": "grd_abc"})
     wait_result = await handlers._run_guard_wait({"run_id": "grd_abc", "wait_ms": 20000})
+    status_payload_list = _unwrap_success(status_result)
+    wait_payload_list = _unwrap_success(wait_result)
 
-    status_payload = json.loads(status_result[0].text)
-    wait_payload = json.loads(wait_result[0].text)
+    status_payload = json.loads(status_payload_list[0].text)
+    wait_payload = json.loads(wait_payload_list[0].text)
 
     assert status_payload == {"status": "running", "run_id": "grd_abc"}
     assert wait_payload["status"] == "complete"

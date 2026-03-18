@@ -15,6 +15,7 @@ from typing import Any
 
 from mcp.server import Server
 from mcp.types import TextContent, Tool
+from returns.result import Failure
 
 from invar.mcp.handlers import (
     _run_doc_delete,
@@ -592,7 +593,10 @@ def create_server() -> Server:
         }
         handler = handlers.get(name)
         if handler:
-            return await handler(arguments)
+            result = await handler(arguments)
+            if isinstance(result, Failure):
+                return [TextContent(type="text", text=f"Error: {result.failure()}")]
+            return result.unwrap()
         return [TextContent(type="text", text=f"Unknown tool: {name}")]
 
     return server

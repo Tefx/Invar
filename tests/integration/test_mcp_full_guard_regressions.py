@@ -14,14 +14,28 @@ from __future__ import annotations
 
 import json
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import patch
 
 import pytest
+from mcp.types import TextContent
+from returns.result import Failure, Result, Success
 
 from invar.mcp import handlers
 from invar.mcp.guard_runs import GuardRunRegistry
 
 pytestmark = pytest.mark.anyio
+
+
+def _unwrap_success(result: Result[handlers.HandlerPayload, str]) -> list[TextContent]:
+    assert isinstance(result, Success)
+    payload = result.unwrap()
+    assert isinstance(payload, list)
+    return payload
+
+
+def _unwrap_failure(result: Result[handlers.HandlerPayload, str]) -> str:
+    assert isinstance(result, Failure)
+    return result.failure()
 
 
 # ============================================================================
@@ -100,11 +114,11 @@ async def test_full_project_scan_defers_without_hanging(monkeypatch: pytest.Monk
     monkeypatch.setattr(
         handlers,
         "_should_defer_full_scan",
-        lambda path, args, budget: True,
+        lambda path, args, budget: Success(True),
     )
 
     # This should NOT hang - it should return immediately with deferred status
-    result = await handlers._run_guard({"path": ".", "changed": False})
+    result = _unwrap_success(await handlers._run_guard({"path": ".", "changed": False}))
 
     assert len(result) == 1
     payload = json.loads(result[0].text)
@@ -120,9 +134,12 @@ async def test_full_project_scan_runs_sync_when_estimate_within_budget(
     """Full-project scan should run synchronously when estimate is within budget."""
     captured_cmd = {}
 
-    async def fake_execute(cmd, timeout=600):
+    async def fake_execute(cmd, timeout=600, **kwargs):
+        del timeout, kwargs
         captured_cmd["cmd"] = cmd
-        return [handlers.TextContent(type="text", text='{"status": "passed", "summary": {}}')]
+        return Success(
+            [handlers.TextContent(type="text", text='{"status": "passed", "summary": {}}')]
+        )
 
     monkeypatch.setattr(handlers, "_execute_command", fake_execute)
 
@@ -130,10 +147,10 @@ async def test_full_project_scan_runs_sync_when_estimate_within_budget(
     monkeypatch.setattr(
         handlers,
         "_should_defer_full_scan",
-        lambda path, args, budget: False,
+        lambda path, args, budget: Success(False),
     )
 
-    result = await handlers._run_guard({"path": ".", "changed": False})
+    result = _unwrap_success(await handlers._run_guard({"path": ".", "changed": False}))
 
     assert len(result) == 1
     # Should have run the command, not deferred
@@ -149,14 +166,15 @@ async def test_changed_only_runs_synchronously(monkeypatch: pytest.MonkeyPatch) 
     """Changed-only path should always run synchronously - baseline behavior."""
     captured_cmd = {}
 
-    async def fake_execute(cmd, timeout=600):
+    async def fake_execute(cmd, timeout=600, **kwargs):
+        del timeout, kwargs
         captured_cmd["cmd"] = cmd
-        return [handlers.TextContent(type="text", text="ok")]
+        return Success([handlers.TextContent(type="text", text="ok")])
 
     monkeypatch.setattr(handlers, "_execute_command", fake_execute)
 
     # Changed=True should NEVER defer
-    result = await handlers._run_guard({"path": ".", "changed": True})
+    result = _unwrap_success(await handlers._run_guard({"path": ".", "changed": True}))
 
     assert len(result) == 1
     assert "--changed" in captured_cmd["cmd"]
@@ -167,14 +185,15 @@ async def test_changed_only_with_various_paths(monkeypatch: pytest.MonkeyPatch) 
     """Changed-only should work with various path inputs."""
     captured_cmd = {}
 
-    async def fake_execute(cmd, timeout=600):
+    async def fake_execute(cmd, timeout=600, **kwargs):
+        del timeout, kwargs
         captured_cmd["cmd"] = cmd
-        return [handlers.TextContent(type="text", text="ok")]
+        return Success([handlers.TextContent(type="text", text="ok")])
 
     monkeypatch.setattr(handlers, "_execute_command", fake_execute)
 
     # Test with explicit path
-    result = await handlers._run_guard({"path": "src/core", "changed": True})
+    result = _unwrap_success(await handlers._run_guard({"path": "src/core", "changed": True}))
     assert len(result) == 1
     assert "src/core" in captured_cmd["cmd"]
 
@@ -190,10 +209,12 @@ async def test_specific_path_full_scan(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
         handlers,
         "_should_defer_full_scan",
-        lambda path, args, budget: True,
+        lambda path, args, budget: Success(True),
     )
 
-    result = await handlers._run_guard({"path": "src/invar/core", "changed": False})
+    result = _unwrap_success(
+        await handlers._run_guard({"path": "src/invar/core", "changed": False})
+    )
 
     assert len(result) == 1
     payload = json.loads(result[0].text)
@@ -205,13 +226,14 @@ async def test_targeted_path_changed_mode(monkeypatch: pytest.MonkeyPatch) -> No
     """Targeted path with changed=True should run synchronously."""
     captured_cmd = {}
 
-    async def fake_execute(cmd, timeout=600):
+    async def fake_execute(cmd, timeout=600, **kwargs):
+        del timeout, kwargs
         captured_cmd["cmd"] = cmd
-        return [handlers.TextContent(type="text", text="ok")]
+        return Success([handlers.TextContent(type="text", text="ok")])
 
     monkeypatch.setattr(handlers, "_execute_command", fake_execute)
 
-    result = await handlers._run_guard({"path": "tests/", "changed": True})
+    result = _unwrap_success(await handlers._run_guard({"path": "tests/", "changed": True}))
 
     assert len(result) == 1
     assert "--changed" in captured_cmd["cmd"]
@@ -357,10 +379,10 @@ async def test_deferred_response_schema(monkeypatch: pytest.MonkeyPatch) -> None
     monkeypatch.setattr(
         handlers,
         "_should_defer_full_scan",
-        lambda path, args, budget: True,
+        lambda path, args, budget: Success(True),
     )
 
-    result = await handlers._run_guard({"path": ".", "changed": False})
+    result = _unwrap_success(await handlers._run_guard({"path": ".", "changed": False}))
 
     payload = json.loads(result[0].text)
 
@@ -379,7 +401,7 @@ async def test_guard_status_response_schema(monkeypatch: pytest.MonkeyPatch) -> 
     """Guard status response should match expected schema."""
     monkeypatch.setattr(handlers, "GUARD_RUNS", _FakeRegistry())
 
-    result = await handlers._run_guard_status({"run_id": "grd_test_123"})
+    result = _unwrap_success(await handlers._run_guard_status({"run_id": "grd_test_123"}))
 
     payload = json.loads(result[0].text)
 
@@ -410,7 +432,9 @@ async def test_guard_wait_response_schema_complete(monkeypatch: pytest.MonkeyPat
         timeout_reason="test",
     )
 
-    result = await handlers._run_guard_wait({"run_id": run.run_id, "wait_ms": 5000})
+    result = _unwrap_success(
+        await handlers._run_guard_wait({"run_id": run.run_id, "wait_ms": 5000})
+    )
 
     payload = json.loads(result[0].text)
 
@@ -436,7 +460,9 @@ async def test_guard_wait_response_schema_failed(monkeypatch: pytest.MonkeyPatch
     }
     monkeypatch.setattr(handlers, "GUARD_RUNS", fake_registry)
 
-    result = await handlers._run_guard_wait({"run_id": "grd_test_123", "wait_ms": 5000})
+    result = _unwrap_success(
+        await handlers._run_guard_wait({"run_id": "grd_test_123", "wait_ms": 5000})
+    )
 
     payload = json.loads(result[0].text)
 
@@ -458,10 +484,12 @@ async def test_sync_full_scan_failure_surfaces_authoritative_cli_path(
             self.stdout = ""
             self.stderr = "subprocess exit code 1"
 
-    monkeypatch.setattr(handlers, "_should_defer_full_scan", lambda path, args, budget: False)
+    monkeypatch.setattr(
+        handlers, "_should_defer_full_scan", lambda path, args, budget: Success(False)
+    )
     monkeypatch.setattr(handlers.subprocess, "run", lambda *args, **kwargs: _FailureResult())
 
-    result = await handlers._run_guard({"path": ".", "changed": False})
+    result = _unwrap_success(await handlers._run_guard({"path": ".", "changed": False}))
 
     payload = json.loads(result[0].text)
     assert payload["status"] == "failed"
@@ -477,20 +505,16 @@ async def test_sync_full_scan_failure_surfaces_authoritative_cli_path(
 
 async def test_invalid_path_returns_error(monkeypatch: pytest.MonkeyPatch) -> None:
     """Invalid path should return error, not hang or crash."""
-    result = await handlers._run_guard({"path": "-e rm -rf /", "changed": True})
+    error = _unwrap_failure(await handlers._run_guard({"path": "-e rm -rf /", "changed": True}))
 
-    assert len(result) == 1
-    assert "Error" in result[0].text
-    assert "cannot start with '-'" in result[0].text
+    assert "cannot start with '-'" in error
 
 
 async def test_path_with_shell_chars_returns_error(monkeypatch: pytest.MonkeyPatch) -> None:
     """Path with shell characters should return error."""
-    result = await handlers._run_guard({"path": "; rm -rf /", "changed": True})
+    error = _unwrap_failure(await handlers._run_guard({"path": "; rm -rf /", "changed": True}))
 
-    assert len(result) == 1
-    assert "Error" in result[0].text
-    assert "forbidden character" in result[0].text
+    assert "forbidden character" in error
 
 
 async def test_sync_budget_ms_parameter(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -499,7 +523,7 @@ async def test_sync_budget_ms_parameter(monkeypatch: pytest.MonkeyPatch) -> None
 
     def capture_budget(path, args, budget):
         captured_budget["budget"] = budget
-        return True  # Always defer
+        return Success(True)  # Always defer
 
     monkeypatch.setattr(handlers, "GUARD_RUNS", _FakeRegistry())
     monkeypatch.setattr(handlers, "_should_defer_full_scan", capture_budget)
@@ -512,20 +536,16 @@ async def test_sync_budget_ms_parameter(monkeypatch: pytest.MonkeyPatch) -> None
 
 async def test_guard_status_requires_run_id(monkeypatch: pytest.MonkeyPatch) -> None:
     """Guard status should require run_id."""
-    result = await handlers._run_guard_status({})
+    error = _unwrap_failure(await handlers._run_guard_status({}))
 
-    assert len(result) == 1
-    assert "Error" in result[0].text
-    assert "run_id" in result[0].text
+    assert "run_id" in error
 
 
 async def test_guard_wait_requires_run_id(monkeypatch: pytest.MonkeyPatch) -> None:
     """Guard wait should require run_id."""
-    result = await handlers._run_guard_wait({})
+    error = _unwrap_failure(await handlers._run_guard_wait({}))
 
-    assert len(result) == 1
-    assert "Error" in result[0].text
-    assert "run_id" in result[0].text
+    assert "run_id" in error
 
 
 async def test_guard_wait_wait_ms_bounds(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -533,12 +553,16 @@ async def test_guard_wait_wait_ms_bounds(monkeypatch: pytest.MonkeyPatch) -> Non
     monkeypatch.setattr(handlers, "GUARD_RUNS", _FakeRegistry())
 
     # Test negative
-    result = await handlers._run_guard_wait({"run_id": "grd_test_123", "wait_ms": -100})
+    result = _unwrap_success(
+        await handlers._run_guard_wait({"run_id": "grd_test_123", "wait_ms": -100})
+    )
     payload = json.loads(result[0].text)
     # Should still work, just bounded
 
     # Test too high
-    result = await handlers._run_guard_wait({"run_id": "grd_test_123", "wait_ms": 50000})
+    result = _unwrap_success(
+        await handlers._run_guard_wait({"run_id": "grd_test_123", "wait_ms": 50000})
+    )
     payload = json.loads(result[0].text)
     # Should still work, just bounded
 
@@ -550,10 +574,8 @@ async def test_guard_wait_wait_ms_bounds(monkeypatch: pytest.MonkeyPatch) -> Non
 
 async def test_estimate_contracts_only_lower_base(monkeypatch: pytest.MonkeyPatch) -> None:
     """contracts_only mode should estimate faster scan."""
-    from pathlib import Path
-
     # Mock to return known file count
-    with patch.object(handlers, "_estimate_candidate_file_count", return_value=100):
+    with patch.object(handlers, "_estimate_candidate_file_count", return_value=Success(100)):
         # With contracts_only=True
         estimate_with_contracts = handlers._estimate_full_scan_duration_ms(
             ".", {"contracts_only": True}
@@ -565,12 +587,14 @@ async def test_estimate_contracts_only_lower_base(monkeypatch: pytest.MonkeyPatc
         )
 
         # contracts_only should be faster
-        assert estimate_with_contracts < estimate_without_contracts
+        assert isinstance(estimate_with_contracts, Success)
+        assert isinstance(estimate_without_contracts, Success)
+        assert estimate_with_contracts.unwrap() < estimate_without_contracts.unwrap()
 
 
 async def test_estimate_strict_mode_adds_overhead(monkeypatch: pytest.MonkeyPatch) -> None:
     """strict mode should estimate slightly slower."""
-    with patch.object(handlers, "_estimate_candidate_file_count", return_value=100):
+    with patch.object(handlers, "_estimate_candidate_file_count", return_value=Success(100)):
         # With strict=True
         estimate_with_strict = handlers._estimate_full_scan_duration_ms(
             ".", {"strict": True, "contracts_only": False}
@@ -582,7 +606,9 @@ async def test_estimate_strict_mode_adds_overhead(monkeypatch: pytest.MonkeyPatc
         )
 
         # strict should add some overhead
-        assert estimate_with_strict > estimate_without_strict
+        assert isinstance(estimate_with_strict, Success)
+        assert isinstance(estimate_without_strict, Success)
+        assert estimate_with_strict.unwrap() > estimate_without_strict.unwrap()
 
 
 # ============================================================================
@@ -610,18 +636,18 @@ async def test_full_flow_changed_false_deferred_then_complete(
     monkeypatch.setattr(
         handlers,
         "_should_defer_full_scan",
-        lambda path, args, budget: True,
+        lambda path, args, budget: Success(True),
     )
 
     # Step 1: Initial call - should defer
-    result = await handlers._run_guard({"path": ".", "changed": False})
+    result = _unwrap_success(await handlers._run_guard({"path": ".", "changed": False}))
     assert len(result) == 1
     payload = json.loads(result[0].text)
     assert payload["status"] == "deferred"
     run_id = payload["run_id"]
 
     # Step 2: Wait for completion
-    final = await handlers._run_guard_wait({"run_id": run_id, "wait_ms": 5000})
+    final = _unwrap_success(await handlers._run_guard_wait({"run_id": run_id, "wait_ms": 5000}))
     final_payload = json.loads(final[0].text)
     assert final_payload["status"] == "complete"
     assert final_payload["report"]["ok"] is True

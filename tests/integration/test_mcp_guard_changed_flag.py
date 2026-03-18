@@ -4,10 +4,18 @@ from __future__ import annotations
 
 import pytest
 from mcp.types import TextContent
+from returns.result import Result, Success
 
 from invar.mcp import handlers
 
 pytestmark = pytest.mark.anyio
+
+
+def _unwrap_success(result: Result[list[TextContent], str]) -> list[TextContent]:
+    assert isinstance(result, Success)
+    payload = result.unwrap()
+    assert isinstance(payload, list)
+    return payload
 
 
 async def test_run_guard_default_uses_changed_flag(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -17,15 +25,18 @@ async def test_run_guard_default_uses_changed_flag(monkeypatch: pytest.MonkeyPat
     async def fake_execute_command(
         cmd: list[str],
         timeout: int = 600,
-    ) -> list[TextContent]:
+        **kwargs: object,
+    ) -> handlers.HandlerResult:
+        del timeout, kwargs
         captured["cmd"] = cmd
-        return [TextContent(type="text", text="ok")]
+        return Success([TextContent(type="text", text="ok")])
 
     monkeypatch.setattr(handlers, "_execute_command", fake_execute_command)
 
     result = await handlers._run_guard({"path": "."})
+    payload = _unwrap_success(result)
 
-    assert len(result) == 1
+    assert len(payload) == 1
     assert "--changed" in captured["cmd"]
     assert "--all" not in captured["cmd"]
 
@@ -37,15 +48,18 @@ async def test_run_guard_changed_true_uses_changed_flag(monkeypatch: pytest.Monk
     async def fake_execute_command(
         cmd: list[str],
         timeout: int = 600,
-    ) -> list[TextContent]:
+        **kwargs: object,
+    ) -> handlers.HandlerResult:
+        del timeout, kwargs
         captured["cmd"] = cmd
-        return [TextContent(type="text", text="ok")]
+        return Success([TextContent(type="text", text="ok")])
 
     monkeypatch.setattr(handlers, "_execute_command", fake_execute_command)
 
     result = await handlers._run_guard({"path": ".", "changed": True})
+    payload = _unwrap_success(result)
 
-    assert len(result) == 1
+    assert len(payload) == 1
     assert "--changed" in captured["cmd"]
     assert "--all" not in captured["cmd"]
 
@@ -57,15 +71,18 @@ async def test_run_guard_changed_false_uses_all_flag(monkeypatch: pytest.MonkeyP
     async def fake_execute_command(
         cmd: list[str],
         timeout: int = 600,
-    ) -> list[TextContent]:
+        **kwargs: object,
+    ) -> handlers.HandlerResult:
+        del timeout, kwargs
         captured["cmd"] = cmd
-        return [TextContent(type="text", text="ok")]
+        return Success([TextContent(type="text", text="ok")])
 
     monkeypatch.setattr(handlers, "_execute_command", fake_execute_command)
-    monkeypatch.setattr(handlers, "_should_defer_full_scan", lambda *args: False)
+    monkeypatch.setattr(handlers, "_should_defer_full_scan", lambda *args: Success(False))
 
     result = await handlers._run_guard({"path": ".", "changed": False})
+    payload = _unwrap_success(result)
 
-    assert len(result) == 1
+    assert len(payload) == 1
     assert "--all" in captured["cmd"]
     assert "--changed" not in captured["cmd"]

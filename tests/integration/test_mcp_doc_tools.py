@@ -8,8 +8,11 @@ doc_insert, and doc_delete to ensure they work end-to-end.
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import pytest
+from mcp.types import TextContent
+from returns.result import Failure, Result, Success
 
 from invar.mcp.handlers import (
     _run_doc_delete,
@@ -23,6 +26,18 @@ from invar.mcp.handlers import (
 
 # Mark all tests in this module as async
 pytestmark = pytest.mark.anyio
+
+
+def _unwrap_success(result: Result[Any, str]) -> list[TextContent]:
+    assert isinstance(result, Success)
+    payload = result.unwrap()
+    assert isinstance(payload, list)
+    return payload
+
+
+def _unwrap_failure(result: Result[Any, str]) -> str:
+    assert isinstance(result, Failure)
+    return str(result.failure())
 
 
 @pytest.fixture
@@ -52,11 +67,10 @@ Content for section 2.
 class TestDocToc:
     """Test invar_doc_toc MCP handler."""
 
-
     async def test_doc_toc_basic(self, sample_markdown_file: Path):
         """Test basic TOC extraction."""
         args = {"file": str(sample_markdown_file)}
-        result = await _run_doc_toc(args)
+        result = _unwrap_success(await _run_doc_toc(args))
 
         assert len(result) == 1
         assert result[0].type == "text"
@@ -64,81 +78,57 @@ class TestDocToc:
         assert "Section 1" in result[0].text
         assert "Section 2" in result[0].text
 
-
     async def test_doc_toc_missing_file(self):
         """Test TOC extraction with missing file."""
         args = {"file": "/nonexistent/file.md"}
-        result = await _run_doc_toc(args)
+        error = _unwrap_failure(await _run_doc_toc(args))
 
-        assert len(result) == 1
-        assert "Error" in result[0].text
-        assert "not found" in result[0].text.lower()
-
+        assert "not found" in error.lower()
 
     async def test_doc_toc_no_file_arg(self):
         """Test TOC extraction without file argument."""
         args = {}
-        result = await _run_doc_toc(args)
+        error = _unwrap_failure(await _run_doc_toc(args))
 
-        assert len(result) == 1
-        assert "Error" in result[0].text
-        assert "required" in result[0].text.lower()
+        assert "required" in error.lower()
 
 
 class TestDocRead:
     """Test invar_doc_read MCP handler."""
 
-
     async def test_doc_read_section_by_slug(self, sample_markdown_file: Path):
         """Test reading section by slug."""
-        args = {
-            "file": str(sample_markdown_file),
-            "section": "section-1"
-        }
-        result = await _run_doc_read(args)
+        args = {"file": str(sample_markdown_file), "section": "section-1"}
+        result = _unwrap_success(await _run_doc_read(args))
 
         assert len(result) == 1
         assert "Section 1" in result[0].text
         assert "Content for section 1" in result[0].text
 
-
     async def test_doc_read_section_not_found(self, sample_markdown_file: Path):
         """Test reading non-existent section."""
-        args = {
-            "file": str(sample_markdown_file),
-            "section": "nonexistent"
-        }
-        result = await _run_doc_read(args)
+        args = {"file": str(sample_markdown_file), "section": "nonexistent"}
+        error = _unwrap_failure(await _run_doc_read(args))
 
-        assert len(result) == 1
-        assert "Error" in result[0].text
-        assert "not found" in result[0].text.lower()
+        assert "not found" in error.lower()
 
 
 class TestDocFind:
     """Test invar_doc_find MCP handler."""
 
-
     async def test_doc_find_pattern(self, sample_markdown_file: Path):
         """Test finding sections by pattern."""
-        args = {
-            "file": str(sample_markdown_file),
-            "pattern": "*Section*"
-        }
-        result = await _run_doc_find(args)
+        args = {"file": str(sample_markdown_file), "pattern": "*Section*"}
+        result = _unwrap_success(await _run_doc_find(args))
 
         assert len(result) == 1
         assert "Section 1" in result[0].text
         assert "Section 2" in result[0].text
 
-
     async def test_doc_find_no_matches(self, sample_markdown_file: Path):
         """Test finding with no matches."""
-        args = {
-            "file": str(sample_markdown_file),
-            "pattern": "*Nonexistent*"
-        }
-        result = await _run_doc_find(args)
+        args = {"file": str(sample_markdown_file), "pattern": "*Nonexistent*"}
+        result = _unwrap_success(await _run_doc_find(args))
 
         assert len(result) == 1
         # Should return empty matches, not an error
@@ -147,7 +137,6 @@ class TestDocFind:
 
 class TestDocReplace:
     """Test invar_doc_replace MCP handler."""
-
 
     async def test_doc_replace_section(self, tmp_path: Path):
         """Test replacing section content."""
@@ -160,9 +149,9 @@ class TestDocReplace:
             "file": str(md_file),
             "section": "title",
             "content": "New content\n",
-            "keep_heading": True
+            "keep_heading": True,
         }
-        result = await _run_doc_replace(args)
+        result = _unwrap_success(await _run_doc_replace(args))
 
         assert len(result) == 1
         assert "success" in result[0].text.lower()
@@ -173,24 +162,20 @@ class TestDocReplace:
         assert "Old content" not in new_content
         assert "# Title" in new_content  # Heading preserved
 
-
     async def test_doc_replace_section_not_found(self, sample_markdown_file: Path):
         """Test replacing non-existent section."""
         args = {
             "file": str(sample_markdown_file),
             "section": "nonexistent",
-            "content": "New content"
+            "content": "New content",
         }
-        result = await _run_doc_replace(args)
+        error = _unwrap_failure(await _run_doc_replace(args))
 
-        assert len(result) == 1
-        assert "Error" in result[0].text
-        assert "not found" in result[0].text.lower()
+        assert "not found" in error.lower()
 
 
 class TestDocInsert:
     """Test invar_doc_insert MCP handler."""
-
 
     async def test_doc_insert_after(self, tmp_path: Path):
         """Test inserting content after a section."""
@@ -202,9 +187,9 @@ class TestDocInsert:
             "file": str(md_file),
             "anchor": "title",
             "content": "## Inserted\n\nNew section\n",
-            "position": "after"
+            "position": "after",
         }
-        result = await _run_doc_insert(args)
+        result = _unwrap_success(await _run_doc_insert(args))
 
         assert len(result) == 1
         assert "success" in result[0].text.lower()
@@ -214,27 +199,23 @@ class TestDocInsert:
         assert "## Inserted" in new_content
         assert "New section" in new_content
 
-
     async def test_doc_insert_invalid_position(self, sample_markdown_file: Path):
         """Test inserting with invalid position."""
         args = {
             "file": str(sample_markdown_file),
             "anchor": "section-1",
             "content": "New content",
-            "position": "invalid"  # type: ignore[dict-item]
+            "position": "invalid",  # type: ignore[dict-item]
         }
         # Note: This might raise validation error at MCP level
         # or be caught by our handler
-        result = await _run_doc_insert(args)
+        error = _unwrap_failure(await _run_doc_insert(args))
 
-        assert len(result) == 1
-        # Should return an error
-        assert "Error" in result[0].text or "error" in result[0].text.lower()
+        assert "position" in error.lower()
 
 
 class TestDocDelete:
     """Test invar_doc_delete MCP handler."""
-
 
     async def test_doc_delete_section(self, tmp_path: Path):
         """Test deleting a section."""
@@ -242,11 +223,8 @@ class TestDocDelete:
         md_file = tmp_path / "delete_test.md"
         md_file.write_text(content)
 
-        args = {
-            "file": str(md_file),
-            "section": "delete-me"
-        }
-        result = await _run_doc_delete(args)
+        args = {"file": str(md_file), "section": "delete-me"}
+        result = _unwrap_success(await _run_doc_delete(args))
 
         assert len(result) == 1
         assert "success" in result[0].text.lower()
@@ -258,51 +236,33 @@ class TestDocDelete:
         assert "# Title" in new_content
         assert "# Next" in new_content
 
-
     async def test_doc_delete_section_not_found(self, sample_markdown_file: Path):
         """Test deleting non-existent section."""
-        args = {
-            "file": str(sample_markdown_file),
-            "section": "nonexistent"
-        }
-        result = await _run_doc_delete(args)
+        args = {"file": str(sample_markdown_file), "section": "nonexistent"}
+        error = _unwrap_failure(await _run_doc_delete(args))
 
-        assert len(result) == 1
-        assert "Error" in result[0].text
-        assert "not found" in result[0].text.lower()
+        assert "not found" in error.lower()
 
 
 class TestErrorHandling:
     """Test error handling across all handlers."""
 
-
     async def test_path_validation_shell_chars(self):
         """Test that shell metacharacters are rejected."""
-        dangerous_paths = [
-            "; rm -rf /",
-            "file.md && echo evil",
-            "file.md | cat",
-            "-flag.md"
-        ]
+        dangerous_paths = ["; rm -rf /", "file.md && echo evil", "file.md | cat", "-flag.md"]
 
         for dangerous_path in dangerous_paths:
             args = {"file": dangerous_path}
-            result = await _run_doc_toc(args)
+            error = _unwrap_failure(await _run_doc_toc(args))
 
-            assert len(result) == 1
-            assert "Error" in result[0].text
-            assert ("Invalid path" in result[0].text or "forbidden" in result[0].text.lower())
-
+            assert "Invalid path" in error or "forbidden" in error.lower()
 
     async def test_directory_instead_of_file(self, tmp_path: Path):
         """Test handling directory path instead of file."""
         args = {"file": str(tmp_path)}
-        result = await _run_doc_toc(args)
+        error = _unwrap_failure(await _run_doc_toc(args))
 
-        assert len(result) == 1
-        assert "Error" in result[0].text
-        assert ("directory" in result[0].text.lower() or "not a file" in result[0].text.lower())
-
+        assert "directory" in error.lower() or "not a file" in error.lower()
 
     async def test_size_limit(self, tmp_path: Path):
         """Test that files exceeding size limit are rejected by @pre contract."""
@@ -319,7 +279,9 @@ class TestErrorHandling:
             await _run_doc_toc(args)
 
         # Verify it's a contract error about size
-        assert "len(source) <= 10_000_000" in str(exc_info.value) or "PreContractError" in str(exc_info.type)
+        assert "len(source) <= 10_000_000" in str(exc_info.value) or "PreContractError" in str(
+            exc_info.type
+        )
 
 
 class TestUnicodeFuzzyMatching:
@@ -358,9 +320,9 @@ Cyrillic section content about verification.
 
         args = {
             "file": str(unicode_markdown_file),
-            "section": "实现计划"  # Should match "Phase A 实现计划"
+            "section": "实现计划",  # Should match "Phase A 实现计划"
         }
-        result = await _run_doc_read(args)
+        result = _unwrap_success(await _run_doc_read(args))
 
         assert len(result) == 1
         data = json.loads(result[0].text)
@@ -373,9 +335,9 @@ Cyrillic section content about verification.
 
         args = {
             "file": str(unicode_markdown_file),
-            "section": "テスト"  # Should match "Phase B テスト"
+            "section": "テスト",  # Should match "Phase B テスト"
         }
-        result = await _run_doc_read(args)
+        result = _unwrap_success(await _run_doc_read(args))
 
         assert len(result) == 1
         data = json.loads(result[0].text)
@@ -388,9 +350,9 @@ Cyrillic section content about verification.
 
         args = {
             "file": str(unicode_markdown_file),
-            "section": "Проверка"  # Should match "Phase C Проверка"
+            "section": "Проверка",  # Should match "Phase C Проверка"
         }
-        result = await _run_doc_read(args)
+        result = _unwrap_success(await _run_doc_read(args))
 
         assert len(result) == 1
         data = json.loads(result[0].text)
@@ -403,9 +365,9 @@ Cyrillic section content about verification.
 
         args = {
             "file": str(unicode_markdown_file),
-            "section": "phasea"  # Should match "Phase A 实现计划" (case-insensitive, no spaces)
+            "section": "phasea",  # Should match "Phase A 实现计划" (case-insensitive, no spaces)
         }
-        result = await _run_doc_read(args)
+        result = _unwrap_success(await _run_doc_read(args))
 
         assert len(result) == 1
         data = json.loads(result[0].text)
@@ -446,13 +408,14 @@ Nested content.
         """Test reading multiple sections in one call."""
         args = {
             "file": str(multi_section_file),
-            "sections": ["section-a", "section-b", "section-c"]
+            "sections": ["section-a", "section-b", "section-c"],
         }
-        result = await _run_doc_read_many(args)
+        result = _unwrap_success(await _run_doc_read_many(args))
 
         assert len(result) == 1
         # Result should be JSON array of section dicts
         import json
+
         sections = json.loads(result[0].text)
 
         assert len(sections) == 3
@@ -468,12 +431,13 @@ Nested content.
         args = {
             "file": str(multi_section_file),
             "sections": ["section-c"],
-            "include_children": True
+            "include_children": True,
         }
-        result = await _run_doc_read_many(args)
+        result = _unwrap_success(await _run_doc_read_many(args))
 
         assert len(result) == 1
         import json
+
         sections = json.loads(result[0].text)
 
         assert len(sections) == 1
@@ -486,12 +450,13 @@ Nested content.
         args = {
             "file": str(multi_section_file),
             "sections": ["section-c"],
-            "include_children": False
+            "include_children": False,
         }
-        result = await _run_doc_read_many(args)
+        result = _unwrap_success(await _run_doc_read_many(args))
 
         assert len(result) == 1
         import json
+
         sections = json.loads(result[0].text)
 
         assert len(sections) == 1
@@ -502,34 +467,22 @@ Nested content.
         """Test batch reading with non-existent section."""
         args = {
             "file": str(multi_section_file),
-            "sections": ["section-a", "nonexistent", "section-b"]
+            "sections": ["section-a", "nonexistent", "section-b"],
         }
-        result = await _run_doc_read_many(args)
+        error = _unwrap_failure(await _run_doc_read_many(args))
 
-        assert len(result) == 1
-        assert "Error" in result[0].text
-        assert "not found" in result[0].text.lower()
+        assert "not found" in error.lower()
 
     async def test_read_many_empty_sections_list(self, multi_section_file: Path):
         """Test batch reading with empty sections list."""
-        args = {
-            "file": str(multi_section_file),
-            "sections": []
-        }
-        result = await _run_doc_read_many(args)
+        args = {"file": str(multi_section_file), "sections": []}
+        error = _unwrap_failure(await _run_doc_read_many(args))
 
-        assert len(result) == 1
-        assert "Error" in result[0].text
-        assert "required" in result[0].text.lower()
+        assert "required" in error.lower()
 
     async def test_read_many_missing_file(self):
         """Test batch reading with missing file."""
-        args = {
-            "file": "/nonexistent/file.md",
-            "sections": ["section-a"]
-        }
-        result = await _run_doc_read_many(args)
+        args = {"file": "/nonexistent/file.md", "sections": ["section-a"]}
+        error = _unwrap_failure(await _run_doc_read_many(args))
 
-        assert len(result) == 1
-        assert "Error" in result[0].text
-        assert "not found" in result[0].text.lower()
+        assert "not found" in error.lower()
