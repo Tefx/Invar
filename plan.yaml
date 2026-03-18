@@ -26937,7 +26937,7 @@ phases:
       - `cat-a-server.fix-shell-result-in-server-py-14-markers`'
   - id: cat-a-server.gate-category-a-server-py
     name: 'Gate: Category A server.py'
-    status: pending
+    status: claimed
     description: 'Gate review: Verify server.py shell_result phase completion.
 
 
@@ -26966,6 +26966,8 @@ phases:
     depends_on:
     - cat-a-server.verify-server-py-shell-result-cleanup
     agent: gate-reviewer
+    claimed_by: gate-reviewer
+    claimed_at: '2026-03-18T03:09:02.194368+00:00'
 - id: cat-c-entry-point
   name: 'Category C: entry_point_too_thick Fixes (10 markers)'
   status: locked
