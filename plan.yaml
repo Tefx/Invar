@@ -29625,7 +29625,7 @@ phases:
     agent: integration-verifier
   - id: p0-migration.remove-migrated-inline-markers
     name: Remove migrated inline markers after config support is live
-    status: claimed
+    status: done
     description: 'Remove inline @invar:allow markers only after pyproject.toml exempt-pattern
       support is implemented and verified in the preceding config phases.
 
@@ -29682,3 +29682,37 @@ phases:
     agent: python-executor
     claimed_by: python-executor
     claimed_at: '2026-03-18T21:12:35.372775+00:00'
+    done_at: '2026-03-18T21:39:47.942066+00:00'
+    evidence: 'Artifact:
+
+      - Commit: da2824b
+
+
+      Verification:
+
+      - Removed covered inline `@invar:allow` markers across `src/invar/**/*.py` where
+      corresponding exemptions exist in pyproject config support
+
+      - Removed non-suppressible inline marker cases now ineffective under strict
+      enforcement (missing_contract / missing_doctest classes)
+
+      - Removed covered suppressible/expensive marker cases tied to configured exemptions
+
+      - Left only legitimate remaining inline markers not covered by config or still
+      required
+
+      - Did not modify `pyproject.toml`
+
+
+      Checks:
+
+      - Marker census reduced substantially; remaining inline markers audited
+
+      - Error mix shifted from inline-suppression violations toward underlying contract/file-size
+      findings (expected after marker removal)
+
+
+      Spec link:
+
+      - p8 migration finalization step acceptance (post-config marker cleanup without
+      pyproject edits)'
