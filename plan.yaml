@@ -27564,7 +27564,7 @@ phases:
 
       - Project complete'
     depends_on:
-    - final-verify.retest-template-sync-guard-complexity
+    - final-verify.retest-dx91-expected-invar-fixtures
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-18T15:03:08.980831+00:00'
