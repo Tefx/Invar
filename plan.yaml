@@ -25896,7 +25896,7 @@ phases:
   steps:
   - id: p5-output.implement
     name: Implement gating output in formatter.py and guard_output.py
-    status: claimed
+    status: done
     description: "Two files to modify:\n\n1. src/invar/core/formatter.py - Extend\
       \ format_guard_agent() JSON output:\n   When escape_hatches exist AND gating\
       \ violations exist, add gating structure to the escape_hatches dict:\n   ```json\n\
@@ -25925,6 +25925,33 @@ phases:
     agent: python-senior
     claimed_by: python-senior
     claimed_at: '2026-03-18T20:30:51.130054+00:00'
+    done_at: '2026-03-18T20:36:57.562331+00:00'
+    evidence: 'Artifact:
+
+      - Commit: 436a214ad333b6c63a38f7fcae02b6f98c407f88
+
+      - Files: src/invar/core/formatter.py, src/invar/shell/guard_output.py
+
+
+      Verification:
+
+      - Run: uv run pytest --doctest-modules src/invar/core/formatter.py -q -> 6 passed
+      (includes updated `format_guard_agent` gating doctests)
+
+      - Run: targeted formatter exercise -> JSON includes `escape_hatches.gating`
+      with `status`, `per_rule_violations`, `budget`, `non_suppressible`, `combination`
+
+      - Run: targeted rich-output exercise -> `output_rich` renders gating `Panel`
+      and non-suppressible inline-attempt guidance block
+
+      - Run: uv run invar guard --all -> repository-wide guard failures unrelated
+      to this step currently present; output formatting changes validated independently
+
+
+      Spec link:
+
+      - p5-output.implement acceptance for agent JSON gating structure and rich panel
+      output extensions'
   - id: p5-output.verify
     name: Verify gating output
     status: pending
