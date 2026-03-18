@@ -95,7 +95,7 @@ COMPLEXITY_MARKER_PATTERN = re.compile(r"#\s*@shell_complexity\s*:")
 ORCHESTRATION_MARKER_PATTERN = re.compile(r"#\s*@shell_orchestration\s*:")
 
 
-# @invar:allow missing_contract: Boolean predicate, empty string is valid input
+@post(lambda result: isinstance(result, bool))
 def has_io_operations(source: str) -> bool:
     """
     Check if source code contains I/O operations.

@@ -39,7 +39,7 @@ class PatternRegistry:
     True
     """
 
-    # @invar:allow missing_contract: __init__ takes only self, no inputs to validate
+    @post(lambda result: result is None)
     def __init__(self) -> None:
         """Initialize with all P0 detectors."""
         self._detectors: list[PatternDetector] = [

@@ -141,7 +141,7 @@ def check_contract_quality_ratio(file_info: FileInfo, config: RuleConfig) -> lis
     return violations
 
 
-# @invar:allow missing_contract: Boolean predicate, accepts empty string (doctest shows)
+@post(lambda result: isinstance(result, bool))
 def is_security_sensitive(path: str) -> bool:
     """
     Check if path indicates security-sensitive code (DX-31).

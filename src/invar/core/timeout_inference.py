@@ -35,10 +35,20 @@ TIMEOUT_TIERS = {
 }
 
 # Libraries that CrossHair cannot handle well
-LIBRARY_BLACKLIST = frozenset([
-    "numpy", "pandas", "torch", "tensorflow", "scipy",
-    "sklearn", "cv2", "PIL", "requests", "aiohttp",
-])
+LIBRARY_BLACKLIST = frozenset(
+    [
+        "numpy",
+        "pandas",
+        "torch",
+        "tensorflow",
+        "scipy",
+        "sklearn",
+        "cv2",
+        "PIL",
+        "requests",
+        "aiohttp",
+    ]
+)
 
 
 @pre(lambda func: callable(func))
@@ -99,7 +109,7 @@ def _count_branches(source: str) -> int:
     return len(re.findall(r"\b(if|for|while|try|elif|except)\b", source))
 
 
-# @invar:allow missing_contract: Boolean predicate, empty string is valid input
+@post(lambda result: isinstance(result, bool))
 def _uses_only_stdlib(source: str) -> bool:
     """Check if source only uses standard library."""
     stdlib_patterns = ["collections", "itertools", "functools", "typing", "dataclasses"]

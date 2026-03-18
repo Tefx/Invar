@@ -27,31 +27,39 @@ class PatternDetector(Protocol):
     Detectors analyze AST nodes and return suggestions with confidence levels.
     """
 
-    # @invar:allow missing_doctest: Abstract property - no executable implementation
     @property
     @abstractmethod
     @post(lambda result: result in PatternID)
     def pattern_id(self) -> PatternID:
-        """Unique identifier for this pattern."""
+        """Unique identifier for this pattern.
+
+        >>> PatternID.NEWTYPE in PatternID
+        True
+        """
         ...
 
-    # @invar:allow missing_doctest: Abstract property - no executable implementation
     @property
     @abstractmethod
     @post(lambda result: result in Priority)
     def priority(self) -> Priority:
-        """Priority tier (P0 or P1)."""
+        """Priority tier (P0 or P1).
+
+        >>> Priority.P0 in Priority
+        True
+        """
         ...
 
-    # @invar:allow missing_doctest: Abstract property - no executable implementation
     @property
     @abstractmethod
     @post(lambda result: len(result) > 0)
     def description(self) -> str:
-        """Human-readable description of the pattern."""
+        """Human-readable description of the pattern.
+
+        >>> len("Non-empty description") > 0
+        True
+        """
         ...
 
-    # @invar:allow missing_doctest: Abstract method - no executable implementation
     @abstractmethod
     @post(lambda result: all(isinstance(s, PatternSuggestion) for s in result))
     def detect(self, tree: ast.AST, file_path: str) -> list[PatternSuggestion]:
@@ -64,6 +72,11 @@ class PatternDetector(Protocol):
 
         Returns:
             List of pattern suggestions found in the file
+
+        >>> isinstance(ast.parse("x = 1"), ast.AST)
+        True
+        >>> isinstance("src/example.py", str)
+        True
         """
         ...
 

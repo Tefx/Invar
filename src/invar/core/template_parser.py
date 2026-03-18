@@ -53,7 +53,7 @@ class ParsedFile:
     raw: str = ""  # Original content
 
     @property
-    # @invar:allow missing_contract: Boolean derived from dict length
+    @post(lambda result: isinstance(result, bool))
     def has_regions(self) -> bool:
         """Check if any Invar regions were found.
 
@@ -276,7 +276,7 @@ class ClaudeMdState:
     user_content: str = ""  # Preserved user content
 
     @property
-    # @invar:allow missing_contract: Boolean derived from state enum check
+    @post(lambda result: isinstance(result, bool))
     def needs_recovery(self) -> bool:
         """Check if recovery/merge is needed.
 

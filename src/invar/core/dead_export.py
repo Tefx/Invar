@@ -71,7 +71,7 @@ def check_dead_exports(
     - Private functions (name.startswith("_"))
     - Dunder methods (name.startswith("__") and name.endswith("__"))
     - Entry points (framework callbacks detected by decorators)
-    - Functions with @invar:allow dead_export: <reason> marker
+    - Inline dead_export markers do not suppress findings (non-suppressible rule)
 
     Examples:
         >>> from invar.core.models import FileInfo, Symbol, SymbolKind, RuleConfig
@@ -126,7 +126,7 @@ def check_dead_exports(
         >>> len(check_dead_exports([info5], {}, RuleConfig()))
         0
 
-        >>> # Case 6: @invar:allow marker - excluded
+        >>> # Case 6: @invar:allow marker does not suppress dead_export
         >>> sym6 = Symbol(name="legacy_api", kind=SymbolKind.FUNCTION, line=3, end_line=10)
         >>> source6 = '''
         ... # @invar:allow dead_export: Legacy API used by external systems
@@ -135,7 +135,7 @@ def check_dead_exports(
         ... '''
         >>> info6 = FileInfo(path="shell/api.py", lines=15, symbols=[sym6], is_shell=True, source=source6)
         >>> len(check_dead_exports([info6], {"shell/api.py::legacy_api": 0}, RuleConfig()))
-        0
+        1
 
         >>> # Case 7: Core file - excluded (only checks Shell)
         >>> sym7 = Symbol(name="public_func", kind=SymbolKind.FUNCTION, line=5, end_line=10)

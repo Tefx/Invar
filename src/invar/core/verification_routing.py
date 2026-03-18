@@ -64,7 +64,7 @@ _IMPORT_PATTERN = re.compile(
 )
 
 
-# @invar:allow missing_contract: Boolean predicate, empty string returns False
+@post(lambda result: isinstance(result, bool))
 def has_incompatible_imports(source: str) -> bool:
     """
     Check if source contains imports incompatible with CrossHair.

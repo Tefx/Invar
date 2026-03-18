@@ -10,7 +10,7 @@ Exemptions:
 - abstract methods (``@abstractmethod`` / ``@abc.abstractmethod``)
 - anything defined inside protocol classes
 - framework entry points (Click/Typer/Flask/FastAPI/etc.)
-- explicit ``# @invar:allow stub_body: <reason>`` markers
+- inline stub_body markers do not suppress findings (non-suppressible rule)
 
 Core module: pure logic, no I/O.
 """
@@ -87,7 +87,7 @@ def check_stub_bodies(file_infos: list[FileInfo], config: RuleConfig) -> list[Vi
         ...     ...
         ... '''
         >>> len(check_stub_bodies([FileInfo(path="src/shim.py", lines=3, source=source8)], RuleConfig()))
-        0
+        1
     """
     _ = config
     violations: list[Violation] = []

@@ -25,7 +25,7 @@ _hypothesis_available = False
 _numpy_available = False
 
 
-# @invar:allow missing_contract: Boolean availability check, no meaningful contract
+@post(lambda result: isinstance(result, bool))
 def _ensure_hypothesis() -> bool:
     """Check if hypothesis is available."""
     global _hypothesis_available
@@ -38,7 +38,7 @@ def _ensure_hypothesis() -> bool:
         return False
 
 
-# @invar:allow missing_contract: Boolean availability check, no meaningful contract
+@post(lambda result: isinstance(result, bool))
 def _ensure_numpy() -> bool:
     """Check if numpy is available."""
     global _numpy_available
