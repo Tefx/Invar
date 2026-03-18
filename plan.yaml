@@ -25708,9 +25708,47 @@ phases:
   - id: p4-guard-integration.gate
     name: Phase 4 Gate
     status: pending
-    description: 'Gate review: Verify Phase 4 completion. Integration is minimal (3-5
-      lines). Guard passes on own codebase. No regressions.'
-    verification: Phase 4 complete. Integration wiring correct and non-regressing.
+    description: 'Gate review: Verify Phase 4 helper/API-signature integration is
+      complete and unambiguous.
+
+
+      review_depth: THOROUGH
+
+      review_depth_rationale:
+
+      - Phase touches a high-risk helper signature integration in the live guard pipeline
+
+      - Acceptance must cover both real-path wiring and fallback behavior when scan
+      metadata is incomplete
+
+      - A silent drop or accidental 2-argument call would bypass budget enforcement
+      without obvious failures
+
+
+      Gate must reject any of:
+
+      1. Evidence only shows import presence without proving the real `_scan_and_check`
+      path uses the 3-argument call
+
+      2. Missing regression coverage for unavailable/partial `file_infos`
+
+      3. Any remaining 2-argument call shape or shim on the guard integration path
+
+      4. Any silent drop path where collected escape hatches can avoid budget evaluation
+
+      5. Vague verification language such as "integration wiring correct" without
+      targeted proof'
+    verification: '- Phase implementation evidence shows `check_escape_budget(report.escape_hatches,
+      config, file_infos)` is wired on the real guard pipeline at the intended location
+
+      - Independent verification includes targeted regression coverage for both main
+      path and explicit missing/partial metadata fallback behavior
+
+      - No 2-argument call path, compatibility shim, or silent drop path remains in
+      the guard integration flow
+
+      - Phase is ready for downstream output/config/non-suppressible phases only if
+      the above evidence is specific and complete'
     depends_on:
     - p4-guard-integration.verify
     agent: gate-reviewer
