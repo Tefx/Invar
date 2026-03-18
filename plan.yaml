@@ -24869,7 +24869,7 @@ phases:
   - id: p1-models-tier.implement
     name: Implement EscapeHatchTier enum, ESCAPE_TIER_MAP, ESCAPE_TIER_COST, and RuleConfig
       fields
-    status: claimed
+    status: done
     description: "Add to src/invar/core/models.py:\n\n1. EscapeHatchTier(StrEnum)\
       \ with values: SUPPRESSIBLE, EXPENSIVE, NON_SUPPRESSIBLE\n\n2. ESCAPE_TIER_MAP:\
       \ dict[str, EscapeHatchTier] mapping all 11 escape hatch rules to their tier:\n\
@@ -24900,6 +24900,37 @@ phases:
     agent: python-executor
     claimed_by: python-executor
     claimed_at: '2026-03-18T16:32:33.284335+00:00'
+    done_at: '2026-03-18T16:40:06.253948+00:00'
+    evidence: 'Artifact:
+
+      - Commit: `4cc8930` (squash merge of worker commit `c7bd6f2`)
+
+      - File changed: `src/invar/core/models.py`
+
+
+      Verification:
+
+      - Added `EscapeHatchTier(StrEnum)` after `CodeLayer` with values SUPPRESSIBLE/EXPENSIVE/NON_SUPPRESSIBLE.
+
+      - Added `ESCAPE_TIER_MAP` with exactly 11 entries (excluding `shell_complexity`).
+
+      - Added `ESCAPE_TIER_COST` mapping `{SUPPRESSIBLE: 1, EXPENSIVE: 3, NON_SUPPRESSIBLE:
+      0}`.
+
+      - Extended `EscapeHatchDetail` with `function_name: str | None = None`.
+
+      - Extended `RuleConfig` with all requested escape budget/exempt fields and defaults
+      (including `escape_exempt_warning=15`).
+
+      - Run: `uv run python -c ''<import/assert checks>''` -> passed (tier import,
+      map length/exclusion, defaults, function_name None).
+
+      - Run: pre-commit + `uv run invar guard --all` -> passed.
+
+
+      Spec link:
+
+      - `p1-models-tier.implement`'
   - id: p1-models-tier.verify
     name: Verify Phase 1 models
     status: pending
