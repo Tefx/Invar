@@ -26296,7 +26296,7 @@ phases:
       - Scope constrained to Phase 6 blocker family (test import/export wiring consistency).'
   - id: p6-config.fix-gate-blockers
     name: Fix p6 gate blocker wiring
-    status: claimed
+    status: done
     description: 'Fix ALL Phase 6 gate blockers in the test import wiring / exports
       consistency family.
 
@@ -26382,6 +26382,39 @@ phases:
     agent: python-executor
     claimed_by: python-executor
     claimed_at: '2026-03-18T21:12:39.723496+00:00'
+    done_at: '2026-03-18T21:39:34.370369+00:00'
+    evidence: '## Wiring Blocker Fix Evidence
+
+
+      **Blocker family**: test import wiring / exports consistency
+
+      **Primary symbol**: `matches_file_symbol_pattern`
+
+      **Expected public path**: `invar.core.utils`
+
+      **Owning implementation path**: `invar.core.exempt_patterns`
+
+
+      **Sibling search performed**:
+
+      - checked all usages of `matches_file_symbol_pattern`
+
+      - verified internal direct import path remains valid in runtime call sites
+
+      - verified Phase 6 tests using public utils import path
+
+
+      **Result**:
+
+      - Added compatibility re-export in `src/invar/core/utils.py` for `matches_file_symbol_pattern`
+
+      - Ensured export surface consistency (including explicit `__all__` handling)
+
+      - Both import paths resolve: public (`invar.core.utils`) and owning module (`invar.core.exempt_patterns`)
+
+      - Focused tests for exempt-pattern/config wiring pass
+
+      - Scope stayed within Phase 6 blocker family only'
   - id: p6-config.retest-gate-blockers
     name: Retest p6 gate blocker wiring
     status: pending
