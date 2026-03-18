@@ -1,3 +1,4 @@
+# @invar:allow file_size: Core models aggregation - data classes belong together
 """
 Pydantic models for Invar.
 
@@ -41,6 +42,28 @@ class CodeLayer(StrEnum):
     DEFAULT = "default"
 
 
+class EscapeHatchTier(StrEnum):
+    """
+    Tier classification for escape hatch rules (P1).
+
+    Suppressible: Low-cost, easy to fix
+    Expensive: Medium-cost, requires attention
+    Non-suppressible: Zero-cost, must fix
+
+    Examples:
+        >>> EscapeHatchTier.SUPPRESSIBLE
+        <EscapeHatchTier.SUPPRESSIBLE: 'SUPPRESSIBLE'>
+        >>> EscapeHatchTier.EXPENSIVE
+        <EscapeHatchTier.EXPENSIVE: 'EXPENSIVE'>
+        >>> EscapeHatchTier.NON_SUPPRESSIBLE
+        <EscapeHatchTier.NON_SUPPRESSIBLE: 'NON_SUPPRESSIBLE'>
+    """
+
+    SUPPRESSIBLE = "SUPPRESSIBLE"
+    EXPENSIVE = "EXPENSIVE"
+    NON_SUPPRESSIBLE = "NON_SUPPRESSIBLE"
+
+
 @dataclass(frozen=True)
 class LayerLimits:
     """Size limits for a specific code layer (LX-10).
@@ -63,6 +86,31 @@ PYTHON_LAYER_LIMITS: dict[CodeLayer, LayerLimits] = {
     CodeLayer.SHELL: LayerLimits(700, 100),
     CodeLayer.TESTS: LayerLimits(1000, 200),
     CodeLayer.DEFAULT: LayerLimits(600, 80),
+}
+
+# P1: Tier classification for escape hatch rules
+ESCAPE_TIER_MAP: dict[str, EscapeHatchTier] = {
+    # Suppressible: Low-cost, easy to fix
+    "dead_assign": EscapeHatchTier.SUPPRESSIBLE,
+    "dead_param": EscapeHatchTier.SUPPRESSIBLE,
+    "shell_pure_logic": EscapeHatchTier.SUPPRESSIBLE,
+    # Expensive: Medium-cost, requires attention
+    "shell_result": EscapeHatchTier.EXPENSIVE,
+    "entry_point_too_thick": EscapeHatchTier.EXPENSIVE,
+    "file_size": EscapeHatchTier.EXPENSIVE,
+    "function_size": EscapeHatchTier.EXPENSIVE,
+    # Non-suppressible: Zero-cost, must fix
+    "dead_export": EscapeHatchTier.NON_SUPPRESSIBLE,
+    "stub_body": EscapeHatchTier.NON_SUPPRESSIBLE,
+    "missing_contract": EscapeHatchTier.NON_SUPPRESSIBLE,
+    "missing_doctest": EscapeHatchTier.NON_SUPPRESSIBLE,
+}
+
+# P1: Cost per tier for budgeting
+ESCAPE_TIER_COST: dict[EscapeHatchTier, int] = {
+    EscapeHatchTier.SUPPRESSIBLE: 1,
+    EscapeHatchTier.EXPENSIVE: 3,
+    EscapeHatchTier.NON_SUPPRESSIBLE: 0,
 }
 
 
@@ -186,6 +234,11 @@ class EscapeHatchDetail(BaseModel):
         >>> d = EscapeHatchDetail(file="test.py", line=10, rule="shell_result", reason="API")
         >>> d.line
         10
+        >>> d.function_name is None
+        True
+        >>> d2 = EscapeHatchDetail(file="test.py", line=10, rule="shell_result", reason="API", function_name="get_data")
+        >>> d2.function_name
+        'get_data'
         >>> # line=0 is valid (fallback when line number unknown)
         >>> d0 = EscapeHatchDetail(file="test.py", line=0, rule="test", reason="fallback")
         >>> d0.line
@@ -196,6 +249,7 @@ class EscapeHatchDetail(BaseModel):
     line: int = Field(ge=0)  # 0 = fallback when line number unknown
     rule: str
     reason: str
+    function_name: str | None = None  # P1: Optional function name for grouping
 
 
 class EscapeHatchSummary(BaseModel):
@@ -459,6 +513,17 @@ class RuleConfig(BaseModel):
     pattern_min_confidence: str = Field(default="medium")  # low, medium, high
     pattern_priorities: list[str] = Field(default_factory=lambda: ["P0"])  # P0, P1
     pattern_exclude: list[str] = Field(default_factory=list)  # Pattern IDs to exclude
+
+    # P1: Escape hatch budget configuration
+    escape_suppressible_per_file: int = Field(default=3, ge=0)
+    escape_expensive_per_file: int = Field(default=2, ge=0)
+    escape_suppressible_per_project: int = Field(default=10, ge=0)
+    escape_expensive_per_project: int = Field(default=5, ge=0)
+    escape_budget_limit: int = Field(default=15, ge=0)
+    escape_warning_threshold: float = Field(default=0.8, ge=0.0, le=1.0)
+    escape_exempt_patterns: dict[str, list[str]] = Field(default_factory=dict)
+    escape_exempt_limit: int = Field(default=20, ge=0)
+    escape_exempt_warning: int = Field(default=15, ge=0)
 
 
 # Phase 4: Perception models
