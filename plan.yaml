@@ -25225,13 +25225,13 @@ phases:
       \ mismatch remains."
 - id: p2-by-file
   name: 'Phase 2: EscapeHatchSummary.by_file property'
-  status: pending
+  status: in_progress
   depends_on:
   - p1-models-tier
   steps:
   - id: p2-by-file.implement
     name: Implement EscapeHatchSummary.by_file property
-    status: pending
+    status: claimed
     description: 'Add by_file property to EscapeHatchSummary in src/invar/core/models.py
       (after existing by_rule property):
 
@@ -25249,6 +25249,8 @@ phases:
     verification: uv run invar guard --all passes. by_file property returns correct
       grouping.
     agent: python-executor
+    claimed_by: python-executor
+    claimed_at: '2026-03-18T17:58:53.766633+00:00'
   - id: p2-by-file.verify
     name: Verify Phase 2 by_file
     status: pending
