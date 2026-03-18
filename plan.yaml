@@ -26355,6 +26355,50 @@ phases:
     depends_on:
     - p6-config.verify
     agent: python-executor
+  - id: p6-config.retest-gate-blockers
+    name: Retest p6 gate blocker wiring
+    status: pending
+    description: 'As an INDEPENDENT TESTER (`integration-verifier`), validate the
+      Phase 6 blocker-family repair from a fresh perspective.
+
+
+      YOUR GOAL IS TO FIND PROBLEMS, not to confirm it works.
+
+
+      Test for:
+
+      - Happy path: `tests/core/test_escape_exempt_patterns.py` can import and exercise
+      `matches_file_symbol_pattern` through the intended public path.
+
+      - Edge cases: sibling exempt-pattern helper exports remain reachable where Phase
+      6 expects stable imports.
+
+      - Error scenarios: stale import wiring, missing re-export, or partial compatibility
+      shim leaves the blocker family unresolved.
+
+
+      Document ALL findings. A test that discovers issues is a SUCCESS.
+
+      Independence Level: L1.'
+    verification: '- Run focused regression for `tests/core/test_escape_exempt_patterns.py`
+
+      - Verify the public import path and owning module path are consistent after
+      the repair
+
+      - Report any remaining import/export mismatches in this blocker family'
+    evidence_template: "## Verification Report\n\n**Tester**: integration-verifier\n\
+      **Scope**: Phase 6 blocker-family import/export wiring\n**Independence Level**:\
+      \ L1\n\n### Test Execution\n- Commands executed:\n  ```\n  <focused pytest command\
+      \ for tests/core/test_escape_exempt_patterns.py>\n  ```\n- Output summary: <key\
+      \ results>\n\n### Issues Found\n| Severity | Description | Location | Reproduction\
+      \ |\n|----------|-------------|----------|--------------|\n| blocker | <issue>\
+      \ | <file:line or import path> | <steps> |\n| should_fix | <issue> | <location>\
+      \ | <steps> |\n\n### Coverage Assessment\n- Happy path verified: yes/no\n- Sibling\
+      \ wiring checked: yes/no\n- NOT tested: <areas not covered and why>\n\n### Verdict\n\
+      - PASS | ISSUES_FOUND | INCOMPLETE"
+    depends_on:
+    - p6-config.fix-gate-blockers
+    agent: integration-verifier
 - id: p7-non-suppressible
   name: 'Phase 7: Non-suppressible enforcement'
   status: done
