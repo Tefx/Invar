@@ -26422,7 +26422,7 @@ phases:
       - `cat-a-guard-runs.fix-shell-result-in-guard-runs-py-8-markers`'
   - id: cat-a-guard-runs.gate-category-a-guard-runs-py
     name: 'Gate: Category A guard_runs.py'
-    status: pending
+    status: claimed
     description: 'Gate review: Verify guard_runs.py shell_result phase completion.
 
 
@@ -26448,6 +26448,8 @@ phases:
     depends_on:
     - cat-a-guard-runs.verify-guard-runs-py-shell-result-cleanup
     agent: gate-reviewer
+    claimed_by: gate-reviewer
+    claimed_at: '2026-03-18T02:11:06.816567+00:00'
 - id: cat-a-handlers
   name: 'Category A: shell_result in handlers.py (21 markers)'
   status: locked
