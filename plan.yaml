@@ -25704,8 +25704,17 @@ phases:
   - id: p0-migration.remove-migrated-inline-markers
     name: Remove migrated inline markers
     status: pending
-    description: 'Remove inline @invar:allow markers that are now covered by the human-approved
-      pyproject.toml exempt patterns.
+    description: 'Remove inline @invar:allow markers only after pyproject.toml exempt-pattern
+      support is implemented and verified.
+
+
+      Blocking dependency rationale:
+
+      - This step MUST NOT run until guard actually reads `[tool.invar.exempt.*]`
+      config.
+
+      - Inline-marker removal before verified config support causes false failures
+      because migrated suppressions are not yet honored.
 
 
       Scope:
@@ -25735,10 +25744,19 @@ phases:
 
 
       Grep hint: grep -rn ''@invar:allow'' src/invar/ --include=''*.py'''
-    verification: All inline @invar:allow markers covered by pyproject.toml exempt
-      patterns have been removed. Remaining inline markers (if any) fit within DX-96
-      default budgets. No non-suppressible rules remain as inline markers. pyproject.toml
-      was NOT modified by this step.
+    verification: '- Phase `p6-config` completed, proving config parsing support is
+      implemented and independently verified before inline-marker removal
+
+      - All inline @invar:allow markers covered by pyproject.toml exempt patterns
+      have been removed after config readiness
+
+      - Remaining inline markers (if any) fit within DX-96 default budgets
+
+      - No non-suppressible rules remain as inline markers
+
+      - pyproject.toml was NOT modified by this step'
+    refs:
+    - p6-config
     depends_on:
     - p0-migration.human-review-and-approve-exemptions
     agent: python-executor
