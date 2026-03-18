@@ -4,7 +4,9 @@ These diagrams can be embedded directly in GitHub README (GitHub renders Mermaid
 
 ---
 
-## 1. USBV Workflow
+## 1. USBV Workflow (Historical)
+
+> **Archive:** The USBV four-phase workflow was removed per [DX-91](./proposals/DX-91-simplification.md). Current guidance: write contracts before code. Guard enforces outcomes, not ceremony.
 
 ```mermaid
 flowchart LR
@@ -143,7 +145,7 @@ sequenceDiagram
     A->>A: ✓ Check-In
     Note right of A: project | branch | status
 
-    A->>A: USBV Workflow
+    A->>A: Contracts → Build → Validate
     A->>G: invar guard
     G-->>A: Results
 
