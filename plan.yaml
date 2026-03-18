@@ -24993,7 +24993,7 @@ phases:
       - Updated gate dependency: p1-models-tier.gate depends on p1-models-tier.retest-canonical-count'
   - id: p1-models-tier.gate
     name: Phase 1 Gate
-    status: pending
+    status: claimed
     description: 'Gate review: Verify Phase 1 completion. All new data model types
       are pure (no I/O), correctly typed, and guard passes.'
     verification: All Phase 1 steps complete. No regressions. New types follow existing
@@ -25001,6 +25001,8 @@ phases:
     depends_on:
     - p1-models-tier.retest-canonical-count
     agent: gate-reviewer
+    claimed_by: gate-reviewer
+    claimed_at: '2026-03-18T17:46:41.420077+00:00'
   - id: p1-models-tier.fix-canonical-count
     name: Fix canonical ESCAPE_TIER_MAP coverage
     status: done
