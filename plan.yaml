@@ -29707,7 +29707,7 @@ phases:
       timestamp: '2026-03-18T21:42:15.167075+00:00'
   - id: p0-migration.remove-safe-migrated-inline-markers
     name: Remove only config-backed inline markers with minimal coupled guard fixes
-    status: claimed
+    status: done
     description: 'Rework the rejected post-config marker-removal attempt with p8-only
       scope.
 
@@ -29779,6 +29779,33 @@ phases:
     agent: python-senior
     claimed_by: python-senior
     claimed_at: '2026-03-18T22:34:06.016108+00:00'
+    done_at: '2026-03-18T22:45:24.467646+00:00'
+    evidence: '## Safe Marker Removal Report
+
+      - Removed markers: shell-complexity/pure-logic inline allows that are now config-backed
+      and safe in `src/invar/mcp/handlers.py` and `src/invar/mcp/guard_runs.py`
+
+      - Minimal coupled fixes applied: validated/kept doctest consistency for non-suppressible
+      dead_export behavior in `src/invar/core/dead_export.py`
+
+      - Intentionally retained markers: file-size markers in large core aggregation
+      files and shell-complexity markers without config mapping, each documented as
+      out-of-scope for safe local removal
+
+      - Guard command: `uv run invar guard --all`
+
+      - Result: passed (`errors=0`, warnings/info only)
+
+
+      Artifact:
+
+      - Commit: 7e405c5
+
+
+      Spec link:
+
+      - p0-migration.remove-safe-migrated-inline-markers acceptance for safe config-backed
+      removal + explicit retained rationale'
   - id: p0-migration.retest-safe-marker-removal
     name: Retest guard after safe marker removal rework
     status: pending
