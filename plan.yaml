@@ -24933,7 +24933,7 @@ phases:
       - `p1-models-tier.implement`'
   - id: p1-models-tier.verify
     name: Verify Phase 1 models
-    status: claimed
+    status: done
     description: 'Independent verification: import EscapeHatchTier, ESCAPE_TIER_MAP,
       ESCAPE_TIER_COST from invar.core.models. Verify:
 
@@ -24953,6 +24953,44 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-18T17:11:46.537044+00:00'
+    done_at: '2026-03-18T17:18:22.479641+00:00'
+    evidence: 'Artifact:
+
+      - Verification task: ses_2fe10ef13ffeEecu22oaitdde2
+
+      - Planner remediation task: ses_2fe0ce810ffeSKMu3oRo0NLLPi
+
+
+      Verification:
+
+      - Run: import checks for EscapeHatchTier/ESCAPE_TIER_MAP/ESCAPE_TIER_COST/RuleConfig
+      -> completed
+
+      - Result: EscapeHatchTier members=3 (pass); ESCAPE_TIER_COST mapping=(1,3,0)
+      (pass); RuleConfig defaults expected tuple present (pass)
+
+      - Result: ESCAPE_TIER_MAP entries=11 vs expected 12 (blocker)
+
+      - Run: uv run invar guard --all -> passed
+
+
+      Spec link:
+
+      - Phase 1 acceptance for canonical ESCAPE_TIER_MAP coverage and model defaults
+
+
+      Issues:
+
+      - blocker: ESCAPE_TIER_MAP cardinality mismatch (11 vs required 12)
+
+
+      Batched remediation:
+
+      - Created fix step: p1-models-tier.fix-canonical-count
+
+      - Created retest step: p1-models-tier.retest-canonical-count
+
+      - Updated gate dependency: p1-models-tier.gate depends on p1-models-tier.retest-canonical-count'
   - id: p1-models-tier.gate
     name: Phase 1 Gate
     status: pending
