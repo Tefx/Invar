@@ -24961,7 +24961,7 @@ phases:
     verification: All Phase 1 steps complete. No regressions. New types follow existing
       patterns.
     depends_on:
-    - p1-models-tier.verify
+    - p1-models-tier.retest-canonical-count
     agent: gate-reviewer
   - id: p1-models-tier.fix-canonical-count
     name: Fix canonical ESCAPE_TIER_MAP coverage
