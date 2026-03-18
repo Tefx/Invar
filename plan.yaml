@@ -26259,7 +26259,7 @@ phases:
       to broader non-suppressible migration closure.'
   - id: p6-config.gate
     name: Phase 6 Gate
-    status: claimed
+    status: done
     description: 'Gate review: Verify Phase 6 completion. Config parsing handles all
       new fields. Exempt patterns parsed correctly. Pydantic validation catches invalid
       values. Guard passes. Gate remains blocked until the blocker-family retest confirms
@@ -26271,6 +26271,29 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-18T20:56:26.537426+00:00'
+    done_at: '2026-03-18T21:12:01.821048+00:00'
+    evidence: 'Gate review executed with blocker findings.
+
+
+      Blockers:
+
+      - test wiring mismatch: `tests/core/test_escape_exempt_patterns.py` imports
+      `matches_file_symbol_pattern` from `invar.core.utils` while symbol resides in
+      `invar.core.exempt_patterns`.
+
+
+      Batched remediation planned:
+
+      - Added fix step: `p6-config.fix-gate-blockers`
+
+      - Added retest step: `p6-config.retest-gate-blockers`
+
+      - Updated gate dependency to wait on retest closure.
+
+
+      Notes:
+
+      - Scope constrained to Phase 6 blocker family (test import/export wiring consistency).'
   - id: p6-config.fix-gate-blockers
     name: Fix p6 gate blocker wiring
     status: pending
