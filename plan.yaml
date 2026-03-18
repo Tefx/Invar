@@ -26713,6 +26713,7 @@ phases:
   - p5-output
   - p6-config
   - p7-non-suppressible
+  - p8-migration-finalization
   steps:
   - id: final-gate.acceptance
     name: Final acceptance verification against all 7 criteria
