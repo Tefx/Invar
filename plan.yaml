@@ -29960,7 +29960,7 @@ phases:
       + deterministic guard-pass)'
   - id: p0-migration.retest-guard-pass-after-remediation
     name: Retest full Invar guard pass after batched remediation
-    status: pending
+    status: claimed
     description: 'Independent retest of the deterministic rework path for the failed
       migration-finalization and final-acceptance guard path.
 
@@ -29991,3 +29991,5 @@ phases:
     depends_on:
     - p0-migration.fix-remaining-guard-blockers
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-18T22:46:57.774365+00:00'
