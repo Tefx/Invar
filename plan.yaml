@@ -25612,7 +25612,7 @@ phases:
       '
   - id: p0-migration.human-review-and-approve-exemptions
     name: Human review and approve exemptions (HUMAN ACTION)
-    status: pending
+    status: claimed
     description: "**THIS STEP REQUIRES HUMAN INTERVENTION — agents MUST NOT execute\
       \ this step.**\n\nDX-96 trust boundary: agents MUST NOT modify pyproject.toml\
       \ to add exemptions. Only a human may approve and write exempt patterns.\n\n\
@@ -25635,6 +25635,8 @@ phases:
     depends_on:
     - p0-migration.inventory-current-escape-hatch-markers
     agent: human
+    claimed_by: human
+    claimed_at: '2026-03-18T16:08:31.761972+00:00'
   - id: p0-migration.verify-guard-passes-after-migration
     name: Verify guard passes after migration
     status: pending
