@@ -27905,3 +27905,116 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-18T14:44:13.231617+00:00'
+  - id: final-verify.fix-template-sync-guard-complexity
+    name: Fix template_sync guard complexity regression while preserving DX56 additions
+      behavior
+    status: pending
+    description: 'Fix the guard regression introduced by the DX56 template-sync repair:
+      `shell_too_complex` in `_merge_project_additions` within `template_sync.py`
+      (5 branches > max 3), while preserving the now-passing DX56 project-additions
+      behavior.
+
+
+      symbolic_testing: false
+
+      prior_loop:
+
+      - final-verify.fix-dx56-project-additions-template-sync
+
+      - final-verify.retest-dx56-project-additions-template-sync
+
+      remaining_blocker: guard regression on `_merge_project_additions` complexity
+      in `src/invar/shell/commands/template_sync.py` after the DX56 contract repair.
+
+      why_new_loop: The prior loop restored DX56 project-additions injection semantics,
+      but the resulting implementation exceeded the shell complexity budget and now
+      blocks guard.
+
+      why_previous_fix_failed: The prior fix focused on restoring project-additions
+      sync behavior and idempotence, but did not sufficiently decompose the merge
+      logic to stay within `shell_too_complex` limits.
+
+
+      ## Root Cause vs Symptom:
+
+      - Root cause: `_merge_project_additions` now carries too many decision branches
+      because DX56 preservation + normalization + injection logic was concentrated
+      into one shell function.
+
+      - Symptom: `uv run invar guard --all` reports `shell_too_complex` on `_merge_project_additions`
+      even though DX56 behavior now passes.
+
+      - Why this fix is not surface-level: reduce structural branching by extracting
+      or simplifying the merge flow without regressing the restored DX56 template-sync
+      contract.
+
+
+      ## Blockers to Fix (ALL of these, not just the first):
+
+
+      ### B1: shell_too_complex in `_merge_project_additions`
+
+      Locations: `src/invar/shell/commands/template_sync.py::_merge_project_additions`
+      and any directly coupled helper logic introduced by the DX56 repair
+
+      Remediation: refactor or decompose the merge path so each shell function stays
+      within guard complexity limits while preserving project-additions injection,
+      ordering, idempotence, and legacy-region preservation.
+
+      Grep hint: `rg -n "_merge_project_additions|project additions|shell_too_complex|template_sync"
+      src tests`
+
+      IMPORTANT: search sibling helper paths in the same module so complexity is removed
+      structurally, not shifted into another oversized shell helper.
+
+
+      ### B2: Behavioral preservation during complexity reduction
+
+      Locations: DX56 sync tests and any helper assertions covering additions insertion,
+      non-duplication, and legacy preservation
+
+      Remediation: ensure the refactor preserves all now-passing DX56 expectations
+      and does not reintroduce marker or injection drift.
+
+      Grep hint: `rg -n "test_project_additions_injection|idempot|legacy|project additions|template_sync"
+      tests src`
+
+
+      ## Completion Criteria:
+
+      - Guard no longer reports `shell_too_complex` for `_merge_project_additions`
+      or any refactored sibling helper
+
+      - DX56 project-additions behavior remains preserved
+
+      - Evidence explains the structural simplification, not just guard suppression
+
+      - Out-of-scope guardrail: remaining non-DX56 pytest blocker families (including
+      DX91 fixture mismatch and subprocess respawn) are deferred unless directly impacted
+      by this refactor'
+    verification: '- Run `uv run invar guard --all` and confirm the `shell_too_complex`
+      finding for `_merge_project_additions` is removed
+
+      - Preserve the DX56 behavior with targeted sync tests and/or the full `uv run
+      pytest tests/ -x` path up to the next unrelated blocker
+
+      - Evidence must show how branching was reduced structurally without changing
+      the restored additions contract'
+    evidence_template: '## Template Sync Guard Complexity Repair
+
+      - blocker_fingerprint: template-sync-shell-too-complex
+
+      - root_cause_hypothesis: <why `_merge_project_additions` exceeded branch budget>
+
+      - why_previous_fix_failed: <what the DX56 behavior-first repair over-concentrated>
+
+      - structural_change: <how logic was decomposed/simplified>
+
+      - preserved_behaviors: <DX56 cases kept passing>
+
+      - sibling_search_evidence: <paths/helpers reviewed>
+
+      '
+    depends_on:
+    - final-verify.retest-dx56-project-additions-template-sync
+    agent: python-senior
