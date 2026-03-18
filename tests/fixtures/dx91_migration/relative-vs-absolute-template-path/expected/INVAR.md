@@ -88,7 +88,7 @@ def read_config(path: Path) -> Result[str, str]:
 ## Escape Hatches
 
 ```python
-# @invar:allow dead_export: CLI entry point called by framework
+# @invar:allow shell_complexity: orchestration requires many steps
 # @invar:allow shell_complexity: orchestration requires many steps
 ```
 
