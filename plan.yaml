@@ -26259,7 +26259,7 @@ phases:
       to broader non-suppressible migration closure.'
   - id: p6-config.gate
     name: Phase 6 Gate
-    status: pending
+    status: claimed
     description: 'Gate review: Verify Phase 6 completion. Config parsing handles all
       new fields. Exempt patterns parsed correctly. Pydantic validation catches invalid
       values. Guard passes.'
@@ -26267,6 +26267,8 @@ phases:
     depends_on:
     - p6-config.verify
     agent: gate-reviewer
+    claimed_by: gate-reviewer
+    claimed_at: '2026-03-18T20:56:26.537426+00:00'
 - id: p7-non-suppressible
   name: 'Phase 7: Non-suppressible enforcement'
   status: in_progress
