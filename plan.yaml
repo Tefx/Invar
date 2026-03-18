@@ -25647,33 +25647,6 @@ phases:
       \ pattern)\n- Run: `uv run invar guard --all` -> passed (`errors=0`, warnings/info\
       \ unchanged baseline)\n- Counts match approved policy: missing_contract=9, missing_doctest=4,\
       \ file_size=1, shell_too_complex=2, shell_pure_logic=1\n\nSpec link:\n- `p0-migration.human-review-and-approve-exemptions`"
-  - id: p0-migration.verify-guard-passes-after-migration
-    name: Verify guard passes after migration
-    status: pending
-    description: 'Run uv run invar guard --all and confirm Invar''s own codebase passes
-      cleanly after the marker migration.
-
-
-      Verify:
-
-      - All existing tests still pass
-
-      - Guard output shows no new violations
-
-      - The pyproject.toml exempt sections are well-formed TOML
-
-      - No inline @invar:allow markers remain for non-suppressible rules (dead_export,
-      stub_body, missing_contract, missing_doctest)
-
-
-      Note: The exempt config is not yet consumed by guard (that''s Phase 6). This
-      step only verifies that removing/migrating inline markers doesn''t break existing
-      guard behavior.'
-    verification: uv run invar guard --all passes. No non-suppressible inline markers
-      remain. pyproject.toml is valid TOML.
-    depends_on:
-    - p0-migration.remove-migrated-inline-markers
-    agent: integration-verifier
   - id: p0-migration.remove-migrated-inline-markers
     name: Remove migrated inline markers
     status: pending
@@ -28381,3 +28354,28 @@ phases:
     verification: Migration complete. All markers properly classified and migrated.
       Guard passes.
     agent: gate-reviewer
+  - id: p0-migration.verify-guard-passes-after-migration
+    name: Verify guard passes after migration
+    status: pending
+    description: 'Run uv run invar guard --all and confirm Invar''s own codebase passes
+      cleanly after the marker migration.
+
+
+      Verify:
+
+      - All existing tests still pass
+
+      - Guard output shows no new violations
+
+      - The pyproject.toml exempt sections are well-formed TOML
+
+      - No inline @invar:allow markers remain for non-suppressible rules (dead_export,
+      stub_body, missing_contract, missing_doctest)
+
+
+      Note: The exempt config is not yet consumed by guard (that''s Phase 6). This
+      step only verifies that removing/migrating inline markers doesn''t break existing
+      guard behavior.'
+    verification: uv run invar guard --all passes. No non-suppressible inline markers
+      remain. pyproject.toml is valid TOML.
+    agent: integration-verifier
