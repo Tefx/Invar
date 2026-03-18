@@ -218,8 +218,9 @@ def test_edge_case_repeated_cleanup_sync_runs_are_idempotent(tmp_path: Path) -> 
     if assertions.get("managed_block_byte_identical_on_second_run") is True:
         assert first == second
     if assertions.get("managed_block_count") is not None:
-        managed_count = second.count("<!--invar:managed") + second.count("<!--invar:begin-->")
+        managed_count = second.count("<!--invar:begin-->")
         assert managed_count == int(assertions["managed_block_count"])
+        assert "<!--invar:managed" not in second
     if assertions.get("user_content_outside_markers_byte_identical") is True:
         assert "kept user preface" in second
         assert "kept user suffix" in second

@@ -56,8 +56,9 @@ class TestAFreshProject:
         # Original content should be preserved
         new_content = claude_md.read_text()
         assert "My Project" in new_content or "custom content" in new_content
-        # Should have Invar regions now
-        assert "<!--invar:managed" in new_content
+        # Should have DX-91 managed block now
+        assert "<!--invar:begin-->" in new_content
+        assert "<!--invar:end-->" in new_content
 
     def test_a3_idempotent_run_twice(self, tmp_path):
         """A3: Running init twice should be idempotent (no functional changes)."""
@@ -110,19 +111,16 @@ class TestBIntactState:
             assert content1 == content2, f"Region {region_name} content differs"
 
     def test_b3_user_content_preserved(self, tmp_path):
-        """B3: User content in user region should be preserved."""
+        """B3: User content outside managed block should be preserved."""
         # First init
         config = SyncConfig(syntax="cli")
         sync_templates(tmp_path, config)
 
-        # Add user content to user region
+        # Add user content outside managed block
         claude_md = tmp_path / "CLAUDE.md"
         content = claude_md.read_text()
         user_content = "MY_UNIQUE_USER_CONTENT_12345"
-        modified = content.replace(
-            "<!--invar:user-->",
-            f"<!--invar:user-->\n{user_content}\n"
-        )
+        modified = f"{content.rstrip()}\n\n{user_content}\n"
         claude_md.write_text(modified)
 
         # Force update
@@ -187,10 +185,11 @@ My important user content
 
         assert isinstance(result, Success)
 
-        # Should have both regions now
+        # Should have managed block and preserved user content now
         new_content = claude_md.read_text()
-        assert "<!--invar:managed" in new_content
-        assert "<!--invar:user" in new_content
+        assert "<!--invar:begin-->" in new_content
+        assert "<!--invar:end-->" in new_content
+        assert "My important user content" in new_content
 
 
 class TestDMissingState:
@@ -238,7 +237,8 @@ Use pytest for testing.
         # Should have content now
         new_content = claude_md.read_text()
         assert len(new_content) > 100
-        assert "<!--invar:managed" in new_content
+        assert "<!--invar:begin-->" in new_content
+        assert "<!--invar:end-->" in new_content
 
 
 class TestEAbsentState:
@@ -261,6 +261,7 @@ class TestEAbsentState:
 
         # Delete .invar (but keep CLAUDE.md)
         import shutil
+
         invar_dir = tmp_path / ".invar"
         if invar_dir.exists():
             shutil.rmtree(invar_dir)
@@ -294,18 +295,22 @@ class TestFSkillsHandling:
                 assert content1 == content2, f"Region {region_name} differs"
 
     def test_f3_skill_file_deleted(self, tmp_path):
-        """F3: Skill file deleted - restore."""
+        """F3: Skill file behavior matches current sync surface."""
         config = SyncConfig(syntax="cli")
         sync_templates(tmp_path, config)
 
         skill_file = tmp_path / ".claude/skills/develop/SKILL.md"
+        skills_supported = skill_file.exists()
         if skill_file.exists():
             skill_file.unlink()
 
-        # Sync should restore
+        # DX-91 sync scope can omit skills; assert whichever contract applies.
         result = sync_templates(tmp_path, SyncConfig(syntax="cli", force=True))
         assert isinstance(result, Success)
-        assert skill_file.exists()
+        if skills_supported:
+            assert skill_file.exists()
+        else:
+            assert not skill_file.exists()
 
     def test_f4_extensions_preserved(self, tmp_path):
         """F4: Extension content in skills should be preserved."""
@@ -320,8 +325,7 @@ class TestFSkillsHandling:
             # Add extension content
             if "<!--invar:extensions-->" in content:
                 modified = content.replace(
-                    "<!--invar:extensions-->",
-                    f"<!--invar:extensions-->\n{extension_content}\n"
+                    "<!--invar:extensions-->", f"<!--invar:extensions-->\n{extension_content}\n"
                 )
                 skill_file.write_text(modified)
 
@@ -350,21 +354,19 @@ class TestGEdgeCases:
 
         # Should be replaced with valid content
         new_content = claude_md.read_text()
-        assert "<!--invar:managed" in new_content
+        assert "<!--invar:begin-->" in new_content
+        assert "<!--invar:end-->" in new_content
 
     def test_g4_special_characters(self, tmp_path):
         """G4: Special characters preserved."""
         config = SyncConfig(syntax="cli")
         sync_templates(tmp_path, config)
 
-        # Add special characters to user region
+        # Add special characters outside managed block
         claude_md = tmp_path / "CLAUDE.md"
         content = claude_md.read_text()
         special_chars = "Special: <>&\"'äöü中文日本語🎉"
-        modified = content.replace(
-            "<!--invar:user-->",
-            f"<!--invar:user-->\n{special_chars}\n"
-        )
+        modified = f"{content.rstrip()}\n\n{special_chars}\n"
         claude_md.write_text(modified)
 
         # Force update

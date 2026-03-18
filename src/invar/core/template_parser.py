@@ -302,21 +302,30 @@ def detect_claude_md_state(content: str) -> ClaudeMdState:
     - "absent": Empty content (file doesn't exist - caller handles this)
 
     Examples:
-        >>> # Intact state
-        >>> intact = '''<!--invar:managed version="5.0"-->
+        >>> # Intact state (DX-91 canonical markers)
+        >>> intact = '''<!--invar:begin-->
         ... managed content
-        ... <!--/invar:managed--><!--invar:project-->
-        ... <!--/invar:project--><!--invar:user-->
-        ... user content
-        ... <!--/invar:user-->'''
+        ... <!--invar:end-->'''
         >>> state = detect_claude_md_state(intact)
         >>> state.state
         'intact'
         >>> state.has_managed
         True
         >>> state.has_user
+        False
+
+        >>> # Intact state (legacy markers still accepted)
+        >>> legacy_intact = '''<!--invar:managed version="5.0"-->
+        ... managed content
+        ... <!--/invar:managed--><!--invar:user-->
+        ... user content
+        ... <!--/invar:user-->'''
+        >>> legacy = detect_claude_md_state(legacy_intact)
+        >>> legacy.state
+        'intact'
+        >>> legacy.has_user
         True
-        >>> "user content" in state.user_content
+        >>> "user content" in legacy.user_content
         True
 
         >>> # Missing state (no Invar markers)
@@ -341,9 +350,14 @@ def detect_claude_md_state(content: str) -> ClaudeMdState:
     if not content.strip():
         return ClaudeMdState(state="absent")
 
-    # Check for markers
-    has_managed_open = "<!--invar:managed" in content
-    has_managed_close = "<!--/invar:managed-->" in content
+    # Check for markers (DX-91 v2 + legacy compatibility)
+    has_v2_open = "<!--invar:begin-->" in content
+    has_v2_close = "<!--invar:end-->" in content
+    has_legacy_managed_open = "<!--invar:managed" in content
+    has_legacy_managed_close = "<!--/invar:managed-->" in content
+
+    has_managed_open = has_v2_open or has_legacy_managed_open
+    has_managed_close = has_v2_close or has_legacy_managed_close
     has_user_open = "<!--invar:user-->" in content
     has_user_close = "<!--/invar:user-->" in content
     has_project_open = "<!--invar:project-->" in content
@@ -356,13 +370,19 @@ def detect_claude_md_state(content: str) -> ClaudeMdState:
         version = version_match.group(1)
 
     # Determine state
-    managed_complete = has_managed_open and has_managed_close
+    managed_complete = (has_v2_open and has_v2_close) or (
+        has_legacy_managed_open and has_legacy_managed_close
+    )
     user_complete = has_user_open and has_user_close
     project_complete = has_project_open and has_project_close
+    user_partial = has_user_open != has_user_close
+    project_partial = has_project_open != has_project_close
 
     # All markers present
     any_marker = any(
         [
+            has_v2_open,
+            has_v2_close,
             has_managed_open,
             has_managed_close,
             has_user_open,
@@ -382,12 +402,13 @@ def detect_claude_md_state(content: str) -> ClaudeMdState:
         if "user" in parsed.regions:
             user_content = parsed.regions["user"].content
 
-    # Check if all required regions are complete
-    if managed_complete and user_complete:
+    # DX-91 contract: managed block is required; user/project blocks are optional,
+    # but if present they must be complete.
+    if managed_complete and not user_partial and not project_partial:
         return ClaudeMdState(
             state="intact",
             has_managed=True,
-            has_user=True,
+            has_user=user_complete,
             has_project=project_complete,
             version=version,
             user_content=user_content,

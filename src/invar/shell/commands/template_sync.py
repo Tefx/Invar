@@ -108,6 +108,14 @@ def _display_path(repo_root: Path, candidate: Path) -> str:
         return str(candidate)
 
 
+def _read_utf8_or_empty(path: Path) -> str:
+    """Read UTF-8 text; treat undecodable files as empty content."""
+    try:
+        return path.read_text(encoding="utf-8")
+    except UnicodeDecodeError:
+        return ""
+
+
 # @shell_complexity: rendering requires fallback sequencing across managed, protocol, and optional context templates.
 def _render_assets(templates_dir: Path, config: SyncConfig) -> Result[_RenderedAssets, str]:
     variables = {"syntax": config.syntax, "language": config.language, "version": "5.0"}
@@ -225,7 +233,7 @@ def _sync_managed_target(
     report: SyncReport,
 ) -> None:
     existed = target_file.exists()
-    existing_content = target_file.read_text(encoding="utf-8") if existed else ""
+    existing_content = _read_utf8_or_empty(target_file) if existed else ""
     merged = _merge_managed(existing_content, managed_block)
 
     if existed and merged == existing_content and not config.force:
@@ -250,7 +258,7 @@ def _sync_fully_managed(
     report: SyncReport,
 ) -> None:
     existed = target_file.exists()
-    existing_content = target_file.read_text(encoding="utf-8") if existed else ""
+    existing_content = _read_utf8_or_empty(target_file) if existed else ""
 
     if existed and existing_content == new_content and not config.force:
         report.skipped.append(target_rel)
