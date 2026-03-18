@@ -29648,7 +29648,7 @@ phases:
     agent: integration-verifier
   - id: p0-migration.remove-migrated-inline-markers
     name: Remove migrated inline markers after config support is live
-    status: rejected
+    status: skipped
     description: 'REJECTED HISTORICAL ATTEMPT - kept for plan history only.
 
 
@@ -29695,6 +29695,7 @@ phases:
     claimed_by: python-executor
     claimed_at: '2026-03-18T21:12:35.372775+00:00'
     done_at: '2026-03-18T21:39:47.942066+00:00'
+    skipped_reason: superseded
     rejection_reason: 'Merge blocked by pre-commit Invar Guard: marker removals surfaced
       10 blocking violations; step needs rework with coupled contract fixes or narrower
       marker scope.'
