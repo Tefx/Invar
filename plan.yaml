@@ -26360,7 +26360,7 @@ phases:
       expectation mismatch).'
   - id: cat-a-guard-runs.verify-guard-runs-py-shell-result-cleanup
     name: Verify guard_runs.py shell_result cleanup
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT TESTER, verify guard_runs.py shell_result elimination.
 
 
@@ -26389,6 +26389,37 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-18T02:03:36.102450+00:00'
+    done_at: '2026-03-18T02:10:48.908886+00:00'
+    evidence: 'Independent verification completed for guard_runs shell_result cleanup.
+
+
+      Verification:
+
+      - `grep -n ''@invar:allow shell_result'' src/invar/mcp/guard_runs.py` -> 0 matches.
+
+      - Helper return contracts verified as `Result[T,E]` across targeted functions;
+      callers updated with Success/Failure handling and unwrap usage.
+
+      - Guard check on modified surface: `uv run invar guard src/invar/mcp/guard_runs.py`
+      -> passed.
+
+      - Related guard-runs tests passed (6/6).
+
+      - Full-suite `pytest tests/` reports pre-existing unrelated failures on main
+      (DX55 regression/template and other unrelated test) not attributable to this
+      step.
+
+
+      Classification:
+
+      - blocker: none for cat-a step acceptance
+
+      - should_fix: unrelated pre-existing suite failures outside step scope
+
+
+      Spec link:
+
+      - `cat-a-guard-runs.fix-shell-result-in-guard-runs-py-8-markers`'
   - id: cat-a-guard-runs.gate-category-a-guard-runs-py
     name: 'Gate: Category A guard_runs.py'
     status: pending
