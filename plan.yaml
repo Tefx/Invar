@@ -27853,7 +27853,7 @@ phases:
       \ blocker family deferred for next remediation loop."
   - id: final-verify.retest-dx56-project-additions-template-sync
     name: Retest DX56 project additions template sync contract
-    status: claimed
+    status: done
     description: 'Re-test the downstream DX56 project-additions sync blocker family
       from a fresh, independent perspective after the batched contract repair.
 
@@ -27905,6 +27905,19 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-18T14:44:13.231617+00:00'
+    done_at: '2026-03-18T14:47:07.203032+00:00'
+    evidence: "Fresh/cold retest executed after DX56 project-additions repair.\n\n\
+      Results:\n- DX56 project-additions blocker family is cleared (previous failing\
+      \ DX56 sync tests now pass).\n- `uv run pytest tests/ -x` improved failure count\
+      \ (10 -> 8), with remaining failures in other families (DX91 fixture content\
+      \ drift, subprocess respawn).\n- New blocker introduced by latest fix: `uv run\
+      \ invar guard --all` reports `shell_too_complex` at `template_sync._merge_project_additions`\
+      \ (5 branches > 3).\n\nIssue classification:\n- blocker (new regression): template_sync\
+      \ guard complexity violation.\n- unrelated remaining failures: DX91 fixture\
+      \ mismatch + subprocess respawn family.\n\nBatched remediation handling:\n-\
+      \ Added one fix + one retest loop for new regression family:\n  - `final-verify.fix-template-sync-guard-complexity`\n\
+      \  - `final-verify.retest-template-sync-guard-complexity`\n- Final gate rewired\
+      \ to depend on latest retest path.\n\nSpec link:\n- `final-verify.fix-dx56-project-additions-template-sync`"
   - id: final-verify.fix-template-sync-guard-complexity
     name: Fix template_sync guard complexity regression while preserving DX56 additions
       behavior
