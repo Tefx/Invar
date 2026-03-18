@@ -25613,16 +25613,64 @@ phases:
   - id: p4-guard-integration.implement
     name: Integrate check_escape_budget into _scan_and_check
     status: pending
-    description: "Add 3-5 lines to src/invar/shell/commands/guard.py in _scan_and_check(),\
-      \ after the DX-33 duplicate escape reasons check (~line 176, after check_duplicate_escape_reasons):\n\
-      \n```python\n# DX-96: Check escape hatch budget limits\nfrom invar.core.escape_budget\
-      \ import check_escape_budget\nfor budget_violation in check_escape_budget(report.escape_hatches,\
-      \ config):\n    report.add_violation(budget_violation)\n```\n\nThis is pure\
-      \ wiring -- import and call. No logic changes.\n\nFile: src/invar/shell/commands/guard.py\
-      \ (function _scan_and_check, after line ~176)"
-    verification: uv run invar guard --all passes. check_escape_budget is called during
-      guard execution. Invar's own codebase does not trigger any new violations (existing
-      escape hatches are within default limits).
+    description: 'Integrate `check_escape_budget(summary, config, file_infos)` into
+      `_scan_and_check` in `src/invar/shell/commands/guard.py` using the Phase 3 contract
+      exactly.
+
+
+      Scope:
+
+      - Wire the import and call in the guard pipeline after escape hatch collection
+      artifacts exist and after the DX-33 duplicate escape reasons check.
+
+      - Pass all three required inputs from scan artifacts: `report.escape_hatches`
+      as the summary input, `config`, and `file_infos` gathered in the same scan/check
+      path.
+
+      - Preserve behavior when symbol or file info is unavailable: the integration
+      must use an explicit fallback path that still runs the helper without crashing,
+      and must not silently skip budget evaluation because metadata is partial or
+      absent.
+
+      - Ensure the wiring location is on the real `_scan_and_check` execution path
+      used by `uv run invar guard --all`; no dead import, no helper call on an unreachable
+      branch, and no silent drop path where collected escape hatches bypass budget
+      checking.
+
+
+      High-risk API-signature integration requirements:
+
+      - This is a helper-signature integration, not a 2-arg shim. Do not narrow or
+      wrap the API back to two arguments.
+
+      - If `file_infos` is unavailable from a given scan path, make the fallback explicit
+      at the call boundary and preserve existing guard behavior apart from adding
+      budget evaluation.
+
+      - Keep import/wiring localized to the guard pipeline; do not add alternate shadow
+      call sites.
+
+
+      Out of scope:
+
+      - No changes to `check_escape_budget` contract or core semantics.
+
+      - No output formatting changes.
+
+      - No config parsing changes.'
+    verification: '- Main path: `uv run invar guard --all` exercises the real `_scan_and_check`
+      pipeline and the wired 3-argument `check_escape_budget(report.escape_hatches,
+      config, file_infos)` path
+
+      - Integration proof: evidence shows the exact import/call location in `src/invar/shell/commands/guard.py`
+      and confirms there is no silent drop path between escape hatch collection and
+      budget evaluation
+
+      - Regression path: targeted coverage proves behavior remains safe when symbol/file
+      info is unavailable or partial, with explicit fallback expectations documented
+
+      - API integrity: no remaining 2-argument call or compatibility shim exists in
+      the guard integration path'
     agent: python-executor
   - id: p4-guard-integration.verify
     name: Verify guard integration
