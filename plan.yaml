@@ -26621,7 +26621,7 @@ phases:
       (DX55 template marker expectation).'
   - id: cat-a-handlers.verify-handlers-py-shell-result-cleanup
     name: Verify handlers.py shell_result cleanup
-    status: pending
+    status: claimed
     description: 'As an INDEPENDENT TESTER, verify handlers.py shell_result elimination.
 
 
@@ -26650,6 +26650,8 @@ phases:
     depends_on:
     - cat-a-handlers.fix-shell-result-in-handlers-py-21-markers
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-18T02:37:45.087130+00:00'
   - id: cat-a-handlers.gate-category-a-handlers-py
     name: 'Gate: Category A handlers.py'
     status: pending
