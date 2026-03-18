@@ -28273,7 +28273,7 @@ phases:
       - commit `b9d9536` (squash merge of worktree commit `260385d`)\n"
   - id: final-verify.retest-dx91-expected-invar-fixtures
     name: Retest DX91 expected INVAR.md fixture synchronization
-    status: pending
+    status: claimed
     description: 'Re-test the DX91 expected-fixture contract blocker family from a
       fresh, independent perspective after syncing the expected INVAR.md corpus.
 
@@ -28323,3 +28323,5 @@ phases:
     depends_on:
     - final-verify.fix-dx91-expected-invar-fixtures
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-18T15:13:32.391415+00:00'
