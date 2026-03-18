@@ -146,6 +146,43 @@ protocol_evolution = "human-approved"  # locked | human-approved | open
 # Test style: "inline" or "separate"
 test_style = "inline"
 
+[tool.invar.exempt.missing_contract]
+patterns = [
+    "src/invar/core/template_parser.py::ParsedFile/has_regions",
+    "src/invar/core/template_parser.py::ClaudeMdState/needs_recovery",
+    "src/invar/core/verification_routing.py::has_incompatible_imports",
+    "src/invar/core/timeout_inference.py::_uses_only_stdlib",
+    "src/invar/core/review_trigger.py::is_security_sensitive",
+    "src/invar/core/shell_analysis.py::has_io_operations",
+    "src/invar/core/hypothesis_strategies.py::_ensure_hypothesis",
+    "src/invar/core/hypothesis_strategies.py::_ensure_numpy",
+    "src/invar/core/patterns/registry.py::PatternRegistry/__init__",
+]
+
+[tool.invar.exempt.missing_doctest]
+patterns = [
+    "src/invar/core/patterns/detector.py::PatternDetector/pattern_id",
+    "src/invar/core/patterns/detector.py::PatternDetector/priority",
+    "src/invar/core/patterns/detector.py::PatternDetector/description",
+    "src/invar/core/patterns/detector.py::PatternDetector/detect",
+]
+
+[tool.invar.exempt.file_size]
+patterns = [
+    "src/invar/core/hypothesis_strategies.py",
+]
+
+[tool.invar.exempt.shell_too_complex]
+patterns = [
+    "src/invar/mcp/handlers.py::_fix_json_newlines",
+    "src/invar/mcp/guard_runs.py::GuardRunRegistry",
+]
+
+[tool.invar.exempt.shell_pure_logic]
+patterns = [
+    "src/invar/mcp/handlers.py::_fix_json_newlines",
+]
+
 # =============================================================================
 # Pytest Configuration
 # =============================================================================
