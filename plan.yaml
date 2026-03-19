@@ -26717,7 +26717,7 @@ phases:
   steps:
   - id: final-gate.acceptance
     name: Final acceptance verification against all 7 criteria
-    status: claimed
+    status: done
     description: 'End-to-end acceptance verification against ALL 10 acceptance criteria
       from revised proposal:
 
@@ -26821,6 +26821,48 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-18T23:46:51.086466+00:00'
+    done_at: '2026-03-19T01:05:23.816303+00:00'
+    evidence: '## Final Acceptance Evidence
+
+
+      - Criteria 1-7,9-10 validated via focused scenarios and implementation checks
+      in the final acceptance run.
+
+      - Criterion 8 validated against the post-migration verified path from `p0-migration.verify-guard-passes-after-migration`,
+      where `uv run invar guard --all` passed with zero blocking errors on the remediated
+      codebase.
+
+
+      Per-criterion highlights:
+
+      1) Limit exceed paths produce failing guard outcome with ERROR violations.
+
+      2) Non-suppressible inline markers map to `escape_hatch_non_suppressible` with
+      human-authorization guidance.
+
+      3) 3+ same-function stacking emits unconditional `escape_hatch_combination`
+      ERROR.
+
+      4) 2 same-function markers are double-counted in budget path.
+
+      5) Threshold logic emits WARNING at ceil(limit*threshold).
+
+      6) Config exempt patterns bypass inline budget counting.
+
+      7) Non-suppressible classes (incl. dead_export) fail immediately on inline suppression
+      attempts.
+
+      8) Invar codebase guard pass confirmed on remediated active path.
+
+      9) Non-suppressible severity is effectively immune to severity overrides (hard
+      error path).
+
+      10) JSON/violation model distinguishes file-level and project-level contexts.
+
+
+      Result:
+
+      - Final acceptance criteria satisfied on active remediated path.'
   - id: final-gate.gate
     name: Final Gate Review
     status: pending
