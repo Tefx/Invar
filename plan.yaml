@@ -26865,7 +26865,7 @@ phases:
       - Final acceptance criteria satisfied on active remediated path.'
   - id: final-gate.gate
     name: Final Gate Review
-    status: pending
+    status: claimed
     description: "Final gate review for DX-96: Escape Hatch Strict Gating.\n\nreview_depth:\
       \ THOROUGH\nreview_depth_rationale: |\n  - Security-critical feature (prevents\
       \ agent abuse of escape hatches)\n  - 7 implementation phases touching 6+ files\n\
@@ -26880,6 +26880,8 @@ phases:
     depends_on:
     - final-gate.acceptance
     agent: gate-reviewer
+    claimed_by: gate-reviewer
+    claimed_at: '2026-03-19T01:06:50.292319+00:00'
 - id: p0-migration
   name: 'Phase 0: Migration — Move Invar''s own escape hatches to pyproject.toml exempt'
   status: done
