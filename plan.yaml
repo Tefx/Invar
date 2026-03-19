@@ -26708,7 +26708,7 @@ phases:
       - PASS; phase-level non-suppressible enforcement behavior is in place.'
 - id: final-gate
   name: 'Final Gate: Full Integration Verification'
-  status: in_progress
+  status: done
   depends_on:
   - p5-output
   - p6-config
@@ -26865,7 +26865,7 @@ phases:
       - Final acceptance criteria satisfied on active remediated path.'
   - id: final-gate.gate
     name: Final Gate Review
-    status: claimed
+    status: done
     description: "Final gate review for DX-96: Escape Hatch Strict Gating.\n\nreview_depth:\
       \ THOROUGH\nreview_depth_rationale: |\n  - Security-critical feature (prevents\
       \ agent abuse of escape hatches)\n  - 7 implementation phases touching 6+ files\n\
@@ -26882,6 +26882,42 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-19T01:06:50.292319+00:00'
+    done_at: '2026-03-19T01:16:39.261374+00:00'
+    evidence: 'Artifact:
+
+      - Commit: 40f1101 (worktree HEAD)
+
+
+      Verification:
+
+      - Reviewed all DX-96 phases P0-P8 and final acceptance evidence -> all complete
+      with supporting outputs.
+
+      - Checked acceptance criteria 1-10 from final acceptance step evidence -> all
+      satisfied, including `uv run invar guard --all --static` with errors=0.
+
+      - Audited trust-boundary message path for non-suppressible inline violations
+      -> guidance does not leak pyproject.toml syntax or exemption pattern details.
+
+      - Confirmed core-zone compliance for `src/invar/core/escape_budget.py` and `src/invar/core/exempt_patterns.py`
+      -> no I/O imports, contracts/doctests preserved.
+
+      - Verified output contract includes `escape_hatches.gating.{status,per_rule_violations,budget,non_suppressible,combination}`
+      -> matches proposal intent.
+
+
+      Spec link:
+
+      - `final-gate.gate` verification: "DX-96 complete. All acceptance criteria met.
+      Guard passes on own codebase. Ready for release."
+
+
+      Notes:
+
+      - Minor non-blocking observations recorded by gate reviewer (rule-name naming
+      mismatch context and implicit severity-override immunity path).
+
+      - Gate verdict: PASS, ready for release.'
 - id: p0-migration
   name: 'Phase 0: Migration — Move Invar''s own escape hatches to pyproject.toml exempt'
   status: done
