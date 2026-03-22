@@ -30495,13 +30495,13 @@ phases:
       for this phase.'
 - id: contract
   name: Contract + Helper Extraction
-  status: pending
+  status: in_progress
   depends_on:
   - verify
   steps:
   - id: contract.protocol-abc-helper
     name: protocol-abc-helper
-    status: pending
+    status: claimed
     description: "Contract step: Extract or extend a helper function for Protocol/ABC\
       \ detection.\n\nstep_type: contract\ncontract_purity: ENFORCED\ncontract_outputs:\n\
       \  - signatures\n  - type_defs\n  - stubs\n\nFile: src/invar/core/dead_export.py\n\
@@ -30527,6 +30527,8 @@ phases:
     - src/invar/core/dead_export.py
     - DX-95
     agent: python-executor
+    claimed_by: python-executor
+    claimed_at: '2026-03-22T18:54:31.417464+00:00'
   - id: contract.check-dead-exports-class
     name: check-dead-exports-class
     status: pending
