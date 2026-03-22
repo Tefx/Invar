@@ -30352,3 +30352,64 @@ phases:
 - id: verify
   name: Prerequisite Verification
   status: pending
+  steps:
+  - id: verify.refs-index-classes
+    name: refs-index-classes
+    status: pending
+    description: 'Prerequisite verification: Confirm that references.py already indexes
+      class symbols (not just functions/constants).
+
+
+      Rationale: The dead_export extension to classes depends on references.py being
+      able to find class references. If it cannot, we need a references.py fix step
+      before proceeding.
+
+
+      Required checks:
+
+      1. Read src/invar/core/references.py and identify how symbols are collected
+
+      2. Verify that class definitions (ast.ClassDef) are included in the symbol index
+
+      3. Verify that class references (imports, attribute access, base-class usage)
+      are tracked
+
+      4. Run a targeted test: pick an existing public class in Invar''s own codebase
+      and confirm `invar refs <file>::<ClassName>` returns its usages
+
+
+      If classes are NOT indexed: report as BLOCKER so the planner can insert a references.py
+      fix phase.'
+    verification: '- invar refs <file>::<ClassName> returns at least one reference
+      for a known public class
+
+      - AST visitor in references.py handles ClassDef nodes
+
+      - Verdict: PASS (classes indexed) or BLOCKER (classes not indexed)'
+    refs:
+    - src/invar/core/references.py
+    - DX-95
+    agent: integration-verifier
+  - id: verify.gate
+    name: gate
+    status: pending
+    description: 'Gate review: Verify prerequisite verification phase completion.
+
+
+      review_depth: QUICK
+
+
+      Criteria:
+
+      - refs-index-classes step completed with PASS verdict
+
+      - If BLOCKER: gate MUST block and report that a references.py fix phase is needed
+      before proceeding'
+    verification: '- Prerequisite check passed: classes are indexed by references.py
+
+      - No blockers reported
+
+      - Ready for contract phase'
+    depends_on:
+    - verify.refs-index-classes
+    agent: gate-reviewer
