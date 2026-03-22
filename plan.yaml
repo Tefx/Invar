@@ -31531,13 +31531,13 @@ phases:
       - No new class dead_export false positives observed'
 - id: doc_sync
   name: Documentation Sync
-  status: pending
+  status: in_progress
   depends_on:
   - selftest
   steps:
   - id: doc_sync.update-docs
     name: update-docs
-    status: pending
+    status: claimed
     description: 'Documentation sync: Update project documentation to reflect class
       dead-export detection.
 
@@ -31576,6 +31576,8 @@ phases:
     - INVAR.md
     - DX-95
     agent: doc-reviewer
+    claimed_by: doc-reviewer
+    claimed_at: '2026-03-22T22:03:02.867672+00:00'
   - id: doc_sync.gate
     name: gate
     status: pending
