@@ -1,0 +1,12 @@
+# =============================================================
+# MANAGED FILE — DO NOT EDIT DIRECTLY
+# This file is owned by vectl. Direct edits bypass CAS write
+# protection, lock recalculation, and schema validation.
+#
+# Use: vectl_* MCP tools (preferred)  OR  vectl <command> (CLI fallback)
+# Docs: vectl guide  OR  MCP: vectl_guide
+# =============================================================
+version: 1
+project: 'DX-97: Extend dead_export to detect unreferenced public classes'
+context: 'Implementation plan for DX-97: Extend dead_export to detect unreferenced
+  public classes.'
