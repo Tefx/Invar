@@ -31386,7 +31386,7 @@ phases:
       - Change scoped to subprocess respawn path; no plan/orchestrator files touched.'
   - id: selftest.retest-guard-and-pytest
     name: Retest full self-test suite after pytest respawn fix
-    status: claimed
+    status: done
     description: 'Independent retest after `selftest.fix-pytest-uvx-respawn`.
 
 
@@ -31476,6 +31476,30 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-22T21:38:40.989602+00:00'
+    done_at: '2026-03-22T21:46:19.949659+00:00'
+    evidence: 'Artifact:
+
+      - Commit hash(es): acd47bd (retest worktree head including prior fix)
+
+
+      Verification:
+
+      - Run: uv run pytest tests/ -v -> PASSED (342 passed, 28 skipped, 0 failed)
+
+      - Run: uv run invar guard --all -> PASSED (0 errors; warning/dead_export baseline
+      unchanged)
+
+
+      Spec link:
+
+      - DX-95
+
+
+      Gaps/Notes:
+
+      - Previously failing respawn test now passes in full-suite run
+
+      - No new class dead_export false positives observed'
 - id: doc_sync
   name: Documentation Sync
   status: locked
