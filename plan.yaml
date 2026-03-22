@@ -30708,7 +30708,7 @@ phases:
       leakage; ready for test phase.'
 - id: test
   name: Tests First
-  status: in_progress
+  status: done
   depends_on:
   - contract
   steps:
@@ -30814,7 +30814,7 @@ phases:
       - No product implementation code added'
   - id: test.gate
     name: gate
-    status: claimed
+    status: done
     description: 'Gate review: Verify test phase completion.
 
 
@@ -30844,9 +30844,37 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-22T19:31:06.830813+00:00'
+    done_at: '2026-03-22T19:33:57.249419+00:00'
+    evidence: 'Artifact:
+
+      - Commit hash: 6229937
+
+
+      Verification:
+
+      - Run: uv run pytest tests/core/test_dead_export.py --collect-only -> 12 tests
+      collected including AC1-AC7 additions
+
+      - Run: uv run pytest tests/core/test_dead_export.py -v --tb=short -> 4 failed,
+      8 passed (expected red phase)
+
+      - Run: git show 6229937 --stat -> only tests/core/test_dead_export.py changed
+
+      - Check: AC1-AC7 test functions present and mapped by name
+
+
+      Spec link:
+
+      - DX-95
+
+
+      Gate decision:
+
+      - PASS: test phase complete, structured AC coverage present, no implementation
+      leakage, ready for implementation phase.'
 - id: impl
   name: Implementation
-  status: locked
+  status: pending
   depends_on:
   - test
   steps:
