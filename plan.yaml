@@ -31792,7 +31792,7 @@ phases:
       - PASS'
   - id: deep_review.gate
     name: gate
-    status: pending
+    status: claimed
     description: 'Final gate review: Verify deep review phase completion.
 
 
@@ -31824,6 +31824,8 @@ phases:
     - deep_review.wiring-audit
     - deep_review.recheck-dead-export-dx96
     agent: gate-reviewer
+    claimed_by: gate-reviewer
+    claimed_at: '2026-03-22T23:42:27.022151+00:00'
   - id: deep_review.fix-dead-export-dx96
     name: Fix dead_export DX-96 consistency
     status: done
