@@ -31879,3 +31879,54 @@ phases:
     depends_on:
     - deep_review.spec-conformance
     agent: python-senior
+  - id: deep_review.recheck-dead-export-dx96
+    name: Recheck dead_export DX-96 conformance
+    status: pending
+    description: 'Independent spec-recheck after the dead_export remediation.
+
+
+      Validate from a fresh perspective that deep_review.spec-conformance''s finding
+      is closed without weakening DX-96.
+
+
+      Required checks:
+
+      - function and class paths in `src/invar/core/dead_export.py` now treat dead_export
+      escape hatches consistently
+
+      - dead_export remains non-suppressible inline per DX-96 intent
+
+      - Protocol/ABC exemptions still behave as documented
+
+      - guard-level behavior remains conformant using the project command family `uv
+      run invar guard --all`
+
+
+      This step reuses the original spec-conformance concern set; do not replace or
+      skip `deep_review.spec-conformance`.'
+    verification: '- Produce a focused conformance report for the dead_export escape-hatch
+      issue
+
+      - Cite implementation locations for function path, class path, and exemption
+      behavior
+
+      - Run or require evidence for `uv run invar guard --all` as the guard-level
+      conformance check
+
+      - Verdict: PASS or ISSUES_FOUND'
+    evidence_template: '## Dead Export Recheck Report
+
+      **Issue under review**: dead_export DX-96 escape-hatch consistency
+
+      **Implementation locations checked**: <file:line entries>
+
+      **Consistency verdict**: <PASS|ISSUES_FOUND>
+
+      **DX-96 non-suppressible verdict**: <PASS|ISSUES_FOUND>
+
+      **Guard command evidence**: `uv run invar guard --all`
+
+      **Notes**: <remaining drift or none>'
+    depends_on:
+    - deep_review.fix-dead-export-dx96
+    agent: doc-reviewer
