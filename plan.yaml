@@ -31231,7 +31231,8 @@ phases:
   - id: selftest.gate
     name: gate
     status: pending
-    description: 'Gate review: Verify self-test phase completion.
+    description: 'Gate review: Verify self-test phase completion after remediation
+      and independent retest.
 
 
       review_depth: QUICK
@@ -31239,20 +31240,27 @@ phases:
 
       Criteria:
 
-      - invar guard --all passed
+      - `selftest.guard-all` evidence captured the original blocker state
 
-      - No false positives from class detection
+      - `selftest.fix-pytest-uvx-respawn` addressed the repeated pytest respawn failure
+
+      - `selftest.retest-guard-and-pytest` reran `uv run pytest tests/ -v` and `uv
+      run invar guard --all`
+
+      - No new false positives from class detection
 
       - Full test suite passed
 
       - Evidence is actual command output, not summary'
-    verification: '- Self-test evidence reviewed
+    verification: '- Retest evidence reviewed
 
-      - No false positives
+      - Full test suite passed in `selftest.retest-guard-and-pytest`
+
+      - `uv run invar guard --all` passed with no new class dead_export false positives
 
       - Ready for doc-sync phase'
     depends_on:
-    - selftest.guard-all
+    - selftest.retest-guard-and-pytest
     agent: gate-reviewer
   - id: selftest.fix-pytest-uvx-respawn
     name: Fix pre-existing pytest respawn regression
