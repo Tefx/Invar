@@ -30984,7 +30984,7 @@ phases:
       timestamp: '2026-03-22T19:46:23.914320+00:00'
   - id: impl.extend-dead-export
     name: extend-dead-export
-    status: claimed
+    status: done
     description: "Implementation step: Extend check_dead_exports to scan for unreferenced\
       \ public classes.\n\nstep_type: implementation\n\nFile: src/invar/core/dead_export.py\n\
       Function: check_dead_exports (existing)\n\nImplementation requirements:\n- Add\
@@ -31017,6 +31017,41 @@ phases:
     agent: python-executor
     claimed_by: python-executor
     claimed_at: '2026-03-22T20:35:20.201914+00:00'
+    done_at: '2026-03-22T20:39:14.312144+00:00'
+    evidence: 'Artifact:
+
+      - Commit hash(es): cebc5d46480c1730fdd645e0ca435f696e8c5910
+
+
+      Files changed:
+
+      - src/invar/core/dead_export.py
+
+
+      Verification:
+
+      - Run: uv run ruff check src/invar/core/dead_export.py -> passed
+
+      - Run: uv run python -m pytest tests/core/test_dead_export.py -v -> 12 passed
+
+      - Run: PYTHONPATH="${PWD}/src" .venv/bin/invar guard --human src/invar/core/dead_export.py
+      -> passed
+
+
+      Spec link:
+
+      - DX-95
+
+
+      Gaps/Notes:
+
+      - Added SymbolKind.CLASS handling in check_dead_exports
+
+      - Protocol/ABC classes exempted via _is_protocol_or_abc
+
+      - __all__ and escape hatch behavior preserved for class path
+
+      - Existing dead_export tests remain passing'
   - id: impl.update-rule-meta
     name: update-rule-meta
     status: done
