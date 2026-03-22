@@ -30413,3 +30413,6 @@ phases:
     depends_on:
     - verify.refs-index-classes
     agent: gate-reviewer
+- id: contract
+  name: Contract + Helper Extraction
+  status: pending
