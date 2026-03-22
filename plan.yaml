@@ -31669,7 +31669,7 @@ phases:
   steps:
   - id: deep_review.spec-conformance
     name: spec-conformance
-    status: claimed
+    status: done
     description: 'Spec conformance verification: Compare implemented behavior against
       DX-95 acceptance criteria, field by field.
 
@@ -31722,6 +31722,15 @@ phases:
     agent: doc-reviewer
     claimed_by: vectl-orchestrator
     claimed_at: '2026-03-22T22:36:15.084811+00:00'
+    done_at: '2026-03-22T22:36:22.398440+00:00'
+    evidence: "Artifact:\n- Review evidence task: ses_2e8576761ffehLWmAlXXtoz88u\n\
+      \nVerification:\n- AC1-AC8 mapped and reviewed against DX-95 implementation/tests\n\
+      - Conformance issue identified: inconsistent dead_export escape-hatch handling\
+      \ between function and class paths in src/invar/core/dead_export.py\n\nSpec\
+      \ link:\n- DX-95\n- DX-96 non-suppressible dead_export semantics\n\nDisposition:\n\
+      - Issue promoted to owned remediation via planner-added batched steps:\n  -\
+      \ deep_review.fix-dead-export-dx96\n  - deep_review.recheck-dead-export-dx96\n\
+      - deep_review.gate rewired to require remediation recheck before closure."
   - id: deep_review.wiring-audit
     name: wiring-audit
     status: done
