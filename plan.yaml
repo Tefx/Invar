@@ -30925,3 +30925,113 @@ phases:
   status: locked
   depends_on:
   - doc_sync
+  steps:
+  - id: deep_review.spec-conformance
+    name: spec-conformance
+    status: pending
+    description: 'Spec conformance verification: Compare implemented behavior against
+      DX-95 acceptance criteria, field by field.
+
+
+      This is NOT ''do tests pass'' -- it is ''does the implementation match what
+      the spec says.''
+
+
+      Required checks (against DX-95 desired_behavior + acceptance_criteria):
+
+      1. Dead public class detected when zero external references
+
+      2. Referenced public class NOT reported
+
+      3. Protocol subclass exempt
+
+      4. ABC subclass exempt
+
+      5. Escape hatch works for classes
+
+      6. Mixed symbols handled correctly
+
+      7. Inner/nested classes ignored (only top-level)
+
+      8. invar guard --all passes on Invar itself
+
+
+      For EACH criterion, cite the spec section and the implementation location.
+
+
+      Also verify:
+
+      - rule_meta.py correctly describes CLASS support
+
+      - Documentation matches implementation
+
+      - No undocumented behavior added'
+    verification: '- All 8 acceptance criteria verified against implementation
+
+      - Spec-code conformance table produced
+
+      - No drift found (or drift documented as issues)
+
+      - Verdict: PASS or ISSUES_FOUND'
+    refs:
+    - DX-95
+    - src/invar/core/dead_export.py
+    - src/invar/core/rule_meta.py
+    - INVAR.md
+    agent: doc-reviewer
+  - id: deep_review.wiring-audit
+    name: wiring-audit
+    status: pending
+    description: 'Wiring completeness audit: Verify every new symbol is reachable
+      at runtime.
+
+
+      Required checks:
+
+      1. _is_protocol_or_abc is called from check_dead_exports (not orphaned)
+
+      2. rule_meta CLASS entry is consumed by the guard runner
+
+      3. No new public exports added that lack external consumers
+
+      4. No identity-lambda contracts (lambda x: x)
+
+      5. All @pre/@post contracts reference real parameters with real comparisons
+
+
+      Use grep/import-trace output as evidence, not assertions.'
+    verification: '- All new symbols are reachable at runtime
+
+      - No orphan exports
+
+      - No identity-lambda contracts
+
+      - Verdict: PASS or ISSUES_FOUND'
+    agent: wiring-auditor
+  - id: deep_review.gate
+    name: gate
+    status: pending
+    description: 'Final gate review: Verify deep review phase completion.
+
+
+      review_depth: STANDARD
+
+
+      Criteria:
+
+      - Spec conformance audit passed
+
+      - Wiring audit passed
+
+      - No blocking issues found
+
+      - Plan is complete'
+    verification: '- Both audits passed
+
+      - No blockers
+
+      - Plan complete'
+    depends_on:
+    - deep_review.spec-conformance
+    - deep_review.wiring-audit
+    agent: gate-reviewer
