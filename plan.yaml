@@ -31806,3 +31806,76 @@ phases:
     - deep_review.spec-conformance
     - deep_review.wiring-audit
     agent: gate-reviewer
+  - id: deep_review.fix-dead-export-dx96
+    name: Fix dead_export DX-96 consistency
+    status: pending
+    description: 'Batched remediation: align dead_export escape-hatch handling with
+      DX-96 non-suppressible behavior so class and function paths enforce the same
+      policy.
+
+
+      Scope:
+
+      - `src/invar/core/dead_export.py`
+
+      - any directly coupled metadata/policy surfaces needed to keep rule behavior
+      and diagnostics consistent
+
+
+      Required outcomes:
+
+      - remove or refactor any inline `has_allow_marker(..., "dead_export")` suppression
+      path that lets function analysis bypass non-suppressible enforcement
+
+      - ensure class handling and function handling share one authoritative DX-96
+      disposition for dead_export escape hatches
+
+      - preserve documented Protocol/ABC exemptions while making dead_export non-suppressible
+      uniformly
+
+      - search for sibling dead_export suppression branches beyond the reported location
+      so the rule does not stay split by symbol kind
+
+
+      Root Cause vs Symptom:
+
+      - Root cause: dead_export policy enforcement is split by symbol path, so function
+      analysis still honors an inline escape hatch while class analysis does not
+
+      - Symptom: deep review found inconsistent rule behavior and DX-96 drift in `src/invar/core/dead_export.py`
+
+      - Why this fix is not surface-level: it must reconcile the rule''s authoritative
+      suppression policy rather than patch only one branch
+
+
+      Completion Criteria:
+
+      - dead_export inline suppression behavior is uniform across symbol kinds
+
+      - DX-96 non-suppressible intent is reflected in the authoritative path used
+      by dead_export
+
+      - sibling search completed for dead_export allow-marker logic
+
+      - follow-on verification can cite one consistent implementation story'
+    verification: '- Root-cause remediation evidence explains how dead_export now
+      enforces one non-suppressible policy
+
+      - Sibling search evidence covers other dead_export allow-marker branches
+
+      - Exact guard command family for downstream verification is `uv run invar guard
+      --all`
+
+      - No new symbol-kind split remains for dead_export suppression semantics'
+    evidence_template: '## Remediation Evidence
+
+      **Policy path updated**: <file:line>
+
+      **Sibling search performed**: <locations checked and result>
+
+      **DX-96 alignment note**: <how non-suppressible handling is now uniform>
+
+      **Guard command reserved for recheck**: `uv run invar guard --all`'
+    depends_on:
+    - deep_review.spec-conformance
+    agent: python-senior
