@@ -8,17 +8,16 @@
 # =============================================================
 version: 1
 project: invar
-strategy_ref: Contract-first where applicable. 7 implementation phases matching proposal
-  exactly, plus final gate. Phases 5 and 6 can run in parallel. All other phases are
-  serial per proposal dependency chain.
+strategy_ref: Contract-first (contract -> test -> implementation). Balanced style.
+  Single-module focus on dead_export.py with minor rule_meta.py touch.
 context: 'DX-96: Escape Hatch Strict Gating. Implements tiered escape hatch limits
   (suppressible/expensive/non-suppressible), per-file + per-project + aggregate budget
   gating, combination penalties, and non-suppressible enforcement. Proposal: docs/proposals/DX-96-escape-hatch-strict-gating.md.
   All code is Python. Core modules require @pre/@post contracts + doctests. Shell
   modules return Result[T, E].'
-project_guidance: 'DX-96: Eliminate all remaining escape hatches in Invar codebase
-  except: missing_contract on __init__ (1, kept), shell_pure_logic (1, kept), shell_too_complex/shell_complexity
-  (3, kept). Target: reduce ~83 real @invar:allow markers to 5-6 kept markers.'
+project_guidance: Extend the dead_export guard rule to detect unreferenced public
+  classes (not just functions/constants). Protocol and ABC subclasses are exempt.
+  This is a focused, low-risk extension to an existing rule.
 phases:
 - id: dx-80
   name: DX-80
