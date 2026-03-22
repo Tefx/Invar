@@ -30501,7 +30501,7 @@ phases:
   steps:
   - id: contract.protocol-abc-helper
     name: protocol-abc-helper
-    status: claimed
+    status: done
     description: "Contract step: Extract or extend a helper function for Protocol/ABC\
       \ detection.\n\nstep_type: contract\ncontract_purity: ENFORCED\ncontract_outputs:\n\
       \  - signatures\n  - type_defs\n  - stubs\n\nFile: src/invar/core/dead_export.py\n\
@@ -30529,7 +30529,41 @@ phases:
     agent: python-executor
     claimed_by: python-executor
     claimed_at: '2026-03-22T19:13:11.728228+00:00'
-    done_at: '2026-03-22T19:10:13.504473+00:00'
+    done_at: '2026-03-22T19:14:13.706911+00:00'
+    evidence: 'Artifact:
+
+      - Commit hash(es): fa21ed3
+
+
+      Files changed:
+
+      - src/invar/core/dead_export.py
+
+
+      Verification:
+
+      - Run: uv run invar guard src/invar/core/dead_export.py -> PASSED (static/doctest/property
+      tests)
+
+      - Run: invar guard --changed -> PASSED
+
+      - Run: uv run invar sig src/invar/core/dead_export.py::_is_protocol_or_abc ->
+      signature with @pre/@post confirmed
+
+
+      Spec link:
+
+      - DX-95
+
+
+      Gaps/Notes:
+
+      - Helper remains stub-only with `raise NotImplementedError`
+
+      - Doctest examples are present and marked skip
+
+      - `@skip_property_test("stub_body: Contract stub pending implementation")` present
+      for guard compatibility'
     rejection_reason: 'Verification failure: invar guard property tests fail on _is_protocol_or_abc
       stub under pre-commit (NotImplementedError during property run). Contract step
       must include property-test skip compatibility.'
