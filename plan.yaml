@@ -31940,7 +31940,7 @@ phases:
       - Added regression test ensuring function escape hatch does not suppress dead_export'
   - id: deep_review.recheck-dead-export-dx96
     name: Recheck dead_export DX-96 conformance
-    status: pending
+    status: claimed
     description: 'Independent spec-recheck after the dead_export remediation.
 
 
@@ -31989,3 +31989,5 @@ phases:
     depends_on:
     - deep_review.fix-dead-export-dx96
     agent: doc-reviewer
+    claimed_by: gate-reviewer
+    claimed_at: '2026-03-22T22:56:50.706806+00:00'
