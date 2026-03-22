@@ -31663,13 +31663,13 @@ phases:
       - PASS: documentation sync complete and consistent with implementation.'
 - id: deep_review
   name: Deep Review
-  status: pending
+  status: in_progress
   depends_on:
   - doc_sync
   steps:
   - id: deep_review.spec-conformance
     name: spec-conformance
-    status: pending
+    status: claimed
     description: 'Spec conformance verification: Compare implemented behavior against
       DX-95 acceptance criteria, field by field.
 
@@ -31720,6 +31720,8 @@ phases:
     - src/invar/core/rule_meta.py
     - INVAR.md
     agent: doc-reviewer
+    claimed_by: doc-reviewer
+    claimed_at: '2026-03-22T22:13:19.451799+00:00'
   - id: deep_review.wiring-audit
     name: wiring-audit
     status: pending
