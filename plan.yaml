@@ -31537,7 +31537,7 @@ phases:
   steps:
   - id: doc_sync.update-docs
     name: update-docs
-    status: claimed
+    status: done
     description: 'Documentation sync: Update project documentation to reflect class
       dead-export detection.
 
@@ -31578,6 +31578,40 @@ phases:
     agent: doc-reviewer
     claimed_by: doc-reviewer
     claimed_at: '2026-03-22T22:07:20.957143+00:00'
+    done_at: '2026-03-22T22:09:52.624803+00:00'
+    evidence: 'Artifact:
+
+      - Commit hash(es): 56252a9
+
+
+      Files changed:
+
+      - INVAR.md
+
+      - CLAUDE.md
+
+      - docs/reference/wiring-rules-validation.md
+
+
+      Verification:
+
+      - Docs updated to include class dead_export coverage
+
+      - Protocol/ABC automatic exemption documented
+
+      - Class-level dead_export escape-hatch example added
+
+      - Function-only stale wording removed from touched docs
+
+
+      Spec link:
+
+      - DX-95
+
+
+      Gaps/Notes:
+
+      - No DX-95 proposal history edits performed'
   - id: doc_sync.gate
     name: gate
     status: pending
