@@ -30920,3 +30920,8 @@ phases:
     depends_on:
     - doc_sync.update-docs
     agent: gate-reviewer
+- id: deep_review
+  name: Deep Review
+  status: locked
+  depends_on:
+  - doc_sync
