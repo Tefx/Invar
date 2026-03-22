@@ -31531,7 +31531,7 @@ phases:
       - No new class dead_export false positives observed'
 - id: doc_sync
   name: Documentation Sync
-  status: in_progress
+  status: done
   depends_on:
   - selftest
   steps:
@@ -31614,7 +31614,7 @@ phases:
       - No DX-95 proposal history edits performed'
   - id: doc_sync.gate
     name: gate
-    status: claimed
+    status: done
     description: 'Gate review: Verify documentation sync phase completion.
 
 
@@ -31636,9 +31636,34 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-22T22:10:47.759896+00:00'
+    done_at: '2026-03-22T22:12:41.438272+00:00'
+    evidence: 'Artifact:
+
+      - Docs update commit: 56252a9
+
+
+      Verification:
+
+      - Rule docs now state function-or-class dead_export scope
+
+      - Protocol/ABC exemption documented in INVAR.md, CLAUDE.md, and docs/reference/wiring-rules-validation.md
+
+      - Class escape-hatch example documented
+
+      - Stale function-only phrasing not found in updated docs
+
+
+      Spec link:
+
+      - DX-95
+
+
+      Gate decision:
+
+      - PASS: documentation sync complete and consistent with implementation.'
 - id: deep_review
   name: Deep Review
-  status: locked
+  status: pending
   depends_on:
   - doc_sync
   steps:
