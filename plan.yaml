@@ -31614,7 +31614,7 @@ phases:
       - No DX-95 proposal history edits performed'
   - id: doc_sync.gate
     name: gate
-    status: pending
+    status: claimed
     description: 'Gate review: Verify documentation sync phase completion.
 
 
@@ -31634,6 +31634,8 @@ phases:
     depends_on:
     - doc_sync.update-docs
     agent: gate-reviewer
+    claimed_by: gate-reviewer
+    claimed_at: '2026-03-22T22:10:47.759896+00:00'
 - id: deep_review
   name: Deep Review
   status: locked
