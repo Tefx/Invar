@@ -31207,7 +31207,7 @@ phases:
   steps:
   - id: selftest.guard-all
     name: guard-all
-    status: claimed
+    status: pending
     description: "Self-test verification: Run invar guard --all on Invar's own codebase.\n\
       \nThis is the critical acceptance criterion (AC8): the new class dead-export\
       \ detection must not produce false positives on Invar's own public classes.\n\
@@ -31228,8 +31228,6 @@ phases:
     refs:
     - DX-95
     agent: integration-verifier
-    claimed_by: integration-verifier
-    claimed_at: '2026-03-22T21:01:58.228756+00:00'
   - id: selftest.gate
     name: gate
     status: pending
