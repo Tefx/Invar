@@ -30350,11 +30350,11 @@ phases:
       - p0-migration.retest-guard-pass-after-remediation'
 - id: verify
   name: Prerequisite Verification
-  status: pending
+  status: in_progress
   steps:
   - id: verify.refs-index-classes
     name: refs-index-classes
-    status: pending
+    status: claimed
     description: 'Prerequisite verification: Confirm that references.py already indexes
       class symbols (not just functions/constants).
 
@@ -30389,6 +30389,8 @@ phases:
     - src/invar/core/references.py
     - DX-95
     agent: integration-verifier
+    claimed_by: integration-verifier
+    claimed_at: '2026-03-22T18:48:05.127388+00:00'
   - id: verify.gate
     name: gate
     status: pending
