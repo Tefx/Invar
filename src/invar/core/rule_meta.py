@@ -192,7 +192,7 @@ RULE_META: dict[str, RuleMeta] = {
         name="dead_export",
         severity=Severity.WARNING,
         category=RuleCategory.SHELL,
-        detects="Public shell function with zero detected callers across src/ (excluding tests/)",
+        detects="Public shell function or class with zero detected callers across src/ (excluding tests/)",
         cannot_detect=(
             "Arbitrary runtime dispatch",
             "Reflection-only callers with no static registration site",
