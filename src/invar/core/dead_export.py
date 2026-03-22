@@ -14,7 +14,7 @@ import ast
 from deal import post, pre
 from invar_runtime import skip_property_test
 
-from invar.core.entry_points import has_allow_marker, is_entry_point
+from invar.core.entry_points import is_entry_point
 from invar.core.models import FileInfo, RuleConfig, Severity, SymbolKind, Violation
 
 
@@ -308,110 +308,77 @@ def check_dead_exports(
                                     exported_names.add(elt.value)
 
         for symbol in file_info.symbols:
-            # Handle functions
-            if symbol.kind == SymbolKind.FUNCTION:
-                # Skip dunder methods (e.g., __init__, __str__) - must check before private
-                if symbol.name.startswith("__") and symbol.name.endswith("__"):
-                    continue
+            if symbol.kind not in (SymbolKind.FUNCTION, SymbolKind.CLASS):
+                continue
 
-                # Skip private functions (start with _)
-                if symbol.name.startswith("_"):
-                    continue
+            is_function = symbol.kind == SymbolKind.FUNCTION
+            kind_label = "function" if is_function else "class"
 
-                # Skip entry points (framework callbacks)
-                if is_entry_point(symbol, source):
-                    continue
+            # Skip dunder methods (e.g., __init__, __str__) - function-only
+            if is_function and symbol.name.startswith("__") and symbol.name.endswith("__"):
+                continue
 
-                # Skip if has @invar:allow dead_export marker
-                if has_allow_marker(symbol, source, "dead_export"):
-                    continue
+            # Skip private symbols (start with _)
+            if symbol.name.startswith("_"):
+                continue
 
-                # Spec: __all__ marks intended public API, treat as referenced.
-                if symbol.name in exported_names:
-                    continue
+            # Skip entry points (framework callbacks) - function-only
+            if is_function and is_entry_point(symbol, source):
+                continue
 
-                # Build reference key
-                key = f"{file_info.path}::{symbol.name}"
+            # Spec: __all__ marks intended public API, treat as referenced.
+            if symbol.name in exported_names:
+                continue
 
-                # Check if referenced (ref_count == 0 means dead export)
-                ref_count = ref_counts.get(key, 0)
-                if ref_count == 0:
-                    violations.append(
-                        Violation(
-                            rule="dead_export",
-                            severity=Severity.WARNING,
-                            file=file_info.path,
-                            line=symbol.line,
-                            message=f"Shell function '{symbol.name}' is never referenced",
-                            suggestion="Remove unused function, or add: # @invar:allow dead_export: <reason>",
-                        )
-                    )
-                elif ref_sources:
-                    # Check if all references are only from test files
-                    sources = ref_sources.get(key, [])
-                    if sources and all(_is_test_file(src) for src in sources):
-                        violations.append(
-                            Violation(
-                                rule="test_only_export",
-                                severity=Severity.INFO,
-                                file=file_info.path,
-                                line=symbol.line,
-                                message=f"Shell function '{symbol.name}' is only referenced from test files",
-                                suggestion="Consider moving to tests/ or adding: # @invar:allow dead_export: <reason>",
-                            )
-                        )
-
-            # Handle classes
-            elif symbol.kind == SymbolKind.CLASS:
-                # Skip private classes (start with _)
-                if symbol.name.startswith("_"):
-                    continue
-
-                # Spec: __all__ marks intended public API, treat as referenced.
-                if symbol.name in exported_names:
-                    continue
-
-                # Skip Protocol/ABC classes (interface definitions)
+            # Skip Protocol/ABC classes (interface definitions)
+            if not is_function and tree is not None:
                 is_protocol_or_abc_class = False
-                if tree is not None:
-                    for node in ast.walk(tree):
-                        if isinstance(node, ast.ClassDef) and node.name == symbol.name:
-                            if _is_protocol_or_abc(node):
-                                is_protocol_or_abc_class = True
-                            break
-
+                for node in ast.walk(tree):
+                    if isinstance(node, ast.ClassDef) and node.name == symbol.name:
+                        if _is_protocol_or_abc(node):
+                            is_protocol_or_abc_class = True
+                        break
                 if is_protocol_or_abc_class:
                     continue
 
-                # Build reference key
-                key = f"{file_info.path}::{symbol.name}"
+            # Build reference key
+            key = f"{file_info.path}::{symbol.name}"
 
-                # Check if referenced (ref_count == 0 means dead export)
-                ref_count = ref_counts.get(key, 0)
-                if ref_count == 0:
+            # Check if referenced (ref_count == 0 means dead export)
+            ref_count = ref_counts.get(key, 0)
+            if ref_count == 0:
+                violations.append(
+                    Violation(
+                        rule="dead_export",
+                        severity=Severity.WARNING,
+                        file=file_info.path,
+                        line=symbol.line,
+                        message=f"Shell {kind_label} '{symbol.name}' is never referenced",
+                        suggestion=(
+                            f"Remove unused {kind_label}, or add: "
+                            "# @invar:allow dead_export: <reason>"
+                        ),
+                    )
+                )
+            elif ref_sources:
+                # Check if all references are only from test files
+                sources = ref_sources.get(key, [])
+                if sources and all(_is_test_file(src) for src in sources):
                     violations.append(
                         Violation(
-                            rule="dead_export",
-                            severity=Severity.WARNING,
+                            rule="test_only_export",
+                            severity=Severity.INFO,
                             file=file_info.path,
                             line=symbol.line,
-                            message=f"Shell class '{symbol.name}' is never referenced",
-                            suggestion="Remove unused class, or add: # @invar:allow dead_export: <reason>",
+                            message=(
+                                f"Shell {kind_label} '{symbol.name}' "
+                                "is only referenced from test files"
+                            ),
+                            suggestion=(
+                                "Consider moving to tests/ or add: "
+                                "# @invar:allow dead_export: <reason>"
+                            ),
                         )
                     )
-                elif ref_sources:
-                    # Check if all references are only from test files
-                    sources = ref_sources.get(key, [])
-                    if sources and all(_is_test_file(src) for src in sources):
-                        violations.append(
-                            Violation(
-                                rule="test_only_export",
-                                severity=Severity.INFO,
-                                file=file_info.path,
-                                line=symbol.line,
-                                message=f"Shell class '{symbol.name}' is only referenced from test files",
-                                suggestion="Consider moving to tests/ or add: # @invar:allow dead_export: <reason>",
-                            )
-                        )
 
     return violations

@@ -250,8 +250,8 @@ class MyAbstract(ABC):
 def test_ac5_escape_hatch_works_for_class():
     """AC5 - Escape hatch works for class.
 
-    Classes with @invar:allow dead_export marker should be exempt
-    from dead_export detection, just like functions.
+    Under DX-96, dead_export is non-suppressible inline. A class marker
+    must not suppress dead_export detection.
     """
     sym = Symbol(name="LegacyClass", kind=SymbolKind.CLASS, line=5, end_line=15)
     # Escape hatch marker present
@@ -275,6 +275,22 @@ class LegacyClass:
     assert len(violations) == 1, (
         f"dead_export should still be reported despite escape hatch (non-suppressible), got {len(violations)}"
     )
+
+
+def test_ac5b_escape_hatch_does_not_suppress_function() -> None:
+    """Function behavior matches class behavior for non-suppressible dead_export."""
+    sym = Symbol(name="legacy_api", kind=SymbolKind.FUNCTION, line=3, end_line=10)
+    source = """
+# @invar:allow dead_export: Legacy API used by external systems
+def legacy_api():
+    return 1
+"""
+    file_info = FileInfo(path="shell/api.py", lines=15, symbols=[sym], is_shell=True, source=source)
+
+    violations = check_dead_exports([file_info], {"shell/api.py::legacy_api": 0}, RuleConfig())
+
+    assert len(violations) == 1
+    assert violations[0].rule == "dead_export"
 
 
 def test_ac6_mixed_symbols_dead_class_live_function_dead_function():
