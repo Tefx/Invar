@@ -31207,7 +31207,7 @@ phases:
   steps:
   - id: selftest.guard-all
     name: guard-all
-    status: claimed
+    status: done
     description: "Self-test verification: Run invar guard --all on Invar's own codebase.\n\
       \nThis is the critical acceptance criterion (AC8): the new class dead-export\
       \ detection must not produce false positives on Invar's own public classes.\n\
@@ -31230,6 +31230,15 @@ phases:
     agent: integration-verifier
     claimed_by: vectl-orchestrator
     claimed_at: '2026-03-22T21:17:24.759115+00:00'
+    done_at: '2026-03-22T21:17:33.598125+00:00'
+    evidence: "Artifact:\n- Verification runs from integration-verifier sessions (`ses_2e8b27aa8ffef6MTsnnuDw1QSd`,\
+      \ `ses_2e8a4e723ffeqlm6ai4Nj4SCU7`)\n\nVerification:\n- Run: uv run invar guard\
+      \ --all -> passed (no new class dead_export false positives)\n- Run: uv run\
+      \ pytest tests/ -v -> failing test detected: tests/test_subprocess_env.py::TestUvxRespawnCommand::test_uses_running_source_for_version_mismatch_respawn\n\
+      \nSpec link:\n- DX-95\n\nDisposition:\n- Verification completed and blocker\
+      \ captured.\n- Planner-created remediation ownership exists:\n  - selftest.fix-pytest-uvx-respawn\n\
+      \  - selftest.retest-guard-and-pytest\n- selftest.gate rewired to wait on remediation\
+      \ retest."
   - id: selftest.gate
     name: gate
     status: pending
