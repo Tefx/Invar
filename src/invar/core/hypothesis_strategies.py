@@ -4,7 +4,6 @@ Hypothesis strategy generation from type annotations and @pre contracts.
 Core module: converts Python types and @pre bounds to Hypothesis strategies.
 Part of DX-12: Hypothesis as CrossHair fallback.
 """
-# @invar:allow file_size: Strategy gen inherently complex, extraction increases coupling
 
 from __future__ import annotations
 

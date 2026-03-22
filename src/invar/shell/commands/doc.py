@@ -159,15 +159,15 @@ def _build_toc_dict(path: Path, depth: int | None = None) -> Result[dict[str, ob
     from dataclasses import asdict
 
     toc = result.unwrap()
+    sections = [_section_to_dict(s) for s in toc.sections]
+    if depth is not None:
+        sections = _filter_by_depth(sections, depth)
+
     toc_dict: dict[str, object] = {
         "file": str(path),
-        "sections": [_section_to_dict(s) for s in toc.sections],
+        "sections": sections,
         "frontmatter": asdict(toc.frontmatter) if toc.frontmatter else None,
     }
-    if depth is not None:
-        sections = toc_dict["sections"]
-        if isinstance(sections, list):
-            toc_dict["sections"] = _filter_by_depth(sections, depth)
     return Success(toc_dict)
 
 
@@ -256,16 +256,18 @@ def _parse_insert_position(
     position: str,
 ) -> Result[Literal["before", "after", "first_child", "last_child"], str]:
     """Validate and normalize insert position option."""
-    if position == "before":
-        return Success("before")
-    if position == "after":
-        return Success("after")
-    if position == "first_child":
-        return Success("first_child")
-    if position == "last_child":
-        return Success("last_child")
-    valid_positions = ("before", "after", "first_child", "last_child")
-    return Failure(f"position must be one of {valid_positions}")
+    valid_positions: dict[str, Literal["before", "after", "first_child", "last_child"]] = {
+        "before": "before",
+        "after": "after",
+        "first_child": "first_child",
+        "last_child": "last_child",
+    }
+    normalized = valid_positions.get(position)
+    if normalized is not None:
+        return Success(normalized)
+
+    allowed_positions = ("before", "after", "first_child", "last_child")
+    return Failure(f"position must be one of {allowed_positions}")
 
 
 def _run_insert(

@@ -138,6 +138,14 @@ rules = ["file_size_warning"]  # Complex strategy inference, hard to split
 pattern = "**/rules.py"
 rules = ["file_size_warning"]  # All rule checks in one place for discoverability
 
+[[tool.invar.guard.rule_exclusions]]
+pattern = "**/core/models.py"
+rules = ["file_size"]  # Core data models remain co-located for schema discoverability
+
+[[tool.invar.guard.rule_exclusions]]
+pattern = "**/core/hypothesis_strategies.py"
+rules = ["file_size"]  # Strategy synthesis is coupled; split increases cross-module churn
+
 [tool.invar]
 # Protocol governance
 protocol_version = "5.0"
@@ -169,6 +177,7 @@ patterns = [
 
 [tool.invar.exempt.file_size]
 patterns = [
+    "src/invar/core/models.py",
     "src/invar/core/hypothesis_strategies.py",
 ]
 

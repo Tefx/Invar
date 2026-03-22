@@ -143,7 +143,7 @@ def check_shell_too_complex(file_info: FileInfo, config: RuleConfig) -> list[Vio
     return violations
 
 
-@pre(lambda violations, limit: isinstance(violations, list) and limit > 0)
+@pre(lambda violations, limit: isinstance(violations, list) and limit >= 0)
 @post(lambda result: isinstance(result, list))
 def check_complexity_debt(violations: list[Violation], limit: int = 5) -> list[Violation]:
     """
@@ -164,7 +164,12 @@ def check_complexity_debt(violations: list[Violation], limit: int = 5) -> list[V
         1
         >>> result[0].severity == Severity.ERROR
         True
+        >>> check_complexity_debt([v1], limit=0)
+        []
     """
+    if limit == 0:
+        return []
+
     unaddressed = [v for v in violations if v.rule == "shell_too_complex"]
     if len(unaddressed) >= limit:
         return [

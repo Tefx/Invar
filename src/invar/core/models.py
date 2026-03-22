@@ -1,4 +1,3 @@
-# @invar:allow file_size: Core models aggregation - data classes belong together
 """
 Pydantic models for Invar.
 

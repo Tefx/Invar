@@ -258,6 +258,7 @@ def guard(
     raise typer.Exit(result.unwrap())
 
 
+# @shell_complexity: CLI guard orchestration coordinates many independent phases and modes
 def _run_guard_command(
     path: Path,
     strict: bool,
@@ -646,6 +647,7 @@ def rules(
         raise typer.Exit(1)
 
 
+# @shell_complexity: output mode and category filtering are command-level orchestration
 def _run_rules_command(
     category: str | None,
     use_json: bool,
