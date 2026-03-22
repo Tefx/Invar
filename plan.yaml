@@ -31669,7 +31669,7 @@ phases:
   steps:
   - id: deep_review.spec-conformance
     name: spec-conformance
-    status: claimed
+    status: pending
     description: 'Spec conformance verification: Compare implemented behavior against
       DX-95 acceptance criteria, field by field.
 
@@ -31720,8 +31720,6 @@ phases:
     - src/invar/core/rule_meta.py
     - INVAR.md
     agent: doc-reviewer
-    claimed_by: gate-reviewer
-    claimed_at: '2026-03-22T22:26:47.482706+00:00'
   - id: deep_review.wiring-audit
     name: wiring-audit
     status: done
