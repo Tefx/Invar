@@ -30645,7 +30645,7 @@ phases:
       - Existing @pre/@post remained valid for extended symbol-kind handling'
   - id: contract.gate
     name: gate
-    status: pending
+    status: claimed
     description: 'Gate review: Verify contract phase completion.
 
 
@@ -30675,6 +30675,8 @@ phases:
     depends_on:
     - contract.check-dead-exports-class
     agent: gate-reviewer
+    claimed_by: gate-reviewer
+    claimed_at: '2026-03-22T19:22:55.751240+00:00'
 - id: test
   name: Tests First
   status: locked
