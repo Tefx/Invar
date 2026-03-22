@@ -31201,7 +31201,7 @@ phases:
       - PASS: implementation phase complete and ready for selftest.'
 - id: selftest
   name: Self-Test (invar guard --all)
-  status: in_progress
+  status: done
   depends_on:
   - impl
   steps:
@@ -31241,7 +31241,7 @@ phases:
       \ retest."
   - id: selftest.gate
     name: gate
-    status: claimed
+    status: done
     description: 'Gate review: Verify self-test phase completion after remediation
       and independent retest.
 
@@ -31275,6 +31275,33 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-22T21:46:41.556347+00:00'
+    done_at: '2026-03-22T22:02:21.564754+00:00'
+    evidence: 'Artifact:
+
+      - Fix commit: 690593d
+
+      - Retest evidence from selftest.retest-guard-and-pytest
+
+
+      Verification:
+
+      - Run: uv run pytest tests/ -v -> 342 passed, 28 skipped, 0 failed
+
+      - Run: uv run invar guard --all -> passed in formal retest, no new class dead_export
+      false positives
+
+      - Gate audit confirms original blocker captured, root-cause fix applied, and
+      independent retest succeeded
+
+
+      Spec link:
+
+      - DX-95
+
+
+      Gate decision:
+
+      - PASS: selftest phase complete and ready for doc_sync.'
   - id: selftest.fix-pytest-uvx-respawn
     name: Fix pre-existing pytest respawn regression
     status: done
@@ -31504,7 +31531,7 @@ phases:
       - No new class dead_export false positives observed'
 - id: doc_sync
   name: Documentation Sync
-  status: locked
+  status: pending
   depends_on:
   - selftest
   steps:
