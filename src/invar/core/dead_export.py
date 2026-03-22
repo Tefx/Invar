@@ -12,6 +12,7 @@ from __future__ import annotations
 import ast
 
 from deal import post, pre
+from invar_runtime import skip_property_test
 
 from invar.core.entry_points import has_allow_marker, is_entry_point
 from invar.core.models import FileInfo, RuleConfig, Severity, SymbolKind, Violation
@@ -37,6 +38,38 @@ def _is_test_file(path: str) -> bool:
         or filename.startswith("test_")
         or filename.endswith("_test.py")
     )
+
+
+@skip_property_test("stub_body: Contract stub pending implementation")
+@pre(lambda node: isinstance(node, ast.ClassDef))
+@post(lambda result: isinstance(result, bool))
+def _is_protocol_or_abc(node: ast.ClassDef) -> bool:
+    """
+    Check if a class definition is a Protocol or ABC subclass.
+
+    Protocol classes (from typing.Protocol or typing_extensions.Protocol) and
+    Abstract Base Classes (from abc.ABC) are structural/behavioral interfaces
+    that define contracts rather than concrete implementations. These should
+    be exempt from dead export reporting as they are meant to be subclassed.
+
+    Note: This is a stub. Full implementation will analyze base classes and
+    class decorators to detect Protocol/ABC heritage.
+
+    Examples:
+        >>> import ast
+        >>> # Protocol subclass
+        >>> code1 = "from typing import Protocol\\nclass MyProto(Protocol): pass"
+        >>> tree1 = ast.parse(code1)
+        >>> _is_protocol_or_abc(tree1.body[1])  # class def  # doctest: +SKIP
+        True
+
+        >>> # Plain class (not Protocol or ABC)
+        >>> code2 = "class PlainClass: pass"
+        >>> tree2 = ast.parse(code2)
+        >>> _is_protocol_or_abc(tree2.body[0])  # doctest: +SKIP
+        False
+    """
+    raise NotImplementedError
 
 
 @pre(
