@@ -30578,7 +30578,7 @@ phases:
       timestamp: '2026-03-22T19:12:58.726220+00:00'
   - id: contract.check-dead-exports-class
     name: check-dead-exports-class
-    status: claimed
+    status: done
     description: "Contract step: Update check_dead_exports contract to cover CLASS\
       \ symbol kind.\n\nstep_type: contract\ncontract_purity: ENFORCED\ncontract_outputs:\n\
       \  - signatures (updated)\n  - stubs\n\nFile: src/invar/core/dead_export.py\n\
@@ -30606,6 +30606,43 @@ phases:
     agent: python-executor
     claimed_by: python-executor
     claimed_at: '2026-03-22T19:16:47.005476+00:00'
+    done_at: '2026-03-22T19:20:13.465006+00:00'
+    evidence: 'Artifact:
+
+      - Commit hash(es): 8457a1c
+
+
+      Files changed:
+
+      - src/invar/core/dead_export.py
+
+
+      Verification:
+
+      - Run: uv run invar guard src/invar/core/dead_export.py -> PASSED
+
+      - Run: invar guard --changed -> PASSED
+
+      - Run: uv run invar sig src/invar/core/dead_export.py::check_dead_exports ->
+      contracts/docstring verified
+
+
+      Spec link:
+
+      - DX-95
+
+
+      Gaps/Notes:
+
+      - Contract-only update; no implementation logic added
+
+      - Module and function docstrings updated to include class detection and Protocol/ABC
+      exclusion behavior
+
+      - Added doctest scenario for class dead-export (skipped until implementation
+      step)
+
+      - Existing @pre/@post remained valid for extended symbol-kind handling'
   - id: contract.gate
     name: gate
     status: pending
