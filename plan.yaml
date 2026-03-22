@@ -30495,7 +30495,7 @@ phases:
       for this phase.'
 - id: contract
   name: Contract + Helper Extraction
-  status: in_progress
+  status: done
   depends_on:
   - verify
   steps:
@@ -30645,7 +30645,7 @@ phases:
       - Existing @pre/@post remained valid for extended symbol-kind handling'
   - id: contract.gate
     name: gate
-    status: claimed
+    status: done
     description: 'Gate review: Verify contract phase completion.
 
 
@@ -30677,9 +30677,38 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-22T19:22:55.751240+00:00'
+    done_at: '2026-03-22T19:24:58.517174+00:00'
+    evidence: 'Artifact:
+
+      - Commit hash(es): d7317e5, 9f6a1af
+
+
+      Verification:
+
+      - Run: uv run invar guard src/invar/core/dead_export.py -> PASSED (static/doctest/crosshair/property)
+
+      - Run: uv run invar sig src/invar/core/dead_export.py::_is_protocol_or_abc ->
+      contracts and skip marker present
+
+      - Run: uv run invar sig src/invar/core/dead_export.py::check_dead_exports ->
+      contracts valid, docstring expanded for class scope
+
+      - Code check: implementation remains function-only (no class detection logic
+      leaked)
+
+
+      Spec link:
+
+      - DX-95
+
+
+      Gate decision:
+
+      - PASS: contract phase complete with contract-only deliverables; no implementation
+      leakage; ready for test phase.'
 - id: test
   name: Tests First
-  status: locked
+  status: pending
   depends_on:
   - contract
   steps:
