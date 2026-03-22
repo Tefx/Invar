@@ -31275,7 +31275,7 @@ phases:
     agent: gate-reviewer
   - id: selftest.fix-pytest-uvx-respawn
     name: Fix pre-existing pytest respawn regression
-    status: claimed
+    status: done
     description: 'Batched remediation for the repeated blocker on `selftest.guard-all`.
 
 
@@ -31346,6 +31346,44 @@ phases:
     agent: python-senior
     claimed_by: python-senior
     claimed_at: '2026-03-22T21:17:50.461394+00:00'
+    done_at: '2026-03-22T21:37:30.431359+00:00'
+    evidence: 'Artifact:
+
+      - Commit hash(es): 609c16c59e33f31fce71efd3b39f5ba6a2125dd8
+
+
+      Files changed:
+
+      - src/invar/shell/subprocess_env.py
+
+
+      Verification:
+
+      - Run: uv run pytest tests/test_subprocess_env.py::TestUvxRespawnCommand::test_uses_running_source_for_version_mismatch_respawn
+      -v -> passed
+
+      - Run: uv run invar guard --all -> passed (0 errors; baseline warning profile
+      unchanged)
+
+
+      Spec link:
+
+      - DX-95
+
+
+      Root-cause:
+
+      - `get_uvx_respawn_command()` previously skipped project-local source probing
+      when first running-source probe returned None, causing respawn command generation
+      to return None in version-mismatch scenario.
+
+      - Fix probes project-local source under safe non-wheel conditions, restoring
+      expected uvx command construction without altering baseline guard behavior.
+
+
+      Gaps/Notes:
+
+      - Change scoped to subprocess respawn path; no plan/orchestrator files touched.'
   - id: selftest.retest-guard-and-pytest
     name: Retest full self-test suite after pytest respawn fix
     status: pending
