@@ -31940,7 +31940,7 @@ phases:
       - Added regression test ensuring function escape hatch does not suppress dead_export'
   - id: deep_review.recheck-dead-export-dx96
     name: Recheck dead_export DX-96 conformance
-    status: claimed
+    status: done
     description: 'Independent spec-recheck after the dead_export remediation.
 
 
@@ -31991,3 +31991,30 @@ phases:
     agent: doc-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-22T22:56:50.706806+00:00'
+    done_at: '2026-03-22T23:04:20.411899+00:00'
+    evidence: 'Artifact:
+
+      - Recheck task: ses_2e83be9baffeO9TtquKVmiIbXO
+
+
+      Verification:
+
+      - Run: uv run invar guard --all -> passed (0 errors)
+
+      - Non-suppressible policy check: dead_export enforced via NON_SUPPRESSIBLE_INLINE_RULES
+      and escape_hatch_non_suppressible path
+
+      - Protocol/ABC exemption checks for class detection passed
+
+
+      Spec link:
+
+      - DX-95
+
+      - DX-96
+
+
+      Verdict:
+
+      - PASS: dead_export function/class handling now consistent with non-suppressible
+      policy; no regression in exemptions.'
