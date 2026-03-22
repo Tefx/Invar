@@ -31724,7 +31724,7 @@ phases:
     claimed_at: '2026-03-22T22:13:19.451799+00:00'
   - id: deep_review.wiring-audit
     name: wiring-audit
-    status: claimed
+    status: done
     description: 'Wiring completeness audit: Verify every new symbol is reachable
       at runtime.
 
@@ -31753,6 +31753,34 @@ phases:
     agent: wiring-auditor
     claimed_by: wiring-auditor
     claimed_at: '2026-03-22T22:18:35.889507+00:00'
+    done_at: '2026-03-22T22:23:33.994968+00:00'
+    evidence: 'Artifact:
+
+      - Task: ses_2e85ede2effevB2Qv992ibXvg8
+
+
+      Verification:
+
+      - _is_protocol_or_abc call site confirmed inside check_dead_exports
+
+      - dead_export rule_meta class wording confirmed and consumed by guard output/formatter/guard
+      command surfaces
+
+      - No new orphan public exports introduced
+
+      - No identity-lambda contracts found
+
+      - @pre/@post contracts reference real parameters with meaningful comparisons
+
+
+      Spec link:
+
+      - DX-95
+
+
+      Verdict:
+
+      - PASS'
   - id: deep_review.gate
     name: gate
     status: pending
