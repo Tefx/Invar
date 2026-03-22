@@ -31241,7 +31241,7 @@ phases:
       \ retest."
   - id: selftest.gate
     name: gate
-    status: pending
+    status: claimed
     description: 'Gate review: Verify self-test phase completion after remediation
       and independent retest.
 
@@ -31273,6 +31273,8 @@ phases:
     depends_on:
     - selftest.retest-guard-and-pytest
     agent: gate-reviewer
+    claimed_by: gate-reviewer
+    claimed_at: '2026-03-22T21:46:41.556347+00:00'
   - id: selftest.fix-pytest-uvx-respawn
     name: Fix pre-existing pytest respawn regression
     status: done
