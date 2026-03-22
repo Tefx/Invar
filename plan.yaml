@@ -30874,7 +30874,7 @@ phases:
       leakage, ready for implementation phase.'
 - id: impl
   name: Implementation
-  status: in_progress
+  status: done
   depends_on:
   - test
   steps:
@@ -31127,7 +31127,7 @@ phases:
       - only dead_export metadata entry modified'
   - id: impl.gate
     name: gate
-    status: claimed
+    status: done
     description: 'Gate review: Verify implementation phase completion.
 
 
@@ -31173,9 +31173,35 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-22T20:40:01.608726+00:00'
+    done_at: '2026-03-22T20:46:22.202963+00:00'
+    evidence: 'Artifact:
+
+      - Commit hash(es): 8c6f5a3, eb96899, 72a3e92
+
+
+      Verification:
+
+      - Run: uv run pytest tests/core/test_dead_export.py -v -> 12 passed (AC1-AC7)
+
+      - Run: uv run invar guard src/invar/core/dead_export.py -> passed
+
+      - Run: uv run invar guard src/invar/core/rule_meta.py -> passed
+
+      - Gate audit: class detection logic implemented, protocol/ABC exemption active,
+      rule_meta updated, no stub remains
+
+
+      Spec link:
+
+      - DX-95
+
+
+      Gate decision:
+
+      - PASS: implementation phase complete and ready for selftest.'
 - id: selftest
   name: Self-Test (invar guard --all)
-  status: locked
+  status: pending
   depends_on:
   - impl
   steps:
