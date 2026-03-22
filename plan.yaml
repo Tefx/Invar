@@ -30984,7 +30984,7 @@ phases:
       timestamp: '2026-03-22T19:46:23.914320+00:00'
   - id: impl.extend-dead-export
     name: extend-dead-export
-    status: pending
+    status: claimed
     description: "Implementation step: Extend check_dead_exports to scan for unreferenced\
       \ public classes.\n\nstep_type: implementation\n\nFile: src/invar/core/dead_export.py\n\
       Function: check_dead_exports (existing)\n\nImplementation requirements:\n- Add\
@@ -31015,6 +31015,8 @@ phases:
     depends_on:
     - impl.protocol-abc-helper
     agent: python-executor
+    claimed_by: python-executor
+    claimed_at: '2026-03-22T20:35:20.201914+00:00'
   - id: impl.update-rule-meta
     name: update-rule-meta
     status: done
