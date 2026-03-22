@@ -40,8 +40,13 @@ def calc(x: int, y: int = 0): ...
 
 ```python
 # @invar:allow dead_export: CLI entry point called by framework
+def my_cli_command(): ...
+
+# @invar:allow dead_export: Abstract base class for subclassing
+class MyProtocol(Protocol): ...
 ```
 
+Protocol/ABC subclasses are automatically exempt from dead_export (no escape hatch needed).
 Exact syntax and repair patterns: `INVAR.md`
 <!--invar:end-->
 
