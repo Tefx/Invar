@@ -30501,7 +30501,7 @@ phases:
   steps:
   - id: contract.protocol-abc-helper
     name: protocol-abc-helper
-    status: done
+    status: rejected
     description: "Contract step: Extract or extend a helper function for Protocol/ABC\
       \ detection.\n\nstep_type: contract\ncontract_purity: ENFORCED\ncontract_outputs:\n\
       \  - signatures\n  - type_defs\n  - stubs\n\nFile: src/invar/core/dead_export.py\n\
@@ -30530,43 +30530,14 @@ phases:
     claimed_by: python-executor
     claimed_at: '2026-03-22T18:54:31.417464+00:00'
     done_at: '2026-03-22T19:01:16.438355+00:00'
-    evidence: 'Artifact:
-
-      - Commit: fa21ed3b3882793a1bc5980837d0cb8e196c414d
-
-
-      Verification:
-
-      - Run: uv run mypy src/invar/core/dead_export.py -> Success (no issues)
-
-      - Run: invar guard -> Passed
-
-      - Run: invar sig src/invar/core/dead_export.py::_is_protocol_or_abc -> signature
-      and @pre/@post contracts present
-
-
-      Spec link:
-
-      - DX-95 desired_behavior -- Protocol/ABC subclasses must be exempt from dead_export
-      flagging
-
-
-      Files changed:
-
-      - src/invar/core/dead_export.py
-
-
-      Deliverable check:
-
-      - Added `_is_protocol_or_abc(node: ast.ClassDef) -> bool`
-
-      - Added `@pre(lambda node: isinstance(node, ast.ClassDef))`
-
-      - Added `@post(lambda result: isinstance(result, bool))`
-
-      - Added doctest examples for Protocol subclass (True) and plain class (False)
-
-      - Stub body only (`raise NotImplementedError`), no detection logic implementation'
+    rejection_reason: 'Evidence invalid: commit hook invar guard failed due doctest
+      executing stub and raising NotImplementedError. Rework required to make contract
+      stub verifiable (e.g., skip doctest execution).'
+    rejection_history:
+    - reason: 'Evidence invalid: commit hook invar guard failed due doctest executing
+        stub and raising NotImplementedError. Rework required to make contract stub
+        verifiable (e.g., skip doctest execution).'
+      timestamp: '2026-03-22T19:05:32.811120+00:00'
   - id: contract.check-dead-exports-class
     name: check-dead-exports-class
     status: pending
