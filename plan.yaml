@@ -30796,3 +30796,8 @@ phases:
     - impl.extend-dead-export
     - impl.update-rule-meta
     agent: gate-reviewer
+- id: selftest
+  name: Self-Test (invar guard --all)
+  status: locked
+  depends_on:
+  - impl
