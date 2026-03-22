@@ -30512,3 +30512,97 @@ phases:
   status: locked
   depends_on:
   - contract
+  steps:
+  - id: test.dead-class-tests
+    name: dead-class-tests
+    status: pending
+    description: 'Test step: Add comprehensive class-specific test cases for dead_export
+      detection.
+
+
+      step_type: test
+
+
+      File: tests/core/test_dead_export.py
+
+
+      Required test cases (mapping to acceptance criteria):
+
+
+      1. AC1 - Dead public class detected: A module with `class Foo` in `__all__`
+      but zero external references -> reported as dead_export
+
+      2. AC2 - Referenced class NOT reported: A module with `class Bar` in `__all__`
+      AND at least one external import -> NOT reported
+
+      3. AC3 - Protocol subclass exempt: `class MyProtocol(Protocol)` in `__all__`
+      with zero refs -> NOT reported (Protocol exemption)
+
+      4. AC4 - ABC subclass exempt: `class MyABC(ABC)` in `__all__` with zero refs
+      -> NOT reported (ABC exemption)
+
+      5. AC5 - Escape hatch works: `class Baz` with `# @invar:allow dead_export` ->
+      NOT reported even with zero refs
+
+      6. AC6 - Mixed symbols: Module with dead class + live function + dead function
+      -> reports both dead symbols, not the live one
+
+      7. AC7 - Nested/inner classes: Only top-level public classes checked, inner
+      classes ignored
+
+      8. AC8 - Self-test: invar guard --all on Invar''s own codebase passes (this
+      is verified in selftest phase, but add a note here)
+
+
+      Pattern: Follow existing test patterns in test_dead_export.py. Use AST fixtures
+      or temp modules as the existing tests do.
+
+
+      These tests SHOULD fail initially (red phase of red-green-refactor) since implementation
+      is not done yet. That is expected and correct.
+
+
+      IMPORTANT: Do NOT add implementation code. Only test code + minimal fixtures/mocks.'
+    verification: '- All 7 test cases (AC1-AC7) present in test_dead_export.py
+
+      - Tests use consistent fixture patterns with existing tests
+
+      - Tests are expected to fail at this stage (no implementation yet)
+
+      - No product implementation code added
+
+      - Test names are descriptive and map to acceptance criteria'
+    refs:
+    - tests/core/test_dead_export.py
+    - DX-95
+    agent: python-executor
+  - id: test.gate
+    name: gate
+    status: pending
+    description: 'Gate review: Verify test phase completion.
+
+
+      review_depth: STANDARD
+
+
+      Criteria:
+
+      - All 7 test cases present and well-structured
+
+      - Tests follow existing patterns in test_dead_export.py
+
+      - No implementation logic leaked into test step
+
+      - Tests map clearly to acceptance criteria
+
+      - Fixtures use spec-derived formats (minimal, no convenience fields)'
+    verification: '- 7 test cases present covering AC1-AC7
+
+      - Test structure follows existing patterns
+
+      - No implementation code present
+
+      - Ready for implementation phase'
+    depends_on:
+    - test.dead-class-tests
+    agent: gate-reviewer
