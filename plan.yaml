@@ -30507,3 +30507,8 @@ phases:
     depends_on:
     - contract.check-dead-exports-class
     agent: gate-reviewer
+- id: test
+  name: Tests First
+  status: locked
+  depends_on:
+  - contract
