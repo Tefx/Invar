@@ -31007,7 +31007,7 @@ phases:
     agent: python-executor
   - id: impl.update-rule-meta
     name: update-rule-meta
-    status: claimed
+    status: done
     description: 'Implementation step: Update rule_meta.py to document CLASS as a
       supported symbol kind for dead_export.
 
@@ -31051,6 +31051,33 @@ phases:
     agent: python-executor
     claimed_by: python-executor
     claimed_at: '2026-03-22T19:38:41.472471+00:00'
+    done_at: '2026-03-22T19:44:19.402406+00:00'
+    evidence: 'Artifact:
+
+      - Commit hash(es): f710bc45b29989bb1f98f4cd8b6c78b81ce8789c
+
+
+      Files changed:
+
+      - src/invar/core/rule_meta.py
+
+
+      Verification:
+
+      - Run: invar guard -- src/invar/core/rule_meta.py -> passed
+
+
+      Spec link:
+
+      - DX-95
+
+
+      Gaps/Notes:
+
+      - dead_export metadata updated from function-only wording to function-or-class
+      wording
+
+      - only dead_export metadata entry modified'
   - id: impl.gate
     name: gate
     status: pending
