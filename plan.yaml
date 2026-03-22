@@ -30354,7 +30354,7 @@ phases:
   steps:
   - id: verify.refs-index-classes
     name: refs-index-classes
-    status: claimed
+    status: done
     description: 'Prerequisite verification: Confirm that references.py already indexes
       class symbols (not just functions/constants).
 
@@ -30391,6 +30391,44 @@ phases:
     agent: integration-verifier
     claimed_by: integration-verifier
     claimed_at: '2026-03-22T18:48:05.127388+00:00'
+    done_at: '2026-03-22T18:52:16.909075+00:00'
+    evidence: 'Artifact:
+
+      - PR: branch vectl/step-verify.refs-index-classes (no code changes)
+
+
+      Verification:
+
+      - Run: uv run invar refs src/invar/core/models.py::FileInfo -> 131 references
+      found
+
+      - Run: uv run invar refs src/invar/core/patterns/detector.py::BaseDetector ->
+      11 references including subclass inheritance usages
+
+      - Run: uv run invar refs src/invar/core/models.py::SymbolKind -> 119 references
+      found
+
+      - Code check: src/invar/core/references.py build_symbol_index includes SymbolKind.CLASS
+
+      - Code check: parser handles ast.ClassDef and extracts class symbols
+
+
+      Spec link:
+
+      - DX-95
+
+
+      Verdict:
+
+      - PASS: classes are indexed and discoverable by invar refs; no blocker for class
+      dead_export extension.
+
+
+      Gaps/Notes:
+
+      - AST fallback path find_references_in_source does not detect base-class syntax;
+      not blocking for this prerequisite because CLI path uses jedi and returns class
+      references correctly.'
   - id: verify.gate
     name: gate
     status: pending
