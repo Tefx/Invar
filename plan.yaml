@@ -30856,3 +30856,67 @@ phases:
   status: locked
   depends_on:
   - selftest
+  steps:
+  - id: doc_sync.update-docs
+    name: update-docs
+    status: pending
+    description: 'Documentation sync: Update project documentation to reflect class
+      dead-export detection.
+
+
+      Files to update:
+
+      - INVAR.md: Update dead_export rule description to mention classes. Add class
+      examples to escape hatch documentation.
+
+      - Any other docs referencing dead_export rules (check docs/ directory)
+
+
+      Required updates:
+
+      1. dead_export rule description: mention that it now covers public classes,
+      not just functions/constants
+
+      2. Protocol/ABC exemption: document that Protocol and ABC subclasses are automatically
+      exempt
+
+      3. Escape hatch for classes: show example of `# @invar:allow dead_export` on
+      a class
+
+      4. Remove any language suggesting dead_export is function-only
+
+
+      Do NOT update the DX-95 proposal (it is a historical record).'
+    verification: '- INVAR.md updated with class dead-export documentation
+
+      - Protocol/ABC exemption documented
+
+      - Escape hatch example for classes present
+
+      - No stale function-only language remains'
+    refs:
+    - INVAR.md
+    - DX-95
+    agent: doc-reviewer
+  - id: doc_sync.gate
+    name: gate
+    status: pending
+    description: 'Gate review: Verify documentation sync phase completion.
+
+
+      review_depth: QUICK
+
+
+      Criteria:
+
+      - Documentation accurately reflects implemented behavior
+
+      - Class detection, Protocol/ABC exemption, and escape hatch documented
+
+      - No stale references to function-only dead_export'
+    verification: '- Docs updated and accurate
+
+      - Ready for deep review phase'
+    depends_on:
+    - doc_sync.update-docs
+    agent: gate-reviewer
