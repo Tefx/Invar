@@ -31826,7 +31826,7 @@ phases:
     agent: gate-reviewer
   - id: deep_review.fix-dead-export-dx96
     name: Fix dead_export DX-96 consistency
-    status: claimed
+    status: done
     description: 'Batched remediation: align dead_export escape-hatch handling with
       DX-96 non-suppressible behavior so class and function paths enforce the same
       policy.
@@ -31899,6 +31899,45 @@ phases:
     agent: python-senior
     claimed_by: python-senior
     claimed_at: '2026-03-22T22:36:37.061497+00:00'
+    done_at: '2026-03-22T22:46:19.526313+00:00'
+    evidence: 'Artifact:
+
+      - Commit: db35e11
+
+
+      Files changed:
+
+      - src/invar/core/dead_export.py
+
+      - tests/core/test_dead_export.py
+
+
+      Verification:
+
+      - Run: uv run pytest tests/core/test_dead_export.py -q -> 13 passed
+
+      - Run: uv run invar guard --all -> status passed (no errors)
+
+      - Run: uv run invar guard src/invar/core/dead_export.py -> passed
+
+
+      Spec link:
+
+      - DX-95
+
+      - DX-96 non-suppressible dead_export semantics
+
+
+      Remediation summary:
+
+      - Removed function-path inline dead_export escape-hatch suppression
+
+      - Unified function/class dead_export handling to consistent non-suppressible
+      behavior
+
+      - Preserved Protocol/ABC exemptions for classes
+
+      - Added regression test ensuring function escape hatch does not suppress dead_export'
   - id: deep_review.recheck-dead-export-dx96
     name: Recheck dead_export DX-96 conformance
     status: pending
