@@ -30714,7 +30714,7 @@ phases:
   steps:
   - id: test.dead-class-tests
     name: dead-class-tests
-    status: claimed
+    status: done
     description: 'Test step: Add comprehensive class-specific test cases for dead_export
       detection.
 
@@ -30777,6 +30777,41 @@ phases:
     agent: python-executor
     claimed_by: python-executor
     claimed_at: '2026-03-22T19:25:18.118545+00:00'
+    done_at: '2026-03-22T19:28:24.944823+00:00'
+    evidence: 'Artifact:
+
+      - Commit hashes: 7e4c86b
+
+
+      Files changed:
+
+      - tests/core/test_dead_export.py
+
+
+      Verification:
+
+      - Run: uv run pytest tests/core/test_dead_export.py -v --tb=short -> 4 failed,
+      8 passed (expected red phase)
+
+      - Run: uv run pytest tests/core/test_dead_export.py --collect-only -> 12 tests
+      collected, includes AC1-AC7 additions
+
+      - Run: uv run mypy tests/core/test_dead_export.py -> Success
+
+
+      Spec link:
+
+      - DX-95
+
+
+      Gaps/Notes:
+
+      - AC1-AC7 tests added; AC8 deferred to selftest phase per plan
+
+      - Failing tests are expected at this stage because implementation for class
+      detection is not yet applied
+
+      - No product implementation code added'
   - id: test.gate
     name: gate
     status: pending
