@@ -87,11 +87,17 @@ def read_config(path: Path) -> Result[str, str]:
 
 ## Escape Hatches
 
+Apply to functions or classes:
+
 ```python
 # @invar:allow dead_export: CLI entry point called by framework
-# @invar:allow shell_complexity: orchestration requires many steps
+def my_cli_command(): ...
+
+# @invar:allow dead_export: Abstract base class for subclassing
+class MyProtocol(Protocol): ...
 ```
 
+Protocol/ABC subclasses are automatically exempt from dead_export (no escape hatch needed).
 Use escape hatches rarely and always include a reason.
 
 ## Minimal Configuration

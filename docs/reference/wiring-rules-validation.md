@@ -6,7 +6,7 @@ This document records the precision/recall results for the six wiring integrity 
 
 | Rule | Category | Severity | Detects |
 |------|----------|----------|---------|
-| dead_export | SHELL | WARNING | Public shell function with zero runtime callers |
+| dead_export | SHELL | WARNING | Public shell function or class with zero runtime callers |
 | dead_param | SHELL | WARNING | Function parameter declared but never referenced |
 | stub_body | SHELL | INFO | Function body is a non-implementation stub |
 | wiring_gap | SHELL | WARNING | Local variable matches unpassed optional parameter |
@@ -67,11 +67,15 @@ Each rule has documented limitations in `src/invar/core/rule_meta.py`:
 
 ### dead_export Suppression
 
-If a shell function is flagged as dead_export but is actually used (e.g., Typer CLI entry point, dynamically registered callback), add an escape hatch marker:
+If a shell function or class is flagged as dead_export but is actually used (e.g., Typer CLI entry point, dynamically registered callback), add an escape hatch marker:
 
 ```python
 # @invar:allow dead_export: Typer CLI command registered at runtime
 def my_command():
+    ...
+
+# @invar:allow dead_export: Abstract base class for subclassing
+class MyProtocol(Protocol):
     ...
 ```
 
@@ -80,6 +84,11 @@ Common reasons for suppression:
 - Flask routes registered via blueprint
 - Dynamically registered event handlers
 - Functions called via reflection
+- Abstract base classes meant to be subclassed
+
+**Automatic exemptions** (no escape hatch needed):
+- Protocol subclasses (typing.Protocol, typing_extensions.Protocol)
+- ABC subclasses (abc.ABC)
 
 ### dead_param Suppression
 
