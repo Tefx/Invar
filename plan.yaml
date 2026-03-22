@@ -31325,6 +31325,96 @@ phases:
     depends_on:
     - selftest.guard-all
     agent: python-senior
+  - id: selftest.retest-guard-and-pytest
+    name: Retest full self-test suite after pytest respawn fix
+    status: pending
+    description: 'Independent retest after `selftest.fix-pytest-uvx-respawn`.
+
+
+      step_type: verification
+
+      verification_scope: phase-check
+
+      protected_gates:
+
+      - selftest.gate
+
+
+      As an INDEPENDENT TESTER (`integration-verifier`), validate the self-test acceptance
+      criteria from a fresh/cold environment.
+
+
+      Required commands:
+
+      1. `uv run pytest tests/ -v`
+
+      2. `uv run invar guard --all`
+
+
+      Required findings:
+
+      - The previously failing test `tests/test_subprocess_env.py::TestUvxRespawnCommand::test_uses_running_source_for_version_mismatch_respawn`
+      now passes as part of the full suite.
+
+      - `uv run invar guard --all` still passes.
+
+      - No new class `dead_export` false positives appear.
+
+      - Evidence includes actual command output, not a summary.
+
+
+      This verification is successful if it either proves the blocker is cleared or
+      surfaces any remaining blocker-class failure with reproducible evidence.'
+    verification: '- Fresh/cold run of `uv run pytest tests/ -v` passes
+
+      - Fresh/cold run of `uv run invar guard --all` passes
+
+      - No new class dead_export false positives are reported
+
+      - Evidence pastes actual command output for both commands'
+    evidence_template: '## Self-Test Retest Evidence
+
+
+      **Commands executed**:
+
+      ```bash
+
+      uv run pytest tests/ -v
+
+      uv run invar guard --all
+
+      ```
+
+
+      **Pytest output**:
+
+      ```text
+
+      <paste actual output>
+
+      ```
+
+
+      **Guard output**:
+
+      ```text
+
+      <paste actual output>
+
+      ```
+
+
+      **Class dead_export check**:
+
+      - New false positives: none | <describe>
+
+
+      **Verdict**:
+
+      - PASS | ISSUES_FOUND'
+    depends_on:
+    - selftest.fix-pytest-uvx-respawn
+    agent: integration-verifier
 - id: doc_sync
   name: Documentation Sync
   status: locked
