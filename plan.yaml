@@ -31826,7 +31826,7 @@ phases:
     agent: gate-reviewer
   - id: deep_review.fix-dead-export-dx96
     name: Fix dead_export DX-96 consistency
-    status: pending
+    status: claimed
     description: 'Batched remediation: align dead_export escape-hatch handling with
       DX-96 non-suppressible behavior so class and function paths enforce the same
       policy.
@@ -31897,6 +31897,8 @@ phases:
     depends_on:
     - deep_review.spec-conformance
     agent: python-senior
+    claimed_by: python-senior
+    claimed_at: '2026-03-22T22:36:37.061497+00:00'
   - id: deep_review.recheck-dead-export-dx96
     name: Recheck dead_export DX-96 conformance
     status: pending
