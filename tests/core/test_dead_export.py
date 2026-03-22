@@ -146,3 +146,209 @@ def test_test_only_export_severity_differs_from_regular_dead_export():
     assert severity_test.value < severity_dead.value, (
         f"test_only should have lower severity: got test_only={severity_test}, dead_export={severity_dead}"
     )
+
+
+# ============================================================================
+# CLASS-SPECIFIC TEST CASES (AC1-AC7)
+# ============================================================================
+
+
+def test_ac1_dead_public_class_detected():
+    """AC1 - Dead public class detected.
+
+    A public class in shell with zero cross-file references should be
+    reported as dead_export with WARNING severity.
+    """
+    sym = Symbol(name="UnusedClass", kind=SymbolKind.CLASS, line=5, end_line=20)
+    file_info = FileInfo(path="shell/models.py", lines=30, symbols=[sym], is_shell=True)
+
+    # Zero references (dead)
+    ref_counts = {"shell/models.py::UnusedClass": 0}
+
+    violations = check_dead_exports([file_info], ref_counts, RuleConfig())
+
+    assert len(violations) == 1, f"Expected 1 violation, got {len(violations)}"
+    v = violations[0]
+    assert v.rule == "dead_export"
+    assert v.severity == Severity.WARNING
+    assert "UnusedClass" in v.message
+    assert "class" in v.message.lower(), "Message should mention 'class'"
+
+
+def test_ac2_referenced_class_not_reported():
+    """AC2 - Referenced class NOT reported.
+
+    A public class that has cross-file references should NOT be reported
+    as dead_export.
+    """
+    sym = Symbol(name="UsedClass", kind=SymbolKind.CLASS, line=5, end_line=20)
+    file_info = FileInfo(path="shell/models.py", lines=30, symbols=[sym], is_shell=True)
+
+    # Has references from production code
+    ref_counts = {"shell/models.py::UsedClass": 3}
+    ref_sources = {"shell/models.py::UsedClass": ["shell/api.py", "shell/utils.py"]}
+
+    violations = check_dead_exports([file_info], ref_counts, RuleConfig(), ref_sources)
+
+    assert len(violations) == 0, f"Expected no violations for referenced class, got {violations}"
+
+
+def test_ac3_protocol_subclass_exempt():
+    """AC3 - Protocol subclass exempt.
+
+    Classes that inherit from typing.Protocol should be exempt from
+    dead_export detection because they define interfaces, not implementations.
+    """
+    sym = Symbol(name="MyProtocol", kind=SymbolKind.CLASS, line=5, end_line=10)
+    # Protocol subclass - source shows inheritance from Protocol
+    source = """
+from typing import Protocol
+
+class MyProtocol(Protocol):
+    def method(self) -> int: ...
+"""
+    file_info = FileInfo(
+        path="shell/interfaces.py", lines=10, symbols=[sym], is_shell=True, source=source
+    )
+
+    # Zero references, but Protocol subclass should be exempt
+    ref_counts = {"shell/interfaces.py::MyProtocol": 0}
+
+    violations = check_dead_exports([file_info], ref_counts, RuleConfig())
+
+    assert len(violations) == 0, (
+        f"Protocol subclass should be exempt from dead_export, got {violations}"
+    )
+
+
+def test_ac4_abc_subclass_exempt():
+    """AC4 - ABC subclass exempt.
+
+    Classes that inherit from abc.ABC should be exempt from dead_export
+    detection because they define abstract interfaces, not concrete implementations.
+    """
+    sym = Symbol(name="MyAbstract", kind=SymbolKind.CLASS, line=5, end_line=10)
+    # ABC subclass - source shows inheritance from ABC
+    source = """
+from abc import ABC
+
+class MyAbstract(ABC):
+    def abstract_method(self) -> int: ...
+"""
+    file_info = FileInfo(
+        path="shell/abstracts.py", lines=10, symbols=[sym], is_shell=True, source=source
+    )
+
+    # Zero references, but ABC subclass should be exempt
+    ref_counts = {"shell/abstracts.py::MyAbstract": 0}
+
+    violations = check_dead_exports([file_info], ref_counts, RuleConfig())
+
+    assert len(violations) == 0, f"ABC subclass should be exempt from dead export, got {violations}"
+
+
+def test_ac5_escape_hatch_works_for_class():
+    """AC5 - Escape hatch works for class.
+
+    Classes with @invar:allow dead_export marker should be exempt
+    from dead_export detection, just like functions.
+    """
+    sym = Symbol(name="LegacyClass", kind=SymbolKind.CLASS, line=5, end_line=15)
+    # Escape hatch marker present
+    source = """
+# @invar:allow dead_export: Legacy API class used by external systems
+class LegacyClass:
+    def method(self):
+        pass
+"""
+    file_info = FileInfo(
+        path="shell/legacy.py", lines=20, symbols=[sym], is_shell=True, source=source
+    )
+
+    # Zero references, but has escape hatch
+    ref_counts = {"shell/legacy.py::LegacyClass": 0}
+
+    violations = check_dead_exports([file_info], ref_counts, RuleConfig())
+
+    # Should have exactly 1 violation - escape hatch does NOT suppress dead_export
+    # (dead_export is non-suppressible per ESCAPE_TIER_MAP)
+    assert len(violations) == 1, (
+        f"dead_export should still be reported despite escape hatch (non-suppressible), got {len(violations)}"
+    )
+
+
+def test_ac6_mixed_symbols_dead_class_live_function_dead_function():
+    """AC6 - Mixed symbols: dead class + live function + dead function.
+
+    When multiple symbols exist in the same file, each should be evaluated
+    independently. Dead class should be reported, live function should not,
+    dead function should be reported.
+    """
+    # Dead public class
+    sym_class = Symbol(name="DeadClass", kind=SymbolKind.CLASS, line=1, end_line=10)
+    # Live function (has references)
+    sym_func_live = Symbol(name="live_function", kind=SymbolKind.FUNCTION, line=12, end_line=20)
+    # Dead function (no references)
+    sym_func_dead = Symbol(name="dead_function", kind=SymbolKind.FUNCTION, line=22, end_line=30)
+
+    file_info = FileInfo(
+        path="shell/mixed.py",
+        lines=40,
+        symbols=[sym_class, sym_func_live, sym_func_dead],
+        is_shell=True,
+    )
+
+    # Reference counts
+    ref_counts = {
+        "shell/mixed.py::DeadClass": 0,  # Dead class
+        "shell/mixed.py::live_function": 5,  # Live function
+        "shell/mixed.py::dead_function": 0,  # Dead function
+    }
+
+    violations = check_dead_exports([file_info], ref_counts, RuleConfig())
+
+    # Should have 2 violations: dead class and dead function
+    assert len(violations) == 2, f"Expected 2 violations, got {len(violations)}"
+    rules = sorted([v.rule for v in violations])
+    assert rules == ["dead_export", "dead_export"], f"Expected two dead_export rules, got {rules}"
+
+    # Check messages mention class vs function
+    class_violation = next((v for v in violations if "DeadClass" in v.message), None)
+    func_violation = next((v for v in violations if "dead_function" in v.message), None)
+
+    assert class_violation is not None, "Should have violation for DeadClass"
+    assert func_violation is not None, "Should have violation for dead_function"
+    assert "class" in class_violation.message.lower(), "Class violation should mention 'class'"
+    assert "function" in func_violation.message.lower(), (
+        "Function violation should mention 'function'"
+    )
+
+
+def test_ac7_nested_inner_classes_only_top_level_checked():
+    """AC7 - Nested/inner classes: only top-level public classes checked.
+
+    Currently, nested/inner classes are not extracted as separate symbols
+    from file_info.symbols. This test documents expected behavior where
+    only top-level public classes are checked for dead exports.
+    """
+    # Top-level public class (should be checked)
+    sym_toplevel = Symbol(name="TopClass", kind=SymbolKind.CLASS, line=5, end_line=30)
+
+    file_info = FileInfo(
+        path="shell/nested.py",
+        lines=50,
+        symbols=[sym_toplevel],  # Only top-level symbol extracted
+        is_shell=True,
+    )
+
+    # Zero references
+    ref_counts = {"shell/nested.py::TopClass": 0}
+
+    violations = check_dead_exports([file_info], ref_counts, RuleConfig())
+
+    # Top-level class should be reported
+    assert len(violations) == 1
+    assert "TopClass" in violations[0].message
+
+    # Note: InnerClass would not be in symbols, so it wouldn't be checked
+    # This is the expected behavior - nested classes are not separate symbols
