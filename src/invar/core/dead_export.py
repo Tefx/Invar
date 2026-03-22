@@ -41,7 +41,7 @@ def _is_test_file(path: str) -> bool:
 
 
 @skip_property_test("stub_body: Contract stub pending implementation")
-@pre(lambda node: isinstance(node, ast.ClassDef))
+@pre(lambda node: isinstance(node, ast.ClassDef) and isinstance(getattr(node, "bases", None), list))
 @post(lambda result: isinstance(result, bool))
 def _is_protocol_or_abc(node: ast.ClassDef) -> bool:
     """
@@ -52,8 +52,7 @@ def _is_protocol_or_abc(node: ast.ClassDef) -> bool:
     that define contracts rather than concrete implementations. These should
     be exempt from dead export reporting as they are meant to be subclassed.
 
-    Note: This is a stub. Full implementation will analyze base classes and
-    class decorators to detect Protocol/ABC heritage.
+    Handles multiple inheritance by checking each base class.
 
     Examples:
         >>> import ast
@@ -63,13 +62,52 @@ def _is_protocol_or_abc(node: ast.ClassDef) -> bool:
         >>> _is_protocol_or_abc(tree1.body[1])  # class def  # doctest: +SKIP
         True
 
-        >>> # Plain class (not Protocol or ABC)
-        >>> code2 = "class PlainClass: pass"
+        >>> # ABC subclass
+        >>> code2 = "from abc import ABC\\nclass MyAbstract(ABC): pass"
         >>> tree2 = ast.parse(code2)
-        >>> _is_protocol_or_abc(tree2.body[0])  # doctest: +SKIP
+        >>> _is_protocol_or_abc(tree2.body[1])  # doctest: +SKIP
+        True
+
+        >>> # Plain class (not Protocol or ABC)
+        >>> code3 = "class PlainClass: pass"
+        >>> tree3 = ast.parse(code3)
+        >>> _is_protocol_or_abc(tree3.body[0])  # doctest: +SKIP
         False
+
+        >>> # Multiple inheritance with Protocol
+        >>> code4 = "from typing import Protocol\\nclass Mixed(Protocol, object): pass"
+        >>> tree4 = ast.parse(code4)
+        >>> _is_protocol_or_abc(tree4.body[1])  # doctest: +SKIP
+        True
+
+        >>> # typing_extensions.Protocol
+        >>> code5 = "from typing_extensions import Protocol\\nclass ExtProto(Protocol): pass"
+        >>> tree5 = ast.parse(code5)
+        >>> _is_protocol_or_abc(tree5.body[1])  # doctest: +SKIP
+        True
     """
-    raise NotImplementedError
+    bases = getattr(node, "bases", None)
+    if not isinstance(bases, list):
+        return False
+
+    for base in bases:
+        # Direct Name nodes: Protocol, ABC
+        if isinstance(base, ast.Name):
+            if base.id in ("Protocol", "ABC"):
+                return True
+        # Attribute nodes: typing.Protocol, abc.ABC, typing_extensions.Protocol
+        elif isinstance(base, ast.Attribute):
+            if base.attr in ("Protocol", "ABC"):
+                return True
+        # Subscript nodes: Protocol[...], ABC[...]
+        elif isinstance(base, ast.Subscript):
+            value = base.value
+            if isinstance(value, ast.Name) and value.id in ("Protocol", "ABC"):
+                return True
+            if isinstance(value, ast.Attribute) and value.attr in ("Protocol", "ABC"):
+                return True
+
+    return False
 
 
 @pre(
