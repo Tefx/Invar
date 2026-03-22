@@ -31724,7 +31724,7 @@ phases:
     claimed_at: '2026-03-22T22:13:19.451799+00:00'
   - id: deep_review.wiring-audit
     name: wiring-audit
-    status: pending
+    status: claimed
     description: 'Wiring completeness audit: Verify every new symbol is reachable
       at runtime.
 
@@ -31751,6 +31751,8 @@ phases:
 
       - Verdict: PASS or ISSUES_FOUND'
     agent: wiring-auditor
+    claimed_by: wiring-auditor
+    claimed_at: '2026-03-22T22:18:35.889507+00:00'
   - id: deep_review.gate
     name: gate
     status: pending
