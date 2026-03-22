@@ -371,7 +371,10 @@ def get_uvx_respawn_command(
     running_source = running_checkout or detect_running_invar_source()
 
     local_source: Path | None = None
-    if running_checkout is not None:
+    should_probe_project_local = running_checkout is not None or (
+        running_source is not None and running_source.suffix != ".whl"
+    )
+    if should_probe_project_local:
         local_source = detect_local_invar_source(project_root=project_root)
         if local_source is None and invocation_root is not None:
             local_source = detect_local_invar_source(project_root=invocation_root)
