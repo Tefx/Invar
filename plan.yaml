@@ -30501,7 +30501,7 @@ phases:
   steps:
   - id: contract.protocol-abc-helper
     name: protocol-abc-helper
-    status: rejected
+    status: claimed
     description: "Contract step: Extract or extend a helper function for Protocol/ABC\
       \ detection.\n\nstep_type: contract\ncontract_purity: ENFORCED\ncontract_outputs:\n\
       \  - signatures\n  - type_defs\n  - stubs\n\nFile: src/invar/core/dead_export.py\n\
@@ -30528,7 +30528,7 @@ phases:
     - DX-95
     agent: python-executor
     claimed_by: python-executor
-    claimed_at: '2026-03-22T18:54:31.417464+00:00'
+    claimed_at: '2026-03-22T19:06:14.960405+00:00'
     done_at: '2026-03-22T19:01:16.438355+00:00'
     rejection_reason: 'Evidence invalid: commit hook invar guard failed due doctest
       executing stub and raising NotImplementedError. Rework required to make contract
