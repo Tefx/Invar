@@ -30415,4 +30415,6 @@ phases:
     agent: gate-reviewer
 - id: contract
   name: Contract + Helper Extraction
-  status: pending
+  status: locked
+  depends_on:
+  - verify
