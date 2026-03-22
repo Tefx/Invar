@@ -31254,6 +31254,77 @@ phases:
     depends_on:
     - selftest.guard-all
     agent: gate-reviewer
+  - id: selftest.fix-pytest-uvx-respawn
+    name: Fix pre-existing pytest respawn regression
+    status: pending
+    description: 'Batched remediation for the repeated blocker on `selftest.guard-all`.
+
+
+      Issue: `uv run pytest tests/ -v` is blocked by the pre-existing failing test
+      `tests/test_subprocess_env.py::TestUvxRespawnCommand::test_uses_running_source_for_version_mismatch_respawn`
+      even though `uv run invar guard --all` passes and reports no new class dead_export
+      false positives.
+
+
+      step_type: implementation
+
+
+      Root Cause vs Symptom:
+
+      - Root cause: investigate and correct the respawn/version-mismatch command construction
+      or environment expectation that makes this test fail under the required `uv
+      run pytest tests/ -v` self-test path.
+
+      - Symptom: the single failing pytest case keeps `selftest.guard-all` from satisfying
+      the required criterion `Full test suite passes`.
+
+      - Why previous fix failed: prior self-test attempts only re-ran verification;
+      they did not create explicit remediation ownership for the failing pytest path.
+
+      - Why this fix is not surface-level: resolve the subprocess/env respawn behavior
+      in product code and/or authoritative test expectation so the failure closes
+      at its semantic source instead of being masked.
+
+
+      Scope:
+
+      - Preserve the passing `uv run invar guard --all` behavior.
+
+      - Preserve the current no-new-class-dead_export-false-positive outcome.
+
+      - Search for sibling respawn/version-mismatch command paths beyond the named
+      test before claiming done.
+
+
+      Likely touch paths:
+
+      - tests/test_subprocess_env.py
+
+      - src/**/subprocess*.py
+
+      - src/**/env*.py
+
+      - src/**/uvx*.py
+
+
+      Completion Criteria (stub exclusion):
+
+      This is an IMPLEMENTATION step. Stub-only completion is NOT acceptable.
+
+      Each deliverable MUST contain substantive logic that processes its inputs and
+      produces outputs that vary based on those inputs. Private stub classes (`_Runtime*`,
+      `_Stub*`, `_Placeholder*`) do not satisfy this requirement.'
+    verification: '- Targeted regression for `tests/test_subprocess_env.py::TestUvxRespawnCommand::test_uses_running_source_for_version_mismatch_respawn`
+      passes
+
+      - Root-cause evidence explains what changed in the respawn/version-mismatch
+      path
+
+      - Change preserves the currently passing `uv run invar guard --all` baseline
+      and does not introduce new class dead_export false positives'
+    depends_on:
+    - selftest.guard-all
+    agent: python-senior
 - id: doc_sync
   name: Documentation Sync
   status: locked
