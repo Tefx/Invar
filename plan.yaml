@@ -31275,7 +31275,7 @@ phases:
     agent: gate-reviewer
   - id: selftest.fix-pytest-uvx-respawn
     name: Fix pre-existing pytest respawn regression
-    status: pending
+    status: claimed
     description: 'Batched remediation for the repeated blocker on `selftest.guard-all`.
 
 
@@ -31344,6 +31344,8 @@ phases:
     depends_on:
     - selftest.guard-all
     agent: python-senior
+    claimed_by: python-senior
+    claimed_at: '2026-03-22T21:17:50.461394+00:00'
   - id: selftest.retest-guard-and-pytest
     name: Retest full self-test suite after pytest respawn fix
     status: pending
