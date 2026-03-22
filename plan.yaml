@@ -30880,7 +30880,7 @@ phases:
   steps:
   - id: impl.protocol-abc-helper
     name: protocol-abc-helper
-    status: claimed
+    status: done
     description: 'Implementation step: Implement the _is_protocol_or_abc helper.
 
 
@@ -30941,7 +30941,40 @@ phases:
     agent: python-executor
     claimed_by: python-executor
     claimed_at: '2026-03-22T20:01:00.586962+00:00'
-    done_at: '2026-03-22T19:44:12.365774+00:00'
+    done_at: '2026-03-22T20:34:59.955854+00:00'
+    evidence: 'Artifact:
+
+      - Commit hash(es): b9a0ed37563fc8ef712a15ec9046c29bc4a9d22a
+
+
+      Files changed:
+
+      - src/invar/core/dead_export.py
+
+
+      Verification:
+
+      - Run: uv run ruff check src/invar/core/dead_export.py -> passed
+
+      - Run: uv run python -m pytest tests/core/test_dead_export.py::test_ac3_protocol_subclass_exempt
+      tests/core/test_dead_export.py::test_ac4_abc_subclass_exempt -v -> 2 passed
+
+      - Run: PYTHONPATH="${PWD}/src:${PYTHONPATH}" .venv/bin/invar guard --human src/invar/core/dead_export.py
+      -> passed
+
+
+      Spec link:
+
+      - DX-95
+
+
+      Gaps/Notes:
+
+      - Added defensive base extraction via getattr(node, "bases", None) for property-test
+      robustness
+
+      - Handles ast.Name, ast.Attribute, and ast.Subscript forms for Protocol/ABC
+      bases'
     rejection_reason: 'Verification failed during orchestrator commit: ruff errors
       and property test failure (''ClassDef'' object has no attribute ''bases'') for
       _is_protocol_or_abc.'
