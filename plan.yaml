@@ -30611,3 +30611,188 @@ phases:
   status: locked
   depends_on:
   - test
+  steps:
+  - id: impl.protocol-abc-helper
+    name: protocol-abc-helper
+    status: pending
+    description: 'Implementation step: Implement the _is_protocol_or_abc helper.
+
+
+      step_type: implementation
+
+
+      File: src/invar/core/dead_export.py
+
+      Function: _is_protocol_or_abc(node: ast.ClassDef) -> bool
+
+
+      Implementation requirements:
+
+      - Check if any base class in node.bases is ''Protocol'' (typing.Protocol) or
+      ''ABC'' (abc.ABC)
+
+      - Handle both direct name references (Protocol) and attribute references (typing.Protocol)
+
+      - Consider runtime_checkable Protocol as still a Protocol
+
+      - Return True if the class is a Protocol or ABC subclass, False otherwise
+
+
+      Pattern: Follow existing AST inspection patterns in dead_export.py.
+
+
+      Edge cases:
+
+      - Base class is an ast.Name with id=''Protocol'' or id=''ABC''
+
+      - Base class is an ast.Attribute with attr=''Protocol'' and value.id=''typing''
+
+      - Base class is an ast.Attribute with attr=''ABC'' and value.id=''abc''
+
+      - Multiple inheritance: class Foo(Protocol, SomeMixin) -> still True
+
+
+      Tests to pass: test_dead_export.py AC3, AC4
+
+
+      ## Completion Criteria (stub exclusion)
+
+      This is an IMPLEMENTATION step. Stub-only completion is NOT acceptable.
+
+      The function MUST contain real AST inspection logic, not just `return False`
+      or `...`.'
+    verification: '- _is_protocol_or_abc contains real AST inspection logic
+
+      - Handles Protocol and ABC base class detection
+
+      - Handles both Name and Attribute AST node forms
+
+      - AC3 and AC4 tests pass
+
+      - invar guard passes on dead_export.py'
+    refs:
+    - src/invar/core/dead_export.py
+    agent: python-executor
+  - id: impl.extend-dead-export
+    name: extend-dead-export
+    status: pending
+    description: "Implementation step: Extend check_dead_exports to scan for unreferenced\
+      \ public classes.\n\nstep_type: implementation\n\nFile: src/invar/core/dead_export.py\n\
+      Function: check_dead_exports (existing)\n\nImplementation requirements:\n- Add\
+      \ ast.ClassDef scanning to the existing symbol collection logic\n- For each\
+      \ public class (in __all__ or matching public naming convention):\n  1. Check\
+      \ if it has external references (using references.py)\n  2. If zero external\
+      \ refs AND not Protocol/ABC (use _is_protocol_or_abc): report as dead_export\n\
+      \  3. If escape hatch present: skip as with existing function/constant handling\n\
+      - Preserve ALL existing behavior for function/constant dead-export detection\n\
+      \nPattern: Follow the existing scanning pattern for functions/constants in the\
+      \ same function.\n\nRisk areas:\n- Must not break existing function/constant\
+      \ detection\n- Must correctly distinguish top-level classes from nested/inner\
+      \ classes\n- Must handle __all__ entries that are classes vs functions\n\nTests\
+      \ to pass: AC1, AC2, AC5, AC6, AC7 (plus all existing tests must continue to\
+      \ pass)\n\n## Completion Criteria (stub exclusion)\nThis is an IMPLEMENTATION\
+      \ step. The class scanning logic MUST be real, not placeholder."
+    verification: '- check_dead_exports now detects unreferenced public classes
+
+      - All new tests (AC1-AC7) pass
+
+      - All existing tests continue to pass
+
+      - invar guard passes on dead_export.py
+
+      - grep confirms ClassDef handling in the function'
+    refs:
+    - src/invar/core/dead_export.py
+    depends_on:
+    - impl.protocol-abc-helper
+    agent: python-executor
+  - id: impl.update-rule-meta
+    name: update-rule-meta
+    status: pending
+    description: 'Implementation step: Update rule_meta.py to document CLASS as a
+      supported symbol kind for dead_export.
+
+
+      step_type: implementation
+
+
+      File: src/invar/core/rule_meta.py
+
+
+      Implementation requirements:
+
+      - Find the dead_export rule metadata entry
+
+      - Add CLASS to its supported symbol kinds (alongside FUNCTION, CONSTANT, or
+      whatever exists)
+
+      - Update any description strings to mention class detection
+
+      - If there is a rule registry or enum, ensure CLASS is included
+
+
+      Pattern: Follow existing rule_meta patterns for other rules.
+
+
+      This is a small, isolated change. It does not touch dead_export.py.
+
+
+      ## Completion Criteria (stub exclusion)
+
+      This is an IMPLEMENTATION step. The rule metadata MUST actually include CLASS.'
+    verification: '- rule_meta.py dead_export entry includes CLASS
+
+      - Description mentions class detection
+
+      - invar guard passes on rule_meta.py
+
+      - No other rules affected'
+    refs:
+    - src/invar/core/rule_meta.py
+    agent: python-executor
+  - id: impl.gate
+    name: gate
+    status: pending
+    description: 'Gate review: Verify implementation phase completion.
+
+
+      review_depth: STANDARD
+
+
+      Criteria:
+
+      1. All 3 implementation steps completed
+
+      2. All new tests (AC1-AC7) pass
+
+      3. All existing tests continue to pass
+
+      4. invar guard passes on all modified files
+
+      5. No stub implementations remain
+
+      6. Protocol/ABC exemption works correctly
+
+      7. Escape hatch works for classes
+
+      8. rule_meta updated
+
+
+      cross_cutting_focus:
+
+      - Existing dead_export behavior preserved (no regressions)
+
+      - Class detection is consistent with function/constant detection patterns'
+    verification: '- All implementation steps completed
+
+      - All tests pass (new + existing)
+
+      - invar guard passes
+
+      - No stubs remain
+
+      - Ready for self-test phase'
+    depends_on:
+    - impl.extend-dead-export
+    - impl.update-rule-meta
+    agent: gate-reviewer
