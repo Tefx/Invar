@@ -30801,3 +30801,53 @@ phases:
   status: locked
   depends_on:
   - impl
+  steps:
+  - id: selftest.guard-all
+    name: guard-all
+    status: pending
+    description: "Self-test verification: Run invar guard --all on Invar's own codebase.\n\
+      \nThis is the critical acceptance criterion (AC8): the new class dead-export\
+      \ detection must not produce false positives on Invar's own public classes.\n\
+      \nRequired:\n1. Run: uv run invar guard --all\n2. Verify zero new violations\
+      \ (existing violations, if any, must match baseline)\n3. If any new dead_export\
+      \ violations appear for classes, determine if they are:\n   a. True positives\
+      \ (classes that genuinely need fixing) -> report but do not block\n   b. False\
+      \ positives (bug in the detection) -> report as BLOCKER\n4. Run: uv run pytest\
+      \ tests/ -v (full test suite)\n5. All tests pass\n\nEnvironment: fresh/cold\
+      \ run, not cached.\nCommand family: uv run invar guard --all (NOT uvx)."
+    verification: '- uv run invar guard --all passes (or only pre-existing violations)
+
+      - No false positives from new class detection
+
+      - Full test suite passes
+
+      - Evidence includes actual command output'
+    refs:
+    - DX-95
+    agent: integration-verifier
+  - id: selftest.gate
+    name: gate
+    status: pending
+    description: 'Gate review: Verify self-test phase completion.
+
+
+      review_depth: QUICK
+
+
+      Criteria:
+
+      - invar guard --all passed
+
+      - No false positives from class detection
+
+      - Full test suite passed
+
+      - Evidence is actual command output, not summary'
+    verification: '- Self-test evidence reviewed
+
+      - No false positives
+
+      - Ready for doc-sync phase'
+    depends_on:
+    - selftest.guard-all
+    agent: gate-reviewer
