@@ -30851,3 +30851,8 @@ phases:
     depends_on:
     - selftest.guard-all
     agent: gate-reviewer
+- id: doc_sync
+  name: Documentation Sync
+  status: locked
+  depends_on:
+  - selftest
