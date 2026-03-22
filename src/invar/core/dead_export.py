@@ -1,7 +1,7 @@
 """
-Dead export detection for Shell functions.
+Dead export detection for Shell functions and classes.
 
-Identifies Shell functions that are never referenced elsewhere in the codebase.
+Identifies Shell functions and classes that are never referenced elsewhere in the codebase.
 Useful for identifying potentially unused API endpoints or dead code.
 
 Core module: pure logic, no I/O.
@@ -91,19 +91,20 @@ def check_dead_exports(
     ref_sources: dict[str, list[str]] | None = None,
 ) -> list[Violation]:
     """
-    Check for dead exports in Shell functions.
+    Check for dead exports in Shell functions and classes.
 
-    Identifies Shell functions that are never referenced elsewhere.
-    Only checks public functions (not starting with _).
+    Identifies Shell functions and classes that are never referenced elsewhere.
+    Only checks public symbols (not starting with _).
 
     Two categories:
-    - dead_export: Function has zero cross-file references (WARNING)
-    - test_only_export: Function is only referenced from test files (INFO)
+    - dead_export: Symbol has zero cross-file references (WARNING)
+    - test_only_export: Symbol is only referenced from test files (INFO)
 
     Exclusions:
-    - Private functions (name.startswith("_"))
+    - Private symbols (name.startswith("_"))
     - Dunder methods (name.startswith("__") and name.endswith("__"))
     - Entry points (framework callbacks detected by decorators)
+    - Protocol/ABC classes (interface definitions meant to be subclassed)
     - Inline dead_export markers do not suppress findings (non-suppressible rule)
 
     Examples:
@@ -222,6 +223,20 @@ def check_dead_exports(
         'test_only_export'
         >>> violations11[0].severity
         <Severity.INFO: 'info'>
+
+        >>> # Case 12: Dead public class (unreferenced public class)
+        >>> sym12 = Symbol(name="UnusedClass", kind=SymbolKind.CLASS, line=1, end_line=5)
+        >>> info12 = FileInfo(path="shell/models.py", lines=10, symbols=[sym12], is_shell=True)
+        >>> ref_counts12 = {"shell/models.py::UnusedClass": 0}
+        >>> violations12 = check_dead_exports([info12], ref_counts12, RuleConfig())
+        >>> len(violations12)  # doctest: +SKIP
+        1
+        >>> violations12[0].rule  # doctest: +SKIP
+        'dead_export'
+        >>> violations12[0].severity  # doctest: +SKIP
+        <Severity.WARNING: 'warning'>
+        >>> violations12[0].message  # doctest: +SKIP
+        "Shell class 'UnusedClass' is never referenced"
     """
     violations: list[Violation] = []
 
