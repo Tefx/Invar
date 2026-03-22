@@ -30578,7 +30578,7 @@ phases:
       timestamp: '2026-03-22T19:12:58.726220+00:00'
   - id: contract.check-dead-exports-class
     name: check-dead-exports-class
-    status: pending
+    status: claimed
     description: "Contract step: Update check_dead_exports contract to cover CLASS\
       \ symbol kind.\n\nstep_type: contract\ncontract_purity: ENFORCED\ncontract_outputs:\n\
       \  - signatures (updated)\n  - stubs\n\nFile: src/invar/core/dead_export.py\n\
@@ -30604,6 +30604,8 @@ phases:
     depends_on:
     - contract.protocol-abc-helper
     agent: python-executor
+    claimed_by: python-executor
+    claimed_at: '2026-03-22T19:16:47.005476+00:00'
   - id: contract.gate
     name: gate
     status: pending
