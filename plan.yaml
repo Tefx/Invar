@@ -30418,3 +30418,92 @@ phases:
   status: locked
   depends_on:
   - verify
+  steps:
+  - id: contract.protocol-abc-helper
+    name: protocol-abc-helper
+    status: pending
+    description: "Contract step: Extract or extend a helper function for Protocol/ABC\
+      \ detection.\n\nstep_type: contract\ncontract_purity: ENFORCED\ncontract_outputs:\n\
+      \  - signatures\n  - type_defs\n  - stubs\n\nFile: src/invar/core/dead_export.py\n\
+      \nDeliverable:\n- A helper function signature: `_is_protocol_or_abc(node: ast.ClassDef)\
+      \ -> bool`\n- @pre contract: node must be ast.ClassDef\n- @post contract: result\
+      \ is bool\n- Doctest showing True for a Protocol subclass, False for a plain\
+      \ class\n- Body: `raise NotImplementedError` or `...` (stub only)\n\nThis helper\
+      \ will be used by the main check_dead_exports to exempt Protocol and ABC classes\
+      \ from dead-export reporting.\n\nSpec ref: DX-95 desired_behavior -- Protocol/ABC\
+      \ subclasses must be exempt from dead_export flagging.\n\nIMPORTANT: This is\
+      \ a CONTRACT step. Do NOT implement the detection logic. Only define the signature,\
+      \ contracts, and doctest."
+    verification: '- Function signature _is_protocol_or_abc exists in dead_export.py
+
+      - @pre and @post contracts present
+
+      - At least one doctest present
+
+      - Body is stub (NotImplementedError or ...)
+
+      - No implementation logic present'
+    refs:
+    - src/invar/core/dead_export.py
+    - DX-95
+    agent: python-executor
+  - id: contract.check-dead-exports-class
+    name: check-dead-exports-class
+    status: pending
+    description: "Contract step: Update check_dead_exports contract to cover CLASS\
+      \ symbol kind.\n\nstep_type: contract\ncontract_purity: ENFORCED\ncontract_outputs:\n\
+      \  - signatures (updated)\n  - stubs\n\nFile: src/invar/core/dead_export.py\n\
+      \nDeliverable:\n- Update the existing check_dead_exports function's @pre/@post\
+      \ contracts to document that it now handles SymbolKind.CLASS (or equivalent)\
+      \ in addition to existing kinds\n- Update docstring to mention class dead-export\
+      \ detection\n- Add a doctest showing a dead public class being reported\n- Do\
+      \ NOT implement the class detection logic yet\n\nThe function should already\
+      \ handle functions/constants. This step extends its contract surface to include\
+      \ classes.\n\nSpec ref: DX-95 desired_behavior -- extend dead_export check to\
+      \ CLASS symbols.\n\nIMPORTANT: This is a CONTRACT step. Do NOT implement the\
+      \ class-scanning logic. Only update contracts, docstrings, and doctests."
+    verification: '- check_dead_exports docstring mentions class detection
+
+      - @pre/@post contracts updated if needed
+
+      - At least one doctest for class dead-export scenario
+
+      - No new implementation logic added'
+    refs:
+    - src/invar/core/dead_export.py
+    - DX-95
+    depends_on:
+    - contract.protocol-abc-helper
+    agent: python-executor
+  - id: contract.gate
+    name: gate
+    status: pending
+    description: 'Gate review: Verify contract phase completion.
+
+
+      review_depth: STANDARD
+
+
+      Criteria:
+
+      - Both contract steps completed
+
+      - All deliverables are contract-only (no implementation logic)
+
+      - Contracts and doctests are present and well-formed
+
+      - invar guard passes on the modified file (contracts are valid)
+
+      - No public API surface added beyond what the spec requires'
+    verification: '- Both contract steps completed with contract-only deliverables
+
+      - @pre/@post contracts present and valid
+
+      - Doctests present
+
+      - No implementation logic leaked into contract steps
+
+      - invar guard passes'
+    depends_on:
+    - contract.check-dead-exports-class
+    agent: gate-reviewer
