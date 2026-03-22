@@ -31127,7 +31127,7 @@ phases:
       - only dead_export metadata entry modified'
   - id: impl.gate
     name: gate
-    status: pending
+    status: claimed
     description: 'Gate review: Verify implementation phase completion.
 
 
@@ -31171,6 +31171,8 @@ phases:
     - impl.extend-dead-export
     - impl.update-rule-meta
     agent: gate-reviewer
+    claimed_by: gate-reviewer
+    claimed_at: '2026-03-22T20:40:01.608726+00:00'
 - id: selftest
   name: Self-Test (invar guard --all)
   status: locked
