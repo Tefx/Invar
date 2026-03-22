@@ -30708,13 +30708,13 @@ phases:
       leakage; ready for test phase.'
 - id: test
   name: Tests First
-  status: pending
+  status: in_progress
   depends_on:
   - contract
   steps:
   - id: test.dead-class-tests
     name: dead-class-tests
-    status: pending
+    status: claimed
     description: 'Test step: Add comprehensive class-specific test cases for dead_export
       detection.
 
@@ -30775,6 +30775,8 @@ phases:
     - tests/core/test_dead_export.py
     - DX-95
     agent: python-executor
+    claimed_by: python-executor
+    claimed_at: '2026-03-22T19:25:18.118545+00:00'
   - id: test.gate
     name: gate
     status: pending
