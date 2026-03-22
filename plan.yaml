@@ -30350,7 +30350,7 @@ phases:
       - p0-migration.retest-guard-pass-after-remediation'
 - id: verify
   name: Prerequisite Verification
-  status: in_progress
+  status: done
   steps:
   - id: verify.refs-index-classes
     name: refs-index-classes
@@ -30431,7 +30431,7 @@ phases:
       references correctly.'
   - id: verify.gate
     name: gate
-    status: claimed
+    status: done
     description: 'Gate review: Verify prerequisite verification phase completion.
 
 
@@ -30454,9 +30454,48 @@ phases:
     agent: gate-reviewer
     claimed_by: gate-reviewer
     claimed_at: '2026-03-22T18:52:38.344619+00:00'
+    done_at: '2026-03-22T18:54:13.541704+00:00'
+    evidence: 'Artifact:
+
+      - PR: branch vectl/step-verify.gate (review-only; no code changes)
+
+
+      Verification:
+
+      - Run: grep -n "SymbolKind.FUNCTION, SymbolKind.CLASS" src/invar/core/references.py
+      -> confirms class symbols indexed
+
+      - Run: grep -n "ast.ClassDef" src/invar/core/parser.py -> confirms ClassDef
+      parsing path
+
+      - Run: uv run invar refs src/invar/core/models.py::FileInfo | jq ''.total''
+      -> 131
+
+      - Run: uv run invar refs src/invar/core/patterns/detector.py::BaseDetector ->
+      inheritance references returned
+
+      - Run: grep -n "SymbolKind.FUNCTION" src/invar/core/dead_export.py -> current
+      rule still function-only
+
+
+      Spec link:
+
+      - DX-95
+
+
+      Gate decision:
+
+      - PASS: prerequisite verification is valid; classes are indexed and referenceable;
+      proceed to contract phase.
+
+
+      Notes:
+
+      - AST fallback missing base-class detection was confirmed but is non-blocking
+      for this phase.'
 - id: contract
   name: Contract + Helper Extraction
-  status: locked
+  status: pending
   depends_on:
   - verify
   steps:
