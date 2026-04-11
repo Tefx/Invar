@@ -32053,3 +32053,9 @@ phases:
   gate: dx97-engine.gate
   depends_on:
   - deep_review
+- id: dx97-integration
+  name: DX-97 Guard and Deferred Integration
+  status: locked
+  gate: dx97-integration.gate
+  depends_on:
+  - dx97-engine
