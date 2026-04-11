@@ -32881,3 +32881,48 @@ phases:
     depends_on:
     - dx97-finalization.runtime-proof
     agent: doc-reviewer-tacit
+  - id: dx97-finalization.gate
+    name: DX-97 final gate
+    status: pending
+    description: 'Final independent gate review for DX-97.
+
+
+      Review depth: THOROUGH
+
+      Focus:
+
+      - changed-path and full-scan mutation semantics match DX-97
+
+      - deferred full-scan reporting closes with the same mutation schema as synchronous
+      runs
+
+      - doc sync matches the implemented behavior
+
+      - no fake-green path exists through survivor, timeout, internal-error, or zero-site
+      cases'
+    verification: '- runtime proof passed with concrete evidence
+
+      - doc sync is complete
+
+      - all blocker-class behavior obligations are proven or explicitly blocked for
+      remediation'
+    evidence_template: '## refs Read Confirmation (MANDATORY)
+
+      For each ref in this step:
+
+      - <filename> — key passage or "NOT READ: <reason>"
+
+
+      ## Gate Review Report
+
+      - Runtime evidence reviewed:
+
+      - Documentation evidence reviewed:
+
+      - Blocking issues:
+
+      - OPEN or BLOCKED decision with reasons:'
+    depends_on:
+    - dx97-finalization.runtime-proof
+    - dx97-finalization.doc-sync
+    agent: gate-reviewer-tacit
