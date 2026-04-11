@@ -4,6 +4,9 @@ Mutation testing integration for Invar.
 DX-28: Wraps mutmut to detect undertested code by automatically
 mutating code (e.g., `in` → `not in`) and checking if tests catch it.
 
+DX-97: Shell mutation orchestration for one-at-a-time mutant execution
+with bounded survivor evidence and fail-closed aggregation.
+
 Shell module: handles subprocess execution and result parsing.
 """
 
@@ -12,13 +15,274 @@ from __future__ import annotations
 import contextlib
 import subprocess
 import sys
+import tempfile
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from returns.result import Failure, Result, Success
 
+# DX-97: Re-export Core types for orchestration
+from invar.core.mutation_sites import (
+    MutationCandidate,
+    collect_mutation_candidates,
+    rewrite_mutation_site,
+)
+from invar.shell.mutation_runtime import MutantOutcome, MutantResult, execute_mutant_tests
+
 if TYPE_CHECKING:
-    from pathlib import Path
+    from invar.core.models import FileInfo, RuleConfig
+
+# DX-97: Survivor evidence is bounded to avoid unbounded output growth
+MAX_SURVIVOR_EVIDENCE = 5
+
+
+@dataclass
+class MutationAggregation:
+    """Aggregated results from mutation orchestration.
+
+    Attributes:
+        total: Total candidates processed
+        killed: Mutants killed by tests
+        survived: Mutants that survived tests (bounded evidence)
+        timeout: Mutants that timed out (fail-closed)
+        error: Internal errors (fail-closed)
+        survivor_evidence: Bounded list of actionable survivor details
+        internal_errors: List of internal errors encountered
+        candidates_order: Deterministic ordering of candidates processed
+
+    Examples:
+        >>> agg = MutationAggregation(total=10, killed=8, survived=2)
+        >>> agg.score
+        80.0
+        >>> agg.passed
+        True
+    """
+
+    total: int = 0
+    killed: int = 0
+    survived: int = 0
+    timeout: int = 0
+    error: int = 0
+    survivor_evidence: list[str] = field(default_factory=list)
+    internal_errors: list[str] = field(default_factory=list)
+    candidates_order: list[str] = field(default_factory=list)
+
+    @property
+    def score(self) -> float:
+        """Mutation score as percentage of killed mutants.
+
+        Examples:
+            >>> MutationAggregation(total=10, killed=10).score
+            100.0
+            >>> MutationAggregation(total=10, killed=8).score
+            80.0
+            >>> MutationAggregation(total=0).score
+            100.0
+        """
+        if self.total == 0:
+            return 100.0
+        return (self.killed / self.total) * 100
+
+    @property
+    def passed(self) -> bool:
+        """Check if mutation score meets threshold (80%).
+
+        Fail-closed: timeouts and errors count as failures.
+
+        Examples:
+            >>> MutationAggregation(total=10, killed=8).passed
+            True
+            >>> MutationAggregation(total=10, killed=7).passed
+            False
+            >>> MutationAggregation(total=10, survived=2, timeout=0, error=0).passed
+            False
+            >>> MutationAggregation(total=0, timeout=0, error=0).passed
+            True
+            >>> MutationAggregation(total=0, timeout=1, error=0).passed
+            False
+            >>> MutationAggregation(total=0, error=1).passed
+            False
+        """
+        # Fail-closed: any timeout or error fails regardless of score
+        if self.timeout > 0 or self.error > 0:
+            return False
+        return self.score >= 80.0
+
+    def add_candidate(self, candidate: MutationCandidate) -> None:
+        """Record candidate processing order for determinism.
+
+        Args:
+            candidate: The mutation candidate being processed
+
+        Examples:
+            >>> from invar.core.mutation_sites import MutationCandidate
+            >>> c = MutationCandidate(file="a.py", line=1, col_offset=0,
+            ...                      operator="Add", original_source="x + y",
+            ...                      mutated_source="x - y")
+            >>> agg = MutationAggregation()
+            >>> agg.add_candidate(c)
+            >>> "a.py:1:Add" in agg.candidates_order
+            True
+        """
+        self.candidates_order.append(f"{candidate.file}:{candidate.line}:{candidate.operator}")
+
+    def add_result(self, result: MutantResult) -> None:
+        """Aggregate a single mutant result.
+
+        Fail-closed: timeouts and errors are counted as failures.
+
+        Args:
+            result: The result from executing tests on a mutant
+
+        Examples:
+            >>> from invar.shell.mutation_runtime import MutantOutcome, MutantResult
+            >>> agg = MutationAggregation()
+            >>> r = MutantResult(outcome=MutantOutcome.KILLED, detail="Tests caught mutation")
+            >>> agg.add_result(r)
+            >>> agg.killed
+            1
+        """
+        if result.outcome == MutantOutcome.KILLED:
+            self.killed += 1
+        elif result.outcome == MutantOutcome.SURVIVED:
+            self.survived += 1
+            # Bounded survivor evidence
+            if len(self.survivor_evidence) < MAX_SURVIVOR_EVIDENCE:
+                self.survivor_evidence.append(result.detail)
+        elif result.outcome == MutantOutcome.TIMEOUT:
+            self.timeout += 1
+        elif result.outcome == MutantOutcome.ERROR:
+            self.error += 1
+            if result.errors:
+                self.internal_errors.extend(result.errors)
+
+    def add_error(self, error_msg: str) -> None:
+        """Record an internal error during orchestration.
+
+        Args:
+            error_msg: Error message describing the failure
+
+        Examples:
+            >>> agg = MutationAggregation()
+            >>> agg.add_error("Failed to collect candidates")
+            >>> "Failed to collect candidates" in agg.internal_errors
+            True
+            >>> agg.error
+            1
+        """
+        self.error += 1
+        self.internal_errors.append(error_msg)
+
+
+# DX-97: Mutation orchestration requires isolated temp workspace per mutant
+def orchestrate_mutations(
+    file_infos: list[FileInfo],
+    config: RuleConfig,
+    changed_lines: list[tuple[int, int]] | None = None,
+    timeout: int = 60,
+    project_root: Path | None = None,
+) -> Result[MutationAggregation, str]:
+    """Orchestrate mutation testing on candidates one at a time.
+
+    DX-97: Materializes each mutant in an isolated temp workspace,
+    executes tests, and aggregates results with bounded survivor evidence.
+
+    Fail-closed behavior:
+    - TIMEEOUT: Counts as failure (score impact)
+    - ERROR: Counts as failure, internal errors recorded
+    - SURVIVED: Recorded with bounded evidence (first 5 only)
+
+    Args:
+        file_infos: List of FileInfo objects with source code
+        config: RuleConfig for candidate collection
+        changed_lines: Optional line spans for changed-path filtering
+        timeout: Maximum time per mutant execution (seconds)
+        project_root: Project root directory (defaults to cwd)
+
+    Returns:
+        Success with MutationAggregation or Failure with error message
+
+    Examples:
+        >>> from invar.core.models import FileInfo, RuleConfig
+        >>> source = "def add(a, b):\\n    return a + b\\n"
+        >>> fi = FileInfo(path="test.py", lines=3, source=source)
+        >>> result = orchestrate_mutations([fi], RuleConfig())
+        >>> isinstance(result, Success)
+        True
+        >>> result.unwrap().total >= 0
+        True
+    """
+    root = project_root or Path.cwd()
+
+    # Collect candidates deterministically
+    try:
+        candidates = collect_mutation_candidates(file_infos, config, changed_lines)
+    except Exception as e:
+        return Failure(f"Failed to collect mutation candidates: {e}")
+
+    # Sort candidates for deterministic ordering (file, line, col_offset)
+    sorted_candidates = sorted(
+        candidates,
+        key=lambda c: (c.file, c.line, c.col_offset),
+    )
+
+    aggregation = MutationAggregation(total=len(sorted_candidates))
+
+    for candidate in sorted_candidates:
+        aggregation.add_candidate(candidate)
+
+        # Get original source from file_infos
+        original_source = ""
+        for fi in file_infos:
+            if fi.path == candidate.file:
+                original_source = fi.source or ""
+                break
+
+        if not original_source:
+            aggregation.add_error(f"Could not find source for {candidate.file}")
+            continue
+
+        # Rewrite the mutation site
+        rewrite_result = rewrite_mutation_site(original_source, candidate)
+        if rewrite_result.is_err():
+            aggregation.add_error(f"Rewrite failed for {candidate}: {rewrite_result.source}")
+            continue
+
+        mutated_source = rewrite_result.unwrap()
+
+        # Materialize in isolated temp workspace
+        tmp_path: Path | None = None
+        try:
+            with tempfile.TemporaryDirectory(prefix="invar_mutant_", dir=root) as tmp_dir:
+                tmp_path = Path(tmp_dir) / candidate.file
+                tmp_path.parent.mkdir(parents=True, exist_ok=True)
+                tmp_path.write_text(mutated_source, encoding="utf-8")
+
+                # Execute tests on the mutant
+                mutant_result = execute_mutant_tests(
+                    mutated_source=mutated_source,
+                    file_path=tmp_path,
+                    timeout=timeout,
+                    project_root=root,
+                )
+
+                aggregation.add_result(mutant_result)
+
+        except Exception as e:
+            aggregation.add_error(f"Internal error processing {candidate}: {e}")
+        finally:
+            # Ensure temp file is cleaned up
+            if tmp_path and tmp_path.exists():
+                with contextlib.suppress(OSError):
+                    tmp_path.unlink(missing_ok=True)
+
+    return Success(aggregation)
+
+
+# =============================================================================
+# Legacy mutmut-based implementation (retained for backwards compatibility)
+# =============================================================================
 
 
 @dataclass
@@ -97,6 +361,7 @@ def check_mutmut_installed() -> Result[str, str]:
         return Failure(f"mutmut check failed: {e}")
 
 
+# Legacy mutmut wrapper (retained for backwards compatibility)
 # @shell_complexity: Subprocess execution with result parsing
 def run_mutation_test(
     target: Path,
@@ -235,6 +500,7 @@ def parse_mutmut_output(
     return Success(result)
 
 
+# Legacy mutmut results query (retained for backwards compatibility)
 # @shell_complexity: Multi-step command execution
 def get_surviving_mutants(target: Path) -> Result[list[str], str]:
     """
@@ -282,6 +548,7 @@ def get_surviving_mutants(target: Path) -> Result[list[str], str]:
         return Failure(f"Failed to get results: {e}")
 
 
+# Legacy mutmut diff viewer (retained for backwards compatibility)
 # @shell_orchestration: Show mutant diff for investigation
 def show_mutant(mutant_id: int) -> Result[str, str]:
     """
