@@ -32465,6 +32465,104 @@ phases:
   gate: dx97-integration.gate
   depends_on:
   - dx97-engine
+  steps:
+  - id: dx97-integration.guard-config-integration
+    name: Guard config and phase wiring
+    status: pending
+    description: 'Implement and verify DX-97 guard/config integration.
+
+
+      Touch paths:
+
+      - src/invar/core/models.py
+
+      - src/invar/core/utils.py
+
+      - src/invar/shell/commands/guard.py
+
+      - src/invar/shell/guard_helpers.py
+
+      - tests/test_config_cleanup.py
+
+      - tests/integration/test_cli_flags.py
+
+
+      Spec refs:
+
+      - docs/proposals/DX-97-guard-mutation-gate.md
+
+      - docs/proposals/DX-80-guard-cli-mcp-alignment.md
+
+
+      Required behavior:
+
+      - add the authoritative v1 mutation config fields and defaults
+
+      - run mutation only after STANDARD guard phases succeed
+
+      - keep `changed=true` as the default synchronous path
+
+      - run changed-only mutation for default guard and all-core mutation for `--all`
+
+      - fail closed on survived mutants, timeouts, and internal errors
+
+
+      Known risks:
+
+      - wiring mutation before STANDARD guard completes
+
+      - drifting changed/default semantics introduced by DX-80
+
+
+      Completion criteria:
+
+      - Expected-Red is proved before implementation
+
+      - config parsing and guard branching match DX-97 exactly
+
+      - stub-only completion is not acceptable'
+    verification: '- Expected-Red proof recorded before implementation
+
+      - focused tests cover disabled mutation, changed-default mutation, and `--all`
+      full-scan mutation entry
+
+      - guard only reaches mutation after STANDARD guard success'
+    evidence_template: '## refs Read Confirmation (MANDATORY)
+
+      For each ref in this step:
+
+      - <filename> — key passage or "NOT READ: <reason>"
+
+
+      ## Expected-Red Proof (MANDATORY)
+
+      - Test-first command(s):
+
+      - Failing output:
+
+
+      ## Implementation Scope
+
+      - Files touched:
+
+      - Config fields/defaults:
+
+      - Guard phase ordering:
+
+
+      ## Green Proof
+
+      - Command(s) run:
+
+      - Passing output:
+
+
+      ## Notes
+
+      - How DX-80 changed-default semantics were preserved:
+
+      - Remaining gaps:'
+    agent: python-executor
 - id: dx97-finalization
   name: DX-97 Finalization
   status: locked
