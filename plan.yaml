@@ -32315,7 +32315,7 @@ phases:
       \ tests/core/test_mutation_sites.py -v`\n- Passing summary: 66 passed"
   - id: dx97-engine.runtime-runner
     name: Runtime-only mutant runner
-    status: pending
+    status: claimed
     description: 'Implement and verify the runtime-only executor used for one DX-97
       mutant at a time.
 
@@ -32398,6 +32398,8 @@ phases:
     depends_on:
     - dx97-engine.changed-line-selection
     agent: python-executor
+    claimed_by: python-executor
+    claimed_at: '2026-04-11T19:48:54.314829+00:00'
   - id: dx97-engine.mutation-orchestration
     name: Mutation orchestration
     status: pending
