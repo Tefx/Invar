@@ -32711,7 +32711,7 @@ phases:
       - Status: clean'
   - id: dx97-engine.retest-gate-blockers
     name: Retest DX-97 gate blocker remediation
-    status: claimed
+    status: done
     description: 'Independent retest of the DX-97 gate blocker remediation.
 
 
@@ -32741,6 +32741,17 @@ phases:
     agent: python-executor
     claimed_by: python-executor
     claimed_at: '2026-04-11T21:50:53.699964+00:00'
+    done_at: '2026-04-11T21:53:23.386124+00:00'
+    evidence: "step_intent: retest_green\nexpected_result: green\nobserved_result:\
+      \ green\nfailure_alignment: none\n\nclosures:\n  B1: CLOSED\n  B2: CLOSED\n\
+      \  S1: CLOSED\n\nmodified_product_files: NO\n\nverification:\n- cmd: uv run\
+      \ pytest tests/core/test_mutation_sites.py tests/test_git_changed_lines.py -v\n\
+      \  result: PASS\n  output: 80 passed\n- cmd: uv run invar guard src/invar/core/mutation_sites.py\
+      \ --changed\n  result: PASS\n  output: status=passed, property tests passed\n\
+      - cmd: uv run invar guard src/invar/shell/git.py --changed\n  result: PASS\n\
+      \  output: status=passed (warnings/info only, no blocker)\n\nblocker_coverage:\n\
+      - B1 operand-preservation tests pass\n- B2 contract semantics tests pass\n-\
+      \ S1 per-file hunk attribution tests pass"
 - id: dx97-integration
   name: DX-97 Guard and Deferred Integration
   status: locked
