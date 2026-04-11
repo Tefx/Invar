@@ -33177,6 +33177,67 @@ phases:
     depends_on:
     - dx97-integration.deferred-output-reporting
     agent: python-senior-tacit
+  - id: dx97-integration.retest-gate-proof-gap
+    name: Retest gate proof gap
+    status: pending
+    description: 'Independent retest for the dx97-integration proof-gap blocker.
+
+
+      As an independent tester, run focused tests and guard-oriented checks that prove
+      the real orchestrate_mutations flow now populates eligible_files, ineligible_files,
+      and files_with_zero_sites, and confirm whether the UNCERTAIN_BLOCKING proof
+      gap is closed.
+
+
+      step_type: test
+
+      step_intent: retest_green
+
+      expected_result: green
+
+
+      This step protects the dx97-integration gate by converting the blocker from
+      proof gap to explicit closure or explicit remaining defect.'
+    verification: '- Focused integration tests pass and demonstrate population of
+      eligible_files, ineligible_files, and files_with_zero_sites in real orchestration
+      flow
+
+      - Guard-oriented verification confirms closure verdict for the prior UNCERTAIN_BLOCKING
+      proof gap
+
+      - If mutation_enabled wiring changed, verification confirms the config path
+      is consumed coherently and does not introduce drift'
+    evidence_template: '## refs Read Confirmation (MANDATORY)
+
+
+      For each ref in this step:
+
+      - <filename> — key passage or "NOT READ: <reason>"
+
+
+      If no refs were provided, state: "No refs for this step."
+
+
+      ## Verification Report
+
+      - Commands executed:
+
+      - Focused test output:
+
+      - Real-flow population evidence for eligible_files:
+
+      - Real-flow population evidence for ineligible_files:
+
+      - Real-flow population evidence for files_with_zero_sites:
+
+      - Closure verdict for UNCERTAIN_BLOCKING proof gap:
+
+      - mutation_enabled consumption check (if applicable):
+
+      - Remaining issues (if any):'
+    depends_on:
+    - dx97-integration.fix-gate-proof-gap
+    agent: python-executor
 - id: dx97-finalization
   name: DX-97 Finalization
   status: locked
