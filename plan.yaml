@@ -32056,7 +32056,7 @@ phases:
   steps:
   - id: dx97-engine.core-mutation-sites
     name: Core mutation-site planning
-    status: claimed
+    status: done
     description: 'Implement and verify the pure Core mutation-site engine for DX-97.
 
 
@@ -32143,7 +32143,53 @@ phases:
     agent: python-executor
     claimed_by: python-executor
     claimed_at: '2026-04-11T19:39:31.229660+00:00'
-    done_at: '2026-04-11T19:37:58.316834+00:00'
+    done_at: '2026-04-11T19:42:19.616468+00:00'
+    evidence: '## Isolation Proof
+
+      - Work executed in /Users/tefx/Projects/Invar/.vectl/worktrees/dx97-engine.core-mutation-sites
+      on branch vectl/step-dx97-engine.core-mutation-sites
+
+
+      ## Commit Proof
+
+      - Base implementation commit: ed35342
+
+      - Remediation commit: db68f5c
+
+      - Latest commit message: fix: strengthen @pre in _collect_binop_candidates to
+      guard against mock objects
+
+      - Worktree status: clean
+
+
+      ## Expected-Red Proof
+
+      - Initial tests failed prior to module implementation (missing module/import
+      gap)
+
+
+      ## Fix Applied
+
+      - Root cause: permissive @pre accepted malformed BinOp-like objects in property
+      testing
+
+      - Change: strengthened `_collect_binop_candidates` preconditions to require
+      required BinOp attributes and valid input types
+
+
+      ## Green Proof
+
+      - `uv run pytest tests/core/test_mutation_sites.py -v` → 35 passed
+
+      - `uv run invar guard src/invar/core/mutation_sites.py --changed` → static/doctest/property
+      checks passed for changed scope
+
+
+      ## Files changed
+
+      - src/invar/core/mutation_sites.py
+
+      - tests/core/test_mutation_sites.py'
     rejection_reason: 'Integration gate failed: invar guard property_tests failed
       for _collect_binop_candidates (''BinOp'' object has no attribute ''op''). Step
       cannot be accepted until guard is green under commit hooks.'
