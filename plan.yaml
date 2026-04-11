@@ -32049,14 +32049,14 @@ phases:
       policy; no regression in exemptions.'
 - id: dx97-engine
   name: DX-97 Mutation Engine Foundations
-  status: pending
+  status: in_progress
   gate: dx97-engine.gate
   depends_on:
   - deep_review
   steps:
   - id: dx97-engine.core-mutation-sites
     name: Core mutation-site planning
-    status: pending
+    status: claimed
     description: 'Implement and verify the pure Core mutation-site engine for DX-97.
 
 
@@ -32141,6 +32141,8 @@ phases:
 
       - Remaining gaps:'
     agent: python-executor
+    claimed_by: python-executor
+    claimed_at: '2026-04-11T18:39:58.208236+00:00'
   - id: dx97-engine.changed-line-selection
     name: Changed-line Core scope selection
     status: pending
