@@ -32717,3 +32717,111 @@ phases:
   gate: dx97-finalization.gate
   depends_on:
   - dx97-integration
+  steps:
+  - id: dx97-finalization.runtime-proof
+    name: Changed and full-scan runtime proof
+    status: pending
+    description: 'As an INDEPENDENT TESTER, provide end-to-end runtime proof for DX-97
+      across both guard surfaces.
+
+
+      Touch paths for evidence:
+
+      - tests/integration/test_cli_flags.py
+
+      - tests/integration/test_mcp_guard_changed_flag.py
+
+      - tests/integration/test_mcp_guard_deferred.py
+
+      - tests/integration/test_mcp_full_guard_regressions.py
+
+
+      Spec refs:
+
+      - docs/proposals/DX-97-guard-mutation-gate.md
+
+      - docs/proposals/DX-94-mcp-full-guard-support-model.md
+
+      - docs/proposals/DX-80-guard-cli-mcp-alignment.md
+
+
+      Required proof:
+
+      - changed=true remains default and synchronous
+
+      - `--all` / `changed=false` performs full-scan mutation over eligible Core files
+
+      - deferred full-scan returns the final mutation payload through the existing
+      DX-94 lifecycle
+
+      - survived mutant, timeout, and error all fail closed
+
+      - zero-site cases report `skipped_zero_sites`, never pass
+
+
+      This is an integration proof step. Actual command output is required; “tests
+      pass” is insufficient.'
+    verification: '- At least one real changed-path proof and one real full-scan/deferred
+      proof are recorded
+
+      - outputs show additive mutation payloads with correct fail-closed semantics
+
+      - any discovered blocker creates a remediation loop instead of an OPEN recommendation'
+    evidence_template: '## Integration Evidence
+
+
+      ### refs Read Confirmation (MANDATORY)
+
+      For each ref in this step:
+
+      - <filename> — key passage or "NOT READ: <reason>"
+
+
+      **Changed-path command or test exercising the full path**:
+
+      ```
+
+      <paste exact command>
+
+      ```
+
+
+      **Changed-path output**:
+
+      ```
+
+      <paste actual output>
+
+      ```
+
+
+      **Full-scan/deferred command or test exercising the full path**:
+
+      ```
+
+      <paste exact command>
+
+      ```
+
+
+      **Full-scan/deferred output**:
+
+      ```
+
+      <paste actual output>
+
+      ```
+
+
+      **Failure-path proof**:
+
+      - survived mutant case:
+
+      - timeout or internal-error case:
+
+      - zero-site case:
+
+
+      **Path exercised**: guard entrypoint -> STANDARD phases -> mutation gate ->
+      reporting/deferred result'
+    agent: integration-verifier-tacit
