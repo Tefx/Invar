@@ -32711,7 +32711,7 @@ phases:
       - Status: clean'
   - id: dx97-engine.retest-gate-blockers
     name: Retest DX-97 gate blocker remediation
-    status: pending
+    status: claimed
     description: 'Independent retest of the DX-97 gate blocker remediation.
 
 
@@ -32739,6 +32739,8 @@ phases:
     depends_on:
     - dx97-engine.fix-gate-blockers
     agent: python-executor
+    claimed_by: python-executor
+    claimed_at: '2026-04-11T21:50:53.699964+00:00'
 - id: dx97-integration
   name: DX-97 Guard and Deferred Integration
   status: locked
