@@ -32764,7 +32764,7 @@ phases:
       \ S1 per-file hunk attribution tests pass"
 - id: dx97-integration
   name: DX-97 Guard and Deferred Integration
-  status: in_progress
+  status: done
   gate: dx97-integration.gate
   depends_on:
   - dx97-engine
@@ -33020,7 +33020,7 @@ phases:
       \ integrated step delta)\n- Status: clean"
   - id: dx97-integration.gate
     name: Guard integration gate
-    status: claimed
+    status: done
     description: 'Independent gate review for DX-97 guard integration.
 
 
@@ -33071,6 +33071,12 @@ phases:
     agent: gate-reviewer-tacit
     claimed_by: gate-reviewer-tacit
     claimed_at: '2026-04-11T23:35:36.330787+00:00'
+    done_at: '2026-04-11T23:46:42.208900+00:00'
+    evidence: "proof_gap_closure: CLOSED\nbehavioral_proof_register:\n  headline:\
+      \ PASS_WITH_DEBT\n  proof_gap_status: NONE\n  blocking_status: CLOSED\n  uncertainty_sources:\
+      \ []\n\ngate_review:\n  wiring_audit: pass\n  deferred_parity: pass\n  blocking_issues:\
+      \ []\n  decision: OPEN\n\nnotes:\n- Non-blocking debt limited to file-size and\
+      \ CLI test-timeout infrastructure; no acceptance blocker"
   - id: dx97-integration.fix-gate-proof-gap
     name: Fix gate proof gap
     status: done
@@ -33278,7 +33284,7 @@ phases:
       - focused classification tests passed"
 - id: dx97-finalization
   name: DX-97 Finalization
-  status: locked
+  status: pending
   gate: dx97-finalization.gate
   depends_on:
   - dx97-integration
