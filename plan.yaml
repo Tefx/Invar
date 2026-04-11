@@ -32059,3 +32059,9 @@ phases:
   gate: dx97-integration.gate
   depends_on:
   - dx97-engine
+- id: dx97-finalization
+  name: DX-97 Finalization
+  status: locked
+  gate: dx97-finalization.gate
+  depends_on:
+  - dx97-integration
