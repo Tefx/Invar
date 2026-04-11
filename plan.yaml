@@ -32825,3 +32825,59 @@ phases:
       **Path exercised**: guard entrypoint -> STANDARD phases -> mutation gate ->
       reporting/deferred result'
     agent: integration-verifier-tacit
+  - id: dx97-finalization.doc-sync
+    name: Mutation gate doc sync
+    status: pending
+    description: 'Update user-facing documentation to match the implemented DX-97
+      behavior.
+
+
+      Touch paths:
+
+      - docs/proposals/DX-97-guard-mutation-gate.md
+
+      - README.md
+
+      - INVAR.md
+
+      - any active guard/MCP user docs that describe changed/default behavior, `--all`,
+      deferred full-scan, or agent JSON output
+
+
+      Required outcomes:
+
+      - docs match the implemented mutation config keys and defaults
+
+      - docs state that changed=true remains default and `--all` performs full-scan
+      mutation
+
+      - docs explain `skipped_zero_sites` and fail-closed survivor/timeout/error semantics
+
+      - docs do not imply a standalone `invar mutate` command or Shell mutation support
+
+
+      Completion criteria:
+
+      - documentation is aligned to the implemented behavior, not the pre-implementation
+      draft assumptions'
+    verification: '- docs cite the real config defaults and surface semantics
+
+      - no active user doc contradicts changed-default, full-scan, or fail-closed
+      behavior'
+    evidence_template: '## refs Read Confirmation (MANDATORY)
+
+      For each ref in this step:
+
+      - <filename> — key passage or "NOT READ: <reason>"
+
+
+      ## Doc Sync Report
+
+      - Files updated:
+
+      - Behavior statements aligned:
+
+      - Any doc intentionally left unchanged and why:'
+    depends_on:
+    - dx97-finalization.runtime-proof
+    agent: doc-reviewer-tacit
