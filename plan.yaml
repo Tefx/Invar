@@ -32314,6 +32314,101 @@ phases:
     depends_on:
     - dx97-engine.changed-line-selection
     agent: python-executor
+  - id: dx97-engine.mutation-orchestration
+    name: Mutation orchestration
+    status: pending
+    description: 'Implement and verify Shell mutation orchestration for DX-97.
+
+
+      Touch paths:
+
+      - src/invar/shell/mutation.py
+
+      - tests/test_mutation_orchestration.py
+
+      - src/invar/core/mutation_sites.py
+
+      - src/invar/shell/mutation_runtime.py
+
+
+      Spec refs:
+
+      - docs/proposals/DX-97-guard-mutation-gate.md
+
+      - docs/proposals/DX-94-mcp-full-guard-support-model.md
+
+
+      Required behavior:
+
+      - materialize one mutant at a time in an isolated temp workspace
+
+      - aggregate counts and bounded survivor evidence
+
+      - fail closed on survived mutants, timeouts, and internal errors
+
+      - preserve deterministic candidate ordering for changed and full-scan paths
+
+
+      Known risks:
+
+      - dirty-workspace leakage
+
+      - survivor evidence too vague to be actionable
+
+
+      Completion criteria:
+
+      - Expected-Red is proved before implementation
+
+      - orchestration reports killed/survived/timeout/error accurately from the runner
+
+      - base checkout stays clean after execution
+
+      - stub-only completion is not acceptable'
+    verification: '- Expected-Red proof recorded before implementation
+
+      - focused tests cover temp-workspace cleanup, deterministic candidate order,
+      bounded survivor evidence, and fail-closed aggregation
+
+      - no mutant path leaves the caller workspace dirty'
+    evidence_template: '## refs Read Confirmation (MANDATORY)
+
+      For each ref in this step:
+
+      - <filename> — key passage or "NOT READ: <reason>"
+
+
+      ## Expected-Red Proof (MANDATORY)
+
+      - Test-first command(s):
+
+      - Failing output:
+
+
+      ## Implementation Scope
+
+      - Files touched:
+
+      - Isolation strategy:
+
+      - Aggregation fields emitted:
+
+
+      ## Green Proof
+
+      - Command(s) run:
+
+      - Passing output:
+
+
+      ## Notes
+
+      - How survivor evidence is bounded:
+
+      - How workspace cleanliness was checked:'
+    depends_on:
+    - dx97-engine.runtime-runner
+    agent: python-executor
 - id: dx97-integration
   name: DX-97 Guard and Deferred Integration
   status: locked
