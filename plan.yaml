@@ -32416,7 +32416,7 @@ phases:
       \ surface; no new CLI command added"
   - id: dx97-engine.mutation-orchestration
     name: Mutation orchestration
-    status: claimed
+    status: done
     description: 'Implement and verify Shell mutation orchestration for DX-97.
 
 
@@ -32511,6 +32511,21 @@ phases:
     agent: python-executor
     claimed_by: python-executor
     claimed_at: '2026-04-11T20:00:52.335063+00:00'
+    done_at: '2026-04-11T20:12:19.158082+00:00'
+    evidence: "## Isolation Proof\n- Worktree: /Users/tefx/Projects/Invar/.vectl/worktrees/dx97-engine.mutation-orchestration\n\
+      - Branch: vectl/step-dx97-engine.mutation-orchestration\n\n## Commit Proof\n\
+      - Commit hash: 0729e200ac9d5cda3734f1772d0fa7107d6e0e10\n- Commit message: DX-97:\
+      \ Implement Shell mutation orchestration\n- Status: clean after commit\n\n##\
+      \ Expected-Red Proof\n- `uv run pytest tests/test_mutation_orchestration.py\
+      \ -v` initially failed due to normalization/boolean contract issues before fixes\n\
+      \n## Implementation Scope\n- Files touched:\n  - src/invar/shell/mutation.py\n\
+      \  - tests/test_mutation_orchestration.py\n- Isolation strategy:\n  - per-mutant\
+      \ temp workspace via TemporaryDirectory, cleanup in finally paths\n- Aggregation\
+      \ fields emitted:\n  - total/killed/survived/timeout/error\n  - bounded survivor\
+      \ evidence\n  - internal errors list\n  - deterministic candidate order evidence\n\
+      \n## Green Proof\n- `uv run pytest tests/test_mutation_orchestration.py tests/test_mutation_runtime.py\
+      \ -v`\n- Passing summary: 45 passed\n\n## Notes\n- Survivor evidence bounded\
+      \ to fixed cap\n- Workspace cleanliness validated by focused tests"
   - id: dx97-engine.gate
     name: Engine foundation gate
     status: pending
