@@ -32141,6 +32141,94 @@ phases:
 
       - Remaining gaps:'
     agent: python-executor
+  - id: dx97-engine.changed-line-selection
+    name: Changed-line Core scope selection
+    status: pending
+    description: 'Implement and verify Shell changed-line selection for DX-97 fast-path
+      mutation.
+
+
+      Touch paths:
+
+      - src/invar/shell/git.py
+
+      - tests/test_git_changed_lines.py
+
+      - tests/integration/test_cli_flags.py
+
+
+      Spec refs:
+
+      - docs/proposals/DX-97-guard-mutation-gate.md
+
+      - docs/proposals/DX-80-guard-cli-mcp-alignment.md
+
+
+      Required behavior:
+
+      - parse staged + unstaged git hunks with zero-context line ranges
+
+      - treat untracked Core Python files as whole-file changed
+
+      - exclude non-Core and deleted files from mutation scope
+
+      - return plain data that downstream mutation orchestration can consume
+
+
+      Known risk:
+
+      - off-by-one line-range errors that silently under-mutate changed logic
+
+
+      Completion criteria:
+
+      - focused tests prove Expected-Red before implementation
+
+      - changed-line extraction is deterministic across staged, unstaged, and untracked
+      inputs
+
+      - stub-only completion is not acceptable'
+    verification: '- Expected-Red proof recorded before implementation
+
+      - focused tests cover staged, unstaged, untracked, deleted, and non-Core paths
+
+      - changed-only guard-path regressions remain green'
+    evidence_template: '## refs Read Confirmation (MANDATORY)
+
+      For each ref in this step:
+
+      - <filename> — key passage or "NOT READ: <reason>"
+
+
+      ## Expected-Red Proof (MANDATORY)
+
+      - Test-first command(s):
+
+      - Failing output exposing line-range drift:
+
+
+      ## Implementation Scope
+
+      - Files touched:
+
+      - Cases covered: staged / unstaged / untracked / deleted / non-Core
+
+
+      ## Green Proof
+
+      - Command(s) run:
+
+      - Passing output:
+
+
+      ## Notes
+
+      - Returned line-range shape:
+
+      - Any remaining ambiguity:'
+    depends_on:
+    - dx97-engine.core-mutation-sites
+    agent: python-executor
 - id: dx97-integration
   name: DX-97 Guard and Deferred Integration
   status: locked
