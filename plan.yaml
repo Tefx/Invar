@@ -32592,7 +32592,7 @@ phases:
     agent: gate-reviewer-tacit
   - id: dx97-engine.fix-gate-blockers
     name: Fix DX-97 gate blockers (B1/B2 + S1)
-    status: claimed
+    status: done
     description: 'Fix DX-97 gate blockers from the blocked engine gate review.
 
 
@@ -32662,6 +32662,53 @@ phases:
     agent: python-senior-tacit
     claimed_by: python-senior-tacit
     claimed_at: '2026-04-11T20:37:52.955563+00:00'
+    done_at: '2026-04-11T21:49:56.620177+00:00'
+    evidence: '## Isolation Proof
+
+      - Worktree: /Users/tefx/Projects/Invar/.vectl/worktrees/dx97-engine.fix-gate-blockers
+
+      - Branch: vectl/step-dx97-engine.fix-gate-blockers
+
+
+      ## Expected-Red Proof
+
+      - Added regression tests first for B1/B2/S1 families
+
+      - Initial failures captured on placeholder operand rewrite and contract semantics
+      before fixes
+
+
+      ## Fixes Applied
+
+      - B1: mutation binop rewrite now preserves original operand expressions; replaced
+      placeholder-based mapping with operator/token mapping and AST-derived operand
+      sources
+
+      - B2: replaced vacuous `is_v1_operator` postcondition with meaningful bool-typed
+      postcondition
+
+      - S1: implemented per-file hunk attribution parser for git diff sections and
+      updated changed-line extraction accordingly
+
+
+      ## Verification
+
+      - `uv run pytest tests/core/test_mutation_sites.py tests/test_git_changed_lines.py
+      -v` passed (80 passed)
+
+      - `uv run invar guard --changed` passed (no errors)
+
+      - doctests for touched modules passed
+
+
+      ## Commit Proof
+
+      - Commit hash: c8aff38507cf3237acbf0f118f9c949d72c23c97
+
+      - Latest message: fix(core,shell): repair mutation-site operand placeholder
+      bug, vacuous contract, and per-file hunk attribution
+
+      - Status: clean'
   - id: dx97-engine.retest-gate-blockers
     name: Retest DX-97 gate blocker remediation
     status: pending
