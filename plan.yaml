@@ -32047,3 +32047,11 @@ phases:
 
       - PASS: dead_export function/class handling now consistent with non-suppressible
       policy; no regression in exemptions.'
+- id: dx97
+  name: DX-97 Guard Mutation Gate
+  status: pending
+  gate: Changed-only remains default/synchronous; --all/full-scan includes Core-only
+    mutation and preserves DX-94 deferred semantics; mutation fails closed on survivor,
+    timeout, and internal error; zero-site never reports pass.
+  depends_on:
+  - deep_review
