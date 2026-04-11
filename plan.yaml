@@ -32528,7 +32528,7 @@ phases:
       \ to fixed cap\n- Workspace cleanliness validated by focused tests"
   - id: dx97-engine.gate
     name: Engine foundation gate
-    status: claimed
+    status: pending
     description: 'Independent gate review for the DX-97 engine foundation phase.
 
 
@@ -32576,8 +32576,6 @@ phases:
     - dx97-engine.runtime-runner
     - dx97-engine.mutation-orchestration
     agent: gate-reviewer-tacit
-    claimed_by: gate-reviewer-tacit
-    claimed_at: '2026-04-11T20:13:09.219423+00:00'
 - id: dx97-integration
   name: DX-97 Guard and Deferred Integration
   status: locked
