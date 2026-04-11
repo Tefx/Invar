@@ -32896,7 +32896,7 @@ phases:
       reviewer: vectl-decide-orchestrator-tacit
   - id: dx97-integration.deferred-output-reporting
     name: Deferred and output reporting parity
-    status: claimed
+    status: done
     description: 'Implement and verify DX-97 output and deferred-reporting parity.
 
 
@@ -33001,6 +33001,23 @@ phases:
     agent: python-senior-tacit
     claimed_by: python-senior-tacit
     claimed_at: '2026-04-11T22:42:06.257044+00:00'
+    done_at: '2026-04-11T23:09:00.016833+00:00'
+    evidence: "## Isolation Proof\n- Worktree: /Users/tefx/Projects/Invar/.vectl/worktrees/dx97-integration.deferred-output-reporting\n\
+      - Branch: vectl/step-dx97-integration.deferred-output-reporting\n\n## Expected-Red\
+      \ Proof\n- Focused agent-output mutation field test initially failed due missing\
+      \ additive fields on aggregation/output structures\n\n## Implementation Scope\n\
+      - Files touched:\n  - src/invar/shell/mutation.py\n  - src/invar/shell/guard_output.py\n\
+      \  - src/invar/shell/commands/guard.py\n  - src/invar/mcp/guard_runs.py\n  -\
+      \ tests/test_agent_json_output.py\n  - tests/integration/test_mcp_guard_deferred.py\n\
+      \  - tests/integration/test_mcp_full_guard_regressions.py\n- Output fields added:\n\
+      \  - eligible_files, ineligible_files, files_with_zero_sites\n  - bounded survivor_evidence\
+      \ with additive mutation schema\n- Deferred lifecycle reuse point:\n  - guard_runs\
+      \ summarize path updated additively, preserving DX-94 deferred run model (no\
+      \ new lifecycle mode)\n\n## Green Proof\n- focused mutation output/deferred\
+      \ parity suites passed\n- mutation-focused regressions and doctests passed\n\
+      \n## Commit Proof\n- Commit hash: 518390f40166f11ddb2082367b6644081319b208\n\
+      - Commit message: style: fix import ordering in guard_output.py (contains final\
+      \ integrated step delta)\n- Status: clean"
   - id: dx97-integration.gate
     name: Guard integration gate
     status: pending
