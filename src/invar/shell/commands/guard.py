@@ -16,7 +16,7 @@ from rich.console import Console
 from rich.table import Table
 
 from invar import __version__
-from invar.core.models import GuardReport, RuleConfig
+from invar.core.models import FileInfo, GuardReport, RuleConfig
 from invar.core.rules import check_all_rules
 from invar.core.utils import get_exit_code
 from invar.shell.config import find_pyproject_root, load_config
@@ -78,11 +78,11 @@ def _scan_and_check(
     config: RuleConfig,
     only_files: set[Path] | None = None,
     verbose: bool = False,
-) -> Result[GuardReport, str]:
+) -> Result[tuple[GuardReport, list[FileInfo]], str]:
     """Scan project files and check against rules."""
     from invar.core.dead_export import check_dead_exports
     from invar.core.entry_points import extract_escape_hatches
-    from invar.core.models import EscapeHatchDetail, FileInfo
+    from invar.core.models import EscapeHatchDetail
     from invar.core.references import count_cross_file_references, get_reference_sources
     from invar.core.review_trigger import check_duplicate_escape_reasons
     from invar.core.shell_architecture import check_complexity_debt
@@ -181,7 +181,7 @@ def _scan_and_check(
     for budget_violation in check_escape_budget(report.escape_hatches, config, all_file_infos):
         report.add_violation(budget_violation)
 
-    return Success(report)
+    return Success((report, all_file_infos))
 
 
 def _determine_output_mode(human: bool, agent: bool = False, json_output: bool = False) -> bool:
@@ -234,6 +234,11 @@ def guard(
         "-c",
         help="Check contract coverage only (skip all tests). Use during SPECIFY phase when functions are stubs.",
     ),
+    mutation: bool = typer.Option(
+        False,
+        "--mutation",
+        help="DX-97: Enable mutation testing (runs after standard phases pass)",
+    ),
 ) -> None:
     """Check project against Invar rules."""
     result = _run_guard_command(
@@ -251,6 +256,7 @@ def guard(
         coverage=coverage,
         suggest=suggest,
         contracts_only=contracts_only,
+        mutation=mutation,
     )
     if isinstance(result, Failure):
         console.print(f"[red]Error:[/red] {result.failure()}")
@@ -274,6 +280,7 @@ def _run_guard_command(
     coverage: bool,
     suggest: bool,
     contracts_only: bool,
+    mutation: bool = False,
 ) -> Result[int, str]:
     """Run guard orchestration and return process exit code."""
     from invar.shell.guard_helpers import (
@@ -401,7 +408,7 @@ def _run_guard_command(
     scan_result = _scan_and_check(path, config, only_files, verbose=verbose)
     if isinstance(scan_result, Failure):
         return Failure(scan_result.failure())
-    report = scan_result.unwrap()
+    report, all_file_infos = scan_result.unwrap()
 
     # DX-61: Run pattern detection if --suggest flag is set
     pattern_suggestions: list = []
@@ -546,8 +553,54 @@ def _run_guard_command(
                 "  [dim]Note: CrossHair uses symbolic execution; coverage not applicable.[/dim]"
             )
 
-    # Exit with combined status
+    # DX-97: Mutation phase - runs AFTER standard phases succeed
+    # all_passed must be defined here since mutation phase depends on it
     all_passed = doctest_passed and crosshair_passed and property_passed
+    mutation_passed = True
+    if mutation and all_passed and static_exit_code == 0:
+        from invar.shell.mutation import orchestrate_mutations
+
+        # Collect file infos for mutation
+        mutation_file_infos = all_file_infos
+        changed_lines: list[tuple[int, int]] | None = None
+        if changed and only_files:
+            # Filter to changed files
+            changed_paths = {str(p) for p in only_files}
+            mutation_file_infos = [fi for fi in all_file_infos if fi.path in changed_paths]
+            # Build changed_lines from the file infos
+            changed_lines = [(1, fi.lines) for fi in mutation_file_infos]
+
+        if mutation_file_infos:
+            mutation_result = orchestrate_mutations(
+                mutation_file_infos,
+                config,
+                changed_lines=changed_lines,
+                timeout=config.mutation_timeout,
+                project_root=path,
+            )
+            if isinstance(mutation_result, Success):
+                agg = mutation_result.unwrap()
+                mutation_passed = agg.passed
+                if not use_agent_output:
+                    if mutation_passed:
+                        console.print(
+                            f"[green]✓ Mutation tests passed[/green] (score: {agg.score:.1f}%)"
+                        )
+                    else:
+                        console.print(
+                            f"[red]✗ Mutation tests failed[/red] (score: {agg.score:.1f}%)"
+                        )
+                        for evidence in agg.survivor_evidence[:5]:
+                            console.print(f"  [dim]  {evidence}[/dim]")
+            else:
+                mutation_passed = False
+                if not use_agent_output:
+                    console.print(
+                        f"[red]✗ Mutation testing error: {mutation_result.failure()}[/red]"
+                    )
+
+    # Exit with combined status
+    all_passed = doctest_passed and crosshair_passed and property_passed and mutation_passed
     final_exit = static_exit_code if all_passed else 1
     return Success(final_exit)
 

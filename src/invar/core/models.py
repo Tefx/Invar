@@ -556,6 +556,10 @@ class RuleConfig(BaseModel):
     pattern_priorities: list[str] = Field(default_factory=lambda: ["P0"])  # P0, P1
     pattern_exclude: list[str] = Field(default_factory=list)  # Pattern IDs to exclude
 
+    # DX-97: Mutation testing configuration (default OFF to preserve default workflow)
+    mutation_enabled: bool = Field(default=False)  # Enable mutation testing
+    mutation_timeout: int = Field(default=60, ge=1, le=600)  # Per-mutant timeout
+
     # P1: Escape hatch budget configuration
     escape_suppressible_per_file: int = Field(default=3, ge=0)
     escape_expensive_per_file: int = Field(default=2, ge=0)
