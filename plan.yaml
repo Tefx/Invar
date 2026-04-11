@@ -33291,7 +33291,7 @@ phases:
   steps:
   - id: dx97-finalization.runtime-proof
     name: Changed and full-scan runtime proof
-    status: claimed
+    status: done
     description: 'As an INDEPENDENT TESTER, provide end-to-end runtime proof for DX-97
       across both guard surfaces.
 
@@ -33398,6 +33398,21 @@ phases:
     agent: integration-verifier-tacit
     claimed_by: integration-verifier-tacit
     claimed_at: '2026-04-11T23:46:54.289952+00:00'
+    done_at: '2026-04-11T23:59:21.008039+00:00'
+    evidence: '## Integration Evidence
+
+      - Changed-default sync path validated via CLI and MCP handler behavior with
+      changed=true defaults
+
+      - Full-scan/deferred path validated with changed=false/--all runtime and deferred
+      lifecycle tests
+
+      - Mutation payload parity validated across synchronous and deferred report paths
+
+      - Failure-path semantics validated: survived, timeout, and error are fail-closed;
+      zero-site semantics explicitly distinct
+
+      - 58 targeted tests passed with command/output-backed evidence'
   - id: dx97-finalization.doc-sync
     name: Mutation gate doc sync
     status: pending
