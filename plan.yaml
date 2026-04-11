@@ -32646,6 +32646,36 @@ phases:
     depends_on:
     - dx97-engine.mutation-orchestration
     agent: python-senior-tacit
+  - id: dx97-engine.retest-gate-blockers
+    name: Retest DX-97 gate blocker remediation
+    status: pending
+    description: 'Independent retest of the DX-97 gate blocker remediation.
+
+
+      step_type: test
+
+      step_intent: retest_green
+
+      expected_result: green
+
+      verification_scope: phase-check
+
+
+      Validate that B1 and B2 are closed and that S1 regression coverage behaves correctly
+      after the fix step. Focus on the exact touched surfaces only: mutation rewrite
+      behavior, is_v1_operator contract semantics, and get_changed_lines multi-file
+      attribution.'
+    verification: '- Focused tests for non-a/b operand preservation pass green.
+
+      - Focused tests for multi-file hunk attribution pass green.
+
+      - Run invar guard on the touched files and show clean output for those surfaces.
+
+      - Evidence must explicitly state whether B1, B2, and S1 are closed, partially
+      closed, or still failing.'
+    depends_on:
+    - dx97-engine.fix-gate-blockers
+    agent: python-executor
 - id: dx97-integration
   name: DX-97 Guard and Deferred Integration
   status: locked
