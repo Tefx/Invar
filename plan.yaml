@@ -32764,14 +32764,14 @@ phases:
       \ S1 per-file hunk attribution tests pass"
 - id: dx97-integration
   name: DX-97 Guard and Deferred Integration
-  status: pending
+  status: in_progress
   gate: dx97-integration.gate
   depends_on:
   - dx97-engine
   steps:
   - id: dx97-integration.guard-config-integration
     name: Guard config and phase wiring
-    status: pending
+    status: claimed
     description: 'Implement and verify DX-97 guard/config integration.
 
 
@@ -32866,6 +32866,8 @@ phases:
 
       - Remaining gaps:'
     agent: python-executor
+    claimed_by: python-executor
+    claimed_at: '2026-04-11T22:06:26.465122+00:00'
   - id: dx97-integration.deferred-output-reporting
     name: Deferred and output reporting parity
     status: pending
