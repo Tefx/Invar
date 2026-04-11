@@ -32056,7 +32056,7 @@ phases:
   steps:
   - id: dx97-engine.core-mutation-sites
     name: Core mutation-site planning
-    status: done
+    status: rejected
     description: 'Implement and verify the pure Core mutation-site engine for DX-97.
 
 
@@ -32144,25 +32144,17 @@ phases:
     claimed_by: python-executor
     claimed_at: '2026-04-11T18:39:58.208236+00:00'
     done_at: '2026-04-11T19:03:26.516370+00:00'
-    evidence: "## Expected-Red Proof (MANDATORY)\n- Tests/contracts/doctests added\
-      \ before implementation:\n  - Created tests/core/test_mutation_sites.py with\
-      \ 27 tests covering mutation site collection, changed-line span filtering, stable\
-      \ candidate identity, and single-site rewrite with AST drift detection\n  -\
-      \ Created stub implementation with NotImplementedError before implementation\n\
-      - Command(s) run: `uv run pytest tests/core/test_mutation_sites.py -v`\n- Failing\
-      \ output showing the gap: all 27 tests initially failed with NotImplementedError\
-      \ before implementation\n\n## Implementation Scope\n- Files touched:\n  - src/invar/core/mutation_sites.py\n\
-      \  - tests/core/test_mutation_sites.py\n- Operator set implemented:\n  - GT,\
-      \ LT, GE, LE, EQ, NE\n  - IN\n  - AND, OR\n  - TRUE, FALSE\n- Why the rewrite\
-      \ remains Core-only:\n  - Pure AST analysis with no I/O imports\n  - Changed-line\
-      \ spans consumed as parameters\n  - Source rewrite as string transformation\
-      \ with AST validation\n\n## Green Proof\n- Command(s) run: `uv run pytest tests/core/test_mutation_sites.py\
-      \ -v`\n- Passing output: 27/27 tests PASSED\n\n- Command(s) run: `uv run invar\
-      \ guard src/invar/core/mutation_sites.py --changed`\n- Passing output: static\
-      \ analysis 0 errors, doctest passed\n\n## Notes\n- Stable candidate identity\
-      \ format:\n  MutationSite(file_path, line, column, operator, node_kind, before,\
-      \ after)\n- Remaining gaps:\n  - Shell integration and guard orchestration are\
-      \ separate downstream steps"
+    rejection_reason: 'Post-completion integration failed: changes were not cleanly
+      merged into main via isolated branch workflow; pre-commit checks failed (ruff
+      import ordering and invar guard property test failures) during integration commit.
+      Reopening for corrected isolated delivery and green integration.'
+    rejection_history:
+    - reason: 'Post-completion integration failed: changes were not cleanly merged
+        into main via isolated branch workflow; pre-commit checks failed (ruff import
+        ordering and invar guard property test failures) during integration commit.
+        Reopening for corrected isolated delivery and green integration.'
+      timestamp: '2026-04-11T19:05:00.556211+00:00'
+      reviewer: vectl-decide-orchestrator-tacit
   - id: dx97-engine.changed-line-selection
     name: Changed-line Core scope selection
     status: pending
