@@ -32409,6 +32409,56 @@ phases:
     depends_on:
     - dx97-engine.runtime-runner
     agent: python-executor
+  - id: dx97-engine.gate
+    name: Engine foundation gate
+    status: pending
+    description: 'Independent gate review for the DX-97 engine foundation phase.
+
+
+      Review depth: THOROUGH
+
+      Focus:
+
+      - Core/Shell boundary stayed intact
+
+      - changed-line selection and mutation orchestration are deterministic
+
+      - fail-closed semantics are explicit, not advisory
+
+      - no step completed with stub-only logic or vague evidence
+
+
+      This phase touches guard infrastructure, so independent review is required before
+      downstream integration.'
+    verification: '- All four engine steps completed with Expected-Red then green
+      proof
+
+      - Core/Shell ownership is preserved
+
+      - no unresolved blocker in candidate generation, line selection, runner semantics,
+      or orchestration cleanup'
+    evidence_template: '## refs Read Confirmation (MANDATORY)
+
+      For each ref in this step:
+
+      - <filename> — key passage or "NOT READ: <reason>"
+
+
+      ## Gate Review Report
+
+      - Step-by-step evidence quality:
+
+      - Boundary violations found:
+
+      - Blocking issues:
+
+      - OPEN or BLOCKED decision with reasons:'
+    depends_on:
+    - dx97-engine.core-mutation-sites
+    - dx97-engine.changed-line-selection
+    - dx97-engine.runtime-runner
+    - dx97-engine.mutation-orchestration
+    agent: gate-reviewer-tacit
 - id: dx97-integration
   name: DX-97 Guard and Deferred Integration
   status: locked
