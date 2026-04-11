@@ -32576,6 +32576,76 @@ phases:
     - dx97-engine.runtime-runner
     - dx97-engine.mutation-orchestration
     agent: gate-reviewer-tacit
+  - id: dx97-engine.fix-gate-blockers
+    name: Fix DX-97 gate blockers (B1/B2 + S1)
+    status: pending
+    description: 'Fix DX-97 gate blockers from the blocked engine gate review.
+
+
+      Work type: defect_repair
+
+      step_type: implementation
+
+      verification_scope: local-check
+
+
+      Targets:
+
+      - B1: src/invar/core/mutation_sites.py rewrite must preserve the original operand
+      names for non-a/b operators; remove placeholder a/b operand rewriting and prove
+      rewritten code stays correct for arbitrary operand identifiers.
+
+      - B2: replace the vacuous postcondition on is_v1_operator with a non-vacuous
+      contract that constrains the real result semantics.
+
+      - S1: tighten get_changed_lines hunk attribution so multi-file unions do not
+      leak hunks across files.
+
+
+      Required tests:
+
+      - Add focused regression coverage proving non-a/b operand preservation during
+      mutation-site rewrite.
+
+      - Add focused regression coverage for multi-file hunk attribution in get_changed_lines.
+
+      - If an expected-red gap test is needed to expose the current failure, capture
+      that first, then complete the green remediation in the same step evidence.
+
+
+      ## Completion Criteria (stub exclusion)
+
+      This is an IMPLEMENTATION step. Stub-only completion is NOT acceptable.
+
+      Each deliverable MUST contain substantive logic that processes its inputs and
+      produces outputs that vary based on those inputs.
+
+
+      ## Known Risks
+
+      - Mutation rewrite bugs can silently produce syntactically valid but semantically
+      wrong code; verify rewritten expressions with operand names beyond a/b.
+
+      - Diff attribution bugs can appear only when multiple files are present; verify
+      file isolation explicitly.
+
+      - Contract repairs must be semantic, not merely stricter-looking text.
+
+      '
+    verification: '- Expected-Red then green evidence is required for the targeted
+      regressions.
+
+      - Run focused tests covering non-a/b operand preservation and multi-file hunk
+      attribution.
+
+      - Show the contract-focused proof for the repaired is_v1_operator postcondition.
+
+      - Evidence must show the failing condition exposed before the fix (or explain
+      why the red state is already captured by existing targeted tests) and the same
+      focused tests passing after remediation.'
+    depends_on:
+    - dx97-engine.mutation-orchestration
+    agent: python-senior-tacit
 - id: dx97-integration
   name: DX-97 Guard and Deferred Integration
   status: locked
