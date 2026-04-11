@@ -33071,7 +33071,7 @@ phases:
     agent: gate-reviewer-tacit
   - id: dx97-integration.fix-gate-proof-gap
     name: Fix gate proof gap
-    status: claimed
+    status: done
     description: 'Fix the dx97-integration gate proof gap by populating real MutationAggregation
       file-classification fields in the orchestrate_mutations integration flow and
       adding non-mock integration evidence for eligible_files, ineligible_files, and
@@ -33187,6 +33187,21 @@ phases:
     agent: python-senior-tacit
     claimed_by: python-senior-tacit
     claimed_at: '2026-04-11T23:21:30.846866+00:00'
+    done_at: '2026-04-11T23:32:21.520269+00:00'
+    evidence: "## Isolation Proof\n- Worktree: /Users/tefx/Projects/Invar/.vectl/worktrees/dx97-integration.fix-gate-proof-gap\n\
+      - Branch: vectl/step-dx97-integration.fix-gate-proof-gap\n\n## Expected-Red\
+      \ Proof\n- New file-classification population tests initially failed with all\
+      \ three fields at 0 in real orchestration path\n\n## Implementation Evidence\n\
+      - Real orchestration updated in src/invar/shell/mutation.py:\n  - pre-classifies\
+      \ parseability and source availability\n  - computes eligible/ineligible/zero-site\
+      \ sets from real flow\n  - writes real counts into MutationAggregation\n- Added/updated\
+      \ tests in tests/test_mutation_orchestration.py proving runtime population through\
+      \ orchestration path\n- mutation_enabled config consumption wired in guard command\
+      \ path (CLI/config coherence)\n\n## Green Proof\n- `uv run pytest tests/test_mutation_orchestration.py\
+      \ tests/test_agent_json_output.py -v` passed\n- `uv run invar guard src/invar/shell/mutation.py\
+      \ --changed` passed\n- doctests passed\n\n## Commit Proof\n- Commit hash: edd9acb\n\
+      - Commit message: fix(dx97): populate file classification fields in real orchestration\
+      \ flow\n- Status: clean"
   - id: dx97-integration.retest-gate-proof-gap
     name: Retest gate proof gap
     status: pending
