@@ -33035,12 +33035,19 @@ phases:
       - output/reporting contracts are additive and mechanically precise
 
       - no ambiguous green path exists for zero-site, timeout, or internal-error outcomes'
-    verification: '- Both integration steps completed with Expected-Red then green
-      proof
+    verification: '- Both original integration steps completed with Expected-Red then
+      green proof where required
+
+      - Focused retest confirms real orchestrate_mutations population of eligible_files,
+      ineligible_files, and files_with_zero_sites
+
+      - Explicit closure confirmation recorded for the prior UNCERTAIN_BLOCKING proof-gap
+      blocker before OPEN is allowed
 
       - changed, full-scan, and deferred semantics remain coherent
 
-      - no blocker remains in config defaults, control flow, or reporting contract'
+      - no blocker remains in config defaults, control flow, reporting contract, or
+      proof-gap disposition'
     evidence_template: '## refs Read Confirmation (MANDATORY)
 
       For each ref in this step:
@@ -33060,6 +33067,7 @@ phases:
     depends_on:
     - dx97-integration.guard-config-integration
     - dx97-integration.deferred-output-reporting
+    - dx97-integration.retest-gate-proof-gap
     agent: gate-reviewer-tacit
   - id: dx97-integration.fix-gate-proof-gap
     name: Fix gate proof gap
