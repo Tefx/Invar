@@ -32668,6 +32668,49 @@ phases:
     depends_on:
     - dx97-integration.guard-config-integration
     agent: python-senior-tacit
+  - id: dx97-integration.gate
+    name: Guard integration gate
+    status: pending
+    description: 'Independent gate review for DX-97 guard integration.
+
+
+      Review depth: THOROUGH
+
+      Cross-cutting focus:
+
+      - changed-default semantics from DX-80 remain intact
+
+      - DX-94 deferred lifecycle is reused, not forked
+
+      - output/reporting contracts are additive and mechanically precise
+
+      - no ambiguous green path exists for zero-site, timeout, or internal-error outcomes'
+    verification: '- Both integration steps completed with Expected-Red then green
+      proof
+
+      - changed, full-scan, and deferred semantics remain coherent
+
+      - no blocker remains in config defaults, control flow, or reporting contract'
+    evidence_template: '## refs Read Confirmation (MANDATORY)
+
+      For each ref in this step:
+
+      - <filename> — key passage or "NOT READ: <reason>"
+
+
+      ## Gate Review Report
+
+      - Step-by-step evidence quality:
+
+      - Contract drift found:
+
+      - Blocking issues:
+
+      - OPEN or BLOCKED decision with reasons:'
+    depends_on:
+    - dx97-integration.guard-config-integration
+    - dx97-integration.deferred-output-reporting
+    agent: gate-reviewer-tacit
 - id: dx97-finalization
   name: DX-97 Finalization
   status: locked
