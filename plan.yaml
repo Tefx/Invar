@@ -32771,7 +32771,7 @@ phases:
   steps:
   - id: dx97-integration.guard-config-integration
     name: Guard config and phase wiring
-    status: claimed
+    status: done
     description: 'Implement and verify DX-97 guard/config integration.
 
 
@@ -32868,6 +32868,23 @@ phases:
     agent: python-executor
     claimed_by: python-executor
     claimed_at: '2026-04-11T22:06:26.465122+00:00'
+    done_at: '2026-04-11T22:26:46.758404+00:00'
+    evidence: "## Isolation Proof\n- Worktree: /Users/tefx/Projects/Invar/.vectl/worktrees/dx97-integration.guard-config-integration\n\
+      - Branch: vectl/step-dx97-integration.guard-config-integration\n\n## Expected-Red\
+      \ Proof\n- Focused mutation-guard integration tests were exercised first to\
+      \ expose missing wiring/default behavior prior to implementation completion\n\
+      \n## Implementation Scope\n- Files touched:\n  - src/invar/core/models.py\n\
+      \  - src/invar/core/utils.py\n  - src/invar/shell/commands/guard.py\n  - src/invar/shell/guard_helpers.py\n\
+      \  - src/invar/shell/guard_output.py\n  - tests/test_mutation_guard_integration.py\n\
+      - Config fields/defaults:\n  - mutation_disabled=false\n  - mutation_threshold=80.0\n\
+      \  - mutation_timeout=60\n- Guard phase ordering:\n  - mutation executes only\
+      \ after standard guard phases succeed\n  - changed-default path preserved (`changed=true`\
+      \ default)\n  - `--all` routes to all-core mutation scope\n\n## Green Proof\n\
+      - `uv run pytest tests/test_mutation_guard_integration.py tests/test_config_cleanup.py\
+      \ tests/integration/test_cli_flags.py -v` passed (24 passed)\n- Fail-closed\
+      \ behavior validated for survived/timeout/internal-error outcomes\n\n## Commit\
+      \ Proof\n- Commit hash: 6b4a35c\n- Commit message: DX-97: Implement guard/config\
+      \ mutation integration\n- Status: clean"
   - id: dx97-integration.deferred-output-reporting
     name: Deferred and output reporting parity
     status: pending
