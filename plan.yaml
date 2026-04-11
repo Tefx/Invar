@@ -32049,7 +32049,7 @@ phases:
       policy; no regression in exemptions.'
 - id: dx97-engine
   name: DX-97 Mutation Engine Foundations
-  status: in_progress
+  status: done
   gate: dx97-engine.gate
   depends_on:
   - deep_review
@@ -32528,7 +32528,7 @@ phases:
       \ to fixed cap\n- Workspace cleanliness validated by focused tests"
   - id: dx97-engine.gate
     name: Engine foundation gate
-    status: claimed
+    status: done
     description: 'Independent gate review for the DX-97 engine foundation phase.
 
 
@@ -32592,6 +32592,14 @@ phases:
     agent: gate-reviewer-tacit
     claimed_by: gate-reviewer-tacit
     claimed_at: '2026-04-11T21:53:35.479162+00:00'
+    done_at: '2026-04-11T22:06:11.526963+00:00'
+    evidence: "closures:\n  B1: CLOSED\n  B2: CLOSED\n  S1: CLOSED\n\nbehavioral_proof_register:\n\
+      \  headline: PASS_WITH_DEBT\n  proof_gap_status: NONE\n  blocking_status: CLOSED\n\
+      \  uncertainty_sources: []\n\ngate_review:\n  wiring_audit: pass (collect/rewrite/execute\
+      \ chain verified)\n  escape_hatch_audit: no new @invar:allow in DX-97 surfaces\n\
+      \  blocking_issues: []\n  decision: OPEN\n\nnotes:\n- Non-blocking debt remains\
+      \ for dead_export wiring and file-size pressure, tracked as should-fix and does\
+      \ not intersect gate acceptance"
   - id: dx97-engine.fix-gate-blockers
     name: Fix DX-97 gate blockers (B1/B2 + S1)
     status: done
@@ -32756,7 +32764,7 @@ phases:
       \ S1 per-file hunk attribution tests pass"
 - id: dx97-integration
   name: DX-97 Guard and Deferred Integration
-  status: locked
+  status: pending
   gate: dx97-integration.gate
   depends_on:
   - dx97-engine
