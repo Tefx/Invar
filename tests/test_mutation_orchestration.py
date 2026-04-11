@@ -409,3 +409,138 @@ class TestChangedLinesNone:
             agg = result.unwrap()
             # Both Add (line 2) and Sub (line 3) should be present
             assert agg.total == 2
+
+
+class TestFileClassificationPopulation:
+    """DX-97: Verify that orchestrate_mutations populates eligible_files,
+    ineligible_files, and files_with_zero_sites from real orchestration flow.
+
+    These fields MUST be populated by the pipeline, not set manually.
+    """
+
+    def test_eligible_files_populated_for_files_with_candidates(self):
+        """Files with mutation sites are counted as eligible_files."""
+        source = "def f():\n    return a + b\n"
+        fi = FileInfo(path="eligible.py", lines=2, source=source)
+
+        with patch("invar.shell.mutation.execute_mutant_tests") as mock_exec:
+            mock_exec.return_value = MutantResult(
+                outcome=MutantOutcome.KILLED, detail="Tests caught mutation"
+            )
+
+            result = orchestrate_mutations([fi], RuleConfig())
+
+            assert isinstance(result, Success)
+            agg = result.unwrap()
+            assert agg.eligible_files == 1, (
+                f"eligible_files should be 1 (file with Add operator), got {agg.eligible_files}"
+            )
+
+    def test_files_with_zero_sites_populated(self):
+        """Files with no mutation sites are counted as files_with_zero_sites."""
+        # Source with no binary operators
+        source = "def f():\n    return 1\n"
+        fi = FileInfo(path="no_sites.py", lines=2, source=source)
+
+        with patch("invar.shell.mutation.execute_mutant_tests") as mock_exec:
+            mock_exec.return_value = MutantResult(
+                outcome=MutantOutcome.KILLED, detail="Tests caught mutation"
+            )
+
+            result = orchestrate_mutations([fi], RuleConfig())
+
+            assert isinstance(result, Success)
+            agg = result.unwrap()
+            assert agg.files_with_zero_sites == 1, (
+                f"files_with_zero_sites should be 1 (parsed OK but no operators), got {agg.files_with_zero_sites}"
+            )
+
+    def test_ineligible_files_populated_for_unparseable_source(self):
+        """Files with unparseable source are counted as ineligible_files."""
+        # Syntax error in source
+        source = "def f(:\n    return a + b\n"
+        fi = FileInfo(path="bad.py", lines=2, source=source)
+
+        with patch("invar.shell.mutation.execute_mutant_tests") as mock_exec:
+            mock_exec.return_value = MutantResult(
+                outcome=MutantOutcome.KILLED, detail="Tests caught mutation"
+            )
+
+            result = orchestrate_mutations([fi], RuleConfig())
+
+            assert isinstance(result, Success)
+            agg = result.unwrap()
+            assert agg.ineligible_files == 1, (
+                f"ineligible_files should be 1 (syntax error), got {agg.ineligible_files}"
+            )
+
+    def test_mixed_file_classification(self):
+        """Multiple files with different classifications are counted correctly."""
+        eligible_source = "def f():\n    return a + b\n"  # Has mutation site
+        zero_site_source = "def g():\n    return 1\n"  # Parsed OK, no sites
+        bad_source = "def h(:\n    return x + y\n"  # Unparseable
+
+        files = [
+            FileInfo(path="eligible.py", lines=2, source=eligible_source),
+            FileInfo(path="zero_sites.py", lines=2, source=zero_site_source),
+            FileInfo(path="bad.py", lines=2, source=bad_source),
+        ]
+
+        with patch("invar.shell.mutation.execute_mutant_tests") as mock_exec:
+            mock_exec.return_value = MutantResult(
+                outcome=MutantOutcome.KILLED, detail="Tests caught mutation"
+            )
+
+            result = orchestrate_mutations(files, RuleConfig())
+
+            assert isinstance(result, Success)
+            agg = result.unwrap()
+            assert agg.eligible_files == 1, f"eligible_files should be 1, got {agg.eligible_files}"
+            assert agg.files_with_zero_sites == 1, (
+                f"files_with_zero_sites should be 1, got {agg.files_with_zero_sites}"
+            )
+            assert agg.ineligible_files == 1, (
+                f"ineligible_files should be 1, got {agg.ineligible_files}"
+            )
+
+    def test_file_without_source_is_ineligible(self):
+        """Files with empty/None source are counted as ineligible."""
+        fi = FileInfo(path="empty.py", lines=0, source="")
+
+        with patch("invar.shell.mutation.execute_mutant_tests") as mock_exec:
+            mock_exec.return_value = MutantResult(
+                outcome=MutantOutcome.KILLED, detail="Tests caught mutation"
+            )
+
+            result = orchestrate_mutations([fi], RuleConfig())
+
+            assert isinstance(result, Success)
+            agg = result.unwrap()
+            assert agg.ineligible_files == 1, (
+                f"ineligible_files should be 1 (no source), got {agg.ineligible_files}"
+            )
+
+    def test_classification_sums_match_total_files(self):
+        """eligible_files + ineligible_files + files_with_zero_sites equals total input files."""
+        files = [
+            FileInfo(path="a.py", lines=2, source="def f():\n    return a + b\n"),
+            FileInfo(path="b.py", lines=2, source="def g():\n    return 1\n"),
+            FileInfo(path="c.py", lines=2, source="def h(:\n    return x + y\n"),
+            FileInfo(path="d.py", lines=2, source="def i():\n    return a - b\n"),
+        ]
+
+        with patch("invar.shell.mutation.execute_mutant_tests") as mock_exec:
+            mock_exec.return_value = MutantResult(
+                outcome=MutantOutcome.KILLED, detail="Tests caught mutation"
+            )
+
+            result = orchestrate_mutations(files, RuleConfig())
+
+            assert isinstance(result, Success)
+            agg = result.unwrap()
+            total_classified = agg.eligible_files + agg.ineligible_files + agg.files_with_zero_sites
+            assert total_classified == len(files), (
+                f"Classification sum ({total_classified}) must equal total files ({len(files)}). "
+                f"eligible={agg.eligible_files}, ineligible={agg.ineligible_files}, "
+                f"zero_sites={agg.files_with_zero_sites}"
+            )

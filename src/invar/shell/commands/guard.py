@@ -521,10 +521,12 @@ def _run_guard_command(
 
     # DX-97: Mutation phase - runs AFTER standard phases succeed but BEFORE output
     # so mutation data is available for agent JSON and deferred report parity
+    # Mutation runs when EITHER --mutation flag OR config.mutation_enabled is True
+    mutation_active = mutation or config.mutation_enabled
     all_passed_preliminary = doctest_passed and crosshair_passed and property_passed
     mutation_passed = True
     mutation_agg = None  # DX-97: Carried to output_agent for additive top-level dict
-    if mutation and all_passed_preliminary and static_exit_code == 0:
+    if mutation_active and all_passed_preliminary and static_exit_code == 0:
         from invar.shell.mutation import orchestrate_mutations
 
         # Collect file infos for mutation

@@ -12,6 +12,7 @@ Shell module: handles subprocess execution and result parsing.
 
 from __future__ import annotations
 
+import ast
 import contextlib
 import subprocess
 import sys
@@ -262,6 +263,28 @@ def orchestrate_mutations(
     """
     root = project_root or Path.cwd()
 
+    # DX-97: Classify files into eligible, ineligible, and zero-site categories.
+    # This classification is a deterministic property of the input files and
+    # must be populated by the real pipeline (not manually set on the dataclass).
+    # - ineligible: files with no source or unparseable source
+    # - eligible: files that parsed OK and produced ≥1 candidate
+    # - zero-site: files that parsed OK but produced 0 candidates
+    eligible_file_set: set[str] = set()
+    ineligible_file_set: set[str] = set()
+    zero_site_file_set: set[str] = set()
+    parseable_file_set: set[str] = set()
+
+    for fi in file_infos:
+        source = fi.source or ""
+        if not source:
+            ineligible_file_set.add(fi.path)
+            continue
+        try:
+            ast.parse(source)
+            parseable_file_set.add(fi.path)
+        except (SyntaxError, ValueError):
+            ineligible_file_set.add(fi.path)
+
     # Collect candidates deterministically
     try:
         candidates = collect_mutation_candidates(file_infos, config, changed_lines)
@@ -274,7 +297,21 @@ def orchestrate_mutations(
         key=lambda c: (c.file, c.line, c.col_offset),
     )
 
-    aggregation = MutationAggregation(total=len(sorted_candidates))
+    # DX-97: Classify parseable files as eligible or zero-site
+    # based on whether candidates were found for them.
+    candidate_file_set: set[str] = {c.file for c in sorted_candidates}
+    for path in parseable_file_set:
+        if path in candidate_file_set:
+            eligible_file_set.add(path)
+        else:
+            zero_site_file_set.add(path)
+
+    aggregation = MutationAggregation(
+        total=len(sorted_candidates),
+        eligible_files=len(eligible_file_set),
+        ineligible_files=len(ineligible_file_set),
+        files_with_zero_sites=len(zero_site_file_set),
+    )
 
     for candidate in sorted_candidates:
         aggregation.add_candidate(candidate)
