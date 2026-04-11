@@ -32416,7 +32416,7 @@ phases:
       \ surface; no new CLI command added"
   - id: dx97-engine.mutation-orchestration
     name: Mutation orchestration
-    status: pending
+    status: claimed
     description: 'Implement and verify Shell mutation orchestration for DX-97.
 
 
@@ -32509,6 +32509,8 @@ phases:
     depends_on:
     - dx97-engine.runtime-runner
     agent: python-executor
+    claimed_by: python-executor
+    claimed_at: '2026-04-11T20:00:52.335063+00:00'
   - id: dx97-engine.gate
     name: Engine foundation gate
     status: pending
