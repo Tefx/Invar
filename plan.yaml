@@ -33071,7 +33071,7 @@ phases:
     agent: gate-reviewer-tacit
   - id: dx97-integration.fix-gate-proof-gap
     name: Fix gate proof gap
-    status: pending
+    status: claimed
     description: 'Fix the dx97-integration gate proof gap by populating real MutationAggregation
       file-classification fields in the orchestrate_mutations integration flow and
       adding non-mock integration evidence for eligible_files, ineligible_files, and
@@ -33185,6 +33185,8 @@ phases:
     depends_on:
     - dx97-integration.deferred-output-reporting
     agent: python-senior-tacit
+    claimed_by: python-senior-tacit
+    claimed_at: '2026-04-11T23:21:30.846866+00:00'
   - id: dx97-integration.retest-gate-proof-gap
     name: Retest gate proof gap
     status: pending
