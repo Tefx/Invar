@@ -253,3 +253,95 @@ def test_doctest_parse_hunk_header():
     assert _parse_hunk_header("@@ -7 +7 @@") == (7, 7)
     # Invalid
     assert _parse_hunk_header("@@garbage@@") is None
+
+
+class TestExtractHunksPerFile:
+    """S1 regression: per-file hunk attribution prevents cross-file leakage."""
+
+    def test_single_file_hunks(self) -> None:
+        """Single-file diff yields hunks attributed to that file."""
+        from invar.shell.git import _extract_hunks_per_file
+
+        diff = (
+            "diff --git a/src/core/foo.py b/src/core/foo.py\n"
+            "--- a/src/core/foo.py\n"
+            "+++ b/src/core/foo.py\n"
+            "@@ -5,3 +5,3 @@\n"
+            " line1\n"
+            " line2\n"
+            " line3\n"
+        )
+        result = _extract_hunks_per_file(diff)
+        assert "src/core/foo.py" in result
+        assert result["src/core/foo.py"] == [(5, 7)]
+
+    def test_multi_file_diff_hunks_are_separate(self) -> None:
+        """Multi-file diff attributes each hunk to its own file only.
+
+        S1 REGRESSION: Previously, hunks from file A were incorrectly
+        attributed to file B because the function extracted ALL hunks
+        from the entire diff and applied them to every file.
+        """
+        from invar.shell.git import _extract_hunks_per_file
+
+        diff = (
+            "diff --git a/src/core/foo.py b/src/core/foo.py\n"
+            "--- a/src/core/foo.py\n"
+            "+++ b/src/core/foo.py\n"
+            "@@ -5,3 +5,3 @@\n"
+            " line_foo\n"
+            "diff --git a/src/core/bar.py b/src/core/bar.py\n"
+            "--- a/src/core/bar.py\n"
+            "+++ b/src/core/bar.py\n"
+            "@@ -10,2 +10,2 @@\n"
+            " line_bar\n"
+        )
+        result = _extract_hunks_per_file(diff)
+        assert "src/core/foo.py" in result
+        assert "src/core/bar.py" in result
+        # foo.py gets lines 5-7 ONLY, bar.py gets lines 10-11 ONLY
+        assert result["src/core/foo.py"] == [(5, 7)]
+        assert result["src/core/bar.py"] == [(10, 11)]
+        # Critical: bar.py must NOT get foo.py's hunk (5,7)
+        assert (5, 7) not in result["src/core/bar.py"]
+
+    def test_multi_hunk_same_file(self) -> None:
+        """Multiple hunks in the same file are grouped together."""
+        from invar.shell.git import _extract_hunks_per_file
+
+        diff = (
+            "diff --git a/src/core/baz.py b/src/core/baz.py\n"
+            "--- a/src/core/baz.py\n"
+            "+++ b/src/core/baz.py\n"
+            "@@ -1,3 +1,3 @@\n"
+            " header\n"
+            "@@ -20,4 +20,4 @@\n"
+            " footer\n"
+        )
+        result = _extract_hunks_per_file(diff)
+        assert "src/core/baz.py" in result
+        assert result["src/core/baz.py"] == [(1, 3), (20, 23)]
+
+    def test_empty_diff_returns_empty_dict(self) -> None:
+        """Empty diff yields no file entries."""
+        from invar.shell.git import _extract_hunks_per_file
+
+        result = _extract_hunks_per_file("")
+        assert result == {}
+
+    def test_no_hunks_after_file_header(self) -> None:
+        """File header with no hunks yields empty list for that file."""
+        from invar.shell.git import _extract_hunks_per_file
+
+        diff = "diff --git a/new.py b/new.py\n--- a/new.py\n+++ b/new.py\n"
+        result = _extract_hunks_per_file(diff)
+        # No @@ hunks means no entries (file has no hunks)
+        assert "new.py" not in result
+
+    def test_hunk_without_file_header_ignored(self) -> None:
+        """Hunks appearing before any file header are ignored."""
+        from invar.shell.git import _extract_hunks_per_file
+
+        diff = "@@ -1,3 +1,3 @@\nline\n"
+        result = _extract_hunks_per_file(diff)
+        assert result == {}

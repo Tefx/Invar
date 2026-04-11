@@ -66,6 +66,10 @@ def _extract_hunks_from_diff(diff_output: str) -> list[tuple[int, int]]:
     """Extract line ranges from 'git diff' output with hunks.
 
     Returns list of (start, end) 1-indexed line ranges.
+
+    .. warning::
+        This extracts ALL hunks regardless of file boundaries.
+        For per-file hunk attribution, use ``_extract_hunks_per_file``.
     """
     hunks: list[tuple[int, int]] = []
     for line in diff_output.splitlines():
@@ -74,6 +78,63 @@ def _extract_hunks_from_diff(diff_output: str) -> list[tuple[int, int]]:
             if parsed:
                 hunks.append(parsed)
     return hunks
+
+
+def _extract_hunks_per_file(
+    diff_output: str,
+) -> dict[str, list[tuple[int, int]]]:
+    """Extract line ranges from diff output, grouped by file path.
+
+    Handles multi-file diffs correctly: each file's hunks are attributed
+    to that file only.
+
+    Args:
+        diff_output: Full output from ``git diff`` or ``git diff --cached``.
+
+    Returns:
+        Dict mapping file path (relative, as in the diff) to list of
+        (start, end) 1-indexed line ranges.
+
+    Examples:
+        >>> diff = "diff --git a/foo.py b/foo.py\\n--- a/foo.py\\n+++ b/foo.py\\n@@ -1,3 +1,3 @@\\nline\\n"
+        >>> hunks = _extract_hunks_per_file(diff)
+        >>> "foo.py" in hunks
+        True
+        >>> hunks["foo.py"]
+        [(1, 3)]
+        >>> # Multi-file diff: hunks are attributed to correct file
+        >>> multi = (
+        ...     "diff --git a/foo.py b/foo.py\\n"
+        ...     "--- a/foo.py\\n+++ b/foo.py\\n"
+        ...     "@@ -1,3 +1,3 @@\\nline\\n"
+        ...     "diff --git a/bar.py b/bar.py\\n"
+        ...     "--- a/bar.py\\n+++ b/bar.py\\n"
+        ...     "@@ -10,2 +10,2 @@\\nline\\n"
+        ... )
+        >>> hunks_multi = _extract_hunks_per_file(multi)
+        >>> len(hunks_multi)
+        2
+        >>> hunks_multi["foo.py"]
+        [(1, 3)]
+        >>> hunks_multi["bar.py"]
+        [(10, 11)]
+    """
+    result: dict[str, list[tuple[int, int]]] = {}
+    current_file: str | None = None
+
+    for line in diff_output.splitlines():
+        # File header: "--- a/path" starts a new file section
+        if line.startswith("--- a/"):
+            # Extract path from "--- a/path"
+            current_file = line[6:]  # Remove "--- a/"
+        elif line.startswith("@@"):
+            parsed = _parse_hunk_header(line)
+            if parsed and current_file is not None:
+                if current_file not in result:
+                    result[current_file] = []
+                result[current_file].append(parsed)
+
+    return result
 
 
 def get_changed_lines(
@@ -120,39 +181,37 @@ def get_changed_lines(
     # --- Staged (cached) diff ---
     cached_diff = _run_git(["diff", "--cached"], project_root)
     if isinstance(cached_diff, Success):
-        hunks = _extract_hunks_from_diff(cached_diff.unwrap())
-        if hunks:
-            staged_files = _run_git(["diff", "--cached", "--name-only"], project_root)
-            if isinstance(staged_files, Success):
-                for line in staged_files.unwrap().strip().splitlines():
-                    if not line:
-                        continue
-                    fpath = repo_root / line
-                    # Exclude deleted and non-Core
-                    if (
-                        fpath.exists()
-                        and line.endswith(".py")
-                        and _is_core_file(fpath, repo_root, core_paths)
-                    ):
-                        result[fpath] = hunks
+        file_hunks = _extract_hunks_per_file(cached_diff.unwrap())
+        for file_path, hunks in file_hunks.items():
+            if not hunks:
+                continue
+            fpath = repo_root / file_path
+            if (
+                fpath.exists()
+                and file_path.endswith(".py")
+                and _is_core_file(fpath, repo_root, core_paths)
+            ):
+                result[fpath] = hunks
 
     # --- Unstaged diff ---
     unstaged_diff = _run_git(["diff"], project_root)
     if isinstance(unstaged_diff, Success):
-        hunks = _extract_hunks_from_diff(unstaged_diff.unwrap())
-        if hunks:
-            unstaged_files = _run_git(["diff", "--name-only"], project_root)
-            if isinstance(unstaged_files, Success):
-                for line in unstaged_files.unwrap().strip().splitlines():
-                    if not line:
-                        continue
-                    fpath = repo_root / line
-                    if (
-                        fpath.exists()
-                        and line.endswith(".py")
-                        and _is_core_file(fpath, repo_root, core_paths)
-                    ):
-                        result[fpath] = hunks
+        file_hunks = _extract_hunks_per_file(unstaged_diff.unwrap())
+        for file_path, hunks in file_hunks.items():
+            if not hunks:
+                continue
+            fpath = repo_root / file_path
+            if (
+                fpath.exists()
+                and file_path.endswith(".py")
+                and _is_core_file(fpath, repo_root, core_paths)
+            ):
+                # Merge with staged hunks if present
+                if fpath in result and result[fpath] is not None:
+                    merged = sorted(set(result[fpath] + hunks))  # type: ignore[operator]
+                    result[fpath] = merged
+                else:
+                    result[fpath] = hunks
 
     # --- Untracked files ---
     untracked = _run_git(["ls-files", "--others", "--exclude-standard"], project_root)

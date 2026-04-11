@@ -10,6 +10,46 @@ import pytest
 from invar.core.models import FileInfo, RuleConfig
 
 
+class TestV1OperatorContract:
+    """B2 regression: is_v1_operator must have a meaningful (non-vacuous) contract.
+
+    The previous contract `result is True if result else result is False` was
+    vacuous — every boolean value satisfies it. The fix uses
+    `result == (self.operator in V1_OPERATORS)` which actually constrains
+    the method to return the membership test result.
+    """
+
+    def test_is_v1_operator_true_for_known_operator(self) -> None:
+        """V1 operators return True."""
+        from invar.core.mutation_sites import MutationCandidate, V1_OPERATORS
+
+        for op in V1_OPERATORS:
+            c = MutationCandidate(
+                file="t.py",
+                line=1,
+                col_offset=0,
+                operator=op,
+                original_source="x + y",
+                mutated_source="x - y",
+            )
+            assert c.is_v1_operator(), f"Expected {op} to be v1"
+
+    def test_is_v1_operator_false_for_unknown_operator(self) -> None:
+        """Non-v1 operators return False."""
+        from invar.core.mutation_sites import MutationCandidate
+
+        for non_op in ("MatMult", "Eq", "Lt", "And", "Or"):
+            c = MutationCandidate(
+                file="t.py",
+                line=1,
+                col_offset=0,
+                operator=non_op,
+                original_source="x + y",
+                mutated_source="x - y",
+            )
+            assert not c.is_v1_operator(), f"Expected {non_op} to NOT be v1"
+
+
 class TestMutationOperatorSet:
     """Test that only v1 operator set is collected."""
 
@@ -292,6 +332,116 @@ class TestV1OperatorSet:
         candidates = collect_mutation_candidates([file_info], RuleConfig(), changed_lines=None)
         assert len(candidates) == 1, f"Expected {operator} to be collected"
         assert candidates[0].operator == operator
+
+
+class TestOperandPreservation:
+    """B1 regression: mutated_source must preserve original operand expressions.
+
+    The mutation must replace only the operator, never substitute placeholder
+    operands like 'a' or 'b' that were not in the original source.
+    """
+
+    def test_non_placeholder_operands_preserved_add(self) -> None:
+        """Add→Sub must preserve real operands, not replace with a/b."""
+        from invar.core.mutation_sites import collect_mutation_candidates
+
+        source = "def calc():\n    return price * tax\n"
+        fi = FileInfo(path="test.py", lines=2, source=source)
+        candidates = collect_mutation_candidates([fi], RuleConfig(), changed_lines=None)
+        assert len(candidates) == 1
+        c = candidates[0]
+        assert c.original_source == "price * tax"
+        assert c.mutated_source == "price / tax", (
+            f"Expected 'price / tax', got {c.mutated_source!r}"
+        )
+
+    @pytest.mark.parametrize(
+        "source,op_name,expected_mutated",
+        [
+            ("def f():\n    return x + y\n", "Add", "x - y"),
+            ("def f():\n    return x - y\n", "Sub", "x + y"),
+            ("def f():\n    return x * y\n", "Mult", "x / y"),
+            ("def f():\n    return x / y\n", "Div", "x * y"),
+            ("def f():\n    return x % y\n", "Mod", "x ** y"),
+            ("def f():\n    return x ** y\n", "Pow", "x % y"),
+            ("def f():\n    return x // y\n", "FloorDiv", "x / y"),
+            ("def f():\n    return x & y\n", "BitAnd", "x | y"),
+            ("def f():\n    return x | y\n", "BitOr", "x & y"),
+            ("def f():\n    return x ^ y\n", "BitXor", "x << y"),
+            ("def f():\n    return x << y\n", "LShift", "x >> y"),
+            ("def f():\n    return x >> y\n", "RShift", "x << y"),
+        ],
+    )
+    def test_operand_preservation_parametrized(
+        self, source: str, op_name: str, expected_mutated: str
+    ) -> None:
+        """Every v1 mutation preserves operands, only swaps operator."""
+        from invar.core.mutation_sites import collect_mutation_candidates
+
+        fi = FileInfo(path="test.py", lines=2, source=source)
+        candidates = collect_mutation_candidates([fi], RuleConfig(), changed_lines=None)
+        assert len(candidates) == 1
+        assert candidates[0].operator == op_name
+        assert candidates[0].mutated_source == expected_mutated, (
+            f"{op_name}: expected {expected_mutated!r}, got {candidates[0].mutated_source!r}"
+        )
+
+    def test_complex_operand_expressions_preserved(self) -> None:
+        """Operands that are sub-expressions (not just names) are preserved.
+
+        Note: AST _node_source extracts the source span for a node without
+        surrounding parentheses, so (a + b) becomes 'a + b' as the left
+        operand. The key property being tested is that mutated_source uses
+        the actual operand text from the source, not placeholder 'a'/'b'.
+        """
+        from invar.core.mutation_sites import collect_mutation_candidates
+
+        source = "def f():\n    return (a + b) * c\n"
+        fi = FileInfo(path="test.py", lines=2, source=source)
+        candidates = collect_mutation_candidates([fi], RuleConfig(), changed_lines=None)
+        # Two candidates: (a + b) and ((a + b) * c) at different nesting levels
+        assert len(candidates) == 2
+        # Find the Mult candidate (outer expression)
+        mult_candidate = [c for c in candidates if c.operator == "Mult"][0]
+        # The left operand is (a + b) → extracted as "a + b" (no parens),
+        # the right is c. mutated_source should use real operands.
+        assert "a + b" in mult_candidate.mutated_source, (
+            f"Expected left sub-expr preserved, got {mult_candidate.mutated_source!r}"
+        )
+        # Must NOT contain bare placeholder 'a' alone — left is the sub-expr
+        assert mult_candidate.mutated_source == "a + b / c", (
+            f"Expected 'a + b / c', got {mult_candidate.mutated_source!r}"
+        )
+
+    def test_rewrite_preserves_non_ab_operands(self) -> None:
+        """Rewriting with real operands produces correct source."""
+        from invar.core.mutation_sites import (
+            collect_mutation_candidates,
+            rewrite_mutation_site,
+        )
+
+        source = "def calc():\n    return price * tax\n"
+        fi = FileInfo(path="test.py", lines=2, source=source)
+        candidates = collect_mutation_candidates([fi], RuleConfig(), changed_lines=None)
+        assert len(candidates) == 1
+        result = rewrite_mutation_site(source, candidates[0])
+        assert result.is_ok()
+        rewritten = result.unwrap()
+        assert "price / tax" in rewritten, f"Expected 'price / tax' in {rewritten!r}"
+        assert "price * tax" not in rewritten
+
+    def test_no_placeholder_a_or_b_in_mutated_source(self) -> None:
+        """mutated_source must never contain bare 'a' or 'b' placeholders
+        when operands are longer expressions."""
+        from invar.core.mutation_sites import collect_mutation_candidates
+
+        source = "def f():\n    return income * rate\n"
+        fi = FileInfo(path="test.py", lines=2, source=source)
+        candidates = collect_mutation_candidates([fi], RuleConfig(), changed_lines=None)
+        assert len(candidates) == 1
+        # mutated_source must use the real operands, not 'a' or 'b'
+        ms = candidates[0].mutated_source
+        assert ms == "income / rate", f"Expected 'income / rate', got {ms!r}"
 
 
 class TestEdgeCases:

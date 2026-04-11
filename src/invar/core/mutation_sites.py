@@ -59,7 +59,7 @@ class MutationCandidate(NamedTuple):
     original_source: str
     mutated_source: str
 
-    @post(lambda result: result is True if result else result is False)
+    @post(lambda result: isinstance(result, bool))
     def is_v1_operator(self) -> bool:
         """Check if this candidate's operator is in v1 set.
 
@@ -158,6 +158,40 @@ def _node_source(node: ast.AST, source: str) -> str:
     return ""
 
 
+# Mutation mapping for v1 operators: maps operator class name to replacement
+# operator class name. Operands are preserved from original source.
+_BINOP_MUTATION_MAP: dict[str, str] = {
+    "Add": "Sub",
+    "Sub": "Add",
+    "Mult": "Div",
+    "Div": "Mult",
+    "Mod": "Pow",
+    "Pow": "Mod",
+    "FloorDiv": "Div",
+    "BitAnd": "BitOr",
+    "BitOr": "BitAnd",
+    "BitXor": "LShift",
+    "LShift": "RShift",
+    "RShift": "LShift",
+}
+
+# AST operator class → source token mapping
+_BINOP_TOKEN_MAP: dict[str, str] = {
+    "Add": "+",
+    "Sub": "-",
+    "Mult": "*",
+    "Div": "/",
+    "Mod": "%",
+    "Pow": "**",
+    "FloorDiv": "//",
+    "BitAnd": "&",
+    "BitOr": "|",
+    "BitXor": "^",
+    "LShift": "<<",
+    "RShift": ">>",
+}
+
+
 @pre(
     lambda node, file, source: (
         isinstance(node, ast.BinOp)
@@ -174,7 +208,12 @@ def _collect_binop_candidates(
     file: str,
     source: str,
 ) -> list[MutationCandidate]:
-    """Collect mutation candidate from a binary operation node."""
+    """Collect mutation candidate from a binary operation node.
+
+    Preserves original operand expressions in mutated_source, replacing
+    only the operator token. For example, ``price * tax`` becomes
+    ``price / tax`` instead of the placeholder ``a / b``.
+    """
     candidates: list[MutationCandidate] = []
     op_name = type(node.op).__name__
 
@@ -185,23 +224,21 @@ def _collect_binop_candidates(
     if not original:
         return candidates
 
-    # Mutation mapping for v1 operators
-    mutations: dict[str, str] = {
-        "Add": "a - b",
-        "Sub": "a + b",
-        "Mult": "a / b",
-        "Div": "a * b",
-        "Mod": "a % b",
-        "Pow": "a ** b",
-        "FloorDiv": "a // b",
-        "BitAnd": "a | b",
-        "BitOr": "a & b",
-        "BitXor": "a ^ b",
-        "LShift": "a >> b",
-        "RShift": "a << b",
-    }
+    # Build mutated_source preserving original operand expressions
+    target_op_name = _BINOP_MUTATION_MAP.get(op_name)
+    if target_op_name is None:
+        return candidates
 
-    mutated = mutations.get(op_name, "")
+    target_token = _BINOP_TOKEN_MAP.get(target_op_name, "")
+    if not target_token:
+        return candidates
+
+    left_source = _node_source(node.left, source)
+    right_source = _node_source(node.right, source)
+    if not left_source or not right_source:
+        return candidates
+
+    mutated = f"{left_source} {target_token} {right_source}"
     candidates.append(
         MutationCandidate(
             file=file,
