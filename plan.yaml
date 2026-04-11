@@ -32229,6 +32229,91 @@ phases:
     depends_on:
     - dx97-engine.core-mutation-sites
     agent: python-executor
+  - id: dx97-engine.runtime-runner
+    name: Runtime-only mutant runner
+    status: pending
+    description: 'Implement and verify the runtime-only executor used for one DX-97
+      mutant at a time.
+
+
+      Touch paths:
+
+      - src/invar/shell/mutation_runtime.py
+
+      - tests/test_mutation_runtime.py
+
+      - src/invar/shell/property_tests.py
+
+      - src/invar/shell/testing.py
+
+
+      Spec refs:
+
+      - docs/proposals/DX-97-guard-mutation-gate.md
+
+
+      Required behavior:
+
+      - execute doctest + property tests only for the mutated target scope
+
+      - normalize outcomes into killed / survived / timeout / error
+
+      - enforce per-mutant timeout without mutating the caller workspace
+
+      - keep the runner as an internal guard phase component, not a new command surface
+
+
+      Completion criteria:
+
+      - Expected-Red is proved with runtime-only failure cases before implementation
+
+      - final runner proves the intended semantics for killed, survived, timeout,
+      and internal error
+
+      - stub-only completion is not acceptable'
+    verification: '- Expected-Red proof recorded before implementation
+
+      - focused tests cover killed, survived, timeout, and internal-error normalization
+
+      - runner only invokes doctest + property tests, not full guard per mutant'
+    evidence_template: '## refs Read Confirmation (MANDATORY)
+
+      For each ref in this step:
+
+      - <filename> — key passage or "NOT READ: <reason>"
+
+
+      ## Expected-Red Proof (MANDATORY)
+
+      - Runtime-only test-first command(s):
+
+      - Failing output:
+
+
+      ## Implementation Scope
+
+      - Files touched:
+
+      - Runtime checks invoked:
+
+      - Timeout behavior:
+
+
+      ## Green Proof
+
+      - Command(s) run:
+
+      - Passing output:
+
+
+      ## Notes
+
+      - How runner avoids full-guard reruns:
+
+      - Remaining gaps:'
+    depends_on:
+    - dx97-engine.changed-line-selection
+    agent: python-executor
 - id: dx97-integration
   name: DX-97 Guard and Deferred Integration
   status: locked
