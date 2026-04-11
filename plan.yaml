@@ -32592,7 +32592,7 @@ phases:
     agent: gate-reviewer-tacit
   - id: dx97-engine.fix-gate-blockers
     name: Fix DX-97 gate blockers (B1/B2 + S1)
-    status: pending
+    status: claimed
     description: 'Fix DX-97 gate blockers from the blocked engine gate review.
 
 
@@ -32660,6 +32660,8 @@ phases:
     depends_on:
     - dx97-engine.mutation-orchestration
     agent: python-senior-tacit
+    claimed_by: python-senior-tacit
+    claimed_at: '2026-04-11T20:37:52.955563+00:00'
   - id: dx97-engine.retest-gate-blockers
     name: Retest DX-97 gate blocker remediation
     status: pending
