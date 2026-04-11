@@ -5,11 +5,13 @@ Shell module: handles output formatting for guard command.
 Extracted from cli.py to reduce file size.
 
 DX-22: Added verification routing statistics for de-duplication.
+DX-97: Additive top-level mutation output for CLI/agent/MCP.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from rich.console import Console
 from rich.panel import Panel
@@ -17,6 +19,9 @@ from rich.panel import Panel
 from invar.core.formatter import format_guard_agent
 from invar.core.models import GuardReport, Severity
 from invar.core.utils import get_combined_status
+
+if TYPE_CHECKING:
+    from invar.shell.mutation import MutationAggregation
 
 console = Console()
 
@@ -330,8 +335,9 @@ def output_agent(
     property_output: dict | None = None,  # DX-08
     routing_stats: dict | None = None,  # DX-22
     coverage_data: dict | None = None,  # DX-37
+    mutation_output: MutationAggregation | None = None,  # DX-97
 ) -> None:
-    """Output report in Agent-optimized JSON format (Phase 8.2 + DX-06 + DX-08 + DX-09 + DX-22 + DX-26 + DX-37).
+    """Output report in Agent-optimized JSON format (Phase 8.2 + DX-06 + DX-08 + DX-09 + DX-22 + DX-26 + DX-37 + DX-97).
 
     Args:
         report: Guard analysis report
@@ -343,10 +349,13 @@ def output_agent(
         property_output: Property test results dict (DX-08)
         routing_stats: Smart routing statistics (DX-22)
         coverage_data: DX-37: Branch coverage data from doctest + hypothesis
+        mutation_output: DX-97: Mutation testing aggregation result
 
     DX-22: Adds routing stats showing CrossHair vs Hypothesis distribution.
     DX-26: status now reflects ALL test phases, not just static analysis.
     DX-37: Adds optional coverage data from doctest + hypothesis phases.
+    DX-97: Adds optional mutation data with eligible/ineligible/zero-site file counts,
+           bounded survivor evidence, and score/passed status.
     """
     from invar.shell.json_output import write_json
 
@@ -386,4 +395,7 @@ def output_agent(
     # DX-37: Add coverage data if collected
     if coverage_data:
         output["coverage"] = coverage_data
+    # DX-97: Add mutation output if mutation phase ran
+    if mutation_output is not None:
+        output["mutation"] = mutation_output.to_output_dict()
     write_json(output, indent=2)

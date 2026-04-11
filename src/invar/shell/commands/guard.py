@@ -519,45 +519,12 @@ def _run_guard_command(
                     "overall_branch_coverage"
                 ]
 
-    # DX-26: Unified output (agent JSON or human Rich)
-    if use_agent_output:
-        output_agent(
-            report,
-            strict,
-            doctest_passed,
-            doctest_output,
-            crosshair_output,
-            level_name,
-            property_output=property_output,
-            coverage_data=coverage_output,  # DX-37
-        )
-    else:
-        output_rich(report, config.strict_pure, changed, pedantic, explain, static)
-        output_verification_status(
-            verification_level,
-            static_exit_code,
-            doctest_passed,
-            doctest_output,
-            crosshair_output,
-            explain,
-            property_output=property_output,
-            strict=strict,
-        )
-        # DX-37: Show coverage info in human output
-        if coverage_output and coverage_output.get("phases_tracked"):
-            phases = coverage_output.get("phases_tracked", [])
-            overall = coverage_output.get("overall_branch_coverage", 0.0)
-            console.print(f"\n[bold]Coverage Analysis[/bold] ({' + '.join(phases)})")
-            console.print(f"  Overall branch coverage: {overall}%")
-            console.print(
-                "  [dim]Note: CrossHair uses symbolic execution; coverage not applicable.[/dim]"
-            )
-
-    # DX-97: Mutation phase - runs AFTER standard phases succeed
-    # all_passed must be defined here since mutation phase depends on it
-    all_passed = doctest_passed and crosshair_passed and property_passed
+    # DX-97: Mutation phase - runs AFTER standard phases succeed but BEFORE output
+    # so mutation data is available for agent JSON and deferred report parity
+    all_passed_preliminary = doctest_passed and crosshair_passed and property_passed
     mutation_passed = True
-    if mutation and all_passed and static_exit_code == 0:
+    mutation_agg = None  # DX-97: Carried to output_agent for additive top-level dict
+    if mutation and all_passed_preliminary and static_exit_code == 0:
         from invar.shell.mutation import orchestrate_mutations
 
         # Collect file infos for mutation
@@ -581,6 +548,7 @@ def _run_guard_command(
             if isinstance(mutation_result, Success):
                 agg = mutation_result.unwrap()
                 mutation_passed = agg.passed
+                mutation_agg = agg  # DX-97: Preserve for output
                 if not use_agent_output:
                     if mutation_passed:
                         console.print(
@@ -598,6 +566,41 @@ def _run_guard_command(
                     console.print(
                         f"[red]✗ Mutation testing error: {mutation_result.failure()}[/red]"
                     )
+
+    # DX-26: Unified output (agent JSON or human Rich)
+    if use_agent_output:
+        output_agent(
+            report,
+            strict,
+            doctest_passed,
+            doctest_output,
+            crosshair_output,
+            level_name,
+            property_output=property_output,
+            coverage_data=coverage_output,  # DX-37
+            mutation_output=mutation_agg,  # DX-97
+        )
+    else:
+        output_rich(report, config.strict_pure, changed, pedantic, explain, static)
+        output_verification_status(
+            verification_level,
+            static_exit_code,
+            doctest_passed,
+            doctest_output,
+            crosshair_output,
+            explain,
+            property_output=property_output,
+            strict=strict,
+        )
+        # DX-37: Show coverage info in human output
+        if coverage_output and coverage_output.get("phases_tracked"):
+            phases = coverage_output.get("phases_tracked", [])
+            overall = coverage_output.get("overall_branch_coverage", 0.0)
+            console.print(f"\n[bold]Coverage Analysis[/bold] ({' + '.join(phases)})")
+            console.print(f"  Overall branch coverage: {overall}%")
+            console.print(
+                "  [dim]Note: CrossHair uses symbolic execution; coverage not applicable.[/dim]"
+            )
 
     # Exit with combined status
     all_passed = doctest_passed and crosshair_passed and property_passed and mutation_passed

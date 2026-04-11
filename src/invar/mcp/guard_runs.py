@@ -153,8 +153,14 @@ def _review_suggested(payload: dict[str, Any]) -> Result[bool, str]:
 
 # @shell_orchestration: MCP deferred guard report summarization (kept local for protocol parity)
 # @shell_complexity: Summary normalization handles optional/malformed payload fields
+# DX-97: Additive mutation output passthrough for deferred final-report parity
 def summarize_guard_payload(payload: dict[str, Any]) -> Result[dict[str, Any], str]:
-    """Convert full guard payload to DX-94 final summary contract."""
+    """Convert full guard payload to DX-94 final summary contract.
+
+    DX-97: If mutation data is present in the payload, it is passed through
+    verbatim (additive, not summarized) to preserve eligible_files,
+    ineligible_files, files_with_zero_sites, and bounded survivor_evidence.
+    """
     review_suggested = _review_suggested(payload)
     if isinstance(review_suggested, Failure):
         return Failure(review_suggested.failure())
@@ -169,16 +175,21 @@ def summarize_guard_payload(payload: dict[str, Any]) -> Result[dict[str, Any], s
     files_checked = summary.get("files_checked", 0)
     status = payload.get("status")
 
-    return Success(
-        {
-            "ok": status == "passed",
-            "errors": int(errors) if isinstance(errors, int | float) else 0,
-            "warnings": int(warnings) if isinstance(warnings, int | float) else 0,
-            "infos": int(infos) if isinstance(infos, int | float) else 0,
-            "files_checked": int(files_checked) if isinstance(files_checked, int | float) else 0,
-            "review_suggested": review_suggested.unwrap(),
-        }
-    )
+    result: dict[str, Any] = {
+        "ok": status == "passed",
+        "errors": int(errors) if isinstance(errors, int | float) else 0,
+        "warnings": int(warnings) if isinstance(warnings, int | float) else 0,
+        "infos": int(infos) if isinstance(infos, int | float) else 0,
+        "files_checked": int(files_checked) if isinstance(files_checked, int | float) else 0,
+        "review_suggested": review_suggested.unwrap(),
+    }
+
+    # DX-97: Additive passthrough for mutation output
+    mutation = payload.get("mutation")
+    if isinstance(mutation, dict):
+        result["mutation"] = mutation
+
+    return Success(result)
 
 
 @dataclass

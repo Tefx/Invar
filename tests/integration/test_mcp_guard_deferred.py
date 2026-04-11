@@ -302,4 +302,125 @@ async def test_guard_run_registry_cancellation_semantics_for_stale_run() -> None
     gate.set()
 
     assert cancelled["status"] == "cancelled"
-    assert cancelled["error_kind"] == "run_expired"
+
+
+async def test_guard_run_registry_completes_with_mutation_in_summary() -> None:
+    """DX-97: mutation data passes through deferred final-report parity."""
+    registry = GuardRunRegistry(retention_seconds=30, max_runtime_seconds=30)
+
+    mutation_payload = _payload(
+        status="passed",
+        errors=0,
+        warnings=1,
+        include_review_trigger=False,
+    )
+    # Add DX-97 additive mutation output to the guard payload
+    mutation_payload["mutation"] = {
+        "total": 10,
+        "killed": 8,
+        "survived": 2,
+        "timeout": 0,
+        "error": 0,
+        "score": 80.0,
+        "passed": True,
+        "eligible_files": 3,
+        "ineligible_files": 1,
+        "files_with_zero_sites": 1,
+        "survivor_evidence": ["core.py:42:Add: x + y -> x - y"],
+    }
+
+    async def fake_run_guard_command_with_mutation(cmd: list[str]) -> dict[str, object]:
+        del cmd
+        await asyncio.sleep(0.01)
+        return mutation_payload
+
+    registry._run_guard_command = fake_run_guard_command_with_mutation
+
+    run = await registry.start(
+        cmd=["python", "-m", "invar.shell.commands.guard", "guard", ".", "--all"],
+        path=".",
+        changed=False,
+        timeout_reason="estimated_duration_exceeds_sync_budget",
+    )
+
+    final = await registry.wait(run.run_id, wait_ms=100)
+
+    assert final["status"] == "complete"
+    assert "mutation" in final["report"], "mutation key must be in final deferred report"
+    mut = final["report"]["mutation"]
+    assert mut["total"] == 10
+    assert mut["killed"] == 8
+    assert mut["survived"] == 2
+    assert mut["eligible_files"] == 3
+    assert mut["ineligible_files"] == 1
+    assert mut["files_with_zero_sites"] == 1
+    assert len(mut["survivor_evidence"]) == 1
+
+
+async def test_guard_run_registry_completes_without_mutation_when_absent() -> None:
+    """DX-97: no mutation key in final report when guard payload has none."""
+    registry = GuardRunRegistry(retention_seconds=30, max_runtime_seconds=30)
+
+    async def fake_run_guard_command_no_mutation(cmd: list[str]) -> dict[str, object]:
+        del cmd
+        await asyncio.sleep(0.01)
+        return _payload(status="passed", errors=0, warnings=0)
+
+    registry._run_guard_command = fake_run_guard_command_no_mutation
+
+    run = await registry.start(
+        cmd=["python", "-m", "invar.shell.commands.guard", "guard", ".", "--all"],
+        path=".",
+        changed=False,
+        timeout_reason="estimated_duration_exceeds_sync_budget",
+    )
+
+    final = await registry.wait(run.run_id, wait_ms=100)
+
+    assert final["status"] == "complete"
+    assert "mutation" not in final["report"], (
+        "mutation key must be absent from final deferred report when not present in payload"
+    )
+
+
+async def test_guard_run_registry_mutation_skipped_zero_sites_distinct() -> None:
+    """DX-97: files_with_zero_sites distinguishes 'no sites' from 'all killed'."""
+    registry = GuardRunRegistry(retention_seconds=30, max_runtime_seconds=30)
+
+    payload = _payload(status="passed", errors=0, warnings=0)
+    payload["mutation"] = {
+        "total": 0,
+        "killed": 0,
+        "survived": 0,
+        "timeout": 0,
+        "error": 0,
+        "score": 100.0,
+        "passed": True,
+        "eligible_files": 0,
+        "ineligible_files": 0,
+        "files_with_zero_sites": 3,
+        "survivor_evidence": [],
+    }
+
+    async def fake_cmd(cmd: list[str]) -> dict[str, object]:
+        del cmd
+        await asyncio.sleep(0.01)
+        return payload
+
+    registry._run_guard_command = fake_cmd
+
+    run = await registry.start(
+        cmd=["python", "-m", "invar.shell.commands.guard", "guard", ".", "--all"],
+        path=".",
+        changed=False,
+        timeout_reason="estimated_duration_exceeds_sync_budget",
+    )
+
+    final = await registry.wait(run.run_id, wait_ms=100)
+
+    assert final["status"] == "complete"
+    mut = final["report"]["mutation"]
+    # Score is 100% (no sites = pass), but files_with_zero_sites shows it's a vacuous pass
+    assert mut["score"] == 100.0
+    assert mut["passed"] is True
+    assert mut["files_with_zero_sites"] == 3

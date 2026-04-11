@@ -653,3 +653,204 @@ async def test_full_flow_changed_false_deferred_then_complete(
     assert final_payload["report"]["ok"] is True
     assert final_payload["report"]["errors"] == 0
     assert final_payload["report"]["warnings"] == 1
+
+
+# ============================================================================
+# Test 9: DX-97 Mutation output regression tests
+# ============================================================================
+
+
+async def test_deferred_final_report_includes_mutation_when_present(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """DX-97: mutation key passes through deferred final report."""
+    registry = GuardRunRegistry(retention_seconds=30, max_runtime_seconds=30)
+
+    mutation_payload = _make_payload(errors=0, warnings=1)
+    mutation_payload["mutation"] = {
+        "total": 5,
+        "killed": 4,
+        "survived": 1,
+        "timeout": 0,
+        "error": 0,
+        "score": 80.0,
+        "passed": True,
+        "eligible_files": 2,
+        "ineligible_files": 1,
+        "files_with_zero_sites": 0,
+        "survivor_evidence": ["core.py:15:Add: x + y -> x - y"],
+    }
+
+    async def fake_cmd_with_mutation(cmd):
+        import asyncio
+
+        await asyncio.sleep(0.01)
+        return mutation_payload
+
+    registry._run_guard_command = fake_cmd_with_mutation
+    monkeypatch.setattr(handlers, "GUARD_RUNS", registry)
+    monkeypatch.setattr(
+        handlers,
+        "_should_defer_full_scan",
+        lambda path, args, budget: Success(True),
+    )
+
+    result = _unwrap_success(await handlers._run_guard({"path": ".", "changed": False}))
+    payload = json.loads(result[0].text)
+    run_id = payload["run_id"]
+
+    final_result = _unwrap_success(
+        await handlers._run_guard_wait({"run_id": run_id, "wait_ms": 5000})
+    )
+    final_payload = json.loads(final_result[0].text)
+
+    assert final_payload["status"] == "complete"
+    assert "mutation" in final_payload["report"], (
+        "mutation key must be present in deferred final report when included in payload"
+    )
+    mut = final_payload["report"]["mutation"]
+    assert mut["total"] == 5
+    assert mut["killed"] == 4
+    assert mut["survived"] == 1
+    assert mut["eligible_files"] == 2
+    assert mut["ineligible_files"] == 1
+    assert mut["files_with_zero_sites"] == 0
+    assert len(mut["survivor_evidence"]) == 1
+
+
+async def test_deferred_final_report_excludes_mutation_when_absent(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """DX-97: mutation key absent from deferred final report when not in payload."""
+    registry = GuardRunRegistry(retention_seconds=30, max_runtime_seconds=30)
+
+    async def fake_cmd_no_mutation(cmd):
+        import asyncio
+
+        await asyncio.sleep(0.01)
+        return _make_payload(errors=0, warnings=0)
+
+    registry._run_guard_command = fake_cmd_no_mutation
+    monkeypatch.setattr(handlers, "GUARD_RUNS", registry)
+    monkeypatch.setattr(
+        handlers,
+        "_should_defer_full_scan",
+        lambda path, args, budget: Success(True),
+    )
+
+    result = _unwrap_success(await handlers._run_guard({"path": ".", "changed": False}))
+    payload = json.loads(result[0].text)
+    run_id = payload["run_id"]
+
+    final_result = _unwrap_success(
+        await handlers._run_guard_wait({"run_id": run_id, "wait_ms": 5000})
+    )
+    final_payload = json.loads(final_result[0].text)
+
+    assert final_payload["status"] == "complete"
+    assert "mutation" not in final_payload["report"], (
+        "mutation key must be absent from deferred final report when not in payload"
+    )
+
+
+async def test_deferred_mutation_skipped_zero_sites_distinct_from_pass(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """DX-97: files_with_zero_sites distinguishes 'no sites' from 'all killed'."""
+    registry = GuardRunRegistry(retention_seconds=30, max_runtime_seconds=30)
+
+    guard_payload = _make_payload(errors=0, warnings=0)
+    guard_payload["mutation"] = {
+        "total": 0,
+        "killed": 0,
+        "survived": 0,
+        "timeout": 0,
+        "error": 0,
+        "score": 100.0,
+        "passed": True,
+        "eligible_files": 0,
+        "ineligible_files": 0,
+        "files_with_zero_sites": 3,
+        "survivor_evidence": [],
+    }
+
+    async def fake_cmd_zero_sites(cmd):
+        import asyncio
+
+        await asyncio.sleep(0.01)
+        return guard_payload
+
+    registry._run_guard_command = fake_cmd_zero_sites
+    monkeypatch.setattr(handlers, "GUARD_RUNS", registry)
+    monkeypatch.setattr(
+        handlers,
+        "_should_defer_full_scan",
+        lambda path, args, budget: Success(True),
+    )
+
+    result = _unwrap_success(await handlers._run_guard({"path": ".", "changed": False}))
+    deferred = json.loads(result[0].text)
+    run_id = deferred["run_id"]
+
+    final_result = _unwrap_success(
+        await handlers._run_guard_wait({"run_id": run_id, "wait_ms": 5000})
+    )
+    final_payload = json.loads(final_result[0].text)
+
+    mut = final_payload["report"]["mutation"]
+    assert mut["score"] == 100.0
+    assert mut["passed"] is True
+    assert mut["files_with_zero_sites"] == 3, (
+        "files_with_zero_sites must be present and non-zero, distinguishing vacuous pass"
+    )
+
+
+async def test_deferred_survivor_evidence_bounded(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """DX-97: survivor_evidence is bounded to 5 entries in deferred final report."""
+    registry = GuardRunRegistry(retention_seconds=30, max_runtime_seconds=30)
+
+    guard_payload = _make_payload(errors=1, warnings=0)
+    # 8 survivors but only 5 evidence entries should pass through
+    guard_payload["mutation"] = {
+        "total": 20,
+        "killed": 12,
+        "survived": 8,
+        "timeout": 0,
+        "error": 0,
+        "score": 60.0,
+        "passed": False,
+        "eligible_files": 3,
+        "ineligible_files": 0,
+        "files_with_zero_sites": 0,
+        "survivor_evidence": [f"file{i}.py:{i * 10}:Add: x + y -> x - y" for i in range(5)],
+    }
+
+    async def fake_cmd_bounded(cmd):
+        import asyncio
+
+        await asyncio.sleep(0.01)
+        return guard_payload
+
+    registry._run_guard_command = fake_cmd_bounded
+    monkeypatch.setattr(handlers, "GUARD_RUNS", registry)
+    monkeypatch.setattr(
+        handlers,
+        "_should_defer_full_scan",
+        lambda path, args, budget: Success(True),
+    )
+
+    result = _unwrap_success(await handlers._run_guard({"path": ".", "changed": False}))
+    deferred = json.loads(result[0].text)
+    run_id = deferred["run_id"]
+
+    final_result = _unwrap_success(
+        await handlers._run_guard_wait({"run_id": run_id, "wait_ms": 5000})
+    )
+    final_payload = json.loads(final_result[0].text)
+
+    mut = final_payload["report"]["mutation"]
+    assert len(mut["survivor_evidence"]) <= 5, (
+        "survivor_evidence must be bounded to at most 5 entries"
+    )

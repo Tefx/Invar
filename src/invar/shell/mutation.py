@@ -50,6 +50,9 @@ class MutationAggregation:
         survivor_evidence: Bounded list of actionable survivor details
         internal_errors: List of internal errors encountered
         candidates_order: Deterministic ordering of candidates processed
+        eligible_files: Files that had mutation sites and were tested (DX-97)
+        ineligible_files: Files skipped due to parse/import errors (DX-97)
+        files_with_zero_sites: Files eligible but containing zero mutation sites (DX-97)
 
     Examples:
         >>> agg = MutationAggregation(total=10, killed=8, survived=2)
@@ -57,6 +60,11 @@ class MutationAggregation:
         80.0
         >>> agg.passed
         True
+        >>> agg = MutationAggregation(total=0, eligible_files=2, files_with_zero_sites=2)
+        >>> agg.passed
+        True
+        >>> agg.files_with_zero_sites
+        2
     """
 
     total: int = 0
@@ -67,6 +75,10 @@ class MutationAggregation:
     survivor_evidence: list[str] = field(default_factory=list)
     internal_errors: list[str] = field(default_factory=list)
     candidates_order: list[str] = field(default_factory=list)
+    # DX-97: Additive mutation file classification
+    eligible_files: int = 0
+    ineligible_files: int = 0
+    files_with_zero_sites: int = 0
 
     @property
     def score(self) -> float:
@@ -173,6 +185,41 @@ class MutationAggregation:
         """
         self.error += 1
         self.internal_errors.append(error_msg)
+
+    # DX-97: Output serialization for agent JSON and deferred report parity
+    def to_output_dict(self) -> dict[str, object]:
+        """Convert to additive top-level mutation output dict.
+
+        Returns dict suitable for inclusion in agent JSON output and
+        deferred final-report parity. survivor_evidence is bounded to
+        MAX_SURVIVOR_EVIDENCE entries.
+
+        Examples:
+            >>> agg = MutationAggregation(total=5, killed=4, survived=1,
+            ...                          eligible_files=3, ineligible_files=1,
+            ...                          files_with_zero_sites=1,
+            ...                          survivor_evidence=["a.py:2:Add"])
+            >>> d = agg.to_output_dict()
+            >>> d["total"]
+            5
+            >>> d["eligible_files"]
+            3
+            >>> d["score"]
+            80.0
+        """
+        return {
+            "total": self.total,
+            "killed": self.killed,
+            "survived": self.survived,
+            "timeout": self.timeout,
+            "error": self.error,
+            "score": self.score,
+            "passed": self.passed,
+            "eligible_files": self.eligible_files,
+            "ineligible_files": self.ineligible_files,
+            "files_with_zero_sites": self.files_with_zero_sites,
+            "survivor_evidence": self.survivor_evidence[:MAX_SURVIVOR_EVIDENCE],
+        }
 
 
 # DX-97: Mutation orchestration requires isolated temp workspace per mutant
