@@ -32563,6 +32563,111 @@ phases:
 
       - Remaining gaps:'
     agent: python-executor
+  - id: dx97-integration.deferred-output-reporting
+    name: Deferred and output reporting parity
+    status: pending
+    description: 'Implement and verify DX-97 output and deferred-reporting parity.
+
+
+      Touch paths:
+
+      - src/invar/shell/guard_output.py
+
+      - src/invar/mcp/guard_runs.py
+
+      - src/invar/mcp/server.py
+
+      - tests/test_agent_json_output.py
+
+      - tests/integration/test_mcp_guard_deferred.py
+
+      - tests/integration/test_mcp_full_guard_regressions.py
+
+
+      Spec refs:
+
+      - docs/proposals/DX-97-guard-mutation-gate.md
+
+      - docs/proposals/DX-94-mcp-full-guard-support-model.md
+
+
+      Required behavior:
+
+      - emit additive top-level mutation output for CLI/agent/MCP consumers
+
+      - preserve DX-94 deferred full-scan lifecycle instead of inventing a new run
+      type
+
+      - report `eligible_files`, `ineligible_files`, `files_with_zero_sites`, counts,
+      and bounded survivor evidence
+
+      - keep `skipped_zero_sites` distinct from true pass
+
+      - keep `--explain` compact: snippets and bounded excerpts only, not full mutant
+      diffs
+
+
+      ## Gate Preview (what the gate WILL reject)
+
+      1. changed/full-scan reporting shape drift between synchronous and deferred
+      runs
+
+      2. ambiguous pass/skip semantics that let zero-site cases look green
+
+      3. survivor evidence too vague for a human to act on
+
+
+      Completion criteria:
+
+      - Expected-Red is proved before implementation
+
+      - synchronous and deferred outputs converge on one mutation schema
+
+      - stub-only completion is not acceptable'
+    verification: '- Expected-Red proof recorded before implementation
+
+      - focused tests cover additive mutation JSON shape, `skipped_zero_sites`, survivor
+      excerpts, and deferred final-report parity
+
+      - no new wait/status method or output mode is introduced'
+    evidence_template: '## refs Read Confirmation (MANDATORY)
+
+      For each ref in this step:
+
+      - <filename> — key passage or "NOT READ: <reason>"
+
+
+      ## Expected-Red Proof (MANDATORY)
+
+      - Test-first command(s):
+
+      - Failing output:
+
+
+      ## Implementation Scope
+
+      - Files touched:
+
+      - Output fields added:
+
+      - Deferred lifecycle reuse point:
+
+
+      ## Green Proof
+
+      - Command(s) run:
+
+      - Passing output:
+
+
+      ## Notes
+
+      - How synchronous and deferred schemas were kept aligned:
+
+      - Why excerpts stay compact:'
+    depends_on:
+    - dx97-integration.guard-config-integration
+    agent: python-senior-tacit
 - id: dx97-finalization
   name: DX-97 Finalization
   status: locked
