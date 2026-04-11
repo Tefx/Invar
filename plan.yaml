@@ -33061,6 +33061,122 @@ phases:
     - dx97-integration.guard-config-integration
     - dx97-integration.deferred-output-reporting
     agent: gate-reviewer-tacit
+  - id: dx97-integration.fix-gate-proof-gap
+    name: Fix gate proof gap
+    status: pending
+    description: 'Fix the dx97-integration gate proof gap by populating real MutationAggregation
+      file-classification fields in the orchestrate_mutations integration flow and
+      adding non-mock integration evidence for eligible_files, ineligible_files, and
+      files_with_zero_sites. Include low-risk should-fix wiring for mutation_enabled
+      config consumption if it can be completed without widening scope.
+
+
+      ## Root Cause vs Symptom:
+
+      - Root cause: MutationAggregation exposes/output-tests file-classification fields,
+      but the real orchestration path does not populate them, leaving gate evidence
+      unable to prove runtime truth.
+
+      - Symptom: eligible_files, ineligible_files, and files_with_zero_sites remain
+      absent or empty in real orchestrate_mutations flow despite contract/output expectations.
+
+      - Why this fix is not surface-level: close the real orchestration population
+      path and prove it via integration coverage rather than mock-only field assertions.
+
+
+      ## Completion Criteria (stub exclusion)
+
+      This is an IMPLEMENTATION step. Stub-only completion is NOT acceptable.
+
+      Each deliverable MUST contain substantive logic that processes its inputs and
+      produces outputs that vary based on those inputs.
+
+
+      ## KNOWN RISKS (from project history):
+
+      - Wiring-only fixes can leave declared output fields unconsumed or unpopulated
+      in real runtime paths.
+
+      - Mock-heavy verification can mask missing end-to-end population for reporting
+      fields.
+
+
+      ## Gate Preview (what the gate WILL reject)
+
+      1. File-classification fields still only covered by unit/output tests instead
+      of real orchestration evidence
+
+      2. Population logic that does not prove all three fields in a real flow
+
+      3. mutation_enabled wiring changes that add new config surface without showing
+      real consumption semantics
+
+
+      ## Failure-mode checklist
+
+      - real flow distinguishes eligible vs ineligible files using actual orchestration
+      inputs
+
+      - zero-site files are preserved distinctly from ineligible files
+
+      - missing/disabled mutation configuration does not fabricate populated fields
+
+      - if mutation_enabled wiring is touched, fallback/default semantics remain backward
+      compatible and explicit
+
+
+      ## State semantics
+
+      - eligible_files / ineligible_files / files_with_zero_sites must reflect last
+      computed orchestration classification for the executed run
+
+      - existing aggregation/reporting fields must remain preserved exactly unless
+      the authoritative contract requires otherwise
+
+      - backward-compatible behavior means existing reporting consumers still receive
+      prior fields while the newly-declared classification fields are now populated
+      in real flow'
+    verification: '- Main path: focused integration tests prove real orchestrate_mutations
+      flow populates eligible_files, ineligible_files, and files_with_zero_sites
+
+      - Failure path: targeted regression covers at least one zero-site or ineligible
+      classification case in the real orchestration path
+
+      - Proof: if mutation_enabled config wiring is touched, evidence shows real consumption
+      semantics and no stale unused config path remains'
+    evidence_template: '## refs Read Confirmation (MANDATORY)
+
+
+      For each ref in this step:
+
+      - <filename> — key passage or "NOT READ: <reason>"
+
+
+      If no refs were provided, state: "No refs for this step."
+
+
+      ## Implementation Evidence
+
+      - Real orchestration path updated:
+
+      - Files changed:
+
+      - Field population proof for eligible_files:
+
+      - Field population proof for ineligible_files:
+
+      - Field population proof for files_with_zero_sites:
+
+      - mutation_enabled wiring disposition (implemented/deferred with reason):
+
+      - Non-regression notes:
+
+      - Root cause vs symptom summary:
+
+      - Commands/tests prepared for downstream retest:'
+    depends_on:
+    - dx97-integration.deferred-output-reporting
+    agent: python-senior-tacit
 - id: dx97-finalization
   name: DX-97 Finalization
   status: locked
