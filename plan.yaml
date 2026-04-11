@@ -33415,7 +33415,7 @@ phases:
       - 58 targeted tests passed with command/output-backed evidence'
   - id: dx97-finalization.doc-sync
     name: Mutation gate doc sync
-    status: pending
+    status: claimed
     description: 'Update user-facing documentation to match the implemented DX-97
       behavior.
 
@@ -33469,6 +33469,8 @@ phases:
     depends_on:
     - dx97-finalization.runtime-proof
     agent: doc-reviewer-tacit
+    claimed_by: doc-reviewer-tacit
+    claimed_at: '2026-04-11T23:59:33.571202+00:00'
   - id: dx97-finalization.gate
     name: DX-97 final gate
     status: pending
