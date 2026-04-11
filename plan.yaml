@@ -32056,7 +32056,7 @@ phases:
   steps:
   - id: dx97-engine.core-mutation-sites
     name: Core mutation-site planning
-    status: rejected
+    status: claimed
     description: 'Implement and verify the pure Core mutation-site engine for DX-97.
 
 
@@ -32142,7 +32142,7 @@ phases:
       - Remaining gaps:'
     agent: python-executor
     claimed_by: python-executor
-    claimed_at: '2026-04-11T18:39:58.208236+00:00'
+    claimed_at: '2026-04-11T19:06:00.269823+00:00'
     done_at: '2026-04-11T19:03:26.516370+00:00'
     rejection_reason: 'Post-completion integration failed: changes were not cleanly
       merged into main via isolated branch workflow; pre-commit checks failed (ruff
