@@ -32315,7 +32315,7 @@ phases:
       \ tests/core/test_mutation_sites.py -v`\n- Passing summary: 66 passed"
   - id: dx97-engine.runtime-runner
     name: Runtime-only mutant runner
-    status: claimed
+    status: done
     description: 'Implement and verify the runtime-only executor used for one DX-97
       mutant at a time.
 
@@ -32400,6 +32400,20 @@ phases:
     agent: python-executor
     claimed_by: python-executor
     claimed_at: '2026-04-11T19:48:54.314829+00:00'
+    done_at: '2026-04-11T19:59:37.891165+00:00'
+    evidence: "## Isolation Proof\n- Worktree: /Users/tefx/Projects/Invar/.vectl/worktrees/dx97-engine.runtime-runner\n\
+      - Branch: vectl/step-dx97-engine.runtime-runner\n\n## Commit Proof\n- Commit\
+      \ hash: 4fdbe38c160b2a4621fc08cf2335953ef798ef39\n- Commit message: DX-97: Add\
+      \ runtime executor for mutation testing\n- Worktree status: clean\n\n## Expected-Red\
+      \ Proof\n- `uv run pytest tests/test_mutation_runtime.py -v` initially failed\
+      \ on outcome normalization (property-test failures misclassified)\n\n## Implementation\
+      \ Scope\n- Files touched:\n  - src/invar/shell/mutation_runtime.py\n  - tests/test_mutation_runtime.py\n\
+      - Runtime checks invoked:\n  - doctest + property tests only (no full guard\
+      \ per mutant)\n- Timeout behavior:\n  - per-mutant timeout enforced with SIGALRM\
+      \ path and normalized timeout outcome\n\n## Green Proof\n- `uv run pytest tests/test_mutation_runtime.py\
+      \ -v` passed (20/20)\n- `uvx invar-tools guard src/invar/shell/mutation_runtime.py`\
+      \ passed with errors=0/warnings=0\n\n## Notes\n- Runner kept internal to shell\
+      \ surface; no new CLI command added"
   - id: dx97-engine.mutation-orchestration
     name: Mutation orchestration
     status: pending
