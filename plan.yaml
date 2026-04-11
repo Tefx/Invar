@@ -32053,6 +32053,94 @@ phases:
   gate: dx97-engine.gate
   depends_on:
   - deep_review
+  steps:
+  - id: dx97-engine.core-mutation-sites
+    name: Core mutation-site planning
+    status: pending
+    description: 'Implement and verify the pure Core mutation-site engine for DX-97.
+
+
+      Touch paths:
+
+      - src/invar/core/mutation_sites.py
+
+      - tests/core/test_mutation_sites.py
+
+
+      Spec refs:
+
+      - docs/proposals/DX-97-guard-mutation-gate.md
+
+      - docs/proposals/DX-80-guard-cli-mcp-alignment.md
+
+
+      Required behavior:
+
+      - collect mutation candidates only for the v1 operator set
+
+      - honor changed-line spans supplied by Shell without importing git/subprocess/tempfile
+      logic into Core
+
+      - emit stable candidate identity data suitable for deferred reporting
+
+      - provide single-site source rewrite with contracts/doctests guarding invalid
+      AST drift
+
+
+      Completion criteria:
+
+      - contracts/doctests/property-style tests are written first
+
+      - Expected-Red is proved before implementation
+
+      - final Core module passes invar guard and focused tests
+
+      - stub-only completion is not acceptable'
+    verification: '- Expected-Red proof recorded before implementation
+
+      - `invar_guard(path="src/invar/core/mutation_sites.py", changed=false)` passes
+      after implementation
+
+      - focused tests for changed-line intersection, stable candidate identity, and
+      single-site rewrite are green'
+    evidence_template: '## refs Read Confirmation (MANDATORY)
+
+      For each ref in this step:
+
+      - <filename> — key passage or "NOT READ: <reason>"
+
+
+      ## Expected-Red Proof (MANDATORY)
+
+      - Tests/contracts/doctests added before implementation:
+
+      - Command(s) run:
+
+      - Failing output showing the gap:
+
+
+      ## Implementation Scope
+
+      - Files touched:
+
+      - Operator set implemented:
+
+      - Why the rewrite remains Core-only:
+
+
+      ## Green Proof
+
+      - Command(s) run:
+
+      - Passing output:
+
+
+      ## Notes
+
+      - Stable candidate identity format:
+
+      - Remaining gaps:'
+    agent: python-executor
 - id: dx97-integration
   name: DX-97 Guard and Deferred Integration
   status: locked
