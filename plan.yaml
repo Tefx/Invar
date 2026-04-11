@@ -32212,7 +32212,7 @@ phases:
       reviewer: vectl-decide-orchestrator-tacit
   - id: dx97-engine.changed-line-selection
     name: Changed-line Core scope selection
-    status: claimed
+    status: done
     description: 'Implement and verify Shell changed-line selection for DX-97 fast-path
       mutation.
 
@@ -32300,6 +32300,19 @@ phases:
     agent: python-executor
     claimed_by: python-executor
     claimed_at: '2026-04-11T19:43:27.763557+00:00'
+    done_at: '2026-04-11T19:48:03.687773+00:00'
+    evidence: "## Isolation Proof\n- Worktree: /Users/tefx/Projects/Invar/.vectl/worktrees/dx97-engine.changed-line-selection\n\
+      - Branch: vectl/step-dx97-engine.changed-line-selection\n\n## Commit Proof\n\
+      - Commit hash: 368235b\n- Commit message: dx97: implement get_changed_lines\
+      \ with zero-context hunk parsing\n- Status: clean after commit\n\n## Expected-Red\
+      \ Proof\n- `uv run pytest tests/test_git_changed_lines.py -v` initially failed\
+      \ on hunk header parsing/shape and result handling assumptions prior to implementation\
+      \ finalization\n\n## Implementation Scope\n- Files touched:\n  - src/invar/shell/git.py\n\
+      \  - tests/test_git_changed_lines.py\n  - tests/integration/test_cli_flags.py\n\
+      - Cases covered:\n  - staged/unstaged hunks\n  - untracked Core files\n  - deleted/non-Core\
+      \ exclusions\n  - zero-context/multi-hunk parsing\n\n## Green Proof\n- `uv run\
+      \ pytest tests/test_git_changed_lines.py tests/integration/test_cli_flags.py\
+      \ tests/core/test_mutation_sites.py -v`\n- Passing summary: 66 passed"
   - id: dx97-engine.runtime-runner
     name: Runtime-only mutant runner
     status: pending
