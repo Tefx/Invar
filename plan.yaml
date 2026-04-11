@@ -32056,7 +32056,7 @@ phases:
   steps:
   - id: dx97-engine.core-mutation-sites
     name: Core mutation-site planning
-    status: claimed
+    status: done
     description: 'Implement and verify the pure Core mutation-site engine for DX-97.
 
 
@@ -32143,7 +32143,21 @@ phases:
     agent: python-executor
     claimed_by: python-executor
     claimed_at: '2026-04-11T19:23:58.910374+00:00'
-    done_at: '2026-04-11T19:23:22.388451+00:00'
+    done_at: '2026-04-11T19:37:58.316834+00:00'
+    evidence: "## Isolation Proof\n- pwd: /Users/tefx/Projects/Invar/.vectl/worktrees/dx97-engine.core-mutation-sites\n\
+      - branch: vectl/step-dx97-engine.core-mutation-sites\n- toplevel: /Users/tefx/Projects/Invar/.vectl/worktrees/dx97-engine.core-mutation-sites\n\
+      \n## Commit Proof\n- Commit hash: ed35342\n- Commit message: Implement DX-97\
+      \ mutation-site engine core module\n- git status --short: clean (nothing to\
+      \ commit)\n\n## Expected-Red Proof\n- Ran `uv run pytest tests/core/test_mutation_sites.py\
+      \ -v` before implementation exposure\n- Initial failure captured as missing\
+      \ module/import gap\n\n## Implementation Scope\n- Files touched:\n  - src/invar/core/mutation_sites.py\n\
+      \  - tests/core/test_mutation_sites.py\n- Added deterministic mutation candidate\
+      \ collection and single-site rewrite path with Core-only boundaries\n\n## Green\
+      \ Proof\n- `uv run pytest tests/core/test_mutation_sites.py -v` passed (35 tests)\n\
+      - `uv run invar guard src/invar/core/mutation_sites.py --changed` passed static+doctest\
+      \ checks\n\n## Notes\n- Output includes deterministic candidate identity for\
+      \ deferred reporting\n- Guard full-scan verification initiated by orchestrator\
+      \ for additional confirmation"
     rejection_reason: 'Completion evidence could not be integrated: step branch had
       no committed delta (merge reported nothing to squash), so required files are
       absent on main. Reopening for committed, mergeable delivery.'
