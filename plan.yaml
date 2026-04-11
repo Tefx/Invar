@@ -32896,7 +32896,7 @@ phases:
       reviewer: vectl-decide-orchestrator-tacit
   - id: dx97-integration.deferred-output-reporting
     name: Deferred and output reporting parity
-    status: pending
+    status: claimed
     description: 'Implement and verify DX-97 output and deferred-reporting parity.
 
 
@@ -32999,6 +32999,8 @@ phases:
     depends_on:
     - dx97-integration.guard-config-integration
     agent: python-senior-tacit
+    claimed_by: python-senior-tacit
+    claimed_at: '2026-04-11T22:42:06.257044+00:00'
   - id: dx97-integration.gate
     name: Guard integration gate
     status: pending
