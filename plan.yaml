@@ -33204,7 +33204,7 @@ phases:
       \ flow\n- Status: clean"
   - id: dx97-integration.retest-gate-proof-gap
     name: Retest gate proof gap
-    status: pending
+    status: claimed
     description: 'Independent retest for the dx97-integration proof-gap blocker.
 
 
@@ -33263,6 +33263,8 @@ phases:
     depends_on:
     - dx97-integration.fix-gate-proof-gap
     agent: python-executor
+    claimed_by: python-executor
+    claimed_at: '2026-04-11T23:33:27.197983+00:00'
 - id: dx97-finalization
   name: DX-97 Finalization
   status: locked
