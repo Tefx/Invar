@@ -32544,16 +32544,29 @@ phases:
 
       - no step completed with stub-only logic or vague evidence
 
+      - explicit confirmation that BLOCKER B1 (operand-preserving rewrite) and BLOCKER
+      B2 (non-vacuous is_v1_operator postcondition) are closed before opening the
+      phase
+
 
       This phase touches guard infrastructure, so independent review is required before
       downstream integration.'
-    verification: '- All four engine steps completed with Expected-Red then green
-      proof
+    verification: '- All four engine foundation steps completed with Expected-Red
+      then green proof where applicable
+
+      - remediation retest evidence reviewed for dx97-engine.fix-gate-blockers and
+      dx97-engine.retest-gate-blockers
 
       - Core/Shell ownership is preserved
 
+      - explicit confirmation that B1 is closed: rewritten code preserves original
+      operand names for non-a/b operators
+
+      - explicit confirmation that B2 is closed: is_v1_operator has a non-vacuous
+      postcondition aligned to result semantics
+
       - no unresolved blocker in candidate generation, line selection, runner semantics,
-      or orchestration cleanup'
+      orchestration cleanup, or blocker remediation'
     evidence_template: '## refs Read Confirmation (MANDATORY)
 
       For each ref in this step:
@@ -32575,6 +32588,7 @@ phases:
     - dx97-engine.changed-line-selection
     - dx97-engine.runtime-runner
     - dx97-engine.mutation-orchestration
+    - dx97-engine.retest-gate-blockers
     agent: gate-reviewer-tacit
   - id: dx97-engine.fix-gate-blockers
     name: Fix DX-97 gate blockers (B1/B2 + S1)
