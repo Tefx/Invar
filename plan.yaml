@@ -33020,7 +33020,7 @@ phases:
       \ integrated step delta)\n- Status: clean"
   - id: dx97-integration.gate
     name: Guard integration gate
-    status: pending
+    status: claimed
     description: 'Independent gate review for DX-97 guard integration.
 
 
@@ -33069,6 +33069,8 @@ phases:
     - dx97-integration.deferred-output-reporting
     - dx97-integration.retest-gate-proof-gap
     agent: gate-reviewer-tacit
+    claimed_by: gate-reviewer-tacit
+    claimed_at: '2026-04-11T23:35:36.330787+00:00'
   - id: dx97-integration.fix-gate-proof-gap
     name: Fix gate proof gap
     status: done
