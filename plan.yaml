@@ -32056,7 +32056,7 @@ phases:
   steps:
   - id: dx97-engine.core-mutation-sites
     name: Core mutation-site planning
-    status: claimed
+    status: done
     description: 'Implement and verify the pure Core mutation-site engine for DX-97.
 
 
@@ -32143,7 +32143,22 @@ phases:
     agent: python-executor
     claimed_by: python-executor
     claimed_at: '2026-04-11T19:06:00.269823+00:00'
-    done_at: '2026-04-11T19:03:26.516370+00:00'
+    done_at: '2026-04-11T19:23:22.388451+00:00'
+    evidence: "## Isolation Proof\n- pwd: /Users/tefx/Projects/Invar/.vectl/worktrees/dx97-engine.core-mutation-sites\n\
+      - branch: vectl/step-dx97-engine.core-mutation-sites\n- toplevel: /Users/tefx/Projects/Invar/.vectl/worktrees/dx97-engine.core-mutation-sites\n\
+      \n## Expected-Red Proof\n- Tests/contracts/doctests created before implementation\
+      \ with initial import/availability failure\n- Command run: `uv run pytest tests/core/test_mutation_sites.py\
+      \ -v`\n- Failing output included `ModuleNotFoundError: No module named 'invar.core.mutation_sites'`\n\
+      \n## Implementation Scope\n- Files touched:\n  - src/invar/core/mutation_sites.py\n\
+      \  - tests/core/test_mutation_sites.py\n- Implemented mutation candidate collection,\
+      \ changed-line filtering, stable candidate identity, and single-site rewrite\
+      \ safety checks\n- Core-only boundary maintained by consuming changed-line spans\
+      \ as inputs and avoiding git/subprocess/tempfile imports in Core\n\n## Green\
+      \ Proof\n- `uv run pytest tests/core/test_mutation_sites.py -v` passed (12/12)\n\
+      - `uvx invar-tools guard --all src/invar/core/mutation_sites.py` reported static\
+      \ errors=0, doctest passed, property tests passed\n\n## Notes\n- Stable candidate\
+      \ identity uses deterministic hash derived from source+location+operator\n-\
+      \ Remaining caution: file-size warning near threshold"
     rejection_reason: 'Post-completion integration failed: changes were not cleanly
       merged into main via isolated branch workflow; pre-commit checks failed (ruff
       import ordering and invar guard property test failures) during integration commit.
