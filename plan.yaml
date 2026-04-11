@@ -33204,7 +33204,7 @@ phases:
       \ flow\n- Status: clean"
   - id: dx97-integration.retest-gate-proof-gap
     name: Retest gate proof gap
-    status: claimed
+    status: done
     description: 'Independent retest for the dx97-integration proof-gap blocker.
 
 
@@ -33265,6 +33265,15 @@ phases:
     agent: python-executor
     claimed_by: python-executor
     claimed_at: '2026-04-11T23:33:27.197983+00:00'
+    done_at: '2026-04-11T23:35:23.005825+00:00'
+    evidence: "step_intent: retest_green\nexpected_result: green\nobserved_result:\
+      \ green\nfailure_alignment: matched\n\nreal_flow_population:\n  eligible_files:\
+      \ confirmed by TestFileClassificationPopulation suite\n  ineligible_files: confirmed\
+      \ by parse-failure/no-source cases\n  files_with_zero_sites: confirmed by no-operator\
+      \ file cases\n\nproof_gap_closure: CLOSED\nmodified_product_files: NO\n\nverification:\n\
+      - `uv run pytest tests/test_mutation_orchestration.py tests/test_agent_json_output.py\
+      \ -v` passed\n- `uv run invar guard src/invar/shell/mutation.py --changed` passed\n\
+      - focused classification tests passed"
 - id: dx97-finalization
   name: DX-97 Finalization
   status: locked
