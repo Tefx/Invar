@@ -32771,7 +32771,7 @@ phases:
   steps:
   - id: dx97-integration.guard-config-integration
     name: Guard config and phase wiring
-    status: rejected
+    status: claimed
     description: 'Implement and verify DX-97 guard/config integration.
 
 
@@ -32867,7 +32867,7 @@ phases:
       - Remaining gaps:'
     agent: python-executor
     claimed_by: python-executor
-    claimed_at: '2026-04-11T22:06:26.465122+00:00'
+    claimed_at: '2026-04-11T22:28:50.032859+00:00'
     done_at: '2026-04-11T22:26:46.758404+00:00'
     rejection_reason: 'Post-completion integration failed: squash-commit hooks failed
       because new mutation phase causes invar guard mutation status=failed (score
