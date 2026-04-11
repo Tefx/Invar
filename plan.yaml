@@ -32193,3 +32193,108 @@ phases:
       \ Gaps\n- <none or explicit list>\n\nIf any mutant survives, any timeout occurs,\
       \ or mutation execution errors, this step is NOT complete."
     agent: python-senior-tacit
+  - id: dx97.gate
+    name: Gate DX-97 mutation semantics
+    status: pending
+    description: 'step_type: gate
+
+      verification_scope: phase-check
+
+
+      Independent gate for critical Guard/MCP infrastructure.
+
+
+      Review whether the DX-97 implementation actually delivered the promised semantics
+      instead of a narrative approximation.
+
+
+      Required gate focus:
+
+      1. changed=true is still default and synchronous
+
+      2. full-scan (--all / changed=false) now includes mutation semantics
+
+      3. DX-94 deferred final report preserves the mutation object when full-scan
+      defers
+
+      4. mutation fails closed on survived mutant, timeout, and internal error
+
+      5. zero-site is never represented as pass
+
+      6. scope did not creep into Shell or standalone-command work
+
+      7. evidence is mechanical (commands/output/payloads), not summary prose
+
+
+      Gate decision basis must explicitly call out any unresolved behavioral-runtime
+      obligations and whether they intersect downstream release/readiness expectations.'
+    verification: '- Review implement step evidence for expected-red then green proof
+
+      - Confirm mutation object and failure taxonomy are present in changed and full-scan
+      evidence
+
+      - Confirm zero-site semantics are skipped_zero_sites, not pass
+
+      - Confirm no Shell mutation or standalone command work was silently introduced
+
+      - OPEN only if changed/default behavior, full-scan behavior, and fail-closed
+      semantics are all evidenced'
+    evidence_template: '## Gate Review Report
+
+      Reviewer: <agent>
+
+      Phase: dx97
+
+
+      ## refs Read Confirmation (MANDATORY)
+
+      For each ref in this step:
+
+      - <filename> — key passage or "NOT READ: <reason>"
+
+
+      ## Step Review
+
+      | Step ID | Status | Evidence Quality | Concerns |
+
+      | ------- | ------ | ---------------- | -------- |
+
+      | dx97.implement-and-verify | ✅/⚠️/❌ | excellent/adequate/insufficient | <notes>
+      |
+
+
+      ## Behavioral Proof Register
+
+      | Requirement | Evidence Ref | Status | Blocking? | Notes |
+
+      | ----------- | ------------ | ------ | --------- | ----- |
+
+      | changed=true default and synchronous | <ref> | PROVEN/UNPROVEN | YES/NO |
+      <notes> |
+
+      | full-scan mutation included | <ref> | PROVEN/UNPROVEN | YES/NO | <notes> |
+
+      | deferred final payload includes mutation object | <ref> | PROVEN/UNPROVEN
+      | YES/NO | <notes> |
+
+      | survivor/timeout/error fail closed | <ref> | PROVEN/UNPROVEN | YES/NO | <notes>
+      |
+
+      | zero-site != pass | <ref> | PROVEN/UNPROVEN | YES/NO | <notes> |
+
+      | Core-only boundary preserved | <ref> | PROVEN/UNPROVEN | YES/NO | <notes>
+      |
+
+
+      ## Gate Decision
+
+      - [ ] OPEN
+
+      - [ ] BLOCKED
+
+
+      If BLOCKED, list the exact missing or contradictory evidence and which runtime
+      obligation remains unproven.'
+    depends_on:
+    - dx97.implement-and-verify
+    agent: gate-reviewer-tacit
