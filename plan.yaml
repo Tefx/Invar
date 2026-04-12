@@ -33533,3 +33533,9 @@ phases:
       \  runtime_evidence_reviewed: yes\n  documentation_evidence_reviewed: yes\n\
       \  blocking_issues: []\n  decision: OPEN\n\nnotes:\n- non-blocking should-fix\
       \ remains for MCP invar_guard mutation parameter parity; does not block gate"
+- id: property-target-skip-fix
+  name: Property Target Owner Resolution Bug Fix
+  status: pending
+  gate: property-target-skip-fix.gate
+  depends_on:
+  - dx97-finalization
