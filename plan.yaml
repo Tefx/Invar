@@ -34312,7 +34312,7 @@ phases:
       No blocker remains for downstream doc-sync/final-review phases.'
 - id: property-target-skip-doc-sync
   name: Property Target Skip Documentation Sync
-  status: in_progress
+  status: done
   gate: property-target-skip-doc-sync.gate
   depends_on:
   - property-target-skip-fix
@@ -34412,7 +34412,7 @@ phases:
       - active docs do not preserve workaround-only guidance: ✅'
   - id: property-target-skip-doc-sync.gate
     name: Gate documentation sync for property target skip fix
-    status: claimed
+    status: done
     description: 'Gate review: verify active documentation now matches the repaired
       property-target resolution behavior, or that explicit no-doc-drift evidence
       is sufficient.'
@@ -34448,9 +34448,90 @@ phases:
     agent: gate-reviewer-tacit
     claimed_by: gate-reviewer-tacit
     claimed_at: '2026-04-12T08:37:55.124116+00:00'
+    done_at: '2026-04-12T08:40:24.148807+00:00'
+    evidence: '## Gate Review Report
+
+      **Reviewer**: gate-reviewer-tacit
+
+      **Phase**: property-target-skip-doc-sync
+
+
+      ### refs Read Confirmation
+
+      - `runtime/README.md` — Documents `@skip_property_test` user-facing usage and
+      reason categories. No mention of target resolution internals or module-level
+      dunder workarounds. Remains accurate after fix.
+
+      - `docs/reference/verification/index.md` — Documents verification pipeline at
+      high level (Phase 4: Hypothesis). No target resolution or dunder content. Remains
+      accurate.
+
+      - `docs/design.md` — Only mention of `@skip_property_test` is in the distribution
+      file listing (line 990). No dunder workaround guidance. Remains accurate.
+
+      - `src/invar/shell/property_tests.py` — `_resolve_target()` (lines 195-297)
+      uses owner-path/class-owned/is_class_owned/has_skip_marker metadata for descriptor-aware
+      resolution. Docstring documents three avoided bugs (class dunder shadowing,
+      descriptor hiding, instance method unsuitability). No module-level dunder workaround
+      dependency.
+
+      - `src/invar/core/property_gen.py` — Discovery emits `owner_path`, `is_class_owned`,
+      `has_skip_marker` fields (lines 306-324). Consistent with runtime consumption.
+
+      - Step evidence from `property-target-skip-doc-sync.update-docs` — Completer
+      confirmed no doc edits needed: fix changed internal mechanics, not user-facing
+      API. Active docs remain accurate. No active docs preserve workaround-only dunder
+      guidance.
+
+
+      ### No-Doc-Drift Justification
+
+      The property-target-skip fix repaired internal target-resolution mechanics:
+
+      - Discovery now emits `owner_path`/`is_class_owned`/`has_skip_marker` metadata
+
+      - Runtime `_resolve_target()` uses this metadata for class-owned descriptor-aware
+      resolution
+
+      - Plain instance methods are explicitly skipped (not silently dropped)
+
+      - No module-level dunder wrapper is needed or referenced
+
+
+      None of these internal changes alter the user-facing CLI, API, or decorator
+      contract documented in active docs. The `@skip_property_test` usage guidance
+      in `runtime/README.md` remains correct. The verification pipeline description
+      in `docs/reference/verification/index.md` remains correct. No active doc mentions
+      or depends on the rejected module-level dunder workaround.
+
+
+      ### Consistency Check
+
+      - Active docs mention repaired behavior correctly: ✅ (no doc mentions internal
+      resolution; user-facing docs still accurate)
+
+      - Active docs do not preserve workaround-only guidance: ✅ (no dunder/workaround
+      text exists in any active doc)
+
+      - No stale `getattr(module, name)` pattern documented as recommended approach:
+      ✅ (only appears in historical proposals, not active guidance)
+
+
+      ### Gate Decision
+
+      OPEN
+
+
+      ### Rationale
+
+      Doc-sync step correctly identified that no active documentation needed updates
+      — the fix was internal mechanics, not user-facing semantics. All three active
+      doc files remain consistent with the repaired behavior. No active doc preserves
+      the rejected module-level dunder workaround as guidance. No-doc-drift evidence
+      is explicit and justified.'
 - id: property-target-skip-review
   name: Property Target Skip Final Review
-  status: locked
+  status: pending
   gate: property-target-skip-review.gate
   depends_on:
   - property-target-skip-doc-sync
