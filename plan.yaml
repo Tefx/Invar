@@ -33803,7 +33803,7 @@ phases:
   - id: property-target-skip-fix.fix-shell-resolution
     name: Resolve class-owned property targets in shell and honor skip metadata on
       the real callable
-    status: pending
+    status: claimed
     description: "step_type: implementation\nwork_type: defect_repair\nscope_kind:\
       \ closure_step\ntags:\n  - integration\nspec_refs:\n  - SPEC MISSING — root\
       \ cause derived from bug report and confirmed reproduction\n  - src/invar/shell/property_tests.py\
@@ -33901,6 +33901,8 @@ phases:
     depends_on:
     - property-target-skip-fix.fix-core-discovery
     agent: python-senior-tacit
+    claimed_by: python-senior-tacit
+    claimed_at: '2026-04-12T08:12:43.354140+00:00'
   - id: property-target-skip-fix.verify-green
     name: Independently retest class-owned property target handling
     status: pending
