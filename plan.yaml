@@ -33622,6 +33622,92 @@ phases:
 
       - Closure step: property-target-skip-fix.fix-shell-resolution'
     agent: python-executor
+  - id: property-target-skip-fix.fix-core-discovery
+    name: Preserve qualified target ownership in property discovery
+    status: pending
+    description: "step_type: implementation\nwork_type: defect_repair\nscope_kind:\
+      \ reduction_step\nspec_refs:\n  - SPEC MISSING — root cause derived from bug\
+      \ report and confirmed reproduction\n  - src/invar/core/property_gen.py discovery\
+      \ currently records bare node.name only\n  - Core rule: new core helpers require\
+      \ @pre/@post and at least one doctest\n\nauthoritative_interface: NONE PINNED\n\
+      harness_refs:\n  - property-target-skip-fix.red-regression\n  - src/invar/core/property_gen.py::find_contracted_functions\n\
+      \ntouch_paths:\n  - src/invar/core/property_gen.py\n  - tests/test_property_target_resolution.py\n\
+      \nUPSTREAM ARTIFACTS:\n- tests/test_property_target_resolution.py — expected-red\
+      \ reproductions from property-target-skip-fix.red-regression are PROTECTED\n\
+      \nFill in the discovery-side repair only. Replace lossy bare-name discovery\
+      \ with class-aware target identity metadata (qualname / owner_path / binding_hint\
+      \ or equivalent) while keeping Core pure.\n\nHard boundaries:\n- Do NOT add\
+      \ runtime getattr/descriptor logic to Core\n- Do NOT special-case dunder names\n\
+      - Do NOT treat function-local nested defs as runnable import targets\n- If you\
+      \ introduce new Core helpers, add @pre/@post and at least one doctest before\
+      \ implementation\n\n## Completion Criteria (stub exclusion)\nThis is an IMPLEMENTATION\
+      \ step. Stub-only completion is NOT acceptable.\nThe deliverable must produce\
+      \ substantive discovery metadata that distinguishes module functions from class-owned\
+      \ targets.\n\nResidual blocker ownership:\n- The focused regression harness\
+      \ may remain red after this step because shell target resolution is still wrong;\
+      \ that residual blocker belongs to property-target-skip-fix.fix-shell-resolution."
+    verification: '- Main path: targeted core tests / doctests for discovery metadata
+      pass
+
+      - Carry-forward red path: the new regression harness is rerun and any remaining
+      red is attributable to shell-side target resolution, not malformed discovery
+      output
+
+      - Proof that module-level and class-owned targets are now distinguishable in
+      discovery output'
+    evidence_template: '## refs Read Confirmation (MANDATORY)
+
+      For each ref in this step:
+
+      - <filename> — key passage or "NOT READ: <reason>"
+
+
+      If no refs were provided, state: "No refs for this step."
+
+
+      ## Upstream Expected-Red Confirmation
+
+      Reference the failing command/output from property-target-skip-fix.red-regression:
+
+      - command:
+
+      - failure excerpt:
+
+
+      ## Core Repair Evidence
+
+      Core-focused command(s):
+
+      ```
+
+      <pytest/doctest command(s)>
+
+      ```
+
+      Actual output:
+
+      ```
+
+      <paste output>
+
+      ```
+
+      Discovery metadata now distinguishes:
+
+      - module function:
+
+      - class-owned method:
+
+      - nested class target (if supported):
+
+
+      ## Residual Blocker Handoff
+
+      If the end-to-end regression remains red, explain exactly why the unresolved
+      blocker is shell-side and why this step is still a net-positive bounded reduction.'
+    depends_on:
+    - property-target-skip-fix.red-regression
+    agent: python-executor
 - id: property-target-skip-doc-sync
   name: Property Target Skip Documentation Sync
   status: locked
