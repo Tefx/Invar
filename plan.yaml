@@ -34162,7 +34162,7 @@ phases:
       PASS'
   - id: property-target-skip-fix.gate
     name: Gate property target owner-resolution fix
-    status: pending
+    status: claimed
     description: 'Gate review: determine whether the property-target owner-resolution
       repair is complete, evidence-backed, and safe to release into the normal property
       phase.
@@ -34245,6 +34245,8 @@ phases:
     - property-target-skip-fix.fix-shell-resolution
     - property-target-skip-fix.verify-green
     agent: gate-reviewer-tacit
+    claimed_by: gate-reviewer-tacit
+    claimed_at: '2026-04-12T08:31:44.826996+00:00'
 - id: property-target-skip-doc-sync
   name: Property Target Skip Documentation Sync
   status: locked
