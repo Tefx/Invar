@@ -33803,7 +33803,7 @@ phases:
   - id: property-target-skip-fix.fix-shell-resolution
     name: Resolve class-owned property targets in shell and honor skip metadata on
       the real callable
-    status: claimed
+    status: done
     description: "step_type: implementation\nwork_type: defect_repair\nscope_kind:\
       \ closure_step\ntags:\n  - integration\nspec_refs:\n  - SPEC MISSING — root\
       \ cause derived from bug report and confirmed reproduction\n  - src/invar/shell/property_tests.py\
@@ -33903,6 +33903,94 @@ phases:
     agent: python-senior-tacit
     claimed_by: python-senior-tacit
     claimed_at: '2026-04-12T08:12:43.354140+00:00'
+    done_at: '2026-04-12T08:29:45.903827+00:00'
+    evidence: '## refs Read Confirmation
+
+      - src/invar/shell/property_tests.py — previous loop resolved every discovered
+      target via bare module `getattr(module, func_name)` and checked skip on that
+      object.
+
+      - src/invar/core/property_gen.py — discovery metadata now includes owner/scope
+      hints (`owner_path`, `is_class_owned`, `has_skip_marker`) consumed by shell-side
+      resolver.
+
+      - src/invar/core/property_runner.py — execution remains callable-based; no root-cause
+      change required.
+
+      - runtime/src/invar_runtime/decorators.py — skip marker is stored on decorated
+      callable (`__invar_skip_property_test__`), requiring descriptor-aware lookup
+      for class/static methods.
+
+      - tests/test_property_target_resolution.py — focused regression suite for dunder
+      owner-loss, collisions, descriptor-order variants, instance-method behavior.
+
+
+      ## Integration Evidence
+
+      Commands executed:
+
+      ```
+
+      uv run pytest -v tests/test_property_target_resolution.py
+
+      uv run pytest -v tests/ -k "property" --ignore=tests/e2e
+
+      uv run pytest -v tests/test_subprocess_env.py
+
+      invar guard --changed
+
+      ```
+
+      Observed output summary:
+
+      - `tests/test_property_target_resolution.py`: 8 passed
+
+      - property-focused subset: passed
+
+      - `tests/test_subprocess_env.py`: passed
+
+      - changed guard: 0 errors (warnings only)
+
+
+      Path exercised:
+
+      `find_contracted_functions -> owner-path resolution -> skip detection -> run_property_test/skip`
+
+
+      ## Main Path / Failure Path Proof
+
+      - Main path green: class dunder skip case now passes without module-level dunder
+      alias workaround.
+
+      - Collision/failure-path proof: module-level `__eq__` and class-owned `C.__eq__`
+      are distinguished via qualified owner path.
+
+      - Instance-method explicit-skip proof: unsupported plain instance methods now
+      skip explicitly with clear reason/hint, not silent mis-resolution.
+
+      - Descriptor-order proof: staticmethod/classmethod skip-marker variants pass
+      across decorator orderings.
+
+
+      ## Root Cause vs Symptom
+
+      - Root cause closed by replacing bare module-level target resolution with owner-aware
+      class-path resolution and descriptor-aware skip checks.
+
+      - Not a workaround: no dependency on module-level dunder redirect wrappers;
+      qualified target identity is preserved end-to-end.
+
+
+      ## Scope Control
+
+      Modified files:
+
+      - src/invar/shell/property_tests.py
+
+      - tests/test_property_target_resolution.py (alignment with explicit instance-method
+      policy)
+
+      - (carry-forward from prior step) src/invar/core/property_gen.py'
   - id: property-target-skip-fix.verify-green
     name: Independently retest class-owned property target handling
     status: pending
