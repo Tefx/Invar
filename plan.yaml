@@ -33809,6 +33809,102 @@ phases:
     depends_on:
     - property-target-skip-fix.fix-core-discovery
     agent: python-senior-tacit
+  - id: property-target-skip-fix.verify-green
+    name: Independently retest class-owned property target handling
+    status: pending
+    description: "step_type: test\nstep_intent: retest_green\nexpected_result: green\n\
+      verification_scope: local-check\nspec_refs:\n  - property-target-skip-fix.red-regression\
+      \ expected-red harness\n  - property-target-skip-fix.fix-core-discovery discovery\
+      \ identity contract\n  - property-target-skip-fix.fix-shell-resolution runtime\
+      \ target-resolution closure\n\nauthoritative_interface: NONE PINNED\nharness_refs:\n\
+      \  - tests/test_property_target_resolution.py\n  - src/invar/shell/property_tests.py::run_property_tests_on_file\n\
+      \ntouch_paths:\n  - none expected; verification-only step\n\nAs an INDEPENDENT\
+      \ TESTER, rerun the focused property-target regression harness from a clean\
+      \ environment and prove the bug is closed:\n- class dunder @skip_property_test\
+      \ is honored\n- non-dunder class-owned targets no longer disappear via bare\
+      \ module lookup\n- module-level collisions do not mask class-owned targets\n\
+      - supported descriptor forms stay green; unsupported plain instance methods\
+      \ follow the documented explicit-skip policy\n- changed-file invar guard is\
+      \ green for the touched surfaces"
+    verification: '- Focused pytest suite passes green
+
+      - Changed-file invar guard passes green
+
+      - Any issue found is reported with reproduction; finding issues counts as successful
+      verification work, but unresolved blockers still block the gate'
+    evidence_template: '## Verification Report
+
+
+      **Tester**: integration-verifier-tacit (independent of implementation)
+
+      **Scope**: property target owner-resolution bug fix
+
+      **Independence Level**: L1
+
+
+      ### refs Read Confirmation (MANDATORY)
+
+      For each ref in this step:
+
+      - <filename> — key passage or "NOT READ: <reason>"
+
+
+      If no refs were provided, state: "No refs for this step."
+
+
+      ### Test Execution
+
+      - Commands executed:
+
+      ```
+
+      <exact pytest and invar guard commands>
+
+      ```
+
+      - Output summary:
+
+      ```
+
+      <paste key output>
+
+      ```
+
+
+      ### Issues Found
+
+      | Severity | Description | Location | Reproduction |
+
+      | --- | --- | --- | --- |
+
+      | blocker | <issue or none> | <file/test> | <steps> |
+
+      | should_fix | <issue or none> | <file/test> | <steps> |
+
+
+      ### Coverage Assessment
+
+      - class dunder skip verified: ✅/❌
+
+      - non-dunder class target verified: ✅/❌
+
+      - module collision verified: ✅/❌
+
+      - descriptor-order variants verified: ✅/❌
+
+      - instance-method explicit-skip policy verified: ✅/❌
+
+
+      ### Headline
+
+      - [ ] PASS
+
+      - [ ] PASS_WITH_DEBT
+
+      - [ ] FAIL'
+    depends_on:
+    - property-target-skip-fix.fix-shell-resolution
+    agent: integration-verifier-tacit
 - id: property-target-skip-doc-sync
   name: Property Target Skip Documentation Sync
   status: locked
