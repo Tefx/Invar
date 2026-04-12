@@ -33415,7 +33415,7 @@ phases:
       - 58 targeted tests passed with command/output-backed evidence'
   - id: dx97-finalization.doc-sync
     name: Mutation gate doc sync
-    status: claimed
+    status: done
     description: 'Update user-facing documentation to match the implemented DX-97
       behavior.
 
@@ -33471,6 +33471,15 @@ phases:
     agent: doc-reviewer-tacit
     claimed_by: doc-reviewer-tacit
     claimed_at: '2026-04-11T23:59:33.571202+00:00'
+    done_at: '2026-04-12T00:08:30.528326+00:00'
+    evidence: "## Doc Sync Report\n- Files updated:\n  - CLAUDE.md\n  - INVAR.md\n\
+      \  - README.md\n  - docs/proposals/DX-94-mcp-full-guard-support-model.md\n \
+      \ - src/invar/templates/protocol/python/tools.md\n- Behavior statements aligned:\n\
+      \  - DX-97 mutation activation/default behavior\n  - changed default vs --all\
+      \ semantics\n  - deferred reporting parity and fail-closed semantics\n  - zero-site\
+      \ (`skipped_zero_sites`) distinction\n- Intentionally unchanged docs:\n  - no\
+      \ additional mutation command surfaces were introduced\n- Commit hash: 044e95ffc829f233584dc6ee56b595bb98b1f158\n\
+      - Worktree status: clean"
   - id: dx97-finalization.gate
     name: DX-97 final gate
     status: pending
