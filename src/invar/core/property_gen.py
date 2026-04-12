@@ -230,6 +230,9 @@ def find_contracted_functions(source: str) -> list[dict[str, Any]]:
     """
     Find all functions with @pre/@post contracts in source code.
 
+    Distinguishes module-level functions from class-owned methods using AST
+    parent tracking, enabling proper skip-marker resolution in shell.
+
     >>> source = '''
     ... from deal import pre, post
     ... @pre(lambda x: x > 0)
@@ -246,21 +249,75 @@ def find_contracted_functions(source: str) -> list[dict[str, Any]]:
         return []
 
     functions: list[dict[str, Any]] = []
-    for node in ast.walk(tree):
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+
+    class FunctionInfoExtractor(ast.NodeVisitor):
+        """Extract function metadata with class-ownership tracking."""
+
+        def __init__(self) -> None:
+            self._class_stack: list[str] = []
+
+        @staticmethod
+        def _has_skip_marker(decorator_list: list[ast.expr]) -> bool:
+            """Check if any decorator is @skip_property_test.
+
+            Handles both @skip_property_test and @skip_property_test("reason").
+            """
+            for dec in decorator_list:
+                if isinstance(dec, ast.Call):
+                    func = dec.func
+                    if isinstance(func, ast.Name) and func.id == "skip_property_test":
+                        return True
+                    if isinstance(func, ast.Attribute) and func.attr == "skip_property_test":
+                        return True
+                elif isinstance(dec, ast.Name) and dec.id == "skip_property_test":
+                    return True
+            return False
+
+        def visit_ClassDef(self, node: ast.ClassDef) -> None:
+            """Track class context for nested function detection."""
+            self._class_stack.append(node.name)
+            self.generic_visit(node)
+            self._class_stack.pop()
+
+        def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
+            """Extract function metadata with class-ownership info."""
+            self._visit_function(node)
+
+        def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
+            """Extract async function metadata with class-ownership info."""
+            self._visit_function(node)
+
+        def _visit_function(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> None:
+            """Common function extraction logic."""
             has_pre, has_post = _get_function_contracts(node)
-            if has_pre or has_post:
-                functions.append(
-                    {
-                        "name": node.name,
-                        "is_async": isinstance(node, ast.AsyncFunctionDef),
-                        "lineno": node.lineno,
-                        "has_pre": has_pre,
-                        "has_post": has_post,
-                        "params": _extract_params(node),
-                        "return_type": _extract_return_type(node),
-                    }
-                )
+            if not (has_pre or has_post):
+                return
+
+            # Determine if class-owned (function is inside a class)
+            is_class_owned = len(self._class_stack) > 0
+            owner_path = ".".join(self._class_stack) if is_class_owned else ""
+
+            # Check for @skip_property_test marker in decorator list
+            has_skip = self._has_skip_marker(node.decorator_list)
+
+            functions.append(
+                {
+                    "name": node.name,
+                    "is_async": isinstance(node, ast.AsyncFunctionDef),
+                    "lineno": node.lineno,
+                    "has_pre": has_pre,
+                    "has_post": has_post,
+                    "params": _extract_params(node),
+                    "return_type": _extract_return_type(node),
+                    # Discovery metadata for qualified ownership
+                    "owner_path": owner_path,
+                    "is_class_owned": is_class_owned,
+                    "has_skip_marker": has_skip,
+                }
+            )
+
+    extractor = FunctionInfoExtractor()
+    extractor.visit(tree)
     return functions
 
 

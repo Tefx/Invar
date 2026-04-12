@@ -13,6 +13,7 @@ import warnings
 from contextlib import contextmanager, suppress
 from inspect import iscoroutinefunction
 from pathlib import Path
+from typing import Any
 
 from returns.result import Failure, Result, Success
 from rich.console import Console
@@ -157,6 +158,145 @@ def _inject_project_site_packages(project_root: Path):
                 sys.path.remove(p)
 
 
+def _has_skip_marker_on_callable(func: Any) -> bool:
+    """Check if a callable (or its underlying function) has the skip marker.
+
+    Inspects multiple forms because descriptor wrapping can hide the marker:
+    - The raw object (works for plain functions and when @skip is outermost)
+    - ``__func__`` (bound-method unwrapping for classmethods, instance methods)
+    - ``__wrapped__`` (functools.wraps / decorator chaining)
+
+    Args:
+        func: Any Python object, typically a callable or descriptor.
+
+    Returns:
+        True if ``__invar_skip_property_test__`` is found on any unwrapped form.
+    """
+    candidates: list[Any] = [func]
+    # Unwrap bound-method / classmethod / instance-method descriptors
+    func_attr = getattr(func, "__func__", None)
+    if func_attr is not None:
+        candidates.append(func_attr)
+    # Unwrap functools.wraps-style decorators
+    wrapped = getattr(func, "__wrapped__", None)
+    if wrapped is not None:
+        candidates.append(wrapped)
+        # Also check __wrapped__.__func__ for double-wrapped cases
+        wrapped_func = getattr(wrapped, "__func__", None)
+        if wrapped_func is not None:
+            candidates.append(wrapped_func)
+
+    return any(getattr(c, "__invar_skip_property_test__", False) for c in candidates)
+
+
+# @shell_complexity: Owner-path resolution requires branching on descriptor types
+# (staticmethod, classmethod, plain instance method) and checking skip markers
+# across multiple forms (raw, __func__, __wrapped__) — inherent to the domain.
+def _resolve_target(
+    module: Any,
+    func_name: str,
+    owner_path: str,
+    is_class_owned: bool,
+    has_skip_marker: bool,
+) -> tuple[Any, str | None]:
+    """Resolve a contracted-function target from discovery metadata.
+
+    Uses owner-path / qualname metadata (not bare ``getattr(module, name)``) so
+    that class-owned targets are resolved through their owning class.  This
+    avoids three resolution bugs:
+
+    1. Class dunders shadow module-type dunders (e.g. ``C.__eq__`` vs
+       ``module.__eq__``).
+    2. ``staticmethod``/``classmethod`` descriptors hide the skip marker on the
+       underlying function.
+    3. Plain instance methods cannot be called without ``self`` — we skip them
+       explicitly rather than silently mis-resolving.
+
+    Args:
+        module:         The imported module object.
+        func_name:      The bare function/method name (from AST).
+        owner_path:     Dot-joined class ownership path (e.g. ``"MyClass"``),
+                        empty string for module-level functions.
+        is_class_owned: True when ``owner_path`` is non-empty.
+        has_skip_marker:True when AST analysis found ``@skip_property_test`` on
+                        the function definition.
+
+    Returns:
+        A ``(func, skip_reason)`` tuple.  When *skip_reason* is non-None the
+        caller MUST skip the function and use *skip_reason* as the hint;
+        *func* may be ``None`` in that case.  When *skip_reason* is ``None``
+        the caller should proceed to test *func*.
+    """
+    # ── Module-level functions (owner_path == "") ────────────────────────
+    if not is_class_owned:
+        func = getattr(module, func_name, None)
+        if func is None or not callable(func):
+            return None, None
+        # Check runtime skip marker (honours both bare and decorated usage)
+        if _has_skip_marker_on_callable(func):
+            return None, f"Skipped: @skip_property_test on {func_name}"
+        return func, None
+
+    # ── Class-owned targets ──────────────────────────────────────────────
+    # Walk the owner_path to reach the class, then getattr the member.
+    owner_parts = owner_path.split(".")
+    cls: Any = module
+    for part in owner_parts:
+        cls = getattr(cls, part, None)
+        if cls is None:
+            return None, f"Skipped: could not resolve owner class {owner_path}"
+
+    # Resolve the raw descriptor from the class dict (preserves staticmethod etc.)
+    raw_attr = cls.__dict__.get(func_name)
+    attr_from_class = getattr(cls, func_name, None)
+
+    # AST-level skip marker is authoritative (descriptor-proof).
+    # It was set by find_contracted_functions from the decorator list.
+    if has_skip_marker:
+        method_kind = "instance method"
+        if isinstance(raw_attr, staticmethod):
+            method_kind = "staticmethod"
+        elif isinstance(raw_attr, classmethod):
+            method_kind = "classmethod"
+        return None, f"Skipped: @skip_property_test on {owner_path}.{func_name} ({method_kind})"
+
+    # ---- staticmethod: extract the raw function for testing ----
+    if isinstance(raw_attr, staticmethod):
+        raw_func = raw_attr.__func__
+        # Check descriptor-level skip (when @skip wraps the staticmethod descriptor)
+        # and runtime-level skip on the extracted function
+        if (
+            hasattr(raw_attr, "__invar_skip_property_test__")
+            or _has_skip_marker_on_callable(raw_func)
+            or _has_skip_marker_on_callable(attr_from_class)
+        ):
+            return None, f"Skipped: @skip_property_test on {owner_path}.{func_name} (staticmethod)"
+        return raw_func, None
+
+    # ---- classmethod: cannot construct a valid cls for deal.cases ----
+    if isinstance(raw_attr, classmethod):
+        if (
+            hasattr(raw_attr, "__invar_skip_property_test__")
+            or _has_skip_marker_on_callable(raw_attr.__func__)
+            or _has_skip_marker_on_callable(attr_from_class)
+        ):
+            return None, f"Skipped: @skip_property_test on {owner_path}.{func_name} (classmethod)"
+        return None, (
+            f"Skipped: classmethod {owner_path}.{func_name} — "
+            f"deal.cases cannot construct the cls argument"
+        )
+
+    # ---- plain instance method: cannot construct self ----
+    # Check runtime marker on attr_from_class (bound method) and __func__
+    if _has_skip_marker_on_callable(attr_from_class):
+        return None, f"Skipped: @skip_property_test on {owner_path}.{func_name} (instance method)"
+
+    return None, (
+        f"Skipped: instance method {owner_path}.{func_name} — "
+        f"deal.cases cannot construct the self argument"
+    )
+
+
 # @shell_complexity: Property test orchestration with module import
 def run_property_tests_on_file(
     file_path: Path,
@@ -211,14 +351,32 @@ def run_property_tests_on_file(
 
     for func_info in contracted:
         func_name = func_info["name"]
-        func = getattr(module, func_name, None)
+        owner_path = func_info.get("owner_path", "")
+        is_class_owned = func_info.get("is_class_owned", False)
+        has_skip_marker = func_info.get("has_skip_marker", False)
 
-        if func is None or not callable(func):
+        # Build a qualified display name for collision visibility
+        display_name = f"{owner_path}.{func_name}" if owner_path else func_name
+
+        # --- Owner-path resolution (not bare getattr) ---
+        func, skip_reason = _resolve_target(
+            module, func_name, owner_path, is_class_owned, has_skip_marker
+        )
+
+        if skip_reason is not None:
             report.functions_skipped += 1
+            report.results.append(
+                PropertyTestResult(
+                    function_name=display_name,
+                    passed=True,
+                    examples_run=0,
+                    file_path=file_path_str,
+                    hint=skip_reason,
+                )
+            )
             continue
 
-        # Skip functions marked with @skip_property_test
-        if hasattr(func, "__invar_skip_property_test__"):
+        if func is None or not callable(func):
             report.functions_skipped += 1
             continue
 
@@ -230,7 +388,7 @@ def run_property_tests_on_file(
             report.functions_skipped += 1
             report.results.append(
                 PropertyTestResult(
-                    function_name=func_name,
+                    function_name=display_name,
                     passed=True,
                     examples_run=0,
                     file_path=file_path_str,
@@ -252,7 +410,7 @@ def run_property_tests_on_file(
             report.functions_skipped += 1
             report.results.append(
                 PropertyTestResult(
-                    function_name=func_name,
+                    function_name=display_name,
                     passed=True,
                     examples_run=0,
                     file_path=file_path_str,
@@ -262,6 +420,7 @@ def run_property_tests_on_file(
             continue
 
         # DX-26: Set file_path for actionable failure output
+        result.function_name = display_name
         result.file_path = file_path_str
         report.results.append(result)
         report.functions_tested += 1
