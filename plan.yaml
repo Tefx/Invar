@@ -34412,7 +34412,7 @@ phases:
       - active docs do not preserve workaround-only guidance: ✅'
   - id: property-target-skip-doc-sync.gate
     name: Gate documentation sync for property target skip fix
-    status: pending
+    status: claimed
     description: 'Gate review: verify active documentation now matches the repaired
       property-target resolution behavior, or that explicit no-doc-drift evidence
       is sufficient.'
@@ -34446,6 +34446,8 @@ phases:
     depends_on:
     - property-target-skip-doc-sync.update-docs
     agent: gate-reviewer-tacit
+    claimed_by: gate-reviewer-tacit
+    claimed_at: '2026-04-12T08:37:55.124116+00:00'
 - id: property-target-skip-review
   name: Property Target Skip Final Review
   status: locked
