@@ -33539,3 +33539,9 @@ phases:
   gate: property-target-skip-fix.gate
   depends_on:
   - dx97-finalization
+- id: property-target-skip-doc-sync
+  name: Property Target Skip Documentation Sync
+  status: locked
+  gate: property-target-skip-doc-sync.gate
+  depends_on:
+  - property-target-skip-fix
