@@ -33993,7 +33993,7 @@ phases:
       - (carry-forward from prior step) src/invar/core/property_gen.py'
   - id: property-target-skip-fix.verify-green
     name: Independently retest class-owned property target handling
-    status: claimed
+    status: done
     description: "step_type: test\nstep_intent: retest_green\nexpected_result: green\n\
       verification_scope: local-check\nspec_refs:\n  - property-target-skip-fix.red-regression\
       \ expected-red harness\n  - property-target-skip-fix.fix-core-discovery discovery\
@@ -34089,6 +34089,77 @@ phases:
     agent: integration-verifier-tacit
     claimed_by: integration-verifier-tacit
     claimed_at: '2026-04-12T08:29:51.126594+00:00'
+    done_at: '2026-04-12T08:31:39.582364+00:00'
+    evidence: '## Verification Report
+
+      **Tester**: integration-verifier-tacit (independent)
+
+
+      ### refs Read Confirmation
+
+      - `src/invar/core/property_gen.py` — discovery includes `owner_path`, `is_class_owned`,
+      `has_skip_marker` from class-aware extraction.
+
+      - `src/invar/shell/property_tests.py` — `_resolve_target()` now resolves class-owned
+      targets through owner path and descriptor-aware branches; skip checks inspect
+      wrapped/bound/raw callable forms.
+
+      - `runtime/src/invar_runtime/decorators.py` — skip marker contract remains `__invar_skip_property_test__`
+      on decorated callable.
+
+      - `tests/test_subprocess_env.py` — baseline property import fixture context.
+
+      - `tests/test_property_target_resolution.py` — focused regression suite covering
+      dunder/class/module collision/descriptor-order/instance-method policy.
+
+
+      ### Test Execution
+
+      Commands:
+
+      ```
+
+      uv run pytest -v tests/test_property_target_resolution.py
+
+      uv run invar guard --changed
+
+      ```
+
+      Output summary:
+
+      - `tests/test_property_target_resolution.py`: 8 passed
+
+      - `invar guard --changed`: passed, 0 errors (warnings only)
+
+
+      ### Issues Found
+
+      | Severity | Description | Location | Reproduction |
+
+      | --- | --- | --- | --- |
+
+      | blocker | none | — | — |
+
+      | should_fix | pre-existing dead_param/dead_export warnings unrelated to this
+      bug closure | core/shell files | `invar guard --changed` |
+
+
+      ### Coverage Assessment
+
+      - class dunder skip verified: ✅
+
+      - non-dunder class target verified: ✅
+
+      - module collision verified: ✅
+
+      - descriptor-order variants verified: ✅
+
+      - instance-method explicit-skip policy verified: ✅
+
+
+      ### Headline
+
+      PASS'
   - id: property-target-skip-fix.gate
     name: Gate property target owner-resolution fix
     status: pending
