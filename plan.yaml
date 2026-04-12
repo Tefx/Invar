@@ -34531,7 +34531,7 @@ phases:
       is explicit and justified.'
 - id: property-target-skip-review
   name: Property Target Skip Final Review
-  status: in_progress
+  status: done
   gate: property-target-skip-review.gate
   depends_on:
   - property-target-skip-doc-sync
@@ -34746,7 +34746,7 @@ phases:
       PASS_WITH_DEBT'
   - id: property-target-skip-review.gate
     name: Final gate for property-target owner-resolution repair
-    status: claimed
+    status: done
     description: 'Gate review: determine whether the bug is actually closed, documentation
       is coherent, and the repaired design removes the need for module-level dunder
       workaround glue.'
@@ -34784,3 +34784,43 @@ phases:
     agent: gate-reviewer-tacit
     claimed_by: gate-reviewer-tacit
     claimed_at: '2026-04-12T08:44:14.367979+00:00'
+    done_at: '2026-04-12T08:46:11.241334+00:00'
+    evidence: '## Gate Review Report
+
+      **Reviewer**: gate-reviewer-tacit
+
+      **Phase**: property-target-skip-review
+
+
+      ### refs Read Confirmation
+
+      - `src/invar/core/property_gen.py` — core discovery emits owner/skip metadata.
+
+      - `src/invar/shell/property_tests.py` — owner-path/descriptor-aware runtime
+      resolution and skip-marker checks.
+
+      - `runtime/src/invar_runtime/decorators.py` — skip marker contract unchanged
+      and honored.
+
+      - `runtime/README.md` — user-facing docs remain coherent.
+
+      - `tests/test_property_target_resolution.py` — focused end-to-end regression
+      coverage.
+
+
+      ### Gate Decision
+
+      OPEN
+
+
+      ### Rationale
+
+      - Black-box regression proof is convincing (focused suite fully green, covers
+      dunder/collision/descriptor-order/instance-method policy).
+
+      - Boundary review reports PASS_WITH_DEBT but no blocker-level architecture distortion.
+
+      - Doc-sync gate confirms no-doc-drift is justified and no workaround-only guidance
+      remains.
+
+      - No unresolved blocker remains for closure.'
