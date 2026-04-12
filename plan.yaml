@@ -33545,3 +33545,9 @@ phases:
   gate: property-target-skip-doc-sync.gate
   depends_on:
   - property-target-skip-fix
+- id: property-target-skip-review
+  name: Property Target Skip Final Review
+  status: locked
+  gate: property-target-skip-review.gate
+  depends_on:
+  - property-target-skip-doc-sync
