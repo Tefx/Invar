@@ -33482,7 +33482,7 @@ phases:
       - Worktree status: clean"
   - id: dx97-finalization.gate
     name: DX-97 final gate
-    status: pending
+    status: claimed
     description: 'Final independent gate review for DX-97.
 
 
@@ -33525,3 +33525,5 @@ phases:
     - dx97-finalization.runtime-proof
     - dx97-finalization.doc-sync
     agent: gate-reviewer-tacit
+    claimed_by: gate-reviewer-tacit
+    claimed_at: '2026-04-12T00:08:59.039393+00:00'
