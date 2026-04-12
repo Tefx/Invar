@@ -34153,3 +34153,55 @@ phases:
 
       - [ ] FAIL'
     agent: blind-tester-tacit
+  - id: property-target-skip-review.boundary-review
+    name: Review Core/Shell boundary preservation for property-target repair
+    status: pending
+    description: "step_type: review\nverification_scope: phase-check\nphase_entry_contract:\n\
+      \  - This phase is phase-gated by property-target-skip-doc-sync.gate via phase\
+      \ dependency\nspec_refs:\n  - Core/Shell rules from CLAUDE.md and .invar/context.md\n\
+      \  - property-target-skip-fix.fix-core-discovery\n  - property-target-skip-fix.fix-shell-resolution\n\
+      \nauthoritative_interface: NONE PINNED\nharness_refs:\n  - src/invar/core/property_gen.py\n\
+      \  - src/invar/shell/property_tests.py\n\ntouch_paths:\n  - none expected; review-only\
+      \ step\n\nReview that the repair preserved the intended module split:\n- Core\
+      \ owns source discovery and target identity metadata\n- Shell owns runtime import/descriptor\
+      \ resolution and skip lookup on the actual callable\n- no new abstraction layer\
+      \ or dunder-specific special case reintroduces architecture distortion"
+    verification: '- Review explicitly states whether Core/Shell responsibilities
+      stayed clean
+
+      - Any drift toward workaround-oriented architecture is surfaced as a blocker'
+    evidence_template: '## Review Report
+
+
+      **Reviewer**: minimalist-architect-tacit
+
+      **Scope**: Core/Shell boundary preservation
+
+
+      ### refs Read Confirmation (MANDATORY)
+
+      For each ref in this step:
+
+      - <filename> — key passage or "NOT READ: <reason>"
+
+
+      If no refs were provided, state: "No refs for this step."
+
+
+      ### Findings
+
+      - Core discovery boundary:
+
+      - Shell runtime boundary:
+
+      - Any workaround-oriented distortion:
+
+
+      ### Headline
+
+      - [ ] PASS
+
+      - [ ] PASS_WITH_DEBT
+
+      - [ ] FAIL'
+    agent: minimalist-architect-tacit
