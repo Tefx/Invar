@@ -33993,7 +33993,7 @@ phases:
       - (carry-forward from prior step) src/invar/core/property_gen.py'
   - id: property-target-skip-fix.verify-green
     name: Independently retest class-owned property target handling
-    status: pending
+    status: claimed
     description: "step_type: test\nstep_intent: retest_green\nexpected_result: green\n\
       verification_scope: local-check\nspec_refs:\n  - property-target-skip-fix.red-regression\
       \ expected-red harness\n  - property-target-skip-fix.fix-core-discovery discovery\
@@ -34087,6 +34087,8 @@ phases:
     depends_on:
     - property-target-skip-fix.fix-shell-resolution
     agent: integration-verifier-tacit
+    claimed_by: integration-verifier-tacit
+    claimed_at: '2026-04-12T08:29:51.126594+00:00'
   - id: property-target-skip-fix.gate
     name: Gate property target owner-resolution fix
     status: pending
