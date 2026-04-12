@@ -34531,14 +34531,14 @@ phases:
       is explicit and justified.'
 - id: property-target-skip-review
   name: Property Target Skip Final Review
-  status: pending
+  status: in_progress
   gate: property-target-skip-review.gate
   depends_on:
   - property-target-skip-doc-sync
   steps:
   - id: property-target-skip-review.black-box-regression
     name: Black-box re-run of the class-owned property-target bug from public surfaces
-    status: pending
+    status: claimed
     description: "step_type: verification\nverification_scope: phase-check\nphase_entry_contract:\n\
       \  - This phase is phase-gated by property-target-skip-doc-sync.gate via phase\
       \ dependency\nspec_refs:\n  - property-target-skip-fix.red-regression\n  - property-target-skip-fix.verify-green\n\
@@ -34600,6 +34600,8 @@ phases:
 
       - [ ] FAIL'
     agent: blind-tester-tacit
+    claimed_by: blind-tester-tacit
+    claimed_at: '2026-04-12T08:41:00.823828+00:00'
   - id: property-target-skip-review.boundary-review
     name: Review Core/Shell boundary preservation for property-target repair
     status: pending
