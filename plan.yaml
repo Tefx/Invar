@@ -33689,7 +33689,7 @@ phases:
       - Closure step: property-target-skip-fix.fix-shell-resolution'
   - id: property-target-skip-fix.fix-core-discovery
     name: Preserve qualified target ownership in property discovery
-    status: claimed
+    status: done
     description: "step_type: implementation\nwork_type: defect_repair\nscope_kind:\
       \ reduction_step\nspec_refs:\n  - SPEC MISSING — root cause derived from bug\
       \ report and confirmed reproduction\n  - src/invar/core/property_gen.py discovery\
@@ -33775,6 +33775,31 @@ phases:
     agent: python-executor
     claimed_by: python-executor
     claimed_at: '2026-04-12T07:56:29.289255+00:00'
+    done_at: '2026-04-12T08:12:38.775936+00:00'
+    evidence: "## refs Read Confirmation\n- src/invar/core/property_gen.py — discovery\
+      \ previously returned bare-name entries only; now includes ownership metadata\
+      \ fields used to distinguish class-owned targets.\n- src/invar/shell/property_tests.py\
+      \ — current runtime still resolves via `getattr(module, func_name)` which is\
+      \ known to be shell-side limitation.\n- runtime/src/invar_runtime/decorators.py\
+      \ — `skip_property_test` stores `__invar_skip_property_test__` on decorated\
+      \ callable; this motivates preserving discovery metadata for later shell resolution.\n\
+      - tests/test_subprocess_env.py — baseline property runner integration pattern\
+      \ and fixture style.\n\n## Upstream Expected-Red Confirmation\n- command: `uv\
+      \ run pytest -v tests/test_property_target_resolution.py`\n- failure excerpt\
+      \ included class dunder `expected 1 argument, got 0` and descriptor-order skip\
+      \ failures.\n\n## Core Repair Evidence\nImplemented in `src/invar/core/property_gen.py`:\n\
+      - replaced flat `ast.walk` extraction with class-aware visitor tracking class\
+      \ stack\n- added discovery metadata per target:\n  - `owner_path`\n  - `is_class_owned`\n\
+      \  - `has_skip_marker`\n- preserved existing contract-detection fields\n\nDiff\
+      \ summary:\n- `src/invar/core/property_gen.py`: +80 / -14\n\nDiscovery now distinguishes:\n\
+      - module function: `owner_path=\"\"`, `is_class_owned=False`\n- class-owned\
+      \ method: `owner_path=\"<Class or nested path>\"`, `is_class_owned=True`\n-\
+      \ nested class target: owner path preserves nesting via dotted class stack\n\
+      \n## Residual Blocker Handoff\nResidual expected-red remains shell-side by design\
+      \ for this step:\n- `src/invar/shell/property_tests.py` still resolves callable\
+      \ via module-level `getattr(module, name)` and does not yet consume owner-path\
+      \ metadata for class-owned targets.\n- This residual is owned by `property-target-skip-fix.fix-shell-resolution`.\n\
+      \n## Scope Control\nModified files for this step:\n- src/invar/core/property_gen.py"
   - id: property-target-skip-fix.fix-shell-resolution
     name: Resolve class-owned property targets in shell and honor skip metadata on
       the real callable
