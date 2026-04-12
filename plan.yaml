@@ -33535,7 +33535,7 @@ phases:
       \ remains for MCP invar_guard mutation parameter parity; does not block gate"
 - id: property-target-skip-fix
   name: Property Target Owner Resolution Bug Fix
-  status: in_progress
+  status: done
   gate: property-target-skip-fix.gate
   depends_on:
   - dx97-finalization
@@ -34162,7 +34162,7 @@ phases:
       PASS'
   - id: property-target-skip-fix.gate
     name: Gate property target owner-resolution fix
-    status: claimed
+    status: done
     description: 'Gate review: determine whether the property-target owner-resolution
       repair is complete, evidence-backed, and safe to release into the normal property
       phase.
@@ -34247,9 +34247,72 @@ phases:
     agent: gate-reviewer-tacit
     claimed_by: gate-reviewer-tacit
     claimed_at: '2026-04-12T08:31:44.826996+00:00'
+    done_at: '2026-04-12T08:36:52.561225+00:00'
+    evidence: '## Gate Review Report
+
+      **Reviewer**: gate-reviewer-tacit
+
+      **Phase**: property-target-skip-fix
+
+
+      ### refs Read Confirmation
+
+      - `src/invar/core/property_gen.py` — discovery now emits `owner_path`, `is_class_owned`,
+      `has_skip_marker` via class-aware extractor.
+
+      - `src/invar/shell/property_tests.py` — `_resolve_target()` consumes owner metadata
+      and performs descriptor-aware resolution; `_has_skip_marker_on_callable()` checks
+      wrapped/descriptor variants.
+
+      - `runtime/src/invar_runtime/decorators.py` — canonical skip-marker contract
+      remains on decorated callable.
+
+      - `tests/test_subprocess_env.py` — baseline runner integration still green.
+
+      - `tests/test_property_target_resolution.py` — focused bug-closure suite.
+
+
+      ### Step-by-Step Review
+
+      | Step ID | Status | Evidence Quality | Concerns |
+
+      | --- | --- | --- | --- |
+
+      | property-target-skip-fix.red-regression | ✅ | high | none |
+
+      | property-target-skip-fix.fix-core-discovery | ✅ | high | none |
+
+      | property-target-skip-fix.fix-shell-resolution | ✅ | high | none |
+
+      | property-target-skip-fix.verify-green | ✅ | high | pre-existing unrelated
+      warnings only |
+
+
+      ### Gate Decision
+
+      OPEN
+
+
+      ### Rationale
+
+      All gate checks pass:
+
+      1) owner-path preserved discovery→runtime,
+
+      2) no module-level dunder-wrapper dependency,
+
+      3) skip checked on actual callable/descriptor variants,
+
+      4) explicit unsupported instance-method behavior,
+
+      5) independent verification convincing (focused regression suite green, changed
+      guard green).
+
+
+      No blocker remains for downstream doc-sync/final-review phases.'
 - id: property-target-skip-doc-sync
   name: Property Target Skip Documentation Sync
-  status: locked
+  status: pending
   gate: property-target-skip-doc-sync.gate
   depends_on:
   - property-target-skip-fix
