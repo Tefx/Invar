@@ -34319,7 +34319,7 @@ phases:
   steps:
   - id: property-target-skip-doc-sync.update-docs
     name: Sync active property-test docs with the repaired target-resolution behavior
-    status: claimed
+    status: done
     description: "step_type: implementation\nwork_type: defect_repair\nverification_scope:\
       \ phase-check\nphase_entry_contract:\n  - This phase is phase-gated by property-target-skip-fix.gate\
       \ via phase dependency\nspec_refs:\n  - property-target-skip-fix.gate accepted\
@@ -34368,6 +34368,48 @@ phases:
     agent: doc-reviewer-tacit
     claimed_by: doc-reviewer-tacit
     claimed_at: '2026-04-12T08:36:58.025691+00:00'
+    done_at: '2026-04-12T08:37:48.282878+00:00'
+    evidence: '## refs Read Confirmation
+
+      - runtime/README.md — user-facing `@skip_property_test` usage and reason guidance.
+
+      - docs/reference/verification/index.md — high-level guard phases including property
+      testing.
+
+      - docs/design.md — property testing design overview.
+
+      - src/invar/core/property_gen.py — discovery metadata now includes owner-path/class-owned/skip-marker
+      fields.
+
+      - src/invar/shell/property_tests.py — runtime now resolves via owner-path `_resolve_target()`.
+
+      - tests/test_property_target_resolution.py — regression expectations for repaired
+      behavior.
+
+
+      ## Doc Sync Evidence
+
+      Edited files:
+
+      - none
+
+
+      Why no-doc-drift:
+
+      - The fix changed internal target-resolution mechanics, not user-facing CLI/API
+      contract.
+
+      - Active docs are high-level and remain accurate.
+
+      - No active docs mention or depend on the rejected module-level dunder wrapper
+      workaround.
+
+
+      ## Consistency Check
+
+      - active docs mention repaired behavior correctly: ✅
+
+      - active docs do not preserve workaround-only guidance: ✅'
   - id: property-target-skip-doc-sync.gate
     name: Gate documentation sync for property target skip fix
     status: pending
