@@ -33996,6 +33996,56 @@ phases:
   gate: property-target-skip-doc-sync.gate
   depends_on:
   - property-target-skip-fix
+  steps:
+  - id: property-target-skip-doc-sync.update-docs
+    name: Sync active property-test docs with the repaired target-resolution behavior
+    status: pending
+    description: "step_type: implementation\nwork_type: defect_repair\nverification_scope:\
+      \ phase-check\nphase_entry_contract:\n  - This phase is phase-gated by property-target-skip-fix.gate\
+      \ via phase dependency\nspec_refs:\n  - property-target-skip-fix.gate accepted\
+      \ behavior and residual policy\n  - runtime/README.md documents @skip_property_test\
+      \ usage\n  - docs/design.md / docs/reference/verification/index.md may need\
+      \ wording updates if supported target semantics changed\n\nauthoritative_interface:\
+      \ NONE PINNED\nharness_refs:\n  - property-target-skip-fix.verify-green evidence\n\
+      \ntouch_paths:\n  - runtime/README.md\n  - docs/reference/verification/index.md\n\
+      \  - docs/design.md\n\nUpdate active docs only if the fix changes documented\
+      \ expectations for property-phase target handling (for example: class-owned\
+      \ targets are supported by owner-path resolution; unsupported plain instance\
+      \ methods are explicitly skipped, not silently lost).\n\nIf the implementation\
+      \ closes the bug without changing any active user-facing semantics, record explicit\
+      \ no-doc-drift evidence instead of editing prose for churn's sake."
+    verification: '- Any edited active docs accurately reflect the repaired behavior
+      and do not mention module-level dunder glue as a workaround
+
+      - If no docs change, evidence explains why no active doc surface drifted'
+    evidence_template: '## refs Read Confirmation (MANDATORY)
+
+      For each ref in this step:
+
+      - <filename> — key passage or "NOT READ: <reason>"
+
+
+      If no refs were provided, state: "No refs for this step."
+
+
+      ## Doc Sync Evidence
+
+      Edited files:
+
+      - <list or ''none''>
+
+
+      Why each edit was required (or why no-doc-drift was concluded):
+
+      - <reason>
+
+
+      ## Consistency Check
+
+      - active docs mention repaired behavior correctly: ✅/❌
+
+      - active docs do not preserve workaround-only guidance: ✅/❌'
+    agent: doc-reviewer-tacit
 - id: property-target-skip-review
   name: Property Target Skip Final Review
   status: locked
