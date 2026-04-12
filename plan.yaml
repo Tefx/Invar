@@ -33535,14 +33535,14 @@ phases:
       \ remains for MCP invar_guard mutation parameter parity; does not block gate"
 - id: property-target-skip-fix
   name: Property Target Owner Resolution Bug Fix
-  status: pending
+  status: in_progress
   gate: property-target-skip-fix.gate
   depends_on:
   - dx97-finalization
   steps:
   - id: property-target-skip-fix.red-regression
     name: Add expected-red regressions for class-owned property targets
-    status: pending
+    status: claimed
     description: "step_type: test\nstep_intent: test_define_red\nexpected_result:\
       \ red\nverification_scope: local-check\nwork_type: defect_repair\nspec_refs:\n\
       \  - SPEC MISSING — user bug report plus confirmed local reproduction of class-owned\
@@ -33622,6 +33622,8 @@ phases:
 
       - Closure step: property-target-skip-fix.fix-shell-resolution'
     agent: python-executor
+    claimed_by: python-executor
+    claimed_at: '2026-04-12T07:49:48.661851+00:00'
   - id: property-target-skip-fix.fix-core-discovery
     name: Preserve qualified target ownership in property discovery
     status: pending
