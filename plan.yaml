@@ -34046,6 +34046,42 @@ phases:
 
       - active docs do not preserve workaround-only guidance: ✅/❌'
     agent: doc-reviewer-tacit
+  - id: property-target-skip-doc-sync.gate
+    name: Gate documentation sync for property target skip fix
+    status: pending
+    description: 'Gate review: verify active documentation now matches the repaired
+      property-target resolution behavior, or that explicit no-doc-drift evidence
+      is sufficient.'
+    verification: '- Documentation sync step completed with specific evidence
+
+      - No active doc surface preserves the rejected module-level dunder workaround
+      as required behavior'
+    evidence_template: '## Gate Review Report
+
+
+      **Reviewer**: gate-reviewer-tacit
+
+      **Phase**: property-target-skip-doc-sync
+
+
+      ### refs Read Confirmation (MANDATORY)
+
+      For each ref in this step:
+
+      - <filename> — key passage or "NOT READ: <reason>"
+
+
+      If no refs were provided, state: "No refs for this step."
+
+
+      ### Gate Decision
+
+      - [ ] OPEN
+
+      - [ ] BLOCKED'
+    depends_on:
+    - property-target-skip-doc-sync.update-docs
+    agent: gate-reviewer-tacit
 - id: property-target-skip-review
   name: Property Target Skip Final Review
   status: locked
