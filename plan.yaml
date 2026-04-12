@@ -33689,7 +33689,7 @@ phases:
       - Closure step: property-target-skip-fix.fix-shell-resolution'
   - id: property-target-skip-fix.fix-core-discovery
     name: Preserve qualified target ownership in property discovery
-    status: pending
+    status: claimed
     description: "step_type: implementation\nwork_type: defect_repair\nscope_kind:\
       \ reduction_step\nspec_refs:\n  - SPEC MISSING — root cause derived from bug\
       \ report and confirmed reproduction\n  - src/invar/core/property_gen.py discovery\
@@ -33773,6 +33773,8 @@ phases:
     depends_on:
     - property-target-skip-fix.red-regression
     agent: python-executor
+    claimed_by: python-executor
+    claimed_at: '2026-04-12T07:56:29.289255+00:00'
   - id: property-target-skip-fix.fix-shell-resolution
     name: Resolve class-owned property targets in shell and honor skip metadata on
       the real callable
