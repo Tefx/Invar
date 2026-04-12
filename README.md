@@ -477,6 +477,10 @@ timeout_crosshair = 300        # CrossHair total timeout
 timeout_crosshair_per_condition = 30  # Per-function timeout
 timeout_hypothesis = 300       # Hypothesis total timeout
 
+# DX-97: Mutation testing (disabled by default, use --mutation to enable)
+mutation_enabled = false       # Enable mutation testing in guard
+mutation_timeout = 60          # Per-mutant timeout (1-600 seconds)
+
 # Excluded paths (not checked by guard)
 exclude_paths = ["tests", "scripts", ".venv", "node_modules", "dist", "build"]
 ```
@@ -524,9 +528,11 @@ rules = ["missing_contract", "shell_result"]
 | Command | Purpose |
 |---------|---------|
 | `invar guard` | Full verification (static + doctest + property + symbolic) |
-| `invar guard --changed` | Only git-modified files |
+| `invar guard --changed` | Only git-modified files (default: true) |
+| `invar guard --all` | Full project scan (uses deferred mode for large repos) |
 | `invar guard --static` | Static analysis only (~0.5s) |
 | `invar guard --coverage` | Collect branch coverage from tests |
+| `invar guard --mutation` | Enable mutation testing (DX-97) |
 | `invar init` | Initialize or migrate managed files |
 | `invar init <path>` | Initialize or migrate managed files |
 | `invar init --file AGENTS.md` | Write managed block to a non-default target file |
@@ -549,7 +555,9 @@ rules = ["missing_contract", "shell_result"]
 
 | Tool | Purpose |
 |------|---------|
-| `invar_guard` | Smart multi-layer verification |
+| `invar_guard` | Smart multi-layer verification (changed=true default, use --all for full scan) |
+| `invar_guard_status` | Check deferred run status (DX-94) |
+| `invar_guard_wait` | Long-poll for deferred run completion (DX-94) |
 | `invar_sig` | Extract signatures and contracts |
 | `invar_map` | Symbol map with reference counts |
 | `invar_doc_toc` | Extract document structure (TOC) |
@@ -559,6 +567,11 @@ rules = ["missing_contract", "shell_result"]
 | `invar_doc_replace` | Replace section content |
 | `invar_doc_insert` | Insert content relative to section |
 | `invar_doc_delete` | Delete section |
+
+**Deferred Full-Scan Mode (DX-94):** Large repositories may return `status: deferred` 
+with a `run_id`. Use `invar_guard_status` to check progress and `invar_guard_wait` 
+for long-poll completion. Mutation testing output includes `eligible_files`, 
+`ineligible_files`, `files_with_zero_sites`, and bounded `survivor_evidence`.
 
 ---
 

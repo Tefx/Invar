@@ -30,13 +30,14 @@ This decouples request lifetime from scan lifetime and avoids transport-level ti
 
 ## Existing Tool (Extended)
 
-### `invar_guard(path=".", changed=true, strict=false, coverage=false, contracts_only=false)`
+### `invar_guard(path=".", changed=true, strict=false, coverage=false, contracts_only=false, mutation=false)`
 Behavior:
 
 - `changed=true` (default): unchanged synchronous response contract.
 - `changed=false`:
   - If planner estimates run <= `sync_budget_ms`, run synchronously and return final report.
   - If planner estimates run > `sync_budget_ms`, return deferred envelope:
+- `mutation=true`: Enables mutation testing phase (DX-97). Runs after all standard phases pass. Output includes `score`, `passed`, `eligible_files`, `ineligible_files`, `files_with_zero_sites`, and bounded `survivor_evidence`. Fail-closed: `timeout>0` or `error>0` causes failure regardless of score.
 
 ```json
 {
@@ -104,10 +105,32 @@ Terminal completion envelope:
     "ok": true,
     "errors": 0,
     "warnings": 2,
-    "review_suggested": false
+    "review_suggested": false,
+    "mutation": {
+      "total": 10,
+      "killed": 8,
+      "survived": 1,
+      "timeout": 0,
+      "error": 0,
+      "score": 80.0,
+      "passed": true,
+      "eligible_files": 3,
+      "ineligible_files": 1,
+      "files_with_zero_sites": 1,
+      "survivor_evidence": ["src/core/calc.py:42:Add"]
+    }
   }
 }
 ```
+
+**DX-97: Mutation output** (when `mutation=true`):
+- `total/killed/survived/timeout/error`: Mutant counts by outcome
+- `score`: Mutation score percentage (killed/total)
+- `passed`: Whether score >= 80% AND timeout==0 AND error==0
+- `eligible_files`: Files with mutation sites that were tested
+- `ineligible_files`: Files skipped due to parse/import errors
+- `files_with_zero_sites`: Files that parsed OK but had no mutation candidates
+- `survivor_evidence`: Bounded list (max 5) of surviving mutant locations
 
 Terminal failure envelope:
 

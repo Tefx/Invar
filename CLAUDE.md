@@ -20,10 +20,24 @@ Run `invar guard` after changes. Fix errors before committing.
 
 | Tool | Use |
 |------|-----|
-| `invar guard` | verify architecture and contracts |
+| `invar guard` | verify architecture and contracts (changed=true default) |
+| `invar guard --all` | full project verification (may defer for large repos) |
 | `invar sig <file>` | inspect signatures and contracts |
 | `invar map [path]` | inspect entry points |
 | `invar refs <file>::<symbol>` | inspect references |
+| `invar_guard_status(run_id)` | check deferred run status (DX-94) |
+| `invar_guard_wait(run_id)` | long-poll deferred run (DX-94) |
+
+**Changed Default:** Both CLI and MCP default to `changed=true` (only modified files)
+for fast feedback. Use `--all` or `changed=false` for full scans.
+
+**Deferred Full-Scan (DX-94):** Large repositories may return `status: deferred`.
+Poll with `invar_guard_status` or long-poll with `invar_guard_wait`.
+
+**Mutation Testing (DX-97):** Enable with `--mutation` flag or `mutation_enabled=true`
+in config. Output includes `score`, `passed`, `survivor_evidence`, and file classification
+(`eligible_files`, `ineligible_files`, `files_with_zero_sites`). Fail-closed: `timeout>0`
+or `error>0` causes failure regardless of score.
 
 ### Contract Traps
 
