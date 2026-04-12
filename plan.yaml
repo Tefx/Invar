@@ -33539,6 +33539,89 @@ phases:
   gate: property-target-skip-fix.gate
   depends_on:
   - dx97-finalization
+  steps:
+  - id: property-target-skip-fix.red-regression
+    name: Add expected-red regressions for class-owned property targets
+    status: pending
+    description: "step_type: test\nstep_intent: test_define_red\nexpected_result:\
+      \ red\nverification_scope: local-check\nwork_type: defect_repair\nspec_refs:\n\
+      \  - SPEC MISSING — user bug report plus confirmed local reproduction of class-owned\
+      \ dunder skip failure\n  - src/invar/core/property_gen.py bare-name discovery\n\
+      \  - src/invar/shell/property_tests.py module-level getattr resolution\n\nauthoritative_interface:\
+      \ NONE PINNED\nharness_refs:\n  - src/invar/shell/property_tests.py::run_property_tests_on_file\n\
+      \  - src/invar/core/property_gen.py::find_contracted_functions\n  - runtime/src/invar_runtime/decorators.py::skip_property_test\n\
+      \ntouch_paths:\n  - tests/test_property_target_resolution.py\n  - tests/test_subprocess_env.py\
+      \ (only if extending an existing fixture helper is materially smaller)\n\nAdd\
+      \ focused regression tests that prove the current bug before product code changes:\n\
+      - class dunder method decorated with @skip_property_test still fails today\n\
+      - non-dunder class method ownership is currently lost\n- module-level __eq__\
+      \ collision does not mask class-owned target identity\n- staticmethod/classmethod\
+      \ decorator-order variants have explicit expectations\n- plain instance methods\
+      \ are not silently mis-resolved\n\nFor this step edit tests/fixtures only. Do\
+      \ NOT patch src/ code here. Success means the gap is exposed with expected-red\
+      \ output, not fixed."
+    verification: '- Run a focused pytest command for the new regression file and
+      capture expected-red failures
+
+      - Expected-red must expose owner-loss / wrong-target-resolution behavior before
+      any src/ change
+
+      - Modified files remain limited to tests/ plus minimal fixture helpers
+
+      - This protects property-target-skip-fix.fix-core-discovery and property-target-skip-fix.fix-shell-resolution'
+    evidence_template: '## refs Read Confirmation (MANDATORY)
+
+      For each ref in this step:
+
+      - <filename> — key passage or "NOT READ: <reason>"
+
+
+      If no refs were provided, state: "No refs for this step."
+
+
+      ## Expected-Red Proof (MANDATORY)
+
+      Command executed:
+
+      ```
+
+      <exact pytest command>
+
+      ```
+
+      Actual failing output:
+
+      ```
+
+      <paste failing output showing current owner-loss bug>
+
+      ```
+
+
+      ## Exposed Gaps
+
+      - class dunder failure:
+
+      - non-dunder class target behavior:
+
+      - collision/shadowing behavior:
+
+      - descriptor-order behavior:
+
+
+      ## Scope Control
+
+      Modified files:
+
+      - <tests only>
+
+
+      ## Downstream Ownership
+
+      - Next implementation step: property-target-skip-fix.fix-core-discovery
+
+      - Closure step: property-target-skip-fix.fix-shell-resolution'
+    agent: python-executor
 - id: property-target-skip-doc-sync
   name: Property Target Skip Documentation Sync
   status: locked
