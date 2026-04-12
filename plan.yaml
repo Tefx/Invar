@@ -33542,7 +33542,7 @@ phases:
   steps:
   - id: property-target-skip-fix.red-regression
     name: Add expected-red regressions for class-owned property targets
-    status: claimed
+    status: done
     description: "step_type: test\nstep_intent: test_define_red\nexpected_result:\
       \ red\nverification_scope: local-check\nwork_type: defect_repair\nspec_refs:\n\
       \  - SPEC MISSING — user bug report plus confirmed local reproduction of class-owned\
@@ -33624,6 +33624,69 @@ phases:
     agent: python-executor
     claimed_by: python-executor
     claimed_at: '2026-04-12T07:49:48.661851+00:00'
+    done_at: '2026-04-12T07:56:25.167616+00:00'
+    evidence: '## refs Read Confirmation
+
+      - src/invar/core/property_gen.py — `find_contracted_functions()` returns bare-name
+      records (`name`, `lineno`, `is_async`, etc.) without class ownership metadata.
+
+      - src/invar/shell/property_tests.py — `run_property_tests_on_file()` resolves
+      targets via `getattr(module, func_name, None)` and checks `__invar_skip_property_test__`
+      on that resolved object.
+
+      - runtime/src/invar_runtime/decorators.py — `skip_property_test` writes `__invar_skip_property_test__`
+      on the decorated callable object.
+
+      - tests/test_subprocess_env.py — existing property-test integration baseline
+      and fixture pattern.
+
+
+      ## Expected-Red Proof
+
+      Command executed:
+
+      ```
+
+      uv run pytest -v tests/test_property_target_resolution.py
+
+      ```
+
+      Observed expected-red failures include:
+
+      - class dunder skip case fails with `expected 1 argument, got 0`
+
+      - staticmethod/classmethod decorator-order skip variants fail
+
+      - plain instance-method behavior mismatch is exposed
+
+
+      Control coverage in same suite confirms non-bug paths and collision behavior
+      are exercised.
+
+
+      ## Exposed Gaps
+
+      - class dunder failure: reproduced (`__eq__` arity failure).
+
+      - non-dunder class target behavior: exercised in focused regression suite.
+
+      - collision/shadowing behavior: exercised in focused regression suite.
+
+      - descriptor-order behavior: staticmethod/classmethod variants fail as expected-red.
+
+
+      ## Scope Control
+
+      Modified files:
+
+      - tests/test_property_target_resolution.py (tests-only)
+
+
+      ## Downstream Ownership
+
+      - Next implementation step: property-target-skip-fix.fix-core-discovery
+
+      - Closure step: property-target-skip-fix.fix-shell-resolution'
   - id: property-target-skip-fix.fix-core-discovery
     name: Preserve qualified target ownership in property discovery
     status: pending
