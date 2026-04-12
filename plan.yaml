@@ -34655,7 +34655,7 @@ phases:
       PASS'
   - id: property-target-skip-review.boundary-review
     name: Review Core/Shell boundary preservation for property-target repair
-    status: claimed
+    status: done
     description: "step_type: review\nverification_scope: phase-check\nphase_entry_contract:\n\
       \  - This phase is phase-gated by property-target-skip-doc-sync.gate via phase\
       \ dependency\nspec_refs:\n  - Core/Shell rules from CLAUDE.md and .invar/context.md\n\
@@ -34707,6 +34707,43 @@ phases:
     agent: minimalist-architect-tacit
     claimed_by: minimalist-architect-tacit
     claimed_at: '2026-04-12T08:43:26.290656+00:00'
+    done_at: '2026-04-12T08:44:10.081604+00:00'
+    evidence: '## Review Report
+
+      **Reviewer**: minimalist-architect-tacit
+
+
+      ### refs Read Confirmation
+
+      - `CLAUDE.md` and `.invar/context.md` — Core/Shell split requirements.
+
+      - `src/invar/core/property_gen.py` — Core emits source-side identity metadata
+      (`owner_path`, `is_class_owned`, `has_skip_marker`).
+
+      - `src/invar/shell/property_tests.py` — Shell performs owner-path runtime resolution
+      and descriptor-aware skip lookup.
+
+      - `tests/test_property_target_resolution.py` — coverage across dunder/non-dunder/collision/descriptor-order/instance-method
+      scenarios.
+
+
+      ### Findings
+
+      - Core discovery boundary: preserved (AST/source metadata only, no runtime descriptor
+      resolution).
+
+      - Shell runtime boundary: preserved (import/runtime/descriptor logic resides
+      in shell).
+
+      - Workaround distortion: none; fix is generic owner-path resolution, not dunder-specific
+      hack.
+
+      - Minor debt noted: cleanup residue around helper usage, non-blocking.
+
+
+      ### Headline
+
+      PASS_WITH_DEBT'
   - id: property-target-skip-review.gate
     name: Final gate for property-target owner-resolution repair
     status: pending
