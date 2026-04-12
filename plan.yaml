@@ -33905,6 +33905,91 @@ phases:
     depends_on:
     - property-target-skip-fix.fix-shell-resolution
     agent: integration-verifier-tacit
+  - id: property-target-skip-fix.gate
+    name: Gate property target owner-resolution fix
+    status: pending
+    description: 'Gate review: determine whether the property-target owner-resolution
+      repair is complete, evidence-backed, and safe to release into the normal property
+      phase.
+
+
+      review_depth: STANDARD
+
+      review_depth_rationale:
+
+      - Fix crosses Core discovery and Shell runtime resolution
+
+      - Known risk is tool-driven architecture distortion via module-level dunder
+      glue
+
+      - Regression closure depends on collision and descriptor-order coverage, not
+      just one happy-path test
+
+
+      cross_cutting_focus:
+
+      - owner-path preservation from discovery through runtime
+
+      - no remaining dependency on module-level dunder redirect wrappers
+
+      - skip metadata checked on the actual callable under test
+
+      - explicit unsupported-instance-method behavior, not silent disappearance'
+    verification: '- All phase steps completed successfully
+
+      - Expected-red evidence exists and is tied to the implemented fix
+
+      - Independent green verification is convincing and collision coverage is present
+
+      - No unresolved blocker remains for downstream doc sync or final review'
+    evidence_template: '## Gate Review Report
+
+
+      **Reviewer**: gate-reviewer-tacit
+
+      **Phase**: property-target-skip-fix
+
+
+      ### refs Read Confirmation (MANDATORY)
+
+      For each ref in this step:
+
+      - <filename> — key passage or "NOT READ: <reason>"
+
+
+      If no refs were provided, state: "No refs for this step."
+
+
+      ### Step-by-Step Review
+
+      | Step ID | Status | Evidence Quality | Concerns |
+
+      | --- | --- | --- | --- |
+
+      | property-target-skip-fix.red-regression | ✅/⚠️/❌ | excellent/adequate/insufficient/missing
+      | <notes> |
+
+      | property-target-skip-fix.fix-core-discovery | ✅/⚠️/❌ | excellent/adequate/insufficient/missing
+      | <notes> |
+
+      | property-target-skip-fix.fix-shell-resolution | ✅/⚠️/❌ | excellent/adequate/insufficient/missing
+      | <notes> |
+
+      | property-target-skip-fix.verify-green | ✅/⚠️/❌ | excellent/adequate/insufficient/missing
+      | <notes> |
+
+
+      ### Gate Decision
+
+      - [ ] OPEN
+
+      - [ ] BLOCKED'
+    depends_on:
+    - property-target-skip-fix.red-regression
+    - property-target-skip-fix.fix-core-discovery
+    - property-target-skip-fix.fix-shell-resolution
+    - property-target-skip-fix.verify-green
+    agent: gate-reviewer-tacit
 - id: property-target-skip-doc-sync
   name: Property Target Skip Documentation Sync
   status: locked
