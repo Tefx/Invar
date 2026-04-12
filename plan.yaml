@@ -34088,3 +34088,68 @@ phases:
   gate: property-target-skip-review.gate
   depends_on:
   - property-target-skip-doc-sync
+  steps:
+  - id: property-target-skip-review.black-box-regression
+    name: Black-box re-run of the class-owned property-target bug from public surfaces
+    status: pending
+    description: "step_type: verification\nverification_scope: phase-check\nphase_entry_contract:\n\
+      \  - This phase is phase-gated by property-target-skip-doc-sync.gate via phase\
+      \ dependency\nspec_refs:\n  - property-target-skip-fix.red-regression\n  - property-target-skip-fix.verify-green\n\
+      \nauthoritative_interface: NONE PINNED\nharness_refs:\n  - tests/test_property_target_resolution.py\n\
+      \  - src/invar/shell/property_tests.py::run_property_tests_on_file\n\ntouch_paths:\n\
+      \  - none expected; review-only step\n\nAs a black-box tester, reproduce the\
+      \ original failure shape from public behavior only and confirm it no longer\
+      \ requires module-level dunder redirect wrappers to stay green.\n\nRequired\
+      \ proof:\n- class-owned dunder @skip_property_test closes without module-level\
+      \ alias glue\n- collision case stays green from the user-visible property-test\
+      \ entrypoint\n- if plain instance methods are intentionally unsupported, the\
+      \ behavior is explicit and stable, not silent disappearance"
+    verification: '- A public-surface reproduction passes without depending on source-level
+      workaround wrappers
+
+      - Any divergence is documented as blocker-class evidence'
+    evidence_template: '## Verification Report
+
+
+      **Tester**: blind-tester-tacit
+
+      **Scope**: black-box closure of property-target owner-resolution fix
+
+
+      ### refs Read Confirmation (MANDATORY)
+
+      For each ref in this step:
+
+      - <filename> — key passage or "NOT READ: <reason>"
+
+
+      If no refs were provided, state: "No refs for this step."
+
+
+      ### Test Execution
+
+      Commands executed:
+
+      ```
+
+      <exact reproduction command(s)>
+
+      ```
+
+      Actual output:
+
+      ```
+
+      <paste output>
+
+      ```
+
+
+      ### Headline
+
+      - [ ] PASS
+
+      - [ ] PASS_WITH_DEBT
+
+      - [ ] FAIL'
+    agent: blind-tester-tacit
