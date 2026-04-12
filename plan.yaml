@@ -34655,7 +34655,7 @@ phases:
       PASS'
   - id: property-target-skip-review.boundary-review
     name: Review Core/Shell boundary preservation for property-target repair
-    status: pending
+    status: claimed
     description: "step_type: review\nverification_scope: phase-check\nphase_entry_contract:\n\
       \  - This phase is phase-gated by property-target-skip-doc-sync.gate via phase\
       \ dependency\nspec_refs:\n  - Core/Shell rules from CLAUDE.md and .invar/context.md\n\
@@ -34705,6 +34705,8 @@ phases:
 
       - [ ] FAIL'
     agent: minimalist-architect-tacit
+    claimed_by: minimalist-architect-tacit
+    claimed_at: '2026-04-12T08:43:26.290656+00:00'
   - id: property-target-skip-review.gate
     name: Final gate for property-target owner-resolution repair
     status: pending
