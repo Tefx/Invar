@@ -34312,14 +34312,14 @@ phases:
       No blocker remains for downstream doc-sync/final-review phases.'
 - id: property-target-skip-doc-sync
   name: Property Target Skip Documentation Sync
-  status: pending
+  status: in_progress
   gate: property-target-skip-doc-sync.gate
   depends_on:
   - property-target-skip-fix
   steps:
   - id: property-target-skip-doc-sync.update-docs
     name: Sync active property-test docs with the repaired target-resolution behavior
-    status: pending
+    status: claimed
     description: "step_type: implementation\nwork_type: defect_repair\nverification_scope:\
       \ phase-check\nphase_entry_contract:\n  - This phase is phase-gated by property-target-skip-fix.gate\
       \ via phase dependency\nspec_refs:\n  - property-target-skip-fix.gate accepted\
@@ -34366,6 +34366,8 @@ phases:
 
       - active docs do not preserve workaround-only guidance: ✅/❌'
     agent: doc-reviewer-tacit
+    claimed_by: doc-reviewer-tacit
+    claimed_at: '2026-04-12T08:36:58.025691+00:00'
   - id: property-target-skip-doc-sync.gate
     name: Gate documentation sync for property target skip fix
     status: pending
