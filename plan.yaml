@@ -34538,7 +34538,7 @@ phases:
   steps:
   - id: property-target-skip-review.black-box-regression
     name: Black-box re-run of the class-owned property-target bug from public surfaces
-    status: claimed
+    status: done
     description: "step_type: verification\nverification_scope: phase-check\nphase_entry_contract:\n\
       \  - This phase is phase-gated by property-target-skip-doc-sync.gate via phase\
       \ dependency\nspec_refs:\n  - property-target-skip-fix.red-regression\n  - property-target-skip-fix.verify-green\n\
@@ -34602,6 +34602,57 @@ phases:
     agent: blind-tester-tacit
     claimed_by: blind-tester-tacit
     claimed_at: '2026-04-12T08:41:00.823828+00:00'
+    done_at: '2026-04-12T08:43:20.110338+00:00'
+    evidence: '## Verification Report
+
+      **Tester**: blind-tester-tacit
+
+
+      ### refs Read Confirmation
+
+      - `src/invar/shell/property_tests.py` — owner-path based `_resolve_target()`
+      and explicit instance-method skip behavior.
+
+      - `runtime/src/invar_runtime/decorators.py` — skip marker location on decorated
+      callable.
+
+      - `tests/test_subprocess_env.py` — import/runner baseline context.
+
+      - `tests/test_property_target_resolution.py` — black-box regression suite covering
+      dunder/collision/descriptor-order/instance-method behavior.
+
+
+      ### Test Execution
+
+      Commands:
+
+      ```
+
+      uv run pytest -v tests/test_property_target_resolution.py
+
+      uv run pytest -v tests/test_property_target_resolution.py::TestClassDunderOwnerLoss::test_class_dunder_skip_still_fails
+      tests/test_property_target_resolution.py::TestModuleLevelEqCollision::test_module_eq_not_masked_by_class_eq
+      tests/test_property_target_resolution.py::TestPlainInstanceMethodsNotMisResolved::test_plain_instance_method_explicitly_skipped
+
+      ```
+
+      Output summary:
+
+      - focused suite: 8 passed
+
+
+      Black-box conclusions:
+
+      - class-owned dunder skip works without module-level alias glue,
+
+      - collision case remains green,
+
+      - unsupported plain instance methods are explicit skips (not silent).
+
+
+      ### Headline
+
+      PASS'
   - id: property-target-skip-review.boundary-review
     name: Review Core/Shell boundary preservation for property-target repair
     status: pending
