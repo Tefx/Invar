@@ -34205,3 +34205,41 @@ phases:
 
       - [ ] FAIL'
     agent: minimalist-architect-tacit
+  - id: property-target-skip-review.gate
+    name: Final gate for property-target owner-resolution repair
+    status: pending
+    description: 'Gate review: determine whether the bug is actually closed, documentation
+      is coherent, and the repaired design removes the need for module-level dunder
+      workaround glue.'
+    verification: '- Black-box regression proof is convincing
+
+      - Boundary review found no blocker-class architecture distortion
+
+      - No downstream blocker remains for plan closure'
+    evidence_template: '## Gate Review Report
+
+
+      **Reviewer**: gate-reviewer-tacit
+
+      **Phase**: property-target-skip-review
+
+
+      ### refs Read Confirmation (MANDATORY)
+
+      For each ref in this step:
+
+      - <filename> — key passage or "NOT READ: <reason>"
+
+
+      If no refs were provided, state: "No refs for this step."
+
+
+      ### Gate Decision
+
+      - [ ] OPEN
+
+      - [ ] BLOCKED'
+    depends_on:
+    - property-target-skip-review.black-box-regression
+    - property-target-skip-review.boundary-review
+    agent: gate-reviewer-tacit
