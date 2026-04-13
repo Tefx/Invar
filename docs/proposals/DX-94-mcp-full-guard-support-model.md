@@ -43,7 +43,6 @@ Behavior:
 {
   "status": "deferred",
   "run_id": "grd_01J...",
-  "lifecycle": "accepted",
   "mode": "full_scan",
   "path": ".",
   "changed": false,
@@ -56,7 +55,7 @@ Behavior:
 Deferred acceptance contract:
 
 - `run_id` is the stable identifier for status/wait operations.
-- `lifecycle` starts at `accepted` and can transition only as documented in Acceptance Criteria.
+- Status progression follows the documented deferred lifecycle (`deferred` -> `running` -> terminal).
 - If acceptance fails before a run is created, `invar_guard` returns immediate terminal `status="failed"` with an error envelope (no `run_id`).
 ## New Companion Tools
 ### `invar_guard_status(run_id: str)`
@@ -67,19 +66,21 @@ Returns run snapshot:
 {
   "status": "running",
   "run_id": "grd_01J...",
-  "lifecycle": "running",
+  "phase": "verification",
+  "progress": {"completed": 0, "total": 0},
+  "started_at": "2026-03-09T00:00:00Z",
   "updated_at": "2026-03-09T00:01:42Z"
 }
 ```
 
 Status contract notes:
 
-- `status` is one of `running | complete | failed | cancelled | expired`.
-- `lifecycle` mirrors run-state progression and is monotonic.
-- Unknown vs expired runs MUST remain machine-distinct via `error_kind`: unknown -> `run_not_found`, expired -> `run_expired`.
+- `status` is one of `deferred | running | complete | failed | cancelled`.
+- Unknown vs expired runs MUST remain machine-distinct via `error_kind`: unknown → `run_not_found`, expired → `run_expired`.
 - Clients MUST key unknown-vs-expired handling on `error_kind`, not on message text.
+- `phase` and `progress` appear only on non-terminal (`deferred`/`running`) snapshots.
 
-### `invar_guard_wait(run_id: str, wait_ms: int = 8000)`
+### `invar_guard_wait(run_id, wait_ms=8000)`
 
 Long-poll with bounded wait.
 
@@ -89,7 +90,9 @@ Representative non-terminal envelope:
 {
   "status": "running",
   "run_id": "grd_01J...",
-  "lifecycle": "running",
+  "phase": "verification",
+  "progress": {"completed": 0, "total": 0},
+  "started_at": "2026-03-09T00:00:00Z",
   "updated_at": "2026-03-09T00:01:42Z"
 }
 ```
@@ -100,7 +103,6 @@ Terminal completion envelope:
 {
   "status": "complete",
   "run_id": "grd_01J...",
-  "lifecycle": "complete",
   "report": {
     "ok": true,
     "errors": 0,
@@ -132,25 +134,51 @@ Terminal completion envelope:
 - `files_with_zero_sites`: Files that parsed OK but had no mutation candidates
 - `survivor_evidence`: Bounded list (max 5) of surviving mutant locations
 
-Terminal failure envelope:
+Terminal failure envelope (semantic guard verdict):
+
+```json
+{
+  "status": "complete",
+  "run_id": "grd_01J...",
+  "report": {
+    "ok": false,
+    "errors": 2,
+    "warnings": 1,
+    "review_suggested": true
+  }
+}
+```
+
+Terminal failure envelope (wrapper instability):
 
 ```json
 {
   "status": "failed",
   "run_id": "grd_01J...",
-  "lifecycle": "failed",
-  "error_kind": "execution_error",
-  "message": "CrossHair subprocess exited non-zero"
+  "error_kind": "wrapper_instability",
+  "classification": "tooling_parity_wrapper_instability",
+  "message": "MCP guard wrapper subprocess exit code 1: no stderr",
+  "subprocess_exit_code": 1,
+  "stderr": "",
+  "accepted_verification_path": {
+    "command": "uvx invar-tools guard --all",
+    "reason": "When MCP wrapper fails but CLI full-scan passes, treat this as tooling-path instability, not DX-91 semantic regression."
+  }
 }
 ```
 
+**Result interpretation rule**: When the guard subprocess exits non-zero, the wrapper MUST attempt to parse stdout as JSON before classifying the result as `wrapper_instability`. If stdout contains valid guard JSON, that JSON is the authoritative semantic result (status=complete with report). Only when stdout is empty or contains no parseable JSON does the result become `wrapper_instability`. This rule applies to both synchronous and deferred paths consistently.
+
 Deferred full-scan failure-mode coverage (`error_kind`):
 
-- `planner_error`: pre-execution estimator/planner failed before worker handoff.
-- `queue_persist_error`: run accepted but background work could not be persisted/scheduled.
-- `execution_error`: worker started but verification execution failed.
+- `execution_error`: worker started but verification execution failed (e.g., subprocess timeout, generic runtime error).
+- `wrapper_instability`: subprocess exited non-zero with empty or unparseable stdout; the wrapper could not extract a semantic guard verdict. Carries `classification`, `subprocess_exit_code`, `stderr`, and `accepted_verification_path`.
 - `run_not_found`: unknown `run_id` (never existed or malformed for this namespace).
 - `run_expired`: run metadata existed but exceeded retention TTL before retrieval.
+
+Not currently shipped (documented for future extension only):
+- `planner_error`: pre-execution estimator/planner failed before worker handoff.
+- `queue_persist_error`: run accepted but background work could not be persisted/scheduled.
 
 Contract semantics:
 
@@ -187,7 +215,7 @@ Timeouts occur when one request must remain open for the entire verification dur
    - deferred envelope (large repos).
 3. CLI can preserve blocking UX by internally looping on `wait` until complete.
 4. Existing MCP clients that only support one-shot full scan may require minor adaptation to follow run handles.
-5. New fields (`lifecycle`, `error_kind`) are additive and safe for clients that ignore unknown keys.
+5. New fields (`phase`, `progress`, `error_kind`) are additive and safe for clients that ignore unknown keys.
 6. Cancellation behavior is implementation-internal unless/until a dedicated cancel tool is introduced in a separate step.
 
 Compatibility contract: no parameter removals, no semantic changes to changed-only mode, additive response/tooling only.
@@ -195,11 +223,13 @@ Compatibility contract: no parameter removals, no semantic changes to changed-on
 1. **Large full scan defers safely**
    - `invar_guard(changed=false)` returns `status="deferred"` within `sync_budget_ms + 500ms` when planner estimate exceeds budget (validated in-repo in gate context).
 2. **No request-timeout failure on long run**
-   - Repeated `invar_guard_wait(run_id, wait_ms<=8000)` eventually returns terminal status (`complete|failed|cancelled|expired`), not transport timeout.
+   - Repeated `invar_guard_wait(run_id, wait_ms<=8000)` eventually returns terminal status (`complete|failed|cancelled`), not transport timeout.
 3. **Unknown vs expired taxonomy is machine-distinct**
    - Unknown `run_id` maps to `error_kind="run_not_found"`; expired `run_id` maps to `error_kind="run_expired"`.
 4. **Deferred full-scan failure coverage is explicit**
-   - Failure modes include planner failure, queue persistence failure, worker execution failure, and run-state expiry/not-found with distinct `error_kind` values.
+   - Shipped failure modes: `execution_error`, `wrapper_instability`, `run_not_found`, `run_expired`.
+   - Future (not yet shipped): `planner_error`, `queue_persist_error`.
+   - All failure modes use distinct `error_kind` values.
 5. **Contract semantics for non-terminal wait are minimal and stable**
    - `invar_guard_wait` may return non-terminal status (typically `running`) without final `report`; clients continue polling until terminal status.
    - Contract does not require explicit wait-timeout envelope keys.
@@ -207,14 +237,19 @@ Compatibility contract: no parameter removals, no semantic changes to changed-on
    - `invar_guard(changed=true)` remains synchronous and matches pre-DX-94 behavior and output fields.
 7. **Backward-compatible shape for final report**
    - Completed report preserves existing summary keys (`ok`, `errors`, `warnings`, `review_suggested`) used by current UX.
-8. **Deterministic lifecycle**
-   - `run_id` is stable; lifecycle/status progression is monotonic through terminal outcomes.
+8. **Deterministic status progression**
+   - `run_id` is stable; `status` progression is monotonic through terminal outcomes.
 9. **Cross-repo validation is explicitly staged when `../tasca` is unavailable**
-   - Gate-context verification is in-repo only (deferred handshake + lifecycle/taxonomy behavior).
+   - Gate-context verification is in-repo only (deferred handshake + status/taxonomy behavior).
    - Cross-repo evidence is deferred to field validation and must include: command context/path, deferred acceptance proof, and terminal outcome proof on the external repo.
 10. **Property-test blocker is removed from DX-94 acceptance coupling**
-   - DX-94 acceptance does not assume universal property-pass of `src/invar/core/rules.py::check_all_rules`.
-   - Rule-semantic/property stabilization remains a separate prerequisite track and must be evidenced independently.
+    - DX-94 acceptance does not assume universal property-pass of `src/invar/core/rules.py::check_all_rules`.
+    - Rule-semantic/property stabilization remains a separate prerequisite track and must be evidenced independently.
+11. **Result interpretation rule (JSON-first)**
+    - When the guard subprocess exits non-zero, the wrapper MUST attempt to parse stdout as JSON before classifying the result as `wrapper_instability`.
+    - If stdout contains valid guard JSON, that JSON is the authoritative semantic result (`status=complete` with report).
+    - Only when stdout is empty or contains no parseable JSON does the result become `wrapper_instability`.
+    - This rule applies consistently to both synchronous and deferred paths.
 ## Non-Goals
 - Rewriting verification engines (doctest/CrossHair/Hypothesis internals).
 - Changing rule semantics or severity policy.
@@ -227,7 +262,7 @@ Compatibility contract: no parameter removals, no semantic changes to changed-on
 3. Introduce only currently implemented companion tools (`invar_guard_status`, `invar_guard_wait`) behind feature-gated release notes.
 4. Maintain final-report schema parity between sync and deferred completion paths.
 5. Ensure run-state storage has bounded retention and cleanup policy (TTL-based) to avoid unbounded disk growth.
-6. Document canonical `error_kind` set for deferred failures: `planner_error`, `queue_persist_error`, `execution_error`, `run_not_found`, `run_expired`.
+6. Document canonical `error_kind` set for deferred failures: `execution_error`, `wrapper_instability`, `run_not_found`, `run_expired`. Future additions: `planner_error`, `queue_persist_error`.
 ## Rollout Notes
 
 1. Phase 1: implement deferred internals + status/wait tools.

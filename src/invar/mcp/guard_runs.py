@@ -451,6 +451,13 @@ class GuardRunRegistry:
         """Run guard command and parse JSON output.
 
         Uses asyncio subprocess so cancellation and timeouts can terminate the child.
+
+        Interpretation order mirrors the sync-path fix in handlers.py::_execute_command:
+        when returncode != 0, attempt to parse stdout as JSON *before* classifying
+        the result as wrapper_instability.  Guard CLI exits rc=1 on semantic failure
+        but still emits valid JSON — that JSON is the authoritative result, not a
+        wrapper fault.  Only when stdout is empty or contains no usable JSON do we
+        fall through to GuardWrapperInstabilityError.
         """
         proc = await asyncio.create_subprocess_exec(
             *cmd,
@@ -481,6 +488,12 @@ class GuardRunRegistry:
         returncode = proc.returncode if proc.returncode is not None else -1
 
         if returncode != 0:
+            # Attempt JSON parse before classifying as wrapper_instability.
+            # Guard CLI exits rc=1 on semantic failure with valid JSON on stdout.
+            parsed = _parse_guard_json(stdout)
+            if isinstance(parsed, Success):
+                return parsed.unwrap()
+            # stdout is empty or unparseable: true wrapper fault
             raise GuardWrapperInstabilityError(returncode, stderr)
 
         parsed = _parse_guard_json(stdout)

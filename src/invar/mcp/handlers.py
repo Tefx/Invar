@@ -511,7 +511,29 @@ async def _execute_command(
 
         stdout = process.stdout.strip()
 
+        # --- Full-scan contract: interpret stdout before classifying failures ---
+        # When full_scan_contract=True and the subprocess returned non-zero,
+        # guard CLI exits rc=1 on semantic failure but still emits valid JSON.
+        # We must parse that JSON as a semantic result, NOT wrapper_instability.
+        # Only if stdout is empty/invalid do we classify as wrapper fault.
         if process.returncode != 0 and full_scan_contract:
+            if stdout:
+                try:
+                    parsed = json.loads(stdout)
+                    return _success_json(parsed)
+                except json.JSONDecodeError:
+                    fixed = _fix_json_newlines(stdout)
+                    if isinstance(fixed, Failure):
+                        # Unfixable newline damage — fall through to wrapper_instability
+                        pass
+                    else:
+                        try:
+                            parsed = json.loads(fixed.unwrap())
+                            return _success_json(parsed)
+                        except json.JSONDecodeError:
+                            # Valid-looking but unparseable stdout — fall through
+                            pass
+            # stdout is empty or contains no usable JSON: true wrapper fault
             payload = build_wrapper_instability_envelope(
                 run_id="sync",
                 path=target_path,

@@ -5,13 +5,17 @@ from __future__ import annotations
 import asyncio
 import json
 from types import SimpleNamespace
+from typing import Any
 
 import pytest
 from mcp.types import TextContent
 from returns.result import Result, Success
 
 from invar.mcp import handlers
-from invar.mcp.guard_runs import GuardRunRegistry
+from invar.mcp.guard_runs import (
+    GuardRunRegistry,
+    GuardWrapperInstabilityError,
+)
 
 pytestmark = pytest.mark.anyio
 
@@ -424,3 +428,220 @@ async def test_guard_run_registry_mutation_skipped_zero_sites_distinct() -> None
     assert mut["score"] == 100.0
     assert mut["passed"] is True
     assert mut["files_with_zero_sites"] == 3
+
+
+# ============================================================================
+# DX-94 Deferred result interpretation regression matrix
+#
+# These tests exercise GuardRunRegistry._run_guard_command via the real
+# subprocess path.  Before the fix, _run_guard_command raises
+# GuardWrapperInstabilityError on ANY non-zero returncode, even when stdout
+# contains valid guard JSON.  After the fix, valid JSON must be accepted
+# as a semantic guard result before falling through to wrapper_instability.
+# ============================================================================
+
+
+class _FakeProcess:
+    """Minimal fake asyncio.subprocess.Process for _run_guard_command."""
+
+    def __init__(self, *, returncode: int = 0, stdout: bytes = b"", stderr: bytes = b"") -> None:
+        self.returncode = returncode
+        self._stdout = stdout
+        self._stderr = stderr
+
+    async def communicate(self) -> tuple[bytes, bytes]:
+        return (self._stdout, self._stderr)
+
+    async def wait(self) -> int:
+        return self.returncode
+
+    def kill(self) -> None:
+        pass
+
+
+def _guard_failed_json_bytes() -> bytes:
+    """Realistic guard JSON with status=failed (guard rc=1), as bytes."""
+    return json.dumps(
+        {
+            "status": "failed",
+            "static": {
+                "passed": False,
+                "errors": 2,
+                "warnings": 1,
+                "infos": 0,
+                "findings": [
+                    {"rule": "missing_post", "file": "core.py", "line": 10},
+                    {"rule": "missing_pre", "file": "core.py", "line": 20},
+                ],
+            },
+            "summary": {"files_checked": 5, "errors": 2, "warnings": 1, "infos": 0},
+        }
+    ).encode("utf-8")
+
+
+def _guard_passed_json_bytes() -> bytes:
+    """Realistic guard JSON with status=passed (guard rc=0), as bytes."""
+    return json.dumps(
+        {
+            "status": "passed",
+            "static": {"passed": True, "errors": 0, "warnings": 0, "infos": 0, "findings": []},
+            "summary": {"files_checked": 5, "errors": 0, "warnings": 0, "infos": 0},
+        }
+    ).encode("utf-8")
+
+
+async def _run_deferred_guard_with_fake_subprocess(
+    fake_proc: _FakeProcess,
+) -> dict[str, Any]:
+    """Run the deferred guard registry with a fake subprocess and return final snapshot."""
+    registry = GuardRunRegistry(retention_seconds=30, max_runtime_seconds=30)
+
+    async def fake_create_subprocess_exec(*args: Any, **kwargs: Any) -> _FakeProcess:
+        del args, kwargs
+        return fake_proc
+
+    # Patch at module level to intercept subprocess creation
+    original = asyncio.create_subprocess_exec
+    asyncio.create_subprocess_exec = fake_create_subprocess_exec  # type: ignore[assignment]
+    try:
+        run = await registry.start(
+            cmd=["python", "-m", "invar.shell.commands.guard", "guard", ".", "--all"],
+            path=".",
+            changed=False,
+            timeout_reason="estimated_duration_exceeds_sync_budget",
+        )
+        final = await registry.wait(run.run_id, wait_ms=5000)
+    finally:
+        asyncio.create_subprocess_exec = original  # type: ignore[assignment]
+
+    return final
+
+
+@pytest.mark.parametrize(
+    "returncode,stdout_bytes,expected_status,expected_error_kind,description",
+    [
+        # Case 1: rc=1 + valid failed JSON -> semantic result, NOT wrapper_instability
+        (
+            1,
+            _guard_failed_json_bytes(),
+            "complete",
+            None,
+            "rc=1 with valid guard JSON must return semantic complete result",
+        ),
+        # Case 2: rc=2 + valid failed JSON -> still semantic result
+        (
+            2,
+            _guard_failed_json_bytes(),
+            "complete",
+            None,
+            "rc!=0 with valid guard JSON must return semantic result regardless of exit code",
+        ),
+        # Case 3: rc=1 + empty stdout -> wrapper_instability
+        (
+            1,
+            b"",
+            "failed",
+            "wrapper_instability",
+            "rc=1 with empty stdout must return wrapper_instability",
+        ),
+        # Case 4: rc=1 + invalid JSON stdout -> wrapper_instability
+        (
+            1,
+            b"not json at all {{{",
+            "failed",
+            "wrapper_instability",
+            "rc=1 with invalid JSON stdout must return wrapper_instability",
+        ),
+        # Case 5: rc=137 + empty stdout -> wrapper_instability (OOM kill)
+        (
+            137,
+            b"",
+            "failed",
+            "wrapper_instability",
+            "rc=137 with empty stdout must return wrapper_instability",
+        ),
+        # Case 6: rc=0 + valid passed JSON -> semantic result (happy path)
+        (
+            0,
+            _guard_passed_json_bytes(),
+            "complete",
+            None,
+            "rc=0 with valid guard JSON must return semantic result",
+        ),
+    ],
+)
+async def test_deferred_result_interpretation_matrix(
+    returncode: int,
+    stdout_bytes: bytes,
+    expected_status: str,
+    expected_error_kind: "str | None",
+    description: str,
+) -> None:
+    """Regression: deferred _run_guard_command must parse valid JSON before classifying wrapper_instability.
+
+    Before the fix, cases 1 and 2 misclassify valid guard JSON as
+    wrapper_instability because _run_guard_command raises
+    GuardWrapperInstabilityError on any non-zero returncode.
+    """
+    fake_proc = _FakeProcess(returncode=returncode, stdout=stdout_bytes, stderr=b"stderr output")
+    final = await _run_deferred_guard_with_fake_subprocess(fake_proc)
+
+    if expected_error_kind is not None:
+        # Wrapper instability path
+        assert final["status"] == expected_status, (
+            f"{description}: expected status={expected_status}, got {final['status']}"
+        )
+        assert final.get("error_kind") == expected_error_kind, (
+            f"{description}: expected error_kind={expected_error_kind}, "
+            f"got {final.get('error_kind')}"
+        )
+    else:
+        # Semantic result path: must NOT be wrapper_instability
+        assert final["status"] == expected_status, (
+            f"{description}: expected status={expected_status}, got {final['status']}"
+        )
+        # For complete status, must have a report with guard semantics
+        if expected_status == "complete":
+            assert "report" in final, f"{description}: complete status must have report"
+            # The report preserves the guard's own ok/errors/warnings structure.
+            # Do NOT assert ok=False here — rc=0 + passed JSON yields ok=True.
+            assert "ok" in final["report"], f"{description}: complete report must contain 'ok'"
+            assert "errors" in final["report"], (
+                f"{description}: complete report must contain 'errors'"
+            )
+        # Must NOT contain wrapper_instability classification
+        assert final.get("error_kind") != "wrapper_instability", (
+            f"{description}: semantic result must not be misclassified as wrapper_instability"
+        )
+        assert final.get("classification") != "tooling_parity_wrapper_instability", (
+            f"{description}: semantic result must not carry wrapper instability classification"
+        )
+
+
+async def test_deferred_result_valid_failed_json_carries_guard_fields() -> None:
+    """Semantic failure through deferred path must carry guard's own status/errors structure."""
+    fake_proc = _FakeProcess(
+        returncode=1,
+        stdout=_guard_failed_json_bytes(),
+        stderr=b"some stderr",
+    )
+    final = await _run_deferred_guard_with_fake_subprocess(fake_proc)
+
+    # Status is "complete" because the deferred path successfully parsed the guard result
+    assert final["status"] == "complete"
+    assert "report" in final
+    report = final["report"]
+    # Guard semantic fields must be preserved — guard said "failed" so ok must be False
+    assert report["ok"] is False
+    assert report["errors"] == 2
+    assert report["warnings"] == 1
+
+
+async def test_deferred_result_wrapper_instability_carries_exit_code() -> None:
+    """Wrapper instability envelope must carry subprocess_exit_code."""
+    fake_proc = _FakeProcess(returncode=1, stdout=b"", stderr=b"segfault or OOM")
+    final = await _run_deferred_guard_with_fake_subprocess(fake_proc)
+
+    assert final["status"] == "failed"
+    assert final["error_kind"] == "wrapper_instability"
+    assert final["subprocess_exit_code"] == 1

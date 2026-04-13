@@ -12,8 +12,11 @@ Key insight: Isolate request-layer timeout behavior from guard-rule correctness.
 
 from __future__ import annotations
 
+import asyncio
 import json
+import subprocess
 from types import SimpleNamespace
+from typing import Callable
 from unittest.mock import patch
 
 import pytest
@@ -854,3 +857,318 @@ async def test_deferred_survivor_evidence_bounded(
     assert len(mut["survivor_evidence"]) <= 5, (
         "survivor_evidence must be bounded to at most 5 entries"
     )
+
+
+# ============================================================================
+# Test 10: Sync full-scan result interpretation regression matrix
+# ============================================================================
+
+
+class _SubprocessResult:
+    """Minimal fake subprocess.CompletedProcess for _execute_command tests."""
+
+    def __init__(self, *, returncode: int = 0, stdout: str = "", stderr: str = "") -> None:
+        self.returncode = returncode
+        self.stdout = stdout
+        self.stderr = stderr
+
+
+def _guard_failed_json() -> str:
+    """Realistic guard JSON with status=failed (guard rc=1)."""
+    return json.dumps(
+        {
+            "status": "failed",
+            "static": {
+                "passed": False,
+                "errors": 2,
+                "warnings": 1,
+                "infos": 0,
+                "findings": [
+                    {"rule": "missing_post", "file": "core.py", "line": 10},
+                    {"rule": "missing_pre", "file": "core.py", "line": 20},
+                ],
+            },
+            "summary": {"files_checked": 5, "errors": 2, "warnings": 1, "infos": 0},
+        }
+    )
+
+
+def _guard_passed_json() -> str:
+    """Realistic guard JSON with status=passed (guard rc=0)."""
+    return json.dumps(
+        {
+            "status": "passed",
+            "static": {
+                "passed": True,
+                "errors": 0,
+                "warnings": 0,
+                "infos": 0,
+                "findings": [],
+            },
+            "summary": {"files_checked": 5, "errors": 0, "warnings": 0, "infos": 0},
+        }
+    )
+
+
+@pytest.mark.parametrize(
+    "returncode,stdout_str,expected_error_kind,expected_status,description",
+    [
+        # Case 1: rc=1 + valid failed JSON → parsed semantic result, NOT wrapper_instability
+        (
+            1,
+            _guard_failed_json,
+            None,  # no error_kind — it's a parsed result, not wrapper_instability
+            "failed",
+            "rc=1 with valid guard JSON must return parsed semantic result",
+        ),
+        # Case 2: rc=2 (segfault-like) + valid failed JSON → still parsed semantic result
+        (
+            2,
+            _guard_failed_json,
+            None,
+            "failed",
+            "rc!=0 with valid guard JSON must return parsed semantic result regardless of exit code",
+        ),
+        # Case 3: rc=1 + empty stdout → wrapper_instability
+        (
+            1,
+            "",
+            "wrapper_instability",
+            "failed",
+            "rc=1 with empty stdout must return wrapper_instability",
+        ),
+        # Case 4: rc=1 + invalid JSON stdout → wrapper_instability
+        (
+            1,
+            "not json at all {{{",
+            "wrapper_instability",
+            "failed",
+            "rc=1 with invalid JSON stdout must return wrapper_instability",
+        ),
+        # Case 5: rc=137 (OOM kill) + empty stdout → wrapper_instability
+        (
+            137,
+            "",
+            "wrapper_instability",
+            "failed",
+            "rc=137 with empty stdout must return wrapper_instability",
+        ),
+        # Case 6: rc=0 + valid passed JSON → parsed result (happy path)
+        (
+            0,
+            _guard_passed_json,
+            None,
+            "passed",
+            "rc=0 with valid guard JSON must return parsed result",
+        ),
+    ],
+)
+async def test_sync_full_scan_result_interpretation_matrix(
+    monkeypatch: pytest.MonkeyPatch,
+    returncode: int,
+    stdout_str: "str | Callable[[], str]",
+    expected_error_kind: "str | None",
+    expected_status: str,
+    description: str,
+) -> None:
+    """Regression matrix: sync full-scan result interpretation in _execute_command.
+
+    This directly tests the bug site: _execute_command with full_scan_contract=True.
+    Before the fix, Case 1 and Case 2 misclassify valid guard JSON as wrapper_instability.
+    """
+    # Resolve callable stdout generators
+    stdout_resolved = stdout_str() if callable(stdout_str) else stdout_str
+
+    monkeypatch.setattr(
+        handlers.subprocess,
+        "run",
+        lambda *a, **kw: _SubprocessResult(
+            returncode=returncode,
+            stdout=stdout_resolved,
+            stderr="some stderr",
+        ),
+    )
+
+    result = await handlers._execute_command(
+        cmd=["python", "-m", "invar.shell.commands.guard", "guard", ".", "--all"],
+        full_scan_contract=True,
+        target_path=".",
+        changed=False,
+    )
+
+    assert isinstance(result, Success), f"{description}: expected Success, got {result}"
+    payload_text = result.unwrap()
+    assert isinstance(payload_text, list)
+    parsed = json.loads(payload_text[0].text)
+
+    assert parsed["status"] == expected_status, (
+        f"{description}: expected status={expected_status}, got {parsed['status']}"
+    )
+
+    if expected_error_kind is not None:
+        assert parsed.get("error_kind") == expected_error_kind, (
+            f"{description}: expected error_kind={expected_error_kind}, "
+            f"got {parsed.get('error_kind')}"
+        )
+    else:
+        # Semantic result: must NOT contain wrapper_instability classification
+        assert parsed.get("error_kind") != "wrapper_instability", (
+            f"{description}: semantic result must not be misclassified as wrapper_instability"
+        )
+        assert parsed.get("classification") != "tooling_parity_wrapper_instability", (
+            f"{description}: semantic result must not carry wrapper instability classification"
+        )
+
+        # Semantic result must carry the guard's own status/errors structure
+        assert "static" in parsed or "summary" in parsed, (
+            f"{description}: parsed semantic result must contain guard payload fields"
+        )
+
+
+async def test_sync_full_scan_changed_true_path_unaffected(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Control: changed=True (full_scan_contract=False) path must remain unchanged.
+
+    The fix must not alter the changed=true fast path. When rc!=0 and
+    full_scan_contract=False, stdout should be attempted as JSON first
+    (existing behavior), not short-circuit to wrapper_instability.
+    """
+    monkeypatch.setattr(
+        handlers.subprocess,
+        "run",
+        lambda *a, **kw: _SubprocessResult(
+            returncode=1,
+            stdout=_guard_failed_json(),
+            stderr="",
+        ),
+    )
+
+    result = await handlers._execute_command(
+        cmd=["python", "-m", "invar.shell.commands.guard", "guard", ".", "--changed"],
+        full_scan_contract=False,
+        target_path=".",
+        changed=True,
+    )
+
+    assert isinstance(result, Success)
+    payload_text = result.unwrap()
+    assert isinstance(payload_text, list)
+    parsed = json.loads(payload_text[0].text)
+    # Changed path parses stdout JSON normally — no wrapper_instability
+    assert parsed["status"] == "failed"
+    assert "error_kind" not in parsed or parsed.get("error_kind") != "wrapper_instability"
+
+
+# ============================================================================
+# Deferred path-shape audit: status/wait envelope machine-distinction
+# ============================================================================
+
+
+async def test_deferred_status_unknown_vs_expired_are_machine_distinct() -> None:
+    """unknown run IDs and expired run IDs must produce different error_kind values.
+
+    Per DX-94 acceptance criteria: unknown -> run_not_found, expired -> run_expired.
+    """
+    registry = GuardRunRegistry(retention_seconds=0, max_runtime_seconds=30)
+
+    # Create a run that will immediately expire
+    async def fast_command(cmd):
+        return _make_payload()
+
+    registry._run_guard_command = fast_command
+
+    run = await registry.start(
+        cmd=["python", "-m", "invar.shell.commands.guard", "guard", ".", "--all"],
+        path=".",
+        changed=False,
+        timeout_reason="estimated_duration_exceeds_sync_budget",
+    )
+
+    # Wait for completion then let it expire
+    await registry.wait(run.run_id, wait_ms=100)
+    await asyncio.sleep(0.01)
+
+    expired = await registry.status(run.run_id)
+    unknown = await registry.status("grd_never_existed")
+
+    assert expired["error_kind"] == "run_expired", (
+        f"expired run must have error_kind=run_expired, got {expired['error_kind']}"
+    )
+    assert unknown["error_kind"] == "run_not_found", (
+        f"unknown run must have error_kind=run_not_found, got {unknown['error_kind']}"
+    )
+    # Machine-distinct: error_kind values must differ
+    assert expired["error_kind"] != unknown["error_kind"], (
+        "run_expired and run_not_found must be machine-distinct"
+    )
+
+
+async def test_deferred_wait_unknown_vs_expired_envelopes() -> None:
+    """wait() must also distinguish unknown from expired runs."""
+    registry = GuardRunRegistry(retention_seconds=0, max_runtime_seconds=30)
+
+    async def fast_command(cmd):
+        return _make_payload()
+
+    registry._run_guard_command = fast_command
+
+    run = await registry.start(
+        cmd=["python", "-m", "invar.shell.commands.guard", "guard", ".", "--all"],
+        path=".",
+        changed=False,
+        timeout_reason="estimated_duration_exceeds_sync_budget",
+    )
+
+    await registry.wait(run.run_id, wait_ms=100)
+    await asyncio.sleep(0.01)
+
+    expired = await registry.wait(run.run_id, wait_ms=100)
+    unknown = await registry.wait("grd_never_existed", wait_ms=100)
+
+    assert expired["error_kind"] == "run_expired"
+    assert unknown["error_kind"] == "run_not_found"
+    assert expired["error_kind"] != unknown["error_kind"], (
+        "wait() must distinguish run_expired from run_not_found"
+    )
+
+
+async def test_deferred_semantic_failure_preserves_guard_status_fields() -> None:
+    """Deferred path: semantic guard failure (rc=1 + valid JSON) must produce
+    a 'complete' status with the guard's own report, NOT 'failed' with
+    wrapper_instability.
+
+    This is the key regression: before the fix, _run_guard_command raised
+    GuardWrapperInstabilityError on any non-zero returncode, discarding
+    valid guard JSON. After the fix, valid JSON is parsed first.
+    """
+    registry = GuardRunRegistry(retention_seconds=30, max_runtime_seconds=30)
+
+    failed_payload = _make_payload(status="failed", errors=3, warnings=1)
+
+    async def semantic_failure_command(cmd):
+        await asyncio.sleep(0.01)
+        return failed_payload
+
+    registry._run_guard_command = semantic_failure_command
+
+    run = await registry.start(
+        cmd=["python", "-m", "invar.shell.commands.guard", "guard", ".", "--all"],
+        path=".",
+        changed=False,
+        timeout_reason="estimated_duration_exceeds_sync_budget",
+    )
+
+    final = await registry.wait(run.run_id, wait_ms=100)
+
+    # Semantic failure result: status=complete with guard's own ok=False
+    assert final["status"] == "complete", (
+        f"semantic guard failure should complete with report, got status={final['status']}"
+    )
+    assert "report" in final
+    assert final["report"]["ok"] is False
+    assert final["report"]["errors"] == 3
+    assert final["report"]["warnings"] == 1
+    # Must NOT have wrapper_instability
+    assert final.get("error_kind") != "wrapper_instability"
+    assert final.get("classification") != "tooling_parity_wrapper_instability"
