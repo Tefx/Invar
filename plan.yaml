@@ -35030,7 +35030,7 @@ phases:
       without re-derivation.'
   - id: mcp-guard-result-consistency.fix-sync-full-scan-interpretation
     name: Fix sync full-scan result interpretation in MCP handlers
-    status: claimed
+    status: done
     description: 'Step type: implementation
 
       Agent source: default
@@ -35188,6 +35188,60 @@ phases:
     agent: python-senior-tacit
     claimed_by: python-senior-tacit
     claimed_at: '2026-04-13T08:07:02.902237+00:00'
+    done_at: '2026-04-13T08:36:29.251870+00:00'
+    evidence: "## refs Read Confirmation (MANDATORY)\n- `src/invar/mcp/handlers.py::_execute_command`\
+      \ (lines 494-546) — Bug site: unconditional `wrapper_instability` when `returncode\
+      \ != 0 and full_scan_contract`, ignoring valid JSON on stdout.\n- `src/invar/mcp/guard_runs.py::build_wrapper_instability_envelope`\
+      \ (lines 41-68) — Wrapper instability envelope builder, used in both sync and\
+      \ deferred paths.\n- `src/invar/mcp/guard_runs.py::_execute_run` (lines 329-380)\
+      \ — Deferred path also raises `GuardWrapperInstabilityError` only when `returncode\
+      \ != 0`, but that's async and correct because `_run_guard_command` parses stdout\
+      \ before raising.\n- `tests/integration/test_mcp_full_guard_regressions.py`\
+      \ — Existing test `test_sync_full_scan_failure_surfaces_authoritative_cli_path`\
+      \ (line 476) only tested empty-stdout case, missed valid-JSON-with-rc1 case.\n\
+      - `tests/integration/test_mcp_guard_changed_flag.py` — Control path tests; verified\
+      \ unchanged.\n\n## Expected-Red Proof (MANDATORY)\n- Tests added/updated before\
+      \ implementation:\n  - `test_sync_full_scan_result_interpretation_matrix` (6\
+      \ parametrized cases in `test_mcp_full_guard_regressions.py`)\n  - `test_sync_full_scan_changed_true_path_unaffected`\
+      \ (control path in `test_mcp_full_guard_regressions.py`)\n- Command: `.venv/bin/python\
+      \ -m pytest tests/integration/test_mcp_full_guard_regressions.py -k \"test_sync_full_scan_result_interpretation_matrix\"\
+      \ -v`\n- Failing output (2 of 6 cases failed):\n  - Case 1 (`rc=1 + valid failed\
+      \ JSON`): `AssertionError: semantic result must not be misclassified as wrapper_instability`\
+      \ — got `error_kind='wrapper_instability'`\n  - Case 2 (`rc=2 + valid failed\
+      \ JSON`): Same misclassification.\n  - Cases 3-6 passed (wrapper_instability\
+      \ correctly emitted for empty/invalid stdout).\n\n## Implementation Delta\n\
+      - Files changed: `src/invar/mcp/handlers.py` (lines 514-546 restructured)\n\
+      - Interpretation rule now enforced: When `full_scan_contract=True` and `returncode\
+      \ != 0`, _execute_command first attempts to parse stdout as JSON (with `_fix_json_newlines`\
+      \ fallback). Only if stdout is empty or contains no parseable JSON does it fall\
+      \ through to `build_wrapper_instability_envelope`. This matches the deferred\
+      \ path behavior where `_parse_guard_json` is called before `GuardWrapperInstabilityError`\
+      \ is raised.\n- Why wrapper_instability still works: The `build_wrapper_instability_envelope`\
+      \ call is preserved as the terminal fallback for all cases where stdout contains\
+      \ no usable JSON (empty, invalid syntax, unfixable newline corruption). True\
+      \ wrapper faults (segfaults, OOM kills, subprocess crashes) all produce empty\
+      \ or garbage stdout.\n\n## Green Proof\n- Command(s):\n  `.venv/bin/python -m\
+      \ pytest tests/integration/test_mcp_full_guard_regressions.py -v`\n  `.venv/bin/python\
+      \ -m pytest tests/integration/test_mcp_guard_changed_flag.py -v`\n- Output:\n\
+      \  ```\n  tests/integration/test_mcp_full_guard_regressions.py::36 tests PASSED\n\
+      \  tests/integration/test_mcp_guard_changed_flag.py::3 tests PASSED\n  ```\n\
+      \  All 39 tests pass, including all 6 matrix cases + control path.\n\n## Final\
+      \ guard verification\n- Command: `invar_guard(changed=true)`\n- Output:\n  ```json\n\
+      \  {\n    \"status\": \"passed\",\n    \"static\": {\"passed\": true, \"errors\"\
+      : 0, \"warnings\": 1, \"infos\": 0},\n    \"summary\": {\"files_checked\": 1,\
+      \ \"errors\": 0, \"warnings\": 1, \"infos\": 0},\n    \"verification_level\"\
+      : \"STANDARD\",\n    \"doctest\": {\"passed\": true},\n    \"crosshair\": {\"\
+      status\": \"skipped\"},\n    \"property_tests\": {\"status\": \"skipped\"}\n\
+      \  }\n  ```\n  Warning is pre-existing file-size warning (97% of limit), unrelated\
+      \ to this change.\n\n## Residual risk\n- The `_fix_json_newlines` path inside\
+      \ the full-scan contract branch uses `pass` to fall through on failure, which\
+      \ intentionally continues to wrapper_instability. This is correct but could\
+      \ be confusing; however, adding logging or comments beyond what's there would\
+      \ be scope expansion.\n- The deferred async path in `guard_runs.py::_execute_run`\
+      \ raises `GuardWrapperInstabilityError` on any non-zero return code before attempting\
+      \ JSON parse — but that's correct because `_run_guard_command` calls `_parse_guard_json`\
+      \ first and only raises `GuardWrapperInstabilityError` if JSON parsing fails.\
+      \ The deferred path is already correct and was not in scope for this step."
   - id: mcp-guard-result-consistency.fix-deferred-full-scan-interpretation-and-doc-sync
     name: Fix deferred full-scan interpretation and sync the minimal MCP contract
     status: pending
