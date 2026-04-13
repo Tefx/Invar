@@ -34824,3 +34824,8 @@ phases:
       remains.
 
       - No unresolved blocker remains for closure.'
+- id: mcp-guard-result-consistency
+  name: MCP Guard Result Interpretation Consistency Fix
+  status: pending
+  depends_on:
+  - property-target-skip-review
