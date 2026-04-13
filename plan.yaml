@@ -34829,3 +34829,116 @@ phases:
   status: pending
   depends_on:
   - property-target-skip-review
+  steps:
+  - id: mcp-guard-result-consistency.audit-contract-matrix
+    name: Audit MCP guard result matrix and choose minimal contract-drift resolution
+    status: pending
+    description: 'Step type: review
+
+      Agent source: default
+
+      Work type: defect_repair with authority-adjudication pressure
+
+      Verification scope: local-check protecting all downstream implementation steps
+      in this phase
+
+      Spec refs: docs/proposals/DX-94-mcp-full-guard-support-model.md#existing-tool-extended
+      ; #new-companion-tools ; #backward-compatibility-expectations ; #acceptance-criteria
+      ; #migration-constraints
+
+      Touch paths: src/invar/mcp/handlers.py ; src/invar/mcp/guard_runs.py ; src/invar/shell/commands/guard.py
+      ; src/invar/shell/guard_output.py ; tests/integration/test_mcp_guard_deferred.py
+      ; tests/integration/test_mcp_full_guard_regressions.py ; tests/integration/test_mcp_guard_changed_flag.py
+      ; docs/proposals/DX-94-mcp-full-guard-support-model.md
+
+      Harness refs: tests/integration/test_mcp_guard_deferred.py ; tests/integration/test_mcp_full_guard_regressions.py
+      ; tests/integration/test_mcp_guard_changed_flag.py
+
+      Authoritative interface: invar_guard(path=".", changed=true|false, strict=false,
+      coverage=false, contracts_only=false, mutation=false) ; invar_guard_status(run_id)
+      ; invar_guard_wait(run_id, wait_ms)
+
+
+      Produce one explicit path matrix for all five MCP guard surfaces:
+
+      1. invar_guard(changed=true)
+
+      2. invar_guard(changed=false) synchronous final result
+
+      3. invar_guard(changed=false) deferred acceptance
+
+      4. invar_guard_status(run_id)
+
+      5. invar_guard_wait(run_id)
+
+
+      For each surface, pin: expected top-level keys, when semantic guard failure
+      may still carry valid JSON despite subprocess exit 1, when wrapper_instability
+      is allowed, and which documented fields are mandatory vs optional.
+
+
+      Contract choice to encode for downstream work: preserve the smallest coherent
+      contract. Do NOT introduce new tools, new lifecycle states, or new error_kind
+      values unless code already emits them or additive support is genuinely low-cost
+      and required for consistency. In particular, decide whether DX-94 should be
+      narrowed to actual shipped shapes instead of expanding code to match planner_error
+      / queue_persist_error / lifecycle examples that are not implemented.
+
+
+      Known risks:
+
+      - DX-94 already drifted on lifecycle/examples vs code. Downstream work must
+      not silently widen the public contract.
+
+      - Wrapper_instability must remain reserved for pre-verdict wrapper faults, not
+      legitimate semantic guard findings serialized as JSON.
+
+      '
+    verification: Produce a five-surface matrix with one explicit contract decision
+      for doc drift and one explicit rule for semantic-failure-vs-wrapper-failure
+      classification. Downstream implementation must be able to cite this matrix without
+      re-deriving the contract.
+    evidence_template: '## refs Read Confirmation (MANDATORY)
+
+
+      For each ref in this step:
+
+      - <filename> — key passage or "NOT READ: <reason>"
+
+
+      If no refs were provided, state: "No refs for this step."
+
+
+      ## MCP Guard Surface Matrix
+
+      | Surface | Expected status space | Required keys | Optional/additive keys |
+      Semantic failure with valid JSON? | Wrapper instability trigger |
+
+      |---|---|---|---|---|---|
+
+
+      ## Contract Drift Decision
+
+      - Chosen authority shape: <document actual contract | add additive fields>
+
+      - Why this is the minimal compatible choice: <one paragraph>
+
+      - Explicitly rejected drift options: <bullets>
+
+
+      ## Implementation Constraints for Downstream Steps
+
+      - Sync full-scan path: <rule>
+
+      - Deferred full-scan path: <rule>
+
+      - Status/wait taxonomy: <rule>
+
+      - Unknown vs expired: <rule>
+
+
+      ## Headline
+
+      - PASS only when the matrix is complete enough that downstream implementers
+      do not need to guess.'
+    agent: spec-verifier-tacit
