@@ -34832,7 +34832,7 @@ phases:
   steps:
   - id: mcp-guard-result-consistency.audit-contract-matrix
     name: Audit MCP guard result matrix and choose minimal contract-drift resolution
-    status: claimed
+    status: done
     description: 'Step type: review
 
       Agent source: default
@@ -34944,6 +34944,90 @@ phases:
     agent: spec-verifier-tacit
     claimed_by: spec-verifier-tacit
     claimed_at: '2026-04-13T08:00:52.072139+00:00'
+    done_at: '2026-04-13T08:06:43.782098+00:00'
+    evidence: '## refs Read Confirmation (MANDATORY)
+
+      - src/invar/mcp/handlers.py — _run_guard and _execute_command paths confirmed
+      for changed=true/changed=false and full_scan_contract handling.
+
+      - src/invar/mcp/guard_runs.py — RunStatus/_snapshot/_run_guard_command/_cleanup_locked
+      reviewed for deferred lifecycle and error envelopes.
+
+      - src/invar/shell/commands/guard.py — guard CLI emits JSON payload and may still
+      exit non-zero.
+
+      - src/invar/shell/guard_output.py — output_agent shape confirmed.
+
+      - tests/integration/test_mcp_guard_deferred.py — deferred taxonomy and envelopes
+      validated by tests.
+
+      - tests/integration/test_mcp_full_guard_regressions.py — sync/deferred schema
+      assertions and wrapper_instability cases reviewed.
+
+      - tests/integration/test_mcp_guard_changed_flag.py — changed flag mapping verified.
+
+      - docs/proposals/DX-94-mcp-full-guard-support-model.md — doc contract reviewed;
+      drift points identified.
+
+
+      ## MCP Guard Surface Matrix
+
+      | Surface | Expected status space | Required keys | Optional/additive keys |
+      Semantic failure with valid JSON? | Wrapper instability trigger |
+
+      |---|---|---|---|---|---|
+
+      | invar_guard(changed=true) | passed/failed (guard JSON) + raw fallback | status/static/summary
+      (guard JSON) | doctest/crosshair/property_tests/verification_level/mutation/coverage
+      | No wrapper envelope here | Never (full_scan_contract=False) |
+
+      | invar_guard(changed=false) sync | passed/failed (guard JSON) OR failed+wrapper_instability
+      envelope | guard JSON keys OR envelope keys (status,run_id,error_kind,classification,accepted_verification_path)
+      | envelope adds subprocess_exit_code/stderr | Yes (current code can surface
+      wrapper envelope JSON) | subprocess returncode != 0 |
+
+      | invar_guard(changed=false) deferred acceptance | deferred | status/run_id/mode/path/changed/accepted_at/poll_after_ms/timeout_reason
+      | none | N/A | N/A |
+
+      | invar_guard_status(run_id) | deferred/running/complete/failed/cancelled |
+      status/run_id | running: phase/progress/started_at/updated_at; complete: report/completed_at/expires_at;
+      failed/cancelled: error_kind/message/completed_at/expires_at + details | Yes
+      (failed+run_not_found/run_expired JSON) | N/A |
+
+      | invar_guard_wait(run_id,wait_ms) | same as status | same as status | same
+      as status | same as status | N/A |
+
+
+      ## Contract Drift Decision
+
+      - Chosen authority shape: Narrow DX-94 docs to shipped behavior unless additive
+      fields are deliberately implemented in this fix.
+
+      - Why minimal: avoids introducing unimplemented states/fields and keeps backward-compatible
+      machine behavior.
+
+      - Rejected options: invent planner_error/queue_persist_error/lifecycle/expired
+      status without runtime support.
+
+
+      ## Implementation Constraints for Downstream Steps
+
+      - Sync full-scan path: interpret valid stdout JSON as semantic result even when
+      returncode=1; wrapper_instability only when non-zero + unusable/empty stdout
+      for full-scan contract.
+
+      - Deferred full-scan path: same rule as sync path in GuardRunRegistry._run_guard_command.
+
+      - Status/wait taxonomy: keep status set and error_kind semantics machine-stable.
+
+      - Unknown vs expired: continue distinguishing via error_kind run_not_found vs
+      run_expired.
+
+
+      ## Headline
+
+      - PASS: matrix and decision are explicit enough for downstream implementation
+      without re-derivation.'
   - id: mcp-guard-result-consistency.fix-sync-full-scan-interpretation
     name: Fix sync full-scan result interpretation in MCP handlers
     status: pending
