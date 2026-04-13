@@ -34826,13 +34826,13 @@ phases:
       - No unresolved blocker remains for closure.'
 - id: mcp-guard-result-consistency
   name: MCP Guard Result Interpretation Consistency Fix
-  status: pending
+  status: in_progress
   depends_on:
   - property-target-skip-review
   steps:
   - id: mcp-guard-result-consistency.audit-contract-matrix
     name: Audit MCP guard result matrix and choose minimal contract-drift resolution
-    status: pending
+    status: claimed
     description: 'Step type: review
 
       Agent source: default
@@ -34942,6 +34942,8 @@ phases:
       - PASS only when the matrix is complete enough that downstream implementers
       do not need to guess.'
     agent: spec-verifier-tacit
+    claimed_by: spec-verifier-tacit
+    claimed_at: '2026-04-13T08:00:52.072139+00:00'
   - id: mcp-guard-result-consistency.fix-sync-full-scan-interpretation
     name: Fix sync full-scan result interpretation in MCP handlers
     status: pending
