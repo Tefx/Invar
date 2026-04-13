@@ -34942,3 +34942,161 @@ phases:
       - PASS only when the matrix is complete enough that downstream implementers
       do not need to guess.'
     agent: spec-verifier-tacit
+  - id: mcp-guard-result-consistency.fix-sync-full-scan-interpretation
+    name: Fix sync full-scan result interpretation in MCP handlers
+    status: pending
+    description: 'Step type: implementation
+
+      Agent source: default
+
+      Verification scope: local-check protecting mcp-guard-result-consistency.fix-deferred-full-scan-interpretation-and-doc-sync
+      and later phase verification
+
+      Spec refs: audit matrix from mcp-guard-result-consistency.audit-contract-matrix
+      ; docs/proposals/DX-94-mcp-full-guard-support-model.md#existing-tool-extended
+      ; #backward-compatibility-expectations ; #acceptance-criteria
+
+      Touch paths: src/invar/mcp/handlers.py ; tests/integration/test_mcp_full_guard_regressions.py
+      ; tests/integration/test_mcp_guard_changed_flag.py
+
+      Harness refs: tests/integration/test_mcp_full_guard_regressions.py ; tests/integration/test_mcp_guard_changed_flag.py
+
+      Authoritative interface: NONE PINNED beyond the audited MCP surface matrix
+
+      Upstream artifacts: audit contract matrix from mcp-guard-result-consistency.audit-contract-matrix
+      is authoritative for sync-path interpretation order
+
+
+      Fix only the synchronous MCP full-scan path in src/invar/mcp/handlers.py::_execute_command.
+
+
+      Expected behavior after the fix:
+
+      - For full_scan_contract mode, valid stdout JSON from the guard must be parsed
+      and returned even when subprocess exit code is 1 and the JSON says guard semantics
+      failed.
+
+      - wrapper_instability remains reserved for true wrapper faults such as empty
+      stdout, invalid/non-JSON stdout, or other pre-verdict subprocess failure shapes.
+
+      - changed=true synchronous behavior must stay unchanged.
+
+
+      Expected-red proof is mandatory:
+
+      1. First write the regression matrix.
+
+      2. Run the targeted tests to prove the current sync full-scan path fails/red
+      before code changes.
+
+      3. Paste that failure into evidence.
+
+      4. Only then change handler logic.
+
+
+      Pure one-off example assertions are insufficient. Use a parametrized regression
+      matrix that covers at least:
+
+      - changed=false + returncode=1 + valid JSON status=failed -> parsed semantic
+      result, not wrapper_instability
+
+      - changed=false + returncode!=0 + invalid/empty stdout -> wrapper_instability
+
+      - changed=true control path remains synchronous and unchanged
+
+
+      ## Completion Criteria (stub exclusion)
+
+      This is an IMPLEMENTATION step. Stub-only completion is NOT acceptable.
+
+      Each deliverable MUST contain substantive logic that processes subprocess stdout
+      before classifying full-scan failure modes.'
+    verification: Targeted regression matrix proves expected-red before the fix, then
+      green after the fix. Final evidence must include targeted pytest output plus
+      final invar_guard verification on changed files.
+    evidence_template: '## refs Read Confirmation (MANDATORY)
+
+
+      For each ref in this step:
+
+      - <filename> — key passage or "NOT READ: <reason>"
+
+
+      If no refs were provided, state: "No refs for this step."
+
+
+      ## Expected-Red Proof (MANDATORY)
+
+      - New/updated tests added before implementation: <list>
+
+      - Exact command run before implementation:
+
+      ```bash
+
+      <targeted pytest command>
+
+      ```
+
+      - Failing output proving current bug:
+
+      ```text
+
+      <paste failing output>
+
+      ```
+
+
+      ## Implementation Delta
+
+      - Files changed: <list>
+
+      - Interpretation-order rule now enforced: <one paragraph>
+
+      - Why wrapper_instability still catches true wrapper faults: <one paragraph>
+
+
+      ## Green Proof
+
+      - Exact targeted command(s):
+
+      ```bash
+
+      <targeted pytest command(s)>
+
+      ```
+
+      - Actual output:
+
+      ```text
+
+      <paste output>
+
+      ```
+
+
+      ## Final guard verification
+
+      - Command:
+
+      ```bash
+
+      <invar_guard changed=true command/tool invocation>
+
+      ```
+
+      - Output:
+
+      ```text
+
+      <paste output>
+
+      ```
+
+
+      ## Residual risk
+
+      - Remaining deferred/doc-sync work intentionally left for next step: <brief
+      note>'
+    depends_on:
+    - mcp-guard-result-consistency.audit-contract-matrix
+    agent: python-senior-tacit
