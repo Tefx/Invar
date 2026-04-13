@@ -35283,3 +35283,143 @@ phases:
     - mcp-guard-result-consistency.audit-contract-matrix
     - mcp-guard-result-consistency.fix-sync-full-scan-interpretation
     agent: python-senior-tacit
+  - id: mcp-guard-result-consistency.verify-result-matrix
+    name: Independently verify MCP guard result interpretation across all paths
+    status: pending
+    description: 'Step type: verification
+
+      Agent source: default
+
+      Verification scope: phase-check protecting mcp-guard-result-consistency.gate
+
+      Spec refs: mcp-guard-result-consistency.audit-contract-matrix ; docs/proposals/DX-94-mcp-full-guard-support-model.md#acceptance-criteria
+      ; #migration-constraints
+
+      Touch paths: src/invar/mcp/handlers.py ; src/invar/mcp/guard_runs.py ; tests/integration/test_mcp_guard_deferred.py
+      ; tests/integration/test_mcp_full_guard_regressions.py ; docs/proposals/DX-94-mcp-full-guard-support-model.md
+
+      Harness refs: tests/integration/test_mcp_guard_deferred.py ; tests/integration/test_mcp_full_guard_regressions.py
+      ; tests/integration/test_mcp_guard_changed_flag.py
+
+      Authoritative interface: audited five-surface MCP result matrix
+
+
+      As an INDEPENDENT TESTER, try to disprove consistency across all MCP guard result
+      paths.
+
+
+      You are verifying that the bug is fully closed, not partially patched. Check
+      all of:
+
+      - invar_guard(changed=true) unchanged behavior
+
+      - changed=false synchronous final result uses semantic JSON even when exit code
+      is 1
+
+      - changed=false deferred acceptance remains bounded and coherent
+
+      - invar_guard_status(run_id) and invar_guard_wait(run_id) preserve the chosen
+      taxonomy
+
+      - true wrapper failures still surface wrapper_instability distinctly
+
+      - docs now match the actual emitted shapes without over-promising unsupported
+      fields
+
+
+      Finding issues is success. If valid JSON is still swallowed anywhere, or docs
+      still promise unsupported lifecycle/error kinds, block the gate.
+
+
+      Independence Level: L1'
+    verification: Run the targeted integration matrix and final invar_guard verification.
+      Evidence must show actual outputs for semantic-failure and wrapper-failure cases
+      plus a five-surface consistency table.
+    evidence_template: '## Verification Report
+
+
+      **Tester**: integration-verifier-tacit (independent of implementation)
+
+      **Scope**: MCP guard sync/deferred result interpretation matrix
+
+      **Independence Level**: L1
+
+
+      ### refs Read Confirmation (MANDATORY)
+
+      For each ref in this step:
+
+      - <filename> — key passage or "NOT READ: <reason>"
+
+
+      If no refs were provided, state: "No refs for this step."
+
+
+      ### Commands executed
+
+      ```bash
+
+      <targeted pytest command(s)>
+
+      <invar_guard changed=true command/tool invocation>
+
+      ```
+
+
+      ### Actual outputs
+
+      ```text
+
+      <paste outputs>
+
+      ```
+
+
+      ### Five-surface consistency table
+
+      | Surface | Observed result | Expected per audit matrix | PASS/FAIL |
+
+      |---|---|---|---|
+
+      | changed=true sync |  |  |  |
+
+      | changed=false sync final |  |  |  |
+
+      | changed=false deferred acceptance |  |  |  |
+
+      | status(run_id) |  |  |  |
+
+      | wait(run_id) |  |  |  |
+
+
+      ### Semantic-failure vs wrapper-failure distinction
+
+      | Scenario | Expected classification | Observed classification | PASS/FAIL |
+
+      |---|---|---|---|
+
+      | valid JSON + exit 1 semantic failure | semantic final result |  |  |
+
+      | unusable stdout/non-JSON wrapper failure | wrapper_instability |  |  |
+
+
+      ### Findings
+
+      | Severity | Description | Location | Reproduction |
+
+      |---|---|---|---|
+
+
+      ### Headline
+
+      - [ ] PASS
+
+      - [ ] PASS_WITH_DEBT
+
+      - [ ] FAIL
+
+
+      **Confidence**: high/medium/low'
+    depends_on:
+    - mcp-guard-result-consistency.fix-deferred-full-scan-interpretation-and-doc-sync
+    agent: integration-verifier-tacit
