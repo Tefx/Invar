@@ -35100,3 +35100,186 @@ phases:
     depends_on:
     - mcp-guard-result-consistency.audit-contract-matrix
     agent: python-senior-tacit
+  - id: mcp-guard-result-consistency.fix-deferred-full-scan-interpretation-and-doc-sync
+    name: Fix deferred full-scan interpretation and sync the minimal MCP contract
+    status: pending
+    description: 'Step type: implementation
+
+      Agent source: default
+
+      Verification scope: phase-check protecting mcp-guard-result-consistency.verify-result-matrix
+
+      Spec refs: audit matrix from mcp-guard-result-consistency.audit-contract-matrix
+      ; docs/proposals/DX-94-mcp-full-guard-support-model.md#new-companion-tools ;
+      #acceptance-criteria ; #migration-constraints
+
+      Touch paths: src/invar/mcp/guard_runs.py ; tests/integration/test_mcp_guard_deferred.py
+      ; tests/integration/test_mcp_full_guard_regressions.py ; docs/proposals/DX-94-mcp-full-guard-support-model.md
+
+      Harness refs: tests/integration/test_mcp_guard_deferred.py ; tests/integration/test_mcp_full_guard_regressions.py
+
+      Authoritative interface: audit matrix from mcp-guard-result-consistency.audit-contract-matrix
+
+      Upstream artifacts: sync-path rule from mcp-guard-result-consistency.fix-sync-full-scan-interpretation
+      must be preserved for deferred parity
+
+
+      Fix the deferred full-scan path in src/invar/mcp/guard_runs.py so valid guard
+      JSON is accepted before subprocess exit-code classification, then close the
+      documented contract drift with the smallest compatible change.
+
+
+      Required scope:
+
+      - GuardRunRegistry._run_guard_command must parse valid stdout JSON before deciding
+      wrapper_instability.
+
+      - Deferred completion/wait/status shapes must remain machine-distinct for unknown
+      vs expired runs.
+
+      - Align DX-94 to actual shipped behavior unless adding an additive field is
+      clearly cheaper and keeps all MCP guard paths consistent.
+
+      - Do NOT invent planner_error / queue_persist_error / extra lifecycle promises
+      unless the implementation truly emits them after this step.
+
+
+      Expected-red proof is mandatory:
+
+      1. First add/update deferred regression tests.
+
+      2. Prove the current deferred path misclassifies semantic failure as wrapper_instability.
+
+      3. Paste the failing output into evidence.
+
+      4. Only then change guard_runs/doc contract.
+
+
+      Regression coverage must include both classes:
+
+      - semantic guard failure with valid JSON + subprocess exit 1
+
+      - true wrapper failure with unusable stdout/non-JSON
+
+
+      Also include a path-shape audit for:
+
+      - deferred acceptance envelope
+
+      - invar_guard_status(run_id)
+
+      - invar_guard_wait(run_id)
+
+
+      ## Completion Criteria (stub exclusion)
+
+      This is an IMPLEMENTATION step. Stub-only completion is NOT acceptable.
+
+      Each deliverable MUST contain substantive logic or concrete documentation updates
+      that make the shipped MCP contract unambiguous across deferred paths.'
+    verification: Expected-red then green for deferred-path regressions, plus explicit
+      evidence that the final documented contract matches the emitted status/wait
+      envelopes. Final evidence must include targeted pytest output and final invar_guard
+      verification on changed files.
+    evidence_template: '## refs Read Confirmation (MANDATORY)
+
+
+      For each ref in this step:
+
+      - <filename> — key passage or "NOT READ: <reason>"
+
+
+      If no refs were provided, state: "No refs for this step."
+
+
+      ## Expected-Red Proof (MANDATORY)
+
+      - New/updated tests added before implementation: <list>
+
+      - Exact command run before implementation:
+
+      ```bash
+
+      <targeted pytest command>
+
+      ```
+
+      - Failing output proving deferred misclassification or contract drift:
+
+      ```text
+
+      <paste failing output>
+
+      ```
+
+
+      ## Implementation / Doc Delta
+
+      - Files changed: <list>
+
+      - Deferred interpretation-order rule now enforced: <one paragraph>
+
+      - Minimal contract-drift resolution chosen: <document actual shape | add additive
+      fields>
+
+      - Explicitly not implemented: <promised-but-unsupported fields/error kinds that
+      were removed from docs or left out intentionally>
+
+
+      ## Green Proof
+
+      - Exact targeted command(s):
+
+      ```bash
+
+      <targeted pytest command(s)>
+
+      ```
+
+      - Actual output:
+
+      ```text
+
+      <paste output>
+
+      ```
+
+
+      ## Five-surface consistency check
+
+      | Surface | Actual status/keys observed | Matches audit matrix? |
+
+      |---|---|---|
+
+      | changed=true sync |  |  |
+
+      | changed=false sync final |  |  |
+
+      | changed=false deferred acceptance |  |  |
+
+      | status(run_id) |  |  |
+
+      | wait(run_id) |  |  |
+
+
+      ## Final guard verification
+
+      - Command:
+
+      ```bash
+
+      <invar_guard changed=true command/tool invocation>
+
+      ```
+
+      - Output:
+
+      ```text
+
+      <paste output>
+
+      ```'
+    depends_on:
+    - mcp-guard-result-consistency.audit-contract-matrix
+    - mcp-guard-result-consistency.fix-sync-full-scan-interpretation
+    agent: python-senior-tacit
