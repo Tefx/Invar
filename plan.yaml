@@ -35793,7 +35793,7 @@ phases:
       affect runtime behavior but should be reconciled in a doc follow-up.'
   - id: mcp-guard-result-consistency.gate
     name: Gate MCP guard result consistency fix
-    status: pending
+    status: claimed
     description: 'Step type: gate
 
       Agent source: default
@@ -35899,3 +35899,5 @@ phases:
     - mcp-guard-result-consistency.fix-deferred-full-scan-interpretation-and-doc-sync
     - mcp-guard-result-consistency.verify-result-matrix
     agent: gate-reviewer-tacit
+    claimed_by: gate-reviewer-tacit
+    claimed_at: '2026-04-13T09:07:20.247474+00:00'
