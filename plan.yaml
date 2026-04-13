@@ -35500,7 +35500,7 @@ phases:
       \ rule."
   - id: mcp-guard-result-consistency.verify-result-matrix
     name: Independently verify MCP guard result interpretation across all paths
-    status: claimed
+    status: done
     description: 'Step type: verification
 
       Agent source: default
@@ -35640,6 +35640,157 @@ phases:
     agent: integration-verifier-tacit
     claimed_by: integration-verifier-tacit
     claimed_at: '2026-04-13T08:58:22.334132+00:00'
+    done_at: '2026-04-13T09:03:23.966889+00:00'
+    evidence: '## Verification Report
+
+      **Tester**: integration-verifier-tacit
+
+      **Scope**: MCP guard sync/deferred result interpretation matrix
+
+
+      ### refs Read Confirmation
+
+      - `src/invar/mcp/handlers.py` — Lines 514-546: `_execute_command` with `full_scan_contract`
+      flag; JSON-first parse before `wrapper_instability` classification on non-zero
+      exit
+
+      - `src/invar/mcp/guard_runs.py` — Lines 487-502: `_run_guard_command` with identical
+      JSON-first interpretation; Lines 41-68: `build_wrapper_instability_envelope`
+
+      - `tests/integration/test_mcp_guard_deferred.py` — 6-param matrix (lines 520-618),
+      semantic field preservation (lines 621-647), envelope exit code (lines 640-647)
+
+      - `tests/integration/test_mcp_full_guard_regressions.py` — Sync matrix (lines
+      913-1025), changed=true control (lines 1028-1060), status/wait envelope machine-distinction
+      (lines 1068-1133)
+
+      - `tests/integration/test_mcp_guard_changed_flag.py` — Flag mapping tests (lines
+      1-88)
+
+      - `docs/proposals/DX-94-mcp-full-guard-support-model.md` — Acceptance Criteria
+      (lines 223-253), API contract with lifecycle field in JSON example (line 46)
+
+
+      ### Commands executed
+
+      ```
+
+      uv run pytest tests/integration/test_mcp_guard_deferred.py tests/integration/test_mcp_full_guard_regressions.py
+      tests/integration/test_mcp_guard_changed_flag.py -v --tb=short
+
+      uv run pytest <21 critical tests> -v --tb=long
+
+      uv run python3 <runtime shape verification for envelope, parse, summarize>
+
+      uv run python3 <runtime check for lifecycle field presence>
+
+      ```
+
+
+      ### Actual outputs
+
+      ```
+
+      62 passed, 1 warning in 0.66s  (full suite)
+
+      21 passed, 1 warning in 0.44s  (critical matrix tests)
+
+      All runtime shape verifications PASSED
+
+      lifecycle field NOT present in emitted envelopes (doc says it is)
+
+      ```
+
+
+      ### Five-surface consistency table
+
+
+      | Surface | Observed result | Expected per audit matrix | PASS/FAIL |
+
+      |---------|----------------|---------------------------|-----------|
+
+      | 1. changed=true sync | Remains synchronous, uses `--changed`, `full_scan_contract=False`;
+      test `test_changed_true_remains_sync` passes | Unchanged behavior, no deferral,
+      no wrapper_instability misclassification | PASS |
+
+      | 2. changed=false sync final | `full_scan_contract=True`; rc!=0 + valid JSON
+      → parsed as semantic result (NOT wrapper_instability); rc!=0 + empty/invalid
+      JSON → wrapper_instability envelope; test matrix 6 cases all pass | JSON-first
+      interpretation per DX-94 AC#11 | PASS |
+
+      | 3. changed=false deferred | `_run_guard_command` attempts JSON parse before
+      GuardWrapperInstabilityError; semantic result → status=complete with report;
+      empty/invalid → failed with wrapper_instability; 6 parametrized cases pass |
+      Same JSON-first rule applied to async path | PASS |
+
+      | 4. status(run_id) | `deferred`/`running` → non-terminal snapshot; `complete`
+      → report; `failed` with error_kind taxonomy; `cancelled` with run_expired; `run_not_found`
+      distinct from `run_expired` | Per DX-94 AC#3 (machine-distinct) and AC#4 (error_kind
+      taxonomy) | PASS |
+
+      | 5. wait(run_id) | Same taxonomy as status; unknown vs expired machine-distinct
+      in wait too; tests `test_deferred_status_unknown_vs_expired_are_machine_distinct`
+      and `test_deferred_wait_unknown_vs_expired_envelopes` both pass | Identical
+      taxonomy enforcement in status and wait | PASS |
+
+
+      ### Semantic-failure vs wrapper-failure distinction
+
+
+      | Scenario | Expected | Observed | PASS/FAIL |
+
+      |----------|----------|----------|-----------|
+
+      | Sync: rc=1 + valid guard JSON | Semantic result with `status="failed"` and
+      `static`/`summary` fields, no `error_kind="wrapper_instability"` | Test passes:
+      parsed result has `status="failed"`, no `wrapper_instability` classification
+      | PASS |
+
+      | Sync: rc=1 + empty stdout | `wrapper_instability` envelope with `classification`,
+      `subprocess_exit_code`, `accepted_verification_path` | Test passes: envelope
+      shape verified with all required fields | PASS |
+
+      | Sync: rc=137 + empty stdout | `wrapper_instability` envelope | Test passes
+      | PASS |
+
+      | Sync: rc=1 + garbled JSON | `wrapper_instability` envelope | Test passes |
+      PASS |
+
+      | Deferred: rc=1 + valid guard JSON | `status="complete"` with report containing
+      `ok=False`, `errors`, `warnings` — NOT failed/wrapper_instability | Test passes:
+      `test_deferred_result_interpretation_matrix` Case 1 verifies | PASS |
+
+      | Deferred: rc=1 + empty stdout | `status="failed"`, `error_kind="wrapper_instability"`,
+      `subprocess_exit_code=1` | Test passes | PASS |
+
+      | changed=true control | Unchanged behavior, rc=1 JSON parsed normally (no full_scan_contract
+      bypass) | Test `test_sync_full_scan_changed_true_path_unaffected` passes | PASS
+      |
+
+
+      ### Doc-Impl Gap (NON-BLOCKING)
+
+
+      The DX-94 proposal JSON example (line 46) shows `"lifecycle": "accepted"` in
+      the deferred envelope, and line 59 references `lifecycle` field behavior. **The
+      implementation never emits this field** — neither in `handlers.py:_run_guard`
+      (deferred envelope dict) nor in `guard_runs.py:_snapshot`. The `status` field
+      alone serves the monotonic lifecycle progression described in acceptance criteria
+      #8. This is a doc over-promise (field promised but never shipped), NOT a functional
+      regression. The field is harmless since clients that don''t see it will simply
+      ignore it (additive rollout constraint per migration constraint #1). Marking
+      as PASS_WITH_DEBT per the unified headline contract.
+
+
+      ### Verdict
+
+      - **PASS_WITH_DEBT** — All five MCP guard surfaces are consistent with the DX-94
+      audit matrix. Semantic-failure vs wrapper-instability classification is correct
+      across both sync and deferred paths. The JSON-first interpretation rule is implemented
+      identically in both `_execute_command` (sync) and `_run_guard_command` (async).
+      The only finding is a non-blocking doc over-promise: the `lifecycle` field in
+      the DX-94 example JSON is never emitted by the implementation. This does not
+      affect runtime behavior but should be reconciled in a doc follow-up.'
   - id: mcp-guard-result-consistency.gate
     name: Gate MCP guard result consistency fix
     status: pending
