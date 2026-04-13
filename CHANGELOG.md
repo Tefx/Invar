@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.21.1] - 2026-04-13
+
+### Fixed
+- Preserve semantic MCP guard JSON results on non-zero full-scan exits for both sync and deferred paths.
+- Reserve `wrapper_instability` for true wrapper faults with unusable stdout rather than semantic guard failures.
+
+### Changed
+- Align DX-94 MCP guard contract documentation with the shipped status and error taxonomy.
+- Archive stale top-level project artifacts under `docs/archive/top-level-legacy/`.
+
 ## [1.20.2] - 2026-03-14
 
 ### Changed
