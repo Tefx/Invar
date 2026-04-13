@@ -35423,3 +35423,111 @@ phases:
     depends_on:
     - mcp-guard-result-consistency.fix-deferred-full-scan-interpretation-and-doc-sync
     agent: integration-verifier-tacit
+  - id: mcp-guard-result-consistency.gate
+    name: Gate MCP guard result consistency fix
+    status: pending
+    description: 'Step type: gate
+
+      Agent source: default
+
+      Verification scope: phase-check for the entire mcp-guard-result-consistency
+      phase
+
+      Review depth: STANDARD
+
+      Review depth rationale:
+
+      - Phase touches external MCP result contracts and wrapper/semantic failure interpretation
+
+      - Phase includes doc/code consistency closure across sync and deferred paths
+
+      Cross-cutting focus:
+
+      - valid guard JSON must never be reclassified as wrapper_instability solely
+      because subprocess exit code is 1
+
+      - true wrapper failures must remain machine-distinct
+
+      - DX-94 must not over-promise unsupported lifecycle/error kinds after the fix
+
+
+      As an INDEPENDENT REVIEWER, decide whether this phase is genuinely complete.
+
+      BLOCK if any of the following remain true:
+
+      1. Sync or deferred full-scan path still checks return code before honoring
+      valid JSON.
+
+      2. Wrapper_instability swallows semantic guard failures on any MCP full-scan
+      path.
+
+      3. Status/wait/deferred acceptance shapes still conflict with the chosen documented
+      contract.
+
+      4. Evidence lacks expected-red proof, targeted regression proof, or final invar_guard
+      verification.
+
+
+      Gate decision basis must explicitly map each blocker-class obligation to evidence
+      reviewed.'
+    verification: Review all step evidence, verify the semantic-failure-vs-wrapper-failure
+      distinction is closed on both sync and deferred full-scan paths, and confirm
+      final invar_guard verification was produced.
+    evidence_template: '## Gate Review Report
+
+
+      **Reviewer**: gate-reviewer-tacit
+
+      **Phase**: mcp-guard-result-consistency
+
+
+      ### refs Read Confirmation (MANDATORY)
+
+      For each ref in this step:
+
+      - <filename> — key passage or "NOT READ: <reason>"
+
+
+      If no refs were provided, state: "No refs for this step."
+
+
+      ### Decision basis
+
+      | Obligation | Evidence reviewed | Status | Blocks? |
+
+      |---|---|---|---|
+
+      | Sync full-scan honors valid JSON before return-code classification |  |  |  |
+
+      | Deferred full-scan honors valid JSON before return-code classification |  |  |  |
+
+      | Wrapper instability reserved for true wrapper faults |  |  |  |
+
+      | Five-surface result matrix is internally consistent |  |  |  |
+
+      | DX-94 docs match shipped contract |  |  |  |
+
+      | Final invar_guard verification present |  |  |  |
+
+
+      ### Issues identified
+
+      | Severity | Description | Related step | Blocking? |
+
+      |---|---|---|---|
+
+
+      ### Gate Decision
+
+      - [ ] OPEN
+
+      - [ ] BLOCKED
+
+
+      If BLOCKED, list the exact unresolved obligation(s).'
+    depends_on:
+    - mcp-guard-result-consistency.audit-contract-matrix
+    - mcp-guard-result-consistency.fix-sync-full-scan-interpretation
+    - mcp-guard-result-consistency.fix-deferred-full-scan-interpretation-and-doc-sync
+    - mcp-guard-result-consistency.verify-result-matrix
+    agent: gate-reviewer-tacit
