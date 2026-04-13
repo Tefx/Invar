@@ -35244,7 +35244,7 @@ phases:
       \ The deferred path is already correct and was not in scope for this step."
   - id: mcp-guard-result-consistency.fix-deferred-full-scan-interpretation-and-doc-sync
     name: Fix deferred full-scan interpretation and sync the minimal MCP contract
-    status: claimed
+    status: done
     description: 'Step type: implementation
 
       Agent source: default
@@ -35427,6 +35427,77 @@ phases:
     agent: python-senior-tacit
     claimed_by: python-senior-tacit
     claimed_at: '2026-04-13T08:37:49.571464+00:00'
+    done_at: '2026-04-13T08:56:39.717856+00:00'
+    evidence: "## refs Read Confirmation (MANDATORY)\n- `src/invar/mcp/guard_runs.py::_run_guard_command`\
+      \ (lines 450-489) — Bug site: unconditional `GuardWrapperInstabilityError` on\
+      \ `returncode != 0` before JSON parse attempt.\n- `src/invar/mcp/handlers.py::_execute_command`\
+      \ (lines 514-546) — Reference implementation: sync path already fixed to try\
+      \ JSON parse before wrapper_instability classification.\n- `docs/proposals/DX-94-mcp-full-guard-support-model.md`\
+      \ — Doc drift: `lifecycle` field not shipped, `expired` not a separate status,\
+      \ `planner_error`/`queue_persist_error` not shipped, missing `wrapper_instability`\
+      \ error_kind, missing JSON-first interpretation rule.\n- `tests/integration/test_mcp_guard_deferred.py`\
+      \ — Existing deferred lifecycle tests; augmented with parametrized interpretation\
+      \ matrix.\n- `tests/integration/test_mcp_full_guard_regressions.py` — Existing\
+      \ sync regression matrix; augmented with deferred path-shape audit tests.\n\n\
+      ## Expected-Red Proof (MANDATORY)\n- Tests added/updated before implementation:\n\
+      \  - `test_deferred_result_interpretation_matrix` (6 parametrized cases in `test_mcp_guard_deferred.py`):\
+      \ Cases 1-2 (valid JSON + rc≠0) misclassified as `wrapper_instability`\n  -\
+      \ `test_deferred_result_valid_failed_json_carries_guard_fields` in `test_mcp_guard_deferred.py`:\
+      \ semantic failure misclassified as `wrapper_instability`\n  - `test_deferred_result_wrapper_instability_carries_exit_code`\
+      \ in `test_mcp_guard_deferred.py`: confirms wrapper_instability still works\
+      \ for empty stdout\n  - `test_deferred_status_unknown_vs_expired_are_machine_distinct`\
+      \ in `test_mcp_full_guard_regressions.py`\n  - `test_deferred_wait_unknown_vs_expired_envelopes`\
+      \ in `test_mcp_full_guard_regressions.py`\n  - `test_deferred_semantic_failure_preserves_guard_status_fields`\
+      \ in `test_mcp_full_guard_regressions.py`\n- Command: `.venv/bin/python -m pytest\
+      \ tests/integration/test_mcp_guard_deferred.py -k \"test_deferred_result\" -v`\n\
+      - Failing output (3 of 8 failed before fix):\n  - Case 1 (rc=1 + valid failed\
+      \ JSON): `AssertionError: rc=1 with valid guard JSON must return semantic complete\
+      \ result: expected status=complete, got failed`\n  - Case 2 (rc=2 + valid failed\
+      \ JSON): Same misclassification\n  - `test_deferred_result_valid_failed_json_carries_guard_fields`:\
+      \ `AssertionError: assert 'failed' == 'complete'`\n\n## Implementation / Doc\
+      \ Delta\n- Files changed:\n  - `src/invar/mcp/guard_runs.py::_run_guard_command`:\
+      \ Restructured to attempt `_parse_guard_json(stdout)` BEFORE classifying as\
+      \ `GuardWrapperInstabilityError`. When `returncode != 0`, tries JSON parse first;\
+      \ only falls through to `GuardWrapperInstabilityError` when stdout is empty\
+      \ or contains no parseable JSON.\n  - `tests/integration/test_mcp_guard_deferred.py`:\
+      \ Added `_FakeProcess`, `_guard_failed_json_bytes`, `_guard_passed_json_bytes`,\
+      \ `_run_deferred_guard_with_fake_subprocess`, `test_deferred_result_interpretation_matrix`\
+      \ (6 cases), `test_deferred_result_valid_failed_json_carries_guard_fields`,\
+      \ `test_deferred_result_wrapper_instability_carries_exit_code`. Added `GuardWrapperInstabilityError`\
+      \ import.\n  - `tests/integration/test_mcp_full_guard_regressions.py`: Added\
+      \ `asyncio` import, `test_deferred_status_unknown_vs_expired_are_machine_distinct`,\
+      \ `test_deferred_wait_unknown_vs_expired_envelopes`, `test_deferred_semantic_failure_preserves_guard_status_fields`.\n\
+      \  - `docs/proposals/DX-94-mcp-full-guard-support-model.md`: Replaced `lifecycle`\
+      \ envelope field with shipped `phase`+`progress`. Fixed status space (`expired`\
+      \ → `failed`+`run_expired`). Added `wrapper_instability` to error_kind list.\
+      \ Marked `planner_error`/`queue_persist_error` as future-only. Added Result\
+      \ interpretation rule (JSON-first) to companion tools section and acceptance\
+      \ criteria item 11. Added terminal failure envelope examples for both semantic\
+      \ and wrapper paths. Updated migration constraint #6.\n- Deferred interpretation\
+      \ rule now enforced: `_run_guard_command` attempts JSON parse on any stdout\
+      \ when `returncode != 0`; only raises `GuardWrapperInstabilityError` when `_parse_guard_json`\
+      \ returns `Failure`.\n- Contract-drift resolution chosen: Narrowed DX-94 doc\
+      \ to match shipped behavior. Removed unshipped `lifecycle`, `planner_error`,\
+      \ `queue_persist_error`, `expired` status. Added shipped `wrapper_instability`,\
+      \ `phase`+`progress`, JSON-first interpretation rule.\n- Explicitly not implemented:\
+      \ `planner_error`, `queue_persist_error` error kinds (not shipped, marked future-only\
+      \ in doc); `lifecycle` field (not shipped, replaced with `phase`+`progress`\
+      \ in doc).\n\n## Green Proof\n- Command(s):\n  `.venv/bin/python -m pytest tests/integration/test_mcp_guard_deferred.py\
+      \ tests/integration/test_mcp_full_guard_regressions.py tests/integration/test_mcp_guard_changed_flag.py\
+      \ -v`\n- Output: `62 passed, 1 warning in 0.65s`\n\n## Final guard verification\n\
+      - Command: `invar_guard(changed=true)`\n- Output:\n  ```json\n  {\n    \"status\"\
+      : \"passed\",\n    \"static\": {\"passed\": true, \"errors\": 0, \"warnings\"\
+      : 2, \"infos\": 0},\n    \"summary\": {\"files_checked\": 2, \"errors\": 0,\
+      \ \"warnings\": 2, \"infos\": 0},\n    \"verification_level\": \"STANDARD\"\
+      ,\n    \"doctest\": {\"passed\": true}\n  }\n  ```\n  Warnings are pre-existing\
+      \ file-size warnings (97% and 83% of limits, unchanged from before this step).\n\
+      \n## Residual risk\n- The `_parse_guard_json` function has a newline-corruption\
+      \ fallback path that is shared between sync and deferred. If this path produces\
+      \ a false-positive parse (fixes corrupted bytes into something JSON-like but\
+      \ semantically wrong), the result would be treated as a semantic result rather\
+      \ than wrapper_instability. This is an accepted trade-off: preferring false-semantic\
+      \ over false-wrapper-instability is correct per the audit matrix's classification\
+      \ rule."
   - id: mcp-guard-result-consistency.verify-result-matrix
     name: Independently verify MCP guard result interpretation across all paths
     status: pending
