@@ -35244,7 +35244,7 @@ phases:
       \ The deferred path is already correct and was not in scope for this step."
   - id: mcp-guard-result-consistency.fix-deferred-full-scan-interpretation-and-doc-sync
     name: Fix deferred full-scan interpretation and sync the minimal MCP contract
-    status: pending
+    status: claimed
     description: 'Step type: implementation
 
       Agent source: default
@@ -35425,6 +35425,8 @@ phases:
     - mcp-guard-result-consistency.audit-contract-matrix
     - mcp-guard-result-consistency.fix-sync-full-scan-interpretation
     agent: python-senior-tacit
+    claimed_by: python-senior-tacit
+    claimed_at: '2026-04-13T08:37:49.571464+00:00'
   - id: mcp-guard-result-consistency.verify-result-matrix
     name: Independently verify MCP guard result interpretation across all paths
     status: pending
