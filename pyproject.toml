@@ -9,7 +9,7 @@ packages = ["src/invar"]
 
 [project]
 name = "invar-tools"
-version = "1.21.1"
+version = "1.21.2"
 description = "AI-native software engineering tools with design-by-contract verification"
 readme = "README.md"
 license = "GPL-3.0-or-later"
@@ -47,7 +47,8 @@ dependencies = [
     "crosshair-tool>=0.0.60",
     "coverage[toml]>=7.0",  # DX-37: Quantitative branch coverage support
     # MCP server (DX-16: Agent tool enforcement)
-    "mcp>=1.0",
+    # Tested 1.x API baseline; 2.x removes CombinationContent used by handlers.
+    "mcp>=1.25,<2",
     # Template engine (DX-49: Protocol Distribution Unification)
     "jinja2>=3.0",
     # Python reference finding (DX-78: invar refs command)

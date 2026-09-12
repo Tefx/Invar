@@ -58,6 +58,26 @@ jobs:
                --ignore-missing-imports \
                --follow-imports=silent
 
+  mcp-compatibility:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.13"]
+        mcp-requirement: ["mcp==1.25.0", "mcp<2"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install supported SDK baseline or latest 1.x
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e runtime/
+          pip install -e ".[dev]" '${{ matrix.mcp-requirement }}'
+          pip check
+      - name: Verify MCP startup, handshake, tools, and document read
+        run: python -m pytest tests/integration/test_mcp_stdio.py -v
+
   lint:
     runs-on: ubuntu-latest
     steps:
